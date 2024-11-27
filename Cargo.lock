@@ -3,7 +3,7 @@
 version = 3
 
 [[package]]
-name = "balatro-gen-rs"
+name = "balatro-rs"
 version = "0.1.0"
 dependencies = [
  "itertools",
