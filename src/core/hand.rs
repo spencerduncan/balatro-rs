@@ -6,11 +6,13 @@ use crate::core::card::Suit;
 use crate::core::card::Value;
 use crate::core::rank::HandRank;
 
+use super::error::PlayHandError;
+
 /// Played/made hand
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct MadeHand {
-    cards: Vec<Card>,
+    hand: Hand,
     rank: HandRank,
 }
 
@@ -41,7 +43,7 @@ impl Hand {
     }
 
     // Get map of each value with corresponding cards.
-    // For example, Ks, Ah, Jh, Jc, Jd -> {J: [Jh, Jc: Jd], A: [Ah], K: [Ks]}
+    // For example, Ks, Ah, Jh, Jc, Jd -> {A: [Ah], K: [Ks], J: [Jh, Jc: Jd]}
     pub fn values_freq(&self) -> HashMap<Value, Vec<Card>> {
         let mut counts: HashMap<Value, Vec<Card>> = HashMap::new();
         for card in self.0.clone() {
@@ -105,32 +107,112 @@ impl Hand {
     // TwoPair
     // OnePair
     // HighCard
-    pub fn best_hand(&self) -> Option<MadeHand> {
+    pub fn best_hand(&self) -> Result<MadeHand, PlayHandError> {
+        if self.len() == 0 {
+            return Err(PlayHandError::NoCards);
+        }
+        if self.len() > 5 {
+            return Err(PlayHandError::TooManyCards);
+        }
+
         // We start trying to evaluate best hands first, so we
         // can return best hand right when we find it.
+        if let Some(hand) = self.is_flush_five() {
+            return Ok(MadeHand {
+                hand,
+                rank: HandRank::FlushFive,
+            });
+        }
+        if let Some(hand) = self.is_flush_house() {
+            return Ok(MadeHand {
+                hand,
+                rank: HandRank::FlushHouse,
+            });
+        }
+        if let Some(hand) = self.is_five_of_kind() {
+            return Ok(MadeHand {
+                hand,
+                rank: HandRank::FiveOfAKind,
+            });
+        }
+        if let Some(hand) = self.is_royal_flush() {
+            return Ok(MadeHand {
+                hand,
+                rank: HandRank::RoyalFlush,
+            });
+        }
+        if let Some(hand) = self.is_straight_flush() {
+            return Ok(MadeHand {
+                hand,
+                rank: HandRank::StraightFlush,
+            });
+        }
+        if let Some(hand) = self.is_four_of_kind() {
+            return Ok(MadeHand {
+                hand,
+                rank: HandRank::FourOfAKind,
+            });
+        }
+        if let Some(hand) = self.is_fullhouse() {
+            return Ok(MadeHand {
+                hand,
+                rank: HandRank::FullHouse,
+            });
+        }
+        if let Some(hand) = self.is_flush() {
+            return Ok(MadeHand {
+                hand,
+                rank: HandRank::Flush,
+            });
+        }
+        if let Some(hand) = self.is_straight() {
+            return Ok(MadeHand {
+                hand,
+                rank: HandRank::Straight,
+            });
+        }
+        if let Some(hand) = self.is_three_of_kind() {
+            return Ok(MadeHand {
+                hand,
+                rank: HandRank::ThreeOfAKind,
+            });
+        }
+        if let Some(hand) = self.is_two_pair() {
+            return Ok(MadeHand {
+                hand,
+                rank: HandRank::TwoPair,
+            });
+        }
+        if let Some(hand) = self.is_pair() {
+            return Ok(MadeHand {
+                hand,
+                rank: HandRank::OnePair,
+            });
+        }
+        if let Some(hand) = self.is_highcard() {
+            return Ok(MadeHand {
+                hand,
+                rank: HandRank::HighCard,
+            });
+        }
+        // We didn't match any known hand, oops...
+        return Err(PlayHandError::UnknownHand);
+    }
 
-        // 5 cards can be many hands, lets check for all
-        if self.len() == 5 {}
-
-        // no cards, no best hand
-        if self.len() == 0 {
+    pub fn is_highcard(&self) -> Option<Hand> {
+        dbg!(self.values_freq());
+        if self.len() < 1 {
             return None;
         }
-        // only 1 card, must be high card
-        if self.len() == 1 {
-            return Some(MadeHand {
-                cards: self.0.clone(),
-                rank: HandRank::HighCard,
-            });
+        if let Some((_value, cards)) = self
+            .values_freq()
+            .into_iter()
+            .find(|(_key, val)| val.len() == 1)
+        {
+            return Some(Hand::new(cards));
+        } else {
+            return None;
         }
-        // 2 cards, either a pair or high card
-        if self.len() == 1 {
-            return Some(MadeHand {
-                cards: self.0.clone(),
-                rank: HandRank::HighCard,
-            });
-        }
-        return None;
     }
 
     pub fn is_pair(&self) -> Option<Hand> {
@@ -440,6 +522,58 @@ mod tests {
         assert_eq!(freq.get(&Suit::Heart).unwrap()[2].suit, Suit::Heart);
         assert_eq!(freq.get(&Suit::Spade).unwrap()[0].suit, Suit::Spade);
         assert_eq!(freq.get(&Suit::Diamond).unwrap()[0].suit, Suit::Diamond);
+    }
+
+    #[test]
+    fn test_highcard() {
+        let c1 = Card::new(Value::Ace, Suit::Heart);
+        let c2 = Card::new(Value::King, Suit::Heart);
+        let c3 = Card::new(Value::Three, Suit::Diamond);
+        let c4 = Card::new(Value::Four, Suit::Diamond);
+        let c5 = Card::new(Value::Five, Suit::Diamond);
+        let c6 = Card::new(Value::Six, Suit::Diamond);
+
+        // Valid 5 (A, K, 3, 4, 5)
+        let hand = Hand::new(vec![c1, c2, c3, c4, c5]);
+        let hc = hand.is_highcard();
+        assert_eq!(hc.clone().unwrap().len(), 1);
+        assert_eq!(hc.unwrap().0[0].value, Value::Ace);
+
+        // Valid 5 (K, A, 3, 4, 5)
+        let hand = Hand::new(vec![c2, c1, c3, c4, c5]);
+        let hc = hand.is_highcard();
+        assert_eq!(hc.clone().unwrap().len(), 1);
+        assert_eq!(hc.unwrap().0[0].value, Value::Ace);
+
+        // Valid 5 (K, 3, 4, 5, 6)
+        let hand = Hand::new(vec![c2, c3, c4, c5, c6]);
+        let hc = hand.is_highcard();
+        assert_eq!(hc.clone().unwrap().len(), 1);
+        assert_eq!(hc.unwrap().0[0].value, Value::King);
+
+        // Valid 4 (K, 3, 4, 5)
+        let hand = Hand::new(vec![c2, c3, c4, c5]);
+        let hc = hand.is_highcard();
+        assert_eq!(hc.clone().unwrap().len(), 1);
+        assert_eq!(hc.unwrap().0[0].value, Value::King);
+
+        // Valid 3 (K, 3, 4)
+        let hand = Hand::new(vec![c2, c3, c4]);
+        let hc = hand.is_highcard();
+        assert_eq!(hc.clone().unwrap().len(), 1);
+        assert_eq!(hc.unwrap().0[0].value, Value::King);
+
+        // Valid 2 (K, 3)
+        let hand = Hand::new(vec![c2, c3]);
+        let hc = hand.is_highcard();
+        assert_eq!(hc.clone().unwrap().len(), 1);
+        assert_eq!(hc.unwrap().0[0].value, Value::King);
+
+        // Valid 1 (K)
+        let hand = Hand::new(vec![c2]);
+        let hc = hand.is_highcard();
+        assert_eq!(hc.clone().unwrap().len(), 1);
+        assert_eq!(hc.unwrap().0[0].value, Value::King);
     }
 
     #[test]
