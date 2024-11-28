@@ -6,17 +6,6 @@ use crate::core::card::Suit;
 use crate::core::card::Value;
 use crate::core::rank::HandRank;
 
-/// A given card and the index it is in the hand.
-// Useful to relate best hand rank back to associated cards in hand.
-// For example, we can determine a hand A A K Q J is a pair, then use
-// the index to determine the scoring cards are index 0 and 1 (A, A)
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
-pub struct CardIndex {
-    card: Card,
-    index: u16,
-}
-
 /// Played/made hand
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
@@ -52,7 +41,7 @@ impl Hand {
     }
 
     // Get map of each value with corresponding cards.
-    // For example, K♤, A♡, J♡, J♧, J♢ -> {J: [J♡, J♧: J♢], A: [A♡], K: [K♤]}
+    // For example, Ks, Ah, Jh, Jc, Jd -> {J: [Jh, Jc: Jd], A: [Ah], K: [Ks]}
     pub fn values_freq(&self) -> HashMap<Value, Vec<Card>> {
         let mut counts: HashMap<Value, Vec<Card>> = HashMap::new();
         for card in self.0.clone() {
@@ -77,7 +66,7 @@ impl Hand {
     }
 
     // Get map of each suit with corresponding cards.
-    // For example, K♤, A♡, J♡, J♧, J♢ -> {♡: [J♡, A♡], ♤: [K♤], ♧: [J♧], ♢: [J♢]}
+    // For example, Ks, Ah, Jh, Jc, Jd -> {h: [Jh, Ah], s: [Ks], c: [Jc], d: [Jd]}
     pub fn suits_freq(&self) -> HashMap<Suit, Vec<Card>> {
         let mut counts: HashMap<Suit, Vec<Card>> = HashMap::new();
         for card in self.0.clone() {
@@ -99,8 +88,23 @@ impl Hand {
     /// Can play any number of cards, it is our responsibility
     /// to determine the best hand. Higher tier hands take precedence
     /// over lower tier hands regardless of their level or scoring.
-    /// For example, if hand is K K K K 2, and all are diamonds,
-    /// hand will always be a Four of a Kind and never a Flush.
+    /// For example, if hand is Kd Kd Kd Kd 2d, best hand will be a
+    // Four of a Kind and never a Flush.
+    //
+    // Hand ranking:
+    // FlushFive
+    // FlushHouse
+    // FiveOfAKind
+    // RoyalFlush
+    // StraightFlush
+    // FourOfAKind
+    // FullHouse
+    // Flush
+    // Straight
+    // ThreeOfAKind
+    // TwoPair
+    // OnePair
+    // HighCard
     pub fn best_hand(&self) -> Option<MadeHand> {
         // We start trying to evaluate best hands first, so we
         // can return best hand right when we find it.
@@ -128,210 +132,224 @@ impl Hand {
         }
         return None;
     }
-}
 
-fn is_five_of_kind(hand: Hand) -> Option<Hand> {
-    dbg!(hand.values_freq());
-    if hand.len() < 5 {
-        return None;
-    }
-    if let Some((_value, cards)) = hand
-        .values_freq()
-        .into_iter()
-        .find(|(_key, val)| val.len() == 5)
-    {
-        return Some(Hand::new(cards));
-    } else {
-        return None;
-    }
-}
-
-fn is_fullhouse(hand: Hand) -> Option<Hand> {
-    dbg!(hand.values_freq());
-    if hand.len() < 5 {
-        return None;
-    }
-
-    // First find 3ok
-    let three = hand
-        .values_freq()
-        .into_iter()
-        .find(|(_key, val)| val.len() == 3);
-    if three.is_none() {
-        return None;
-    }
-    let three_val = three
-        .as_ref()
-        .unwrap()
-        .1
-        .first()
-        .expect("values freq has empty Vec<card>")
-        .value;
-
-    // Next find 2ok that isn't same value as 3ok
-    let two = hand
-        .values_freq()
-        .into_iter()
-        .find(|(key, val)| *key != three_val && val.len() == 2);
-    if two.is_none() {
-        return None;
-    }
-
-    // Combine 3ok and 2ok
-    let mut cards: Vec<Card> = Vec::new();
-    cards.extend(three.unwrap().1);
-    cards.extend(two.unwrap().1);
-    return Some(Hand::new(cards));
-}
-
-fn is_four_of_kind(hand: Hand) -> Option<Hand> {
-    dbg!(hand.values_freq());
-    if hand.len() < 4 {
-        return None;
-    }
-    if let Some((_value, cards)) = hand
-        .values_freq()
-        .into_iter()
-        .find(|(_key, val)| val.len() == 4)
-    {
-        return Some(Hand::new(cards));
-    } else {
-        return None;
-    }
-}
-
-fn is_flush(hand: Hand) -> Option<Hand> {
-    dbg!(hand.values_freq());
-    if hand.len() < 5 {
-        return None;
-    }
-    if let Some((_value, cards)) = hand
-        .suits_freq()
-        .into_iter()
-        .find(|(_key, val)| val.len() == 5)
-    {
-        return Some(Hand::new(cards));
-    } else {
-        return None;
-    }
-}
-
-fn is_straight(hand: Hand) -> Option<Hand> {
-    dbg!(hand.values());
-    if hand.len() != 5 {
-        return None;
-    }
-    // Iterate our sorted values. Each value must be one more than the previous.
-    let values = hand.values();
-    if values.windows(2).all(|v| (v[1] as u16 - v[0] as u16) == 1) {
-        return Some(hand);
-    }
-
-    // Special case for low ace.
-    // Values are sorted with Ace as high (2, 3, 4, 5, A)
-    // Therefore, we can check that last value is ace, first value is two.
-    // Then remove the last value (ace) from vec and check for incremental values
-    // for everything else (2, 3, 4, 5).
-    if values[4] == Value::Ace && values[0] == Value::Two {
-        let skip_last: Vec<Value> = values.into_iter().rev().skip(1).rev().collect();
-        if skip_last
-            .windows(2)
-            .all(|v| (v[1] as u16 - v[0] as u16) == 1)
+    pub fn is_pair(&self) -> Option<Hand> {
+        dbg!(self.values_freq());
+        if self.len() < 2 {
+            return None;
+        }
+        if let Some((_value, cards)) = self
+            .values_freq()
+            .into_iter()
+            .find(|(_key, val)| val.len() == 2)
         {
-            return Some(hand);
+            return Some(Hand::new(cards));
+        } else {
+            return None;
         }
     }
-    return None;
-}
 
-fn is_straight_flush(hand: Hand) -> Option<Hand> {
-    if is_flush(hand.clone()).is_some() && is_straight(hand.clone()).is_some() {
-        return Some(hand);
-    }
-    return None;
-}
+    pub fn is_two_pair(&self) -> Option<Hand> {
+        dbg!(self.values_freq());
+        if self.len() < 4 {
+            return None;
+        }
 
-fn is_royal_flush(hand: Hand) -> Option<Hand> {
-    if is_straight_flush(hand.clone()).is_some()
-        && hand.values().into_iter().eq(vec![
-            Value::Ten,
-            Value::Jack,
-            Value::Queen,
-            Value::King,
-            Value::Ace,
-        ])
-    {
-        return Some(hand);
-    }
-    return None;
-}
+        // First find first pair
+        let first = self
+            .values_freq()
+            .into_iter()
+            .find(|(_key, val)| val.len() == 2);
+        if first.is_none() {
+            return None;
+        }
+        let first_val = first
+            .as_ref()
+            .unwrap()
+            .1
+            .first()
+            .expect("values freq has empty Vec<card>")
+            .value;
 
-fn is_three_of_kind(hand: Hand) -> Option<Hand> {
-    dbg!(hand.values_freq());
-    if hand.len() < 3 {
-        return None;
-    }
-    if let Some((_value, cards)) = hand
-        .values_freq()
-        .into_iter()
-        .find(|(_key, val)| val.len() == 3)
-    {
+        // Next find second pair that isn't same value as first pair
+        let second = self
+            .values_freq()
+            .into_iter()
+            .find(|(key, val)| *key != first_val && val.len() == 2);
+        if second.is_none() {
+            return None;
+        }
+
+        // Combine first and second pair
+        let mut cards: Vec<Card> = Vec::new();
+        cards.extend(first.unwrap().1);
+        cards.extend(second.unwrap().1);
         return Some(Hand::new(cards));
-    } else {
-        return None;
-    }
-}
-
-fn is_two_pair(hand: Hand) -> Option<Hand> {
-    dbg!(hand.values_freq());
-    if hand.len() < 4 {
-        return None;
     }
 
-    // First find first pair
-    let first = hand
-        .values_freq()
-        .into_iter()
-        .find(|(_key, val)| val.len() == 2);
-    if first.is_none() {
-        return None;
-    }
-    let first_val = first
-        .as_ref()
-        .unwrap()
-        .1
-        .first()
-        .expect("values freq has empty Vec<card>")
-        .value;
-
-    // Next find second pair that isn't same value as first pair
-    let second = hand
-        .values_freq()
-        .into_iter()
-        .find(|(key, val)| *key != first_val && val.len() == 2);
-    if second.is_none() {
-        return None;
+    pub fn is_three_of_kind(&self) -> Option<Hand> {
+        dbg!(self.values_freq());
+        if self.len() < 3 {
+            return None;
+        }
+        if let Some((_value, cards)) = self
+            .values_freq()
+            .into_iter()
+            .find(|(_key, val)| val.len() == 3)
+        {
+            return Some(Hand::new(cards));
+        } else {
+            return None;
+        }
     }
 
-    // Combine first and second pair
-    let mut cards: Vec<Card> = Vec::new();
-    cards.extend(first.unwrap().1);
-    cards.extend(second.unwrap().1);
-    return Some(Hand::new(cards));
-}
+    pub fn is_straight(&self) -> Option<Hand> {
+        dbg!(self.values());
+        if self.len() != 5 {
+            return None;
+        }
+        // Iterate our sorted values. Each value must be one more than the previous.
+        let values = self.values();
+        if values.windows(2).all(|v| (v[1] as u16 - v[0] as u16) == 1) {
+            return Some(self.clone());
+        }
 
-fn is_pair(hand: Hand) -> Option<Hand> {
-    dbg!(hand.values_freq());
-    if hand.len() < 2 {
+        // Special case for low ace.
+        // Values are sorted with Ace as high (2, 3, 4, 5, A)
+        // Therefore, we can check that last value is ace, first value is two.
+        // Then remove the last value (ace) from vec and check for incremental values
+        // for everything else (2, 3, 4, 5).
+        if values[4] == Value::Ace && values[0] == Value::Two {
+            let skip_last: Vec<Value> = values.into_iter().rev().skip(1).rev().collect();
+            if skip_last
+                .windows(2)
+                .all(|v| (v[1] as u16 - v[0] as u16) == 1)
+            {
+                return Some(self.clone());
+            }
+        }
         return None;
     }
-    if let Some((_value, cards)) = hand
-        .values_freq()
-        .into_iter()
-        .find(|(_key, val)| val.len() == 2)
-    {
+
+    pub fn is_flush(&self) -> Option<Hand> {
+        dbg!(self.values_freq());
+        if self.len() < 5 {
+            return None;
+        }
+        if let Some((_value, cards)) = self
+            .suits_freq()
+            .into_iter()
+            .find(|(_key, val)| val.len() == 5)
+        {
+            return Some(Hand::new(cards));
+        } else {
+            return None;
+        }
+    }
+
+    pub fn is_fullhouse(&self) -> Option<Hand> {
+        dbg!(self.values_freq());
+        if self.len() < 5 {
+            return None;
+        }
+
+        // First find 3ok
+        let three = self
+            .values_freq()
+            .into_iter()
+            .find(|(_key, val)| val.len() == 3);
+        if three.is_none() {
+            return None;
+        }
+        let three_val = three
+            .as_ref()
+            .unwrap()
+            .1
+            .first()
+            .expect("values freq has empty Vec<card>")
+            .value;
+
+        // Next find 2ok that isn't same value as 3ok
+        let two = self
+            .values_freq()
+            .into_iter()
+            .find(|(key, val)| *key != three_val && val.len() == 2);
+        if two.is_none() {
+            return None;
+        }
+
+        // Combine 3ok and 2ok
+        let mut cards: Vec<Card> = Vec::new();
+        cards.extend(three.unwrap().1);
+        cards.extend(two.unwrap().1);
         return Some(Hand::new(cards));
-    } else {
+    }
+
+    pub fn is_four_of_kind(&self) -> Option<Hand> {
+        dbg!(self.values_freq());
+        if self.len() < 4 {
+            return None;
+        }
+        if let Some((_value, cards)) = self
+            .values_freq()
+            .into_iter()
+            .find(|(_key, val)| val.len() == 4)
+        {
+            return Some(Hand::new(cards));
+        } else {
+            return None;
+        }
+    }
+
+    pub fn is_straight_flush(&self) -> Option<Hand> {
+        if self.is_flush().is_some() && self.is_straight().is_some() {
+            return Some(self.clone());
+        }
+        return None;
+    }
+
+    pub fn is_royal_flush(&self) -> Option<Hand> {
+        if self.is_straight_flush().is_some()
+            && self.values().into_iter().eq(vec![
+                Value::Ten,
+                Value::Jack,
+                Value::Queen,
+                Value::King,
+                Value::Ace,
+            ])
+        {
+            return Some(self.clone());
+        }
+        return None;
+    }
+
+    pub fn is_five_of_kind(&self) -> Option<Hand> {
+        dbg!(self.values_freq());
+        if self.len() < 5 {
+            return None;
+        }
+        if let Some((_value, cards)) = self
+            .values_freq()
+            .into_iter()
+            .find(|(_key, val)| val.len() == 5)
+        {
+            return Some(Hand::new(cards));
+        } else {
+            return None;
+        }
+    }
+
+    pub fn is_flush_house(&self) -> Option<Hand> {
+        if self.is_flush().is_some() && self.is_fullhouse().is_some() {
+            return Some(self.clone());
+        }
+        return None;
+    }
+
+    pub fn is_flush_five(&self) -> Option<Hand> {
+        if self.is_flush().is_some() && self.is_five_of_kind().is_some() {
+            return Some(self.clone());
+        }
         return None;
     }
 }
@@ -425,128 +443,142 @@ mod tests {
     }
 
     #[test]
-    fn test_five_of_kind() {
+    fn test_pair() {
         let c1 = Card::new(Value::King, Suit::Heart);
-        let c2 = Card::new(Value::King, Suit::Spade);
-        let c3 = Card::new(Value::King, Suit::Heart);
-        let c4 = Card::new(Value::King, Suit::Diamond);
-        let c5 = Card::new(Value::King, Suit::Heart);
-        let not = Card::new(Value::Ace, Suit::Heart);
+        let c2 = Card::new(Value::King, Suit::Diamond);
+        let c3 = Card::new(Value::Three, Suit::Diamond);
+        let c4 = Card::new(Value::Four, Suit::Diamond);
+        let c5 = Card::new(Value::Five, Suit::Diamond);
+        let c6 = Card::new(Value::Six, Suit::Diamond);
 
-        // Valid 5 (K, K, K, K, K)
+        // Valid 5 (K, K, 3, 4, 5)
         let hand = Hand::new(vec![c1, c2, c3, c4, c5]);
-        let is_5 = is_five_of_kind(hand);
-        assert_eq!(is_5.unwrap().len(), 5);
+        let is_2 = hand.is_pair();
+        assert_eq!(is_2.unwrap().len(), 2);
 
-        // Valid 5 from 7 cards (K, K, K, K, K, A, A)
-        let hand = Hand::new(vec![c1, c2, c3, c4, c5, not, not]);
-        let is_5 = is_five_of_kind(hand);
-        assert_eq!(is_5.unwrap().len(), 5);
-
-        // Invalid 5 (K, K, K, K, A)
-        let hand = Hand::new(vec![c1, c2, c3, c4, not]);
-        let is_5 = is_five_of_kind(hand);
-        assert_eq!(is_5, None);
-
-        // Invalid 4 (K, K, K, K)
+        // Valid 4 (K, K, 3, 4)
         let hand = Hand::new(vec![c1, c2, c3, c4]);
-        let is_5 = is_five_of_kind(hand);
-        assert_eq!(is_5, None);
+        let is_2 = hand.is_pair();
+        assert_eq!(is_2.unwrap().len(), 2);
+
+        // Valid 3 (K, K, 3)
+        let hand = Hand::new(vec![c1, c2, c3]);
+        let is_2 = hand.is_pair();
+        assert_eq!(is_2.unwrap().len(), 2);
+
+        // Valid 2 (K, K)
+        let hand = Hand::new(vec![c1, c2]);
+        let is_2 = hand.is_pair();
+        assert_eq!(is_2.unwrap().len(), 2);
+
+        // Invalid 1 (K)
+        let hand = Hand::new(vec![c1]);
+        let is_2 = hand.is_pair();
+        assert_eq!(is_2, None);
+
+        // Invalid 2 (K, 3)
+        let hand = Hand::new(vec![c1, c3]);
+        let is_2 = hand.is_pair();
+        assert_eq!(is_2, None);
+
+        // Invalid 3 (K, 3, 4)
+        let hand = Hand::new(vec![c1, c3, c4]);
+        let is_2 = hand.is_pair();
+        assert_eq!(is_2, None);
+
+        // Invalid 4 (K, 3, 4, 5)
+        let hand = Hand::new(vec![c1, c3, c4, c5]);
+        let is_2 = hand.is_pair();
+        assert_eq!(is_2, None);
+
+        // Invalid 5 (K, 3, 4, 5, 6)
+        let hand = Hand::new(vec![c1, c3, c4, c5, c6]);
+        let is_2 = hand.is_pair();
+        assert_eq!(is_2, None);
     }
 
     #[test]
-    fn test_fullhouse() {
+    fn test_two_pair() {
         let c1 = Card::new(Value::King, Suit::Heart);
         let c2 = Card::new(Value::King, Suit::Spade);
-        let c3 = Card::new(Value::King, Suit::Heart);
-        let c4 = Card::new(Value::Four, Suit::Diamond);
-        let c5 = Card::new(Value::Four, Suit::Heart);
+        let c3 = Card::new(Value::Four, Suit::Diamond);
+        let c4 = Card::new(Value::Four, Suit::Heart);
         let not1 = Card::new(Value::Two, Suit::Heart);
         let not2 = Card::new(Value::Three, Suit::Heart);
 
-        // Valid 5 (K, K, K, 4, 4)
-        let hand = Hand::new(vec![c1, c2, c3, c4, c5]);
-        let is_fh = is_fullhouse(hand);
-        assert_eq!(is_fh.unwrap().len(), 5);
+        // Valid 5 (K, K, 4, 4, 2)
+        let hand = Hand::new(vec![c1, c2, c3, c4, not1]);
+        let tp = hand.is_two_pair();
+        assert_eq!(tp.unwrap().len(), 4);
 
-        // Valid 5 from 7 cards (K, K, K, 4, 4, 2, 3)
-        let hand = Hand::new(vec![c1, c2, c3, c4, c5, not1, not2]);
-        let is_fh = is_fullhouse(hand);
-        assert_eq!(is_fh.unwrap().len(), 5);
+        // Valid 4 (K, K, 4, 4)
+        let hand = Hand::new(vec![c1, c2, c3, c4]);
+        let tp = hand.is_two_pair();
+        assert_eq!(tp.unwrap().len(), 4);
 
         // Invalid 5 (K, K, K, K, 2)
-        let hand = Hand::new(vec![c1, c2, c3, c3, not1]);
-        let is_fh = is_fullhouse(hand);
-        assert_eq!(is_fh, None);
+        let hand = Hand::new(vec![c1, c1, c2, c2, not1]);
+        let tp = hand.is_two_pair();
+        assert_eq!(tp, None);
 
-        // Invalid 5 (K, K, 4, 4, 2)
-        let hand = Hand::new(vec![c1, c2, c4, c5, not1]);
-        let is_fh = is_fullhouse(hand);
-        assert_eq!(is_fh, None);
+        // Invalid 5 (K, 4, 3, 2, 2)
+        let hand = Hand::new(vec![c1, c4, not1, not2, not2]);
+        let tp = hand.is_two_pair();
+        assert_eq!(tp, None);
 
-        // Invalid 4 (K, K, 4, 4)
-        let hand = Hand::new(vec![c1, c2, c4, c5]);
-        let is_fh = is_fullhouse(hand);
-        assert_eq!(is_fh, None);
+        // Invalid 5 (K, K, 4, 3, 2)
+        let hand = Hand::new(vec![c1, c1, c4, not1, not2]);
+        let tp = hand.is_two_pair();
+        assert_eq!(tp, None);
+
+        // Invalid 4 (K, K, 4, 2)
+        let hand = Hand::new(vec![c1, c2, c4, not1]);
+        let tp = hand.is_two_pair();
+        assert_eq!(tp, None);
     }
 
     #[test]
-    fn test_four_of_kind() {
+    fn test_three_of_kind() {
         let c1 = Card::new(Value::King, Suit::Heart);
         let c2 = Card::new(Value::King, Suit::Spade);
         let c3 = Card::new(Value::King, Suit::Heart);
-        let c4 = Card::new(Value::King, Suit::Diamond);
-        let not = Card::new(Value::Ace, Suit::Heart);
+        let not1 = Card::new(Value::Ace, Suit::Heart);
+        let not2 = Card::new(Value::Two, Suit::Heart);
 
-        // Valid 4 (K, K, K, K)
-        let hand = Hand::new(vec![c1, c2, c3, c4, not]);
-        let is_4 = is_four_of_kind(hand);
-        assert_eq!(is_4.unwrap().len(), 4);
+        // Valid 5 (K, K, K, A, 2)
+        let hand = Hand::new(vec![c1, c2, c3, not1, not2]);
+        let is_3 = hand.is_three_of_kind();
+        assert_eq!(is_3.unwrap().len(), 3);
 
-        // Valid 4 from 7 cards (K, K, K, K, A, A, A)
-        let hand = Hand::new(vec![c1, c2, c3, c4, not, not, not]);
-        let is_4 = is_four_of_kind(hand);
-        assert_eq!(is_4.unwrap().len(), 4);
+        // Valid 4 (K, K, K, A)
+        let hand = Hand::new(vec![c1, c2, c3, not1]);
+        let is_3 = hand.is_three_of_kind();
+        assert_eq!(is_3.unwrap().len(), 3);
 
-        // Invalid 4 (K, K, K, A)
-        let hand = Hand::new(vec![c1, c2, c3, not]);
-        let is_4 = is_four_of_kind(hand);
-        assert_eq!(is_4, None);
-
-        // Invalid 3 (K, K, K)
+        // Valid 3 (K, K, K)
         let hand = Hand::new(vec![c1, c2, c3]);
-        let is_4 = is_four_of_kind(hand);
-        assert_eq!(is_4, None);
-    }
+        let is_3 = hand.is_three_of_kind();
+        assert_eq!(is_3.unwrap().len(), 3);
 
-    #[test]
-    fn test_flush() {
-        let c1 = Card::new(Value::King, Suit::Heart);
-        let c2 = Card::new(Value::Queen, Suit::Heart);
-        let c3 = Card::new(Value::Jack, Suit::Heart);
-        let c4 = Card::new(Value::Seven, Suit::Heart);
-        let c5 = Card::new(Value::Eight, Suit::Heart);
-        let not = Card::new(Value::Ace, Suit::Diamond);
+        // Invalid 3 (K, K, A)
+        let hand = Hand::new(vec![c1, c2, not1]);
+        let is_3 = hand.is_three_of_kind();
+        assert_eq!(is_3, None);
 
-        // Valid 5 (h, h, h, h, h)
-        let hand = Hand::new(vec![c1, c2, c3, c4, c5]);
-        let flush = is_flush(hand);
-        assert_eq!(flush.unwrap().len(), 5);
+        // Invalid 4 (K, K, A, A),
+        let hand = Hand::new(vec![c1, c2, not1, not1]);
+        let is_3 = hand.is_three_of_kind();
+        assert_eq!(is_3, None);
 
-        // Valid 5 from 7 cards (h, h, h, h, h, d, d)
-        let hand = Hand::new(vec![c1, c2, c3, c4, c5, not, not]);
-        let flush = is_flush(hand);
-        assert_eq!(flush.unwrap().len(), 5);
+        // Invalid 5 (K, K, A, A, 2),
+        let hand = Hand::new(vec![c1, c2, not1, not1, not2]);
+        let is_3 = hand.is_three_of_kind();
+        assert_eq!(is_3, None);
 
-        // Invalid 5 (h, h, h, h, d)
-        let hand = Hand::new(vec![c1, c2, c3, c4, not]);
-        let flush = is_flush(hand);
-        assert_eq!(flush, None);
-
-        // Invalid 4 (h, h, h, h)
-        let hand = Hand::new(vec![c1, c2, c3, c4]);
-        let flush = is_flush(hand);
-        assert_eq!(flush, None);
+        // Invalid 2 (K, K)
+        let hand = Hand::new(vec![c1, c2]);
+        let is_3 = hand.is_three_of_kind();
+        assert_eq!(is_3, None);
     }
 
     #[test]
@@ -561,28 +593,123 @@ mod tests {
 
         // Valid 5 (2, 3, 4 ,5 ,6)
         let hand = Hand::new(vec![c2, c3, c4, c5, c6]);
-        let straight = is_straight(hand);
+        let straight = hand.is_straight();
         assert_eq!(straight.unwrap().len(), 5);
 
         // Valid 5 with low ace (A, 2, 3, 4 ,5)
         let hand = Hand::new(vec![c1, c2, c3, c4, c5]);
-        let straight = is_straight(hand);
+        let straight = hand.is_straight();
         assert_eq!(straight.unwrap().len(), 5);
 
         // Invalid 5 (2, 3, 4, 5, 7)
         let hand = Hand::new(vec![c2, c3, c4, c5, c7]);
-        let straight = is_straight(hand);
+        let straight = hand.is_straight();
         assert_eq!(straight, None);
 
         // Invalid 5 with low ace (A, 2, 3, 4, 7)
         let hand = Hand::new(vec![c1, c2, c3, c4, c7]);
-        let straight = is_straight(hand);
+        let straight = hand.is_straight();
         assert_eq!(straight, None);
 
         // Invalid 4 (2, 3, 4, 5)
         let hand = Hand::new(vec![c2, c3, c4, c5]);
-        let straight = is_straight(hand);
+        let straight = hand.is_straight();
         assert_eq!(straight, None);
+    }
+
+    #[test]
+    fn test_flush() {
+        let c1 = Card::new(Value::King, Suit::Heart);
+        let c2 = Card::new(Value::Queen, Suit::Heart);
+        let c3 = Card::new(Value::Jack, Suit::Heart);
+        let c4 = Card::new(Value::Seven, Suit::Heart);
+        let c5 = Card::new(Value::Eight, Suit::Heart);
+        let not = Card::new(Value::Ace, Suit::Diamond);
+
+        // Valid 5 (h, h, h, h, h)
+        let hand = Hand::new(vec![c1, c2, c3, c4, c5]);
+        let flush = hand.is_flush();
+        assert_eq!(flush.unwrap().len(), 5);
+
+        // Valid 5 from 7 cards (h, h, h, h, h, d, d)
+        let hand = Hand::new(vec![c1, c2, c3, c4, c5, not, not]);
+        let flush = hand.is_flush();
+        assert_eq!(flush.unwrap().len(), 5);
+
+        // Invalid 5 (h, h, h, h, d)
+        let hand = Hand::new(vec![c1, c2, c3, c4, not]);
+        let flush = hand.is_flush();
+        assert_eq!(flush, None);
+
+        // Invalid 4 (h, h, h, h)
+        let hand = Hand::new(vec![c1, c2, c3, c4]);
+        let flush = hand.is_flush();
+        assert_eq!(flush, None);
+    }
+
+    #[test]
+    fn test_fullhouse() {
+        let c1 = Card::new(Value::King, Suit::Heart);
+        let c2 = Card::new(Value::King, Suit::Spade);
+        let c3 = Card::new(Value::King, Suit::Heart);
+        let c4 = Card::new(Value::Four, Suit::Diamond);
+        let c5 = Card::new(Value::Four, Suit::Heart);
+        let not1 = Card::new(Value::Two, Suit::Heart);
+        let not2 = Card::new(Value::Three, Suit::Heart);
+
+        // Valid 5 (K, K, K, 4, 4)
+        let hand = Hand::new(vec![c1, c2, c3, c4, c5]);
+        let is_fh = hand.is_fullhouse();
+        assert_eq!(is_fh.unwrap().len(), 5);
+
+        // Valid 5 from 7 cards (K, K, K, 4, 4, 2, 3)
+        let hand = Hand::new(vec![c1, c2, c3, c4, c5, not1, not2]);
+        let is_fh = hand.is_fullhouse();
+        assert_eq!(is_fh.unwrap().len(), 5);
+
+        // Invalid 5 (K, K, K, K, 2)
+        let hand = Hand::new(vec![c1, c2, c3, c3, not1]);
+        let is_fh = hand.is_fullhouse();
+        assert_eq!(is_fh, None);
+
+        // Invalid 5 (K, K, 4, 4, 2)
+        let hand = Hand::new(vec![c1, c2, c4, c5, not1]);
+        let is_fh = hand.is_fullhouse();
+        assert_eq!(is_fh, None);
+
+        // Invalid 4 (K, K, 4, 4)
+        let hand = Hand::new(vec![c1, c2, c4, c5]);
+        let is_fh = hand.is_fullhouse();
+        assert_eq!(is_fh, None);
+    }
+
+    #[test]
+    fn test_four_of_kind() {
+        let c1 = Card::new(Value::King, Suit::Heart);
+        let c2 = Card::new(Value::King, Suit::Spade);
+        let c3 = Card::new(Value::King, Suit::Heart);
+        let c4 = Card::new(Value::King, Suit::Diamond);
+        let not = Card::new(Value::Ace, Suit::Heart);
+
+        // Valid 4 (K, K, K, K)
+        let hand = Hand::new(vec![c1, c2, c3, c4, not]);
+        let is_4 = hand.is_four_of_kind();
+        assert_eq!(is_4.unwrap().len(), 4);
+
+        // Valid 4 from 7 cards (K, K, K, K, A, A, A)
+        let hand = Hand::new(vec![c1, c2, c3, c4, not, not, not]);
+        let is_4 = hand.is_four_of_kind();
+        assert_eq!(is_4.unwrap().len(), 4);
+
+        // Invalid 4 (K, K, K, A)
+        let hand = Hand::new(vec![c1, c2, c3, not]);
+        let is_4 = hand.is_four_of_kind();
+        assert_eq!(is_4, None);
+
+        // Invalid 3 (K, K, K)
+        let hand = Hand::new(vec![c1, c2, c3]);
+        let is_4 = hand.is_four_of_kind();
+        assert_eq!(is_4, None);
     }
 
     #[test]
@@ -598,27 +725,27 @@ mod tests {
 
         // Valid 5 (2h, 3h, 4h, 5h ,6h)
         let hand = Hand::new(vec![c2, c3, c4, c5, c6]);
-        let sf = is_straight_flush(hand);
+        let sf = hand.is_straight_flush();
         assert_eq!(sf.unwrap().len(), 5);
 
         // Valid 5 with low ace (Ah, 2h, 3h, 4h, 5h)
         let hand = Hand::new(vec![c1, c2, c3, c4, c5]);
-        let sf = is_straight_flush(hand);
+        let sf = hand.is_straight_flush();
         assert_eq!(sf.unwrap().len(), 5);
 
         // Invalid 5, wrong value (2h, 3h, 4h, 5h, 7h)
         let hand = Hand::new(vec![c2, c3, c4, c5, not1]);
-        let sf = is_straight_flush(hand);
+        let sf = hand.is_straight_flush();
         assert_eq!(sf, None);
 
         // Invalid 5, wrong suit (2h, 3h, 4h, 5h, 6d)
         let hand = Hand::new(vec![c2, c3, c4, c5, not2]);
-        let sf = is_straight_flush(hand);
+        let sf = hand.is_straight_flush();
         assert_eq!(sf, None);
 
         // Invalid 4 (2h, 3h, 4h, 5h)
         let hand = Hand::new(vec![c2, c3, c4, c5]);
-        let sf = is_straight_flush(hand);
+        let sf = hand.is_straight_flush();
         assert_eq!(sf, None);
     }
 
@@ -634,122 +761,119 @@ mod tests {
 
         // Valid 5 (10s, Js, Qs, Ks, As)
         let hand = Hand::new(vec![c1, c2, c3, c4, c5]);
-        let rf = is_royal_flush(hand);
+        let rf = hand.is_royal_flush();
         assert_eq!(rf.unwrap().len(), 5);
 
         // Valid 5, scrambled input order (Js, 10s, Ks, Qs, As)
         let hand = Hand::new(vec![c2, c1, c4, c3, c5]);
-        let rf = is_royal_flush(hand);
+        let rf = hand.is_royal_flush();
         assert_eq!(rf.unwrap().len(), 5);
 
         // Invalid 5, wrong value (9s, Js, Qs, Ks, As)
         let hand = Hand::new(vec![not1, c2, c3, c4, c5]);
-        let rf = is_royal_flush(hand);
+        let rf = hand.is_royal_flush();
         assert_eq!(rf, None);
 
         // Invalid 5, wrong suit (10s, Js, Qs, Ks, Ad)
         let hand = Hand::new(vec![c1, c2, c3, c4, not2]);
-        let rf = is_royal_flush(hand);
+        let rf = hand.is_royal_flush();
         assert_eq!(rf, None);
 
         // Invalid 4 (2h, 3h, 4h, 5h)
         let hand = Hand::new(vec![c2, c3, c4, c5]);
-        let rf = is_royal_flush(hand);
+        let rf = hand.is_royal_flush();
         assert_eq!(rf, None);
     }
 
     #[test]
-    fn test_three_of_kind() {
+    fn test_five_of_kind() {
         let c1 = Card::new(Value::King, Suit::Heart);
         let c2 = Card::new(Value::King, Suit::Spade);
         let c3 = Card::new(Value::King, Suit::Heart);
-        let not1 = Card::new(Value::Ace, Suit::Heart);
-        let not2 = Card::new(Value::Two, Suit::Heart);
+        let c4 = Card::new(Value::King, Suit::Diamond);
+        let c5 = Card::new(Value::King, Suit::Heart);
+        let not = Card::new(Value::Ace, Suit::Heart);
 
-        // Valid 5 (K, K, K, A, 2)
-        let hand = Hand::new(vec![c1, c2, c3, not1, not2]);
-        let is_3 = is_three_of_kind(hand);
-        assert_eq!(is_3.unwrap().len(), 3);
+        // Valid 5 (K, K, K, K, K)
+        let hand = Hand::new(vec![c1, c2, c3, c4, c5]);
+        let is_5 = hand.is_five_of_kind();
+        assert_eq!(is_5.unwrap().len(), 5);
 
-        // Valid 4 (K, K, K, A)
-        let hand = Hand::new(vec![c1, c2, c3, not1]);
-        let is_3 = is_three_of_kind(hand);
-        assert_eq!(is_3.unwrap().len(), 3);
+        // Valid 5 from 7 cards (K, K, K, K, K, A, A)
+        let hand = Hand::new(vec![c1, c2, c3, c4, c5, not, not]);
+        let is_5 = hand.is_five_of_kind();
+        assert_eq!(is_5.unwrap().len(), 5);
 
-        // Valid 3 (K, K, K)
-        let hand = Hand::new(vec![c1, c2, c3]);
-        let is_3 = is_three_of_kind(hand);
-        assert_eq!(is_3.unwrap().len(), 3);
+        // Invalid 5 (K, K, K, K, A)
+        let hand = Hand::new(vec![c1, c2, c3, c4, not]);
+        let is_5 = hand.is_five_of_kind();
+        assert_eq!(is_5, None);
 
-        // Invalid 3 (K, K, A)
-        let hand = Hand::new(vec![c1, c2, not1]);
-        let is_3 = is_three_of_kind(hand);
-        assert_eq!(is_3, None);
-
-        // Invalid 4 (K, K, A, A),
-        let hand = Hand::new(vec![c1, c2, not1, not1]);
-        let is_3 = is_three_of_kind(hand);
-        assert_eq!(is_3, None);
-
-        // Invalid 5 (K, K, A, A, 2),
-        let hand = Hand::new(vec![c1, c2, not1, not1, not2]);
-        let is_3 = is_three_of_kind(hand);
-        assert_eq!(is_3, None);
-
-        // Invalid 2 (K, K)
-        let hand = Hand::new(vec![c1, c2]);
-        let is_3 = is_three_of_kind(hand);
-        assert_eq!(is_3, None);
-    }
-
-    #[test]
-    fn test_two_pair() {
-        let c1 = Card::new(Value::King, Suit::Heart);
-        let c2 = Card::new(Value::King, Suit::Spade);
-        let c3 = Card::new(Value::Four, Suit::Diamond);
-        let c4 = Card::new(Value::Four, Suit::Heart);
-        let not1 = Card::new(Value::Two, Suit::Heart);
-        let not2 = Card::new(Value::Three, Suit::Heart);
-
-        // Valid 5 (K, K, 4, 4, 2)
-        let hand = Hand::new(vec![c1, c2, c3, c4, not1]);
-        let tp = is_two_pair(hand);
-        assert_eq!(tp.unwrap().len(), 4);
-
-        // Valid 4 (K, K, 4, 4)
+        // Invalid 4 (K, K, K, K)
         let hand = Hand::new(vec![c1, c2, c3, c4]);
-        let tp = is_two_pair(hand);
-        assert_eq!(tp.unwrap().len(), 4);
-
-        // Invalid 5 (K, K, K, K, 2)
-        let hand = Hand::new(vec![c1, c1, c2, c2, not1]);
-        let tp = is_two_pair(hand);
-        assert_eq!(tp, None);
-
-        // Invalid 5 (K, 4, 3, 2, 2)
-        let hand = Hand::new(vec![c1, c4, not1, not2, not2]);
-        let tp = is_two_pair(hand);
-        assert_eq!(tp, None);
-
-        // Invalid 5 (K, K, 4, 3, 2)
-        let hand = Hand::new(vec![c1, c1, c4, not1, not2]);
-        let tp = is_two_pair(hand);
-        assert_eq!(tp, None);
-
-        // Invalid 4 (K, K, 4, 2)
-        let hand = Hand::new(vec![c1, c2, c4, not1]);
-        let tp = is_two_pair(hand);
-        assert_eq!(tp, None);
+        let is_5 = hand.is_five_of_kind();
+        assert_eq!(is_5, None);
     }
 
     #[test]
-    fn test_is_pair() {
-        let _c1 = Card::new(Value::King, Suit::Heart);
-        let _c2 = Card::new(Value::King, Suit::Spade);
-        let _c3 = Card::new(Value::Two, Suit::Heart);
-        let _c4 = Card::new(Value::Three, Suit::Heart);
-        let _c5 = Card::new(Value::Four, Suit::Heart);
+    fn test_flush_house() {
+        let c1 = Card::new(Value::King, Suit::Heart);
+        let c2 = Card::new(Value::King, Suit::Heart);
+        let c3 = Card::new(Value::King, Suit::Heart);
+        let c4 = Card::new(Value::Ace, Suit::Heart);
+        let c5 = Card::new(Value::Ace, Suit::Heart);
+        let not1 = Card::new(Value::Two, Suit::Heart);
+        let not2 = Card::new(Value::Ace, Suit::Diamond);
 
-        // assert_eq!(is_pair(&vec![c1, c2]), true);
+        // Valid 5 (Kh, Kh, Kh, Ah, Ah)
+        let hand = Hand::new(vec![c1, c2, c3, c4, c5]);
+        let fh = hand.is_flush_house();
+        assert_eq!(fh.unwrap().len(), 5);
+
+        // Invalid 5 (Kh, Kh, Kh, Ah, 2h)
+        let hand = Hand::new(vec![c1, c2, c3, c4, not1]);
+        let fh = hand.is_flush_house();
+        assert_eq!(fh, None);
+
+        // Invalid 5 (Kh, Kh, Kh, Ah, Ad)
+        let hand = Hand::new(vec![c1, c2, c3, c4, not2]);
+        let fh = hand.is_flush_house();
+        assert_eq!(fh, None);
+
+        // Invalid 4 (Kh, Kh, Kh, Ah)
+        let hand = Hand::new(vec![c1, c2, c3, c4]);
+        let fh = hand.is_flush_house();
+        assert_eq!(fh, None);
+    }
+
+    #[test]
+    fn test_flush_five() {
+        let c1 = Card::new(Value::King, Suit::Heart);
+        let c2 = Card::new(Value::King, Suit::Heart);
+        let c3 = Card::new(Value::King, Suit::Heart);
+        let c4 = Card::new(Value::King, Suit::Heart);
+        let c5 = Card::new(Value::King, Suit::Heart);
+        let not1 = Card::new(Value::Two, Suit::Heart);
+        let not2 = Card::new(Value::King, Suit::Diamond);
+
+        // Valid 5 (Kh, Kh, Kh, Kh, Kh)
+        let hand = Hand::new(vec![c1, c2, c3, c4, c5]);
+        let ff = hand.is_flush_five();
+        assert_eq!(ff.unwrap().len(), 5);
+
+        // Invalid 5 (Kh, Kh, Kh, Kh, 2h)
+        let hand = Hand::new(vec![c1, c2, c3, c4, not1]);
+        let ff = hand.is_flush_five();
+        assert_eq!(ff, None);
+
+        // Invalid 5 (Kh, Kh, Kh, Kh, Kd)
+        let hand = Hand::new(vec![c1, c2, c3, c4, not2]);
+        let ff = hand.is_flush_five();
+        assert_eq!(ff, None);
+
+        // Invalid 4 (Kh, Kh, Kh, Kh)
+        let hand = Hand::new(vec![c1, c2, c3, c4]);
+        let ff = hand.is_flush_five();
+        assert_eq!(ff, None);
     }
 }
