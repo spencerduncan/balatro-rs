@@ -1,4 +1,5 @@
 use crate::core::card::{Card, Suit, Value};
+use rand::{seq::SliceRandom, thread_rng};
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone)]
@@ -23,11 +24,21 @@ impl Deck {
     pub fn push(&mut self, c: Card) {
         self.cards.push(c)
     }
+    pub fn draw(&mut self, n: usize) -> Option<Vec<Card>> {
+        if self.cards.len() < n {
+            return None;
+        }
+        return Some(self.cards.drain(0..n).collect());
+    }
     pub fn len(&self) -> usize {
         self.cards.len()
     }
     pub fn is_empty(&self) -> bool {
         self.cards.is_empty()
+    }
+
+    pub fn shuffle(&mut self) {
+        self.cards.shuffle(&mut thread_rng());
     }
 }
 

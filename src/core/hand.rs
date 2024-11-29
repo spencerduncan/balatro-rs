@@ -1,19 +1,18 @@
+use indexmap::IndexMap;
 use itertools::Itertools;
-use std::collections::HashMap;
 
 use crate::core::card::Card;
 use crate::core::card::Suit;
 use crate::core::card::Value;
+use crate::core::error::PlayHandError;
 use crate::core::rank::HandRank;
-
-use super::error::PlayHandError;
 
 /// Played/made hand
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct MadeHand {
-    hand: Hand,
-    rank: HandRank,
+    pub hand: Hand,
+    pub rank: HandRank,
 }
 
 /// Struct to hold cards in hand
@@ -28,6 +27,9 @@ impl Hand {
     pub fn push(&mut self, c: Card) {
         self.0.push(c);
     }
+    pub fn append(&mut self, cards: Vec<Card>) {
+        self.0.extend(cards);
+    }
     pub fn truncate(&mut self, len: usize) {
         self.0.truncate(len)
     }
@@ -41,11 +43,14 @@ impl Hand {
     pub fn values(&self) -> Vec<Value> {
         self.0.iter().map(|x| x.value).sorted().collect()
     }
+    pub fn cards(&self) -> Vec<Card> {
+        return self.0.clone();
+    }
 
     // Get map of each value with corresponding cards.
     // For example, Ks, Ah, Jh, Jc, Jd -> {A: [Ah], K: [Ks], J: [Jh, Jc: Jd]}
-    pub fn values_freq(&self) -> HashMap<Value, Vec<Card>> {
-        let mut counts: HashMap<Value, Vec<Card>> = HashMap::new();
+    pub fn values_freq(&self) -> IndexMap<Value, Vec<Card>> {
+        let mut counts: IndexMap<Value, Vec<Card>> = IndexMap::new();
         for card in self.0.clone() {
             if let Some(cards) = counts.get(&card.value) {
                 let mut copy = cards.clone();
@@ -69,8 +74,8 @@ impl Hand {
 
     // Get map of each suit with corresponding cards.
     // For example, Ks, Ah, Jh, Jc, Jd -> {h: [Jh, Ah], s: [Ks], c: [Jc], d: [Jd]}
-    pub fn suits_freq(&self) -> HashMap<Suit, Vec<Card>> {
-        let mut counts: HashMap<Suit, Vec<Card>> = HashMap::new();
+    pub fn suits_freq(&self) -> IndexMap<Suit, Vec<Card>> {
+        let mut counts: IndexMap<Suit, Vec<Card>> = IndexMap::new();
         for card in self.0.clone() {
             if let Some(cards) = counts.get(&card.suit) {
                 let mut copy = cards.clone();
@@ -436,6 +441,13 @@ impl Hand {
     }
 }
 
+impl Default for Hand {
+    fn default() -> Self {
+        let cards: Vec<Card> = Vec::new();
+        Self(cards)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -464,11 +476,11 @@ mod tests {
 
     #[test]
     fn test_values_freq() {
-        let c1 = Card::new(Value::King, Suit::Heart);
-        let c2 = Card::new(Value::King, Suit::Spade);
-        let c3 = Card::new(Value::Two, Suit::Heart);
-        let c4 = Card::new(Value::Three, Suit::Diamond);
-        let c5 = Card::new(Value::Four, Suit::Heart);
+        let c1 = Card::new(Value::Two, Suit::Heart);
+        let c2 = Card::new(Value::Three, Suit::Diamond);
+        let c3 = Card::new(Value::Four, Suit::Heart);
+        let c4 = Card::new(Value::King, Suit::Heart);
+        let c5 = Card::new(Value::King, Suit::Spade);
 
         let hand = Hand::new(vec![c1, c2, c3, c4, c5]);
         let freq = hand.values_freq();
@@ -492,6 +504,9 @@ mod tests {
         assert_eq!(freq.get(&Value::Two).unwrap()[0].value, Value::Two);
         assert_eq!(freq.get(&Value::Three).unwrap()[0].value, Value::Three);
         assert_eq!(freq.get(&Value::Four).unwrap()[0].value, Value::Four);
+
+        // Check ordered by value
+        assert_eq!(freq.into_iter().nth(0).unwrap().0, Value::King)
     }
 
     #[test]
@@ -522,6 +537,37 @@ mod tests {
         assert_eq!(freq.get(&Suit::Heart).unwrap()[2].suit, Suit::Heart);
         assert_eq!(freq.get(&Suit::Spade).unwrap()[0].suit, Suit::Spade);
         assert_eq!(freq.get(&Suit::Diamond).unwrap()[0].suit, Suit::Diamond);
+    }
+
+    #[test]
+    fn test_best_hand() {
+        let c1 = Card::new(Value::Ace, Suit::Heart);
+        let c2 = Card::new(Value::Two, Suit::Heart);
+        let c3 = Card::new(Value::Three, Suit::Diamond);
+
+        // Best hand is flush five (Ah, Ah, Ah, Ah, Ah)
+        let hand = Hand::new(vec![c1, c1, c1, c1, c1]);
+        let best = hand.best_hand().expect("is best hand");
+        assert_eq!(best.rank, HandRank::FlushFive);
+        assert_eq!(best.hand.len(), 5);
+
+        // 4ok is better than flush (Ah, Ah, Ah, Ah, 2h)
+        let hand = Hand::new(vec![c1, c1, c1, c1, c2]);
+        let best = hand.best_hand().expect("is best hand");
+        assert_eq!(best.clone().rank, HandRank::FourOfAKind);
+        assert_eq!(best.hand.len(), 4);
+
+        // Two pair is better than pair (Ah, Ah, 2h, 2h, 3d)
+        let hand = Hand::new(vec![c1, c1, c2, c2, c3]);
+        let best = hand.best_hand().expect("is best hand");
+        assert_eq!(best.clone().rank, HandRank::TwoPair);
+        assert_eq!(best.hand.len(), 4);
+
+        // At worst, we get a high card (Ah, 2h, 3d)
+        let hand = Hand::new(vec![c1, c2, c3]);
+        let best = hand.best_hand().expect("is best hand");
+        assert_eq!(best.clone().rank, HandRank::HighCard);
+        assert_eq!(best.hand.len(), 1);
     }
 
     #[test]

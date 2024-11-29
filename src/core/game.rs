@@ -1,0 +1,39 @@
+use crate::core::card::Card;
+use crate::core::deck::Deck;
+use crate::core::hand::{Hand, MadeHand};
+
+/// Struct to hold cards in hand
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, Clone)]
+pub struct Game {
+    deck: Deck,
+    available: Vec<Card>,
+}
+
+impl Game {
+    pub fn new() -> Self {
+        Self {
+            deck: Deck::default(),
+            available: Vec::new(),
+        }
+    }
+
+    pub fn deal(&mut self) {
+        self.deck.shuffle();
+        if let Some(drawn) = self.deck.draw(7) {
+            self.available.extend(drawn);
+        }
+    }
+
+    pub fn score(&self, hand: MadeHand) -> usize {
+        let base_mult = hand.rank.level().mult;
+        let base_chips = hand.rank.level().chips;
+        let hand_chips: usize = hand.hand.cards().iter().map(|c| c.chips()).sum();
+        return (hand_chips + base_chips) * base_mult;
+    }
+
+    pub fn play(&self, hand: Hand) {
+        let best_hand = hand.best_hand().expect("is best hand (for now)");
+        self.score(best_hand);
+    }
+}

@@ -166,7 +166,7 @@ impl Card {
         self.value == Value::Ace || !self.is_face() && self.value as u16 % 2 != 0
     }
 
-    pub fn chips(&self) -> u16 {
+    pub fn chips(&self) -> usize {
         match self.value {
             Value::Two => 1,
             Value::Three => 2,
