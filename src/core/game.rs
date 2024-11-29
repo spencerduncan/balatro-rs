@@ -2,12 +2,12 @@ use crate::core::card::Card;
 use crate::core::deck::Deck;
 use crate::core::hand::{MadeHand, SelectHand};
 
-/// Struct to hold cards in hand
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone)]
 pub struct Game {
-    deck: Deck,
-    available: Vec<Card>,
+    pub deck: Deck,
+    pub available: Vec<Card>,
+    pub mult: usize,
 }
 
 impl Game {
@@ -15,6 +15,7 @@ impl Game {
         Self {
             deck: Deck::default(),
             available: Vec::new(),
+            mult: 1,
         }
     }
 
