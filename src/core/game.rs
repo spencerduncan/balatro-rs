@@ -1,6 +1,6 @@
 use crate::core::card::Card;
 use crate::core::deck::Deck;
-use crate::core::hand::{Hand, MadeHand};
+use crate::core::hand::{MadeHand, SelectHand};
 
 /// Struct to hold cards in hand
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -32,8 +32,8 @@ impl Game {
         return (hand_chips + base_chips) * base_mult;
     }
 
-    pub fn play(&self, hand: Hand) {
-        let best_hand = hand.best_hand().expect("is best hand (for now)");
-        self.score(best_hand);
+    pub fn play(&self, select: SelectHand) {
+        let best = select.best_hand().expect("is best hand (for now)");
+        self.score(best);
     }
 }
