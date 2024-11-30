@@ -99,6 +99,7 @@ impl Game {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::core::card::{Suit, Value};
 
     #[test]
     fn test_constructor() {
@@ -112,6 +113,149 @@ mod tests {
     fn test_deal() {
         let mut g = Game::new();
         g.deal();
+        // deck should be 7 cards smaller than we started with
+        assert_eq!(g.deck.len(), 52 - 7);
+        // should be 7 cards now available
         assert_eq!(g.available.len(), 7);
+    }
+
+    #[test]
+    fn test_draw() {
+        let mut g = Game::new();
+        g.draw(1);
+        assert_eq!(g.available.len(), 1);
+        assert_eq!(g.deck.len(), 52 - 1);
+        g.draw(3);
+        assert_eq!(g.available.len(), 4);
+        assert_eq!(g.deck.len(), 52 - 4);
+    }
+    #[test]
+    fn test_discard() {
+        let mut g = Game::new();
+        g.deal();
+        assert_eq!(g.available.len(), 7);
+        assert_eq!(g.deck.len(), 52 - 7);
+        // select first 4 cards
+        let select = SelectHand::new(g.available[0..4].to_vec());
+        g.discard(select.clone());
+        // available should still be 7, we discarded then redrew to match
+        assert_eq!(g.available.len(), 7);
+        // deck is now smaller since we drew from it
+        assert_eq!(g.deck.len(), 52 - 7 - select.len());
+    }
+
+    #[test]
+    fn test_score() {
+        let g = Game::new();
+        let ace = Card::new(Value::Ace, Suit::Heart);
+        let king = Card::new(Value::King, Suit::Diamond);
+        let jack = Card::new(Value::Jack, Suit::Club);
+
+        // Score [Ah, Kd, Jc]
+        // High card (level 1) -> chips=5, mult=1
+        // Played cards (1 ace) -> 11 chips
+        // (5 + 11) * 1 = 16
+        let cards = vec![ace, king, jack];
+        let hand = SelectHand::new(cards).best_hand().unwrap();
+        let score = g.score(hand);
+        assert_eq!(score, 16);
+
+        // Score [Kd, Kd, Ah]
+        // Pair (level 1) -> chips=10, mult=2
+        // Played cards (2 kings) -> 10 + 10 == 20 chips
+        // (10 + 20) * 2 = 60
+        let cards = vec![king, king, ace];
+        let hand = SelectHand::new(cards).best_hand().unwrap();
+        let score = g.score(hand);
+        assert_eq!(score, 60);
+
+        // Score [Ah, Ah, Ah, Kd]
+        // Three of kind (level 1) -> chips=30, mult=3
+        // Played cards (3 aces) -> 11 + 11 + 11 == 33 chips
+        // (30 + 33) * 3 = 189
+        let cards = vec![ace, ace, ace, king];
+        let hand = SelectHand::new(cards).best_hand().unwrap();
+        let score = g.score(hand);
+        assert_eq!(score, 189);
+
+        // Score [Kd, Kd, Kd, Kd, Ah]
+        // Four of kind (level 1) -> chips=60, mult=7
+        // Played cards (4 kings) -> 10 + 10 + 10 + 10 == 40 chips
+        // (60 + 40) * 7 = 700
+        let cards = vec![king, king, king, king, ace];
+        let hand = SelectHand::new(cards).best_hand().unwrap();
+        let score = g.score(hand);
+        assert_eq!(score, 700);
+
+        // Score [Jc, Jc, Jc, Jc, Jc]
+        // Flush five (level 1) -> chips=160, mult=16
+        // Played cards (5 jacks) -> 10 + 10 + 10 + 10 + 10 == 50 chips
+        // (160 + 50) * 16 = 3360
+        let cards = vec![jack, jack, jack, jack, jack];
+        let hand = SelectHand::new(cards).best_hand().unwrap();
+        let score = g.score(hand);
+        assert_eq!(score, 3360);
+    }
+
+    #[test]
+    fn test_gen_moves_play() {
+        let ace = Card::new(Value::Ace, Suit::Heart);
+        let king = Card::new(Value::King, Suit::Diamond);
+        let jack = Card::new(Value::Jack, Suit::Club);
+
+        let mut g = Game::new();
+        // Only 1 card available [(Ah)]
+        // Playable moves: [Ah]
+        g.available = vec![ace];
+        let moves: Vec<Box<dyn Move>> = g.gen_moves_play().collect();
+        assert_eq!(moves.len(), 1);
+        let m = &moves[0];
+        // Test that we can apply that play move to the game
+        m.apply(&mut g);
+
+        // 2 cards available [Ah, Kd]
+        // Playable moves: [(Ah, Kd), (Ah), (Kd)]
+        g.available = vec![ace, king];
+        let moves: Vec<Box<dyn Move>> = g.gen_moves_play().collect();
+        assert_eq!(moves.len(), 3);
+
+        // 3 cards available [Ah, Kd, Jc]
+        // Playable moves: [(Ah, Kd, Jc), (Ah, Kd), (Ah, Jc), (Kd, Jc), (Ah), (Kd), (Jc)]
+        g.available = vec![ace, king, jack];
+        let moves: Vec<Box<dyn Move>> = g.gen_moves_play().collect();
+        assert_eq!(moves.len(), 7);
+    }
+
+    #[test]
+    fn test_gen_moves_discard() {
+        let ace = Card::new(Value::Ace, Suit::Heart);
+        let king = Card::new(Value::King, Suit::Diamond);
+        let jack = Card::new(Value::Jack, Suit::Club);
+
+        let mut g = Game::new();
+        // Only 1 card available [(Ah)]
+        // Playable moves: [Ah]
+        g.available = vec![ace];
+        let moves: Vec<Box<dyn Move>> = g.gen_moves_discard().collect();
+        assert_eq!(moves.len(), 1);
+        let m = &moves[0];
+        // Test that we can apply that discard move to the game
+        m.apply(&mut g);
+        // available should still be 1, we discarded then redrew to match
+        assert_eq!(g.available.len(), 1);
+        // deck is now smaller since we drew from it
+        assert_eq!(g.deck.len(), 52 - 1);
+
+        // 2 cards available [Ah, Kd]
+        // Playable moves: [(Ah, Kd), (Ah), (Kd)]
+        g.available = vec![ace, king];
+        let moves: Vec<Box<dyn Move>> = g.gen_moves_discard().collect();
+        assert_eq!(moves.len(), 3);
+
+        // 3 cards available [Ah, Kd, Jc]
+        // Playable moves: [(Ah, Kd, Jc), (Ah, Kd), (Ah, Jc), (Kd, Jc), (Ah), (Kd), (Jc)]
+        g.available = vec![ace, king, jack];
+        let moves: Vec<Box<dyn Move>> = g.gen_moves_discard().collect();
+        assert_eq!(moves.len(), 7);
     }
 }

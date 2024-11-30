@@ -4,7 +4,7 @@ use crate::core::game::Game;
 use super::hand::SelectHand;
 
 pub trait Move {
-    fn apply(self, game: &mut Game);
+    fn apply(&self, game: &mut Game);
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -15,14 +15,14 @@ pub enum Moves {
 }
 
 impl Move for Moves {
-    fn apply(self, game: &mut Game) {
+    fn apply(&self, game: &mut Game) {
         match self {
             Self::Play(cards) => {
-                let hand = SelectHand::new(cards);
+                let hand = SelectHand::new(cards.to_vec());
                 game.play(hand);
             }
             Self::Discard(cards) => {
-                let hand = SelectHand::new(cards);
+                let hand = SelectHand::new(cards.to_vec());
                 game.discard(hand);
             }
         }
