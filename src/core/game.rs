@@ -1,7 +1,7 @@
-use crate::core::action::{Action, Actions};
 use crate::core::card::Card;
 use crate::core::deck::Deck;
 use crate::core::hand::{MadeHand, SelectHand};
+use crate::core::moves::{Move, Moves};
 use std::collections::HashSet;
 
 use itertools::Itertools;
@@ -56,13 +56,11 @@ impl Game {
         self.score(best);
     }
 
-    // get all legal actions that can be executed given current state
-    pub fn gen_actions(&self) -> impl Iterator<Item = Box<dyn Action>> {
-        let mut actions: Vec<Box<dyn Action>> = vec![];
-        // For all available cards, we can both play or discard every combination
-        // of 1, 2, 3, 4 or 5 cards. We generate all combos and then create both
-        // Play and Discard actions from the select.
-        let combos: Vec<Vec<Card>> = self
+    // get all legal Play moves that can be executed given current state
+    pub fn gen_moves_play(&self) -> impl Iterator<Item = Box<dyn Move>> {
+        // For all available cards, we can both play every combination
+        // of 1, 2, 3, 4 or 5 cards.
+        let combos = self
             .available
             .clone()
             .into_iter()
@@ -71,14 +69,30 @@ impl Game {
             .chain(self.available.clone().into_iter().combinations(3))
             .chain(self.available.clone().into_iter().combinations(2))
             .chain(self.available.clone().into_iter().combinations(1))
-            .collect();
-        for combo in combos.clone() {
-            actions.push(Box::new(Actions::Play(combo)))
-        }
-        for combo in combos {
-            actions.push(Box::new(Actions::Discard(combo)))
-        }
-        return actions.into_iter();
+            .map(|cards| Box::new(Moves::Play(cards)) as Box<dyn Move>);
+        return combos;
+    }
+
+    // get all legal Play moves that can be executed given current state
+    pub fn gen_moves_discard(&self) -> impl Iterator<Item = Box<dyn Move>> {
+        // For all available cards, we can both discard every combination
+        // of 1, 2, 3, 4 or 5 cards.
+        let combos = self
+            .available
+            .clone()
+            .into_iter()
+            .combinations(5)
+            .chain(self.available.clone().into_iter().combinations(4))
+            .chain(self.available.clone().into_iter().combinations(3))
+            .chain(self.available.clone().into_iter().combinations(2))
+            .chain(self.available.clone().into_iter().combinations(1))
+            .map(|cards| Box::new(Moves::Discard(cards)) as Box<dyn Move>);
+        return combos;
+    }
+
+    // get all legal moves that can be executed given current state
+    pub fn gen_moves(&self) -> impl Iterator<Item = Box<dyn Move>> {
+        return self.gen_moves_play().chain(self.gen_moves_discard());
     }
 }
 
@@ -92,5 +106,12 @@ mod tests {
         assert_eq!(g.available.len(), 0);
         assert_eq!(g.deck.len(), 52);
         assert_eq!(g.mult, 1);
+    }
+
+    #[test]
+    fn test_deal() {
+        let mut g = Game::new();
+        g.deal();
+        assert_eq!(g.available.len(), 7);
     }
 }

@@ -3,18 +3,18 @@ use crate::core::game::Game;
 
 use super::hand::SelectHand;
 
-pub trait Action {
+pub trait Move {
     fn apply(self, game: &mut Game);
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Hash)]
-pub enum Actions {
+pub enum Moves {
     Play(Vec<Card>),
     Discard(Vec<Card>),
 }
 
-impl Action for Actions {
+impl Move for Moves {
     fn apply(self, game: &mut Game) {
         match self {
             Self::Play(cards) => {
