@@ -1,16 +1,37 @@
+use crate::core::ante::Ante;
 use crate::core::card::Card;
 use crate::core::deck::Deck;
+use crate::core::error::GameError;
 use crate::core::hand::{MadeHand, SelectHand};
 use crate::core::moves::{Move, Moves};
+use crate::core::stage::{Blind, Stage};
 use std::collections::HashSet;
+use std::default;
 
 use itertools::Itertools;
+
+use super::stage;
+
+const DEFAULT_PLAYS: usize = 4;
+const DEFAULT_DISCARDS: usize = 4;
+const HAND_SIZE: usize = 7;
+const BASE_MULT: usize = 1;
+const BASE_CHIPS: usize = 0;
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone)]
 pub struct Game {
     pub deck: Deck,
     pub available: Vec<Card>,
+    pub stage: Stage,
+    pub ante: Ante,
+
+    // playing
+    pub plays: usize,
+    pub discards: usize,
+
+    // for scoring
+    pub chips: usize,
     pub mult: usize,
 }
 
@@ -19,14 +40,19 @@ impl Game {
         Self {
             deck: Deck::default(),
             available: Vec::new(),
-            mult: 1,
+            stage: Stage::PreBlind,
+            ante: Ante::One,
+            plays: DEFAULT_PLAYS,
+            discards: DEFAULT_DISCARDS,
+            chips: BASE_CHIPS,
+            mult: BASE_MULT,
         }
     }
 
     // shuffle and deal new cards to available
     pub fn deal(&mut self) {
         self.deck.shuffle();
-        self.draw(7);
+        self.draw(HAND_SIZE);
     }
 
     // draw from deck to available
@@ -37,11 +63,16 @@ impl Game {
     }
 
     // discard specific cards from available and draw equal number back to available
-    pub fn discard(&mut self, select: SelectHand) {
+    pub fn discard(&mut self, select: SelectHand) -> Result<(), GameError> {
+        if self.discards <= 0 {
+            return Err(GameError::NoRemainingDiscards);
+        }
+        self.discards -= 1;
         // retain cards that we are not discarding
         let remove: HashSet<Card> = HashSet::from_iter(select.cards());
         self.available.retain(|c| !remove.contains(c));
-        self.draw(select.cards().len())
+        self.draw(select.cards().len());
+        return Ok(());
     }
 
     pub fn score(&self, hand: MadeHand) -> usize {
@@ -51,13 +82,38 @@ impl Game {
         return (hand_chips + base_chips) * base_mult;
     }
 
-    pub fn play(&self, select: SelectHand) {
-        let best = select.best_hand().expect("is best hand (for now)");
+    pub fn check_score(&self, score: usize) -> Result<(), GameError> {
+        let base = self.ante.base();
+        let required = match self.stage {
+            Stage::Blind(Blind::Small) => base,
+            Stage::Blind(Blind::Big) => (base as f32 * 1.5) as usize,
+            Stage::Blind(Blind::Boss) => base * 2,
+            // can only check score if in blind stage
+            _ => return Err(GameError::InvalidStage),
+        };
+        if score >= required {
+            // TODO: move game stage state machine, progress blinds
+        };
+        // TODO: check for no more plays -> loss
+        return Ok(());
+    }
+
+    pub fn play(&mut self, select: SelectHand) -> Result<(), GameError> {
+        if self.plays <= 0 {
+            return Err(GameError::NoRemainingPlays);
+        }
+        self.plays -= 1;
+        let best = select.best_hand()?;
         self.score(best);
+        return Ok(());
     }
 
     // get all legal Play moves that can be executed given current state
-    pub fn gen_moves_play(&self) -> impl Iterator<Item = Box<dyn Move>> {
+    pub fn gen_moves_play(&self) -> Option<impl Iterator<Item = Box<dyn Move>>> {
+        // If no plays remaining, return None
+        if self.plays <= 0 {
+            return None;
+        }
         // For all available cards, we can both play every combination
         // of 1, 2, 3, 4 or 5 cards.
         let combos = self
@@ -70,11 +126,15 @@ impl Game {
             .chain(self.available.clone().into_iter().combinations(2))
             .chain(self.available.clone().into_iter().combinations(1))
             .map(|cards| Box::new(Moves::Play(cards)) as Box<dyn Move>);
-        return combos;
+        return Some(combos);
     }
 
     // get all legal Play moves that can be executed given current state
-    pub fn gen_moves_discard(&self) -> impl Iterator<Item = Box<dyn Move>> {
+    pub fn gen_moves_discard(&self) -> Option<impl Iterator<Item = Box<dyn Move>>> {
+        // If no discards remaining, return None
+        if self.discards <= 0 {
+            return None;
+        }
         // For all available cards, we can both discard every combination
         // of 1, 2, 3, 4 or 5 cards.
         let combos = self
@@ -87,12 +147,18 @@ impl Game {
             .chain(self.available.clone().into_iter().combinations(2))
             .chain(self.available.clone().into_iter().combinations(1))
             .map(|cards| Box::new(Moves::Discard(cards)) as Box<dyn Move>);
-        return combos;
+        return Some(combos);
     }
 
     // get all legal moves that can be executed given current state
     pub fn gen_moves(&self) -> impl Iterator<Item = Box<dyn Move>> {
-        return self.gen_moves_play().chain(self.gen_moves_discard());
+        let plays = self.gen_moves_play();
+        let discards = self.gen_moves_discard();
+
+        return plays
+            .into_iter()
+            .flatten()
+            .chain(discards.into_iter().flatten());
     }
 }
 
@@ -114,9 +180,9 @@ mod tests {
         let mut g = Game::new();
         g.deal();
         // deck should be 7 cards smaller than we started with
-        assert_eq!(g.deck.len(), 52 - 7);
+        assert_eq!(g.deck.len(), 52 - HAND_SIZE);
         // should be 7 cards now available
-        assert_eq!(g.available.len(), 7);
+        assert_eq!(g.available.len(), HAND_SIZE);
     }
 
     #[test]
@@ -133,15 +199,16 @@ mod tests {
     fn test_discard() {
         let mut g = Game::new();
         g.deal();
-        assert_eq!(g.available.len(), 7);
-        assert_eq!(g.deck.len(), 52 - 7);
+        assert_eq!(g.available.len(), HAND_SIZE);
+        assert_eq!(g.deck.len(), 52 - HAND_SIZE);
         // select first 4 cards
         let select = SelectHand::new(g.available[0..4].to_vec());
-        g.discard(select.clone());
+        let discard_res = g.discard(select.clone());
+        assert!(discard_res.is_ok());
         // available should still be 7, we discarded then redrew to match
-        assert_eq!(g.available.len(), 7);
+        assert_eq!(g.available.len(), HAND_SIZE);
         // deck is now smaller since we drew from it
-        assert_eq!(g.deck.len(), 52 - 7 - select.len());
+        assert_eq!(g.deck.len(), 52 - HAND_SIZE - select.len());
     }
 
     #[test]
@@ -207,7 +274,7 @@ mod tests {
         // Only 1 card available [(Ah)]
         // Playable moves: [Ah]
         g.available = vec![ace];
-        let moves: Vec<Box<dyn Move>> = g.gen_moves_play().collect();
+        let moves: Vec<Box<dyn Move>> = g.gen_moves_play().expect("are plays").collect();
         assert_eq!(moves.len(), 1);
         let m = &moves[0];
         // Test that we can apply that play move to the game
@@ -216,13 +283,13 @@ mod tests {
         // 2 cards available [Ah, Kd]
         // Playable moves: [(Ah, Kd), (Ah), (Kd)]
         g.available = vec![ace, king];
-        let moves: Vec<Box<dyn Move>> = g.gen_moves_play().collect();
+        let moves: Vec<Box<dyn Move>> = g.gen_moves_play().expect("are plays").collect();
         assert_eq!(moves.len(), 3);
 
         // 3 cards available [Ah, Kd, Jc]
         // Playable moves: [(Ah, Kd, Jc), (Ah, Kd), (Ah, Jc), (Kd, Jc), (Ah), (Kd), (Jc)]
         g.available = vec![ace, king, jack];
-        let moves: Vec<Box<dyn Move>> = g.gen_moves_play().collect();
+        let moves: Vec<Box<dyn Move>> = g.gen_moves_play().expect("are plays").collect();
         assert_eq!(moves.len(), 7);
     }
 
@@ -236,7 +303,7 @@ mod tests {
         // Only 1 card available [(Ah)]
         // Playable moves: [Ah]
         g.available = vec![ace];
-        let moves: Vec<Box<dyn Move>> = g.gen_moves_discard().collect();
+        let moves: Vec<Box<dyn Move>> = g.gen_moves_discard().expect("are discards").collect();
         assert_eq!(moves.len(), 1);
         let m = &moves[0];
         // Test that we can apply that discard move to the game
@@ -249,13 +316,13 @@ mod tests {
         // 2 cards available [Ah, Kd]
         // Playable moves: [(Ah, Kd), (Ah), (Kd)]
         g.available = vec![ace, king];
-        let moves: Vec<Box<dyn Move>> = g.gen_moves_discard().collect();
+        let moves: Vec<Box<dyn Move>> = g.gen_moves_discard().expect("are discards").collect();
         assert_eq!(moves.len(), 3);
 
         // 3 cards available [Ah, Kd, Jc]
         // Playable moves: [(Ah, Kd, Jc), (Ah, Kd), (Ah, Jc), (Kd, Jc), (Ah), (Kd), (Jc)]
         g.available = vec![ace, king, jack];
-        let moves: Vec<Box<dyn Move>> = g.gen_moves_discard().collect();
+        let moves: Vec<Box<dyn Move>> = g.gen_moves_discard().expect("are discards").collect();
         assert_eq!(moves.len(), 7);
     }
 }

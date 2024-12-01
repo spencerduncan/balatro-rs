@@ -9,3 +9,15 @@ pub enum PlayHandError {
     #[error("Played hand could not determine best hand")]
     UnknownHand,
 }
+
+#[derive(Error, Debug)]
+pub enum GameError {
+    #[error("No remaining discards")]
+    NoRemainingDiscards,
+    #[error("No remaining plays")]
+    NoRemainingPlays,
+    #[error("Invalid hand played")]
+    InvalidHand(#[from] PlayHandError),
+    #[error("Invalid stage")]
+    InvalidStage,
+}
