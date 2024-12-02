@@ -1,5 +1,6 @@
 use indexmap::IndexMap;
 use itertools::Itertools;
+use std::fmt;
 
 use crate::core::card::Card;
 use crate::core::card::Suit;
@@ -456,6 +457,17 @@ impl Default for SelectHand {
     fn default() -> Self {
         let cards: Vec<Card> = Vec::new();
         Self(cards)
+    }
+}
+
+impl fmt::Display for SelectHand {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "[")?;
+        for card in &self.0 {
+            write!(f, "{}", card)?;
+        }
+        write!(f, "]")?;
+        return Ok(());
     }
 }
 

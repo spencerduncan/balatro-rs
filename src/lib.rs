@@ -2,11 +2,11 @@ pub mod core;
 
 #[cfg(test)]
 mod tests {
+    use crate::core::action::Action;
     use crate::core::game::Game;
-    use crate::core::moves::Move;
     use crate::core::stage::Stage;
 
-    use rand::seq::SliceRandom;
+    use rand::Rng;
 
     // not working yet, wip
     #[ignore]
@@ -20,11 +20,13 @@ mod tests {
                 println!("Game over {:?}", end);
                 break;
             }
-            let moves: Vec<Box<dyn Move>> = g.gen_moves().collect();
-            if let Some(m) = moves.choose(&mut rand::thread_rng()) {
-                m.apply(&mut g);
-            }
+            let actions: Vec<Action> = g.gen_moves().collect();
+            let i = rand::thread_rng().gen_range(0..actions.len());
+            let rand_action = actions[i].clone();
+            let action_res = g.handle_action(rand_action);
+            assert!(action_res.is_ok());
         }
+        // Ensure game is over at end
         assert!(matches!(g.stage, Stage::End(_)));
     }
 }
