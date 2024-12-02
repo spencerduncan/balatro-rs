@@ -31,7 +31,7 @@ impl HandRank {
         match self {
             Self::HighCard => Level {
                 level: 1,
-                chips: 500,
+                chips: 5,
                 mult: 1,
             },
             Self::OnePair => Level {
