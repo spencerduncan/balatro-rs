@@ -217,7 +217,6 @@ impl SelectHand {
     }
 
     pub fn is_highcard(&self) -> Option<SelectHand> {
-        dbg!(self.values_freq());
         if self.len() < 1 {
             return None;
         }
@@ -233,7 +232,6 @@ impl SelectHand {
     }
 
     pub fn is_pair(&self) -> Option<SelectHand> {
-        dbg!(self.values_freq());
         if self.len() < 2 {
             return None;
         }
@@ -249,7 +247,6 @@ impl SelectHand {
     }
 
     pub fn is_two_pair(&self) -> Option<SelectHand> {
-        dbg!(self.values_freq());
         if self.len() < 4 {
             return None;
         }
@@ -287,7 +284,6 @@ impl SelectHand {
     }
 
     pub fn is_three_of_kind(&self) -> Option<SelectHand> {
-        dbg!(self.values_freq());
         if self.len() < 3 {
             return None;
         }
@@ -303,7 +299,6 @@ impl SelectHand {
     }
 
     pub fn is_straight(&self) -> Option<SelectHand> {
-        dbg!(self.values());
         if self.len() != 5 {
             return None;
         }
@@ -331,7 +326,6 @@ impl SelectHand {
     }
 
     pub fn is_flush(&self) -> Option<SelectHand> {
-        dbg!(self.values_freq());
         if self.len() < 5 {
             return None;
         }
@@ -347,7 +341,6 @@ impl SelectHand {
     }
 
     pub fn is_fullhouse(&self) -> Option<SelectHand> {
-        dbg!(self.values_freq());
         if self.len() < 5 {
             return None;
         }
@@ -385,7 +378,6 @@ impl SelectHand {
     }
 
     pub fn is_four_of_kind(&self) -> Option<SelectHand> {
-        dbg!(self.values_freq());
         if self.len() < 4 {
             return None;
         }
@@ -423,7 +415,6 @@ impl SelectHand {
     }
 
     pub fn is_five_of_kind(&self) -> Option<SelectHand> {
-        dbg!(self.values_freq());
         if self.len() < 5 {
             return None;
         }

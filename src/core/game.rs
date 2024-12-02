@@ -14,6 +14,7 @@ const DEFAULT_DISCARDS: usize = 4;
 const HAND_SIZE: usize = 7;
 const BASE_MULT: usize = 1;
 const BASE_CHIPS: usize = 0;
+const BASE_SCORE: usize = 0;
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone)]
@@ -30,6 +31,7 @@ pub struct Game {
     // for scoring
     pub chips: usize,
     pub mult: usize,
+    pub score: usize,
 }
 
 impl Game {
@@ -43,10 +45,15 @@ impl Game {
             discards: DEFAULT_DISCARDS,
             chips: BASE_CHIPS,
             mult: BASE_MULT,
+            score: BASE_SCORE,
         }
     }
 
-    pub fn start(&mut self) {}
+    pub fn start(&mut self) {
+        // for now just move state to small blind
+        self.stage = Stage::Blind(Blind::Small);
+        self.deal();
+    }
 
     pub fn over(&self) -> Option<End> {
         match self.stage {
@@ -71,16 +78,23 @@ impl Game {
     }
 
     // discard specific cards from available and draw equal number back to available
-    pub fn discard(&mut self, select: SelectHand) -> Result<(), GameError> {
-        if self.discards <= 0 {
-            return Err(GameError::NoRemainingDiscards);
+    fn _discard(&mut self, select: SelectHand, check: bool) -> Result<(), GameError> {
+        if check {
+            if self.discards <= 0 {
+                return Err(GameError::NoRemainingDiscards);
+            }
+            self.discards -= 1;
         }
-        self.discards -= 1;
         // retain cards that we are not discarding
         let remove: HashSet<Card> = HashSet::from_iter(select.cards());
         self.available.retain(|c| !remove.contains(c));
         self.draw(select.cards().len());
         return Ok(());
+    }
+
+    // discard specific cards from available and draw equal number back to available
+    pub fn discard(&mut self, select: SelectHand) -> Result<(), GameError> {
+        return self._discard(select, true);
     }
 
     pub fn calc_score(&self, hand: MadeHand) -> usize {
@@ -90,7 +104,7 @@ impl Game {
         return (hand_chips + base_chips) * base_mult;
     }
 
-    pub fn check_score(&self, score: usize) -> Result<(), GameError> {
+    pub fn required_score(&self) -> Result<usize, GameError> {
         let base = self.ante.base();
         let required = match self.stage {
             Stage::Blind(Blind::Small) => base,
@@ -99,10 +113,45 @@ impl Game {
             // can only check score if in blind stage
             _ => return Err(GameError::InvalidStage),
         };
+        return Ok(required);
+    }
+
+    pub fn handle_score(&mut self, score: usize) -> Result<(), GameError> {
+        self.score += score;
+        let required = self.required_score()?;
+        // blind passed
+        if self.score < required {
+            // no more hands to play -> lose
+            if self.plays == 0 {
+                self.stage = Stage::End(End::Lose);
+                return Ok(());
+            } else {
+                // more hands to play, carry on
+                return Ok(());
+            }
+        }
+        // score exceeds blind -> next blind or win
         if score >= required {
-            // TODO: move game stage state machine, progress blinds
+            // game.reset()
+            match self.stage {
+                Stage::Blind(Blind::Small) => {
+                    self.stage = Stage::Blind(Blind::Big);
+                }
+                Stage::Blind(Blind::Big) => {
+                    self.stage = Stage::Blind(Blind::Boss);
+                }
+                Stage::Blind(Blind::Boss) => {
+                    self.stage = Stage::Blind(Blind::Small);
+                    if let Some(next_ante) = self.ante.next() {
+                        self.ante = next_ante
+                    } else {
+                        self.stage = Stage::End(End::Win);
+                        return Ok(());
+                    }
+                }
+                _ => return Err(GameError::InvalidStage),
+            }
         };
-        // TODO: check for no more plays -> loss
         return Ok(());
     }
 
@@ -112,7 +161,9 @@ impl Game {
         }
         self.plays -= 1;
         let best = select.best_hand()?;
-        self.calc_score(best);
+        let score = self.calc_score(best);
+        self.handle_score(score)?;
+        self._discard(select, false)?;
         return Ok(());
     }
 

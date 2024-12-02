@@ -30,4 +30,17 @@ impl Ante {
             Self::Eight => 50000,
         }
     }
+    pub fn next(&self) -> Option<Self> {
+        match self {
+            Self::Zero => Some(Self::One),
+            Self::One => Some(Self::Two),
+            Self::Two => Some(Self::Three),
+            Self::Three => Some(Self::Four),
+            Self::Four => Some(Self::Five),
+            Self::Five => Some(Self::Six),
+            Self::Six => Some(Self::Seven),
+            Self::Seven => Some(Self::Eight),
+            Self::Eight => None,
+        }
+    }
 }

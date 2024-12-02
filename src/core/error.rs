@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone)]
 pub enum PlayHandError {
     #[error("Played hand contains more than 5 cards")]
     TooManyCards,
@@ -10,7 +10,7 @@ pub enum PlayHandError {
     UnknownHand,
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone)]
 pub enum GameError {
     #[error("No remaining discards")]
     NoRemainingDiscards,
