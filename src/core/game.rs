@@ -4,13 +4,10 @@ use crate::core::deck::Deck;
 use crate::core::error::GameError;
 use crate::core::hand::{MadeHand, SelectHand};
 use crate::core::moves::{Move, Moves};
-use crate::core::stage::{Blind, Stage};
+use crate::core::stage::{Blind, End, Stage};
 use std::collections::HashSet;
-use std::default;
 
 use itertools::Itertools;
-
-use super::stage;
 
 const DEFAULT_PLAYS: usize = 4;
 const DEFAULT_DISCARDS: usize = 4;
@@ -46,6 +43,17 @@ impl Game {
             discards: DEFAULT_DISCARDS,
             chips: BASE_CHIPS,
             mult: BASE_MULT,
+        }
+    }
+
+    pub fn start(&mut self) {}
+
+    pub fn over(&self) -> Option<End> {
+        match self.stage {
+            Stage::End(end) => {
+                return Some(end);
+            }
+            _ => return None,
         }
     }
 
