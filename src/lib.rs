@@ -8,6 +8,7 @@ mod tests {
 
     use rand::seq::SliceRandom;
 
+    // not working yet, wip
     #[ignore]
     #[test]
     fn test_game() {
