@@ -57,17 +57,17 @@ impl Game {
         }
     }
 
-    // shuffle and deal new cards to available
-    pub fn deal(&mut self) {
-        self.deck.shuffle();
-        self.draw(HAND_SIZE);
-    }
-
     // draw from deck to available
     pub fn draw(&mut self, count: usize) {
         if let Some(drawn) = self.deck.draw(count) {
             self.available.extend(drawn);
         }
+    }
+
+    // shuffle and deal new cards to available
+    pub fn deal(&mut self) {
+        self.deck.shuffle();
+        self.draw(HAND_SIZE);
     }
 
     // discard specific cards from available and draw equal number back to available
@@ -83,7 +83,7 @@ impl Game {
         return Ok(());
     }
 
-    pub fn score(&self, hand: MadeHand) -> usize {
+    pub fn calc_score(&self, hand: MadeHand) -> usize {
         let base_mult = hand.rank.level().mult;
         let base_chips = hand.rank.level().chips;
         let hand_chips: usize = hand.hand.cards().iter().map(|c| c.chips()).sum();
@@ -112,7 +112,7 @@ impl Game {
         }
         self.plays -= 1;
         let best = select.best_hand()?;
-        self.score(best);
+        self.calc_score(best);
         return Ok(());
     }
 
@@ -240,7 +240,7 @@ mod tests {
         // (5 + 11) * 1 = 16
         let cards = vec![ace, king, jack];
         let hand = SelectHand::new(cards).best_hand().unwrap();
-        let score = g.score(hand);
+        let score = g.calc_score(hand);
         assert_eq!(score, 16);
 
         // Score [Kd, Kd, Ah]
@@ -249,7 +249,7 @@ mod tests {
         // (10 + 20) * 2 = 60
         let cards = vec![king, king, ace];
         let hand = SelectHand::new(cards).best_hand().unwrap();
-        let score = g.score(hand);
+        let score = g.calc_score(hand);
         assert_eq!(score, 60);
 
         // Score [Ah, Ah, Ah, Kd]
@@ -258,7 +258,7 @@ mod tests {
         // (30 + 33) * 3 = 189
         let cards = vec![ace, ace, ace, king];
         let hand = SelectHand::new(cards).best_hand().unwrap();
-        let score = g.score(hand);
+        let score = g.calc_score(hand);
         assert_eq!(score, 189);
 
         // Score [Kd, Kd, Kd, Kd, Ah]
@@ -267,7 +267,7 @@ mod tests {
         // (60 + 40) * 7 = 700
         let cards = vec![king, king, king, king, ace];
         let hand = SelectHand::new(cards).best_hand().unwrap();
-        let score = g.score(hand);
+        let score = g.calc_score(hand);
         assert_eq!(score, 700);
 
         // Score [Jc, Jc, Jc, Jc, Jc]
@@ -276,7 +276,7 @@ mod tests {
         // (160 + 50) * 16 = 3360
         let cards = vec![jack, jack, jack, jack, jack];
         let hand = SelectHand::new(cards).best_hand().unwrap();
-        let score = g.score(hand);
+        let score = g.calc_score(hand);
         assert_eq!(score, 3360);
     }
 
