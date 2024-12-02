@@ -1,7 +1,10 @@
 [package]
 name = "balatro-rs"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
+description = "Game engine and move generator for simplified version of balatro"
+repository ="https://github.com/evanofslack/balatro-rs"
+keywords = ["balatro", "game-engine", "move-generator"]
 
 [dependencies]
 rand = "~0.8.5"

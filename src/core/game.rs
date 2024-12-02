@@ -21,6 +21,7 @@ const BASE_SCORE: usize = 0;
 pub struct Game {
     pub deck: Deck,
     pub available: Vec<Card>,
+    pub discarded: Vec<Card>,
     pub stage: Stage,
     pub ante: Ante,
 
@@ -39,6 +40,7 @@ impl Game {
         Self {
             deck: Deck::default(),
             available: Vec::new(),
+            discarded: Vec::new(),
             stage: Stage::PreBlind,
             ante: Ante::One,
             plays: DEFAULT_PLAYS,
@@ -64,6 +66,13 @@ impl Game {
         }
     }
 
+    pub fn clear_blind(&mut self) {
+        self.score = BASE_SCORE;
+        self.plays = DEFAULT_PLAYS;
+        self.discards = DEFAULT_DISCARDS;
+        self.deal();
+    }
+
     // draw from deck to available
     pub fn draw(&mut self, count: usize) {
         if let Some(drawn) = self.deck.draw(count) {
@@ -73,11 +82,14 @@ impl Game {
 
     // shuffle and deal new cards to available
     pub fn deal(&mut self) {
+        // add discarded and available back to deck, emptying in process
+        self.deck.append(&mut self.discarded);
+        self.deck.append(&mut self.available);
         self.deck.shuffle();
         self.draw(HAND_SIZE);
     }
 
-    // discard specific cards from available and draw equal number back to available
+    // remove specific cards from available, send to discarded, and draw equal number back to available
     fn _discard(&mut self, select: SelectHand, check: bool) -> Result<(), GameError> {
         if check {
             if self.discards <= 0 {
@@ -87,7 +99,13 @@ impl Game {
         }
         // retain cards that we are not discarding
         let remove: HashSet<Card> = HashSet::from_iter(select.cards());
-        self.available.retain(|c| !remove.contains(c));
+        // self.available.retain(|c| !remove.contains(c));
+
+        let available = std::mem::take(&mut self.available);
+        let (discarded, new_avail): (Vec<Card>, Vec<Card>) =
+            available.into_iter().partition(|c| remove.contains(c));
+        self.available = new_avail;
+        self.discarded.extend(discarded);
         self.draw(select.cards().len());
         return Ok(());
     }
@@ -117,8 +135,11 @@ impl Game {
     }
 
     pub fn handle_score(&mut self, score: usize) -> Result<(), GameError> {
+        dbg!("score: {}", score);
         self.score += score;
+        dbg!("total score: {}", self.score);
         let required = self.required_score()?;
+        dbg!("required score: {}", required);
         // blind passed
         if self.score < required {
             // no more hands to play -> lose
@@ -131,19 +152,21 @@ impl Game {
             }
         }
         // score exceeds blind -> next blind or win
-        if score >= required {
-            // game.reset()
+        if self.score >= required {
             match self.stage {
                 Stage::Blind(Blind::Small) => {
+                    self.clear_blind();
                     self.stage = Stage::Blind(Blind::Big);
                 }
                 Stage::Blind(Blind::Big) => {
+                    self.clear_blind();
                     self.stage = Stage::Blind(Blind::Boss);
                 }
                 Stage::Blind(Blind::Boss) => {
-                    self.stage = Stage::Blind(Blind::Small);
                     if let Some(next_ante) = self.ante.next() {
-                        self.ante = next_ante
+                        self.ante = next_ante;
+                        self.clear_blind();
+                        self.stage = Stage::Blind(Blind::Small);
                     } else {
                         self.stage = Stage::End(End::Win);
                         return Ok(());
@@ -156,11 +179,13 @@ impl Game {
     }
 
     pub fn play(&mut self, select: SelectHand) -> Result<(), GameError> {
+        dbg!("play: {}", select.clone());
         if self.plays <= 0 {
             return Err(GameError::NoRemainingPlays);
         }
         self.plays -= 1;
         let best = select.best_hand()?;
+        dbg!("best hand: {}", best.clone());
         let score = self.calc_score(best);
         self.handle_score(score)?;
         self._discard(select, false)?;

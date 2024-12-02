@@ -8,12 +8,14 @@ mod tests {
 
     use rand::Rng;
 
-    // not working yet, wip
+    #[ignore]
     #[test]
     fn test_game() {
         let mut g = Game::new();
 
+        dbg!("game state before start {:?}", g.clone());
         g.start();
+        dbg!("game state start {:?}", g.clone());
         loop {
             if let Some(end) = g.over() {
                 dbg!("game over {:?}", end);
@@ -25,12 +27,13 @@ mod tests {
             }
             let i = rand::thread_rng().gen_range(0..actions.len());
             let action = actions[i].clone();
-            dbg!("handle action: {}", action.clone());
-            let action_res = g.handle_action(action);
+            let action_res = g.handle_action(action.clone());
+            dbg!("handled action: {}", action);
+            // dbg!("game state {:?}", g.clone());
             debug_assert!(action_res.is_ok());
         }
         // Ensure game is over at end
-        dbg!("game state {:?}", g.clone());
+        dbg!("end game state {:?}", g.clone());
         debug_assert!(matches!(g.stage, Stage::End(_)));
     }
 }

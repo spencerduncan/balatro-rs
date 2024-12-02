@@ -40,6 +40,10 @@ impl Deck {
     pub fn shuffle(&mut self) {
         self.cards.shuffle(&mut thread_rng());
     }
+
+    pub fn append(&mut self, other: &mut Vec<Card>) {
+        self.cards.append(other);
+    }
 }
 
 impl Default for Deck {
