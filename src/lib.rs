@@ -8,32 +8,30 @@ mod tests {
 
     use rand::Rng;
 
-    #[ignore]
     #[test]
     fn test_game() {
         let mut g = Game::new();
 
-        dbg!("game state before start {:?}", g.clone());
         g.start();
-        dbg!("game state start {:?}", g.clone());
         loop {
-            if let Some(end) = g.over() {
-                dbg!("game over {:?}", end);
+            // Check if game is over
+            if let Some(_end) = g.over() {
                 break;
             }
+
+            // Get all available moves
             let actions: Vec<Action> = g.gen_moves().collect();
             if actions.len() == 0 {
                 break;
             }
+
+            // Pick a random move and execute it
             let i = rand::thread_rng().gen_range(0..actions.len());
             let action = actions[i].clone();
             let action_res = g.handle_action(action.clone());
-            dbg!("handled action: {}", action);
-            // dbg!("game state {:?}", g.clone());
-            debug_assert!(action_res.is_ok());
+            assert!(action_res.is_ok());
         }
         // Ensure game is over at end
-        dbg!("end game state {:?}", g.clone());
-        debug_assert!(matches!(g.stage, Stage::End(_)));
+        assert!(matches!(g.stage, Stage::End(_)));
     }
 }

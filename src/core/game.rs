@@ -134,61 +134,57 @@ impl Game {
         return Ok(required);
     }
 
-    pub fn handle_score(&mut self, score: usize) -> Result<(), GameError> {
-        dbg!("score: {}", score);
+    // Returns true if blind passed, false if not.
+    pub fn handle_score(&mut self, score: usize) -> Result<bool, GameError> {
         self.score += score;
-        dbg!("total score: {}", self.score);
         let required = self.required_score()?;
-        dbg!("required score: {}", required);
         // blind passed
         if self.score < required {
             // no more hands to play -> lose
             if self.plays == 0 {
                 self.stage = Stage::End(End::Lose);
-                return Ok(());
+                return Ok(false);
             } else {
                 // more hands to play, carry on
-                return Ok(());
+                return Ok(false);
             }
         }
         // score exceeds blind -> next blind or win
-        if self.score >= required {
-            match self.stage {
-                Stage::Blind(Blind::Small) => {
-                    self.clear_blind();
-                    self.stage = Stage::Blind(Blind::Big);
-                }
-                Stage::Blind(Blind::Big) => {
-                    self.clear_blind();
-                    self.stage = Stage::Blind(Blind::Boss);
-                }
-                Stage::Blind(Blind::Boss) => {
-                    if let Some(next_ante) = self.ante.next() {
-                        self.ante = next_ante;
-                        self.clear_blind();
-                        self.stage = Stage::Blind(Blind::Small);
-                    } else {
-                        self.stage = Stage::End(End::Win);
-                        return Ok(());
-                    }
-                }
-                _ => return Err(GameError::InvalidStage),
+        match self.stage {
+            Stage::Blind(Blind::Small) => {
+                self.stage = Stage::Blind(Blind::Big);
+                return Ok(true);
             }
+            Stage::Blind(Blind::Big) => {
+                self.stage = Stage::Blind(Blind::Boss);
+                return Ok(true);
+            }
+            Stage::Blind(Blind::Boss) => {
+                if let Some(next_ante) = self.ante.next() {
+                    self.ante = next_ante;
+                    self.stage = Stage::Blind(Blind::Small);
+                    return Ok(true);
+                } else {
+                    self.stage = Stage::End(End::Win);
+                    return Ok(true);
+                }
+            }
+            _ => return Err(GameError::InvalidStage),
         };
-        return Ok(());
     }
 
     pub fn play(&mut self, select: SelectHand) -> Result<(), GameError> {
-        dbg!("play: {}", select.clone());
         if self.plays <= 0 {
             return Err(GameError::NoRemainingPlays);
         }
         self.plays -= 1;
         let best = select.best_hand()?;
-        dbg!("best hand: {}", best.clone());
         let score = self.calc_score(best);
-        self.handle_score(score)?;
+        let pass_blind = self.handle_score(score)?;
         self._discard(select, false)?;
+        if pass_blind {
+            self.clear_blind();
+        }
         return Ok(());
     }
 
