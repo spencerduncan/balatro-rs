@@ -1,5 +1,6 @@
 use crate::core::card::Card;
 use crate::core::hand::SelectHand;
+use crate::core::stage::Blind;
 use std::fmt;
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -28,6 +29,11 @@ pub enum Action {
     Play(SelectHand),
     Discard(SelectHand),
     MoveCard(MoveDirection, Card),
+    CashOut(usize),
+    // BuyConsumable(Consumable)
+    NextRound(),
+    SelectBlind(Blind),
+    // SkipBlind(Blind),
 }
 
 impl fmt::Display for Action {
@@ -41,6 +47,15 @@ impl fmt::Display for Action {
             }
             Self::MoveCard(dir, card) => {
                 write!(f, "MoveCard: {:?} - {:}", card, dir)
+            }
+            Self::CashOut(reward) => {
+                write!(f, "CashOut: {:}", reward)
+            }
+            Self::NextRound() => {
+                write!(f, "NextRound")
+            }
+            Self::SelectBlind(blind) => {
+                write!(f, "SelectBlind: {:?}", blind)
             }
         }
     }

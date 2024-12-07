@@ -7,6 +7,25 @@ pub enum Blind {
     Boss,
 }
 
+impl Blind {
+    /// reward is money earned for beating the blind
+    pub fn reward(&self) -> usize {
+        match self {
+            Self::Small => 3,
+            Self::Big => 4,
+            Self::Boss => 5,
+        }
+    }
+
+    pub fn next(&self) -> Self {
+        match self {
+            Self::Small => Self::Big,
+            Self::Big => Self::Boss,
+            Self::Boss => Self::Small,
+        }
+    }
+}
+
 /// Game ending
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, Copy)]
@@ -31,4 +50,13 @@ pub enum Stage {
     Shop,
     // Game ending
     End(End),
+}
+
+impl Stage {
+    pub fn is_blind(&self) -> bool {
+        return match self {
+            Stage::Blind(_) => true,
+            _ => false,
+        };
+    }
 }

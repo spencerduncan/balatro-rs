@@ -13,12 +13,7 @@ mod tests {
         let mut g = Game::new();
 
         g.start();
-        loop {
-            // Check if game is over
-            if let Some(_end) = g.over() {
-                break;
-            }
-
+        while !g.is_over() {
             // Get all available moves
             let actions: Vec<Action> = g.gen_moves().collect();
             if actions.len() == 0 {
@@ -31,7 +26,11 @@ mod tests {
             let action_res = g.handle_action(action.clone());
             assert!(action_res.is_ok());
         }
+        let result = g.result();
         // Ensure game is over at end
+        assert!(result.is_some());
+        // Check game state at end
         assert!(matches!(g.stage, Stage::End(_)));
+        dbg!(g.action_history);
     }
 }

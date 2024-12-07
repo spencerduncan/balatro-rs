@@ -1,4 +1,7 @@
-use std::fmt;
+use std::{
+    fmt,
+    sync::atomic::{AtomicUsize, Ordering},
+};
 
 // Useful balatro docs: https://balatrogame.fandom.com/wiki/Card_Ranks
 
@@ -130,11 +133,17 @@ pub enum Seal {
     Purple,
 }
 
+// Each card gets a unique id. Not sure this is strictly
+// necessary but it makes identifying otherwise identical cards
+// possible (i.e. for trashing, reordering, etc)
+static CARD_ID_COUNTER: AtomicUsize = AtomicUsize::new(0);
+
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(PartialEq, PartialOrd, Eq, Ord, Clone, Copy, Hash)]
 pub struct Card {
     pub value: Value,
     pub suit: Suit,
+    pub id: usize,
     pub edition: Edition,
     pub enhancement: Option<Enhancement>,
     pub seal: Option<Seal>,
@@ -142,9 +151,11 @@ pub struct Card {
 
 impl Card {
     pub fn new(value: Value, suit: Suit) -> Self {
+        let id = CARD_ID_COUNTER.fetch_add(1, Ordering::SeqCst);
         Self {
             value,
             suit,
+            id: id,
             edition: Edition::Base,
             enhancement: None,
             seal: None,

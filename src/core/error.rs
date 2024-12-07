@@ -20,4 +20,12 @@ pub enum GameError {
     InvalidHand(#[from] PlayHandError),
     #[error("Invalid stage")]
     InvalidStage,
+    #[error("Invalid action")]
+    InvalidAction,
+    #[error("No card match")]
+    InvalidBlind,
+    #[error("Invalid blind")]
+    NoCardMatch,
+    #[error("Invalid move direction")]
+    InvalidMoveDirection,
 }
