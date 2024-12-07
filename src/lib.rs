@@ -23,8 +23,9 @@ mod tests {
             // Pick a random move and execute it
             let i = rand::thread_rng().gen_range(0..actions.len());
             let action = actions[i].clone();
-            dbg!(action.clone());
-            let action_res = g.handle_action(action.clone());
+            println!("game state:\n{}", g.clone());
+            println!("play action: {}", action.clone());
+            let action_res = g.handle_action(action);
             debug_assert!(action_res.is_ok());
         }
         let result = g.result();
@@ -32,6 +33,6 @@ mod tests {
         assert!(result.is_some());
         // Check game state at end
         assert!(matches!(g.stage, Stage::End(_)));
-        dbg!(g.action_history);
+        println!("game action history: {:?}", g.action_history);
     }
 }

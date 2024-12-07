@@ -6,9 +6,11 @@ use crate::core::error::GameError;
 use crate::core::hand::{MadeHand, SelectHand};
 use crate::core::stage::{Blind, End, Stage};
 use std::collections::HashSet;
+use std::fmt;
 
 use itertools::Itertools;
 
+const DEFAULT_ROUND_START: usize = 0;
 const DEFAULT_PLAYS: usize = 4;
 const DEFAULT_DISCARDS: usize = 4;
 const DEFAULT_MONEY: usize = 0;
@@ -31,6 +33,7 @@ pub struct Game {
     pub stage: Stage,
     pub ante: Ante,
     pub action_history: Vec<Action>,
+    pub round: usize,
 
     // playing
     pub plays: usize,
@@ -54,6 +57,7 @@ impl Game {
             stage: Stage::PreBlind,
             ante: Ante::One,
             action_history: Vec::new(),
+            round: DEFAULT_ROUND_START,
             plays: DEFAULT_PLAYS,
             discards: DEFAULT_DISCARDS,
             reward: DEFAULT_REWARD,
@@ -216,6 +220,7 @@ impl Game {
 
     pub fn next_round(&mut self) -> Result<(), GameError> {
         self.stage = Stage::PreBlind;
+        self.round += 1;
         return Ok(());
     }
 
@@ -446,6 +451,23 @@ impl Game {
                 _ => Err(GameError::InvalidAction),
             },
         };
+    }
+}
+
+impl fmt::Display for Game {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        writeln!(f, "deck length: {}", self.deck.len())?;
+        writeln!(f, "available length: {}", self.available.len())?;
+        writeln!(f, "discard length: {}", self.discarded.len())?;
+        writeln!(f, "action history length: {}", self.action_history.len())?;
+        writeln!(f, "blind: {:?}", self.blind)?;
+        writeln!(f, "stage: {:?}", self.stage)?;
+        writeln!(f, "ante: {:?}", self.ante)?;
+        writeln!(f, "round: {}", self.round)?;
+        writeln!(f, "hands remaining: {}", self.plays)?;
+        writeln!(f, "discards remaining: {}", self.discards)?;
+        writeln!(f, "money: {}", self.money)?;
+        writeln!(f, "score: {}", self.score)
     }
 }
 
