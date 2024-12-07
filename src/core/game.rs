@@ -16,7 +16,7 @@ const DEFAULT_REWARD: usize = 0;
 const DEFAULT_MONEY_PER_HAND: usize = 1;
 const DEFAULT_INTEREST_RATE: f32 = 0.2;
 const DEFAULT_INTEREST_MAX: usize = 5;
-const HAND_SIZE: usize = 7;
+const HAND_SIZE: usize = 8;
 const BASE_MULT: usize = 1;
 const BASE_CHIPS: usize = 0;
 const BASE_SCORE: usize = 0;
@@ -27,7 +27,7 @@ pub struct Game {
     pub deck: Deck,
     pub available: Vec<Card>,
     pub discarded: Vec<Card>,
-    pub blind: Blind,
+    pub blind: Option<Blind>,
     pub stage: Stage,
     pub ante: Ante,
     pub action_history: Vec<Action>,
@@ -50,7 +50,7 @@ impl Game {
             deck: Deck::default(),
             available: Vec::new(),
             discarded: Vec::new(),
-            blind: Blind::Small,
+            blind: None,
             stage: Stage::PreBlind,
             ante: Ante::One,
             action_history: Vec::new(),
@@ -66,7 +66,7 @@ impl Game {
 
     pub fn start(&mut self) {
         // for now just move state to small blind
-        self.stage = Stage::Blind(Blind::Small);
+        self.stage = Stage::PreBlind;
         self.deal();
     }
 
@@ -193,13 +193,24 @@ impl Game {
     }
 
     pub fn select_blind(&mut self, blind: Blind) -> Result<(), GameError> {
+        // can only set blind if stage is pre blind
         if self.stage != Stage::PreBlind {
             return Err(GameError::InvalidStage);
         }
-        if blind != self.blind.next() {
-            return Err(GameError::InvalidBlind);
+        // provided blind must be expected next blind
+        if let Some(current) = self.blind {
+            if blind != current.next() {
+                return Err(GameError::InvalidBlind);
+            }
+        } else {
+            // if game just started, blind will be None, in which case
+            // we can only set it to small.
+            if blind != Blind::Small {
+                return Err(GameError::InvalidBlind);
+            }
         }
-        self.blind = blind;
+        self.blind = Some(blind);
+        self.stage = Stage::Blind(blind);
         return Ok(());
     }
 
@@ -230,13 +241,14 @@ impl Game {
             }
         }
 
+        let blind = self.blind.expect("stage is blind");
         // score exceeds blind (blind passed).
         // handle reward then progress to next stage.
-        let reward = self.calc_reward(self.blind)?;
+        let reward = self.calc_reward(blind)?;
         self.reward = reward;
 
         // passed boss blind, either win or progress ante
-        if self.blind == Blind::Boss {
+        if blind == Blind::Boss {
             if let Some(next_ante) = self.ante.next() {
                 self.ante = next_ante;
             } else {
@@ -380,7 +392,11 @@ impl Game {
         if self.stage != Stage::PreBlind {
             return None;
         }
-        return Some(vec![Action::SelectBlind(self.blind.next())].into_iter());
+        if let Some(blind) = self.blind {
+            return Some(vec![Action::SelectBlind(blind.next())].into_iter());
+        } else {
+            return Some(vec![Action::SelectBlind(Blind::Small)].into_iter());
+        }
     }
 
     // get all legal moves that can be executed given current state

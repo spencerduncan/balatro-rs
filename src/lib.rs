@@ -23,8 +23,9 @@ mod tests {
             // Pick a random move and execute it
             let i = rand::thread_rng().gen_range(0..actions.len());
             let action = actions[i].clone();
+            dbg!(action.clone());
             let action_res = g.handle_action(action.clone());
-            assert!(action_res.is_ok());
+            debug_assert!(action_res.is_ok());
         }
         let result = g.result();
         // Ensure game is over at end
