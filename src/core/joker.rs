@@ -1,23 +1,14 @@
+use crate::core::effect::Effects;
 use crate::core::game::Game;
+use std::sync::Arc;
 use strum::{EnumIter, IntoEnumIterator};
-
-pub trait Effect {
-    fn apply(&self, game: &mut Game);
-}
-
-pub enum Effects {
-    OnPlay(Box<dyn FnOnce(&mut Game)>),
-    OnDiscard(Box<dyn FnOnce(&mut Game)>),
-    OnScore(Box<dyn FnOnce(&mut Game)>),
-    OnHandRank(Box<dyn FnOnce(&mut Game)>),
-}
 
 pub trait Joker: std::fmt::Debug + Clone {
     fn name(&self) -> String;
     fn desc(&self) -> String;
     fn rarity(&self) -> Rarity;
     fn categories(&self) -> Vec<Categories>;
-    fn effects(&self, game: Game) -> Vec<Effects>;
+    fn effects(&self, game: &Game) -> Vec<Effects>;
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -30,7 +21,7 @@ pub enum Categories {
     Effect,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, EnumIter)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Rarity {
     Common,
     Uncommon,
@@ -76,7 +67,7 @@ impl Joker for Jokers {
             Self::LustyJoker(j) => j.categories(),
         }
     }
-    fn effects(&self, game: Game) -> Vec<Effects> {
+    fn effects(&self, game: &Game) -> Vec<Effects> {
         match self {
             Self::TheJoker(j) => j.effects(game),
             Self::LustyJoker(j) => j.effects(game),
@@ -100,11 +91,11 @@ impl Joker for TheJoker {
     fn categories(&self) -> Vec<Categories> {
         vec![Categories::MultPlus]
     }
-    fn effects(&self, _in: Game) -> Vec<Effects> {
+    fn effects(&self, _in: &Game) -> Vec<Effects> {
         fn apply(g: &mut Game) {
             g.mult += 4;
         }
-        vec![Effects::OnScore(Box::new(apply))]
+        vec![Effects::OnScore(Arc::new(apply))]
     }
 }
 
@@ -124,10 +115,10 @@ impl Joker for LustyJoker {
     fn categories(&self) -> Vec<Categories> {
         vec![Categories::MultPlus]
     }
-    fn effects(&self, _in: Game) -> Vec<Effects> {
+    fn effects(&self, _in: &Game) -> Vec<Effects> {
         fn apply(g: &mut Game) {
             g.mult += 4;
         }
-        vec![Effects::OnScore(Box::new(apply))]
+        vec![Effects::OnScore(Arc::new(apply))]
     }
 }
