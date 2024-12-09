@@ -122,3 +122,41 @@ impl Joker for LustyJoker {
         vec![Effects::OnScore(Arc::new(apply))]
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::core::card::{Card, Suit, Value};
+    use crate::core::hand::SelectHand;
+    use crate::core::stage::{Blind, Stage};
+
+    use super::*;
+
+    #[test]
+    fn test_the_joker() {
+        let mut g = Game::new();
+        g.stage = Stage::Blind(Blind::Small);
+        let j = Jokers::TheJoker(TheJoker {});
+
+        let ace = Card::new(Value::Ace, Suit::Heart);
+        let hand = SelectHand::new(vec![ace]);
+
+        // Score Ace high without joker
+        // High card (level 1) -> 5 chips, 1 mult
+        // Played cards (1 ace) -> 11 chips
+        // (5 + 11) * (1) = 16
+        let score = g.calc_score(hand.best_hand().unwrap());
+        assert_eq!(score, 16);
+
+        // buy (and apply) the joker
+        g.stage = Stage::Shop;
+        g.buy_joker(j).unwrap();
+        g.stage = Stage::Blind(Blind::Small);
+        // Score Ace high with the Joker
+        // High card (level 1) -> 5 chips, 1 mult
+        // Played cards (1 ace) -> 11 chips
+        // Joker (The Joker) -> 4 mult
+        // (5 + 11) * (1 + 4) = 80
+        let score = g.calc_score(hand.best_hand().unwrap());
+        assert_eq!(score, 80);
+    }
+}

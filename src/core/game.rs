@@ -228,6 +228,9 @@ impl Game {
     }
 
     pub fn buy_joker(&mut self, joker: Jokers) -> Result<(), GameError> {
+        if self.stage != Stage::Shop {
+            return Err(GameError::InvalidStage);
+        }
         self.jokers.push(joker);
         self.effect_registry
             .register_jokers(self.jokers.clone(), &self.clone());
