@@ -1,4 +1,4 @@
-use crate::core::card::{Card, Suit, Value};
+use crate::card::{Card, Suit, Value};
 use rand::{seq::SliceRandom, thread_rng};
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

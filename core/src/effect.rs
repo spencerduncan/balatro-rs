@@ -1,4 +1,4 @@
-use crate::core::game::Game;
+use crate::game::Game;
 
 pub trait Effect {
     fn apply(&self, game: &mut Game);

@@ -1,10 +1,10 @@
-use crate::core::action::{Action, MoveDirection};
-use crate::core::ante::Ante;
-use crate::core::card::Card;
-use crate::core::deck::Deck;
-use crate::core::error::GameError;
-use crate::core::hand::{MadeHand, SelectHand};
-use crate::core::stage::{Blind, End, Stage};
+use crate::action::{Action, MoveDirection};
+use crate::ante::Ante;
+use crate::card::Card;
+use crate::deck::Deck;
+use crate::error::GameError;
+use crate::hand::{MadeHand, SelectHand};
+use crate::stage::{Blind, End, Stage};
 use std::collections::HashSet;
 use std::fmt;
 

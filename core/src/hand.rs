@@ -2,11 +2,11 @@ use indexmap::IndexMap;
 use itertools::Itertools;
 use std::fmt;
 
-use crate::core::card::Card;
-use crate::core::card::Suit;
-use crate::core::card::Value;
-use crate::core::error::PlayHandError;
-use crate::core::rank::HandRank;
+use crate::card::Card;
+use crate::card::Suit;
+use crate::card::Value;
+use crate::error::PlayHandError;
+use crate::rank::HandRank;
 
 // Hand, SelectHand and MadeHand are all representations of a collection of Card,
 // just at different phases in the cycle of selecting, executing and scoring cards.
