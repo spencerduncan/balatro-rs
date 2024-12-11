@@ -2,9 +2,9 @@ pub mod core;
 
 #[cfg(test)]
 mod tests {
-    use crate::core::action::Action;
-    use crate::core::game::Game;
-    use crate::core::stage::Stage;
+    use crate::action::Action;
+    use crate::game::Game;
+    use crate::stage::Stage;
 
     use rand::Rng;
 
