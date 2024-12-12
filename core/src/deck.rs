@@ -11,19 +11,6 @@ impl Deck {
     pub fn new() -> Self {
         Self { cards: Vec::new() }
     }
-    pub(crate) fn contains(&self, c: &Card) -> bool {
-        self.cards.contains(c)
-    }
-    pub(crate) fn remove(&mut self, c: &Card) -> bool {
-        if let Some(pos) = self.cards.iter().position(|x| x == c) {
-            self.cards.remove(pos);
-            return true;
-        }
-        return false;
-    }
-    pub(crate) fn push(&mut self, c: Card) {
-        self.cards.push(c)
-    }
     pub(crate) fn draw(&mut self, n: usize) -> Option<Vec<Card>> {
         if self.cards.len() < n {
             return None;
@@ -33,9 +20,6 @@ impl Deck {
     pub(crate) fn len(&self) -> usize {
         self.cards.len()
     }
-    pub(crate) fn is_empty(&self) -> bool {
-        self.cards.is_empty()
-    }
 
     pub(crate) fn shuffle(&mut self) {
         self.cards.shuffle(&mut thread_rng());
@@ -44,6 +28,11 @@ impl Deck {
     pub(crate) fn append(&mut self, other: &mut Vec<Card>) {
         self.cards.append(other);
     }
+
+    pub fn cards(&self) -> Vec<Card> {
+        self.cards.clone()
+    }
+
     // // Loops through cards, assigning index to each equal to index in deck
     // pub(crate) fn index_cards(&mut self) {
     //     let mut i = 0;

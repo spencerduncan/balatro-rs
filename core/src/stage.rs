@@ -1,5 +1,8 @@
+use pyo3::pyclass;
+
 /// Types of blinds
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "python", pyclass(eq))]
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, Copy)]
 pub enum Blind {
     Small,
@@ -28,6 +31,7 @@ impl Blind {
 
 /// Game ending
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "python", pyclass(eq))]
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, Copy)]
 pub enum End {
     Win,
@@ -38,16 +42,17 @@ pub enum End {
 // Playing through an ante looks like:
 // Pre -> Small -> Post -> Shop -> Pre -> Big -> Post -> Shop -> Boss -> Post -> Shop
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "python", pyclass)]
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, Copy)]
 pub enum Stage {
     // See blind conditions, choose blind (or skip blind)
-    PreBlind,
+    PreBlind(),
     // Play blind
     Blind(Blind),
     // Collect payout, optionally play consumables
-    PostBlind,
+    PostBlind(),
     // Buy jokers, consumables
-    Shop,
+    Shop(),
     // Game ending
     End(End),
 }

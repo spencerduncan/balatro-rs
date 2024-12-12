@@ -1,3 +1,4 @@
+use pyo3::pyclass;
 use std::{
     fmt,
     sync::atomic::{AtomicUsize, Ordering},
@@ -7,6 +8,7 @@ use std::{
 
 /// Card rank or value.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "python", pyclass(eq))]
 #[derive(PartialEq, PartialOrd, Eq, Ord, Debug, Clone, Copy, Hash)]
 pub enum Value {
     Two = 0,
@@ -70,6 +72,7 @@ impl From<Value> for char {
 
 /// Enum for the four different suits.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "python", pyclass(eq))]
 #[derive(PartialEq, PartialOrd, Eq, Ord, Debug, Clone, Copy, Hash)]
 pub enum Suit {
     Spade = 0,
@@ -100,6 +103,7 @@ impl From<Suit> for char {
 
 /// Enum for card  enhancements
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "python", pyclass(eq))]
 #[derive(PartialEq, PartialOrd, Eq, Ord, Debug, Clone, Copy, Hash)]
 pub enum Enhancement {
     Bonus,
@@ -114,6 +118,7 @@ pub enum Enhancement {
 
 /// Enum for card  editions
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "python", pyclass(eq))]
 #[derive(PartialEq, PartialOrd, Eq, Ord, Debug, Clone, Copy, Hash)]
 pub enum Edition {
     Base,
@@ -125,6 +130,7 @@ pub enum Edition {
 
 /// Enum for card seals
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "python", pyclass(eq))]
 #[derive(PartialEq, PartialOrd, Eq, Ord, Debug, Clone, Copy, Hash)]
 pub enum Seal {
     Gold,
@@ -139,6 +145,7 @@ pub enum Seal {
 static CARD_ID_COUNTER: AtomicUsize = AtomicUsize::new(0);
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "python", pyclass)]
 #[derive(PartialEq, PartialOrd, Eq, Ord, Clone, Copy, Hash)]
 pub struct Card {
     pub value: Value,

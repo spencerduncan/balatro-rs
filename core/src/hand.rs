@@ -1,5 +1,6 @@
 use indexmap::IndexMap;
 use itertools::Itertools;
+use pyo3::pyclass;
 use std::fmt;
 
 use crate::card::Card;
@@ -29,6 +30,7 @@ pub struct MadeHand {
 
 // SelectHand represents (up to 5) cards user selects from hand for action
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "python", pyclass)]
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct SelectHand(Vec<Card>);
 

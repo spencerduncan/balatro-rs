@@ -54,7 +54,7 @@ impl Game {
             available: Vec::new(),
             discarded: Vec::new(),
             blind: None,
-            stage: Stage::PreBlind,
+            stage: Stage::PreBlind(),
             ante: Ante::One,
             action_history: Vec::new(),
             round: DEFAULT_ROUND_START,
@@ -70,7 +70,7 @@ impl Game {
 
     pub fn start(&mut self) {
         // for now just move state to small blind
-        self.stage = Stage::PreBlind;
+        self.stage = Stage::PreBlind();
         self.deal();
     }
 
@@ -192,13 +192,13 @@ impl Game {
     pub fn cashout(&mut self) -> Result<(), GameError> {
         self.money += self.reward;
         self.reward = 0;
-        self.stage = Stage::Shop;
+        self.stage = Stage::Shop();
         return Ok(());
     }
 
     pub fn select_blind(&mut self, blind: Blind) -> Result<(), GameError> {
         // can only set blind if stage is pre blind
-        if self.stage != Stage::PreBlind {
+        if self.stage != Stage::PreBlind() {
             return Err(GameError::InvalidStage);
         }
         // provided blind must be expected next blind
@@ -219,7 +219,7 @@ impl Game {
     }
 
     pub fn next_round(&mut self) -> Result<(), GameError> {
-        self.stage = Stage::PreBlind;
+        self.stage = Stage::PreBlind();
         self.round += 1;
         return Ok(());
     }
@@ -263,7 +263,7 @@ impl Game {
         };
 
         // finish blind, proceed to post blind
-        self.stage = Stage::PostBlind;
+        self.stage = Stage::PostBlind();
         return Ok(true);
     }
 
@@ -376,7 +376,7 @@ impl Game {
     // get cash out move
     pub fn gen_moves_cash_out(&self) -> Option<impl Iterator<Item = Action>> {
         // If stage is not post blind, cannot cash out
-        if self.stage != Stage::PostBlind {
+        if self.stage != Stage::PostBlind() {
             return None;
         }
         return Some(vec![Action::CashOut(self.reward)].into_iter());
@@ -385,7 +385,7 @@ impl Game {
     // get next round move
     pub fn gen_moves_next_round(&self) -> Option<impl Iterator<Item = Action>> {
         // If stage is not shop, cannot next round
-        if self.stage != Stage::Shop {
+        if self.stage != Stage::Shop() {
             return None;
         }
         return Some(vec![Action::NextRound()].into_iter());
@@ -394,7 +394,7 @@ impl Game {
     // get select blind move
     pub fn gen_moves_select_blind(&self) -> Option<impl Iterator<Item = Action>> {
         // If stage is not pre blind, cannot select blind
-        if self.stage != Stage::PreBlind {
+        if self.stage != Stage::PreBlind() {
             return None;
         }
         if let Some(blind) = self.blind {
@@ -439,15 +439,15 @@ impl Game {
                 false => Err(GameError::InvalidAction),
             },
             Action::CashOut(_reward) => match self.stage {
-                Stage::PostBlind => self.cashout(),
+                Stage::PostBlind() => self.cashout(),
                 _ => Err(GameError::InvalidAction),
             },
             Action::NextRound() => match self.stage {
-                Stage::Shop => self.next_round(),
+                Stage::Shop() => self.next_round(),
                 _ => Err(GameError::InvalidAction),
             },
             Action::SelectBlind(blind) => match self.stage {
-                Stage::PreBlind => self.select_blind(blind),
+                Stage::PreBlind() => self.select_blind(blind),
                 _ => Err(GameError::InvalidAction),
             },
         };
@@ -474,7 +474,7 @@ impl fmt::Display for Game {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::card::{Suit, Value};
+    use crate::card::{Suit, Value};
 
     #[test]
     fn test_constructor() {
