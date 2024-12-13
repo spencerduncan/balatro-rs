@@ -161,16 +161,15 @@ impl Game {
         return (hand_chips + base_chips) * base_mult;
     }
 
-    pub fn required_score(&self) -> Result<usize, GameError> {
+    pub fn required_score(&self) -> usize {
         let base = self.ante_current.base();
-        let required = match self.stage {
-            Stage::Blind(Blind::Small) => base,
-            Stage::Blind(Blind::Big) => (base as f32 * 1.5) as usize,
-            Stage::Blind(Blind::Boss) => base * 2,
-            // can only check score if in blind stage
-            _ => return Err(GameError::InvalidStage),
+        let required = match self.blind {
+            None => base,
+            Some(Blind::Small) => base,
+            Some(Blind::Big) => (base as f32 * 1.5) as usize,
+            Some(Blind::Boss) => base * 2,
         };
-        return Ok(required);
+        return required;
     }
 
     pub fn calc_reward(&mut self, blind: Blind) -> Result<usize, GameError> {
@@ -228,7 +227,7 @@ impl Game {
         }
 
         self.score += score;
-        let required = self.required_score()?;
+        let required = self.required_score();
 
         // blind not passed
         if self.score < required {

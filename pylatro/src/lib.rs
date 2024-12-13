@@ -1,5 +1,6 @@
 use balatro_rs::action::Action;
 use balatro_rs::card::Card;
+use balatro_rs::config::Config;
 use balatro_rs::error::GameError;
 use balatro_rs::game::Game;
 use balatro_rs::stage::{End, Stage};
@@ -13,9 +14,10 @@ struct GameEngine {
 #[pymethods]
 impl GameEngine {
     #[new]
-    fn new() -> Self {
+    #[pyo3(signature = (config=None))]
+    fn new(config: Option<Config>) -> Self {
         GameEngine {
-            game: Game::default(),
+            game: Game::new(config.unwrap_or(Config::default())),
         }
     }
 
@@ -83,6 +85,14 @@ impl GameState {
     fn discards(&self) -> usize {
         return self.game.discards;
     }
+    #[getter]
+    fn score(&self) -> usize {
+        return self.game.score;
+    }
+    #[getter]
+    fn required_score(&self) -> usize {
+        return self.game.required_score();
+    }
 
     fn __repr__(&self) -> String {
         format!("GameState:\n{}", self.game)
@@ -91,6 +101,7 @@ impl GameState {
 
 #[pymodule]
 fn pylatro(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    m.add_class::<Config>()?;
     m.add_class::<GameEngine>()?;
     m.add_class::<GameState>()?;
     Ok(())
