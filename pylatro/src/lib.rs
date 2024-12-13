@@ -14,7 +14,9 @@ struct GameEngine {
 impl GameEngine {
     #[new]
     fn new() -> Self {
-        GameEngine { game: Game::new() }
+        GameEngine {
+            game: Game::default(),
+        }
     }
 
     fn gen_moves(&self) -> Vec<Action> {

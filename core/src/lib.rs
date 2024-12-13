@@ -1,6 +1,7 @@
 pub mod action;
 pub mod ante;
 pub mod card;
+pub mod config;
 pub mod deck;
 pub mod effect;
 pub mod error;
@@ -19,7 +20,7 @@ mod tests {
 
     #[test]
     fn test_game() {
-        let mut g = Game::new();
+        let mut g = Game::default();
 
         g.start();
         while !g.is_over() {

@@ -1,6 +1,7 @@
 use crate::action::{Action, MoveDirection};
 use crate::ante::Ante;
 use crate::card::Card;
+use crate::config::Config;
 use crate::deck::Deck;
 use crate::error::GameError;
 use crate::hand::{MadeHand, SelectHand};
@@ -10,28 +11,18 @@ use std::fmt;
 
 use itertools::Itertools;
 
-const DEFAULT_ROUND_START: usize = 0;
-const DEFAULT_PLAYS: usize = 4;
-const DEFAULT_DISCARDS: usize = 4;
-const DEFAULT_MONEY: usize = 0;
-const DEFAULT_REWARD: usize = 0;
-const DEFAULT_MONEY_PER_HAND: usize = 1;
-const DEFAULT_INTEREST_RATE: f32 = 0.2;
-const DEFAULT_INTEREST_MAX: usize = 5;
-const HAND_SIZE: usize = 8;
-const BASE_MULT: usize = 1;
-const BASE_CHIPS: usize = 0;
-const BASE_SCORE: usize = 0;
-
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone)]
 pub struct Game {
+    pub config: Config,
     pub deck: Deck,
     pub available: Vec<Card>,
     pub discarded: Vec<Card>,
     pub blind: Option<Blind>,
     pub stage: Stage,
-    pub ante: Ante,
+    pub ante_start: Ante,
+    pub ante_end: Ante,
+    pub ante_current: Ante,
     pub action_history: Vec<Action>,
     pub round: usize,
 
@@ -48,23 +39,27 @@ pub struct Game {
 }
 
 impl Game {
-    pub fn new() -> Self {
+    pub fn new(config: Config) -> Self {
+        let ante_start = Ante::try_from(config.ante_start).unwrap_or(Ante::One);
         Self {
             deck: Deck::default(),
             available: Vec::new(),
             discarded: Vec::new(),
+            action_history: Vec::new(),
             blind: None,
             stage: Stage::PreBlind(),
-            ante: Ante::One,
-            action_history: Vec::new(),
-            round: DEFAULT_ROUND_START,
-            plays: DEFAULT_PLAYS,
-            discards: DEFAULT_DISCARDS,
-            reward: DEFAULT_REWARD,
-            money: DEFAULT_MONEY,
-            chips: BASE_CHIPS,
-            mult: BASE_MULT,
-            score: BASE_SCORE,
+            ante_start: ante_start,
+            ante_end: Ante::try_from(config.ante_end).unwrap_or(Ante::Eight),
+            ante_current: ante_start,
+            round: config.round_start,
+            plays: config.plays,
+            discards: config.discards,
+            reward: config.reward_base,
+            money: config.money_start,
+            chips: config.base_chips,
+            mult: config.base_mult,
+            score: config.base_score,
+            config: config,
         }
     }
 
@@ -88,9 +83,9 @@ impl Game {
     }
 
     pub fn clear_blind(&mut self) {
-        self.score = BASE_SCORE;
-        self.plays = DEFAULT_PLAYS;
-        self.discards = DEFAULT_DISCARDS;
+        self.score = self.config.base_score;
+        self.plays = self.config.plays;
+        self.discards = self.config.discards;
         self.deal();
     }
 
@@ -107,7 +102,7 @@ impl Game {
         self.deck.append(&mut self.discarded);
         self.deck.append(&mut self.available);
         self.deck.shuffle();
-        self.draw(HAND_SIZE);
+        self.draw(self.config.hand_size);
     }
 
     // remove specific cards from available, send to discarded, and draw equal number back to available
@@ -167,7 +162,7 @@ impl Game {
     }
 
     pub fn required_score(&self) -> Result<usize, GameError> {
-        let base = self.ante.base();
+        let base = self.ante_current.base();
         let required = match self.stage {
             Stage::Blind(Blind::Small) => base,
             Stage::Blind(Blind::Big) => (base as f32 * 1.5) as usize,
@@ -179,12 +174,12 @@ impl Game {
     }
 
     pub fn calc_reward(&mut self, blind: Blind) -> Result<usize, GameError> {
-        let mut interest = (self.money as f32 * DEFAULT_INTEREST_RATE).floor() as usize;
-        if interest > DEFAULT_INTEREST_MAX {
-            interest = DEFAULT_INTEREST_MAX
+        let mut interest = (self.money as f32 * self.config.interest_rate).floor() as usize;
+        if interest > self.config.interest_max {
+            interest = self.config.interest_max
         }
         let base = blind.reward();
-        let hand_bonus = self.plays * DEFAULT_MONEY_PER_HAND;
+        let hand_bonus = self.plays * self.config.money_per_hand;
         let reward = base + interest + hand_bonus;
         return Ok(reward);
     }
@@ -255,8 +250,8 @@ impl Game {
 
         // passed boss blind, either win or progress ante
         if blind == Blind::Boss {
-            if let Some(next_ante) = self.ante.next() {
-                self.ante = next_ante;
+            if let Some(ante_next) = self.ante_current.next(self.ante_end) {
+                self.ante_current = ante_next;
             } else {
                 self.stage = Stage::End(End::Win);
                 return Ok(true);
@@ -463,12 +458,18 @@ impl fmt::Display for Game {
         writeln!(f, "action history length: {}", self.action_history.len())?;
         writeln!(f, "blind: {:?}", self.blind)?;
         writeln!(f, "stage: {:?}", self.stage)?;
-        writeln!(f, "ante: {:?}", self.ante)?;
+        writeln!(f, "ante: {:?}", self.ante_current)?;
         writeln!(f, "round: {}", self.round)?;
         writeln!(f, "hands remaining: {}", self.plays)?;
         writeln!(f, "discards remaining: {}", self.discards)?;
         writeln!(f, "money: {}", self.money)?;
         writeln!(f, "score: {}", self.score)
+    }
+}
+
+impl Default for Game {
+    fn default() -> Self {
+        return Self::new(Config::default());
     }
 }
 
@@ -479,7 +480,7 @@ mod tests {
 
     #[test]
     fn test_constructor() {
-        let g = Game::new();
+        let g = Game::default();
         assert_eq!(g.available.len(), 0);
         assert_eq!(g.deck.len(), 52);
         assert_eq!(g.mult, 1);
@@ -487,17 +488,17 @@ mod tests {
 
     #[test]
     fn test_deal() {
-        let mut g = Game::new();
+        let mut g = Game::default();
         g.deal();
         // deck should be 7 cards smaller than we started with
-        assert_eq!(g.deck.len(), 52 - HAND_SIZE);
+        assert_eq!(g.deck.len(), 52 - g.config.hand_size);
         // should be 7 cards now available
-        assert_eq!(g.available.len(), HAND_SIZE);
+        assert_eq!(g.available.len(), g.config.hand_size);
     }
 
     #[test]
     fn test_draw() {
-        let mut g = Game::new();
+        let mut g = Game::default();
         g.draw(1);
         assert_eq!(g.available.len(), 1);
         assert_eq!(g.deck.len(), 52 - 1);
@@ -507,23 +508,23 @@ mod tests {
     }
     #[test]
     fn test_discard() {
-        let mut g = Game::new();
+        let mut g = Game::default();
         g.deal();
-        assert_eq!(g.available.len(), HAND_SIZE);
-        assert_eq!(g.deck.len(), 52 - HAND_SIZE);
+        assert_eq!(g.available.len(), g.config.hand_size);
+        assert_eq!(g.deck.len(), 52 - g.config.hand_size);
         // select first 4 cards
         let select = SelectHand::new(g.available[0..4].to_vec());
         let discard_res = g.discard(select.clone());
         assert!(discard_res.is_ok());
         // available should still be 7, we discarded then redrew to match
-        assert_eq!(g.available.len(), HAND_SIZE);
+        assert_eq!(g.available.len(), g.config.hand_size);
         // deck is now smaller since we drew from it
-        assert_eq!(g.deck.len(), 52 - HAND_SIZE - select.len());
+        assert_eq!(g.deck.len(), 52 - g.config.hand_size - select.len());
     }
 
     #[test]
     fn test_score() {
-        let g = Game::new();
+        let g = Game::default();
         let ace = Card::new(Value::Ace, Suit::Heart);
         let king = Card::new(Value::King, Suit::Diamond);
         let jack = Card::new(Value::Jack, Suit::Club);
@@ -580,7 +581,7 @@ mod tests {
         let king = Card::new(Value::King, Suit::Diamond);
         let jack = Card::new(Value::Jack, Suit::Club);
 
-        let mut g = Game::new();
+        let mut g = Game::default();
         g.stage = Stage::Blind(Blind::Small);
         // Only 1 card available [(Ah)]
         // Playable moves: [Ah]
@@ -607,7 +608,7 @@ mod tests {
         let king = Card::new(Value::King, Suit::Diamond);
         let jack = Card::new(Value::Jack, Suit::Club);
 
-        let mut g = Game::new();
+        let mut g = Game::default();
         g.stage = Stage::Blind(Blind::Small);
         // Only 1 card available [(Ah)]
         // Playable moves: [Ah]
