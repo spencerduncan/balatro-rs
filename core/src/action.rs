@@ -63,3 +63,10 @@ impl fmt::Display for Action {
         }
     }
 }
+
+#[cfg(feature = "python")]
+impl Action {
+    fn __repr__(&self) -> String {
+        format!("Action: {}", self)
+    }
+}

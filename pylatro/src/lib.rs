@@ -2,7 +2,7 @@ use balatro_rs::action::Action;
 use balatro_rs::card::Card;
 use balatro_rs::error::GameError;
 use balatro_rs::game::Game;
-use balatro_rs::stage::Stage;
+use balatro_rs::stage::{End, Stage};
 use pyo3::prelude::*;
 
 #[pyclass]
@@ -25,10 +25,24 @@ impl GameEngine {
         return self.game.handle_action(action);
     }
 
-    fn get_state(&self) -> GameState {
+    #[getter]
+    fn state(&self) -> GameState {
         return GameState {
             game: self.game.clone(),
         };
+    }
+    #[getter]
+    fn is_over(&self) -> bool {
+        return self.game.is_over();
+    }
+    #[getter]
+    fn is_win(&self) -> bool {
+        if let Some(end) = self.game.result() {
+            if end == End::Win {
+                return true;
+            }
+        }
+        return false;
     }
 }
 
@@ -58,6 +72,18 @@ impl GameState {
     #[getter]
     fn discarded(&self) -> Vec<Card> {
         return self.game.discarded.clone();
+    }
+    #[getter]
+    fn plays(&self) -> usize {
+        return self.game.plays;
+    }
+    #[getter]
+    fn discards(&self) -> usize {
+        return self.game.discards;
+    }
+
+    fn __repr__(&self) -> String {
+        format!("GameState:\n{}", self.game)
     }
 }
 

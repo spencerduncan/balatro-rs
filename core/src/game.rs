@@ -215,6 +215,7 @@ impl Game {
         }
         self.blind = Some(blind);
         self.stage = Stage::Blind(blind);
+        self.deal();
         return Ok(());
     }
 
