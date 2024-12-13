@@ -40,31 +40,32 @@ class BalatroEnv(gym.Env):
         moves = self._game.gen_moves()
         real_action = moves[action]
         handle_res = self._game.handle_action(real_action)
-        if handle_res is not None:
-            print(f"handle response: {handle_res}")
+        print(f"handle response: {handle_res}")
 
         self._last_score = self._score
         self._score = self._game.state.score
         self._target_score = self._game.state.required_score
+        print(f"score: {self._score}")
+        print(f"target score: {self._target_score}")
 
         terminated = self._game.is_over
-        truncated = terminated
-
-        print(f"terminated: {terminated}")
         print(f"game over: {self._game.is_over}")
-        # print(self._game.state)
+        truncated = terminated
+        print(f"terminated: {terminated}")
 
         # calc reward
         reward = 0
         score_diff = self._score - self._last_score
         if score_diff > 0:
-            reward = score_diff
+            reward = round(score_diff / 10)
         if terminated:
-            reward = 10000 if self._game.is_win else -100
+            reward = 10000 if self._game.is_win else 0
         print(f"reward: {reward}")
 
         observation = self._get_obs()
         info = self._get_info()
+        print(f"obs: {observation}")
+        print(f"info: {info}")
         return observation, reward, terminated, truncated, info
 
     def reset(self, seed: Optional[int] = None, options: Optional[dict] = None):
