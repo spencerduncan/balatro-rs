@@ -2,12 +2,12 @@ use crate::action::{Action, MoveDirection};
 use crate::ante::Ante;
 use crate::card::Card;
 use crate::config::Config;
-use crate::core::Shop;
 use crate::deck::Deck;
-use crate::effect::EffectRegistry;
+use crate::effect::{EffectRegistry, Effects};
 use crate::error::GameError;
 use crate::hand::{MadeHand, SelectHand};
 use crate::joker::Jokers;
+use crate::shop::Shop;
 use crate::stage::{Blind, End, Stage};
 
 use itertools::Itertools;
@@ -176,7 +176,7 @@ impl Game {
         // Apply effects that modify game.chips and game.mult
         for e in self.effect_registry.on_score.clone() {
             match e {
-                Effects::OnScore(f) => f(self),
+                Effects::OnScore(f) => f.lock().unwrap()(self),
                 _ => (),
             }
         }
@@ -185,8 +185,8 @@ impl Game {
         let score = self.chips * self.mult;
 
         // reset chips and mult
-        self.mult = BASE_MULT;
-        self.chips = BASE_CHIPS;
+        self.mult = self.config.base_mult;
+        self.chips = self.config.base_chips;
         return score;
     }
 
@@ -220,7 +220,7 @@ impl Game {
     }
 
     pub fn buy_joker(&mut self, joker: Jokers) -> Result<(), GameError> {
-        if self.stage != Stage::Shop {
+        if self.stage != Stage::Shop() {
             return Err(GameError::InvalidStage);
         }
         self.jokers.push(joker);
@@ -441,7 +441,7 @@ impl Game {
     // get buy joker moves
     pub fn gen_moves_buy_joker(&self) -> Option<impl Iterator<Item = Action>> {
         // If stage is not shop, cannot buy
-        if self.stage != Stage::Shop {
+        if self.stage != Stage::Shop() {
             return None;
         }
         return self.shop.gen_moves_buy_joker();
@@ -488,7 +488,7 @@ impl Game {
                 _ => Err(GameError::InvalidAction),
             },
             Action::BuyJoker(joker) => match self.stage {
-                Stage::Shop => self.buy_joker(joker),
+                Stage::Shop() => self.buy_joker(joker),
                 _ => Err(GameError::InvalidAction),
             },
             Action::NextRound() => match self.stage {
@@ -577,7 +577,7 @@ mod tests {
 
     #[test]
     fn test_score() {
-        let g = Game::default();
+        let mut g = Game::default();
         let ace = Card::new(Value::Ace, Suit::Heart);
         let king = Card::new(Value::King, Suit::Diamond);
         let jack = Card::new(Value::Jack, Suit::Club);

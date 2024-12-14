@@ -1,6 +1,6 @@
-use crate::core::action::Action;
-use crate::core::error::GameError;
-use crate::core::joker::{Jokers, Rarity};
+use crate::action::Action;
+use crate::error::GameError;
+use crate::joker::{Jokers, Rarity};
 use rand::distributions::WeightedIndex;
 use rand::prelude::*;
 
