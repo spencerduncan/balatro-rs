@@ -15,6 +15,7 @@ class BalatroEnv(gym.Env):
         self._score = 0
         self._last_score = 0
         self._target_score = 0
+        self._highest_score = 0
 
         self.observation_space = gym.spaces.Dict(
             {
@@ -25,7 +26,6 @@ class BalatroEnv(gym.Env):
 
     @property
     def action_space(self):
-        print("action space")
         actions = self._game.gen_moves()
         return spaces.Discrete(len(actions))
 
@@ -36,40 +36,43 @@ class BalatroEnv(gym.Env):
         return {"difference": self._target_score - self._score}
 
     def step(self, action):
-        print("step")
         moves = self._game.gen_moves()
-        real_action = moves[action]
-        handle_res = self._game.handle_action(real_action)
-        print(f"handle response: {handle_res}")
-
-        self._last_score = self._score
-        self._score = self._game.state.score
-        self._target_score = self._game.state.required_score
-        print(f"score: {self._score}")
-        print(f"target score: {self._target_score}")
+        if action < len(moves):
+            real_action = moves[action]
+            self._game.handle_action(real_action)
 
         terminated = self._game.is_over
-        print(f"game over: {self._game.is_over}")
         truncated = terminated
-        print(f"terminated: {terminated}")
 
-        # calc reward
+        score = self._game.state.score
+        target_score = self._game.state.required_score
+        if score > self._highest_score:
+            self._highest_score = score
+            print(f"new high score: {score}")
+        score_diff = score - self._last_score
+        # self._last_score = score
+        self._target_score = target_score
+        # print(f"prev score: {self._last_score}")
+        # print(f"current score: {self._game.state.score}")
+        # print(f"score diff: {score_diff}")
+        # self._score = self._game.state.score
+        # self._target_score = self._game.state.required_score
+
         reward = 0
-        score_diff = self._score - self._last_score
         if score_diff > 0:
-            reward = round(score_diff / 10)
+            reward = score_diff / 100
         if terminated:
-            reward = 10000 if self._game.is_win else 0
-        print(f"reward: {reward}")
+            reward = 1 if self._game.is_win else 0
+            if self._game.is_win:
+                print(f"game win: {self._game.state}")
+                print(f"score: {self._game.state.score}")
+        # print(f"reward: {reward}")
 
         observation = self._get_obs()
         info = self._get_info()
-        print(f"obs: {observation}")
-        print(f"info: {info}")
         return observation, reward, terminated, truncated, info
 
     def reset(self, seed: Optional[int] = None, options: Optional[dict] = None):
-        print("reset")
         super().reset(seed=seed)
         self._game = pylatro.GameEngine(self._config)
         self._score = 0

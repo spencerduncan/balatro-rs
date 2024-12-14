@@ -83,7 +83,7 @@ class BalatroAgent:
 def train():
     # hyperparameters
     learning_rate = 0.01
-    n_episodes = 10_000
+    n_episodes = 100_000
     start_epsilon = 1.0
     epsilon_decay = start_epsilon / (n_episodes / 2)  # reduce the exploration over time
     final_epsilon = 0.1
@@ -115,10 +115,9 @@ def train():
             # update if the environment is done and the current obs
             done = terminated or truncated
             obs = next_obs
-
         agent.decay_epsilon()
 
-        # plot(env, agent)
+    plot(env, agent)
 
 
 def plot(env, agent):
@@ -126,7 +125,6 @@ def plot(env, agent):
     fig, axs = plt.subplots(1, 3, figsize=(20, 8))
 
     # np.convolve will compute the rolling mean for 100 episodes
-
     axs[0].plot(np.convolve(env.return_queue, np.ones(100)))
     axs[0].set_title("Episode Rewards")
     axs[0].set_xlabel("Episode")
