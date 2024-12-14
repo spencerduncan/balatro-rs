@@ -26,8 +26,10 @@ pub enum GameError {
     InvalidAction,
     #[error("No card match")]
     InvalidBlind,
-    #[error("Invalid blind")]
+    #[error("No card match")]
     NoCardMatch,
+    #[error("No joker match")]
+    NoJokerMatch,
     #[error("Invalid move direction")]
     InvalidMoveDirection,
 }

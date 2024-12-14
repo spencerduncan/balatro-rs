@@ -2,19 +2,22 @@ use crate::action::{Action, MoveDirection};
 use crate::ante::Ante;
 use crate::card::Card;
 use crate::config::Config;
+use crate::core::Shop;
 use crate::deck::Deck;
+use crate::effect::EffectRegistry;
 use crate::error::GameError;
 use crate::hand::{MadeHand, SelectHand};
+use crate::joker::Jokers;
 use crate::stage::{Blind, End, Stage};
+
+use itertools::Itertools;
 use std::collections::HashSet;
 use std::fmt;
 
-use itertools::Itertools;
-
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone)]
 pub struct Game {
     pub config: Config,
+    pub shop: Shop,
     pub deck: Deck,
     pub available: Vec<Card>,
     pub discarded: Vec<Card>,
@@ -25,6 +28,10 @@ pub struct Game {
     pub ante_current: Ante,
     pub action_history: Vec<Action>,
     pub round: usize,
+
+    // jokers and their effects
+    pub jokers: Vec<Jokers>,
+    pub effect_registry: EffectRegistry,
 
     // playing
     pub plays: usize,
@@ -42,10 +49,13 @@ impl Game {
     pub fn new(config: Config) -> Self {
         let ante_start = Ante::try_from(config.ante_start).unwrap_or(Ante::One);
         Self {
+            shop: Shop::new(),
             deck: Deck::default(),
             available: Vec::new(),
             discarded: Vec::new(),
             action_history: Vec::new(),
+            jokers: Vec::new(),
+            effect_registry: EffectRegistry::new(),
             blind: None,
             stage: Stage::PreBlind(),
             ante_start: ante_start,
@@ -154,11 +164,30 @@ impl Game {
         }
     }
 
-    pub fn calc_score(&self, hand: MadeHand) -> usize {
-        let base_mult = hand.rank.level().mult;
-        let base_chips = hand.rank.level().chips;
-        let hand_chips: usize = hand.hand.cards().iter().map(|c| c.chips()).sum();
-        return (hand_chips + base_chips) * base_mult;
+    pub fn calc_score(&mut self, hand: MadeHand) -> usize {
+        // compute chips and mult from hand level
+        self.chips += hand.rank.level().chips;
+        self.mult += hand.rank.level().mult;
+
+        // add chips for each played card
+        let card_chips: usize = hand.hand.cards().iter().map(|c| c.chips()).sum();
+        self.chips += card_chips;
+
+        // Apply effects that modify game.chips and game.mult
+        for e in self.effect_registry.on_score.clone() {
+            match e {
+                Effects::OnScore(f) => f(self),
+                _ => (),
+            }
+        }
+
+        // compute score
+        let score = self.chips * self.mult;
+
+        // reset chips and mult
+        self.mult = BASE_MULT;
+        self.chips = BASE_CHIPS;
+        return score;
     }
 
     pub fn required_score(&self) -> usize {
@@ -187,6 +216,16 @@ impl Game {
         self.money += self.reward;
         self.reward = 0;
         self.stage = Stage::Shop();
+        return Ok(());
+    }
+
+    pub fn buy_joker(&mut self, joker: Jokers) -> Result<(), GameError> {
+        if self.stage != Stage::Shop {
+            return Err(GameError::InvalidStage);
+        }
+        self.jokers.push(joker);
+        self.effect_registry
+            .register_jokers(self.jokers.clone(), &self.clone());
         return Ok(());
     }
 
@@ -399,6 +438,15 @@ impl Game {
         }
     }
 
+    // get buy joker moves
+    pub fn gen_moves_buy_joker(&self) -> Option<impl Iterator<Item = Action>> {
+        // If stage is not shop, cannot buy
+        if self.stage != Stage::Shop {
+            return None;
+        }
+        return self.shop.gen_moves_buy_joker();
+    }
+
     // get all legal moves that can be executed given current state
     pub fn gen_moves(&self) -> impl Iterator<Item = Action> {
         let plays = self.gen_moves_play();
@@ -407,6 +455,7 @@ impl Game {
         let cashouts = self.gen_moves_cash_out();
         let nextrounds = self.gen_moves_next_round();
         let selectblinds = self.gen_moves_select_blind();
+        let buy_jokers = self.gen_moves_buy_joker();
 
         return plays
             .into_iter()
@@ -415,7 +464,8 @@ impl Game {
             .chain(move_cards.into_iter().flatten())
             .chain(cashouts.into_iter().flatten())
             .chain(nextrounds.into_iter().flatten())
-            .chain(selectblinds.into_iter().flatten());
+            .chain(selectblinds.into_iter().flatten())
+            .chain(buy_jokers.into_iter().flatten());
     }
 
     pub fn handle_action(&mut self, action: Action) -> Result<(), GameError> {
@@ -435,6 +485,10 @@ impl Game {
             },
             Action::CashOut(_reward) => match self.stage {
                 Stage::PostBlind() => self.cashout(),
+                _ => Err(GameError::InvalidAction),
+            },
+            Action::BuyJoker(joker) => match self.stage {
+                Stage::Shop => self.buy_joker(joker),
                 _ => Err(GameError::InvalidAction),
             },
             Action::NextRound() => match self.stage {
@@ -482,7 +536,7 @@ mod tests {
         let g = Game::default();
         assert_eq!(g.available.len(), 0);
         assert_eq!(g.deck.len(), 52);
-        assert_eq!(g.mult, 1);
+        assert_eq!(g.mult, 0);
     }
 
     #[test]

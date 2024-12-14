@@ -1,5 +1,6 @@
 use crate::card::Card;
 use crate::hand::SelectHand;
+use crate::joker::Jokers;
 use crate::stage::Blind;
 use pyo3::pyclass;
 use std::fmt;
@@ -33,7 +34,7 @@ pub enum Action {
     Discard(SelectHand),
     MoveCard(MoveDirection, Card),
     CashOut(usize),
-    // BuyConsumable(Consumable)
+    BuyJoker(Jokers),
     NextRound(),
     SelectBlind(Blind),
     // SkipBlind(Blind),
@@ -53,6 +54,9 @@ impl fmt::Display for Action {
             }
             Self::CashOut(reward) => {
                 write!(f, "CashOut: {:}", reward)
+            }
+            Self::BuyJoker(joker) => {
+                write!(f, "BuyJoker: {:?}", joker)
             }
             Self::NextRound() => {
                 write!(f, "NextRound")
