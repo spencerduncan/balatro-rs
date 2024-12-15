@@ -1,6 +1,7 @@
-use crate::core::effect::Effects;
-use crate::core::game::Game;
-use std::sync::Arc;
+use crate::effect::Effects;
+use crate::game::Game;
+use pyo3::pyclass;
+use std::sync::{Arc, Mutex};
 use strum::{EnumIter, IntoEnumIterator};
 
 pub trait Joker: std::fmt::Debug + Clone {
@@ -30,6 +31,7 @@ pub enum Rarity {
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "python", pyclass(eq))]
 #[derive(Debug, Clone, EnumIter, Eq, PartialEq, Hash)]
 pub enum Jokers {
     TheJoker(TheJoker),
@@ -76,6 +78,7 @@ impl Joker for Jokers {
 }
 
 #[derive(Debug, Clone, Default, Eq, PartialEq, Hash, serde::Serialize, serde::Deserialize)]
+#[cfg_attr(feature = "python", pyclass(eq))]
 pub struct TheJoker {}
 
 impl Joker for TheJoker {
@@ -95,11 +98,12 @@ impl Joker for TheJoker {
         fn apply(g: &mut Game) {
             g.mult += 4;
         }
-        vec![Effects::OnScore(Arc::new(apply))]
+        vec![Effects::OnScore(Arc::new(Mutex::new(apply)))]
     }
 }
 
 #[derive(Debug, Clone, Default, Eq, PartialEq, Hash, serde::Serialize, serde::Deserialize)]
+#[cfg_attr(feature = "python", pyclass(eq))]
 pub struct LustyJoker {}
 
 impl Joker for LustyJoker {
@@ -119,21 +123,21 @@ impl Joker for LustyJoker {
         fn apply(g: &mut Game) {
             g.mult += 4;
         }
-        vec![Effects::OnScore(Arc::new(apply))]
+        vec![Effects::OnScore(Arc::new(Mutex::new(apply)))]
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::core::card::{Card, Suit, Value};
-    use crate::core::hand::SelectHand;
-    use crate::core::stage::{Blind, Stage};
+    use crate::card::{Card, Suit, Value};
+    use crate::hand::SelectHand;
+    use crate::stage::{Blind, Stage};
 
     use super::*;
 
     #[test]
     fn test_the_joker() {
-        let mut g = Game::new();
+        let mut g = Game::default();
         g.stage = Stage::Blind(Blind::Small);
         let j = Jokers::TheJoker(TheJoker {});
 
@@ -148,7 +152,7 @@ mod tests {
         assert_eq!(score, 16);
 
         // buy (and apply) the joker
-        g.stage = Stage::Shop;
+        g.stage = Stage::Shop();
         g.buy_joker(j).unwrap();
         g.stage = Stage::Blind(Blind::Small);
         // Score Ace high with the Joker

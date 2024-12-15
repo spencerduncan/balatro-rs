@@ -1,3 +1,5 @@
+use pyo3::exceptions::PyException;
+use pyo3::prelude::*;
 use thiserror::Error;
 
 #[derive(Error, Debug, Clone)]
@@ -30,4 +32,11 @@ pub enum GameError {
     NoJokerMatch,
     #[error("Invalid move direction")]
     InvalidMoveDirection,
+}
+
+#[cfg(feature = "python")]
+impl std::convert::From<GameError> for PyErr {
+    fn from(err: GameError) -> PyErr {
+        PyException::new_err(err.to_string())
+    }
 }

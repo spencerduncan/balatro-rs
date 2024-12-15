@@ -1,16 +1,28 @@
-pub mod core;
+pub mod action;
+pub mod ante;
+pub mod card;
+pub mod config;
+pub mod deck;
+pub mod effect;
+pub mod error;
+pub mod game;
+pub mod hand;
+pub mod joker;
+pub mod rank;
+pub mod shop;
+pub mod stage;
 
 #[cfg(test)]
 mod tests {
-    use crate::core::action::Action;
-    use crate::core::game::Game;
-    use crate::core::stage::Stage;
+    use crate::action::Action;
+    use crate::game::Game;
+    use crate::stage::Stage;
 
     use rand::Rng;
 
     #[test]
     fn test_game() {
-        let mut g = Game::new();
+        let mut g = Game::default();
 
         g.start();
         while !g.is_over() {

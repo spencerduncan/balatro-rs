@@ -1,4 +1,4 @@
-use crate::core::card::{Card, Suit, Value};
+use crate::card::{Card, Suit, Value};
 use rand::{seq::SliceRandom, thread_rng};
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -10,13 +10,6 @@ pub struct Deck {
 impl Deck {
     pub fn new() -> Self {
         Self { cards: Vec::new() }
-    }
-    pub fn remove(&mut self, c: &Card) -> bool {
-        if let Some(pos) = self.cards.iter().position(|x| x == c) {
-            self.cards.remove(pos);
-            return true;
-        }
-        return false;
     }
     pub(crate) fn draw(&mut self, n: usize) -> Option<Vec<Card>> {
         if self.cards.len() < n {
@@ -35,6 +28,11 @@ impl Deck {
     pub(crate) fn append(&mut self, other: &mut Vec<Card>) {
         self.cards.append(other);
     }
+
+    pub fn cards(&self) -> Vec<Card> {
+        self.cards.clone()
+    }
+
     // // Loops through cards, assigning index to each equal to index in deck
     // pub(crate) fn index_cards(&mut self) {
     //     let mut i = 0;

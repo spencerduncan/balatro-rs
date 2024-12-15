@@ -1,10 +1,12 @@
-use crate::core::card::Card;
-use crate::core::hand::SelectHand;
-use crate::core::joker::Jokers;
-use crate::core::stage::Blind;
+use crate::card::Card;
+use crate::hand::SelectHand;
+use crate::joker::Jokers;
+use crate::stage::Blind;
+use pyo3::pyclass;
 use std::fmt;
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "python", pyclass(eq))]
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum MoveDirection {
     Left,
@@ -25,6 +27,7 @@ impl fmt::Display for MoveDirection {
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "python", pyclass(eq))]
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum Action {
     Play(SelectHand),
@@ -62,5 +65,12 @@ impl fmt::Display for Action {
                 write!(f, "SelectBlind: {:?}", blind)
             }
         }
+    }
+}
+
+#[cfg(feature = "python")]
+impl Action {
+    fn __repr__(&self) -> String {
+        format!("Action: {}", self)
     }
 }

@@ -1,42 +1,31 @@
-use crate::core::action::{Action, MoveDirection};
-use crate::core::ante::Ante;
-use crate::core::card::Card;
-use crate::core::deck::Deck;
-use crate::core::effect::EffectRegistry;
-use crate::core::error::GameError;
-use crate::core::hand::{MadeHand, SelectHand};
-use crate::core::joker::Jokers;
-use crate::core::shop::Shop;
-use crate::core::stage::{Blind, End, Stage};
+use crate::action::{Action, MoveDirection};
+use crate::ante::Ante;
+use crate::card::Card;
+use crate::config::Config;
+use crate::deck::Deck;
+use crate::effect::{EffectRegistry, Effects};
+use crate::error::GameError;
+use crate::hand::{MadeHand, SelectHand};
+use crate::joker::Jokers;
+use crate::shop::Shop;
+use crate::stage::{Blind, End, Stage};
+
+use itertools::Itertools;
 use std::collections::HashSet;
 use std::fmt;
 
-use itertools::Itertools;
-
-use super::effect::Effects;
-
-const DEFAULT_ROUND_START: usize = 0;
-const DEFAULT_PLAYS: usize = 4;
-const DEFAULT_DISCARDS: usize = 4;
-const DEFAULT_MONEY: usize = 0;
-const DEFAULT_REWARD: usize = 0;
-const DEFAULT_MONEY_PER_HAND: usize = 1;
-const DEFAULT_INTEREST_RATE: f32 = 0.2;
-const DEFAULT_INTEREST_MAX: usize = 5;
-const HAND_SIZE: usize = 8;
-const BASE_MULT: usize = 0;
-const BASE_CHIPS: usize = 0;
-const BASE_SCORE: usize = 0;
-
 #[derive(Debug, Clone)]
 pub struct Game {
+    pub config: Config,
     pub shop: Shop,
     pub deck: Deck,
     pub available: Vec<Card>,
     pub discarded: Vec<Card>,
     pub blind: Option<Blind>,
     pub stage: Stage,
-    pub ante: Ante,
+    pub ante_start: Ante,
+    pub ante_end: Ante,
+    pub ante_current: Ante,
     pub action_history: Vec<Action>,
     pub round: usize,
 
@@ -57,32 +46,36 @@ pub struct Game {
 }
 
 impl Game {
-    pub fn new() -> Self {
+    pub fn new(config: Config) -> Self {
+        let ante_start = Ante::try_from(config.ante_start).unwrap_or(Ante::One);
         Self {
             shop: Shop::new(),
             deck: Deck::default(),
             available: Vec::new(),
             discarded: Vec::new(),
-            blind: None,
-            stage: Stage::PreBlind,
-            ante: Ante::One,
             action_history: Vec::new(),
-            round: DEFAULT_ROUND_START,
             jokers: Vec::new(),
             effect_registry: EffectRegistry::new(),
-            plays: DEFAULT_PLAYS,
-            discards: DEFAULT_DISCARDS,
-            reward: DEFAULT_REWARD,
-            money: DEFAULT_MONEY,
-            chips: BASE_CHIPS,
-            mult: BASE_MULT,
-            score: BASE_SCORE,
+            blind: None,
+            stage: Stage::PreBlind(),
+            ante_start: ante_start,
+            ante_end: Ante::try_from(config.ante_end).unwrap_or(Ante::Eight),
+            ante_current: ante_start,
+            round: config.round_start,
+            plays: config.plays,
+            discards: config.discards,
+            reward: config.reward_base,
+            money: config.money_start,
+            chips: config.base_chips,
+            mult: config.base_mult,
+            score: config.base_score,
+            config: config,
         }
     }
 
     pub fn start(&mut self) {
         // for now just move state to small blind
-        self.stage = Stage::PreBlind;
+        self.stage = Stage::PreBlind();
         self.deal();
     }
 
@@ -100,9 +93,9 @@ impl Game {
     }
 
     pub fn clear_blind(&mut self) {
-        self.score = BASE_SCORE;
-        self.plays = DEFAULT_PLAYS;
-        self.discards = DEFAULT_DISCARDS;
+        self.score = self.config.base_score;
+        self.plays = self.config.plays;
+        self.discards = self.config.discards;
         self.deal();
     }
 
@@ -119,7 +112,7 @@ impl Game {
         self.deck.append(&mut self.discarded);
         self.deck.append(&mut self.available);
         self.deck.shuffle();
-        self.draw(HAND_SIZE);
+        self.draw(self.config.hand_size);
     }
 
     // remove specific cards from available, send to discarded, and draw equal number back to available
@@ -183,7 +176,7 @@ impl Game {
         // Apply effects that modify game.chips and game.mult
         for e in self.effect_registry.on_score.clone() {
             match e {
-                Effects::OnScore(f) => f(self),
+                Effects::OnScore(f) => f.lock().unwrap()(self),
                 _ => (),
             }
         }
@@ -192,30 +185,29 @@ impl Game {
         let score = self.chips * self.mult;
 
         // reset chips and mult
-        self.mult = BASE_MULT;
-        self.chips = BASE_CHIPS;
+        self.mult = self.config.base_mult;
+        self.chips = self.config.base_chips;
         return score;
     }
 
-    pub fn required_score(&self) -> Result<usize, GameError> {
-        let base = self.ante.base();
-        let required = match self.stage {
-            Stage::Blind(Blind::Small) => base,
-            Stage::Blind(Blind::Big) => (base as f32 * 1.5) as usize,
-            Stage::Blind(Blind::Boss) => base * 2,
-            // can only check score if in blind stage
-            _ => return Err(GameError::InvalidStage),
+    pub fn required_score(&self) -> usize {
+        let base = self.ante_current.base();
+        let required = match self.blind {
+            None => base,
+            Some(Blind::Small) => base,
+            Some(Blind::Big) => (base as f32 * 1.5) as usize,
+            Some(Blind::Boss) => base * 2,
         };
-        return Ok(required);
+        return required;
     }
 
     pub fn calc_reward(&mut self, blind: Blind) -> Result<usize, GameError> {
-        let mut interest = (self.money as f32 * DEFAULT_INTEREST_RATE).floor() as usize;
-        if interest > DEFAULT_INTEREST_MAX {
-            interest = DEFAULT_INTEREST_MAX
+        let mut interest = (self.money as f32 * self.config.interest_rate).floor() as usize;
+        if interest > self.config.interest_max {
+            interest = self.config.interest_max
         }
         let base = blind.reward();
-        let hand_bonus = self.plays * DEFAULT_MONEY_PER_HAND;
+        let hand_bonus = self.plays * self.config.money_per_hand;
         let reward = base + interest + hand_bonus;
         return Ok(reward);
     }
@@ -223,12 +215,12 @@ impl Game {
     pub fn cashout(&mut self) -> Result<(), GameError> {
         self.money += self.reward;
         self.reward = 0;
-        self.stage = Stage::Shop;
+        self.stage = Stage::Shop();
         return Ok(());
     }
 
     pub fn buy_joker(&mut self, joker: Jokers) -> Result<(), GameError> {
-        if self.stage != Stage::Shop {
+        if self.stage != Stage::Shop() {
             return Err(GameError::InvalidStage);
         }
         self.jokers.push(joker);
@@ -239,7 +231,7 @@ impl Game {
 
     pub fn select_blind(&mut self, blind: Blind) -> Result<(), GameError> {
         // can only set blind if stage is pre blind
-        if self.stage != Stage::PreBlind {
+        if self.stage != Stage::PreBlind() {
             return Err(GameError::InvalidStage);
         }
         // provided blind must be expected next blind
@@ -256,11 +248,12 @@ impl Game {
         }
         self.blind = Some(blind);
         self.stage = Stage::Blind(blind);
+        self.deal();
         return Ok(());
     }
 
     pub fn next_round(&mut self) -> Result<(), GameError> {
-        self.stage = Stage::PreBlind;
+        self.stage = Stage::PreBlind();
         self.round += 1;
         return Ok(());
     }
@@ -273,7 +266,7 @@ impl Game {
         }
 
         self.score += score;
-        let required = self.required_score()?;
+        let required = self.required_score();
 
         // blind not passed
         if self.score < required {
@@ -295,8 +288,8 @@ impl Game {
 
         // passed boss blind, either win or progress ante
         if blind == Blind::Boss {
-            if let Some(next_ante) = self.ante.next() {
-                self.ante = next_ante;
+            if let Some(ante_next) = self.ante_current.next(self.ante_end) {
+                self.ante_current = ante_next;
             } else {
                 self.stage = Stage::End(End::Win);
                 return Ok(true);
@@ -304,7 +297,7 @@ impl Game {
         };
 
         // finish blind, proceed to post blind
-        self.stage = Stage::PostBlind;
+        self.stage = Stage::PostBlind();
         return Ok(true);
     }
 
@@ -417,7 +410,7 @@ impl Game {
     // get cash out move
     pub fn gen_moves_cash_out(&self) -> Option<impl Iterator<Item = Action>> {
         // If stage is not post blind, cannot cash out
-        if self.stage != Stage::PostBlind {
+        if self.stage != Stage::PostBlind() {
             return None;
         }
         return Some(vec![Action::CashOut(self.reward)].into_iter());
@@ -426,7 +419,7 @@ impl Game {
     // get next round move
     pub fn gen_moves_next_round(&self) -> Option<impl Iterator<Item = Action>> {
         // If stage is not shop, cannot next round
-        if self.stage != Stage::Shop {
+        if self.stage != Stage::Shop() {
             return None;
         }
         return Some(vec![Action::NextRound()].into_iter());
@@ -435,7 +428,7 @@ impl Game {
     // get select blind move
     pub fn gen_moves_select_blind(&self) -> Option<impl Iterator<Item = Action>> {
         // If stage is not pre blind, cannot select blind
-        if self.stage != Stage::PreBlind {
+        if self.stage != Stage::PreBlind() {
             return None;
         }
         if let Some(blind) = self.blind {
@@ -448,7 +441,7 @@ impl Game {
     // get buy joker moves
     pub fn gen_moves_buy_joker(&self) -> Option<impl Iterator<Item = Action>> {
         // If stage is not shop, cannot buy
-        if self.stage != Stage::Shop {
+        if self.stage != Stage::Shop() {
             return None;
         }
         return self.shop.gen_moves_buy_joker();
@@ -491,19 +484,19 @@ impl Game {
                 false => Err(GameError::InvalidAction),
             },
             Action::CashOut(_reward) => match self.stage {
-                Stage::PostBlind => self.cashout(),
+                Stage::PostBlind() => self.cashout(),
                 _ => Err(GameError::InvalidAction),
             },
             Action::BuyJoker(joker) => match self.stage {
-                Stage::Shop => self.buy_joker(joker),
+                Stage::Shop() => self.buy_joker(joker),
                 _ => Err(GameError::InvalidAction),
             },
             Action::NextRound() => match self.stage {
-                Stage::Shop => self.next_round(),
+                Stage::Shop() => self.next_round(),
                 _ => Err(GameError::InvalidAction),
             },
             Action::SelectBlind(blind) => match self.stage {
-                Stage::PreBlind => self.select_blind(blind),
+                Stage::PreBlind() => self.select_blind(blind),
                 _ => Err(GameError::InvalidAction),
             },
         };
@@ -518,7 +511,7 @@ impl fmt::Display for Game {
         writeln!(f, "action history length: {}", self.action_history.len())?;
         writeln!(f, "blind: {:?}", self.blind)?;
         writeln!(f, "stage: {:?}", self.stage)?;
-        writeln!(f, "ante: {:?}", self.ante)?;
+        writeln!(f, "ante: {:?}", self.ante_current)?;
         writeln!(f, "round: {}", self.round)?;
         writeln!(f, "hands remaining: {}", self.plays)?;
         writeln!(f, "discards remaining: {}", self.discards)?;
@@ -527,14 +520,20 @@ impl fmt::Display for Game {
     }
 }
 
+impl Default for Game {
+    fn default() -> Self {
+        return Self::new(Config::default());
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::card::{Suit, Value};
+    use crate::card::{Suit, Value};
 
     #[test]
     fn test_constructor() {
-        let g = Game::new();
+        let g = Game::default();
         assert_eq!(g.available.len(), 0);
         assert_eq!(g.deck.len(), 52);
         assert_eq!(g.mult, 0);
@@ -542,17 +541,17 @@ mod tests {
 
     #[test]
     fn test_deal() {
-        let mut g = Game::new();
+        let mut g = Game::default();
         g.deal();
         // deck should be 7 cards smaller than we started with
-        assert_eq!(g.deck.len(), 52 - HAND_SIZE);
+        assert_eq!(g.deck.len(), 52 - g.config.hand_size);
         // should be 7 cards now available
-        assert_eq!(g.available.len(), HAND_SIZE);
+        assert_eq!(g.available.len(), g.config.hand_size);
     }
 
     #[test]
     fn test_draw() {
-        let mut g = Game::new();
+        let mut g = Game::default();
         g.draw(1);
         assert_eq!(g.available.len(), 1);
         assert_eq!(g.deck.len(), 52 - 1);
@@ -562,23 +561,23 @@ mod tests {
     }
     #[test]
     fn test_discard() {
-        let mut g = Game::new();
+        let mut g = Game::default();
         g.deal();
-        assert_eq!(g.available.len(), HAND_SIZE);
-        assert_eq!(g.deck.len(), 52 - HAND_SIZE);
+        assert_eq!(g.available.len(), g.config.hand_size);
+        assert_eq!(g.deck.len(), 52 - g.config.hand_size);
         // select first 4 cards
         let select = SelectHand::new(g.available[0..4].to_vec());
         let discard_res = g.discard(select.clone());
         assert!(discard_res.is_ok());
         // available should still be 7, we discarded then redrew to match
-        assert_eq!(g.available.len(), HAND_SIZE);
+        assert_eq!(g.available.len(), g.config.hand_size);
         // deck is now smaller since we drew from it
-        assert_eq!(g.deck.len(), 52 - HAND_SIZE - select.len());
+        assert_eq!(g.deck.len(), 52 - g.config.hand_size - select.len());
     }
 
     #[test]
     fn test_score() {
-        let g = &mut Game::new();
+        let mut g = Game::default();
         let ace = Card::new(Value::Ace, Suit::Heart);
         let king = Card::new(Value::King, Suit::Diamond);
         let jack = Card::new(Value::Jack, Suit::Club);
@@ -635,7 +634,7 @@ mod tests {
         let king = Card::new(Value::King, Suit::Diamond);
         let jack = Card::new(Value::Jack, Suit::Club);
 
-        let mut g = Game::new();
+        let mut g = Game::default();
         g.stage = Stage::Blind(Blind::Small);
         // Only 1 card available [(Ah)]
         // Playable moves: [Ah]
@@ -662,7 +661,7 @@ mod tests {
         let king = Card::new(Value::King, Suit::Diamond);
         let jack = Card::new(Value::Jack, Suit::Club);
 
-        let mut g = Game::new();
+        let mut g = Game::default();
         g.stage = Stage::Blind(Blind::Small);
         // Only 1 card available [(Ah)]
         // Playable moves: [Ah]

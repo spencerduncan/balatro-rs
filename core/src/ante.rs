@@ -1,3 +1,5 @@
+use std::convert::TryFrom;
+
 /// All ante levels.
 // Goes above 8 for endless mode.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -30,7 +32,10 @@ impl Ante {
             Self::Eight => 50000,
         }
     }
-    pub fn next(&self) -> Option<Self> {
+    pub fn next(&self, max: Ante) -> Option<Self> {
+        if *self == max {
+            return None;
+        }
         match self {
             Self::Zero => Some(Self::One),
             Self::One => Some(Self::Two),
@@ -41,6 +46,24 @@ impl Ante {
             Self::Six => Some(Self::Seven),
             Self::Seven => Some(Self::Eight),
             Self::Eight => None,
+        }
+    }
+}
+
+impl TryFrom<usize> for Ante {
+    type Error = ();
+
+    fn try_from(i: usize) -> Result<Self, Self::Error> {
+        match i {
+            1 => Ok(Self::One),
+            2 => Ok(Self::Two),
+            3 => Ok(Self::Three),
+            4 => Ok(Self::Four),
+            5 => Ok(Self::Five),
+            6 => Ok(Self::Six),
+            7 => Ok(Self::Seven),
+            8 => Ok(Self::Eight),
+            _ => Err(()),
         }
     }
 }

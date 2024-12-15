@@ -1,6 +1,6 @@
-use crate::core::game::Game;
-use crate::core::joker::{Joker, Jokers};
-use std::sync::Arc;
+use crate::game::Game;
+use crate::joker::{Joker, Jokers};
+use std::sync::{Arc, Mutex};
 
 #[derive(Debug, Clone)]
 pub struct EffectRegistry {
@@ -34,11 +34,13 @@ impl EffectRegistry {
 }
 
 #[derive(Clone)]
+// signature of these callbacks are more complicated so they
+// can be used by pyo3 as part of python class.
 pub enum Effects {
-    OnPlay(Arc<dyn Fn(&mut Game)>),
-    OnDiscard(Arc<dyn Fn(&mut Game)>),
-    OnScore(Arc<dyn Fn(&mut Game)>),
-    OnHandRank(Arc<dyn Fn(&mut Game)>),
+    OnPlay(Arc<Mutex<dyn Fn(&mut Game) + Send + 'static>>),
+    OnDiscard(Arc<Mutex<dyn Fn(&mut Game) + Send + 'static>>),
+    OnScore(Arc<Mutex<dyn Fn(&mut Game) + Send + 'static>>),
+    OnHandRank(Arc<Mutex<dyn Fn(&mut Game) + Send + 'static>>),
 }
 
 impl std::fmt::Debug for Effects {
