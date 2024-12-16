@@ -33,77 +33,82 @@ pub enum Rarity {
     Legendary,
 }
 
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "python", pyclass(eq))]
-#[derive(Debug, Clone, EnumIter, Eq, PartialEq, Hash)]
-pub enum Jokers {
-    TheJoker(TheJoker),
-    GreedyJoker(GreedyJoker),
-    LustyJoker(LustyJoker),
-    WrathfulJoker(WrathfulJoker),
-    GluttonousJoker(GluttonousJoker),
+// We could pass around `Box<dyn Joker>` but it doesn't work so nice with pyo3 and serde.
+// Since we know all variants (one for each joker), we define an enum that implements
+// our `Joker` trait. This macro just reduces the amount of boilerplate we have to copy
+// to match each joker and call its methods.
+// It ends up creating an enum `Jokers` that contains each joker struct (where each struct impl `Joker`), and we impl `Joker`
+// for `Jokers` enum by matching each case and calling underlying methods.
+// https://stackoverflow.com/questions/63848427/using-enums-for-dynamic-polymorphism-in-rust/63849405#63849405
+macro_rules! make_jokers {
+    ($($x:ident), *) => {
+        #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+        #[cfg_attr(feature = "python", pyclass(eq))]
+        #[derive(Debug, Clone, EnumIter, Eq, PartialEq, Hash)]
+        pub enum Jokers {
+            $(
+                $x($x),
+            )*
+        }
+
+        impl Joker for Jokers {
+            fn name(&self) -> String {
+                match self {
+                    $(
+                        Jokers::$x(joker) => joker.name(),
+                    )*
+                }
+            }
+            fn desc(&self) -> String {
+                match self {
+                    $(
+                        Jokers::$x(joker) => joker.desc(),
+                    )*
+                }
+            }
+            fn cost(&self) -> usize {
+                match self {
+                    $(
+                        Jokers::$x(joker) => joker.cost(),
+                    )*
+                }
+            }
+            fn rarity(&self) -> Rarity {
+                match self {
+                    $(
+                        Jokers::$x(joker) => joker.rarity(),
+                    )*
+                }
+            }
+            fn categories(&self) -> Vec<Categories> {
+                match self {
+                    $(
+                        Jokers::$x(joker) => joker.categories(),
+                    )*
+                }
+            }
+            fn effects(&self, game: &Game) -> Vec<Effects> {
+                match self {
+                    $(
+                        Jokers::$x(joker) => joker.effects(game),
+                    )*
+                }
+            }
+        }
+    }
 }
+
+make_jokers!(
+    TheJoker,
+    GreedyJoker,
+    LustyJoker,
+    WrathfulJoker,
+    GluttonousJoker
+);
 
 impl Jokers {
     pub fn by_rarity(rarirty: Rarity) -> Vec<Self> {
         return Self::iter().filter(|j| j.rarity() == rarirty).collect();
-    }
-}
-
-impl Joker for Jokers {
-    fn name(&self) -> String {
-        match self {
-            Self::TheJoker(j) => j.name(),
-            Self::GreedyJoker(j) => j.name(),
-            Self::LustyJoker(j) => j.name(),
-            Self::WrathfulJoker(j) => j.name(),
-            Self::GluttonousJoker(j) => j.name(),
-        }
-    }
-    fn desc(&self) -> String {
-        match self {
-            Self::TheJoker(j) => j.desc(),
-            Self::GreedyJoker(j) => j.desc(),
-            Self::LustyJoker(j) => j.desc(),
-            Self::WrathfulJoker(j) => j.desc(),
-            Self::GluttonousJoker(j) => j.desc(),
-        }
-    }
-    fn cost(&self) -> usize {
-        match self {
-            Self::TheJoker(j) => j.cost(),
-            Self::GreedyJoker(j) => j.cost(),
-            Self::LustyJoker(j) => j.cost(),
-            Self::WrathfulJoker(j) => j.cost(),
-            Self::GluttonousJoker(j) => j.cost(),
-        }
-    }
-    fn rarity(&self) -> Rarity {
-        match self {
-            Self::TheJoker(j) => j.rarity(),
-            Self::GreedyJoker(j) => j.rarity(),
-            Self::LustyJoker(j) => j.rarity(),
-            Self::WrathfulJoker(j) => j.rarity(),
-            Self::GluttonousJoker(j) => j.rarity(),
-        }
-    }
-    fn categories(&self) -> Vec<Categories> {
-        match self {
-            Self::TheJoker(j) => j.categories(),
-            Self::GreedyJoker(j) => j.categories(),
-            Self::LustyJoker(j) => j.categories(),
-            Self::WrathfulJoker(j) => j.categories(),
-            Self::GluttonousJoker(j) => j.categories(),
-        }
-    }
-    fn effects(&self, game: &Game) -> Vec<Effects> {
-        match self {
-            Self::TheJoker(j) => j.effects(game),
-            Self::GreedyJoker(j) => j.effects(game),
-            Self::LustyJoker(j) => j.effects(game),
-            Self::WrathfulJoker(j) => j.effects(game),
-            Self::GluttonousJoker(j) => j.effects(game),
-        }
     }
 }
 
