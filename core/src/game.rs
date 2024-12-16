@@ -176,7 +176,7 @@ impl Game {
         // Apply effects that modify game.chips and game.mult
         for e in self.effect_registry.on_score.clone() {
             match e {
-                Effects::OnScore(f) => f.lock().unwrap()(self, hand.hand.clone()),
+                Effects::OnScore(f) => f.lock().unwrap()(self, hand.clone()),
                 _ => (),
             }
         }

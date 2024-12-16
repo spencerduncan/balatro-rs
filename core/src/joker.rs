@@ -1,7 +1,7 @@
 use crate::card::Suit;
 use crate::effect::Effects;
 use crate::game::Game;
-use crate::hand::SelectHand;
+use crate::hand::MadeHand;
 use pyo3::pyclass;
 use std::sync::{Arc, Mutex};
 use strum::{EnumIter, IntoEnumIterator};
@@ -128,7 +128,7 @@ impl Joker for TheJoker {
         vec![Categories::MultPlus]
     }
     fn effects(&self, _in: &Game) -> Vec<Effects> {
-        fn apply(g: &mut Game, _hand: SelectHand) {
+        fn apply(g: &mut Game, _hand: MadeHand) {
             g.mult += 4;
         }
         vec![Effects::OnScore(Arc::new(Mutex::new(apply)))]
@@ -156,8 +156,13 @@ impl Joker for GreedyJoker {
         vec![Categories::MultPlus]
     }
     fn effects(&self, _in: &Game) -> Vec<Effects> {
-        fn apply(g: &mut Game, hand: SelectHand) {
-            let diamonds = hand.suits().iter().filter(|s| **s == Suit::Diamond).count();
+        fn apply(g: &mut Game, hand: MadeHand) {
+            let diamonds = hand
+                .hand
+                .suits()
+                .iter()
+                .filter(|s| **s == Suit::Diamond)
+                .count();
             g.mult += diamonds * 3
         }
         vec![Effects::OnScore(Arc::new(Mutex::new(apply)))]
@@ -185,8 +190,13 @@ impl Joker for LustyJoker {
         vec![Categories::MultPlus]
     }
     fn effects(&self, _in: &Game) -> Vec<Effects> {
-        fn apply(g: &mut Game, hand: SelectHand) {
-            let hearts = hand.suits().iter().filter(|s| **s == Suit::Heart).count();
+        fn apply(g: &mut Game, hand: MadeHand) {
+            let hearts = hand
+                .hand
+                .suits()
+                .iter()
+                .filter(|s| **s == Suit::Heart)
+                .count();
             g.mult += hearts * 3
         }
         vec![Effects::OnScore(Arc::new(Mutex::new(apply)))]
@@ -214,8 +224,13 @@ impl Joker for WrathfulJoker {
         vec![Categories::MultPlus]
     }
     fn effects(&self, _in: &Game) -> Vec<Effects> {
-        fn apply(g: &mut Game, hand: SelectHand) {
-            let spades = hand.suits().iter().filter(|s| **s == Suit::Spade).count();
+        fn apply(g: &mut Game, hand: MadeHand) {
+            let spades = hand
+                .hand
+                .suits()
+                .iter()
+                .filter(|s| **s == Suit::Spade)
+                .count();
             g.mult += spades * 3
         }
         vec![Effects::OnScore(Arc::new(Mutex::new(apply)))]
@@ -243,8 +258,13 @@ impl Joker for GluttonousJoker {
         vec![Categories::MultPlus]
     }
     fn effects(&self, _in: &Game) -> Vec<Effects> {
-        fn apply(g: &mut Game, hand: SelectHand) {
-            let clubs = hand.suits().iter().filter(|s| **s == Suit::Club).count();
+        fn apply(g: &mut Game, hand: MadeHand) {
+            let clubs = hand
+                .hand
+                .suits()
+                .iter()
+                .filter(|s| **s == Suit::Club)
+                .count();
             g.mult += clubs * 3
         }
         vec![Effects::OnScore(Arc::new(Mutex::new(apply)))]
