@@ -225,7 +225,7 @@ impl SelectHand {
         if let Some((_value, cards)) = self
             .values_freq()
             .into_iter()
-            .find(|(_key, val)| val.len() == 1)
+            .find(|(_key, val)| val.len() >= 1)
         {
             return Some(SelectHand::new(cards));
         } else {
@@ -240,7 +240,7 @@ impl SelectHand {
         if let Some((_value, cards)) = self
             .values_freq()
             .into_iter()
-            .find(|(_key, val)| val.len() == 2)
+            .find(|(_key, val)| val.len() >= 2)
         {
             return Some(SelectHand::new(cards));
         } else {
@@ -257,7 +257,7 @@ impl SelectHand {
         let first = self
             .values_freq()
             .into_iter()
-            .find(|(_key, val)| val.len() == 2);
+            .find(|(_key, val)| val.len() >= 2);
         if first.is_none() {
             return None;
         }
@@ -273,7 +273,7 @@ impl SelectHand {
         let second = self
             .values_freq()
             .into_iter()
-            .find(|(key, val)| *key != first_val && val.len() == 2);
+            .find(|(key, val)| *key != first_val && val.len() >= 2);
         if second.is_none() {
             return None;
         }
@@ -292,7 +292,7 @@ impl SelectHand {
         if let Some((_value, cards)) = self
             .values_freq()
             .into_iter()
-            .find(|(_key, val)| val.len() == 3)
+            .find(|(_key, val)| val.len() >= 3)
         {
             return Some(SelectHand::new(cards));
         } else {
@@ -351,7 +351,7 @@ impl SelectHand {
         let three = self
             .values_freq()
             .into_iter()
-            .find(|(_key, val)| val.len() == 3);
+            .find(|(_key, val)| val.len() >= 3);
         if three.is_none() {
             return None;
         }
@@ -367,7 +367,7 @@ impl SelectHand {
         let two = self
             .values_freq()
             .into_iter()
-            .find(|(key, val)| *key != three_val && val.len() == 2);
+            .find(|(key, val)| *key != three_val && val.len() >= 2);
         if two.is_none() {
             return None;
         }
@@ -386,7 +386,7 @@ impl SelectHand {
         if let Some((_value, cards)) = self
             .values_freq()
             .into_iter()
-            .find(|(_key, val)| val.len() == 4)
+            .find(|(_key, val)| val.len() >= 4)
         {
             return Some(SelectHand::new(cards));
         } else {
@@ -423,7 +423,7 @@ impl SelectHand {
         if let Some((_value, cards)) = self
             .values_freq()
             .into_iter()
-            .find(|(_key, val)| val.len() == 5)
+            .find(|(_key, val)| val.len() >= 5)
         {
             return Some(SelectHand::new(cards));
         } else {
