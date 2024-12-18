@@ -32,6 +32,10 @@ pub enum GameError {
     NoJokerMatch,
     #[error("Invalid move direction")]
     InvalidMoveDirection,
+    #[error("No available slot")]
+    NoAvailableSlot,
+    #[error("Invalid balance")]
+    InvalidBalance,
 }
 
 #[cfg(feature = "python")]
