@@ -1,5 +1,4 @@
 use crate::card::Card;
-use crate::hand::SelectHand;
 use crate::joker::Jokers;
 use crate::stage::Blind;
 use pyo3::pyclass;
@@ -30,9 +29,10 @@ impl fmt::Display for MoveDirection {
 #[cfg_attr(feature = "python", pyclass(eq))]
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum Action {
-    Play(SelectHand),
-    Discard(SelectHand),
-    MoveCard(MoveDirection, Card),
+    SelectCard(Card),
+    MoveCard(MoveDirection),
+    Play(),
+    Discard(),
     CashOut(usize),
     BuyJoker(Jokers),
     NextRound(),
@@ -43,14 +43,17 @@ pub enum Action {
 impl fmt::Display for Action {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Self::Play(cards) => {
-                write!(f, "Play: {:?}", cards)
+            Self::SelectCard(card) => {
+                write!(f, "SelectCard: {:?}", card)
             }
-            Self::Discard(cards) => {
-                write!(f, "Discard: {:?}", cards)
+            Self::Play() => {
+                write!(f, "Play")
             }
-            Self::MoveCard(dir, card) => {
-                write!(f, "MoveCard: {:?} - {:}", card, dir)
+            Self::Discard() => {
+                write!(f, "Discard")
+            }
+            Self::MoveCard(dir) => {
+                write!(f, "MoveCard: {:}", dir)
             }
             Self::CashOut(reward) => {
                 write!(f, "CashOut: {:}", reward)
