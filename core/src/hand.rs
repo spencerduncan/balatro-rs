@@ -26,6 +26,7 @@ pub struct Hand(Vec<Card>);
 pub struct MadeHand {
     pub hand: SelectHand,
     pub rank: HandRank,
+    pub all: Vec<Card>,
 }
 
 // SelectHand represents (up to 5) cards user selects from hand for action
@@ -140,78 +141,91 @@ impl SelectHand {
             return Ok(MadeHand {
                 hand,
                 rank: HandRank::FlushFive,
+                all: self.cards(),
             });
         }
         if let Some(hand) = self.is_flush_house() {
             return Ok(MadeHand {
                 hand,
                 rank: HandRank::FlushHouse,
+                all: self.cards(),
             });
         }
         if let Some(hand) = self.is_five_of_kind() {
             return Ok(MadeHand {
                 hand,
                 rank: HandRank::FiveOfAKind,
+                all: self.cards(),
             });
         }
         if let Some(hand) = self.is_royal_flush() {
             return Ok(MadeHand {
                 hand,
                 rank: HandRank::RoyalFlush,
+                all: self.cards(),
             });
         }
         if let Some(hand) = self.is_straight_flush() {
             return Ok(MadeHand {
                 hand,
                 rank: HandRank::StraightFlush,
+                all: self.cards(),
             });
         }
         if let Some(hand) = self.is_four_of_kind() {
             return Ok(MadeHand {
                 hand,
                 rank: HandRank::FourOfAKind,
+                all: self.cards(),
             });
         }
         if let Some(hand) = self.is_fullhouse() {
             return Ok(MadeHand {
                 hand,
                 rank: HandRank::FullHouse,
+                all: self.cards(),
             });
         }
         if let Some(hand) = self.is_flush() {
             return Ok(MadeHand {
                 hand,
                 rank: HandRank::Flush,
+                all: self.cards(),
             });
         }
         if let Some(hand) = self.is_straight() {
             return Ok(MadeHand {
                 hand,
                 rank: HandRank::Straight,
+                all: self.cards(),
             });
         }
         if let Some(hand) = self.is_three_of_kind() {
             return Ok(MadeHand {
                 hand,
                 rank: HandRank::ThreeOfAKind,
+                all: self.cards(),
             });
         }
         if let Some(hand) = self.is_two_pair() {
             return Ok(MadeHand {
                 hand,
                 rank: HandRank::TwoPair,
+                all: self.cards(),
             });
         }
         if let Some(hand) = self.is_pair() {
             return Ok(MadeHand {
                 hand,
                 rank: HandRank::OnePair,
+                all: self.cards(),
             });
         }
         if let Some(hand) = self.is_highcard() {
             return Ok(MadeHand {
                 hand,
                 rank: HandRank::HighCard,
+                all: self.cards(),
             });
         }
         // We didn't match any known hand, oops...

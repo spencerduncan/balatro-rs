@@ -1,6 +1,6 @@
 use crate::action::Action;
 use crate::error::GameError;
-use crate::joker::{Jokers, Rarity};
+use crate::joker::{Joker, Jokers, Rarity};
 use rand::distributions::WeightedIndex;
 use rand::prelude::*;
 
@@ -35,11 +35,16 @@ impl Shop {
         };
     }
 
-    pub fn gen_moves_buy_joker(&self) -> Option<impl Iterator<Item = Action>> {
+    pub fn gen_moves_buy_joker(&self, balance: usize) -> Option<impl Iterator<Item = Action>> {
         if self.jokers.len() == 0 {
             return None;
         }
-        let buys = self.jokers.clone().into_iter().map(|j| Action::BuyJoker(j));
+        let buys = self
+            .jokers
+            .clone()
+            .into_iter()
+            .filter(move |j| j.cost() <= balance)
+            .map(|j| Action::BuyJoker(j));
         return Some(buys);
     }
 }

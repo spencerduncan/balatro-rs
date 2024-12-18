@@ -6,7 +6,7 @@ use crate::deck::Deck;
 use crate::effect::{EffectRegistry, Effects};
 use crate::error::GameError;
 use crate::hand::{MadeHand, SelectHand};
-use crate::joker::Jokers;
+use crate::joker::{Joker, Jokers};
 use crate::shop::Shop;
 use crate::stage::{Blind, End, Stage};
 
@@ -223,6 +223,13 @@ impl Game {
         if self.stage != Stage::Shop() {
             return Err(GameError::InvalidStage);
         }
+        if self.jokers.len() >= self.config.joker_slots {
+            return Err(GameError::NoAvailableSlot);
+        }
+        if joker.cost() > self.money {
+            return Err(GameError::InvalidBalance);
+        }
+        self.money -= joker.cost();
         self.jokers.push(joker);
         self.effect_registry
             .register_jokers(self.jokers.clone(), &self.clone());
@@ -444,7 +451,11 @@ impl Game {
         if self.stage != Stage::Shop() {
             return None;
         }
-        return self.shop.gen_moves_buy_joker();
+        // Cannot buy if all joker slots full
+        if self.jokers.len() >= self.config.joker_slots {
+            return None;
+        }
+        return self.shop.gen_moves_buy_joker(self.money);
     }
 
     // get all legal moves that can be executed given current state
