@@ -1,5 +1,7 @@
 use crate::action::{Action, MoveDirection};
 use crate::game::Game;
+use crate::joker::Joker;
+use crate::space::ActionSpace;
 use crate::stage::{Blind, Stage};
 
 impl Game {
@@ -140,5 +142,72 @@ impl Game {
             .chain(next_rounds.into_iter().flatten())
             .chain(select_blinds.into_iter().flatten())
             .chain(buy_jokers.into_iter().flatten());
+    }
+
+    pub fn gen_action_space(&self) -> ActionSpace {
+        let mut space = ActionSpace::from(self.config.clone());
+
+        if self.stage.is_blind() {
+            // Select cards
+            if self.selected.len() < self.config.selected_max {
+                self.available.iter().enumerate().for_each(|(i, _)| {
+                    space
+                        .unmask_select_card(i)
+                        .expect("valid index for selecting")
+                });
+            }
+
+            // play/discard cards if selected
+            if self.selected.len() > 0 {
+                space.unmask_play();
+                space.unmask_discard();
+            }
+
+            // move cards
+            self.available
+                .iter()
+                .skip(1)
+                .enumerate()
+                .for_each(|(i, _)| {
+                    space
+                        .unmask_move_card_left(i)
+                        .expect("valid index for move left")
+                });
+            self.available
+                .iter()
+                .skip(1)
+                .enumerate()
+                .for_each(|(i, _)| {
+                    space
+                        .unmask_move_card_right(i)
+                        .expect("valid index for moving right")
+                });
+        }
+
+        if self.stage == Stage::PostBlind() {
+            space.unmask_cash_out();
+        }
+
+        if self.stage == Stage::Shop() {
+            space.unmask_next_round();
+        }
+
+        if self.stage == Stage::PreBlind() {
+            space.unmask_select_blind();
+        }
+
+        if self.stage == Stage::Shop() {
+            self.shop
+                .jokers
+                .iter()
+                .enumerate()
+                .filter(|(_i, j)| j.cost() <= self.money)
+                .for_each(|(i, _j)| {
+                    space
+                        .unmask_buy_joker(i)
+                        .expect("valid index for buy joker")
+                });
+        }
+        return space;
     }
 }

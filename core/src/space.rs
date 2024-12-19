@@ -9,13 +9,14 @@ use pyo3::pyclass;
 // store consumable slots max = 4
 //
 // 0-23: select_card
-// 24-25: move_card
-// 26: play
-// 27: discard
-// 28: cashout
-// 29-32: buy joker
-// 33: next round
-// 34: select blind
+// 24-46: move_card (left)
+// 47-69: move_card (right)
+// 70: play
+// 71: discard
+// 72: cashout
+// 73-76: buy joker
+// 77: next round
+// 78: select blind
 //
 // We end up with a vector of length 35 where each index
 // represents a potential action.
@@ -24,7 +25,8 @@ use pyo3::pyclass;
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct ActionSpace {
     pub select_card: Vec<usize>,
-    pub move_card: Vec<usize>,
+    pub move_card_left: Vec<usize>,
+    pub move_card_right: Vec<usize>,
     pub play: Vec<usize>,
     pub discard: Vec<usize>,
     pub cash_out: Vec<usize>,
@@ -36,7 +38,8 @@ pub struct ActionSpace {
 impl ActionSpace {
     pub fn size(&self) -> usize {
         return self.select_card.len()
-            + self.move_card.len()
+            + self.move_card_left.len()
+            + self.move_card_right.len()
             + self.play.len()
             + self.discard.len()
             + self.cash_out.len()
@@ -45,6 +48,8 @@ impl ActionSpace {
             + self.select_blind.len();
     }
 
+    // Not all actions are always legal, by default all actions
+    // are masked out, but provide methods to unmask valid.
     pub fn unmask_select_card(&mut self, i: usize) -> Result<(), ActionSpaceError> {
         if i >= self.select_card.len() {
             return Err(ActionSpaceError::InvalidIndex);
@@ -53,13 +58,20 @@ impl ActionSpace {
         return Ok(());
     }
 
-    // Not all actions are always legal, by default all actions
-    // are masked out, but provide methods to unmask valid.
-    pub fn unmask_move_card(&mut self, dir: MoveDirection) {
-        match dir {
-            MoveDirection::Left => self.move_card[0] = 1,
-            MoveDirection::Right => self.move_card[1] = 1,
+    pub fn unmask_move_card_left(&mut self, i: usize) -> Result<(), ActionSpaceError> {
+        if i >= self.move_card_left.len() {
+            return Err(ActionSpaceError::InvalidIndex);
         }
+        self.move_card_left[i] = 1;
+        return Ok(());
+    }
+
+    pub fn unmask_move_card_right(&mut self, i: usize) -> Result<(), ActionSpaceError> {
+        if i >= self.move_card_right.len() {
+            return Err(ActionSpaceError::InvalidIndex);
+        }
+        self.move_card_right[i] = 1;
+        return Ok(());
     }
 
     pub fn unmask_play(&mut self) {
@@ -95,7 +107,8 @@ impl From<Config> for ActionSpace {
     fn from(c: Config) -> Self {
         return ActionSpace {
             select_card: vec![0; c.available_max],
-            move_card: vec![0; 2], // left, right
+            move_card_left: vec![0; c.available_max - 1], // every card but leftmost can move left
+            move_card_right: vec![0; c.available_max - 1], // every card but rightmost can move right
             play: vec![0; 1],
             discard: vec![0; 1],
             cash_out: vec![0; 1],
