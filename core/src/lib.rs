@@ -6,6 +6,7 @@ pub mod deck;
 pub mod effect;
 pub mod error;
 pub mod game;
+pub mod generator;
 pub mod hand;
 pub mod joker;
 pub mod rank;
