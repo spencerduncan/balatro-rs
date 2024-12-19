@@ -24,7 +24,7 @@ pub enum GameError {
     InvalidStage,
     #[error("Invalid action")]
     InvalidAction,
-    #[error("No card match")]
+    #[error("No blind match")]
     InvalidBlind,
     #[error("No card match")]
     NoCardMatch,
@@ -36,6 +36,10 @@ pub enum GameError {
     NoAvailableSlot,
     #[error("Invalid balance")]
     InvalidBalance,
+    #[error("Invalid move card")]
+    InvalidMoveCard,
+    #[error("Invalid select card")]
+    InvalidSelectCard,
 }
 
 #[cfg(feature = "python")]

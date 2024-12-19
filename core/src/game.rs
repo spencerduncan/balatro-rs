@@ -20,6 +20,7 @@ pub struct Game {
     pub shop: Shop,
     pub deck: Deck,
     pub available: Vec<Card>,
+    pub selected: Vec<Card>,
     pub discarded: Vec<Card>,
     pub blind: Option<Blind>,
     pub stage: Stage,
@@ -52,13 +53,14 @@ impl Game {
             shop: Shop::new(),
             deck: Deck::default(),
             available: Vec::new(),
+            selected: Vec::new(),
             discarded: Vec::new(),
             action_history: Vec::new(),
             jokers: Vec::new(),
             effect_registry: EffectRegistry::new(),
             blind: None,
             stage: Stage::PreBlind(),
-            ante_start: ante_start,
+            ante_start,
             ante_end: Ante::try_from(config.ante_end).unwrap_or(Ante::Eight),
             ante_current: ante_start,
             round: config.round_start,
@@ -69,7 +71,7 @@ impl Game {
             chips: config.base_chips,
             mult: config.base_mult,
             score: config.base_score,
-            config: config,
+            config,
         }
     }
 
@@ -159,6 +161,19 @@ impl Game {
                     return Ok(());
                 }
             }
+        } else {
+            return Err(GameError::NoCardMatch);
+        }
+    }
+
+    pub fn select_card(&mut self, card: Card) -> Result<(), GameError> {
+        if self.selected.len() > self.config.selected_max {
+            return Err(GameError::InvalidSelectCard);
+        }
+        if let Some((i, _)) = self.available.iter().find_position(|c| c.id == card.id) {
+            let card = self.available.remove(i);
+            self.selected.push(card);
+            return Ok(());
         } else {
             return Err(GameError::NoCardMatch);
         }
@@ -323,6 +338,24 @@ impl Game {
         return Ok(());
     }
 
+    // get all legal SelectCard moves that can be executed given current state
+    pub fn gen_moves_select_card(&self) -> Option<impl Iterator<Item = Action>> {
+        // Can only select card during blinds
+        if !self.stage.is_blind() {
+            return None;
+        }
+        // Cannot select more than max
+        if self.selected.len() >= self.config.selected_max {
+            return None;
+        }
+        let combos = self
+            .available
+            .clone()
+            .into_iter()
+            .map(|c| Action::SelectCard(c));
+        return Some(combos);
+    }
+
     // get all legal Play moves that can be executed given current state
     pub fn gen_moves_play(&self) -> Option<impl Iterator<Item = Action>> {
         // Can only play hand during blinds
@@ -333,18 +366,11 @@ impl Game {
         if self.plays <= 0 {
             return None;
         }
-        // For all available cards, we can both play every combination
-        // of 1, 2, 3, 4 or 5 cards.
-        let combos = self
-            .available
-            .clone()
-            .into_iter()
-            .combinations(5)
-            .chain(self.available.clone().into_iter().combinations(4))
-            .chain(self.available.clone().into_iter().combinations(3))
-            .chain(self.available.clone().into_iter().combinations(2))
-            .chain(self.available.clone().into_iter().combinations(1))
-            .map(|cards| Action::Play(SelectHand::new(cards)));
+        // If no cards selected, return None
+        if self.selected.len() == 0 {
+            return None;
+        }
+        let combos = vec![Action::Play()].into_iter();
         return Some(combos);
     }
 
@@ -358,18 +384,11 @@ impl Game {
         if self.discards <= 0 {
             return None;
         }
-        // For all available cards, we can both discard every combination
-        // of 1, 2, 3, 4 or 5 cards.
-        let combos = self
-            .available
-            .clone()
-            .into_iter()
-            .combinations(5)
-            .chain(self.available.clone().into_iter().combinations(4))
-            .chain(self.available.clone().into_iter().combinations(3))
-            .chain(self.available.clone().into_iter().combinations(2))
-            .chain(self.available.clone().into_iter().combinations(1))
-            .map(|cards| Action::Discard(SelectHand::new(cards)));
+        // If no cards selected, return None
+        if self.selected.len() == 0 {
+            return None;
+        }
+        let combos = vec![Action::Discard()].into_iter();
         return Some(combos);
     }
 
@@ -379,38 +398,15 @@ impl Game {
         if !self.stage.is_blind() {
             return None;
         }
-        // if 0 or 1 available cards, there are no possible moves
-        if self.available.len() == 0 || self.available.len() == 1 {
+        // Must be one card selected to move
+        if self.selected.len() == 0 || self.selected.len() >= 2 {
             return None;
         }
-        // We can move all cards left and right, except 1st card can only move right
-        // and last card can only move left.
-        let combos = self
-            .available
-            .clone()
-            .into_iter()
-            .skip(1)
-            .rev()
-            .skip(1)
-            .flat_map(|c| {
-                vec![
-                    Action::MoveCard(MoveDirection::Left, c),
-                    Action::MoveCard(MoveDirection::Right, c),
-                ]
-                .into_iter()
-            })
-            .chain(
-                self.available
-                    .clone()
-                    .first()
-                    .map(|c| Action::MoveCard(MoveDirection::Right, *c)),
-            )
-            .chain(
-                self.available
-                    .clone()
-                    .last()
-                    .map(|c| Action::MoveCard(MoveDirection::Left, *c)),
-            );
+        let combos = vec![
+            Action::MoveCard(MoveDirection::Left),
+            Action::MoveCard(MoveDirection::Right),
+        ]
+        .into_iter();
         return Some(combos);
     }
 
@@ -460,38 +456,47 @@ impl Game {
 
     // get all legal moves that can be executed given current state
     pub fn gen_moves(&self) -> impl Iterator<Item = Action> {
+        let select_cards = self.gen_moves_select_card();
         let plays = self.gen_moves_play();
         let discards = self.gen_moves_discard();
         let move_cards = self.gen_moves_move_card();
-        let cashouts = self.gen_moves_cash_out();
-        let nextrounds = self.gen_moves_next_round();
-        let selectblinds = self.gen_moves_select_blind();
+        let cash_outs = self.gen_moves_cash_out();
+        let next_rounds = self.gen_moves_next_round();
+        let select_blinds = self.gen_moves_select_blind();
         let buy_jokers = self.gen_moves_buy_joker();
 
-        return plays
+        return select_cards
             .into_iter()
             .flatten()
+            .chain(plays.into_iter().flatten())
             .chain(discards.into_iter().flatten())
             .chain(move_cards.into_iter().flatten())
-            .chain(cashouts.into_iter().flatten())
-            .chain(nextrounds.into_iter().flatten())
-            .chain(selectblinds.into_iter().flatten())
+            .chain(cash_outs.into_iter().flatten())
+            .chain(next_rounds.into_iter().flatten())
+            .chain(select_blinds.into_iter().flatten())
             .chain(buy_jokers.into_iter().flatten());
     }
 
     pub fn handle_action(&mut self, action: Action) -> Result<(), GameError> {
         self.action_history.push(action.clone());
         return match action {
-            Action::Play(hand) => match self.stage.is_blind() {
-                true => self.play(hand),
+            Action::SelectCard(card) => match self.stage.is_blind() {
+                true => self.select_card(card),
                 false => Err(GameError::InvalidAction),
             },
-            Action::Discard(hand) => match self.stage.is_blind() {
-                true => self.discard(hand),
+            Action::Play() => match self.stage.is_blind() {
+                true => self.play(SelectHand::new(self.selected.clone())),
                 false => Err(GameError::InvalidAction),
             },
-            Action::MoveCard(dir, card) => match self.stage.is_blind() {
-                true => self.move_card(dir, card),
+            Action::Discard() => match self.stage.is_blind() {
+                true => self.discard(SelectHand::new(self.selected.clone())),
+                false => Err(GameError::InvalidAction),
+            },
+            Action::MoveCard(dir) => match self.stage.is_blind() {
+                true => match self.selected.len() {
+                    1 => self.move_card(dir, self.selected[0]),
+                    _ => Err(GameError::InvalidMoveCard),
+                },
                 false => Err(GameError::InvalidAction),
             },
             Action::CashOut(_reward) => match self.stage {
@@ -643,60 +648,35 @@ mod tests {
     fn test_gen_moves_play() {
         let ace = Card::new(Value::Ace, Suit::Heart);
         let king = Card::new(Value::King, Suit::Diamond);
-        let jack = Card::new(Value::Jack, Suit::Club);
 
         let mut g = Game::default();
         g.stage = Stage::Blind(Blind::Small);
-        // Only 1 card available [(Ah)]
-        // Playable moves: [Ah]
-        g.available = vec![ace];
+
+        // nothing selected, nothing to play
+        assert!(g.gen_moves_discard().is_none());
+
+        g.selected = vec![ace];
         let moves: Vec<Action> = g.gen_moves_play().expect("are plays").collect();
         assert_eq!(moves.len(), 1);
 
-        // 2 cards available [Ah, Kd]
-        // Playable moves: [(Ah, Kd), (Ah), (Kd)]
-        g.available = vec![ace, king];
+        g.selected = vec![ace, king];
         let moves: Vec<Action> = g.gen_moves_play().expect("are plays").collect();
-        assert_eq!(moves.len(), 3);
-
-        // 3 cards available [Ah, Kd, Jc]
-        // Playable moves: [(Ah, Kd, Jc), (Ah, Kd), (Ah, Jc), (Kd, Jc), (Ah), (Kd), (Jc)]
-        g.available = vec![ace, king, jack];
-        let moves: Vec<Action> = g.gen_moves_play().expect("are plays").collect();
-        assert_eq!(moves.len(), 7);
+        assert_eq!(moves.len(), 1);
     }
 
     #[test]
     fn test_gen_moves_discard() {
         let ace = Card::new(Value::Ace, Suit::Heart);
         let king = Card::new(Value::King, Suit::Diamond);
-        let jack = Card::new(Value::Jack, Suit::Club);
 
         let mut g = Game::default();
         g.stage = Stage::Blind(Blind::Small);
-        // Only 1 card available [(Ah)]
-        // Playable moves: [Ah]
-        g.available = vec![ace];
+
+        // nothing selected, nothing to discard
+        assert!(g.gen_moves_discard().is_none());
+
+        g.selected = vec![ace, king];
         let moves: Vec<Action> = g.gen_moves_discard().expect("are discards").collect();
         assert_eq!(moves.len(), 1);
-        // let m = &moves[0];
-        // // Test that we can apply that discard move to the game
-        // m.apply(&mut g);
-        // // available should still be 1, we discarded then redrew to match
-        // assert_eq!(g.available.len(), 1);
-        // // deck is now smaller since we drew from it
-        // assert_eq!(g.deck.len(), 52 - 1);
-
-        // 2 cards available [Ah, Kd]
-        // Playable moves: [(Ah, Kd), (Ah), (Kd)]
-        g.available = vec![ace, king];
-        let moves: Vec<Action> = g.gen_moves_discard().expect("are discards").collect();
-        assert_eq!(moves.len(), 3);
-
-        // 3 cards available [Ah, Kd, Jc]
-        // Playable moves: [(Ah, Kd, Jc), (Ah, Kd), (Ah, Jc), (Kd, Jc), (Ah), (Kd), (Jc)]
-        g.available = vec![ace, king, jack];
-        let moves: Vec<Action> = g.gen_moves_discard().expect("are discards").collect();
-        assert_eq!(moves.len(), 7);
     }
 }

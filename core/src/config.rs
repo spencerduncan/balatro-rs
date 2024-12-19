@@ -15,6 +15,7 @@ const DEFAULT_BASE_SCORE: usize = 0;
 const DEFAULT_ANTE_START: usize = 1;
 const DEFAULT_ANTE_END: usize = 8;
 const DEFAULT_JOKER_SLOTS: usize = 5;
+const DEFAULT_SELECTED_MAX: usize = 5;
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "python", pyclass)]
@@ -35,6 +36,7 @@ pub struct Config {
     pub ante_start: usize,
     pub ante_end: usize,
     pub joker_slots: usize,
+    pub selected_max: usize,
 }
 
 impl Config {
@@ -55,6 +57,7 @@ impl Config {
             ante_start: DEFAULT_ANTE_START,
             ante_end: DEFAULT_ANTE_END,
             joker_slots: DEFAULT_JOKER_SLOTS,
+            selected_max: DEFAULT_SELECTED_MAX,
         };
     }
 }
