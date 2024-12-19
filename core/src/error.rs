@@ -48,3 +48,9 @@ impl std::convert::From<GameError> for PyErr {
         PyException::new_err(err.to_string())
     }
 }
+
+#[derive(Error, Debug, Clone)]
+pub enum ActionSpaceError {
+    #[error("Invalid index")]
+    InvalidIndex,
+}

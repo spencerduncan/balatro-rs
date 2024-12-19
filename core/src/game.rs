@@ -114,7 +114,7 @@ impl Game {
         self.deck.append(&mut self.discarded);
         self.deck.append(&mut self.available);
         self.deck.shuffle();
-        self.draw(self.config.hand_size);
+        self.draw(self.config.available);
     }
 
     // remove specific cards from available, send to discarded, and draw equal number back to available
@@ -560,9 +560,9 @@ mod tests {
         let mut g = Game::default();
         g.deal();
         // deck should be 7 cards smaller than we started with
-        assert_eq!(g.deck.len(), 52 - g.config.hand_size);
+        assert_eq!(g.deck.len(), 52 - g.config.available);
         // should be 7 cards now available
-        assert_eq!(g.available.len(), g.config.hand_size);
+        assert_eq!(g.available.len(), g.config.available);
     }
 
     #[test]
@@ -579,16 +579,16 @@ mod tests {
     fn test_discard() {
         let mut g = Game::default();
         g.deal();
-        assert_eq!(g.available.len(), g.config.hand_size);
-        assert_eq!(g.deck.len(), 52 - g.config.hand_size);
+        assert_eq!(g.available.len(), g.config.available);
+        assert_eq!(g.deck.len(), 52 - g.config.available);
         // select first 4 cards
         let select = SelectHand::new(g.available[0..4].to_vec());
         let discard_res = g.discard(select.clone());
         assert!(discard_res.is_ok());
         // available should still be 7, we discarded then redrew to match
-        assert_eq!(g.available.len(), g.config.hand_size);
+        assert_eq!(g.available.len(), g.config.available);
         // deck is now smaller since we drew from it
-        assert_eq!(g.deck.len(), 52 - g.config.hand_size - select.len());
+        assert_eq!(g.deck.len(), 52 - g.config.available - select.len());
     }
 
     #[test]

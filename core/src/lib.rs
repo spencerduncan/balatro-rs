@@ -10,6 +10,7 @@ pub mod hand;
 pub mod joker;
 pub mod rank;
 pub mod shop;
+pub mod space;
 pub mod stage;
 
 #[cfg(test)]
