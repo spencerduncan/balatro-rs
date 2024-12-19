@@ -1,5 +1,7 @@
+use crate::action::MoveDirection;
 use crate::config::Config;
 use crate::error::ActionSpaceError;
+use pyo3::pyclass;
 
 // Hard code a bounded action space.
 // Given constraints:
@@ -17,10 +19,9 @@ use crate::error::ActionSpaceError;
 //
 // We end up with a vector of length 35 where each index
 // represents a potential action.
-
-// Not all actions are always legal, so we can
-// also provide an action mask based on game state.
-
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "python", pyclass(eq))]
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct ActionSpace {
     pub select_card: Vec<usize>,
     pub move_card: Vec<usize>,
@@ -45,11 +46,48 @@ impl ActionSpace {
     }
 
     pub fn unmask_select_card(&mut self, i: usize) -> Result<(), ActionSpaceError> {
-        if i > self.select_card.len() {
+        if i >= self.select_card.len() {
             return Err(ActionSpaceError::InvalidIndex);
         }
         self.select_card[i] = 1;
         return Ok(());
+    }
+
+    // Not all actions are always legal, by default all actions
+    // are masked out, but provide methods to unmask valid.
+    pub fn unmask_move_card(&mut self, dir: MoveDirection) {
+        match dir {
+            MoveDirection::Left => self.move_card[0] = 1,
+            MoveDirection::Right => self.move_card[1] = 1,
+        }
+    }
+
+    pub fn unmask_play(&mut self) {
+        self.play[0] = 1;
+    }
+
+    pub fn unmask_discard(&mut self) {
+        self.discard[0] = 1;
+    }
+
+    pub fn unmask_cash_out(&mut self) {
+        self.cash_out[0] = 1;
+    }
+
+    pub fn unmask_buy_joker(&mut self, i: usize) -> Result<(), ActionSpaceError> {
+        if i >= self.buy_joker.len() {
+            return Err(ActionSpaceError::InvalidIndex);
+        }
+        self.buy_joker[i] = 1;
+        return Ok(());
+    }
+
+    pub fn unmask_next_round(&mut self) {
+        self.next_round[0] = 1;
+    }
+
+    pub fn unmask_select_blind(&mut self) {
+        self.select_blind[0] = 1;
     }
 }
 
@@ -68,6 +106,7 @@ impl From<Config> for ActionSpace {
     }
 }
 
+// Generate an action space vector, masked based on current state
 impl From<ActionSpace> for Vec<usize> {
     fn from(a: ActionSpace) -> Vec<usize> {
         return [
@@ -90,7 +129,7 @@ mod tests {
     use crate::config::Config;
 
     #[test]
-    fn test_mask() {
+    fn test_unmask() {
         let c = Config::default();
         let mut a = ActionSpace::from(c);
 
@@ -100,5 +139,21 @@ mod tests {
         dbg!(v.clone());
         assert_eq!(v[0], 0);
         assert_eq!(v[1], 1);
+    }
+
+    #[test]
+    fn test_unmask_max_index() {
+        let c = Config::default();
+        let mut a = ActionSpace::from(c);
+
+        a.unmask_select_card(23).unwrap();
+
+        let v: Vec<usize> = Vec::from(a.clone());
+        dbg!(v.clone());
+        assert_eq!(v[0], 0);
+        assert_eq!(v[23], 1);
+
+        let res = a.unmask_select_card(24);
+        assert!(res.is_err());
     }
 }
