@@ -211,3 +211,45 @@ impl Game {
         return space;
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::card::{Card, Suit, Value};
+
+    #[test]
+    fn test_gen_moves_play() {
+        let ace = Card::new(Value::Ace, Suit::Heart);
+        let king = Card::new(Value::King, Suit::Diamond);
+
+        let mut g = Game::default();
+        g.stage = Stage::Blind(Blind::Small);
+
+        // nothing selected, nothing to play
+        assert!(g.gen_moves_discard().is_none());
+
+        g.selected = vec![ace];
+        let moves: Vec<Action> = g.gen_moves_play().expect("are plays").collect();
+        assert_eq!(moves.len(), 1);
+
+        g.selected = vec![ace, king];
+        let moves: Vec<Action> = g.gen_moves_play().expect("are plays").collect();
+        assert_eq!(moves.len(), 1);
+    }
+
+    #[test]
+    fn test_gen_moves_discard() {
+        let ace = Card::new(Value::Ace, Suit::Heart);
+        let king = Card::new(Value::King, Suit::Diamond);
+
+        let mut g = Game::default();
+        g.stage = Stage::Blind(Blind::Small);
+
+        // nothing selected, nothing to discard
+        assert!(g.gen_moves_discard().is_none());
+
+        g.selected = vec![ace, king];
+        let moves: Vec<Action> = g.gen_moves_discard().expect("are discards").collect();
+        assert_eq!(moves.len(), 1);
+    }
+}
