@@ -21,8 +21,8 @@ impl GameEngine {
         }
     }
 
-    fn gen_moves(&self) -> Vec<Action> {
-        return self.game.gen_moves().collect();
+    fn gen_actions(&self) -> Vec<Action> {
+        return self.game.gen_actions().collect();
     }
 
     fn handle_action(&mut self, action: Action) -> Result<(), GameError> {

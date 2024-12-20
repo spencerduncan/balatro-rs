@@ -6,11 +6,11 @@ def main():
     game = pylatro.GameEngine()
 
     while True:
-        moves = game.gen_moves()
-        if len(moves) == 0:
+        actions = game.gen_actions()
+        if len(actions) == 0:
             break
-        move = random.choice(moves)
-        game.handle_action(move)
+        action = random.choice(actions)
+        game.handle_action(action)
 
     assert game.is_over
     # state = game.get_state()
