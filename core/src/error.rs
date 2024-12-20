@@ -53,4 +53,8 @@ impl std::convert::From<GameError> for PyErr {
 pub enum ActionSpaceError {
     #[error("Invalid index")]
     InvalidIndex,
+    #[error("Invalid conversion to action")]
+    InvalidActionConversion,
+    #[error("Masked action")]
+    MaskedAction,
 }

@@ -1,6 +1,7 @@
-use crate::action::MoveDirection;
+use crate::action::{Action, MoveDirection};
 use crate::config::Config;
 use crate::error::ActionSpaceError;
+use crate::game::Game;
 use pyo3::pyclass;
 
 // Hard code a bounded action space.
@@ -8,9 +9,9 @@ use pyo3::pyclass;
 // available max = 24
 // store consumable slots max = 4
 //
-// 0-23: select_card
-// 24-46: move_card (left)
-// 47-69: move_card (right)
+// 0-23: select card
+// 24-46: move card (left)
+// 47-69: move card (right)
 // 70: play
 // 71: discard
 // 72: cashout
@@ -46,6 +47,78 @@ impl ActionSpace {
             + self.buy_joker.len()
             + self.next_round.len()
             + self.select_blind.len();
+    }
+
+    pub fn select_card_min(&self) -> usize {
+        return 0;
+    }
+
+    pub fn select_card_max(&self) -> usize {
+        return self.select_card_min() + self.select_card.len();
+    }
+
+    pub fn move_card_left_min(&self) -> usize {
+        return self.select_card_max() + 1;
+    }
+
+    pub fn move_card_left_max(&self) -> usize {
+        return self.move_card_left_min() + self.select_card.len() - 1;
+    }
+
+    pub fn move_card_right_min(&self) -> usize {
+        return self.move_card_left_max() + 1;
+    }
+
+    pub fn move_card_right_max(&self) -> usize {
+        return self.move_card_right_min() + self.select_card.len() - 1;
+    }
+
+    pub fn play_min(&self) -> usize {
+        return self.move_card_right_max() + 1;
+    }
+
+    pub fn play_max(&self) -> usize {
+        return self.play_min() + self.play.len();
+    }
+
+    pub fn discard_min(&self) -> usize {
+        return self.play_max() + 1;
+    }
+
+    pub fn discard_max(&self) -> usize {
+        return self.discard_min() + self.discard.len();
+    }
+
+    pub fn cash_out_min(&self) -> usize {
+        return self.discard_max() + 1;
+    }
+
+    pub fn cash_out_max(&self) -> usize {
+        return self.cash_out_min() + self.cash_out.len();
+    }
+
+    pub fn buy_joker_min(&self) -> usize {
+        return self.cash_out_max() + 1;
+    }
+
+    pub fn buy_joker_max(&self) -> usize {
+        return self.buy_joker_min() + self.buy_joker.len();
+    }
+
+    pub fn next_round_min(&self) -> usize {
+        return self.buy_joker_max() + 1;
+    }
+
+    pub fn next_round_max(&self) -> usize {
+        return self.next_round_min() + self.next_round.len();
+    }
+
+    pub fn select_blind_min(&self) -> usize {
+        return self.next_round_max() + 1;
+    }
+
+    pub fn select_blind_max(&self) -> usize {
+        return self.select_blind_min() + self.select_blind.len();
     }
 
     // Not all actions are always legal, by default all actions
@@ -101,6 +174,68 @@ impl ActionSpace {
     pub fn unmask_select_blind(&mut self) {
         self.select_blind[0] = 1;
     }
+
+    pub fn to_action(&self, index: usize, game: Game) -> Result<Action, ActionSpaceError> {
+        let vec = self.to_vec();
+        if let Some(v) = vec.get(index) {
+            if *v == 0 {
+                return Err(ActionSpaceError::MaskedAction);
+            }
+        } else {
+            return Err(ActionSpaceError::InvalidIndex);
+        }
+        match index {
+            // Cannot reference runtime values in patterns, so this is workaround
+            n if (self.select_card_min()..=self.select_card_max()).contains(&n) => {
+                if let Some(card) = game.available.get(index) {
+                    return Ok(Action::SelectCard(*card));
+                } else {
+                    return Err(ActionSpaceError::InvalidActionConversion);
+                }
+            }
+            n if (self.move_card_left_min()..=self.move_card_left_max()).contains(&n) => {
+                let n_offset = n - self.move_card_left_min();
+                if let Some(_card) = game.available.get(n_offset) {
+                    return Ok(Action::MoveCard(MoveDirection::Left)); // TODO: fix
+                } else {
+                    return Err(ActionSpaceError::InvalidActionConversion);
+                }
+            }
+            n if (self.move_card_right_min()..=self.move_card_right_max()).contains(&n) => {
+                let n_offset = n - self.move_card_right_min();
+                if let Some(_card) = game.available.get(n_offset) {
+                    return Ok(Action::MoveCard(MoveDirection::Right)); // TODO: fix
+                } else {
+                    return Err(ActionSpaceError::InvalidActionConversion);
+                }
+            }
+            n if (self.play_min()..=self.play_max()).contains(&n) => {
+                let n_offset = n - self.play_min();
+
+                if let Some(card) = game.available.get(n_offset) {
+                    return Ok(Action::SelectCard(*card));
+                } else {
+                    return Err(ActionSpaceError::InvalidActionConversion);
+                }
+            }
+            _ => return Err(ActionSpaceError::InvalidActionConversion),
+        }
+    }
+
+    fn to_vec(&self) -> Vec<usize> {
+        return [
+            self.select_card.clone(),
+            self.move_card_left.clone(),
+            self.move_card_right.clone(),
+            self.play.clone(),
+            self.discard.clone(),
+            self.cash_out.clone(),
+            self.buy_joker.clone(),
+            self.next_round.clone(),
+            self.select_blind.clone(),
+        ]
+        .concat();
+    }
 }
 
 impl From<Config> for ActionSpace {
@@ -124,7 +259,8 @@ impl From<ActionSpace> for Vec<usize> {
     fn from(a: ActionSpace) -> Vec<usize> {
         return [
             a.select_card,
-            a.move_card,
+            a.move_card_left,
+            a.move_card_right,
             a.play,
             a.discard,
             a.cash_out,

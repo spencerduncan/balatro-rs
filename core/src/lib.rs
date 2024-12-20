@@ -28,8 +28,8 @@ mod tests {
 
         g.start();
         while !g.is_over() {
-            // Get all available moves
-            let actions: Vec<Action> = g.gen_moves().collect();
+            // Get all available actions
+            let actions: Vec<Action> = g.gen_actions().collect();
             if actions.len() == 0 {
                 break;
             }
