@@ -187,24 +187,24 @@ impl ActionSpace {
         match index {
             // Cannot reference runtime values in patterns, so this is workaround
             n if (self.select_card_min()..=self.select_card_max()).contains(&n) => {
-                if let Some(card) = game.available.get(index) {
-                    return Ok(Action::SelectCard(*card));
+                if let Some(card) = game.available.card_from_index(index) {
+                    return Ok(Action::SelectCard(card));
                 } else {
                     return Err(ActionSpaceError::InvalidActionConversion);
                 }
             }
             n if (self.move_card_left_min()..=self.move_card_left_max()).contains(&n) => {
                 let n_offset = n - self.move_card_left_min();
-                if let Some(_card) = game.available.get(n_offset) {
-                    return Ok(Action::MoveCard(MoveDirection::Left)); // TODO: fix
+                if let Some(card) = game.available.card_from_index(n_offset) {
+                    return Ok(Action::MoveCard(MoveDirection::Left, card));
                 } else {
                     return Err(ActionSpaceError::InvalidActionConversion);
                 }
             }
             n if (self.move_card_right_min()..=self.move_card_right_max()).contains(&n) => {
                 let n_offset = n - self.move_card_right_min();
-                if let Some(_card) = game.available.get(n_offset) {
-                    return Ok(Action::MoveCard(MoveDirection::Right)); // TODO: fix
+                if let Some(card) = game.available.card_from_index(n_offset) {
+                    return Ok(Action::MoveCard(MoveDirection::Right, card));
                 } else {
                     return Err(ActionSpaceError::InvalidActionConversion);
                 }
@@ -212,8 +212,8 @@ impl ActionSpace {
             n if (self.play_min()..=self.play_max()).contains(&n) => {
                 let n_offset = n - self.play_min();
 
-                if let Some(card) = game.available.get(n_offset) {
-                    return Ok(Action::SelectCard(*card));
+                if let Some(card) = game.available.card_from_index(n_offset) {
+                    return Ok(Action::SelectCard(card));
                 } else {
                     return Err(ActionSpaceError::InvalidActionConversion);
                 }
