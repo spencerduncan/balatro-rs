@@ -30,7 +30,7 @@ impl fmt::Display for MoveDirection {
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum Action {
     SelectCard(Card),
-    MoveCard(MoveDirection),
+    MoveCard(MoveDirection, Card),
     Play(),
     Discard(),
     CashOut(usize),
@@ -52,8 +52,8 @@ impl fmt::Display for Action {
             Self::Discard() => {
                 write!(f, "Discard")
             }
-            Self::MoveCard(dir) => {
-                write!(f, "MoveCard: {:}", dir)
+            Self::MoveCard(dir, card) => {
+                write!(f, "MoveCard: {:?} - {:}", card, dir)
             }
             Self::CashOut(reward) => {
                 write!(f, "CashOut: {:}", reward)

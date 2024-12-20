@@ -1,5 +1,6 @@
 pub mod action;
 pub mod ante;
+pub mod available;
 pub mod card;
 pub mod config;
 pub mod deck;
@@ -39,7 +40,8 @@ mod tests {
             let action = actions[i].clone();
             println!("game state:\n{}", g.clone());
             println!("play action: {}", action.clone());
-            let action_res = g.handle_action(action);
+            let action_res = g.handle_action(action.clone());
+            dbg!(action);
             debug_assert!(action_res.is_ok());
         }
         let result = g.result();

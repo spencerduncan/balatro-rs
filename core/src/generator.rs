@@ -12,11 +12,12 @@ impl Game {
             return None;
         }
         // Cannot select more than max
-        if self.selected.len() >= self.config.selected_max {
+        if self.available.selected().len() >= self.config.selected_max {
             return None;
         }
         let combos = self
             .available
+            .not_selected()
             .clone()
             .into_iter()
             .map(|c| Action::SelectCard(c));
@@ -34,7 +35,7 @@ impl Game {
             return None;
         }
         // If no cards selected, return None
-        if self.selected.len() == 0 {
+        if self.available.selected().len() == 0 {
             return None;
         }
         let combos = vec![Action::Play()].into_iter();
@@ -52,7 +53,7 @@ impl Game {
             return None;
         }
         // If no cards selected, return None
-        if self.selected.len() == 0 {
+        if self.available.selected().len() == 0 {
             return None;
         }
         let combos = vec![Action::Discard()].into_iter();
@@ -65,15 +66,24 @@ impl Game {
         if !self.stage.is_blind() {
             return None;
         }
-        // Must be one card selected to move
-        if self.selected.len() == 0 || self.selected.len() >= 2 {
-            return None;
-        }
-        let combos = vec![
-            Action::MoveCard(MoveDirection::Left),
-            Action::MoveCard(MoveDirection::Right),
-        ]
-        .into_iter();
+        let left = self
+            .available
+            .cards()
+            .clone()
+            .into_iter()
+            .skip(1)
+            .map(|c| Action::MoveCard(MoveDirection::Left, c));
+        let right = self
+            .available
+            .cards()
+            .clone()
+            .into_iter()
+            .rev()
+            .skip(1)
+            .rev()
+            .map(|c| Action::MoveCard(MoveDirection::Right, c));
+
+        let combos = left.chain(right);
         return Some(combos);
     }
 
@@ -149,14 +159,18 @@ impl Game {
             return;
         }
         // Cannot select more if max already selected
-        if self.selected.len() >= self.config.selected_max {
+        if self.available.selected().len() >= self.config.selected_max {
             return;
         }
-        self.available.iter().enumerate().for_each(|(i, _)| {
-            space
-                .unmask_select_card(i)
-                .expect("valid index for selecting");
-        });
+        self.available
+            .not_selected()
+            .iter()
+            .enumerate()
+            .for_each(|(i, _)| {
+                space
+                    .unmask_select_card(i)
+                    .expect("valid index for selecting");
+            });
         dbg!(space.clone());
     }
 
@@ -165,7 +179,7 @@ impl Game {
             return;
         }
         // Cannot play/discard if no cards selected
-        if self.selected.len() == 0 {
+        if self.available.selected().len() == 0 {
             return;
         }
         space.unmask_play();
@@ -179,6 +193,7 @@ impl Game {
         // move left
         // every available card except the first can move left
         self.available
+            .cards()
             .iter()
             .skip(1)
             .enumerate()
@@ -190,6 +205,7 @@ impl Game {
         // move right
         // every available card except the last can move right
         self.available
+            .cards()
             .iter()
             .rev()
             .skip(1)
@@ -268,11 +284,14 @@ mod tests {
         // nothing selected, nothing to play
         assert!(g.gen_actions_discard().is_none());
 
-        g.selected = vec![ace];
+        g.available.extend(vec![ace]);
+        g.select_card(ace).unwrap();
         let moves: Vec<Action> = g.gen_actions_play().expect("are plays").collect();
         assert_eq!(moves.len(), 1);
 
-        g.selected = vec![ace, king];
+        g.available.extend(vec![ace, king]);
+        g.select_card(ace).unwrap();
+        g.select_card(king).unwrap();
         let moves: Vec<Action> = g.gen_actions_play().expect("are plays").collect();
         assert_eq!(moves.len(), 1);
     }
@@ -288,7 +307,9 @@ mod tests {
         // nothing selected, nothing to discard
         assert!(g.gen_actions_discard().is_none());
 
-        g.selected = vec![ace, king];
+        g.available.extend(vec![ace, king]);
+        g.select_card(ace).unwrap();
+        g.select_card(king).unwrap();
         let moves: Vec<Action> = g.gen_actions_discard().expect("are discards").collect();
         assert_eq!(moves.len(), 1);
     }
@@ -311,7 +332,7 @@ mod tests {
         space = ActionSpace::from(g.config.clone());
         // Now select 5 cards, no more selects available, regenerate action space
         for _ in 0..g.config.selected_max {
-            g.select_card(*g.available.first().expect("is first card"))
+            g.select_card(*g.available.not_selected().first().expect("is first card"))
                 .expect("can select");
         }
         g.unmask_action_space_select_cards(&mut space);

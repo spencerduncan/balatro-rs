@@ -1,5 +1,6 @@
 use crate::action::{Action, MoveDirection};
 use crate::ante::Ante;
+use crate::available::Available;
 use crate::card::Card;
 use crate::config::Config;
 use crate::deck::Deck;
@@ -10,8 +11,6 @@ use crate::joker::{Joker, Jokers};
 use crate::shop::Shop;
 use crate::stage::{Blind, End, Stage};
 
-use itertools::Itertools;
-use std::collections::HashSet;
 use std::fmt;
 
 #[derive(Debug, Clone)]
@@ -19,8 +18,7 @@ pub struct Game {
     pub config: Config,
     pub shop: Shop,
     pub deck: Deck,
-    pub available: Vec<Card>,
-    pub selected: Vec<Card>,
+    pub available: Available,
     pub discarded: Vec<Card>,
     pub blind: Option<Blind>,
     pub stage: Stage,
@@ -52,8 +50,7 @@ impl Game {
         Self {
             shop: Shop::new(),
             deck: Deck::default(),
-            available: Vec::new(),
-            selected: Vec::new(),
+            available: Available::default(),
             discarded: Vec::new(),
             action_history: Vec::new(),
             jokers: Vec::new(),
@@ -105,78 +102,58 @@ impl Game {
     pub fn draw(&mut self, count: usize) {
         if let Some(drawn) = self.deck.draw(count) {
             self.available.extend(drawn);
+            // self.available.extend(drawn);
         }
     }
 
     // shuffle and deal new cards to available
     pub fn deal(&mut self) {
-        // add discarded and available back to deck, emptying in process
+        // add discarded back to deck, emptying in process
         self.deck.append(&mut self.discarded);
-        self.deck.append(&mut self.available);
+        // add available back to deck and empty
+        self.deck.extend(self.available.cards());
+        self.available.empty();
         self.deck.shuffle();
         self.draw(self.config.available);
     }
 
-    // remove specific cards from available, send to discarded, and draw equal number back to available
-    fn _discard(&mut self, select: SelectHand, check: bool) -> Result<(), GameError> {
-        if check {
-            if self.discards <= 0 {
-                return Err(GameError::NoRemainingDiscards);
-            }
-            self.discards -= 1;
+    pub fn select_card(&mut self, card: Card) -> Result<(), GameError> {
+        if self.available.selected().len() > self.config.selected_max {
+            return Err(GameError::InvalidSelectCard);
         }
-        // retain cards that we are not discarding
-        let remove: HashSet<Card> = HashSet::from_iter(select.cards());
-        // self.available.retain(|c| !remove.contains(c));
-
-        let available = std::mem::take(&mut self.available);
-        let (discarded, new_avail): (Vec<Card>, Vec<Card>) =
-            available.into_iter().partition(|c| remove.contains(c));
-        self.available = new_avail;
-        self.discarded.extend(discarded);
-        self.draw(select.cards().len());
-        return Ok(());
-    }
-
-    // discard specific cards from available and draw equal number back to available
-    pub fn discard(&mut self, select: SelectHand) -> Result<(), GameError> {
-        return self._discard(select, true);
+        return self.available.select_card(card);
     }
 
     pub fn move_card(&mut self, direction: MoveDirection, card: Card) -> Result<(), GameError> {
-        if let Some((i, _)) = self.available.iter().find_position(|c| c.id == card.id) {
-            match direction {
-                MoveDirection::Left => {
-                    if i == 0 {
-                        return Err(GameError::InvalidMoveDirection);
-                    }
-                    self.available.swap(i, i - 1);
-                    return Ok(());
-                }
-                MoveDirection::Right => {
-                    if i == self.available.len() {
-                        return Err(GameError::InvalidMoveDirection);
-                    }
-                    self.available.swap(i, i + 1);
-                    return Ok(());
-                }
-            }
-        } else {
-            return Err(GameError::NoCardMatch);
-        }
+        return self.available.move_card(direction, card);
     }
 
-    pub fn select_card(&mut self, card: Card) -> Result<(), GameError> {
-        if self.selected.len() > self.config.selected_max {
-            return Err(GameError::InvalidSelectCard);
+    pub fn play_selected(&mut self) -> Result<(), GameError> {
+        if self.plays <= 0 {
+            return Err(GameError::NoRemainingPlays);
         }
-        if let Some((i, _)) = self.available.iter().find_position(|c| c.id == card.id) {
-            let card = self.available.remove(i);
-            self.selected.push(card);
-            return Ok(());
-        } else {
-            return Err(GameError::NoCardMatch);
+        self.plays -= 1;
+        let selected = SelectHand::new(self.available.selected());
+        let best = selected.best_hand()?;
+        let score = self.calc_score(best);
+        let pass_blind = self.handle_score(score)?;
+        let removed = self.available.remove_selected();
+        self.draw(removed);
+        if pass_blind {
+            self.clear_blind();
         }
+        return Ok(());
+    }
+
+    // discard selected cards from available and draw equal number back to available
+    pub fn discard_selected(&mut self) -> Result<(), GameError> {
+        if self.discards <= 0 {
+            return Err(GameError::NoRemainingDiscards);
+        }
+        self.discards -= 1;
+        let removed = self.available.remove_selected();
+        self.draw(removed);
+        return Ok(());
     }
 
     pub fn calc_score(&mut self, hand: MadeHand) -> usize {
@@ -323,21 +300,6 @@ impl Game {
         return Ok(true);
     }
 
-    pub fn play(&mut self, select: SelectHand) -> Result<(), GameError> {
-        if self.plays <= 0 {
-            return Err(GameError::NoRemainingPlays);
-        }
-        self.plays -= 1;
-        let best = select.best_hand()?;
-        let score = self.calc_score(best);
-        let pass_blind = self.handle_score(score)?;
-        self._discard(select, false)?;
-        if pass_blind {
-            self.clear_blind();
-        }
-        return Ok(());
-    }
-
     pub fn handle_action(&mut self, action: Action) -> Result<(), GameError> {
         self.action_history.push(action.clone());
         return match action {
@@ -346,18 +308,15 @@ impl Game {
                 false => Err(GameError::InvalidAction),
             },
             Action::Play() => match self.stage.is_blind() {
-                true => self.play(SelectHand::new(self.selected.clone())),
+                true => self.play_selected(),
                 false => Err(GameError::InvalidAction),
             },
             Action::Discard() => match self.stage.is_blind() {
-                true => self.discard(SelectHand::new(self.selected.clone())),
+                true => self.discard_selected(),
                 false => Err(GameError::InvalidAction),
             },
-            Action::MoveCard(dir) => match self.stage.is_blind() {
-                true => match self.selected.len() {
-                    1 => self.move_card(dir, self.selected[0]),
-                    _ => Err(GameError::InvalidMoveCard),
-                },
+            Action::MoveCard(dir, card) => match self.stage.is_blind() {
+                true => self.move_card(dir, card),
                 false => Err(GameError::InvalidAction),
             },
             Action::CashOut(_reward) => match self.stage {
@@ -383,7 +342,8 @@ impl Game {
 impl fmt::Display for Game {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         writeln!(f, "deck length: {}", self.deck.len())?;
-        writeln!(f, "available length: {}", self.available.len())?;
+        writeln!(f, "available length: {}", self.available.cards().len())?;
+        writeln!(f, "selected length: {}", self.available.selected().len())?;
         writeln!(f, "discard length: {}", self.discarded.len())?;
         writeln!(f, "action history length: {}", self.action_history.len())?;
         writeln!(f, "blind: {:?}", self.blind)?;
@@ -411,7 +371,7 @@ mod tests {
     #[test]
     fn test_constructor() {
         let g = Game::default();
-        assert_eq!(g.available.len(), 0);
+        assert_eq!(g.available.cards().len(), 0);
         assert_eq!(g.deck.len(), 52);
         assert_eq!(g.mult, 0);
     }
@@ -423,33 +383,35 @@ mod tests {
         // deck should be 7 cards smaller than we started with
         assert_eq!(g.deck.len(), 52 - g.config.available);
         // should be 7 cards now available
-        assert_eq!(g.available.len(), g.config.available);
+        assert_eq!(g.available.cards().len(), g.config.available);
     }
 
     #[test]
     fn test_draw() {
         let mut g = Game::default();
         g.draw(1);
-        assert_eq!(g.available.len(), 1);
+        assert_eq!(g.available.cards().len(), 1);
         assert_eq!(g.deck.len(), 52 - 1);
         g.draw(3);
-        assert_eq!(g.available.len(), 4);
+        assert_eq!(g.available.cards().len(), 4);
         assert_eq!(g.deck.len(), 52 - 4);
     }
     #[test]
     fn test_discard() {
         let mut g = Game::default();
         g.deal();
-        assert_eq!(g.available.len(), g.config.available);
+        assert_eq!(g.available.cards().len(), g.config.available);
         assert_eq!(g.deck.len(), 52 - g.config.available);
         // select first 4 cards
-        let select = SelectHand::new(g.available[0..4].to_vec());
-        let discard_res = g.discard(select.clone());
+        for c in g.available.cards()[0..5].to_vec() {
+            g.select_card(c).unwrap();
+        }
+        let discard_res = g.discard_selected();
         assert!(discard_res.is_ok());
         // available should still be 7, we discarded then redrew to match
-        assert_eq!(g.available.len(), g.config.available);
+        assert_eq!(g.available.cards().len(), g.config.available);
         // deck is now smaller since we drew from it
-        assert_eq!(g.deck.len(), 52 - g.config.available - select.len());
+        assert_eq!(g.deck.len(), 52 - g.config.available - 5);
     }
 
     #[test]
