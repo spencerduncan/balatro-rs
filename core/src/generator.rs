@@ -213,8 +213,8 @@ impl Game {
             .enumerate()
             .for_each(|(i, _)| {
                 space
-                    .unmask_move_card_left(i)
-                    .expect("valid index for move left")
+                    .unmask_move_card_right(i)
+                    .expect("valid index for move right")
             });
     }
 
@@ -345,5 +345,71 @@ mod tests {
         assert!(space.select_card[0] == 1);
         g.unmask_action_space_select_cards(&mut space);
         assert!(space.select_card[0] == 1);
+    }
+
+    #[test]
+    fn test_unmask_action_space_play_and_discard() {
+        let mut g = Game::default();
+        g.deal();
+        g.stage = Stage::Blind(Blind::Small);
+        let mut space = ActionSpace::from(g.config.clone());
+
+        // Default action space everything should be masked
+        assert!(space.play[0] == 0);
+        assert!(space.discard[0] == 0);
+
+        for c in g.available.cards()[0..5].to_vec() {
+            g.select_card(c).unwrap();
+        }
+        // Unmask play/discard
+        g.unmask_action_space_play_and_discard(&mut space);
+        assert!(space.play[0] == 1);
+        assert!(space.discard[0] == 1);
+    }
+
+    #[test]
+    fn test_unmask_action_space_move_cards() {
+        let mut g = Game::default();
+        g.stage = Stage::Blind(Blind::Small);
+        let mut space = ActionSpace::from(g.config.clone());
+
+        // Default action space everything should be masked, since no cards available yet
+        assert_eq!(g.available.cards().len(), 0);
+        for i in 0..space.move_card_left.len() {
+            assert!(space.move_card_left[i] == 0);
+        }
+        for i in 0..space.move_card_right.len() {
+            assert!(space.move_card_right[i] == 0);
+        }
+
+        // deal and make available
+        g.deal();
+        // Unmask play/discard
+        g.unmask_action_space_move_cards(&mut space);
+
+        // Should be able to move left every available card except leftmost
+        let available = g.available.cards().len();
+        for i in 0..available - 1 {
+            assert!(space.move_card_left[i] == 1);
+        }
+        for i in 0..available - 1 {
+            assert!(space.move_card_right[i] == 1);
+        }
+
+        // Even when selected, we can still move cards
+        let not_selected = g.available.not_selected();
+        for c in &not_selected[0..5] {
+            g.select_card(*c).unwrap();
+        }
+
+        // Get fresh action space and mask
+        space = ActionSpace::from(g.config.clone());
+        g.unmask_action_space_move_cards(&mut space);
+        for i in 0..available - 1 {
+            assert!(space.move_card_left[i] == 1);
+        }
+        for i in 0..available - 1 {
+            assert!(space.move_card_right[i] == 1);
+        }
     }
 }
