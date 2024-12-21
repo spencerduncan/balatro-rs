@@ -163,9 +163,10 @@ impl Game {
             return;
         }
         self.available
-            .not_selected()
+            .cards_and_selected()
             .iter()
             .enumerate()
+            .filter(|(_, (_, a))| !*a)
             .for_each(|(i, _)| {
                 space
                     .unmask_select_card(i)
@@ -330,13 +331,43 @@ mod tests {
 
         // Make a fresh space
         space = ActionSpace::from(g.config.clone());
+        // Select 2 cards, regenerate action space
+        for _ in 0..2 {
+            g.select_card(*g.available.not_selected().first().expect("is first card"))
+                .expect("can select");
+        }
+        g.unmask_action_space_select_cards(&mut space);
+        // Cannot select first and second, can select third
+        assert!(space.select_card[0] == 0);
+        assert!(space.select_card[1] == 0);
+        assert!(space.select_card[2] == 1);
+    }
+
+    #[test]
+    fn test_unmask_action_space_select_cards_max() {
+        let mut g = Game::default();
+        g.deal();
+        g.stage = Stage::Blind(Blind::Small);
+        let mut space = ActionSpace::from(g.config.clone());
+
+        // Default action space everything should be masked
+        assert!(space.select_card[0] == 0);
+
+        // Unmask card selects, we have all selects available
+        g.unmask_action_space_select_cards(&mut space);
+        assert!(space.select_card[0] == 1);
+
+        // Make a fresh space
+        space = ActionSpace::from(g.config.clone());
         // Now select 5 cards, no more selects available, regenerate action space
         for _ in 0..g.config.selected_max {
             g.select_card(*g.available.not_selected().first().expect("is first card"))
                 .expect("can select");
         }
         g.unmask_action_space_select_cards(&mut space);
-        assert!(space.select_card[0] == 0);
+        for i in 0..space.select_card.len() - 1 {
+            assert!(space.select_card[i] == 0);
+        }
 
         // If stage is not blind, don't alter space
         g.stage = Stage::Shop();

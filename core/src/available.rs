@@ -89,6 +89,10 @@ impl Available {
     pub(crate) fn cards(&self) -> Vec<Card> {
         return self.cards.iter().map(|(c, _)| *c).collect();
     }
+
+    pub(crate) fn cards_and_selected(&self) -> Vec<(Card, bool)> {
+        return self.cards.clone();
+    }
 }
 
 impl Default for Available {

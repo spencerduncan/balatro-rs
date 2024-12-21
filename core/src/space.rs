@@ -2,6 +2,7 @@ use crate::action::{Action, MoveDirection};
 use crate::config::Config;
 use crate::error::ActionSpaceError;
 use crate::game::Game;
+use crate::stage::Blind;
 use pyo3::pyclass;
 
 // Hard code a bounded action space.
@@ -54,7 +55,7 @@ impl ActionSpace {
     }
 
     pub fn select_card_max(&self) -> usize {
-        return self.select_card_min() + self.select_card.len();
+        return self.select_card_min() + self.select_card.len() - 1;
     }
 
     pub fn move_card_left_min(&self) -> usize {
@@ -62,7 +63,7 @@ impl ActionSpace {
     }
 
     pub fn move_card_left_max(&self) -> usize {
-        return self.move_card_left_min() + self.select_card.len() - 1;
+        return self.move_card_left_min() + self.select_card.len() - 2;
     }
 
     pub fn move_card_right_min(&self) -> usize {
@@ -70,7 +71,7 @@ impl ActionSpace {
     }
 
     pub fn move_card_right_max(&self) -> usize {
-        return self.move_card_right_min() + self.select_card.len() - 1;
+        return self.move_card_right_min() + self.select_card.len() - 2;
     }
 
     pub fn play_min(&self) -> usize {
@@ -78,7 +79,7 @@ impl ActionSpace {
     }
 
     pub fn play_max(&self) -> usize {
-        return self.play_min() + self.play.len();
+        return self.play_min() + self.play.len() - 1;
     }
 
     pub fn discard_min(&self) -> usize {
@@ -86,7 +87,7 @@ impl ActionSpace {
     }
 
     pub fn discard_max(&self) -> usize {
-        return self.discard_min() + self.discard.len();
+        return self.discard_min() + self.discard.len() - 1;
     }
 
     pub fn cash_out_min(&self) -> usize {
@@ -94,7 +95,7 @@ impl ActionSpace {
     }
 
     pub fn cash_out_max(&self) -> usize {
-        return self.cash_out_min() + self.cash_out.len();
+        return self.cash_out_min() + self.cash_out.len() - 1;
     }
 
     pub fn buy_joker_min(&self) -> usize {
@@ -102,7 +103,7 @@ impl ActionSpace {
     }
 
     pub fn buy_joker_max(&self) -> usize {
-        return self.buy_joker_min() + self.buy_joker.len();
+        return self.buy_joker_min() + self.buy_joker.len() - 1;
     }
 
     pub fn next_round_min(&self) -> usize {
@@ -110,7 +111,7 @@ impl ActionSpace {
     }
 
     pub fn next_round_max(&self) -> usize {
-        return self.next_round_min() + self.next_round.len();
+        return self.next_round_min() + self.next_round.len() - 1;
     }
 
     pub fn select_blind_min(&self) -> usize {
@@ -118,7 +119,7 @@ impl ActionSpace {
     }
 
     pub fn select_blind_max(&self) -> usize {
-        return self.select_blind_min() + self.select_blind.len();
+        return self.select_blind_min() + self.select_blind.len() - 1;
     }
 
     // Not all actions are always legal, by default all actions
@@ -175,7 +176,7 @@ impl ActionSpace {
         self.select_blind[0] = 1;
     }
 
-    pub fn to_action(&self, index: usize, game: Game) -> Result<Action, ActionSpaceError> {
+    pub fn to_action(&self, index: usize, game: &Game) -> Result<Action, ActionSpaceError> {
         let vec = self.to_vec();
         if let Some(v) = vec.get(index) {
             if *v == 0 {
@@ -184,9 +185,29 @@ impl ActionSpace {
         } else {
             return Err(ActionSpaceError::InvalidIndex);
         }
+        dbg!("index {:} to action", index);
+        dbg!("select card min: {:}", self.select_card_min());
+        dbg!("select card max: {:}", self.select_card_max());
+        dbg!("move left min: {:}", self.move_card_left_min());
+        dbg!("move left max: {:}", self.move_card_left_max());
+        dbg!("move right min: {:}", self.move_card_right_min());
+        dbg!("move right max: {:}", self.move_card_right_max());
+        dbg!("play min: {:}", self.play_min());
+        dbg!("play max: {:}", self.play_max());
+        dbg!("discard min: {:}", self.discard_min());
+        dbg!("discard max: {:}", self.discard_max());
+        dbg!("cash min: {:}", self.cash_out_min());
+        dbg!("cash max: {:}", self.cash_out_max());
+        dbg!("buy joker min: {:}", self.buy_joker_min());
+        dbg!("buy joker max: {:}", self.buy_joker_max());
+        dbg!("next round min: {:}", self.next_round_min());
+        dbg!("next round max: {:}", self.next_round_max());
+        dbg!("select blind min: {:}", self.select_blind_min());
+        dbg!("select blind max: {:}", self.select_blind_max());
         match index {
             // Cannot reference runtime values in patterns, so this is workaround
             n if (self.select_card_min()..=self.select_card_max()).contains(&n) => {
+                dbg!("select card (index={:})", index);
                 if let Some(card) = game.available.card_from_index(index) {
                     return Ok(Action::SelectCard(card));
                 } else {
@@ -195,6 +216,7 @@ impl ActionSpace {
             }
             n if (self.move_card_left_min()..=self.move_card_left_max()).contains(&n) => {
                 let n_offset = n - self.move_card_left_min();
+                dbg!("move card left (index={:})", n_offset);
                 if let Some(card) = game.available.card_from_index(n_offset) {
                     return Ok(Action::MoveCard(MoveDirection::Left, card));
                 } else {
@@ -203,6 +225,7 @@ impl ActionSpace {
             }
             n if (self.move_card_right_min()..=self.move_card_right_max()).contains(&n) => {
                 let n_offset = n - self.move_card_right_min();
+                dbg!("move card right (index={:})", n_offset);
                 if let Some(card) = game.available.card_from_index(n_offset) {
                     return Ok(Action::MoveCard(MoveDirection::Right, card));
                 } else {
@@ -210,12 +233,36 @@ impl ActionSpace {
                 }
             }
             n if (self.play_min()..=self.play_max()).contains(&n) => {
-                let n_offset = n - self.play_min();
-
-                if let Some(card) = game.available.card_from_index(n_offset) {
-                    return Ok(Action::SelectCard(card));
+                dbg!("play");
+                return Ok(Action::Play());
+            }
+            n if (self.discard_min()..=self.discard_max()).contains(&n) => {
+                dbg!("discard");
+                return Ok(Action::Discard());
+            }
+            n if (self.cash_out_min()..=self.cash_out_max()).contains(&n) => {
+                dbg!("cash out");
+                dbg!("{:}, {:}", self.cash_out_min(), self.cash_out_max());
+                return Ok(Action::CashOut(game.reward));
+            }
+            n if (self.buy_joker_min()..=self.buy_joker_max()).contains(&n) => {
+                let n_offset = n - self.buy_joker_min();
+                dbg!("buy joker (index={:})", n_offset);
+                if let Some(joker) = game.shop.joker_from_index(n_offset) {
+                    return Ok(Action::BuyJoker(joker));
                 } else {
                     return Err(ActionSpaceError::InvalidActionConversion);
+                }
+            }
+            n if (self.next_round_min()..=self.next_round_max()).contains(&n) => {
+                dbg!("next round");
+                return Ok(Action::NextRound());
+            }
+            n if (self.select_blind_min()..=self.select_blind_max()).contains(&n) => {
+                dbg!("select blind");
+                match game.blind {
+                    Some(blind) => Ok(Action::SelectBlind(blind.next())),
+                    None => Ok(Action::SelectBlind(Blind::Small)),
                 }
             }
             _ => return Err(ActionSpaceError::InvalidActionConversion),
@@ -276,6 +323,7 @@ impl From<ActionSpace> for Vec<usize> {
 mod tests {
     use super::*;
     use crate::config::Config;
+    use crate::stage::Blind;
 
     #[test]
     fn test_unmask() {
@@ -304,5 +352,80 @@ mod tests {
 
         let res = a.unmask_select_card(24);
         assert!(res.is_err());
+    }
+
+    #[test]
+    fn test_index_to_action() {
+        let mut g = Game::default();
+        let space = g.gen_action_space();
+        let space_vec = g.gen_action_space().to_vec();
+
+        // Game hasn't started yet, so only valid action is select blind
+        for b in space_vec.iter().rev().skip(1).rev() {
+            assert_eq!(*b, 0);
+        }
+        assert_eq!(*space_vec.last().unwrap(), 1);
+        let last_index = space_vec.len() - 1;
+        let action = space.to_action(last_index, &g).expect("to action");
+        assert_eq!(action, Action::SelectBlind(Blind::Small));
+        g.handle_action(action).unwrap();
+
+        // Game now in small blind, we can select, move, play, discard
+        let space = g.gen_action_space();
+        let space_vec = g.gen_action_space().to_vec();
+        assert_eq!(space_vec[0], 1);
+        // dbg!(space);
+        // dbg!(space_vec);
+
+        // We can select first card
+        assert_eq!(g.available.selected().len(), 0);
+        let index = space.select_card_min();
+        let action = space.to_action(index, &g).expect("to action");
+        assert_eq!(
+            action,
+            Action::SelectCard(g.available.card_from_index(0).expect("first card"))
+        );
+        g.handle_action(action).unwrap();
+        assert_eq!(g.available.selected().len(), 1);
+
+        // Regenerate space, cannot select first card, can select second
+        let space = g.gen_action_space();
+        let space_vec = g.gen_action_space().to_vec();
+        assert_eq!(space_vec[0], 0);
+        assert_eq!(space_vec[1], 1);
+        assert_eq!(g.available.selected().len(), 1);
+
+        // Ensure select second is unmasked, convert to action and handle
+        let index = space.select_card_min() + 1;
+        let action = space.to_action(index, &g).expect("to action");
+        assert_eq!(
+            action,
+            Action::SelectCard(g.available.card_from_index(1).expect("second card"))
+        );
+        g.handle_action(action).unwrap();
+        assert_eq!(g.available.selected().len(), 2);
+
+        // Regenerate space, cannot select first or second, can play and discard
+        let space = g.gen_action_space();
+        let space_vec = g.gen_action_space().to_vec();
+        assert_eq!(space_vec[0], 0);
+        assert_eq!(space_vec[1], 0);
+        assert_eq!(g.available.selected().len(), 2);
+
+        let index = space.play_min();
+        let action_play = space.to_action(index, &g).expect("to action");
+        assert_eq!(action_play, Action::Play());
+
+        let index = space.discard_min();
+        let action_discard = space.to_action(index, &g).expect("to action");
+        assert_eq!(action_discard, Action::Discard());
+
+        // Play
+        g.handle_action(action_play).unwrap();
+
+        let space = g.gen_action_space();
+        let space_vec = g.gen_action_space().to_vec();
+        // dbg!(space);
+        // dbg!(space_vec);
     }
 }

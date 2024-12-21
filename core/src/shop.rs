@@ -18,6 +18,10 @@ impl Shop {
         self.jokers = vec![j1, j2]
     }
 
+    pub(crate) fn joker_from_index(&self, i: usize) -> Option<Jokers> {
+        return Some(self.jokers[i].clone());
+    }
+
     pub fn buy_joker(&mut self, joker: Jokers) -> Result<Jokers, GameError> {
         let i = self
             .jokers
