@@ -20,7 +20,7 @@ use pyo3::pyclass;
 // 77: next round
 // 78: select blind
 //
-// We end up with a vector of length 35 where each index
+// We end up with a vector of length 79 (so far) where each index
 // represents a potential action.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "python", pyclass(eq))]
