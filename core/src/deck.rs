@@ -29,6 +29,10 @@ impl Deck {
         self.cards.append(other);
     }
 
+    pub(crate) fn extend(&mut self, other: Vec<Card>) {
+        self.cards.extend(other);
+    }
+
     pub fn cards(&self) -> Vec<Card> {
         self.cards.clone()
     }

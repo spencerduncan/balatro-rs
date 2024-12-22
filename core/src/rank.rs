@@ -27,7 +27,7 @@ pub enum HandRank {
 }
 
 impl HandRank {
-    pub fn level(&self) -> Level {
+    pub(crate) fn level(&self) -> Level {
         match self {
             Self::HighCard => Level {
                 level: 1,

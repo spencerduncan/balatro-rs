@@ -40,6 +40,14 @@ pub enum GameError {
     InvalidMoveCard,
     #[error("Invalid select card")]
     InvalidSelectCard,
+    #[error("Invalid action space")]
+    InvalidActionSpace,
+}
+
+impl std::convert::From<ActionSpaceError> for GameError {
+    fn from(_err: ActionSpaceError) -> GameError {
+        GameError::InvalidActionSpace
+    }
 }
 
 #[cfg(feature = "python")]
@@ -47,4 +55,14 @@ impl std::convert::From<GameError> for PyErr {
     fn from(err: GameError) -> PyErr {
         PyException::new_err(err.to_string())
     }
+}
+
+#[derive(Error, Debug, Clone)]
+pub enum ActionSpaceError {
+    #[error("Invalid index")]
+    InvalidIndex,
+    #[error("Invalid conversion to action")]
+    InvalidActionConversion,
+    #[error("Masked action")]
+    MaskedAction,
 }

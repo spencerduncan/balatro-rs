@@ -8,7 +8,6 @@ const DEFAULT_REWARD_BASE: usize = 0;
 const DEFAULT_MONEY_PER_HAND: usize = 1;
 const DEFAULT_INTEREST_RATE: f32 = 0.2;
 const DEFAULT_INTEREST_MAX: usize = 5;
-const DEFAULT_HAND_SIZE: usize = 8;
 const DEFAULT_BASE_MULT: usize = 0;
 const DEFAULT_BASE_CHIPS: usize = 0;
 const DEFAULT_BASE_SCORE: usize = 0;
@@ -16,6 +15,9 @@ const DEFAULT_ANTE_START: usize = 1;
 const DEFAULT_ANTE_END: usize = 8;
 const DEFAULT_JOKER_SLOTS: usize = 5;
 const DEFAULT_SELECTED_MAX: usize = 5;
+const DEFAULT_AVAILABLE: usize = 8;
+const DEFAULT_AVAILABLE_MAX: usize = 24; // arbitrary
+const DEFAULT_STORE_CONSUMABLE_SLOTS_MAX: usize = 4;
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "python", pyclass)]
@@ -29,7 +31,6 @@ pub struct Config {
     pub money_per_hand: usize,
     pub interest_rate: f32,
     pub interest_max: usize,
-    pub hand_size: usize,
     pub base_mult: usize,
     pub base_chips: usize,
     pub base_score: usize,
@@ -37,6 +38,9 @@ pub struct Config {
     pub ante_end: usize,
     pub joker_slots: usize,
     pub selected_max: usize,
+    pub available: usize,
+    pub available_max: usize,
+    pub store_consumable_slots_max: usize,
 }
 
 impl Config {
@@ -50,7 +54,6 @@ impl Config {
             money_per_hand: DEFAULT_MONEY_PER_HAND,
             interest_rate: DEFAULT_INTEREST_RATE,
             interest_max: DEFAULT_INTEREST_MAX,
-            hand_size: DEFAULT_HAND_SIZE,
             base_mult: DEFAULT_BASE_MULT,
             base_chips: DEFAULT_BASE_CHIPS,
             base_score: DEFAULT_BASE_SCORE,
@@ -58,6 +61,9 @@ impl Config {
             ante_end: DEFAULT_ANTE_END,
             joker_slots: DEFAULT_JOKER_SLOTS,
             selected_max: DEFAULT_SELECTED_MAX,
+            available: DEFAULT_AVAILABLE,
+            available_max: DEFAULT_AVAILABLE_MAX,
+            store_consumable_slots_max: DEFAULT_STORE_CONSUMABLE_SLOTS_MAX,
         };
     }
 }

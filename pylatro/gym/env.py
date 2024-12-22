@@ -26,7 +26,7 @@ class BalatroEnv(gym.Env):
 
     @property
     def action_space(self):
-        actions = self._game.gen_moves()
+        actions = self._game.gen_actions()
         return spaces.Discrete(len(actions))
 
     def _get_obs(self):
@@ -36,9 +36,9 @@ class BalatroEnv(gym.Env):
         return {"difference": self._target_score - self._score}
 
     def step(self, action):
-        moves = self._game.gen_moves()
-        if action < len(moves):
-            real_action = moves[action]
+        actions = self._game.gen_actions()
+        if action < len(actions):
+            real_action = actions[action]
             self._game.handle_action(real_action)
 
         terminated = self._game.is_over
