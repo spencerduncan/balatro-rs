@@ -6,7 +6,7 @@ use crate::stage::{Blind, Stage};
 
 impl Game {
     // Get all legal SelectCard actions that can be executed given current state
-    pub fn gen_actions_select_card(&self) -> Option<impl Iterator<Item = Action>> {
+    fn gen_actions_select_card(&self) -> Option<impl Iterator<Item = Action>> {
         // Can only select card during blinds
         if !self.stage.is_blind() {
             return None;
@@ -25,7 +25,7 @@ impl Game {
     }
 
     // Get all legal Play actions that can be executed given current state
-    pub fn gen_actions_play(&self) -> Option<impl Iterator<Item = Action>> {
+    fn gen_actions_play(&self) -> Option<impl Iterator<Item = Action>> {
         // Can only play hand during blinds
         if !self.stage.is_blind() {
             return None;
@@ -43,7 +43,7 @@ impl Game {
     }
 
     // Get all legal Play actions that can be executed given current state
-    pub fn gen_actions_discard(&self) -> Option<impl Iterator<Item = Action>> {
+    fn gen_actions_discard(&self) -> Option<impl Iterator<Item = Action>> {
         // Can only discard during blinds
         if !self.stage.is_blind() {
             return None;
@@ -61,7 +61,7 @@ impl Game {
     }
 
     // Get all legal move card actions
-    pub fn gen_actions_move_card(&self) -> Option<impl Iterator<Item = Action>> {
+    fn gen_actions_move_card(&self) -> Option<impl Iterator<Item = Action>> {
         // Can only move cards during blinds
         if !self.stage.is_blind() {
             return None;
@@ -88,7 +88,7 @@ impl Game {
     }
 
     // Get cash out action
-    pub fn gen_actions_cash_out(&self) -> Option<impl Iterator<Item = Action>> {
+    fn gen_actions_cash_out(&self) -> Option<impl Iterator<Item = Action>> {
         // If stage is not post blind, cannot cash out
         if self.stage != Stage::PostBlind() {
             return None;
@@ -97,7 +97,7 @@ impl Game {
     }
 
     // Get next round action
-    pub fn gen_actions_next_round(&self) -> Option<impl Iterator<Item = Action>> {
+    fn gen_actions_next_round(&self) -> Option<impl Iterator<Item = Action>> {
         // If stage is not shop, cannot next round
         if self.stage != Stage::Shop() {
             return None;
@@ -106,7 +106,7 @@ impl Game {
     }
 
     // Get select blind action
-    pub fn gen_actions_select_blind(&self) -> Option<impl Iterator<Item = Action>> {
+    fn gen_actions_select_blind(&self) -> Option<impl Iterator<Item = Action>> {
         // If stage is not pre blind, cannot select blind
         if self.stage != Stage::PreBlind() {
             return None;
@@ -119,7 +119,7 @@ impl Game {
     }
 
     // Get buy joker actions
-    pub fn gen_actions_buy_joker(&self) -> Option<impl Iterator<Item = Action>> {
+    fn gen_actions_buy_joker(&self) -> Option<impl Iterator<Item = Action>> {
         // If stage is not shop, cannot buy
         if self.stage != Stage::Shop() {
             return None;
@@ -154,7 +154,7 @@ impl Game {
             .chain(buy_jokers.into_iter().flatten());
     }
 
-    pub fn unmask_action_space_select_cards(&self, space: &mut ActionSpace) {
+    fn unmask_action_space_select_cards(&self, space: &mut ActionSpace) {
         if !self.stage.is_blind() {
             return;
         }
@@ -175,7 +175,7 @@ impl Game {
         dbg!(space.clone());
     }
 
-    pub fn unmask_action_space_play_and_discard(&self, space: &mut ActionSpace) {
+    fn unmask_action_space_play_and_discard(&self, space: &mut ActionSpace) {
         if !self.stage.is_blind() {
             return;
         }
@@ -192,7 +192,7 @@ impl Game {
         }
     }
 
-    pub fn unmask_action_space_move_cards(&self, space: &mut ActionSpace) {
+    fn unmask_action_space_move_cards(&self, space: &mut ActionSpace) {
         if !self.stage.is_blind() {
             return;
         }
@@ -224,28 +224,28 @@ impl Game {
             });
     }
 
-    pub fn unmask_action_space_cash_out(&self, space: &mut ActionSpace) {
+    fn unmask_action_space_cash_out(&self, space: &mut ActionSpace) {
         if self.stage != Stage::PostBlind() {
             return;
         }
         space.unmask_cash_out();
     }
 
-    pub fn unmask_action_space_next_round(&self, space: &mut ActionSpace) {
+    fn unmask_action_space_next_round(&self, space: &mut ActionSpace) {
         if self.stage != Stage::Shop() {
             return;
         }
         space.unmask_next_round();
     }
 
-    pub fn unmask_action_space_select_blind(&self, space: &mut ActionSpace) {
+    fn unmask_action_space_select_blind(&self, space: &mut ActionSpace) {
         if self.stage != Stage::PreBlind() {
             return;
         }
         space.unmask_select_blind();
     }
 
-    pub fn unmask_action_space_buy_joker(&self, space: &mut ActionSpace) {
+    fn unmask_action_space_buy_joker(&self, space: &mut ActionSpace) {
         if self.stage != Stage::Shop() {
             return;
         }
@@ -270,6 +270,7 @@ impl Game {
         self.unmask_action_space_cash_out(&mut space);
         self.unmask_action_space_next_round(&mut space);
         self.unmask_action_space_select_blind(&mut space);
+        self.unmask_action_space_buy_joker(&mut space);
         return space;
     }
 }

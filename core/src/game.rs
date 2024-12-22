@@ -91,7 +91,7 @@ impl Game {
         return self.result().is_some();
     }
 
-    pub fn clear_blind(&mut self) {
+    fn clear_blind(&mut self) {
         self.score = self.config.base_score;
         self.plays = self.config.plays;
         self.discards = self.config.discards;
@@ -99,7 +99,7 @@ impl Game {
     }
 
     // draw from deck to available
-    pub fn draw(&mut self, count: usize) {
+    fn draw(&mut self, count: usize) {
         if let Some(drawn) = self.deck.draw(count) {
             self.available.extend(drawn);
             // self.available.extend(drawn);
@@ -107,7 +107,7 @@ impl Game {
     }
 
     // shuffle and deal new cards to available
-    pub fn deal(&mut self) {
+    pub(crate) fn deal(&mut self) {
         // add discarded back to deck, emptying in process
         self.deck.append(&mut self.discarded);
         // add available back to deck and empty
@@ -117,18 +117,22 @@ impl Game {
         self.draw(self.config.available);
     }
 
-    pub fn select_card(&mut self, card: Card) -> Result<(), GameError> {
+    pub(crate) fn select_card(&mut self, card: Card) -> Result<(), GameError> {
         if self.available.selected().len() > self.config.selected_max {
             return Err(GameError::InvalidSelectCard);
         }
         return self.available.select_card(card);
     }
 
-    pub fn move_card(&mut self, direction: MoveDirection, card: Card) -> Result<(), GameError> {
+    pub(crate) fn move_card(
+        &mut self,
+        direction: MoveDirection,
+        card: Card,
+    ) -> Result<(), GameError> {
         return self.available.move_card(direction, card);
     }
 
-    pub fn play_selected(&mut self) -> Result<(), GameError> {
+    pub(crate) fn play_selected(&mut self) -> Result<(), GameError> {
         if self.plays <= 0 {
             return Err(GameError::NoRemainingPlays);
         }
@@ -146,7 +150,7 @@ impl Game {
     }
 
     // discard selected cards from available and draw equal number back to available
-    pub fn discard_selected(&mut self) -> Result<(), GameError> {
+    pub(crate) fn discard_selected(&mut self) -> Result<(), GameError> {
         if self.discards <= 0 {
             return Err(GameError::NoRemainingDiscards);
         }
@@ -156,7 +160,7 @@ impl Game {
         return Ok(());
     }
 
-    pub fn calc_score(&mut self, hand: MadeHand) -> usize {
+    pub(crate) fn calc_score(&mut self, hand: MadeHand) -> usize {
         // compute chips and mult from hand level
         self.chips += hand.rank.level().chips;
         self.mult += hand.rank.level().mult;
@@ -193,7 +197,7 @@ impl Game {
         return required;
     }
 
-    pub fn calc_reward(&mut self, blind: Blind) -> Result<usize, GameError> {
+    fn calc_reward(&mut self, blind: Blind) -> Result<usize, GameError> {
         let mut interest = (self.money as f32 * self.config.interest_rate).floor() as usize;
         if interest > self.config.interest_max {
             interest = self.config.interest_max
@@ -204,14 +208,14 @@ impl Game {
         return Ok(reward);
     }
 
-    pub fn cashout(&mut self) -> Result<(), GameError> {
+    fn cashout(&mut self) -> Result<(), GameError> {
         self.money += self.reward;
         self.reward = 0;
         self.stage = Stage::Shop();
         return Ok(());
     }
 
-    pub fn buy_joker(&mut self, joker: Jokers) -> Result<(), GameError> {
+    pub(crate) fn buy_joker(&mut self, joker: Jokers) -> Result<(), GameError> {
         if self.stage != Stage::Shop() {
             return Err(GameError::InvalidStage);
         }
@@ -228,7 +232,7 @@ impl Game {
         return Ok(());
     }
 
-    pub fn select_blind(&mut self, blind: Blind) -> Result<(), GameError> {
+    fn select_blind(&mut self, blind: Blind) -> Result<(), GameError> {
         // can only set blind if stage is pre blind
         if self.stage != Stage::PreBlind() {
             return Err(GameError::InvalidStage);
@@ -251,14 +255,14 @@ impl Game {
         return Ok(());
     }
 
-    pub fn next_round(&mut self) -> Result<(), GameError> {
+    fn next_round(&mut self) -> Result<(), GameError> {
         self.stage = Stage::PreBlind();
         self.round += 1;
         return Ok(());
     }
 
     // Returns true if blind passed, false if not.
-    pub fn handle_score(&mut self, score: usize) -> Result<bool, GameError> {
+    fn handle_score(&mut self, score: usize) -> Result<bool, GameError> {
         // can only handle score if stage is blind
         if !self.stage.is_blind() {
             return Err(GameError::InvalidStage);

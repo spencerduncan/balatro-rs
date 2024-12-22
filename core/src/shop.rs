@@ -12,7 +12,14 @@ pub struct Shop {
 }
 
 impl Shop {
-    pub fn refresh(&mut self) {
+    pub fn new() -> Self {
+        return Shop {
+            joker_gen: JokerGenerator {},
+            jokers: Vec::new(),
+        };
+    }
+
+    pub(crate) fn refresh(&mut self) {
         let j1 = self.joker_gen.gen_joker();
         let j2 = self.joker_gen.gen_joker();
         self.jokers = vec![j1, j2]
@@ -22,7 +29,7 @@ impl Shop {
         return Some(self.jokers[i].clone());
     }
 
-    pub fn buy_joker(&mut self, joker: Jokers) -> Result<Jokers, GameError> {
+    pub(crate) fn buy_joker(&mut self, joker: Jokers) -> Result<Jokers, GameError> {
         let i = self
             .jokers
             .iter()
@@ -32,14 +39,10 @@ impl Shop {
         return Ok(out);
     }
 
-    pub fn new() -> Self {
-        return Shop {
-            joker_gen: JokerGenerator {},
-            jokers: Vec::new(),
-        };
-    }
-
-    pub fn gen_moves_buy_joker(&self, balance: usize) -> Option<impl Iterator<Item = Action>> {
+    pub(crate) fn gen_moves_buy_joker(
+        &self,
+        balance: usize,
+    ) -> Option<impl Iterator<Item = Action>> {
         if self.jokers.len() == 0 {
             return None;
         }
@@ -70,7 +73,7 @@ impl JokerGenerator {
     }
 
     // Generate a random new joker
-    pub fn gen_joker(&self) -> Jokers {
+    pub(crate) fn gen_joker(&self) -> Jokers {
         let rarity = self.gen_rarity();
         let choices = Jokers::by_rarity(rarity);
         let i = thread_rng().gen_range(0..choices.len());

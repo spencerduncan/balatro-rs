@@ -53,7 +53,11 @@ impl Available {
         return remove_count;
     }
 
-    pub fn move_card(&mut self, direction: MoveDirection, card: Card) -> Result<(), GameError> {
+    pub(crate) fn move_card(
+        &mut self,
+        direction: MoveDirection,
+        card: Card,
+    ) -> Result<(), GameError> {
         if let Some((i, _)) = self.cards.iter().find_position(|(c, _)| c.id == card.id) {
             match direction {
                 MoveDirection::Left => {

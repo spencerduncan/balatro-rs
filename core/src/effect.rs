@@ -20,7 +20,7 @@ impl EffectRegistry {
             on_handrank: Vec::new(),
         };
     }
-    pub fn register_jokers(&mut self, jokers: Vec<Jokers>, game: &Game) {
+    pub(crate) fn register_jokers(&mut self, jokers: Vec<Jokers>, game: &Game) {
         for j in jokers.clone() {
             for e in j.effects(game) {
                 match e {

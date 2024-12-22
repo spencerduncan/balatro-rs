@@ -39,32 +39,20 @@ impl SelectHand {
     pub fn new(cards: Vec<Card>) -> Self {
         Self(cards)
     }
-    pub fn push(&mut self, c: Card) {
-        self.0.push(c);
-    }
-    pub fn append(&mut self, cards: Vec<Card>) {
-        self.0.extend(cards);
-    }
-    pub fn truncate(&mut self, len: usize) {
-        self.0.truncate(len)
-    }
-    pub fn len(&self) -> usize {
+    pub(crate) fn len(&self) -> usize {
         self.0.len()
     }
-    pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
-    }
     // Get all values in a hand. Sorted lowest to highest.
-    pub fn values(&self) -> Vec<Value> {
+    fn values(&self) -> Vec<Value> {
         self.0.iter().map(|x| x.value).sorted().collect()
     }
-    pub fn cards(&self) -> Vec<Card> {
+    pub(crate) fn cards(&self) -> Vec<Card> {
         return self.0.clone();
     }
 
     // Get map of each value with corresponding cards.
     // For example, Ks, Ah, Jh, Jc, Jd -> {A: [Ah], K: [Ks], J: [Jh, Jc: Jd]}
-    pub fn values_freq(&self) -> IndexMap<Value, Vec<Card>> {
+    fn values_freq(&self) -> IndexMap<Value, Vec<Card>> {
         let mut counts: IndexMap<Value, Vec<Card>> = IndexMap::new();
         for card in self.0.clone() {
             if let Some(cards) = counts.get(&card.value) {
@@ -83,13 +71,13 @@ impl SelectHand {
     }
 
     // Get all suits in a hand
-    pub fn suits(&self) -> Vec<Suit> {
+    pub(crate) fn suits(&self) -> Vec<Suit> {
         self.0.iter().map(|x| x.suit).sorted().collect()
     }
 
     // Get map of each suit with corresponding cards.
     // For example, Ks, Ah, Jh, Jc, Jd -> {h: [Jh, Ah], s: [Ks], c: [Jc], d: [Jd]}
-    pub fn suits_freq(&self) -> IndexMap<Suit, Vec<Card>> {
+    pub(crate) fn suits_freq(&self) -> IndexMap<Suit, Vec<Card>> {
         let mut counts: IndexMap<Suit, Vec<Card>> = IndexMap::new();
         for card in self.0.clone() {
             if let Some(cards) = counts.get(&card.suit) {
@@ -127,7 +115,7 @@ impl SelectHand {
     // TwoPair
     // OnePair
     // HighCard
-    pub fn best_hand(&self) -> Result<MadeHand, PlayHandError> {
+    pub(crate) fn best_hand(&self) -> Result<MadeHand, PlayHandError> {
         if self.len() == 0 {
             return Err(PlayHandError::NoCards);
         }
@@ -232,7 +220,7 @@ impl SelectHand {
         return Err(PlayHandError::UnknownHand);
     }
 
-    pub fn is_highcard(&self) -> Option<SelectHand> {
+    pub(crate) fn is_highcard(&self) -> Option<SelectHand> {
         if self.len() < 1 {
             return None;
         }
@@ -247,7 +235,7 @@ impl SelectHand {
         }
     }
 
-    pub fn is_pair(&self) -> Option<SelectHand> {
+    pub(crate) fn is_pair(&self) -> Option<SelectHand> {
         if self.len() < 2 {
             return None;
         }
@@ -262,7 +250,7 @@ impl SelectHand {
         }
     }
 
-    pub fn is_two_pair(&self) -> Option<SelectHand> {
+    pub(crate) fn is_two_pair(&self) -> Option<SelectHand> {
         if self.len() < 4 {
             return None;
         }
@@ -299,7 +287,7 @@ impl SelectHand {
         return Some(SelectHand::new(cards));
     }
 
-    pub fn is_three_of_kind(&self) -> Option<SelectHand> {
+    pub(crate) fn is_three_of_kind(&self) -> Option<SelectHand> {
         if self.len() < 3 {
             return None;
         }
@@ -314,7 +302,7 @@ impl SelectHand {
         }
     }
 
-    pub fn is_straight(&self) -> Option<SelectHand> {
+    pub(crate) fn is_straight(&self) -> Option<SelectHand> {
         if self.len() != 5 {
             return None;
         }
@@ -341,7 +329,7 @@ impl SelectHand {
         return None;
     }
 
-    pub fn is_flush(&self) -> Option<SelectHand> {
+    pub(crate) fn is_flush(&self) -> Option<SelectHand> {
         if self.len() < 5 {
             return None;
         }
@@ -356,7 +344,7 @@ impl SelectHand {
         }
     }
 
-    pub fn is_fullhouse(&self) -> Option<SelectHand> {
+    pub(crate) fn is_fullhouse(&self) -> Option<SelectHand> {
         if self.len() < 5 {
             return None;
         }
@@ -393,7 +381,7 @@ impl SelectHand {
         return Some(SelectHand::new(cards));
     }
 
-    pub fn is_four_of_kind(&self) -> Option<SelectHand> {
+    pub(crate) fn is_four_of_kind(&self) -> Option<SelectHand> {
         if self.len() < 4 {
             return None;
         }
@@ -408,14 +396,14 @@ impl SelectHand {
         }
     }
 
-    pub fn is_straight_flush(&self) -> Option<SelectHand> {
+    pub(crate) fn is_straight_flush(&self) -> Option<SelectHand> {
         if self.is_flush().is_some() && self.is_straight().is_some() {
             return Some(self.clone());
         }
         return None;
     }
 
-    pub fn is_royal_flush(&self) -> Option<SelectHand> {
+    pub(crate) fn is_royal_flush(&self) -> Option<SelectHand> {
         if self.is_straight_flush().is_some()
             && self.values().into_iter().eq(vec![
                 Value::Ten,
@@ -430,7 +418,7 @@ impl SelectHand {
         return None;
     }
 
-    pub fn is_five_of_kind(&self) -> Option<SelectHand> {
+    pub(crate) fn is_five_of_kind(&self) -> Option<SelectHand> {
         if self.len() < 5 {
             return None;
         }
@@ -445,14 +433,14 @@ impl SelectHand {
         }
     }
 
-    pub fn is_flush_house(&self) -> Option<SelectHand> {
+    pub(crate) fn is_flush_house(&self) -> Option<SelectHand> {
         if self.is_flush().is_some() && self.is_fullhouse().is_some() {
             return Some(self.clone());
         }
         return None;
     }
 
-    pub fn is_flush_five(&self) -> Option<SelectHand> {
+    pub(crate) fn is_flush_five(&self) -> Option<SelectHand> {
         if self.is_flush().is_some() && self.is_five_of_kind().is_some() {
             return Some(self.clone());
         }
