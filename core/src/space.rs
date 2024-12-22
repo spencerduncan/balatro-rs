@@ -50,81 +50,81 @@ impl ActionSpace {
             + self.select_blind.len();
     }
 
-    pub fn select_card_min(&self) -> usize {
+    fn select_card_min(&self) -> usize {
         return 0;
     }
 
-    pub fn select_card_max(&self) -> usize {
+    fn select_card_max(&self) -> usize {
         return self.select_card_min() + self.select_card.len() - 1;
     }
 
-    pub fn move_card_left_min(&self) -> usize {
+    fn move_card_left_min(&self) -> usize {
         return self.select_card_max() + 1;
     }
 
-    pub fn move_card_left_max(&self) -> usize {
+    fn move_card_left_max(&self) -> usize {
         return self.move_card_left_min() + self.select_card.len() - 2;
     }
 
-    pub fn move_card_right_min(&self) -> usize {
+    fn move_card_right_min(&self) -> usize {
         return self.move_card_left_max() + 1;
     }
 
-    pub fn move_card_right_max(&self) -> usize {
+    fn move_card_right_max(&self) -> usize {
         return self.move_card_right_min() + self.select_card.len() - 2;
     }
 
-    pub fn play_min(&self) -> usize {
+    fn play_min(&self) -> usize {
         return self.move_card_right_max() + 1;
     }
 
-    pub fn play_max(&self) -> usize {
+    fn play_max(&self) -> usize {
         return self.play_min() + self.play.len() - 1;
     }
 
-    pub fn discard_min(&self) -> usize {
+    fn discard_min(&self) -> usize {
         return self.play_max() + 1;
     }
 
-    pub fn discard_max(&self) -> usize {
+    fn discard_max(&self) -> usize {
         return self.discard_min() + self.discard.len() - 1;
     }
 
-    pub fn cash_out_min(&self) -> usize {
+    fn cash_out_min(&self) -> usize {
         return self.discard_max() + 1;
     }
 
-    pub fn cash_out_max(&self) -> usize {
+    fn cash_out_max(&self) -> usize {
         return self.cash_out_min() + self.cash_out.len() - 1;
     }
 
-    pub fn buy_joker_min(&self) -> usize {
+    fn buy_joker_min(&self) -> usize {
         return self.cash_out_max() + 1;
     }
 
-    pub fn buy_joker_max(&self) -> usize {
+    fn buy_joker_max(&self) -> usize {
         return self.buy_joker_min() + self.buy_joker.len() - 1;
     }
 
-    pub fn next_round_min(&self) -> usize {
+    fn next_round_min(&self) -> usize {
         return self.buy_joker_max() + 1;
     }
 
-    pub fn next_round_max(&self) -> usize {
+    fn next_round_max(&self) -> usize {
         return self.next_round_min() + self.next_round.len() - 1;
     }
 
-    pub fn select_blind_min(&self) -> usize {
+    fn select_blind_min(&self) -> usize {
         return self.next_round_max() + 1;
     }
 
-    pub fn select_blind_max(&self) -> usize {
+    fn select_blind_max(&self) -> usize {
         return self.select_blind_min() + self.select_blind.len() - 1;
     }
 
     // Not all actions are always legal, by default all actions
     // are masked out, but provide methods to unmask valid.
-    pub fn unmask_select_card(&mut self, i: usize) -> Result<(), ActionSpaceError> {
+    pub(crate) fn unmask_select_card(&mut self, i: usize) -> Result<(), ActionSpaceError> {
         if i >= self.select_card.len() {
             return Err(ActionSpaceError::InvalidIndex);
         }
@@ -132,7 +132,7 @@ impl ActionSpace {
         return Ok(());
     }
 
-    pub fn unmask_move_card_left(&mut self, i: usize) -> Result<(), ActionSpaceError> {
+    pub(crate) fn unmask_move_card_left(&mut self, i: usize) -> Result<(), ActionSpaceError> {
         if i >= self.move_card_left.len() {
             return Err(ActionSpaceError::InvalidIndex);
         }
@@ -140,7 +140,7 @@ impl ActionSpace {
         return Ok(());
     }
 
-    pub fn unmask_move_card_right(&mut self, i: usize) -> Result<(), ActionSpaceError> {
+    pub(crate) fn unmask_move_card_right(&mut self, i: usize) -> Result<(), ActionSpaceError> {
         if i >= self.move_card_right.len() {
             return Err(ActionSpaceError::InvalidIndex);
         }
@@ -148,19 +148,19 @@ impl ActionSpace {
         return Ok(());
     }
 
-    pub fn unmask_play(&mut self) {
+    pub(crate) fn unmask_play(&mut self) {
         self.play[0] = 1;
     }
 
-    pub fn unmask_discard(&mut self) {
+    pub(crate) fn unmask_discard(&mut self) {
         self.discard[0] = 1;
     }
 
-    pub fn unmask_cash_out(&mut self) {
+    pub(crate) fn unmask_cash_out(&mut self) {
         self.cash_out[0] = 1;
     }
 
-    pub fn unmask_buy_joker(&mut self, i: usize) -> Result<(), ActionSpaceError> {
+    pub(crate) fn unmask_buy_joker(&mut self, i: usize) -> Result<(), ActionSpaceError> {
         if i >= self.buy_joker.len() {
             return Err(ActionSpaceError::InvalidIndex);
         }
@@ -168,11 +168,11 @@ impl ActionSpace {
         return Ok(());
     }
 
-    pub fn unmask_next_round(&mut self) {
+    pub(crate) fn unmask_next_round(&mut self) {
         self.next_round[0] = 1;
     }
 
-    pub fn unmask_select_blind(&mut self) {
+    pub(crate) fn unmask_select_blind(&mut self) {
         self.select_blind[0] = 1;
     }
 
