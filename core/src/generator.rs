@@ -183,8 +183,13 @@ impl Game {
         if self.available.selected().len() == 0 {
             return;
         }
-        space.unmask_play();
-        space.unmask_discard();
+        // Can only play/discard is have remaining
+        if self.plays != 0 {
+            space.unmask_play();
+        }
+        if self.discards != 0 {
+            space.unmask_discard();
+        }
     }
 
     pub fn unmask_action_space_move_cards(&self, space: &mut ActionSpace) {

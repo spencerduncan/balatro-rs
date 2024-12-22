@@ -40,6 +40,14 @@ pub enum GameError {
     InvalidMoveCard,
     #[error("Invalid select card")]
     InvalidSelectCard,
+    #[error("Invalid action space")]
+    InvalidActionSpace,
+}
+
+impl std::convert::From<ActionSpaceError> for GameError {
+    fn from(_err: ActionSpaceError) -> GameError {
+        GameError::InvalidActionSpace
+    }
 }
 
 #[cfg(feature = "python")]

@@ -185,25 +185,6 @@ impl ActionSpace {
         } else {
             return Err(ActionSpaceError::InvalidIndex);
         }
-        dbg!("index {:} to action", index);
-        dbg!("select card min: {:}", self.select_card_min());
-        dbg!("select card max: {:}", self.select_card_max());
-        dbg!("move left min: {:}", self.move_card_left_min());
-        dbg!("move left max: {:}", self.move_card_left_max());
-        dbg!("move right min: {:}", self.move_card_right_min());
-        dbg!("move right max: {:}", self.move_card_right_max());
-        dbg!("play min: {:}", self.play_min());
-        dbg!("play max: {:}", self.play_max());
-        dbg!("discard min: {:}", self.discard_min());
-        dbg!("discard max: {:}", self.discard_max());
-        dbg!("cash min: {:}", self.cash_out_min());
-        dbg!("cash max: {:}", self.cash_out_max());
-        dbg!("buy joker min: {:}", self.buy_joker_min());
-        dbg!("buy joker max: {:}", self.buy_joker_max());
-        dbg!("next round min: {:}", self.next_round_min());
-        dbg!("next round max: {:}", self.next_round_max());
-        dbg!("select blind min: {:}", self.select_blind_min());
-        dbg!("select blind max: {:}", self.select_blind_max());
         match index {
             // Cannot reference runtime values in patterns, so this is workaround
             n if (self.select_card_min()..=self.select_card_max()).contains(&n) => {
@@ -215,7 +196,8 @@ impl ActionSpace {
                 }
             }
             n if (self.move_card_left_min()..=self.move_card_left_max()).contains(&n) => {
-                let n_offset = n - self.move_card_left_min();
+                // Index shifted to right (+1), since leftmost card cannot move left
+                let n_offset = n - self.move_card_left_min() + 1;
                 dbg!("move card left (index={:})", n_offset);
                 if let Some(card) = game.available.card_from_index(n_offset) {
                     return Ok(Action::MoveCard(MoveDirection::Left, card));
@@ -269,7 +251,7 @@ impl ActionSpace {
         }
     }
 
-    fn to_vec(&self) -> Vec<usize> {
+    pub fn to_vec(&self) -> Vec<usize> {
         return [
             self.select_card.clone(),
             self.move_card_left.clone(),
@@ -282,6 +264,12 @@ impl ActionSpace {
             self.select_blind.clone(),
         ]
         .concat();
+    }
+
+    // True is all elements are masked
+    pub fn is_empty(&self) -> bool {
+        let vec = self.to_vec();
+        return (*vec.iter().min().unwrap() == 0) && (*vec.iter().max().unwrap() == 0);
     }
 }
 
@@ -423,8 +411,8 @@ mod tests {
         // Play
         g.handle_action(action_play).unwrap();
 
-        let space = g.gen_action_space();
-        let space_vec = g.gen_action_space().to_vec();
+        // let space = g.gen_action_space();
+        // let space_vec = g.gen_action_space().to_vec();
         // dbg!(space);
         // dbg!(space_vec);
     }

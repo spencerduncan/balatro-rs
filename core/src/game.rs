@@ -337,6 +337,12 @@ impl Game {
             },
         };
     }
+
+    pub fn handle_action_index(&mut self, index: usize) -> Result<(), GameError> {
+        let space = self.gen_action_space();
+        let action = space.to_action(index, self)?;
+        return self.handle_action(action);
+    }
 }
 
 impl fmt::Display for Game {
