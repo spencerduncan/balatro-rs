@@ -2,21 +2,32 @@ import pylatro
 import random
 
 
-def main():
+# Test action space (vector) api
+def test_action_space():
     game = pylatro.GameEngine()
 
     while True:
-        actions = game.gen_actions()
-        if len(actions) == 0:
+        if game.is_over:
             break
-        action = random.choice(actions)
-        game.handle_action(action)
+
+        # Generate static length action space vector
+        action_space = game.gen_action_space()
+
+        # Vector is masked, invalid actions are 0, valid are 1.
+        # We only want to execute valid actions.
+        while True:
+            index = random.choice(range(len(action_space)))
+            if action_space[index] == 1:
+                game.handle_action_index(index)
+                break
 
     assert game.is_over
-    # state = game.get_state()
-    # print(state)
-    # print(state.action_history)
+    if game.is_win:
+        print("game win!")
+    else:
+        print("game loss!")
+    print(game.state)
 
 
 if __name__ == "__main__":
-    main()
+    test_action_space()
