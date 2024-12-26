@@ -25,8 +25,16 @@ impl GameEngine {
         return self.game.gen_actions().collect();
     }
 
+    fn gen_action_space(&self) -> Vec<usize> {
+        return self.game.gen_action_space().to_vec();
+    }
+
     fn handle_action(&mut self, action: Action) -> Result<(), GameError> {
         return self.game.handle_action(action);
+    }
+
+    fn handle_action_index(&mut self, index: usize) -> Result<(), GameError> {
+        return self.game.handle_action_index(index);
     }
 
     #[getter]
