@@ -172,7 +172,6 @@ impl Game {
                     .unmask_select_card(i)
                     .expect("valid index for selecting");
             });
-        dbg!(space.clone());
     }
 
     fn unmask_action_space_play_and_discard(&self, space: &mut ActionSpace) {

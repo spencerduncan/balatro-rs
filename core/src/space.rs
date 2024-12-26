@@ -188,7 +188,6 @@ impl ActionSpace {
         match index {
             // Cannot reference runtime values in patterns, so this is workaround
             n if (self.select_card_min()..=self.select_card_max()).contains(&n) => {
-                dbg!("select card (index={:})", index);
                 if let Some(card) = game.available.card_from_index(index) {
                     return Ok(Action::SelectCard(card));
                 } else {
@@ -198,7 +197,6 @@ impl ActionSpace {
             n if (self.move_card_left_min()..=self.move_card_left_max()).contains(&n) => {
                 // Index shifted to right (+1), since leftmost card cannot move left
                 let n_offset = n - self.move_card_left_min() + 1;
-                dbg!("move card left (index={:})", n_offset);
                 if let Some(card) = game.available.card_from_index(n_offset) {
                     return Ok(Action::MoveCard(MoveDirection::Left, card));
                 } else {
@@ -207,7 +205,6 @@ impl ActionSpace {
             }
             n if (self.move_card_right_min()..=self.move_card_right_max()).contains(&n) => {
                 let n_offset = n - self.move_card_right_min();
-                dbg!("move card right (index={:})", n_offset);
                 if let Some(card) = game.available.card_from_index(n_offset) {
                     return Ok(Action::MoveCard(MoveDirection::Right, card));
                 } else {
@@ -215,21 +212,16 @@ impl ActionSpace {
                 }
             }
             n if (self.play_min()..=self.play_max()).contains(&n) => {
-                dbg!("play");
                 return Ok(Action::Play());
             }
             n if (self.discard_min()..=self.discard_max()).contains(&n) => {
-                dbg!("discard");
                 return Ok(Action::Discard());
             }
             n if (self.cash_out_min()..=self.cash_out_max()).contains(&n) => {
-                dbg!("cash out");
-                dbg!("{:}, {:}", self.cash_out_min(), self.cash_out_max());
                 return Ok(Action::CashOut(game.reward));
             }
             n if (self.buy_joker_min()..=self.buy_joker_max()).contains(&n) => {
                 let n_offset = n - self.buy_joker_min();
-                dbg!("buy joker (index={:})", n_offset);
                 if let Some(joker) = game.shop.joker_from_index(n_offset) {
                     return Ok(Action::BuyJoker(joker));
                 } else {
@@ -237,11 +229,9 @@ impl ActionSpace {
                 }
             }
             n if (self.next_round_min()..=self.next_round_max()).contains(&n) => {
-                dbg!("next round");
                 return Ok(Action::NextRound());
             }
             n if (self.select_blind_min()..=self.select_blind_max()).contains(&n) => {
-                dbg!("select blind");
                 match game.blind {
                     Some(blind) => Ok(Action::SelectBlind(blind.next())),
                     None => Ok(Action::SelectBlind(Blind::Small)),

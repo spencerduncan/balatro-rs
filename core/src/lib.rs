@@ -25,7 +25,7 @@ mod tests {
 
     #[test]
     // Test executing a full game using the gen_actions api
-    fn test_game_actions() {
+    fn test_game_gen_actions() {
         let mut g = Game::default();
 
         g.start();
