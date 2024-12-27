@@ -3,6 +3,7 @@ use crate::effect::Effects;
 use crate::game::Game;
 use crate::hand::MadeHand;
 use pyo3::pyclass;
+use std::fmt;
 use std::sync::{Arc, Mutex};
 use strum::{EnumIter, IntoEnumIterator};
 
@@ -31,6 +32,25 @@ pub enum Rarity {
     Uncommon,
     Rare,
     Legendary,
+}
+
+impl fmt::Display for Rarity {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Common => {
+                write!(f, "Common")
+            }
+            Self::Uncommon => {
+                write!(f, "Uncommon")
+            }
+            Self::Rare => {
+                write!(f, "Rare")
+            }
+            Self::Legendary => {
+                write!(f, "Legendary")
+            }
+        }
+    }
 }
 
 // We could pass around `Box<dyn Joker>` but it doesn't work so nice with pyo3 and serde.
@@ -119,6 +139,19 @@ make_jokers!(
 impl Jokers {
     pub(crate) fn by_rarity(rarirty: Rarity) -> Vec<Self> {
         return Self::iter().filter(|j| j.rarity() == rarirty).collect();
+    }
+}
+
+impl fmt::Display for Jokers {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{} [${}, {}] - {}",
+            self.name(),
+            self.cost(),
+            self.rarity(),
+            self.desc()
+        )
     }
 }
 

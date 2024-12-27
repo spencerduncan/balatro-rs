@@ -1,4 +1,5 @@
 use pyo3::pyclass;
+use std::fmt;
 
 /// Types of blinds
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -25,6 +26,16 @@ impl Blind {
             Self::Small => Self::Big,
             Self::Big => Self::Boss,
             Self::Boss => Self::Small,
+        }
+    }
+}
+
+impl fmt::Display for Blind {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Self::Small => write!(f, "Small Blind"),
+            Self::Big => write!(f, "Big Blind"),
+            Self::Boss => write!(f, "Boss Blind"),
         }
     }
 }

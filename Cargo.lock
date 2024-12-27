@@ -33,6 +33,7 @@ name = "balatro-cli"
 version = "0.0.1"
 dependencies = [
  "balatro-rs",
+ "colored",
  "text_io",
 ]
 
@@ -40,6 +41,7 @@ dependencies = [
 name = "balatro-rs"
 version = "0.0.1"
 dependencies = [
+ "colored",
  "criterion",
  "indexmap",
  "itertools 0.13.0",
@@ -92,6 +94,16 @@ dependencies = [
  "bitflags",
  "textwrap",
  "unicode-width",
+]
+
+[[package]]
+name = "colored"
+version = "2.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "117725a109d387c937a1533ce01b450cbde6b88abceea8473c4d7a85853cda3c"
+dependencies = [
+ "lazy_static",
+ "windows-sys",
 ]
 
 [[package]]

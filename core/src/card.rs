@@ -1,3 +1,5 @@
+#[cfg(feature = "colored")]
+use colored::Colorize;
 use pyo3::pyclass;
 use std::{
     fmt,
@@ -87,6 +89,14 @@ const SUITS: [Suit; 4] = [Suit::Spade, Suit::Club, Suit::Heart, Suit::Diamond];
 impl Suit {
     pub const fn suits() -> [Self; 4] {
         SUITS
+    }
+    pub fn unicode(&self) -> &str {
+        match self {
+            Self::Spade => "♤",
+            Self::Club => "♧",
+            Self::Heart => "♡",
+            Self::Diamond => "♢",
+        }
     }
 }
 
@@ -205,18 +215,31 @@ impl Card {
 
 impl fmt::Debug for Card {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "Card({}{})",
-            char::from(self.value),
-            char::from(self.suit)
-        )
+        #[cfg(feature = "colored")]
+        let suit = match self.suit {
+            Suit::Spade => self.suit.unicode().black(),
+            Suit::Club => self.suit.unicode().green(),
+            Suit::Heart => self.suit.unicode().red(),
+            Suit::Diamond => self.suit.unicode().blue(),
+        };
+        #[cfg(not(feature = "colored"))]
+        let suit = self.suit.unicode();
+        write!(f, "Card({}{})", char::from(self.value), suit)
     }
 }
 
 impl fmt::Display for Card {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}{}", char::from(self.value), char::from(self.suit))
+        #[cfg(feature = "colored")]
+        let suit = match self.suit {
+            Suit::Spade => self.suit.unicode().black(),
+            Suit::Club => self.suit.unicode().green(),
+            Suit::Heart => self.suit.unicode().red(),
+            Suit::Diamond => self.suit.unicode().blue(),
+        };
+        #[cfg(not(feature = "colored"))]
+        let suit = self.suit.unicode();
+        write!(f, "{}{}", char::from(self.value), suit)
     }
 }
 
