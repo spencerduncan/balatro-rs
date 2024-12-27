@@ -605,6 +605,7 @@ mod tests {
         // Buy (and apply) the joker
         g.money += 1000; // Give adequate money to buy
         g.stage = Stage::Shop();
+        g.shop.jokers.push(joker.clone());
         g.buy_joker(joker).unwrap();
         g.stage = Stage::Blind(Blind::Small);
         // Second score with joker applied

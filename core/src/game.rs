@@ -213,6 +213,7 @@ impl Game {
         self.money += self.reward;
         self.reward = 0;
         self.stage = Stage::Shop();
+        self.shop.refresh();
         return Ok(());
     }
 
@@ -226,6 +227,7 @@ impl Game {
         if joker.cost() > self.money {
             return Err(GameError::InvalidBalance);
         }
+        self.shop.buy_joker(&joker)?;
         self.money -= joker.cost();
         self.jokers.push(joker);
         self.effect_registry
@@ -515,28 +517,16 @@ mod tests {
     #[test]
     fn test_play_selected() {
         let mut g = Game::default();
+        g.start();
         g.stage = Stage::Blind(Blind::Small);
         g.blind = Some(Blind::Small);
-        let j0 = Card::new(Value::Jack, Suit::Club);
-        let j1 = Card::new(Value::Jack, Suit::Club);
-        let j2 = Card::new(Value::Jack, Suit::Club);
-        let j3 = Card::new(Value::Jack, Suit::Club);
-        let j4 = Card::new(Value::Jack, Suit::Club);
-
-        // Score [Jc, Jc, Jc, Jc, Jc]
-        // Flush five (level 1) -> chips=160, mult=16
-        // Played cards (5 jacks) -> 10 + 10 + 10 + 10 + 10 == 50 chips
-        // (160 + 50) * 16 = 3360
-        let cards = vec![j0, j1, j2, j3, j4];
-
-        let mut available = Available::default();
-        available.extend(cards.clone());
-        for c in cards {
-            available.select_card(c).expect("can select card");
+        for card in g.available.cards().iter().take(5) {
+            g.available.select_card(*card).expect("can select card");
         }
-        g.available = available;
 
         assert_eq!(g.available.selected().len(), 5);
+        // Artifically set score so blind passes
+        g.score += g.required_score();
         g.play_selected().expect("can play selected");
 
         // Should have cleared blind
@@ -552,5 +542,19 @@ mod tests {
         assert_eq!(g.discarded.len(), 0);
         // Available should be length available
         assert_eq!(g.available.cards().len(), g.config.available);
+    }
+
+    #[test]
+    fn test_buy_joker() {
+        let mut g = Game::default();
+        g.start();
+        g.stage = Stage::Shop();
+        g.money = 10;
+        g.shop.refresh();
+
+        let j1 = g.shop.joker_from_index(0).expect("is joker");
+        g.buy_joker(j1.clone()).expect("buy joker");
+        assert_eq!(g.money, 10 - j1.cost());
+        assert_eq!(g.jokers.len(), 1);
     }
 }
