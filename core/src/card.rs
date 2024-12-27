@@ -217,10 +217,10 @@ impl fmt::Debug for Card {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         #[cfg(feature = "colored")]
         let suit = match self.suit {
-            Suit::Spade => self.suit.unicode().black(),
-            Suit::Club => self.suit.unicode().green(),
-            Suit::Heart => self.suit.unicode().red(),
-            Suit::Diamond => self.suit.unicode().blue(),
+            Suit::Spade => self.suit.unicode().bold(),
+            Suit::Club => self.suit.unicode().green().bold(),
+            Suit::Heart => self.suit.unicode().red().bold(),
+            Suit::Diamond => self.suit.unicode().blue().bold(),
         };
         #[cfg(not(feature = "colored"))]
         let suit = self.suit.unicode();
@@ -232,10 +232,10 @@ impl fmt::Display for Card {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         #[cfg(feature = "colored")]
         let suit = match self.suit {
-            Suit::Spade => self.suit.unicode().black(),
-            Suit::Club => self.suit.unicode().green(),
-            Suit::Heart => self.suit.unicode().red(),
-            Suit::Diamond => self.suit.unicode().blue(),
+            Suit::Spade => self.suit.unicode().bold(),
+            Suit::Club => self.suit.unicode().green().bold(),
+            Suit::Heart => self.suit.unicode().red().bold(),
+            Suit::Diamond => self.suit.unicode().blue().bold(),
         };
         #[cfg(not(feature = "colored"))]
         let suit = self.suit.unicode();

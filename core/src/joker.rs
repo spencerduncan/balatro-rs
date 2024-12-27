@@ -146,7 +146,7 @@ impl fmt::Display for Jokers {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "{} [${}, {}] - {}",
+            "{} [${}, {}] {}",
             self.name(),
             self.cost(),
             self.rarity(),

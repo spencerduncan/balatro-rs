@@ -59,7 +59,7 @@ impl fmt::Display for Action {
                 write!(f, "CashOut: {}", reward)
             }
             Self::BuyJoker(joker) => {
-                write!(f, "BuyJoker: {:?}", joker)
+                write!(f, "BuyJoker: {}", joker)
             }
             Self::NextRound() => {
                 write!(f, "NextRound")
