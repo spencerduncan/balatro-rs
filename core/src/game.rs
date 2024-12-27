@@ -156,6 +156,7 @@ impl Game {
             return Err(GameError::NoRemainingDiscards);
         }
         self.discards -= 1;
+        self.discarded.extend(self.available.selected());
         let removed = self.available.remove_selected();
         self.draw(removed);
         return Ok(());
