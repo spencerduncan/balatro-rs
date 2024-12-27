@@ -44,10 +44,10 @@ fn run_game_action_space() {
             }
         }
         let action = space.to_action(i, &g).expect("valid index to action");
-        dbg!("game state:\n{}", g.clone());
-        dbg!("play action: {}", action.clone());
+        // dbg!("game state:\n{}", g.clone());
+        // dbg!("play action: {}", action.clone());
         let action_res = g.handle_action(action.clone());
-        dbg!(action);
+        // dbg!(action);
         assert!(action_res.is_ok());
     }
     let result = g.result();
@@ -55,7 +55,7 @@ fn run_game_action_space() {
     assert!(result.is_some());
     // Check game state at end
     assert!(matches!(g.stage, Stage::End(_)));
-    dbg!("game action history: {:?}", g.action_history);
+    // dbg!("game action history: {:?}", g.action_history);
 }
 
 #[test]
@@ -64,9 +64,18 @@ fn test_game() {
     run_game_action_space();
 }
 
-// #[test]
-// fn test_games() {
-//     for _ in 0..10000 {
-//         run_game();
-//     }
-// }
+#[test]
+#[ignore]
+fn test_games_gen_actions() {
+    for _ in 0..1000 {
+        run_game_gen_actions();
+    }
+}
+
+#[test]
+#[ignore]
+fn test_games_action_space() {
+    for _ in 0..1000 {
+        run_game_action_space();
+    }
+}
