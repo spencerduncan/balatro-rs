@@ -1,4 +1,4 @@
 [workspace]
 
-members = ["core", "pylatro"]
+members = ["core", "pylatro", "cli"]
 
