@@ -141,6 +141,7 @@ impl Game {
         let best = selected.best_hand()?;
         let score = self.calc_score(best);
         let pass_blind = self.handle_score(score)?;
+        self.discarded.extend(self.available.selected());
         let removed = self.available.remove_selected();
         self.draw(removed);
         if pass_blind {
@@ -425,7 +426,7 @@ mod tests {
     }
 
     #[test]
-    fn test_score() {
+    fn test_calc_score() {
         let mut g = Game::default();
         let ace = Card::new(Value::Ace, Suit::Heart);
         let king = Card::new(Value::King, Suit::Diamond);
@@ -475,5 +476,81 @@ mod tests {
         let hand = SelectHand::new(cards).best_hand().unwrap();
         let score = g.calc_score(hand);
         assert_eq!(score, 3360);
+    }
+
+    #[test]
+    fn test_handle_score() {
+        let mut g = Game::default();
+        g.start();
+        g.stage = Stage::Blind(Blind::Small);
+        g.blind = Some(Blind::Small);
+
+        // Not enough to pass
+        let required = g.required_score();
+        let score = required - 1;
+
+        let passed = g.handle_score(score).unwrap();
+        assert!(!passed);
+        assert_eq!(g.score, score);
+
+        // Enough to pass now
+        let passed = g.handle_score(1).unwrap();
+        assert!(passed);
+        assert_eq!(g.score, required);
+        assert_eq!(g.stage, Stage::PostBlind());
+    }
+
+    #[test]
+    fn test_clear_blind() {
+        let mut g = Game::default();
+        g.start();
+        g.deal();
+        g.clear_blind();
+        // deck should be 7 cards smaller than we started with
+        assert_eq!(g.deck.len(), 52 - g.config.available);
+        // should be 7 cards now available
+        assert_eq!(g.available.cards().len(), g.config.available);
+    }
+
+    #[test]
+    fn test_play_selected() {
+        let mut g = Game::default();
+        g.stage = Stage::Blind(Blind::Small);
+        g.blind = Some(Blind::Small);
+        let j0 = Card::new(Value::Jack, Suit::Club);
+        let j1 = Card::new(Value::Jack, Suit::Club);
+        let j2 = Card::new(Value::Jack, Suit::Club);
+        let j3 = Card::new(Value::Jack, Suit::Club);
+        let j4 = Card::new(Value::Jack, Suit::Club);
+
+        // Score [Jc, Jc, Jc, Jc, Jc]
+        // Flush five (level 1) -> chips=160, mult=16
+        // Played cards (5 jacks) -> 10 + 10 + 10 + 10 + 10 == 50 chips
+        // (160 + 50) * 16 = 3360
+        let cards = vec![j0, j1, j2, j3, j4];
+
+        let mut available = Available::default();
+        available.extend(cards.clone());
+        for c in cards {
+            available.select_card(c).expect("can select card");
+        }
+        g.available = available;
+
+        assert_eq!(g.available.selected().len(), 5);
+        g.play_selected().expect("can play selected");
+
+        // Should have cleared blind
+        assert_eq!(g.stage, Stage::PostBlind());
+        // Score should reset to 0
+        assert_eq!(g.score, g.config.base_score);
+        // Plays and discards should reset
+        assert_eq!(g.plays, g.config.plays);
+        assert_eq!(g.discards, g.config.discards);
+        // Deck should be length 52 - available
+        assert_eq!(g.deck.len(), 52 - g.config.available);
+        // Discarded should be length 0
+        assert_eq!(g.discarded.len(), 0);
+        // Available should be length available
+        assert_eq!(g.available.cards().len(), g.config.available);
     }
 }
