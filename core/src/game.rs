@@ -140,11 +140,11 @@ impl Game {
         let selected = SelectHand::new(self.available.selected());
         let best = selected.best_hand()?;
         let score = self.calc_score(best);
-        let pass_blind = self.handle_score(score)?;
+        let clear_blind = self.handle_score(score)?;
         self.discarded.extend(self.available.selected());
         let removed = self.available.remove_selected();
         self.draw(removed);
-        if pass_blind {
+        if clear_blind {
             self.clear_blind();
         }
         return Ok(());
@@ -265,7 +265,7 @@ impl Game {
         return Ok(());
     }
 
-    // Returns true if blind passed, false if not.
+    // Returns true if should clear blind after, false if not.
     fn handle_score(&mut self, score: usize) -> Result<bool, GameError> {
         // can only handle score if stage is blind
         if !self.stage.is_blind() {
@@ -299,7 +299,7 @@ impl Game {
                 self.ante_current = ante_next;
             } else {
                 self.stage = Stage::End(End::Win);
-                return Ok(true);
+                return Ok(false);
             }
         };
 
@@ -359,6 +359,10 @@ impl fmt::Display for Game {
         writeln!(f, "available length: {}", self.available.cards().len())?;
         writeln!(f, "selected length: {}", self.available.selected().len())?;
         writeln!(f, "discard length: {}", self.discarded.len())?;
+        writeln!(f, "jokers: ")?;
+        for j in self.jokers.clone() {
+            writeln!(f, "{}", j)?
+        }
         writeln!(f, "action history length: {}", self.action_history.len())?;
         writeln!(f, "blind: {:?}", self.blind)?;
         writeln!(f, "stage: {:?}", self.stage)?;
