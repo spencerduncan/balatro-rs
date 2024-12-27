@@ -19,7 +19,14 @@ indexmap = "2.6.0"
 strum = { version = "0.26", features = ["derive"] }
 pyo3 = {version = "0.23.1", optional = true}
 
+[dev-dependencies]
+criterion = "0.3"
+
 [features]
 default = ["serde", "python"]
 python = ["dep:pyo3"]
 serde = ["dep:serde", "dep:serde_json", "uuid?/serde"]
+
+[[bench]]
+name = "benchmark"
+harness = false
