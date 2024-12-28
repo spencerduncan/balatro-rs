@@ -4,6 +4,7 @@ const DEFAULT_ROUND_START: usize = 0;
 const DEFAULT_PLAYS: usize = 4;
 const DEFAULT_DISCARDS: usize = 4;
 const DEFAULT_MONEY_START: usize = 0;
+const DEFAULT_MONEY_MAX: usize = 500;
 const DEFAULT_REWARD_BASE: usize = 0;
 const DEFAULT_MONEY_PER_HAND: usize = 1;
 const DEFAULT_INTEREST_RATE: f32 = 0.2;
@@ -14,10 +15,13 @@ const DEFAULT_BASE_SCORE: usize = 0;
 const DEFAULT_ANTE_START: usize = 1;
 const DEFAULT_ANTE_END: usize = 8;
 const DEFAULT_JOKER_SLOTS: usize = 5;
-const DEFAULT_SELECTED_MAX: usize = 5;
+const DEFAULT_JOKER_SLOTS_MAX: usize = 10;
 const DEFAULT_AVAILABLE: usize = 8;
 const DEFAULT_AVAILABLE_MAX: usize = 24; // arbitrary
 const DEFAULT_STORE_CONSUMABLE_SLOTS_MAX: usize = 4;
+const DEFAULT_DECK_MAX: usize = 100;
+const DEFAULT_DISCARDED_MAX: usize = 100;
+const DEFAULT_SELECTED_MAX: usize = 5;
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "python", pyclass)]
@@ -27,6 +31,7 @@ pub struct Config {
     pub plays: usize,
     pub discards: usize,
     pub money_start: usize,
+    pub money_max: usize,
     pub reward_base: usize,
     pub money_per_hand: usize,
     pub interest_rate: f32,
@@ -37,10 +42,13 @@ pub struct Config {
     pub ante_start: usize,
     pub ante_end: usize,
     pub joker_slots: usize,
+    pub joker_slots_max: usize,
     pub selected_max: usize,
     pub available: usize,
     pub available_max: usize,
     pub store_consumable_slots_max: usize,
+    pub deck_max: usize,
+    pub discarded_max: usize,
 }
 
 impl Config {
@@ -50,6 +58,7 @@ impl Config {
             plays: DEFAULT_PLAYS,
             discards: DEFAULT_DISCARDS,
             money_start: DEFAULT_MONEY_START,
+            money_max: DEFAULT_MONEY_MAX,
             reward_base: DEFAULT_REWARD_BASE,
             money_per_hand: DEFAULT_MONEY_PER_HAND,
             interest_rate: DEFAULT_INTEREST_RATE,
@@ -60,10 +69,13 @@ impl Config {
             ante_start: DEFAULT_ANTE_START,
             ante_end: DEFAULT_ANTE_END,
             joker_slots: DEFAULT_JOKER_SLOTS,
+            joker_slots_max: DEFAULT_JOKER_SLOTS_MAX,
             selected_max: DEFAULT_SELECTED_MAX,
             available: DEFAULT_AVAILABLE,
             available_max: DEFAULT_AVAILABLE_MAX,
             store_consumable_slots_max: DEFAULT_STORE_CONSUMABLE_SLOTS_MAX,
+            deck_max: DEFAULT_DECK_MAX,
+            discarded_max: DEFAULT_DISCARDED_MAX,
         };
     }
 }
@@ -82,8 +94,107 @@ impl Config {
         Self::default()
     }
 
+    #[getter]
+    fn get_ante_end(&mut self) -> usize {
+        return self.ante_end;
+    }
+
     #[setter]
-    fn ante_end(&mut self, i: usize) {
+    fn set_ante_end(&mut self, i: usize) {
         self.ante_end = i;
+    }
+
+    #[getter]
+    fn get_plays(&mut self) -> usize {
+        return self.plays;
+    }
+
+    #[setter]
+    fn set_plays(&mut self, i: usize) {
+        self.plays = i;
+    }
+
+    #[getter]
+    fn get_discards(&mut self) -> usize {
+        return self.discards;
+    }
+
+    #[setter]
+    fn set_discards(&mut self, i: usize) {
+        self.discards = i;
+    }
+
+    #[getter]
+    fn get_selected_max(&mut self) -> usize {
+        return self.selected_max;
+    }
+
+    #[setter]
+    fn set_selected_max(&mut self, i: usize) {
+        self.selected_max = i;
+    }
+
+    #[getter]
+    fn get_deck_max(&mut self) -> usize {
+        return self.deck_max;
+    }
+
+    #[setter]
+    fn set_deck_max(&mut self, i: usize) {
+        self.deck_max = i;
+    }
+
+    #[getter]
+    fn get_discarded_max(&mut self) -> usize {
+        return self.discarded_max;
+    }
+
+    #[setter]
+    fn set_discarded_max(&mut self, i: usize) {
+        self.discarded_max = i;
+    }
+
+    #[getter]
+    fn get_available_max(&mut self) -> usize {
+        return self.available_max;
+    }
+
+    #[setter]
+    fn set_available_max(&mut self, i: usize) {
+        self.available_max = i;
+    }
+
+    #[getter]
+    fn get_joker_slots(&mut self) -> usize {
+        return self.joker_slots;
+    }
+
+    #[setter]
+    fn set_joker_slots(&mut self, i: usize) {
+        self.joker_slots = i;
+    }
+
+    #[getter]
+    fn get_joker_slots_max(&mut self) -> usize {
+        return self.joker_slots_max;
+    }
+
+    #[setter]
+    fn set_joker_slots_max(&mut self, i: usize) {
+        self.joker_slots_max = i;
+    }
+
+    #[getter]
+    fn get_money_max(&mut self) -> usize {
+        return self.money_max;
+    }
+
+    #[setter]
+    fn set_money_max(&mut self, i: usize) {
+        self.money_max = i;
+    }
+    #[getter]
+    fn get_stage_max(&self) -> usize {
+        return 8;
     }
 }

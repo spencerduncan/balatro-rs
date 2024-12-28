@@ -22,7 +22,7 @@ impl Available {
         }
     }
 
-    pub(crate) fn selected(&self) -> Vec<Card> {
+    pub fn selected(&self) -> Vec<Card> {
         return self
             .cards
             .iter()
@@ -31,7 +31,7 @@ impl Available {
             .collect();
     }
 
-    pub(crate) fn not_selected(&self) -> Vec<Card> {
+    pub fn not_selected(&self) -> Vec<Card> {
         return self
             .cards
             .iter()
@@ -90,7 +90,7 @@ impl Available {
         }
     }
 
-    pub(crate) fn cards(&self) -> Vec<Card> {
+    pub fn cards(&self) -> Vec<Card> {
         return self.cards.iter().map(|(c, _)| *c).collect();
     }
 

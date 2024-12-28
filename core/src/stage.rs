@@ -1,4 +1,5 @@
-use pyo3::pyclass;
+#[cfg(feature = "python")]
+use pyo3::{pyclass, pymethods};
 use std::fmt;
 
 /// Types of blinds
@@ -74,5 +75,26 @@ impl Stage {
             Stage::Blind(_) => true,
             _ => false,
         };
+    }
+}
+
+#[cfg(feature = "python")]
+#[pymethods]
+impl Stage {
+    fn int(&self) -> usize {
+        match self {
+            Self::PreBlind() => 0,
+            Self::Blind(blind) => match blind {
+                Blind::Small => 1,
+                Blind::Big => 2,
+                Blind::Boss => 3,
+            },
+            Self::PostBlind() => 4,
+            Self::Shop() => 5,
+            Self::End(end) => match end {
+                End::Win => 6,
+                End::Lose => 7,
+            },
+        }
     }
 }

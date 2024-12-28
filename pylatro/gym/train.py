@@ -39,18 +39,46 @@ class BalatroAgent:
 
         self.training_error = []
 
-    def get_action(self, obs: tuple[int, int, bool]) -> int:
+    def get_action(self, obs: dict) -> int:
         """
         Returns the best action with probability (1 - epsilon)
         otherwise a random action with probability epsilon to ensure exploration.
         """
+        mask = self.env.unwrapped.action_mask()
         # with probability epsilon return a random action to explore the environment
         if np.random.random() < self.epsilon:
-            return self.env.action_space.sample()
-        # with probability (1 - epsilon) act greedily (exploit)
+            return self.get_rand_action(obs)
         else:
-            obs_tuple = obs["score"], obs["target"]
-            return int(np.argmax(self.q_values[obs_tuple]))
+            # get best action, use it only if its valid
+            action = self.get_best_action(obs)
+            if mask[action] == 1:
+                return action
+            else:
+                return self.get_rand_action(obs)
+
+    def get_rand_action(self, obs: dict) -> int:
+        mask = self.env.unwrapped.action_mask()
+        space = self.env.action_space
+        action = space.sample(mask)
+        return action
+
+    def get_best_action(self, obs: dict) -> int:
+        obs_tuple = (
+            obs["score"],
+            obs["target"],
+            obs["stage"],
+            obs["round"],
+            obs["plays"],
+            obs["discards"],
+            obs["money"],
+            obs["deck_len"],
+            obs["selected_len"],
+            obs["available_len"],
+            obs["discarded_len"],
+            obs["jokers_len"],
+        )
+        action = np.argmax(self.q_values[obs_tuple])
+        return action
 
     def update(
         self,
@@ -61,8 +89,34 @@ class BalatroAgent:
         next_obs: dict[str, int],
     ):
         """Updates the Q-value of an action."""
-        obs_tuple = obs["score"], obs["target"]
-        next_obs_tuple = next_obs["score"], next_obs["target"]
+        obs_tuple = (
+            obs["score"],
+            obs["target"],
+            obs["stage"],
+            obs["round"],
+            obs["plays"],
+            obs["discards"],
+            obs["money"],
+            obs["deck_len"],
+            obs["selected_len"],
+            obs["available_len"],
+            obs["discarded_len"],
+            obs["jokers_len"],
+        )
+        next_obs_tuple = (
+            next_obs["score"],
+            next_obs["target"],
+            next_obs["stage"],
+            next_obs["round"],
+            next_obs["plays"],
+            next_obs["discards"],
+            next_obs["money"],
+            next_obs["deck_len"],
+            next_obs["selected_len"],
+            next_obs["available_len"],
+            next_obs["discarded_len"],
+            next_obs["jokers_len"],
+        )
 
         future_q_value = (not terminated) * np.max(self.q_values[next_obs_tuple])
         temporal_difference = (
@@ -83,7 +137,7 @@ class BalatroAgent:
 def train():
     # hyperparameters
     learning_rate = 0.01
-    n_episodes = 100_000
+    n_episodes = 10_000_000
     start_epsilon = 1.0
     epsilon_decay = start_epsilon / (n_episodes / 2)  # reduce the exploration over time
     final_epsilon = 0.1
@@ -122,23 +176,40 @@ def train():
 
 def plot(env, agent):
     # visualize the episode rewards, episode length and training error in one figure
-    fig, axs = plt.subplots(1, 3, figsize=(20, 8))
+    fig, axs = plt.subplots(1, 5, figsize=(20, 8))
+    base_env = env.unwrapped
 
     # np.convolve will compute the rolling mean for 100 episodes
-    axs[0].plot(np.convolve(env.return_queue, np.ones(100)))
+    roll_eps = 10
+    # axs[0].plot(env.return_queue)
+    axs[0].plot(np.convolve(env.return_queue, np.ones(roll_eps)) / roll_eps)
     axs[0].set_title("Episode Rewards")
     axs[0].set_xlabel("Episode")
     axs[0].set_ylabel("Reward")
 
-    axs[1].plot(np.convolve(env.length_queue, np.ones(100)))
+    axs[1].plot(env.length_queue)
+    axs[1].plot(np.convolve(env.length_queue, np.ones(roll_eps)) / roll_eps)
     axs[1].set_title("Episode Lengths")
     axs[1].set_xlabel("Episode")
     axs[1].set_ylabel("Length")
 
-    axs[2].plot(np.convolve(agent.training_error, np.ones(100)))
+    axs[2].plot(agent.training_error)
+    axs[2].plot(np.convolve(agent.training_error, np.ones(roll_eps)) / roll_eps)
     axs[2].set_title("Training Error")
     axs[2].set_xlabel("Episode")
     axs[2].set_ylabel("Temporal Difference")
+
+    axs[3].plot(base_env.score_queue)
+    # axs[3].plot(np.convolve(np.asarray(base_env.score_queue), np.ones(roll_eps)))
+    axs[3].set_title("Scores")
+    axs[3].set_xlabel("Episode")
+    axs[3].set_ylabel("Score")
+
+    axs[4].plot(base_env.actions_queue)
+    # axs[4].plot(np.convolve(np.asarray(base_env.actions_queue), np.ones(roll_eps)))
+    axs[4].set_title("Actions Length")
+    axs[4].set_xlabel("Episode")
+    axs[4].set_ylabel("Actions")
 
     plt.tight_layout()
     plt.show()

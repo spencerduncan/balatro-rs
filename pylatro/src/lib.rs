@@ -3,6 +3,7 @@ use balatro_rs::card::Card;
 use balatro_rs::config::Config;
 use balatro_rs::error::GameError;
 use balatro_rs::game::Game;
+use balatro_rs::joker::Jokers;
 use balatro_rs::stage::{End, Stage};
 use pyo3::prelude::*;
 
@@ -70,6 +71,10 @@ impl GameState {
         return self.game.stage;
     }
     #[getter]
+    fn round(&self) -> usize {
+        return self.game.round;
+    }
+    #[getter]
     fn action_history(&self) -> Vec<Action> {
         return self.game.action_history.clone();
     }
@@ -78,8 +83,12 @@ impl GameState {
         return self.game.deck.cards();
     }
     #[getter]
+    fn selected(&self) -> Vec<Card> {
+        return self.game.available.selected();
+    }
+    #[getter]
     fn available(&self) -> Vec<Card> {
-        return self.game.deck.cards();
+        return self.game.available.cards();
     }
     #[getter]
     fn discarded(&self) -> Vec<Card> {
@@ -93,6 +102,7 @@ impl GameState {
     fn discards(&self) -> usize {
         return self.game.discards;
     }
+
     #[getter]
     fn score(&self) -> usize {
         return self.game.score;
@@ -100,6 +110,14 @@ impl GameState {
     #[getter]
     fn required_score(&self) -> usize {
         return self.game.required_score();
+    }
+    #[getter]
+    fn jokers(&self) -> Vec<Jokers> {
+        return self.game.jokers.clone();
+    }
+    #[getter]
+    fn money(&self) -> usize {
+        return self.game.money;
     }
 
     fn __repr__(&self) -> String {
@@ -112,5 +130,6 @@ fn pylatro(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Config>()?;
     m.add_class::<GameEngine>()?;
     m.add_class::<GameState>()?;
+    m.add_class::<Stage>()?;
     Ok(())
 }
