@@ -1,5 +1,5 @@
 use crate::card::{Suit, Value};
-use crate::joker::{JokerId, JokerRarity};
+use crate::joker::{Joker, JokerId, JokerRarity};
 use crate::rank::HandRank;
 use crate::static_joker::{StaticCondition, StaticJoker};
 
@@ -8,19 +8,20 @@ pub struct StaticJokerFactory;
 
 impl StaticJokerFactory {
     /// Create the basic Joker (+4 Mult)
-    pub fn create_joker() -> Box<StaticJoker> {
+    pub fn create_joker() -> Box<dyn Joker> {
         Box::new(
             StaticJoker::builder(JokerId::Joker, "Joker", "+4 Mult")
                 .rarity(JokerRarity::Common)
                 .cost(2)
                 .mult(4)
                 .per_hand()
-                .build(),
+                .build()
+                .expect("Valid joker configuration"),
         )
     }
 
     /// Create Greedy Joker (Diamond cards give +3 Mult when scored)
-    pub fn create_greedy_joker() -> Box<StaticJoker> {
+    pub fn create_greedy_joker() -> Box<dyn Joker> {
         Box::new(
             StaticJoker::builder(
                 JokerId::GreedyJoker,
@@ -32,12 +33,13 @@ impl StaticJokerFactory {
             .mult(3)
             .condition(StaticCondition::SuitScored(Suit::Diamond))
             .per_card()
-            .build(),
+            .build()
+            .expect("Valid joker configuration"),
         )
     }
 
     /// Create Lusty Joker (Heart cards give +3 Mult when scored)
-    pub fn create_lusty_joker() -> Box<StaticJoker> {
+    pub fn create_lusty_joker() -> Box<dyn Joker> {
         Box::new(
             StaticJoker::builder(
                 JokerId::LustyJoker,
@@ -49,12 +51,13 @@ impl StaticJokerFactory {
             .mult(3)
             .condition(StaticCondition::SuitScored(Suit::Heart))
             .per_card()
-            .build(),
+            .build()
+            .expect("Valid joker configuration"),
         )
     }
 
     /// Create Wrathful Joker (Spade cards give +3 Mult when scored)
-    pub fn create_wrathful_joker() -> Box<StaticJoker> {
+    pub fn create_wrathful_joker() -> Box<dyn Joker> {
         Box::new(
             StaticJoker::builder(
                 JokerId::WrathfulJoker,
@@ -66,12 +69,13 @@ impl StaticJokerFactory {
             .mult(3)
             .condition(StaticCondition::SuitScored(Suit::Spade))
             .per_card()
-            .build(),
+            .build()
+            .expect("Valid joker configuration"),
         )
     }
 
     /// Create Gluttonous Joker (Club cards give +3 Mult when scored)
-    pub fn create_gluttonous_joker() -> Box<StaticJoker> {
+    pub fn create_gluttonous_joker() -> Box<dyn Joker> {
         Box::new(
             StaticJoker::builder(
                 JokerId::GluttonousJoker,
@@ -83,12 +87,13 @@ impl StaticJokerFactory {
             .mult(3)
             .condition(StaticCondition::SuitScored(Suit::Club))
             .per_card()
-            .build(),
+            .build()
+            .expect("Valid joker configuration"),
         )
     }
 
     /// Create Jolly Joker (+8 Mult if played hand contains a Pair)
-    pub fn create_jolly_joker() -> Box<StaticJoker> {
+    pub fn create_jolly_joker() -> Box<dyn Joker> {
         Box::new(
             StaticJoker::builder(
                 JokerId::JollyJoker,
@@ -100,12 +105,13 @@ impl StaticJokerFactory {
             .mult(8)
             .condition(StaticCondition::HandType(HandRank::OnePair))
             .per_hand()
-            .build(),
+            .build()
+            .expect("Valid joker configuration"),
         )
     }
 
     /// Create Zany Joker (+12 Mult if played hand contains a Three of a Kind)
-    pub fn create_zany_joker() -> Box<StaticJoker> {
+    pub fn create_zany_joker() -> Box<dyn Joker> {
         Box::new(
             StaticJoker::builder(
                 JokerId::ZanyJoker,
@@ -117,12 +123,13 @@ impl StaticJokerFactory {
             .mult(12)
             .condition(StaticCondition::HandType(HandRank::ThreeOfAKind))
             .per_hand()
-            .build(),
+            .build()
+            .expect("Valid joker configuration"),
         )
     }
 
     /// Create Mad Joker (+10 Mult if played hand contains a Two Pair)
-    pub fn create_mad_joker() -> Box<StaticJoker> {
+    pub fn create_mad_joker() -> Box<dyn Joker> {
         Box::new(
             StaticJoker::builder(
                 JokerId::MadJoker,
@@ -134,12 +141,13 @@ impl StaticJokerFactory {
             .mult(10)
             .condition(StaticCondition::HandType(HandRank::TwoPair))
             .per_hand()
-            .build(),
+            .build()
+            .expect("Valid joker configuration"),
         )
     }
 
     /// Create Crazy Joker (+12 Mult if played hand contains a Straight)
-    pub fn create_crazy_joker() -> Box<StaticJoker> {
+    pub fn create_crazy_joker() -> Box<dyn Joker> {
         Box::new(
             StaticJoker::builder(
                 JokerId::CrazyJoker,
@@ -151,12 +159,13 @@ impl StaticJokerFactory {
             .mult(12)
             .condition(StaticCondition::HandType(HandRank::Straight))
             .per_hand()
-            .build(),
+            .build()
+            .expect("Valid joker configuration"),
         )
     }
 
     /// Create Droll Joker (+10 Mult if played hand contains a Flush)
-    pub fn create_droll_joker() -> Box<StaticJoker> {
+    pub fn create_droll_joker() -> Box<dyn Joker> {
         Box::new(
             StaticJoker::builder(
                 JokerId::DrollJoker,
@@ -168,12 +177,13 @@ impl StaticJokerFactory {
             .mult(10)
             .condition(StaticCondition::HandType(HandRank::Flush))
             .per_hand()
-            .build(),
+            .build()
+            .expect("Valid joker configuration"),
         )
     }
 
     /// Create Sly Joker (+50 Chips if played hand contains a Pair)
-    pub fn create_sly_joker() -> Box<StaticJoker> {
+    pub fn create_sly_joker() -> Box<dyn Joker> {
         Box::new(
             StaticJoker::builder(
                 JokerId::SlyJoker,
@@ -185,12 +195,13 @@ impl StaticJokerFactory {
             .chips(50)
             .condition(StaticCondition::HandType(HandRank::OnePair))
             .per_hand()
-            .build(),
+            .build()
+            .expect("Valid joker configuration"),
         )
     }
 
     /// Create Wily Joker (+100 Chips if played hand contains a Three of a Kind)
-    pub fn create_wily_joker() -> Box<StaticJoker> {
+    pub fn create_wily_joker() -> Box<dyn Joker> {
         Box::new(
             StaticJoker::builder(
                 JokerId::WilyJoker,
@@ -202,12 +213,13 @@ impl StaticJokerFactory {
             .chips(100)
             .condition(StaticCondition::HandType(HandRank::ThreeOfAKind))
             .per_hand()
-            .build(),
+            .build()
+            .expect("Valid joker configuration"),
         )
     }
 
     /// Create Clever Joker (+80 Chips if played hand contains a Two Pair)
-    pub fn create_clever_joker() -> Box<StaticJoker> {
+    pub fn create_clever_joker() -> Box<dyn Joker> {
         Box::new(
             StaticJoker::builder(
                 JokerId::CleverJoker,
@@ -219,12 +231,13 @@ impl StaticJokerFactory {
             .chips(80)
             .condition(StaticCondition::HandType(HandRank::TwoPair))
             .per_hand()
-            .build(),
+            .build()
+            .expect("Valid joker configuration"),
         )
     }
 
     /// Create Devious Joker (+100 Chips if played hand contains a Straight)
-    pub fn create_devious_joker() -> Box<StaticJoker> {
+    pub fn create_devious_joker() -> Box<dyn Joker> {
         Box::new(
             StaticJoker::builder(
                 JokerId::DeviousJoker,
@@ -236,12 +249,13 @@ impl StaticJokerFactory {
             .chips(100)
             .condition(StaticCondition::HandType(HandRank::Straight))
             .per_hand()
-            .build(),
+            .build()
+            .expect("Valid joker configuration"),
         )
     }
 
     /// Create Crafty Joker (+80 Chips if played hand contains a Flush)
-    pub fn create_crafty_joker() -> Box<StaticJoker> {
+    pub fn create_crafty_joker() -> Box<dyn Joker> {
         Box::new(
             StaticJoker::builder(
                 JokerId::CraftyJoker,
@@ -253,12 +267,13 @@ impl StaticJokerFactory {
             .chips(80)
             .condition(StaticCondition::HandType(HandRank::Flush))
             .per_hand()
-            .build(),
+            .build()
+            .expect("Valid joker configuration"),
         )
     }
 
     /// Create Even Steven (Even cards give +4 Mult when scored)
-    pub fn create_even_steven() -> Box<StaticJoker> {
+    pub fn create_even_steven() -> Box<dyn Joker> {
         Box::new(
             StaticJoker::builder(
                 JokerId::EvenSteven,
@@ -276,12 +291,13 @@ impl StaticJokerFactory {
                 Value::Ten,
             ]))
             .per_card()
-            .build(),
+            .build()
+            .expect("Valid joker configuration"),
         )
     }
 
     /// Create Odd Todd (Odd cards give +31 Chips when scored)
-    pub fn create_odd_todd() -> Box<StaticJoker> {
+    pub fn create_odd_todd() -> Box<dyn Joker> {
         Box::new(
             StaticJoker::builder(
                 JokerId::OddTodd,
@@ -299,12 +315,13 @@ impl StaticJokerFactory {
                 Value::Ace,
             ]))
             .per_card()
-            .build(),
+            .build()
+            .expect("Valid joker configuration"),
         )
     }
 
     /// Create Scholar (Aces give +20 Chips and +4 Mult when scored)
-    pub fn create_scholar() -> Box<StaticJoker> {
+    pub fn create_scholar() -> Box<dyn Joker> {
         Box::new(
             StaticJoker::builder(
                 JokerId::Scholar,
@@ -317,7 +334,8 @@ impl StaticJokerFactory {
             .mult(4)
             .condition(StaticCondition::RankScored(Value::Ace))
             .per_card()
-            .build(),
+            .build()
+            .expect("Valid joker configuration"),
         )
     }
 }

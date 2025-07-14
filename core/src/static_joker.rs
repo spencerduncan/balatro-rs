@@ -244,8 +244,37 @@ impl StaticJokerBuilder {
         self
     }
 
-    pub fn build(self) -> StaticJoker {
-        StaticJoker {
+    pub fn build(self) -> Result<StaticJoker, String> {
+        // Validate that per_card/per_hand is compatible with condition
+        match (&self.condition, self.per_card) {
+            (StaticCondition::HandType(_), true) => {
+                return Err("HandType conditions should be per_hand, not per_card".to_string());
+            }
+            (StaticCondition::SuitScored(_), false) => {
+                return Err("SuitScored conditions should be per_card, not per_hand".to_string());
+            }
+            (StaticCondition::RankScored(_), false) => {
+                return Err("RankScored conditions should be per_card, not per_hand".to_string());
+            }
+            (StaticCondition::AnySuitScored(_), false) => {
+                return Err("AnySuitScored conditions should be per_card, not per_hand".to_string());
+            }
+            (StaticCondition::AnyRankScored(_), false) => {
+                return Err("AnyRankScored conditions should be per_card, not per_hand".to_string());
+            }
+            _ => {} // Valid combinations
+        }
+
+        // Validate that at least one bonus is specified
+        if self.chips_bonus.is_none() && self.mult_bonus.is_none() && self.mult_multiplier.is_none()
+        {
+            return Err(
+                "At least one bonus (chips, mult, or mult_multiplier) must be specified"
+                    .to_string(),
+            );
+        }
+
+        Ok(StaticJoker {
             id: self.id,
             name: self.name,
             description: self.description,
@@ -256,7 +285,7 @@ impl StaticJokerBuilder {
             mult_multiplier: self.mult_multiplier,
             condition: self.condition,
             per_card: self.per_card,
-        }
+        })
     }
 }
 
@@ -270,7 +299,8 @@ mod tests {
             .rarity(JokerRarity::Common)
             .mult(4)
             .per_hand()
-            .build();
+            .build()
+            .expect("Valid joker configuration");
 
         assert_eq!(joker.id(), JokerId::Joker);
         assert_eq!(joker.name(), "Test Joker");
@@ -285,7 +315,8 @@ mod tests {
             .mult(5)
             .condition(StaticCondition::Always)
             .per_hand()
-            .build();
+            .build()
+            .expect("Valid joker configuration");
 
         let effect = joker.create_effect();
         assert_eq!(effect.mult, 5);
@@ -298,7 +329,8 @@ mod tests {
                 .mult(3)
                 .condition(StaticCondition::SuitScored(Suit::Diamond))
                 .per_card()
-                .build();
+                .build()
+                .expect("Valid joker configuration");
 
         let diamond_card = Card::new(Value::King, Suit::Diamond);
         let heart_card = Card::new(Value::King, Suit::Heart);
@@ -314,7 +346,8 @@ mod tests {
             .mult(4)
             .condition(StaticCondition::RankScored(Value::Ace))
             .per_card()
-            .build();
+            .build()
+            .expect("Valid joker configuration");
 
         let ace_card = Card::new(Value::Ace, Suit::Spade);
         let king_card = Card::new(Value::King, Suit::Spade);
@@ -332,7 +365,8 @@ mod tests {
                 Suit::Diamond,
             ]))
             .per_card()
-            .build();
+            .build()
+            .expect("Valid joker configuration");
 
         let heart_card = Card::new(Value::Ten, Suit::Heart);
         let diamond_card = Card::new(Value::Ten, Suit::Diamond);
@@ -356,7 +390,8 @@ mod tests {
                     Value::Ten,
                 ]))
                 .per_card()
-                .build();
+                .build()
+                .expect("Valid joker configuration");
 
         let even_card = Card::new(Value::Eight, Suit::Club);
         let odd_card = Card::new(Value::Seven, Suit::Club);
@@ -372,7 +407,8 @@ mod tests {
             .mult(10)
             .mult_multiplier(1.2)
             .per_hand()
-            .build();
+            .build()
+            .expect("Valid joker configuration");
 
         let effect = joker.create_effect();
         assert_eq!(effect.chips, 50);
@@ -385,7 +421,8 @@ mod tests {
         let joker = StaticJoker::builder(JokerId::Joker, "Expensive", "Costs more")
             .rarity(JokerRarity::Common)
             .cost(10)
-            .build();
+            .build()
+            .expect("Valid joker configuration");
 
         assert_eq!(joker.cost(), 10);
     }
@@ -395,25 +432,29 @@ mod tests {
         // Common
         let common = StaticJoker::builder(JokerId::Joker, "Common", "")
             .rarity(JokerRarity::Common)
-            .build();
+            .build()
+            .expect("Valid joker configuration");
         assert_eq!(common.cost(), 3);
 
         // Uncommon
         let uncommon = StaticJoker::builder(JokerId::Joker, "Uncommon", "")
             .rarity(JokerRarity::Uncommon)
-            .build();
+            .build()
+            .expect("Valid joker configuration");
         assert_eq!(uncommon.cost(), 6);
 
         // Rare
         let rare = StaticJoker::builder(JokerId::Joker, "Rare", "")
             .rarity(JokerRarity::Rare)
-            .build();
+            .build()
+            .expect("Valid joker configuration");
         assert_eq!(rare.cost(), 8);
 
         // Legendary
         let legendary = StaticJoker::builder(JokerId::Joker, "Legendary", "")
             .rarity(JokerRarity::Legendary)
-            .build();
+            .build()
+            .expect("Valid joker configuration");
         assert_eq!(legendary.cost(), 20);
     }
 
@@ -427,7 +468,8 @@ mod tests {
         .mult(8)
         .condition(StaticCondition::HandType(HandRank::OnePair))
         .per_hand()
-        .build();
+        .build()
+        .expect("Valid joker configuration");
 
         // Test with a hand that is exactly a pair
         let pair_hand = SelectHand::new(vec![
@@ -475,7 +517,8 @@ mod tests {
         .mult(10)
         .condition(StaticCondition::HandType(HandRank::Flush))
         .per_hand()
-        .build();
+        .build()
+        .expect("Valid joker configuration");
 
         // Regular flush
         let flush_hand = SelectHand::new(vec![
@@ -519,7 +562,8 @@ mod tests {
         .mult(10)
         .condition(StaticCondition::HandType(HandRank::TwoPair))
         .per_hand()
-        .build();
+        .build()
+        .expect("Valid joker configuration");
 
         // Exact two pair
         let two_pair_hand = SelectHand::new(vec![
@@ -563,7 +607,8 @@ mod tests {
         .mult(12)
         .condition(StaticCondition::HandType(HandRank::ThreeOfAKind))
         .per_hand()
-        .build();
+        .build()
+        .expect("Valid joker configuration");
 
         // Exact three of a kind
         let three_kind_hand = SelectHand::new(vec![
@@ -617,7 +662,8 @@ mod tests {
         .mult(12)
         .condition(StaticCondition::HandType(HandRank::Straight))
         .per_hand()
-        .build();
+        .build()
+        .expect("Valid joker configuration");
 
         // Regular straight
         let straight_hand = SelectHand::new(vec![
@@ -661,7 +707,8 @@ mod tests {
         .chips(20)
         .condition(StaticCondition::HandType(HandRank::FullHouse))
         .per_hand()
-        .build();
+        .build()
+        .expect("Valid joker configuration");
 
         // Full house
         let full_house_hand = SelectHand::new(vec![
@@ -705,7 +752,8 @@ mod tests {
         .chips(30)
         .condition(StaticCondition::HandType(HandRank::FourOfAKind))
         .per_hand()
-        .build();
+        .build()
+        .expect("Valid joker configuration");
 
         // Four of a kind
         let four_kind_hand = SelectHand::new(vec![
@@ -749,7 +797,8 @@ mod tests {
         .chips(50)
         .condition(StaticCondition::HandType(HandRank::StraightFlush))
         .per_hand()
-        .build();
+        .build()
+        .expect("Valid joker configuration");
 
         // Straight flush
         let straight_flush_hand = SelectHand::new(vec![
@@ -803,7 +852,8 @@ mod tests {
         .chips(5)
         .condition(StaticCondition::HandType(HandRank::HighCard))
         .per_hand()
-        .build();
+        .build()
+        .expect("Valid joker configuration");
 
         // High card (no pairs, flushes, or straights)
         let high_card_hand = SelectHand::new(vec![
@@ -837,7 +887,8 @@ mod tests {
         .chips(100)
         .condition(StaticCondition::HandType(HandRank::RoyalFlush))
         .per_hand()
-        .build();
+        .build()
+        .expect("Valid joker configuration");
 
         // Royal flush (A, K, Q, J, 10 all same suit)
         let royal_flush_hand = SelectHand::new(vec![
@@ -871,7 +922,8 @@ mod tests {
         .chips(50)
         .condition(StaticCondition::HandType(HandRank::FiveOfAKind))
         .per_hand()
-        .build();
+        .build()
+        .expect("Valid joker configuration");
 
         // Five of a kind (5 cards of same rank)
         let five_kind_hand = SelectHand::new(vec![
@@ -905,7 +957,8 @@ mod tests {
         .chips(60)
         .condition(StaticCondition::HandType(HandRank::FlushHouse))
         .per_hand()
-        .build();
+        .build()
+        .expect("Valid joker configuration");
 
         // Flush house (full house + flush - 3 of same rank + pair, all same suit)
         let flush_house_hand = SelectHand::new(vec![
@@ -949,7 +1002,8 @@ mod tests {
         .chips(80)
         .condition(StaticCondition::HandType(HandRank::FlushFive))
         .per_hand()
-        .build();
+        .build()
+        .expect("Valid joker configuration");
 
         // Flush five (five of a kind + flush - 5 cards same rank, all same suit)
         let flush_five_hand = SelectHand::new(vec![
@@ -981,5 +1035,62 @@ mod tests {
         assert!(joker.check_hand_condition(&flush_five_hand));
         assert!(!joker.check_hand_condition(&five_kind_hand));
         assert!(!joker.check_hand_condition(&flush_hand));
+    }
+
+    #[test]
+    fn test_builder_validation() {
+        // Test invalid configuration: HandType condition with per_card
+        let result = StaticJoker::builder(
+            JokerId::JollyJoker,
+            "Invalid Joker",
+            "This should fail validation",
+        )
+        .mult(8)
+        .condition(StaticCondition::HandType(HandRank::OnePair))
+        .per_card() // This should be invalid with HandType
+        .build();
+
+        assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .contains("HandType conditions should be per_hand"));
+
+        // Test invalid configuration: SuitScored condition with per_hand
+        let result = StaticJoker::builder(
+            JokerId::GreedyJoker,
+            "Invalid Suit Joker",
+            "This should fail validation",
+        )
+        .mult(3)
+        .condition(StaticCondition::SuitScored(Suit::Diamond))
+        .per_hand() // This should be invalid with SuitScored
+        .build();
+
+        assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .contains("SuitScored conditions should be per_card"));
+
+        // Test invalid configuration: No bonuses specified
+        let result = StaticJoker::builder(
+            JokerId::Joker,
+            "No Bonus Joker",
+            "This should fail validation",
+        )
+        .condition(StaticCondition::Always)
+        .per_hand()
+        .build();
+
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("At least one bonus"));
+
+        // Test valid configuration
+        let result = StaticJoker::builder(JokerId::Joker, "Valid Joker", "This should work")
+            .mult(4)
+            .condition(StaticCondition::Always)
+            .per_hand()
+            .build();
+
+        assert!(result.is_ok());
     }
 }

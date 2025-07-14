@@ -1,0 +1,290 @@
+use balatro_rs::{
+    card::{Card, Suit, Value},
+    hand::{Hand, SelectHand},
+    joker::{GameContext, Joker},
+    stage::{Stage, Blind},
+    static_joker_factory::StaticJokerFactory,
+};
+
+/// Helper function to create a test GameContext
+fn create_test_context<'a>(
+    chips: i32,
+    mult: i32,
+    jokers: &'a [Box<dyn Joker>],
+    hand: &'a SelectHand,
+) -> GameContext<'a> {
+    let stage = Box::leak(Box::new(Stage::Blind(Blind::Small)));
+    let discarded = Box::leak(Box::new(Vec::<Card>::new()));
+    
+    GameContext {
+        chips,
+        mult,
+        money: 100,
+        ante: 1,
+        round: 1,
+        stage,
+        hands_played: 0,
+        discards_used: 0,
+        jokers,
+        hand,
+        discarded,
+    }
+}
+
+#[test]
+fn test_static_joker_on_hand_played_integration() {
+    // Test simple mult bonus joker (Joker)
+    let joker = StaticJokerFactory::create_joker();
+    let hand = Hand(vec![
+        Card::new(Value::King, Suit::Heart),
+        Card::new(Value::Queen, Suit::Diamond),
+    ]);
+    let select_hand = SelectHand::new(vec![
+        Card::new(Value::King, Suit::Heart),
+        Card::new(Value::Queen, Suit::Diamond),
+    ]);
+    
+    let jokers: Vec<Box<dyn Joker>> = vec![joker];
+    let mut context = create_test_context(50, 10, &jokers, &hand);
+    
+    // Should add +4 mult when hand is played
+    let effect = jokers[0].on_hand_played(&mut context, &select_hand);
+    assert_eq!(effect.mult, 4);
+}
+
+#[test]
+fn test_suit_condition_on_card_scored() {
+    // Test Greedy Joker (Diamond cards give +3 Mult when scored)
+    let joker = StaticJokerFactory::create_greedy_joker();
+    let hand = Hand(vec![
+        Card::new(Value::King, Suit::Diamond),
+        Card::new(Value::Queen, Suit::Heart),
+    ]);
+    
+    let jokers: Vec<Box<dyn Joker>> = vec![joker];
+    let mut context = create_test_context(50, 10, &jokers, &hand);
+    
+    // Diamond card should trigger effect
+    let diamond_card = Card::new(Value::King, Suit::Diamond);
+    let effect = jokers[0].on_card_scored(&mut context, &diamond_card);
+    assert_eq!(effect.mult, 3);
+    
+    // Heart card should not trigger effect
+    let heart_card = Card::new(Value::Queen, Suit::Heart);
+    let no_effect = jokers[0].on_card_scored(&mut context, &heart_card);
+    assert_eq!(no_effect.mult, 0);
+}
+
+#[test]
+fn test_hand_type_condition_integration() {
+    // Test Jolly Joker (+8 Mult if hand contains a Pair)
+    let joker = StaticJokerFactory::create_jolly_joker();
+    
+    // Test with a pair
+    let pair_hand = SelectHand::new(vec![
+        Card::new(Value::King, Suit::Heart),
+        Card::new(Value::King, Suit::Diamond),
+        Card::new(Value::Queen, Suit::Heart),
+        Card::new(Value::Jack, Suit::Diamond),
+        Card::new(Value::Ten, Suit::Club),
+    ]);
+    
+    let jokers: Vec<Box<dyn Joker>> = vec![joker];
+    let mut context = create_test_context(50, 10, &jokers, &pair_hand);
+    
+    // Should trigger on pair
+    let effect = jokers[0].on_hand_played(&mut context, &pair_hand);
+    assert_eq!(effect.mult, 8);
+    
+    // Test with high card (no pair)
+    let high_card_hand = SelectHand::new(vec![
+        Card::new(Value::King, Suit::Heart),
+        Card::new(Value::Queen, Suit::Diamond),
+        Card::new(Value::Jack, Suit::Club),
+        Card::new(Value::Ten, Suit::Spade),
+        Card::new(Value::Nine, Suit::Heart),
+    ]);
+    
+    let mut context2 = create_test_context(50, 10, &jokers, &high_card_hand);
+    let no_effect = jokers[0].on_hand_played(&mut context2, &high_card_hand);
+    assert_eq!(no_effect.mult, 0);
+}
+
+#[test]
+fn test_chip_bonus_jokers() {
+    // Test Sly Joker (+50 Chips if hand contains a Pair)
+    let joker = StaticJokerFactory::create_sly_joker();
+    
+    let pair_hand = SelectHand::new(vec![
+        Card::new(Value::Ace, Suit::Heart),
+        Card::new(Value::Ace, Suit::Diamond),
+    ]);
+    
+    let jokers: Vec<Box<dyn Joker>> = vec![joker];
+    let mut context = create_test_context(50, 10, &jokers, &pair_hand);
+    
+    let effect = jokers[0].on_hand_played(&mut context, &pair_hand);
+    assert_eq!(effect.chips, 50);
+}
+
+#[test]
+fn test_rank_condition_jokers() {
+    // Test Even Steven (Even cards give +4 Mult when scored)
+    let joker = StaticJokerFactory::create_even_steven();
+    
+    let hand = Hand(vec![
+        Card::new(Value::Two, Suit::Heart),    // Even
+        Card::new(Value::Three, Suit::Diamond), // Odd
+        Card::new(Value::Four, Suit::Club),    // Even
+    ]);
+    
+    let jokers: Vec<Box<dyn Joker>> = vec![joker];
+    let mut context = create_test_context(50, 10, &jokers, &hand);
+    
+    // Even cards should trigger
+    let even_card = Card::new(Value::Two, Suit::Heart);
+    let effect = jokers[0].on_card_scored(&mut context, &even_card);
+    assert_eq!(effect.mult, 4);
+    
+    // Odd card should not trigger
+    let odd_card = Card::new(Value::Three, Suit::Diamond);
+    let no_effect = jokers[0].on_card_scored(&mut context, &odd_card);
+    assert_eq!(no_effect.mult, 0);
+}
+
+#[test]
+fn test_multiple_static_jokers() {
+    // Test multiple jokers affecting the same hand
+    let jolly = StaticJokerFactory::create_jolly_joker(); // +8 Mult for pairs
+    let sly = StaticJokerFactory::create_sly_joker();     // +50 Chips for pairs
+    
+    let pair_hand = SelectHand::new(vec![
+        Card::new(Value::King, Suit::Heart),
+        Card::new(Value::King, Suit::Diamond),
+    ]);
+    
+    let jokers: Vec<Box<dyn Joker>> = vec![jolly, sly];
+    let mut context = create_test_context(50, 10, &jokers, &pair_hand);
+    
+    // Both jokers should trigger
+    let effect1 = jokers[0].on_hand_played(&mut context, &pair_hand);
+    assert_eq!(effect1.mult, 8);
+    
+    let effect2 = jokers[1].on_hand_played(&mut context, &pair_hand);
+    assert_eq!(effect2.chips, 50);
+}
+
+#[test]
+fn test_complex_hand_type_containment() {
+    // Test that hand type conditions properly use "contains" logic
+    let pair_joker = StaticJokerFactory::create_jolly_joker(); // +8 Mult if contains pair
+    
+    // Full house contains pairs
+    let full_house = SelectHand::new(vec![
+        Card::new(Value::King, Suit::Heart),
+        Card::new(Value::King, Suit::Diamond),
+        Card::new(Value::King, Suit::Club),
+        Card::new(Value::Queen, Suit::Heart),
+        Card::new(Value::Queen, Suit::Diamond),
+    ]);
+    
+    let jokers: Vec<Box<dyn Joker>> = vec![pair_joker];
+    let mut context = create_test_context(50, 10, &jokers, &full_house);
+    
+    // Should trigger because full house contains pairs
+    let effect = jokers[0].on_hand_played(&mut context, &full_house);
+    assert_eq!(effect.mult, 8);
+}
+
+#[test]
+fn test_all_suit_jokers() {
+    // Test all four suit-based jokers
+    let greedy = StaticJokerFactory::create_greedy_joker();   // Diamond
+    let lusty = StaticJokerFactory::create_lusty_joker();     // Heart
+    let wrathful = StaticJokerFactory::create_wrathful_joker(); // Spade
+    let gluttonous = StaticJokerFactory::create_gluttonous_joker(); // Club
+    
+    let hand = Hand(vec![
+        Card::new(Value::King, Suit::Diamond),
+        Card::new(Value::Queen, Suit::Heart),
+        Card::new(Value::Jack, Suit::Spade),
+        Card::new(Value::Ten, Suit::Club),
+    ]);
+    
+    // Test each joker with its matching suit
+    let jokers: Vec<Box<dyn Joker>> = vec![greedy];
+    let mut context = create_test_context(50, 10, &jokers, &hand);
+    let diamond_card = Card::new(Value::King, Suit::Diamond);
+    let effect = jokers[0].on_card_scored(&mut context, &diamond_card);
+    assert_eq!(effect.mult, 3);
+    
+    let jokers: Vec<Box<dyn Joker>> = vec![lusty];
+    let mut context = create_test_context(50, 10, &jokers, &hand);
+    let heart_card = Card::new(Value::Queen, Suit::Heart);
+    let effect = jokers[0].on_card_scored(&mut context, &heart_card);
+    assert_eq!(effect.mult, 3);
+    
+    let jokers: Vec<Box<dyn Joker>> = vec![wrathful];
+    let mut context = create_test_context(50, 10, &jokers, &hand);
+    let spade_card = Card::new(Value::Jack, Suit::Spade);
+    let effect = jokers[0].on_card_scored(&mut context, &spade_card);
+    assert_eq!(effect.mult, 3);
+    
+    let jokers: Vec<Box<dyn Joker>> = vec![gluttonous];
+    let mut context = create_test_context(50, 10, &jokers, &hand);
+    let club_card = Card::new(Value::Ten, Suit::Club);
+    let effect = jokers[0].on_card_scored(&mut context, &club_card);
+    assert_eq!(effect.mult, 3);
+}
+
+#[test]
+fn test_scholar_joker() {
+    // Test Scholar (Aces give +20 Chips and +4 Mult when scored)
+    let scholar = StaticJokerFactory::create_scholar();
+    
+    let hand = Hand(vec![
+        Card::new(Value::Ace, Suit::Heart),
+        Card::new(Value::King, Suit::Diamond),
+    ]);
+    
+    let jokers: Vec<Box<dyn Joker>> = vec![scholar];
+    let mut context = create_test_context(50, 10, &jokers, &hand);
+    
+    // Ace should trigger composite effect
+    let ace_card = Card::new(Value::Ace, Suit::Heart);
+    let effect = jokers[0].on_card_scored(&mut context, &ace_card);
+    // Scholar should give both chips and mult
+    assert_eq!(effect.chips, 20);
+    assert_eq!(effect.mult, 4);
+    
+    // Non-ace should not trigger
+    let king_card = Card::new(Value::King, Suit::Diamond);
+    let no_effect = jokers[0].on_card_scored(&mut context, &king_card);
+    assert_eq!(no_effect.chips, 0);
+    assert_eq!(no_effect.mult, 0);
+}
+
+#[test]
+fn test_odd_todd_joker() {
+    // Test Odd Todd (Odd cards give +31 Chips when scored)
+    let odd_todd = StaticJokerFactory::create_odd_todd();
+    
+    let hand = Hand(vec![
+        Card::new(Value::Three, Suit::Heart),  // Odd
+        Card::new(Value::Five, Suit::Diamond), // Odd
+        Card::new(Value::Six, Suit::Club),     // Even
+    ]);
+    
+    let jokers: Vec<Box<dyn Joker>> = vec![odd_todd];
+    let mut context = create_test_context(50, 10, &jokers, &hand);
+    
+    // Odd cards should trigger
+    let odd_card = Card::new(Value::Three, Suit::Heart);
+    let effect = jokers[0].on_card_scored(&mut context, &odd_card);
+    assert_eq!(effect.chips, 31);
+    
+    // Even card should not trigger
+    let even_card = Card::new(Value::Six, Suit::Club);
+    let no_effect = jokers[0].on_card_scored(&mut context, &even_card);
+    assert_eq!(no_effect.chips, 0);
+}
