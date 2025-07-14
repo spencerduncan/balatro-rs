@@ -508,4 +508,478 @@ mod tests {
         assert!(flush_joker.check_hand_condition(&straight_flush_hand)); // Straight flush contains a flush
         assert!(!flush_joker.check_hand_condition(&mixed_hand)); // Not a flush
     }
+
+    #[test]
+    fn test_two_pair_condition() {
+        let joker = StaticJoker::builder(
+            JokerId::MadJoker,
+            "Two Pair Bonus",
+            "+10 Mult if played hand contains Two Pair",
+        )
+        .mult(10)
+        .condition(StaticCondition::HandType(HandRank::TwoPair))
+        .per_hand()
+        .build();
+
+        // Exact two pair
+        let two_pair_hand = SelectHand::new(vec![
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::King, Suit::Diamond),
+            Card::new(Value::Queen, Suit::Heart),
+            Card::new(Value::Queen, Suit::Diamond),
+            Card::new(Value::Jack, Suit::Club),
+        ]);
+
+        // Full house (contains two pairs)
+        let full_house_hand = SelectHand::new(vec![
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::King, Suit::Diamond),
+            Card::new(Value::King, Suit::Club),
+            Card::new(Value::Queen, Suit::Heart),
+            Card::new(Value::Queen, Suit::Diamond),
+        ]);
+
+        // Single pair (doesn't contain two pair)
+        let one_pair_hand = SelectHand::new(vec![
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::King, Suit::Diamond),
+            Card::new(Value::Queen, Suit::Heart),
+            Card::new(Value::Jack, Suit::Diamond),
+            Card::new(Value::Ten, Suit::Club),
+        ]);
+
+        assert!(joker.check_hand_condition(&two_pair_hand));
+        assert!(joker.check_hand_condition(&full_house_hand)); // Full house contains two pairs
+        assert!(!joker.check_hand_condition(&one_pair_hand));
+    }
+
+    #[test]
+    fn test_three_of_a_kind_condition() {
+        let joker = StaticJoker::builder(
+            JokerId::ZanyJoker,
+            "Three of a Kind Bonus",
+            "+12 Mult if played hand contains Three of a Kind",
+        )
+        .mult(12)
+        .condition(StaticCondition::HandType(HandRank::ThreeOfAKind))
+        .per_hand()
+        .build();
+
+        // Exact three of a kind
+        let three_kind_hand = SelectHand::new(vec![
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::King, Suit::Diamond),
+            Card::new(Value::King, Suit::Club),
+            Card::new(Value::Queen, Suit::Heart),
+            Card::new(Value::Jack, Suit::Diamond),
+        ]);
+
+        // Full house (contains three of a kind)
+        let full_house_hand = SelectHand::new(vec![
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::King, Suit::Diamond),
+            Card::new(Value::King, Suit::Club),
+            Card::new(Value::Queen, Suit::Heart),
+            Card::new(Value::Queen, Suit::Diamond),
+        ]);
+
+        // Four of a kind (contains three of a kind)
+        let four_kind_hand = SelectHand::new(vec![
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::King, Suit::Diamond),
+            Card::new(Value::King, Suit::Club),
+            Card::new(Value::King, Suit::Spade),
+            Card::new(Value::Queen, Suit::Heart),
+        ]);
+
+        // Two pair (doesn't contain three of a kind)
+        let two_pair_hand = SelectHand::new(vec![
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::King, Suit::Diamond),
+            Card::new(Value::Queen, Suit::Heart),
+            Card::new(Value::Queen, Suit::Diamond),
+            Card::new(Value::Jack, Suit::Club),
+        ]);
+
+        assert!(joker.check_hand_condition(&three_kind_hand));
+        assert!(joker.check_hand_condition(&full_house_hand));
+        assert!(joker.check_hand_condition(&four_kind_hand));
+        assert!(!joker.check_hand_condition(&two_pair_hand));
+    }
+
+    #[test]
+    fn test_straight_condition() {
+        let joker = StaticJoker::builder(
+            JokerId::CrazyJoker,
+            "Straight Bonus",
+            "+12 Mult if played hand contains Straight",
+        )
+        .mult(12)
+        .condition(StaticCondition::HandType(HandRank::Straight))
+        .per_hand()
+        .build();
+
+        // Regular straight
+        let straight_hand = SelectHand::new(vec![
+            Card::new(Value::Ten, Suit::Heart),
+            Card::new(Value::Nine, Suit::Diamond),
+            Card::new(Value::Eight, Suit::Club),
+            Card::new(Value::Seven, Suit::Spade),
+            Card::new(Value::Six, Suit::Heart),
+        ]);
+
+        // Straight flush (contains straight)
+        let straight_flush_hand = SelectHand::new(vec![
+            Card::new(Value::Six, Suit::Heart),
+            Card::new(Value::Five, Suit::Heart),
+            Card::new(Value::Four, Suit::Heart),
+            Card::new(Value::Three, Suit::Heart),
+            Card::new(Value::Two, Suit::Heart),
+        ]);
+
+        // Not a straight
+        let non_straight_hand = SelectHand::new(vec![
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::Queen, Suit::Diamond),
+            Card::new(Value::Jack, Suit::Club),
+            Card::new(Value::Nine, Suit::Spade),
+            Card::new(Value::Eight, Suit::Heart),
+        ]);
+
+        assert!(joker.check_hand_condition(&straight_hand));
+        assert!(joker.check_hand_condition(&straight_flush_hand));
+        assert!(!joker.check_hand_condition(&non_straight_hand));
+    }
+
+    #[test]
+    fn test_full_house_condition() {
+        let joker = StaticJoker::builder(
+            JokerId::Scholar,
+            "Full House Bonus",
+            "+20 Chips if played hand contains Full House",
+        )
+        .chips(20)
+        .condition(StaticCondition::HandType(HandRank::FullHouse))
+        .per_hand()
+        .build();
+
+        // Full house
+        let full_house_hand = SelectHand::new(vec![
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::King, Suit::Diamond),
+            Card::new(Value::King, Suit::Club),
+            Card::new(Value::Queen, Suit::Heart),
+            Card::new(Value::Queen, Suit::Diamond),
+        ]);
+
+        // Three of a kind (doesn't contain full house)
+        let three_kind_hand = SelectHand::new(vec![
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::King, Suit::Diamond),
+            Card::new(Value::King, Suit::Club),
+            Card::new(Value::Queen, Suit::Heart),
+            Card::new(Value::Jack, Suit::Diamond),
+        ]);
+
+        // Two pair (doesn't contain full house)
+        let two_pair_hand = SelectHand::new(vec![
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::King, Suit::Diamond),
+            Card::new(Value::Queen, Suit::Heart),
+            Card::new(Value::Queen, Suit::Diamond),
+            Card::new(Value::Jack, Suit::Club),
+        ]);
+
+        assert!(joker.check_hand_condition(&full_house_hand));
+        assert!(!joker.check_hand_condition(&three_kind_hand));
+        assert!(!joker.check_hand_condition(&two_pair_hand));
+    }
+
+    #[test]
+    fn test_four_of_a_kind_condition() {
+        let joker = StaticJoker::builder(
+            JokerId::Scholar,
+            "Four of a Kind Bonus",
+            "+30 Chips if played hand contains Four of a Kind",
+        )
+        .chips(30)
+        .condition(StaticCondition::HandType(HandRank::FourOfAKind))
+        .per_hand()
+        .build();
+
+        // Four of a kind
+        let four_kind_hand = SelectHand::new(vec![
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::King, Suit::Diamond),
+            Card::new(Value::King, Suit::Club),
+            Card::new(Value::King, Suit::Spade),
+            Card::new(Value::Queen, Suit::Heart),
+        ]);
+
+        // Five of a kind (contains four of a kind)
+        let five_kind_hand = SelectHand::new(vec![
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::King, Suit::Diamond),
+            Card::new(Value::King, Suit::Club),
+            Card::new(Value::King, Suit::Spade),
+            Card::new(Value::King, Suit::Heart), // Duplicate for five of a kind test
+        ]);
+
+        // Three of a kind (doesn't contain four of a kind)
+        let three_kind_hand = SelectHand::new(vec![
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::King, Suit::Diamond),
+            Card::new(Value::King, Suit::Club),
+            Card::new(Value::Queen, Suit::Heart),
+            Card::new(Value::Jack, Suit::Diamond),
+        ]);
+
+        assert!(joker.check_hand_condition(&four_kind_hand));
+        assert!(joker.check_hand_condition(&five_kind_hand));
+        assert!(!joker.check_hand_condition(&three_kind_hand));
+    }
+
+    #[test]
+    fn test_straight_flush_condition() {
+        let joker = StaticJoker::builder(
+            JokerId::Scholar,
+            "Straight Flush Bonus",
+            "+50 Chips if played hand contains Straight Flush",
+        )
+        .chips(50)
+        .condition(StaticCondition::HandType(HandRank::StraightFlush))
+        .per_hand()
+        .build();
+
+        // Straight flush
+        let straight_flush_hand = SelectHand::new(vec![
+            Card::new(Value::Six, Suit::Heart),
+            Card::new(Value::Five, Suit::Heart),
+            Card::new(Value::Four, Suit::Heart),
+            Card::new(Value::Three, Suit::Heart),
+            Card::new(Value::Two, Suit::Heart),
+        ]);
+
+        // Royal flush (contains straight flush)
+        let royal_flush_hand = SelectHand::new(vec![
+            Card::new(Value::Ace, Suit::Heart),
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::Queen, Suit::Heart),
+            Card::new(Value::Jack, Suit::Heart),
+            Card::new(Value::Ten, Suit::Heart),
+        ]);
+
+        // Regular flush (doesn't contain straight)
+        let flush_hand = SelectHand::new(vec![
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::Queen, Suit::Heart),
+            Card::new(Value::Jack, Suit::Heart),
+            Card::new(Value::Nine, Suit::Heart),
+            Card::new(Value::Seven, Suit::Heart),
+        ]);
+
+        // Regular straight (doesn't contain flush)
+        let straight_hand = SelectHand::new(vec![
+            Card::new(Value::Ten, Suit::Heart),
+            Card::new(Value::Nine, Suit::Diamond),
+            Card::new(Value::Eight, Suit::Club),
+            Card::new(Value::Seven, Suit::Spade),
+            Card::new(Value::Six, Suit::Heart),
+        ]);
+
+        assert!(joker.check_hand_condition(&straight_flush_hand));
+        assert!(joker.check_hand_condition(&royal_flush_hand));
+        assert!(!joker.check_hand_condition(&flush_hand));
+        assert!(!joker.check_hand_condition(&straight_hand));
+    }
+
+    #[test]
+    fn test_high_card_condition() {
+        let joker = StaticJoker::builder(
+            JokerId::Scholar,
+            "High Card Bonus",
+            "+5 Chips if played hand is High Card",
+        )
+        .chips(5)
+        .condition(StaticCondition::HandType(HandRank::HighCard))
+        .per_hand()
+        .build();
+
+        // High card (no pairs, flushes, or straights)
+        let high_card_hand = SelectHand::new(vec![
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::Queen, Suit::Diamond),
+            Card::new(Value::Jack, Suit::Club),
+            Card::new(Value::Nine, Suit::Spade),
+            Card::new(Value::Seven, Suit::Heart),
+        ]);
+
+        // Pair (not high card)
+        let pair_hand = SelectHand::new(vec![
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::King, Suit::Diamond),
+            Card::new(Value::Queen, Suit::Club),
+            Card::new(Value::Jack, Suit::Spade),
+            Card::new(Value::Nine, Suit::Heart),
+        ]);
+
+        assert!(joker.check_hand_condition(&high_card_hand));
+        assert!(!joker.check_hand_condition(&pair_hand));
+    }
+
+    #[test]
+    fn test_royal_flush_condition() {
+        let joker = StaticJoker::builder(
+            JokerId::Scholar,
+            "Royal Flush Bonus",
+            "+100 Chips if played hand contains Royal Flush",
+        )
+        .chips(100)
+        .condition(StaticCondition::HandType(HandRank::RoyalFlush))
+        .per_hand()
+        .build();
+
+        // Royal flush (A, K, Q, J, 10 all same suit)
+        let royal_flush_hand = SelectHand::new(vec![
+            Card::new(Value::Ace, Suit::Heart),
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::Queen, Suit::Heart),
+            Card::new(Value::Jack, Suit::Heart),
+            Card::new(Value::Ten, Suit::Heart),
+        ]);
+
+        // Regular straight flush (not royal)
+        let straight_flush_hand = SelectHand::new(vec![
+            Card::new(Value::Nine, Suit::Heart),
+            Card::new(Value::Eight, Suit::Heart),
+            Card::new(Value::Seven, Suit::Heart),
+            Card::new(Value::Six, Suit::Heart),
+            Card::new(Value::Five, Suit::Heart),
+        ]);
+
+        assert!(joker.check_hand_condition(&royal_flush_hand));
+        assert!(!joker.check_hand_condition(&straight_flush_hand));
+    }
+
+    #[test]
+    fn test_five_of_a_kind_condition() {
+        let joker = StaticJoker::builder(
+            JokerId::Scholar,
+            "Five of a Kind Bonus",
+            "+50 Chips if played hand contains Five of a Kind",
+        )
+        .chips(50)
+        .condition(StaticCondition::HandType(HandRank::FiveOfAKind))
+        .per_hand()
+        .build();
+
+        // Five of a kind (5 cards of same rank)
+        let five_kind_hand = SelectHand::new(vec![
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::King, Suit::Diamond),
+            Card::new(Value::King, Suit::Club),
+            Card::new(Value::King, Suit::Spade),
+            Card::new(Value::King, Suit::Heart), // Special Balatro case with duplicate suits
+        ]);
+
+        // Four of a kind (doesn't contain five of a kind)
+        let four_kind_hand = SelectHand::new(vec![
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::King, Suit::Diamond),
+            Card::new(Value::King, Suit::Club),
+            Card::new(Value::King, Suit::Spade),
+            Card::new(Value::Queen, Suit::Heart),
+        ]);
+
+        assert!(joker.check_hand_condition(&five_kind_hand));
+        assert!(!joker.check_hand_condition(&four_kind_hand));
+    }
+
+    #[test]
+    fn test_flush_house_condition() {
+        let joker = StaticJoker::builder(
+            JokerId::Scholar,
+            "Flush House Bonus",
+            "+60 Chips if played hand contains Flush House",
+        )
+        .chips(60)
+        .condition(StaticCondition::HandType(HandRank::FlushHouse))
+        .per_hand()
+        .build();
+
+        // Flush house (full house + flush - 3 of same rank + pair, all same suit)
+        let flush_house_hand = SelectHand::new(vec![
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::Queen, Suit::Heart),
+            Card::new(Value::Queen, Suit::Heart),
+        ]);
+
+        // Regular full house (not flush)
+        let full_house_hand = SelectHand::new(vec![
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::King, Suit::Diamond),
+            Card::new(Value::King, Suit::Club),
+            Card::new(Value::Queen, Suit::Heart),
+            Card::new(Value::Queen, Suit::Diamond),
+        ]);
+
+        // Regular flush (not full house)
+        let flush_hand = SelectHand::new(vec![
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::Queen, Suit::Heart),
+            Card::new(Value::Jack, Suit::Heart),
+            Card::new(Value::Ten, Suit::Heart),
+            Card::new(Value::Nine, Suit::Heart),
+        ]);
+
+        assert!(joker.check_hand_condition(&flush_house_hand));
+        assert!(!joker.check_hand_condition(&full_house_hand));
+        assert!(!joker.check_hand_condition(&flush_hand));
+    }
+
+    #[test]
+    fn test_flush_five_condition() {
+        let joker = StaticJoker::builder(
+            JokerId::Scholar,
+            "Flush Five Bonus",
+            "+80 Chips if played hand contains Flush Five",
+        )
+        .chips(80)
+        .condition(StaticCondition::HandType(HandRank::FlushFive))
+        .per_hand()
+        .build();
+
+        // Flush five (five of a kind + flush - 5 cards same rank, all same suit)
+        let flush_five_hand = SelectHand::new(vec![
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::King, Suit::Heart),
+        ]);
+
+        // Five of a kind (not flush)
+        let five_kind_hand = SelectHand::new(vec![
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::King, Suit::Diamond),
+            Card::new(Value::King, Suit::Club),
+            Card::new(Value::King, Suit::Spade),
+            Card::new(Value::King, Suit::Heart),
+        ]);
+
+        // Regular flush (not five of a kind)
+        let flush_hand = SelectHand::new(vec![
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::Queen, Suit::Heart),
+            Card::new(Value::Jack, Suit::Heart),
+            Card::new(Value::Ten, Suit::Heart),
+            Card::new(Value::Nine, Suit::Heart),
+        ]);
+
+        assert!(joker.check_hand_condition(&flush_five_hand));
+        assert!(!joker.check_hand_condition(&five_kind_hand));
+        assert!(!joker.check_hand_condition(&flush_hand));
+    }
 }
