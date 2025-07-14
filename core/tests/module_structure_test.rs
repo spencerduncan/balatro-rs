@@ -108,7 +108,10 @@ mod tests {
         let _play = Action::Play();
         let _discard = Action::Discard();
         let _cash_out = Action::CashOut(100);
-        let _buy_joker = Action::BuyJoker { joker_id: JokerId::Joker, slot: 0 };
+        let _buy_joker = Action::BuyJoker {
+            joker_id: JokerId::Joker,
+            slot: 0,
+        };
         let _next_round = Action::NextRound();
         let _select_blind = Action::SelectBlind(Blind::Small);
 
