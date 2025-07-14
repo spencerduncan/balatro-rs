@@ -314,6 +314,7 @@ pub trait Joker: Send + Sync + std::fmt::Debug {
         }
     }
 
+
     // Lifecycle hooks with default implementations
 
     /// Called when a hand is played and scored

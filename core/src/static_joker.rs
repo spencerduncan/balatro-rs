@@ -379,7 +379,7 @@ mod tests {
 
     #[test]
     fn test_suit_jokers_greedy() {
-        let joker = crate::static_joker_factory::StaticJokerFactory::create_greedy_joker();
+        let joker = crate::static_joker_factory::StaticJokerFactory::create_greedy_joker_concrete();
 
         // Test properties
         assert_eq!(joker.id(), JokerId::GreedyJoker);
@@ -401,7 +401,7 @@ mod tests {
 
     #[test]
     fn test_suit_jokers_lusty() {
-        let joker = crate::static_joker_factory::StaticJokerFactory::create_lusty_joker();
+        let joker = crate::static_joker_factory::StaticJokerFactory::create_lusty_joker_concrete();
 
         // Test properties
         assert_eq!(joker.id(), JokerId::LustyJoker);
@@ -423,7 +423,7 @@ mod tests {
 
     #[test]
     fn test_suit_jokers_wrathful() {
-        let joker = crate::static_joker_factory::StaticJokerFactory::create_wrathful_joker();
+        let joker = crate::static_joker_factory::StaticJokerFactory::create_wrathful_joker_concrete();
 
         // Test properties
         assert_eq!(joker.id(), JokerId::WrathfulJoker);
@@ -445,7 +445,7 @@ mod tests {
 
     #[test]
     fn test_suit_jokers_gluttonous() {
-        let joker = crate::static_joker_factory::StaticJokerFactory::create_gluttonous_joker();
+        let joker = crate::static_joker_factory::StaticJokerFactory::create_gluttonous_joker_concrete();
 
         // Test properties
         assert_eq!(joker.id(), JokerId::GluttonousJoker);
@@ -468,10 +468,10 @@ mod tests {
     #[test]
     fn test_suit_jokers_isolation() {
         // Create all four suit jokers
-        let greedy = crate::static_joker_factory::StaticJokerFactory::create_greedy_joker();
-        let lusty = crate::static_joker_factory::StaticJokerFactory::create_lusty_joker();
-        let wrathful = crate::static_joker_factory::StaticJokerFactory::create_wrathful_joker();
-        let gluttonous = crate::static_joker_factory::StaticJokerFactory::create_gluttonous_joker();
+        let greedy = crate::static_joker_factory::StaticJokerFactory::create_greedy_joker_concrete();
+        let lusty = crate::static_joker_factory::StaticJokerFactory::create_lusty_joker_concrete();
+        let wrathful = crate::static_joker_factory::StaticJokerFactory::create_wrathful_joker_concrete();
+        let gluttonous = crate::static_joker_factory::StaticJokerFactory::create_gluttonous_joker_concrete();
 
         // Create one card of each suit
         let diamond_card = Card::new(Value::Ace, Suit::Diamond);

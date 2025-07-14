@@ -338,6 +338,74 @@ impl StaticJokerFactory {
             .expect("Valid joker configuration"),
         )
     }
+    
+    /// Test-only methods that return concrete types for internal testing
+    #[cfg(test)]
+    pub fn create_greedy_joker_concrete() -> StaticJoker {
+        StaticJoker::builder(
+            JokerId::GreedyJoker,
+            "Greedy Joker",
+            "Played cards with Diamond suit give +3 Mult when scored",
+        )
+        .rarity(JokerRarity::Common)
+        .cost(5)
+        .mult(3)
+        .condition(StaticCondition::SuitScored(Suit::Diamond))
+        .per_card()
+        .build()
+        .expect("Valid joker configuration")
+    }
+
+    /// Test-only methods that return concrete types for internal testing
+    #[cfg(test)]
+    pub fn create_lusty_joker_concrete() -> StaticJoker {
+        StaticJoker::builder(
+            JokerId::LustyJoker,
+            "Lusty Joker",
+            "Played cards with Heart suit give +3 Mult when scored",
+        )
+        .rarity(JokerRarity::Common)
+        .cost(5)
+        .mult(3)
+        .condition(StaticCondition::SuitScored(Suit::Heart))
+        .per_card()
+        .build()
+        .expect("Valid joker configuration")
+    }
+
+    /// Test-only methods that return concrete types for internal testing
+    #[cfg(test)]
+    pub fn create_wrathful_joker_concrete() -> StaticJoker {
+        StaticJoker::builder(
+            JokerId::WrathfulJoker,
+            "Wrathful Joker",
+            "Played cards with Spade suit give +3 Mult when scored",
+        )
+        .rarity(JokerRarity::Common)
+        .cost(5)
+        .mult(3)
+        .condition(StaticCondition::SuitScored(Suit::Spade))
+        .per_card()
+        .build()
+        .expect("Valid joker configuration")
+    }
+
+    /// Test-only methods that return concrete types for internal testing
+    #[cfg(test)]
+    pub fn create_gluttonous_joker_concrete() -> StaticJoker {
+        StaticJoker::builder(
+            JokerId::GluttonousJoker,
+            "Gluttonous Joker",
+            "Played cards with Club suit give +3 Mult when scored",
+        )
+        .rarity(JokerRarity::Common)
+        .cost(5)
+        .mult(3)
+        .condition(StaticCondition::SuitScored(Suit::Club))
+        .per_card()
+        .build()
+        .expect("Valid joker configuration")
+    }
 }
 
 #[cfg(test)]
