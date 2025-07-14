@@ -1,6 +1,7 @@
 use crate::card::{Card, Suit};
 use crate::hand::SelectHand;
 use crate::joker::{GameContext, Joker, JokerEffect, JokerId, JokerRarity};
+use rand::prelude::*;
 use serde::{Deserialize, Serialize};
 
 // Basic Joker implementation
@@ -638,8 +639,100 @@ impl Joker for Runner {
     }
 
     fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
-        if hand.is_straight().is_some() {
+        // Check for straight in any form: straight, straight flush, or royal flush
+        if hand.is_straight().is_some() || hand.is_straight_flush().is_some() || hand.is_royal_flush().is_some() {
             JokerEffect::new().with_chips(15)
+        } else {
+            JokerEffect::new()
+        }
+    }
+}
+
+// Supernova Joker implementation - adds hand played to mult
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct SupernovaJoker;
+
+impl Joker for SupernovaJoker {
+    fn id(&self) -> JokerId {
+        JokerId::Supernova
+    }
+
+    fn name(&self) -> &str {
+        "Supernova"
+    }
+
+    fn description(&self) -> &str {
+        "Adds hand played to Mult"
+    }
+
+    fn rarity(&self) -> JokerRarity {
+        JokerRarity::Common
+    }
+
+    fn cost(&self) -> usize {
+        4
+    }
+
+    fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
+        // Get the hand rank and convert to mult value
+        if let Ok(made_hand) = hand.best_hand() {
+            let mult_bonus = match made_hand.rank {
+                crate::rank::HandRank::HighCard => 1,
+                crate::rank::HandRank::OnePair => 2,
+                crate::rank::HandRank::TwoPair => 2,
+                crate::rank::HandRank::ThreeOfAKind => 3,
+                crate::rank::HandRank::Straight => 4,
+                crate::rank::HandRank::Flush => 4,
+                crate::rank::HandRank::FullHouse => 5,
+                crate::rank::HandRank::FourOfAKind => 7,
+                crate::rank::HandRank::StraightFlush => 8,
+                crate::rank::HandRank::RoyalFlush => 10,
+                crate::rank::HandRank::FiveOfAKind => 12,
+                crate::rank::HandRank::FlushHouse => 14,
+                crate::rank::HandRank::FlushFive => 16,
+            };
+            JokerEffect::new().with_mult(mult_bonus)
+        } else {
+            JokerEffect::new()
+        }
+    }
+}
+
+// Space Joker implementation - 1 in 4 chance for +1 hand level  
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct SpaceJokerImpl;
+
+impl Joker for SpaceJokerImpl {
+    fn id(&self) -> JokerId {
+        JokerId::SpaceJoker
+    }
+
+    fn name(&self) -> &str {
+        "Space Joker"
+    }
+
+    fn description(&self) -> &str {
+        "1 in 4 chance to upgrade level of played hand"
+    }
+
+    fn rarity(&self) -> JokerRarity {
+        JokerRarity::Uncommon
+    }
+
+    fn cost(&self) -> usize {
+        5
+    }
+
+    fn on_hand_played(&self, _context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
+        // 1 in 4 chance (25%) to trigger
+        let mut rng = thread_rng();
+        if rng.gen_bool(0.25) {
+            // For now, provide a placeholder effect since hand level upgrading requires game state changes
+            // In a full implementation, this would need to modify the hand level in the game state
+            // TODO: Implement actual hand level upgrade functionality
+            let mut effect = JokerEffect::new();
+            effect.message = Some("Space Joker activated! +1 hand level".to_string());
+            effect
         } else {
             JokerEffect::new()
         }
