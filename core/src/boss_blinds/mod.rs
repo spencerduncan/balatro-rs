@@ -19,8 +19,25 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 use strum::{EnumIter, IntoEnumIterator};
 
-/// Core trait that all boss blind types must implement
-pub trait BossBlind {
+/// Bounded data types for boss blind custom state
+/// Replaces arbitrary JSON deserialization with type-safe alternatives
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum BossBlindData {
+    /// Integer value with reasonable bounds
+    Integer(i64),
+    /// Float value for multipliers and percentages
+    Float(f64),
+    /// Boolean flags for state tracking
+    Boolean(bool),
+    /// String value with length limits
+    String(String), // TODO: Consider adding max length validation
+    /// List of integer values for counters and collections
+    IntegerList(Vec<i64>),
+}
+
+/// Trait for boss blind metadata and information
+/// Follows Interface Segregation Principle by focusing only on metadata concerns
+pub trait BossBlindInfo {
     /// Get the name of this boss blind
     fn name(&self) -> &'static str;
 
@@ -32,11 +49,23 @@ pub trait BossBlind {
 
     /// Get the reward multiplier for defeating this boss blind
     fn reward_multiplier(&self) -> f64;
+}
 
+/// Trait for boss blind lifecycle management
+/// Handles activation and deactivation events
+pub trait BossBlindLifecycle {
     /// Apply the boss blind's effect when the blind starts
     /// Called when the player selects this boss blind
     fn on_blind_start(&self, game: &mut crate::game::Game);
 
+    /// Apply the boss blind's effect when the blind ends
+    /// Called when the blind is completed or failed
+    fn on_blind_end(&self, game: &mut crate::game::Game);
+}
+
+/// Trait for boss blind scoring modifications
+/// Handles scoring effects and card interactions
+pub trait BossBlindScoring {
     /// Apply the boss blind's effect during hand evaluation
     /// Called for each hand played during the blind
     fn on_hand_played(
@@ -45,10 +74,6 @@ pub trait BossBlind {
         hand: &crate::hand::Hand,
     ) -> HandModification;
 
-    /// Apply the boss blind's effect when the blind ends
-    /// Called when the blind is completed or failed
-    fn on_blind_end(&self, game: &mut crate::game::Game);
-
     /// Check if this boss blind's effect should modify a specific card
     fn affects_card(&self, card: &crate::card::Card) -> bool {
         // Default implementation - most boss blinds don't affect specific cards
@@ -56,6 +81,10 @@ pub trait BossBlind {
         false
     }
 }
+
+/// Convenience trait that combines all boss blind traits
+/// Implementations can implement this for full boss blind functionality
+pub trait BossBlind: BossBlindInfo + BossBlindLifecycle + BossBlindScoring {}
 
 /// Modifications that can be applied to hand scoring by boss blinds
 #[derive(Debug, Clone, Default)]
@@ -152,8 +181,8 @@ pub struct BossBlindState {
     pub active_boss: Option<BossBlindId>,
     /// Whether the boss blind effect is currently active
     pub effect_active: bool,
-    /// Custom state data for boss blind effects
-    pub custom_state: std::collections::HashMap<String, serde_json::Value>,
+    /// Custom state data for boss blind effects (type-safe)
+    pub custom_state: std::collections::HashMap<String, BossBlindData>,
 }
 
 impl BossBlindState {
@@ -187,12 +216,12 @@ impl BossBlindState {
     }
 
     /// Set custom state data for boss blind effects
-    pub fn set_custom_state(&mut self, key: String, value: serde_json::Value) {
+    pub fn set_custom_state(&mut self, key: String, value: BossBlindData) {
         self.custom_state.insert(key, value);
     }
 
     /// Get custom state data for boss blind effects
-    pub fn get_custom_state(&self, key: &str) -> Option<&serde_json::Value> {
+    pub fn get_custom_state(&self, key: &str) -> Option<&BossBlindData> {
         self.custom_state.get(key)
     }
 }
