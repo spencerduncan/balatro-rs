@@ -173,6 +173,60 @@ jobs:
           flags: python
           fail_ci_if_error: false
 
+  # Test Python bindings
+  python-test:
+    name: Python Bindings Test
+    runs-on: ubuntu-latest
+    container:
+      image: rust:latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Python and dependencies
+        run: |
+          apt-get update
+          apt-get install -y python3 python3-dev python3-venv python3-pip pkg-config libssl-dev
+          
+      - name: Setup Python virtual environment
+        run: |
+          python3 -m venv /opt/venv
+          echo "/opt/venv/bin" >> $GITHUB_PATH
+          
+      - name: Install Python packages
+        run: |
+          /opt/venv/bin/pip install --upgrade pip
+          /opt/venv/bin/pip install maturin pytest
+      
+      - name: Cache cargo registry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-registry-
+      
+      - name: Cache cargo build
+        uses: actions/cache@v3
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-python-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-build-python-
+      
+      - name: Build Python extension
+        run: |
+          cd pylatro
+          export VIRTUAL_ENV=/opt/venv
+          /opt/venv/bin/maturin develop
+      
+      - name: Run Python tests
+        run: |
+          cd pylatro
+          export VIRTUAL_ENV=/opt/venv
+          /opt/venv/bin/python -m pytest test/test_pylatro.py -v
+
   # Ensure all workspace members build successfully
   build-all:
     name: Build All Workspace Members
