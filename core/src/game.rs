@@ -7,7 +7,7 @@ use crate::deck::Deck;
 use crate::effect::{EffectRegistry, Effects};
 use crate::error::GameError;
 use crate::hand::{MadeHand, SelectHand};
-use crate::joker::{OldJoker as Joker, Jokers};
+use crate::joker::{Jokers, OldJoker as Joker};
 use crate::shop::Shop;
 use crate::stage::{Blind, End, Stage};
 

@@ -25,7 +25,7 @@ pub enum JokerId {
     CleverJoker,
     DeviousJoker,
     CraftyJoker,
-    
+
     // Multiplicative jokers (Common/Uncommon)
     HalfJoker,
     AbstractJoker,
@@ -38,7 +38,7 @@ pub enum JokerId {
     ScaryFace,
     RoughGem,
     PolishedJoker,
-    
+
     // Conditional jokers (Common/Uncommon)
     Banner,
     EvenSteven,
@@ -79,7 +79,7 @@ pub enum JokerId {
     TheFamily,
     TheOrder,
     TheClub,
-    
+
     // Economy jokers (Common/Uncommon)
     DelayedGratification,
     RocketShip,
@@ -101,14 +101,14 @@ pub enum JokerId {
     Bootstraps,
     BullMarket,
     SeedMoney,
-    
+
     // Retrigger jokers (Uncommon/Rare)
     Dusk,
     Seltzer,
     Hanging,
     Sock,
     Midas,
-    
+
     // Effect jokers (Uncommon/Rare)
     Superposition,
     FourFingers,
@@ -143,7 +143,7 @@ pub enum JokerId {
     Acrobat2,
     Loyalty,
     Mystic,
-    
+
     // Special/Legendary jokers
     MarbleJoker,
     Vampire,
@@ -177,7 +177,7 @@ pub enum JokerId {
     TroubadourJoker2,
     Brainstorm,
     Invisible,
-    
+
     // Modded/Extras (for future expansion to 150)
     Reserved7,
     Reserved8,
@@ -237,25 +237,25 @@ impl JokerEffect {
     pub fn new() -> Self {
         Self::default()
     }
-    
+
     /// Add chips
     pub fn with_chips(mut self, chips: i32) -> Self {
         self.chips = chips;
         self
     }
-    
+
     /// Add mult
     pub fn with_mult(mut self, mult: i32) -> Self {
         self.mult = mult;
         self
     }
-    
+
     /// Add money
     pub fn with_money(mut self, money: i32) -> Self {
         self.money = money;
         self
     }
-    
+
     /// Set mult multiplier
     pub fn with_mult_multiplier(mut self, multiplier: f32) -> Self {
         self.mult_multiplier = multiplier;
@@ -294,16 +294,16 @@ pub struct GameContext<'a> {
 pub trait Joker: Send + Sync + std::fmt::Debug {
     /// Get the unique identifier for this joker
     fn id(&self) -> JokerId;
-    
+
     /// Get the display name
     fn name(&self) -> &str;
-    
+
     /// Get the description
     fn description(&self) -> &str;
-    
+
     /// Get the rarity
     fn rarity(&self) -> JokerRarity;
-    
+
     /// Get the base cost in the shop
     fn cost(&self) -> usize {
         match self.rarity() {
@@ -313,56 +313,56 @@ pub trait Joker: Send + Sync + std::fmt::Debug {
             JokerRarity::Legendary => 20,
         }
     }
-    
+
     // Lifecycle hooks with default implementations
-    
+
     /// Called when a hand is played and scored
     fn on_hand_played(&self, _context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
         JokerEffect::new()
     }
-    
+
     /// Called for each card as it's scored
     fn on_card_scored(&self, _context: &mut GameContext, _card: &Card) -> JokerEffect {
         JokerEffect::new()
     }
-    
+
     /// Called when a new blind starts
     fn on_blind_start(&self, _context: &mut GameContext) -> JokerEffect {
         JokerEffect::new()
     }
-    
+
     /// Called when the shop opens
     fn on_shop_open(&self, _context: &mut GameContext) -> JokerEffect {
         JokerEffect::new()
     }
-    
+
     /// Called when cards are discarded
     fn on_discard(&self, _context: &mut GameContext, _cards: &[Card]) -> JokerEffect {
         JokerEffect::new()
     }
-    
+
     /// Called at the end of each round
     fn on_round_end(&self, _context: &mut GameContext) -> JokerEffect {
         JokerEffect::new()
     }
-    
+
     // Modifier hooks with default implementations
-    
+
     /// Modify base chips
     fn modify_chips(&self, _context: &GameContext, base_chips: i32) -> i32 {
         base_chips
     }
-    
+
     /// Modify base mult
     fn modify_mult(&self, _context: &GameContext, base_mult: i32) -> i32 {
         base_mult
     }
-    
+
     /// Modify hand size
     fn modify_hand_size(&self, _context: &GameContext, base_size: usize) -> usize {
         base_size
     }
-    
+
     /// Modify number of discards
     fn modify_discards(&self, _context: &GameContext, base_discards: usize) -> usize {
         base_discards
@@ -389,7 +389,7 @@ pub use compat::{Joker as OldJoker, Jokers};
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_joker_trait_bounds() {
         // This won't compile if Joker doesn't have Send + Sync bounds

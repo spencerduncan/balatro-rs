@@ -27,11 +27,11 @@ impl JokerFactory {
             _ => None,
         }
     }
-    
+
     /// Get all joker IDs by rarity
     pub fn get_by_rarity(rarity: JokerRarity) -> Vec<JokerId> {
         use JokerId::*;
-        
+
         match rarity {
             JokerRarity::Common => vec![
                 Joker,
@@ -62,7 +62,7 @@ impl JokerFactory {
             ],
         }
     }
-    
+
     /// Get all implemented joker IDs
     pub fn get_all_implemented() -> Vec<JokerId> {
         use JokerId::*;

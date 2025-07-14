@@ -54,109 +54,169 @@ macro_rules! impl_joker_wrapper {
 }
 
 // Implement all the joker wrappers
-impl_joker_wrapper!(TheJoker, Categories::MultPlus, |g: &mut Game, _hand: MadeHand| {
-    g.mult += 4;
-});
-
-impl_joker_wrapper!(GreedyJoker, Categories::MultPlus, |g: &mut Game, hand: MadeHand| {
-    let diamonds = hand
-        .hand
-        .suits()
-        .iter()
-        .filter(|s| **s == Suit::Diamond)
-        .count();
-    g.mult += diamonds * 3
-});
-
-impl_joker_wrapper!(LustyJoker, Categories::MultPlus, |g: &mut Game, hand: MadeHand| {
-    let hearts = hand
-        .hand
-        .suits()
-        .iter()
-        .filter(|s| **s == Suit::Heart)
-        .count();
-    g.mult += hearts * 3
-});
-
-impl_joker_wrapper!(WrathfulJoker, Categories::MultPlus, |g: &mut Game, hand: MadeHand| {
-    let spades = hand
-        .hand
-        .suits()
-        .iter()
-        .filter(|s| **s == Suit::Spade)
-        .count();
-    g.mult += spades * 3
-});
-
-impl_joker_wrapper!(GluttonousJoker, Categories::MultPlus, |g: &mut Game, hand: MadeHand| {
-    let clubs = hand
-        .hand
-        .suits()
-        .iter()
-        .filter(|s| **s == Suit::Club)
-        .count();
-    g.mult += clubs * 3
-});
-
-impl_joker_wrapper!(JollyJoker, Categories::MultPlus, |g: &mut Game, hand: MadeHand| {
-    if hand.hand.is_pair().is_some() {
-        g.mult += 8
+impl_joker_wrapper!(
+    TheJoker,
+    Categories::MultPlus,
+    |g: &mut Game, _hand: MadeHand| {
+        g.mult += 4;
     }
-});
+);
 
-impl_joker_wrapper!(ZanyJoker, Categories::MultPlus, |g: &mut Game, hand: MadeHand| {
-    if hand.hand.is_three_of_kind().is_some() {
-        g.mult += 12
+impl_joker_wrapper!(
+    GreedyJoker,
+    Categories::MultPlus,
+    |g: &mut Game, hand: MadeHand| {
+        let diamonds = hand
+            .hand
+            .suits()
+            .iter()
+            .filter(|s| **s == Suit::Diamond)
+            .count();
+        g.mult += diamonds * 3
     }
-});
+);
 
-impl_joker_wrapper!(MadJoker, Categories::MultPlus, |g: &mut Game, hand: MadeHand| {
-    if hand.hand.is_two_pair().is_some() {
-        g.mult += 10
+impl_joker_wrapper!(
+    LustyJoker,
+    Categories::MultPlus,
+    |g: &mut Game, hand: MadeHand| {
+        let hearts = hand
+            .hand
+            .suits()
+            .iter()
+            .filter(|s| **s == Suit::Heart)
+            .count();
+        g.mult += hearts * 3
     }
-});
+);
 
-impl_joker_wrapper!(CrazyJoker, Categories::MultPlus, |g: &mut Game, hand: MadeHand| {
-    if hand.hand.is_straight().is_some() {
-        g.mult += 12
+impl_joker_wrapper!(
+    WrathfulJoker,
+    Categories::MultPlus,
+    |g: &mut Game, hand: MadeHand| {
+        let spades = hand
+            .hand
+            .suits()
+            .iter()
+            .filter(|s| **s == Suit::Spade)
+            .count();
+        g.mult += spades * 3
     }
-});
+);
 
-impl_joker_wrapper!(DrollJoker, Categories::MultPlus, |g: &mut Game, hand: MadeHand| {
-    if hand.hand.is_flush().is_some() {
-        g.mult += 10
+impl_joker_wrapper!(
+    GluttonousJoker,
+    Categories::MultPlus,
+    |g: &mut Game, hand: MadeHand| {
+        let clubs = hand
+            .hand
+            .suits()
+            .iter()
+            .filter(|s| **s == Suit::Club)
+            .count();
+        g.mult += clubs * 3
     }
-});
+);
 
-impl_joker_wrapper!(SlyJoker, Categories::Chips, |g: &mut Game, hand: MadeHand| {
-    if hand.hand.is_pair().is_some() {
-        g.chips += 50
+impl_joker_wrapper!(
+    JollyJoker,
+    Categories::MultPlus,
+    |g: &mut Game, hand: MadeHand| {
+        if hand.hand.is_pair().is_some() {
+            g.mult += 8
+        }
     }
-});
+);
 
-impl_joker_wrapper!(WilyJoker, Categories::Chips, |g: &mut Game, hand: MadeHand| {
-    if hand.hand.is_three_of_kind().is_some() {
-        g.chips += 100
+impl_joker_wrapper!(
+    ZanyJoker,
+    Categories::MultPlus,
+    |g: &mut Game, hand: MadeHand| {
+        if hand.hand.is_three_of_kind().is_some() {
+            g.mult += 12
+        }
     }
-});
+);
 
-impl_joker_wrapper!(CleverJoker, Categories::Chips, |g: &mut Game, hand: MadeHand| {
-    if hand.hand.is_two_pair().is_some() {
-        g.chips += 80
+impl_joker_wrapper!(
+    MadJoker,
+    Categories::MultPlus,
+    |g: &mut Game, hand: MadeHand| {
+        if hand.hand.is_two_pair().is_some() {
+            g.mult += 10
+        }
     }
-});
+);
 
-impl_joker_wrapper!(DeviousJoker, Categories::Chips, |g: &mut Game, hand: MadeHand| {
-    if hand.hand.is_straight().is_some() {
-        g.chips += 100
+impl_joker_wrapper!(
+    CrazyJoker,
+    Categories::MultPlus,
+    |g: &mut Game, hand: MadeHand| {
+        if hand.hand.is_straight().is_some() {
+            g.mult += 12
+        }
     }
-});
+);
 
-impl_joker_wrapper!(CraftyJoker, Categories::Chips, |g: &mut Game, hand: MadeHand| {
-    if hand.hand.is_flush().is_some() {
-        g.chips += 80
+impl_joker_wrapper!(
+    DrollJoker,
+    Categories::MultPlus,
+    |g: &mut Game, hand: MadeHand| {
+        if hand.hand.is_flush().is_some() {
+            g.mult += 10
+        }
     }
-});
+);
+
+impl_joker_wrapper!(
+    SlyJoker,
+    Categories::Chips,
+    |g: &mut Game, hand: MadeHand| {
+        if hand.hand.is_pair().is_some() {
+            g.chips += 50
+        }
+    }
+);
+
+impl_joker_wrapper!(
+    WilyJoker,
+    Categories::Chips,
+    |g: &mut Game, hand: MadeHand| {
+        if hand.hand.is_three_of_kind().is_some() {
+            g.chips += 100
+        }
+    }
+);
+
+impl_joker_wrapper!(
+    CleverJoker,
+    Categories::Chips,
+    |g: &mut Game, hand: MadeHand| {
+        if hand.hand.is_two_pair().is_some() {
+            g.chips += 80
+        }
+    }
+);
+
+impl_joker_wrapper!(
+    DeviousJoker,
+    Categories::Chips,
+    |g: &mut Game, hand: MadeHand| {
+        if hand.hand.is_straight().is_some() {
+            g.chips += 100
+        }
+    }
+);
+
+impl_joker_wrapper!(
+    CraftyJoker,
+    Categories::Chips,
+    |g: &mut Game, hand: MadeHand| {
+        if hand.hand.is_flush().is_some() {
+            g.chips += 80
+        }
+    }
+);
 
 // Macro to create the enum of all jokers
 macro_rules! make_jokers {
@@ -258,9 +318,9 @@ impl fmt::Display for Jokers {
 #[cfg(test)]
 mod tests {
     use crate::card::{Card, Suit, Value};
+    use crate::game::Game;
     use crate::hand::SelectHand;
     use crate::stage::{Blind, Stage};
-    use crate::game::Game;
 
     use super::*;
 
