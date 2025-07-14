@@ -118,8 +118,12 @@ jobs:
         run: |
           # Install LLVM for coverage
           apt-get install -y llvm
+          # Create cargo bin directory if it doesn't exist
+          mkdir -p ~/.cargo/bin
           # Install cargo-llvm-cov
           curl -LsSf https://github.com/taiki-e/cargo-llvm-cov/releases/latest/download/cargo-llvm-cov-x86_64-unknown-linux-gnu.tar.gz | tar xzf - -C ~/.cargo/bin
+          # Make sure cargo bin is in PATH
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
           # Use the virtual environment's pip
           /opt/venv/bin/pip install --upgrade pip
           /opt/venv/bin/pip install maturin pytest pytest-cov
