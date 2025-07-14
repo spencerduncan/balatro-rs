@@ -339,6 +339,216 @@ impl StaticJokerFactory {
         )
     }
 
+    /// Create Red Card (Red cards give +3 Mult when scored)
+    pub fn create_red_card() -> Box<dyn Joker> {
+        Box::new(
+            StaticJoker::builder(
+                JokerId::RedCard,
+                "Red Card",
+                "Red cards (Hearts and Diamonds) give +3 Mult when scored",
+            )
+            .rarity(JokerRarity::Uncommon)
+            .cost(6)
+            .mult(3)
+            .condition(StaticCondition::AnySuitScored(vec![
+                Suit::Heart,
+                Suit::Diamond,
+            ]))
+            .per_card()
+            .build()
+            .expect("Valid joker configuration"),
+        )
+    }
+
+    /// Create Blue Joker (Black cards give +3 Mult when scored)
+    pub fn create_blue_joker() -> Box<dyn Joker> {
+        Box::new(
+            StaticJoker::builder(
+                JokerId::BlueJoker,
+                "Blue Joker",
+                "Black cards (Clubs and Spades) give +3 Mult when scored",
+            )
+            .rarity(JokerRarity::Uncommon)
+            .cost(6)
+            .mult(3)
+            .condition(StaticCondition::AnySuitScored(vec![
+                Suit::Club,
+                Suit::Spade,
+            ]))
+            .per_card()
+            .build()
+            .expect("Valid joker configuration"),
+        )
+    }
+
+    /// Create Faceless Joker (Face cards give +5 Mult when scored)
+    pub fn create_faceless_joker() -> Box<dyn Joker> {
+        Box::new(
+            StaticJoker::builder(
+                JokerId::FacelessJoker,
+                "Faceless Joker",
+                "Face cards (Jack, Queen, King) give +5 Mult when scored",
+            )
+            .rarity(JokerRarity::Common)
+            .cost(3)
+            .mult(5)
+            .condition(StaticCondition::AnyRankScored(vec![
+                Value::Jack,
+                Value::Queen,
+                Value::King,
+            ]))
+            .per_card()
+            .build()
+            .expect("Valid joker configuration"),
+        )
+    }
+
+    /// Create Square (Number cards give +4 Chips when scored)
+    pub fn create_square() -> Box<dyn Joker> {
+        Box::new(
+            StaticJoker::builder(
+                JokerId::Square,
+                "Square",
+                "Number cards (2, 3, 4, 5, 6, 7, 8, 9, 10) give +4 Chips when scored",
+            )
+            .rarity(JokerRarity::Common)
+            .cost(3)
+            .chips(4)
+            .condition(StaticCondition::AnyRankScored(vec![
+                Value::Two,
+                Value::Three,
+                Value::Four,
+                Value::Five,
+                Value::Six,
+                Value::Seven,
+                Value::Eight,
+                Value::Nine,
+                Value::Ten,
+            ]))
+            .per_card()
+            .build()
+            .expect("Valid joker configuration"),
+        )
+    }
+
+    /// Create Walkie (+10 Chips and +4 Mult if hand contains Straight)
+    pub fn create_walkie() -> Box<dyn Joker> {
+        Box::new(
+            StaticJoker::builder(
+                JokerId::Walkie,
+                "Walkie",
+                "+10 Chips and +4 Mult if played hand contains a Straight",
+            )
+            .rarity(JokerRarity::Common)
+            .cost(3)
+            .chips(10)
+            .mult(4)
+            .condition(StaticCondition::HandType(HandRank::Straight))
+            .per_hand()
+            .build()
+            .expect("Valid joker configuration"),
+        )
+    }
+
+    /// Create Runner (+15 Chips if hand contains Straight)
+    pub fn create_runner() -> Box<dyn Joker> {
+        Box::new(
+            StaticJoker::builder(
+                JokerId::Runner,
+                "Runner",
+                "+15 Chips if played hand contains a Straight",
+            )
+            .rarity(JokerRarity::Common)
+            .cost(3)
+            .chips(15)
+            .condition(StaticCondition::HandType(HandRank::Straight))
+            .per_hand()
+            .build()
+            .expect("Valid joker configuration"),
+        )
+    }
+
+    // TODO: Implement these jokers when framework supports the required conditions
+
+    /// Create Half Joker (+20 Mult if played hand has 4 or fewer cards)
+    /// TODO: Requires hand size condition in StaticCondition enum
+    pub fn create_half_joker() -> Box<dyn Joker> {
+        // Placeholder implementation until framework supports hand size conditions
+        Box::new(
+            StaticJoker::builder(
+                JokerId::HalfJoker,
+                "Half Joker",
+                "+20 Mult if played hand has 4 or fewer cards",
+            )
+            .rarity(JokerRarity::Common)
+            .cost(3)
+            .mult(20)
+            .condition(StaticCondition::Always) // TODO: Change to HandSize(4) when available
+            .per_hand()
+            .build()
+            .expect("Valid joker configuration"),
+        )
+    }
+
+    /// Create Banner (+30 Chips for each remaining discard)
+    /// TODO: Requires discard count access in GameContext
+    pub fn create_banner() -> Box<dyn Joker> {
+        // Placeholder implementation until framework supports discard count
+        Box::new(
+            StaticJoker::builder(
+                JokerId::Banner,
+                "Banner",
+                "+30 Chips for each remaining discard",
+            )
+            .rarity(JokerRarity::Common)
+            .cost(3)
+            .chips(30) // TODO: Should be 30 * discard_count
+            .condition(StaticCondition::Always)
+            .per_hand()
+            .build()
+            .expect("Valid joker configuration"),
+        )
+    }
+
+    /// Create Abstract Joker (All Jokers give X0.25 more Mult)
+    /// TODO: Requires joker interaction system
+    pub fn create_abstract_joker() -> Box<dyn Joker> {
+        // Placeholder implementation until framework supports joker interactions
+        Box::new(
+            StaticJoker::builder(
+                JokerId::AbstractJoker,
+                "Abstract Joker",
+                "All Jokers give X0.25 more Mult",
+            )
+            .rarity(JokerRarity::Common)
+            .cost(3)
+            .mult_multiplier(1.25) // TODO: Should affect other jokers
+            .condition(StaticCondition::Always)
+            .per_hand()
+            .build()
+            .expect("Valid joker configuration"),
+        )
+    }
+
+    /// Create Steel Joker (This Joker gains X0.25 Mult for each Steel Card in your full deck)
+    /// TODO: Requires deck composition access
+    pub fn create_steel_joker() -> Box<dyn Joker> {
+        // Placeholder implementation until framework supports deck composition
+        Box::new(
+            StaticJoker::builder(
+                JokerId::SteelJoker,
+                "Steel Joker",
+                "This Joker gains X0.25 Mult for each Steel Card in your full deck",
+            )
+            .rarity(JokerRarity::Uncommon)
+            .cost(6)
+            .mult_multiplier(1.0) // TODO: Should be 1.0 + (0.25 * steel_card_count)
+            .condition(StaticCondition::Always)
+            .per_hand()
+            .build()
+            .expect("Valid joker configuration"),
+        )
+    }
     /// Test-only methods that return concrete types for internal testing
     #[cfg(test)]
     pub fn create_greedy_joker_concrete() -> StaticJoker {
