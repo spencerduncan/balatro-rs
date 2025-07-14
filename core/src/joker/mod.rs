@@ -383,6 +383,12 @@ pub enum Categories {
 // Include the compatibility module for the old API
 pub mod compat;
 
+// Include the conditional joker framework
+pub mod conditional;
+
+// Re-export important types
+pub use conditional::{ConditionalJoker, JokerCondition};
+
 // Re-export old API types for backwards compatibility
 pub use compat::{Joker as OldJoker, Jokers};
 
