@@ -23,21 +23,19 @@ impl Available {
     }
 
     pub fn selected(&self) -> Vec<Card> {
-        return self
-            .cards
+        self.cards
             .iter()
             .filter(|(_c, a)| *a)
             .map(|(c, _a)| *c)
-            .collect();
+            .collect()
     }
 
     pub fn not_selected(&self) -> Vec<Card> {
-        return self
-            .cards
+        self.cards
             .iter()
             .filter(|(_, s)| !*s)
             .map(|(c, _)| *c)
-            .collect();
+            .collect()
     }
 
     pub(crate) fn card_from_index(&self, i: usize) -> Option<Card> {
@@ -91,7 +89,7 @@ impl Available {
     }
 
     pub fn cards(&self) -> Vec<Card> {
-        return self.cards.iter().map(|(c, _)| *c).collect();
+        self.cards.iter().map(|(c, _)| *c).collect()
     }
 
     pub(crate) fn cards_and_selected(&self) -> Vec<(Card, bool)> {

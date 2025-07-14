@@ -44,7 +44,7 @@ impl fmt::Display for Action {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::SelectCard(card) => {
-                write!(f, "SelectCard: {}", card)
+                write!(f, "SelectCard: {card}")
             }
             Self::Play() => {
                 write!(f, "Play")
@@ -53,19 +53,19 @@ impl fmt::Display for Action {
                 write!(f, "Discard")
             }
             Self::MoveCard(dir, card) => {
-                write!(f, "MoveCard: {} - {}", card, dir)
+                write!(f, "MoveCard: {card} - {dir}")
             }
             Self::CashOut(reward) => {
-                write!(f, "CashOut: {}", reward)
+                write!(f, "CashOut: {reward}")
             }
             Self::BuyJoker(joker) => {
-                write!(f, "BuyJoker: {}", joker)
+                write!(f, "BuyJoker: {joker}")
             }
             Self::NextRound() => {
                 write!(f, "NextRound")
             }
             Self::SelectBlind(blind) => {
-                write!(f, "SelectBlind: {}", blind)
+                write!(f, "SelectBlind: {blind}")
             }
         }
     }
@@ -74,6 +74,6 @@ impl fmt::Display for Action {
 #[cfg(feature = "python")]
 impl Action {
     fn __repr__(&self) -> String {
-        format!("Action: {}", self)
+        format!("Action: {self}")
     }
 }

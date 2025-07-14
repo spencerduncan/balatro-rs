@@ -40,19 +40,22 @@ fi
 
 echo ""
 echo "🧪 Running tests..."
-# Try to run tests, but if Python lib is missing, run core tests only
-if cargo test --all --verbose 2>&1 | grep -q "libpython"; then
-    echo -e "${YELLOW}⚠ Python library issue detected, running core tests only${NC}"
-    if cargo test -p balatro-rs --verbose; then
-        echo -e "${GREEN}✓ Core tests passed${NC}"
-    else
-        echo -e "${RED}✗ Core tests failed${NC}"
-        exit 1
-    fi
+# Export LD_LIBRARY_PATH for Python
+export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:$(python3 -c 'import sysconfig; print(sysconfig.get_config_var("LIBDIR"))')"
+
+# Try to run all tests first
+if cargo test --all --verbose; then
+    echo -e "${GREEN}✓ All tests passed${NC}"
 else
-    # Re-run the tests properly if no Python issue
-    if cargo test --all --verbose; then
-        echo -e "${GREEN}✓ All tests passed${NC}"
+    # If it fails, check if it's due to Python library
+    if cargo test --all --verbose 2>&1 | grep -q "libpython"; then
+        echo -e "${YELLOW}⚠ Python library issue detected, running core tests without Python feature${NC}"
+        if cargo test -p balatro-rs --verbose --no-default-features; then
+            echo -e "${GREEN}✓ Core tests passed (without Python)${NC}"
+        else
+            echo -e "${RED}✗ Tests failed${NC}"
+            exit 1
+        fi
     else
         echo -e "${RED}✗ Tests failed${NC}"
         exit 1

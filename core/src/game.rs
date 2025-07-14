@@ -358,7 +358,7 @@ impl fmt::Display for Game {
         writeln!(f, "discard length: {}", self.discarded.len())?;
         writeln!(f, "jokers: ")?;
         for j in self.jokers.clone() {
-            writeln!(f, "{}", j)?
+            writeln!(f, "{j}")?
         }
         writeln!(f, "action history length: {}", self.action_history.len())?;
         writeln!(f, "blind: {:?}", self.blind)?;

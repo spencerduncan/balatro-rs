@@ -255,7 +255,7 @@ impl ActionSpace {
     // True is all elements are masked
     pub fn is_empty(&self) -> bool {
         let vec = self.to_vec();
-        return (*vec.iter().min().unwrap() == 0) && (*vec.iter().max().unwrap() == 0);
+        (*vec.iter().min().unwrap() == 0) && (*vec.iter().max().unwrap() == 0)
     }
 }
 
