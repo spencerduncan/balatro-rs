@@ -41,7 +41,7 @@ impl GameEngine {
     fn get_action_name(&self, index: usize) -> Result<String, GameError> {
         let space = self.game.gen_action_space();
         let action = space.to_action(index, &self.game)?;
-        Ok(format!("{}", action))
+        Ok(format!("{action}"))
     }
 
     #[getter]
