@@ -39,7 +39,7 @@ pub struct ActionSpace {
 
 impl ActionSpace {
     pub fn size(&self) -> usize {
-        return self.select_card.len()
+        self.select_card.len()
             + self.move_card_left.len()
             + self.move_card_right.len()
             + self.play.len()
@@ -47,79 +47,79 @@ impl ActionSpace {
             + self.cash_out.len()
             + self.buy_joker.len()
             + self.next_round.len()
-            + self.select_blind.len();
+            + self.select_blind.len()
     }
 
     fn select_card_min(&self) -> usize {
-        return 0;
+        0
     }
 
     fn select_card_max(&self) -> usize {
-        return self.select_card_min() + self.select_card.len() - 1;
+        self.select_card_min() + self.select_card.len() - 1
     }
 
     fn move_card_left_min(&self) -> usize {
-        return self.select_card_max() + 1;
+        self.select_card_max() + 1
     }
 
     fn move_card_left_max(&self) -> usize {
-        return self.move_card_left_min() + self.select_card.len() - 2;
+        self.move_card_left_min() + self.select_card.len() - 2
     }
 
     fn move_card_right_min(&self) -> usize {
-        return self.move_card_left_max() + 1;
+        self.move_card_left_max() + 1
     }
 
     fn move_card_right_max(&self) -> usize {
-        return self.move_card_right_min() + self.select_card.len() - 2;
+        self.move_card_right_min() + self.select_card.len() - 2
     }
 
     fn play_min(&self) -> usize {
-        return self.move_card_right_max() + 1;
+        self.move_card_right_max() + 1
     }
 
     fn play_max(&self) -> usize {
-        return self.play_min() + self.play.len() - 1;
+        self.play_min() + self.play.len() - 1
     }
 
     fn discard_min(&self) -> usize {
-        return self.play_max() + 1;
+        self.play_max() + 1
     }
 
     fn discard_max(&self) -> usize {
-        return self.discard_min() + self.discard.len() - 1;
+        self.discard_min() + self.discard.len() - 1
     }
 
     fn cash_out_min(&self) -> usize {
-        return self.discard_max() + 1;
+        self.discard_max() + 1
     }
 
     fn cash_out_max(&self) -> usize {
-        return self.cash_out_min() + self.cash_out.len() - 1;
+        self.cash_out_min() + self.cash_out.len() - 1
     }
 
     fn buy_joker_min(&self) -> usize {
-        return self.cash_out_max() + 1;
+        self.cash_out_max() + 1
     }
 
     fn buy_joker_max(&self) -> usize {
-        return self.buy_joker_min() + self.buy_joker.len() - 1;
+        self.buy_joker_min() + self.buy_joker.len() - 1
     }
 
     fn next_round_min(&self) -> usize {
-        return self.buy_joker_max() + 1;
+        self.buy_joker_max() + 1
     }
 
     fn next_round_max(&self) -> usize {
-        return self.next_round_min() + self.next_round.len() - 1;
+        self.next_round_min() + self.next_round.len() - 1
     }
 
     fn select_blind_min(&self) -> usize {
-        return self.next_round_max() + 1;
+        self.next_round_max() + 1
     }
 
     fn select_blind_max(&self) -> usize {
-        return self.select_blind_min() + self.select_blind.len() - 1;
+        self.select_blind_min() + self.select_blind.len() - 1
     }
 
     // Not all actions are always legal, by default all actions
@@ -129,7 +129,7 @@ impl ActionSpace {
             return Err(ActionSpaceError::InvalidIndex);
         }
         self.select_card[i] = 1;
-        return Ok(());
+        Ok(())
     }
 
     pub(crate) fn unmask_move_card_left(&mut self, i: usize) -> Result<(), ActionSpaceError> {
@@ -137,7 +137,7 @@ impl ActionSpace {
             return Err(ActionSpaceError::InvalidIndex);
         }
         self.move_card_left[i] = 1;
-        return Ok(());
+        Ok(())
     }
 
     pub(crate) fn unmask_move_card_right(&mut self, i: usize) -> Result<(), ActionSpaceError> {
@@ -145,7 +145,7 @@ impl ActionSpace {
             return Err(ActionSpaceError::InvalidIndex);
         }
         self.move_card_right[i] = 1;
-        return Ok(());
+        Ok(())
     }
 
     pub(crate) fn unmask_play(&mut self) {
@@ -165,7 +165,7 @@ impl ActionSpace {
             return Err(ActionSpaceError::InvalidIndex);
         }
         self.buy_joker[i] = 1;
-        return Ok(());
+        Ok(())
     }
 
     pub(crate) fn unmask_next_round(&mut self) {
@@ -189,47 +189,43 @@ impl ActionSpace {
             // Cannot reference runtime values in patterns, so this is workaround
             n if (self.select_card_min()..=self.select_card_max()).contains(&n) => {
                 if let Some(card) = game.available.card_from_index(index) {
-                    return Ok(Action::SelectCard(card));
+                    Ok(Action::SelectCard(card))
                 } else {
-                    return Err(ActionSpaceError::InvalidActionConversion);
+                    Err(ActionSpaceError::InvalidActionConversion)
                 }
             }
             n if (self.move_card_left_min()..=self.move_card_left_max()).contains(&n) => {
                 // Index shifted to right (+1), since leftmost card cannot move left
                 let n_offset = n - self.move_card_left_min() + 1;
                 if let Some(card) = game.available.card_from_index(n_offset) {
-                    return Ok(Action::MoveCard(MoveDirection::Left, card));
+                    Ok(Action::MoveCard(MoveDirection::Left, card))
                 } else {
-                    return Err(ActionSpaceError::InvalidActionConversion);
+                    Err(ActionSpaceError::InvalidActionConversion)
                 }
             }
             n if (self.move_card_right_min()..=self.move_card_right_max()).contains(&n) => {
                 let n_offset = n - self.move_card_right_min();
                 if let Some(card) = game.available.card_from_index(n_offset) {
-                    return Ok(Action::MoveCard(MoveDirection::Right, card));
+                    Ok(Action::MoveCard(MoveDirection::Right, card))
                 } else {
-                    return Err(ActionSpaceError::InvalidActionConversion);
+                    Err(ActionSpaceError::InvalidActionConversion)
                 }
             }
-            n if (self.play_min()..=self.play_max()).contains(&n) => {
-                return Ok(Action::Play());
-            }
-            n if (self.discard_min()..=self.discard_max()).contains(&n) => {
-                return Ok(Action::Discard());
-            }
+            n if (self.play_min()..=self.play_max()).contains(&n) => Ok(Action::Play()),
+            n if (self.discard_min()..=self.discard_max()).contains(&n) => Ok(Action::Discard()),
             n if (self.cash_out_min()..=self.cash_out_max()).contains(&n) => {
-                return Ok(Action::CashOut(game.reward));
+                Ok(Action::CashOut(game.reward))
             }
             n if (self.buy_joker_min()..=self.buy_joker_max()).contains(&n) => {
                 let n_offset = n - self.buy_joker_min();
                 if let Some(joker) = game.shop.joker_from_index(n_offset) {
-                    return Ok(Action::BuyJoker(joker));
+                    Ok(Action::BuyJoker(joker))
                 } else {
-                    return Err(ActionSpaceError::InvalidActionConversion);
+                    Err(ActionSpaceError::InvalidActionConversion)
                 }
             }
             n if (self.next_round_min()..=self.next_round_max()).contains(&n) => {
-                return Ok(Action::NextRound());
+                Ok(Action::NextRound())
             }
             n if (self.select_blind_min()..=self.select_blind_max()).contains(&n) => {
                 match game.blind {
@@ -237,12 +233,12 @@ impl ActionSpace {
                     None => Ok(Action::SelectBlind(Blind::Small)),
                 }
             }
-            _ => return Err(ActionSpaceError::InvalidActionConversion),
+            _ => Err(ActionSpaceError::InvalidActionConversion),
         }
     }
 
     pub fn to_vec(&self) -> Vec<usize> {
-        return [
+        [
             self.select_card.clone(),
             self.move_card_left.clone(),
             self.move_card_right.clone(),
@@ -253,19 +249,19 @@ impl ActionSpace {
             self.next_round.clone(),
             self.select_blind.clone(),
         ]
-        .concat();
+        .concat()
     }
 
     // True is all elements are masked
     pub fn is_empty(&self) -> bool {
         let vec = self.to_vec();
-        return (*vec.iter().min().unwrap() == 0) && (*vec.iter().max().unwrap() == 0);
+        (*vec.iter().min().unwrap() == 0) && (*vec.iter().max().unwrap() == 0)
     }
 }
 
 impl From<Config> for ActionSpace {
     fn from(c: Config) -> Self {
-        return ActionSpace {
+        ActionSpace {
             select_card: vec![0; c.available_max],
             move_card_left: vec![0; c.available_max - 1], // every card but leftmost can move left
             move_card_right: vec![0; c.available_max - 1], // every card but rightmost can move right
@@ -275,14 +271,14 @@ impl From<Config> for ActionSpace {
             buy_joker: vec![0; c.store_consumable_slots_max],
             next_round: vec![0; 1],
             select_blind: vec![0; 1],
-        };
+        }
     }
 }
 
 // Generate an action space vector, masked based on current state
 impl From<ActionSpace> for Vec<usize> {
     fn from(a: ActionSpace) -> Vec<usize> {
-        return [
+        [
             a.select_card,
             a.move_card_left,
             a.move_card_right,
@@ -293,7 +289,7 @@ impl From<ActionSpace> for Vec<usize> {
             a.next_round,
             a.select_blind,
         ]
-        .concat();
+        .concat()
     }
 }
 

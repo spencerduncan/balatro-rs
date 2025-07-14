@@ -8,7 +8,7 @@ fn input_loop(max: usize) -> usize {
         if i <= max {
             return i;
         } else {
-            println!("Input must be between 0 and {}", max)
+            println!("Input must be between 0 and {max}")
         }
     }
 }
@@ -26,7 +26,7 @@ fn game_loop(game: &mut Game) {
         }
         let index = input_loop(actions.len());
         if index == 0 {
-            println!("\n{}", game);
+            println!("\n{game}");
             continue;
         }
         let action = actions[index - 1].clone();
