@@ -314,7 +314,6 @@ pub trait Joker: Send + Sync + std::fmt::Debug {
         }
     }
 
-
     // Lifecycle hooks with default implementations
 
     /// Called when a hand is played and scored
@@ -386,6 +385,13 @@ pub mod compat;
 
 // Include the conditional joker framework
 pub mod conditional;
+
+// Include hand composition jokers (Ride the Bus, Blackboard, DNA)
+pub mod hand_composition_jokers;
+
+// Include tests for hand composition jokers (Ride the Bus, Blackboard, DNA)
+#[cfg(test)]
+mod hand_composition_tests;
 
 // Re-export important types
 pub use conditional::{ConditionalJoker, JokerCondition};
