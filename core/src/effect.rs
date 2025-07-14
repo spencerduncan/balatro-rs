@@ -3,6 +3,10 @@ use crate::hand::MadeHand;
 use crate::joker::{OldJoker as Joker, Jokers};
 use std::sync::{Arc, Mutex};
 
+// Type aliases to simplify complex types
+type GameHandCallback = Arc<Mutex<dyn Fn(&mut Game, MadeHand) + Send + 'static>>;
+type GameCallback = Arc<Mutex<dyn Fn(&mut Game) + Send + 'static>>;
+
 #[derive(Debug, Clone)]
 pub struct EffectRegistry {
     pub on_play: Vec<Effects>,
@@ -11,14 +15,20 @@ pub struct EffectRegistry {
     pub on_handrank: Vec<Effects>,
 }
 
+impl Default for EffectRegistry {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl EffectRegistry {
     pub fn new() -> Self {
-        return Self {
+        Self {
             on_play: Vec::new(),
             on_discard: Vec::new(),
             on_score: Vec::new(),
             on_handrank: Vec::new(),
-        };
+        }
     }
     pub(crate) fn register_jokers(&mut self, jokers: Vec<Jokers>, game: &Game) {
         for j in jokers.clone() {
@@ -38,10 +48,10 @@ impl EffectRegistry {
 // signature of these callbacks are more complicated so they
 // can be used by pyo3 as part of python class.
 pub enum Effects {
-    OnPlay(Arc<Mutex<dyn Fn(&mut Game, MadeHand) + Send + 'static>>),
-    OnDiscard(Arc<Mutex<dyn Fn(&mut Game, MadeHand) + Send + 'static>>),
-    OnScore(Arc<Mutex<dyn Fn(&mut Game, MadeHand) + Send + 'static>>),
-    OnHandRank(Arc<Mutex<dyn Fn(&mut Game) + Send + 'static>>),
+    OnPlay(GameHandCallback),
+    OnDiscard(GameHandCallback),
+    OnScore(GameHandCallback),
+    OnHandRank(GameCallback),
 }
 
 impl std::fmt::Debug for Effects {

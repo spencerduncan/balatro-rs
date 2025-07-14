@@ -11,12 +11,18 @@ pub struct Shop {
     joker_gen: JokerGenerator,
 }
 
+impl Default for Shop {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Shop {
     pub fn new() -> Self {
-        return Shop {
+        Shop {
             joker_gen: JokerGenerator {},
             jokers: Vec::new(),
-        };
+        }
     }
 
     pub(crate) fn refresh(&mut self) {
@@ -26,7 +32,7 @@ impl Shop {
     }
 
     pub(crate) fn joker_from_index(&self, i: usize) -> Option<Jokers> {
-        return Some(self.jokers[i].clone());
+        Some(self.jokers[i].clone())
     }
 
     pub(crate) fn buy_joker(&mut self, joker: &Jokers) -> Result<Jokers, GameError> {
@@ -36,14 +42,14 @@ impl Shop {
             .position(|j| j == joker)
             .ok_or(GameError::NoJokerMatch)?;
         let out = self.jokers.remove(i);
-        return Ok(out);
+        Ok(out)
     }
 
     pub(crate) fn gen_moves_buy_joker(
         &self,
         balance: usize,
     ) -> Option<impl Iterator<Item = Action>> {
-        if self.jokers.len() == 0 {
+        if self.jokers.is_empty() {
             return None;
         }
         let buys = self
@@ -51,8 +57,8 @@ impl Shop {
             .clone()
             .into_iter()
             .filter(move |j| j.cost() <= balance)
-            .map(|j| Action::BuyJoker(j));
-        return Some(buys);
+            .map(Action::BuyJoker);
+        Some(buys)
     }
 }
 
@@ -66,7 +72,7 @@ impl JokerGenerator {
     // Legendary can only appear from Soul Spectral Card.
     fn gen_rarity(&self) -> Rarity {
         // For now, we only have common jokers...
-        return Rarity::Common;
+        Rarity::Common
         // let choices = [Rarity::Common, Rarity::Uncommon, Rarity::Rare];
         // let weights = [70, 25, 5];
         // let dist = WeightedIndex::new(&weights).unwrap();
@@ -81,7 +87,7 @@ impl JokerGenerator {
         let i = thread_rng().gen_range(0..choices.len());
         // TODO: don't regenerate already generated jokers.
         // track with hashmap.
-        return choices[i].clone();
+        choices[i].clone()
     }
 }
 

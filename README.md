@@ -1,5 +1,8 @@
 # balatro-rs
 
+[![CI](https://github.com/spencerduncan/balatro-rs/actions/workflows/ci.yml/badge.svg)](https://github.com/spencerduncan/balatro-rs/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/spencerduncan/balatro-rs/branch/main/graph/badge.svg)](https://codecov.io/gh/spencerduncan/balatro-rs)
+
 Game engine and move generator for a simplified version of [balatro](https://www.playbalatro.com/), written in rust with python bindings
 
 ## Overview
@@ -61,4 +64,4 @@ The following features are missing and may or may not be added
 
 ## Python bindings
 
-This library uses [pyo3](https://pyo3.rs) to provide python bindings. For more details on the python work and attempts at applying reinforcement learning, check the work in the directory [/pylatro](https://github.com/evanofslack/balatro-rs/tree/main/pylatro).
+This library uses [pyo3](https://pyo3.rs) to provide python bindings. For more details on the python work and attempts at applying reinforcement learning, check the work in the directory [/pylatro](https://github.com/spencerduncan/balatro-rs/tree/main/pylatro).
