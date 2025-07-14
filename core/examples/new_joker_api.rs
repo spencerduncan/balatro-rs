@@ -20,7 +20,7 @@ fn main() {
 
     // Example 3: Getting jokers by rarity
     let common_jokers = JokerFactory::get_by_rarity(JokerRarity::Common);
-    println!("\nCommon jokers available: {:?}", common_jokers);
+    println!("\nCommon jokers available: {common_jokers:?}");
 
     // Example 4: Demonstrating JokerEffect
     let effect = JokerEffect::new().with_mult(4).with_chips(50);
