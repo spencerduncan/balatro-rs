@@ -47,8 +47,9 @@ impl Shop {
     }
 
     pub(crate) fn has_joker(&self, joker_id: JokerId) -> bool {
-        // TODO: For now, we'll check if any of the old Jokers enum matches
-        // This is a temporary implementation until shop is updated to use JokerId
+        // FIXME: Temporary implementation using Jokers enum matching
+        // This should be replaced when shop is refactored to store JokerId directly
+        // instead of the full Jokers enum. See issue tracking shop JokerId migration.
         self.jokers.iter().any(|j| j.matches_joker_id(joker_id))
     }
 
@@ -57,7 +58,7 @@ impl Shop {
         balance: usize,
         current_joker_count: usize,
         max_slots: usize,
-    ) -> Option<impl Iterator<Item = Action>> {
+    ) -> Option<impl Iterator<Item = Action> + '_> {
         if self.jokers.is_empty() {
             return None;
         }
@@ -67,24 +68,25 @@ impl Shop {
             return None;
         }
 
-        let buys: Vec<Action> = self
-            .jokers
-            .iter()
-            .filter(move |j| j.cost() <= balance)
-            .flat_map(|joker| {
-                // Map old Joker enum to new JokerId
-                let joker_id = joker.to_joker_id();
-
-                // Generate an action for each available slot (0 to current_joker_count inclusive)
-                (0..=current_joker_count).map(move |slot| Action::BuyJoker { joker_id, slot })
-            })
-            .collect();
-
-        if buys.is_empty() {
-            None
-        } else {
-            Some(buys.into_iter())
+        // Use iterator chain without intermediate Vec allocation for better performance
+        let has_affordable_jokers = self.jokers.iter().any(|j| j.cost() <= balance);
+        
+        if !has_affordable_jokers {
+            return None;
         }
+
+        Some(
+            self.jokers
+                .iter()
+                .filter(move |j| j.cost() <= balance)
+                .flat_map(move |joker| {
+                    // Map old Joker enum to new JokerId
+                    let joker_id = joker.to_joker_id();
+
+                    // Generate an action for each available slot (0 to current_joker_count inclusive)
+                    (0..=current_joker_count).map(move |slot| Action::BuyJoker { joker_id, slot })
+                })
+        )
     }
 }
 

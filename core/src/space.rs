@@ -219,8 +219,10 @@ impl ActionSpace {
             n if (self.buy_joker_min()..=self.buy_joker_max()).contains(&n) => {
                 let n_offset = n - self.buy_joker_min();
                 if let Some(joker) = game.shop.joker_from_index(n_offset) {
-                    // TODO: For backward compatibility, just append to the end
-                    // In the future, this should be updated to support slot selection
+                    // FIXME: ActionSpace only supports appending jokers (backward compatibility)
+                    // This limitation exists because ActionSpace uses fixed indices and cannot
+                    // represent slot selection dynamically. Consider extending ActionSpace
+                    // to support slot parameters for joker purchases in the future.
                     let slot = game.jokers.len();
 
                     // Map old Joker enum to new JokerId
