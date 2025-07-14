@@ -154,11 +154,15 @@ jobs:
       - name: Build Python extension for coverage
         run: |
           cd pylatro
+          # Set VIRTUAL_ENV for maturin
+          export VIRTUAL_ENV=/opt/venv
           /opt/venv/bin/maturin develop
       
       - name: Run Python tests with coverage
         run: |
           cd pylatro
+          # Set VIRTUAL_ENV for consistency
+          export VIRTUAL_ENV=/opt/venv
           /opt/venv/bin/python -m pytest test/test_pylatro.py -v --cov=pylatro --cov-report=xml
       
       - name: Upload Python coverage to codecov.io
