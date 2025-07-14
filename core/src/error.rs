@@ -42,6 +42,14 @@ pub enum GameError {
     InvalidSelectCard,
     #[error("Invalid action space")]
     InvalidActionSpace,
+    #[error("Invalid slot index")]
+    InvalidSlot,
+    #[error("Joker not available in shop")]
+    JokerNotInShop,
+    #[error("Joker not found: {0}")]
+    JokerNotFound(String),
+    #[error("Invalid operation: {0}")]
+    InvalidOperation(String),
 }
 
 impl std::convert::From<ActionSpaceError> for GameError {

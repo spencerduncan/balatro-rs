@@ -8,17 +8,18 @@ repository ="https://github.com/evanofslack/balatro-rs"
 keywords = ["balatro", "game-engine", "move-generator"]
 
 [dependencies]
+anyhow = "~1.0"
+colored = {version = "2.2.0", optional = true}
+indexmap = "2.6.0"
+itertools = "0.13.0"
+pyo3 = {version = "0.24.1", optional = true}
 rand = "~0.8.5"
-thiserror = "~1.0.61"
 serde = { version = "~1.0.215", optional = true, features = ["derive"] }
 serde_json = { version = "~1.0.118", optional = true }
+strum = { version = "0.26", features = ["derive"] }
+thiserror = "~1.0.61"
 tracing = { version = "~0.1.40", optional = true}
 uuid  = {version = "~1.9.1", optional = true, features = ["v7"]}
-itertools = "0.13.0"
-indexmap = "2.6.0"
-strum = { version = "0.26", features = ["derive"] }
-pyo3 = {version = "0.23.1", optional = true}
-colored = {version = "2.2.0", optional = true}
 
 [dev-dependencies]
 criterion = "0.3"
