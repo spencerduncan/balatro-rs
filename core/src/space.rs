@@ -224,29 +224,7 @@ impl ActionSpace {
                     let slot = game.jokers.len();
 
                     // Map old Joker enum to new JokerId
-                    let joker_id = match &joker {
-                        crate::joker::Jokers::TheJoker(_) => crate::joker::JokerId::Joker,
-                        crate::joker::Jokers::GreedyJoker(_) => crate::joker::JokerId::GreedyJoker,
-                        crate::joker::Jokers::LustyJoker(_) => crate::joker::JokerId::LustyJoker,
-                        crate::joker::Jokers::WrathfulJoker(_) => {
-                            crate::joker::JokerId::WrathfulJoker
-                        }
-                        crate::joker::Jokers::GluttonousJoker(_) => {
-                            crate::joker::JokerId::GluttonousJoker
-                        }
-                        crate::joker::Jokers::JollyJoker(_) => crate::joker::JokerId::JollyJoker,
-                        crate::joker::Jokers::ZanyJoker(_) => crate::joker::JokerId::ZanyJoker,
-                        crate::joker::Jokers::MadJoker(_) => crate::joker::JokerId::MadJoker,
-                        crate::joker::Jokers::CrazyJoker(_) => crate::joker::JokerId::CrazyJoker,
-                        crate::joker::Jokers::DrollJoker(_) => crate::joker::JokerId::DrollJoker,
-                        crate::joker::Jokers::SlyJoker(_) => crate::joker::JokerId::SlyJoker,
-                        crate::joker::Jokers::WilyJoker(_) => crate::joker::JokerId::WilyJoker,
-                        crate::joker::Jokers::CleverJoker(_) => crate::joker::JokerId::CleverJoker,
-                        crate::joker::Jokers::DeviousJoker(_) => {
-                            crate::joker::JokerId::DeviousJoker
-                        }
-                        crate::joker::Jokers::CraftyJoker(_) => crate::joker::JokerId::CraftyJoker,
-                    };
+                    let joker_id = joker.to_joker_id();
 
                     Ok(Action::BuyJoker { joker_id, slot })
                 } else {

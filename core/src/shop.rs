@@ -49,27 +49,7 @@ impl Shop {
     pub(crate) fn has_joker(&self, joker_id: JokerId) -> bool {
         // TODO: For now, we'll check if any of the old Jokers enum matches
         // This is a temporary implementation until shop is updated to use JokerId
-        self.jokers.iter().any(|j| {
-            // Map between old Jokers enum and new JokerId
-            matches!(
-                (j, joker_id),
-                (Jokers::TheJoker(_), JokerId::Joker)
-                    | (Jokers::GreedyJoker(_), JokerId::GreedyJoker)
-                    | (Jokers::LustyJoker(_), JokerId::LustyJoker)
-                    | (Jokers::WrathfulJoker(_), JokerId::WrathfulJoker)
-                    | (Jokers::GluttonousJoker(_), JokerId::GluttonousJoker)
-                    | (Jokers::JollyJoker(_), JokerId::JollyJoker)
-                    | (Jokers::ZanyJoker(_), JokerId::ZanyJoker)
-                    | (Jokers::MadJoker(_), JokerId::MadJoker)
-                    | (Jokers::CrazyJoker(_), JokerId::CrazyJoker)
-                    | (Jokers::DrollJoker(_), JokerId::DrollJoker)
-                    | (Jokers::SlyJoker(_), JokerId::SlyJoker)
-                    | (Jokers::WilyJoker(_), JokerId::WilyJoker)
-                    | (Jokers::CleverJoker(_), JokerId::CleverJoker)
-                    | (Jokers::DeviousJoker(_), JokerId::DeviousJoker)
-                    | (Jokers::CraftyJoker(_), JokerId::CraftyJoker)
-            )
-        })
+        self.jokers.iter().any(|j| j.matches_joker_id(joker_id))
     }
 
     pub(crate) fn gen_moves_buy_joker(
@@ -87,38 +67,16 @@ impl Shop {
             return None;
         }
 
-        // We can insert at any position from 0 to current_joker_count (inclusive)
-        let available_slots: Vec<usize> = (0..=current_joker_count).collect();
-
         let buys: Vec<Action> = self
             .jokers
             .iter()
             .filter(move |j| j.cost() <= balance)
             .flat_map(|joker| {
                 // Map old Joker enum to new JokerId
-                let joker_id = match joker {
-                    Jokers::TheJoker(_) => JokerId::Joker,
-                    Jokers::GreedyJoker(_) => JokerId::GreedyJoker,
-                    Jokers::LustyJoker(_) => JokerId::LustyJoker,
-                    Jokers::WrathfulJoker(_) => JokerId::WrathfulJoker,
-                    Jokers::GluttonousJoker(_) => JokerId::GluttonousJoker,
-                    Jokers::JollyJoker(_) => JokerId::JollyJoker,
-                    Jokers::ZanyJoker(_) => JokerId::ZanyJoker,
-                    Jokers::MadJoker(_) => JokerId::MadJoker,
-                    Jokers::CrazyJoker(_) => JokerId::CrazyJoker,
-                    Jokers::DrollJoker(_) => JokerId::DrollJoker,
-                    Jokers::SlyJoker(_) => JokerId::SlyJoker,
-                    Jokers::WilyJoker(_) => JokerId::WilyJoker,
-                    Jokers::CleverJoker(_) => JokerId::CleverJoker,
-                    Jokers::DeviousJoker(_) => JokerId::DeviousJoker,
-                    Jokers::CraftyJoker(_) => JokerId::CraftyJoker,
-                };
+                let joker_id = joker.to_joker_id();
 
-                // Generate an action for each available slot
-                available_slots
-                    .iter()
-                    .map(move |&slot| Action::BuyJoker { joker_id, slot })
-                    .collect::<Vec<_>>()
+                // Generate an action for each available slot (0 to current_joker_count inclusive)
+                (0..=current_joker_count).map(move |slot| Action::BuyJoker { joker_id, slot })
             })
             .collect();
 

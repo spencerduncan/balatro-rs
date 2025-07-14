@@ -89,10 +89,22 @@ impl Game {
         self.result().is_some()
     }
 
+    /// Returns a reference to the joker at the specified slot, if it exists.
+    ///
+    /// # Arguments
+    /// * `slot` - The zero-based index of the joker slot to check
+    ///
+    /// # Returns
+    /// * `Some(&Jokers)` if a joker exists at the specified slot
+    /// * `None` if the slot is empty or the index is out of bounds
     pub fn get_joker_at_slot(&self, slot: usize) -> Option<&Jokers> {
         self.jokers.get(slot)
     }
 
+    /// Returns the total number of jokers currently owned by the player.
+    ///
+    /// # Returns
+    /// The count of jokers in the player's collection
     pub fn joker_count(&self) -> usize {
         self.jokers.len()
     }
@@ -242,6 +254,28 @@ impl Game {
         Ok(())
     }
 
+    /// Purchases a joker from the shop and places it at the specified slot.
+    ///
+    /// This method validates that the game is in the shop stage, the joker is available
+    /// in the shop, the player has sufficient money, and the slot is valid. If all
+    /// validations pass, it purchases the joker and inserts it at the specified position,
+    /// shifting existing jokers to the right if necessary.
+    ///
+    /// # Arguments
+    /// * `joker_id` - The identifier of the joker to purchase
+    /// * `slot` - The zero-based index where to place the joker (0 to jokers.len())
+    ///
+    /// # Returns
+    /// * `Ok(())` if the purchase was successful
+    /// * `Err(GameError)` if the purchase failed due to validation errors
+    ///
+    /// # Errors
+    /// * `InvalidStage` - Game is not in shop stage
+    /// * `InvalidSlot` - Slot index is greater than current joker count
+    /// * `NoAvailableSlot` - Joker limit reached and trying to add at the end
+    /// * `JokerNotInShop` - Requested joker is not available in the shop
+    /// * `InvalidBalance` - Player doesn't have enough money
+    /// * `NoJokerMatch` - Joker found in shop but couldn't be matched (internal error)
     pub(crate) fn buy_joker_with_slot(
         &mut self,
         joker_id: JokerId,
@@ -272,26 +306,7 @@ impl Game {
             .shop
             .jokers
             .iter()
-            .find(|j| {
-                matches!(
-                    (j, joker_id),
-                    (Jokers::TheJoker(_), JokerId::Joker)
-                        | (Jokers::GreedyJoker(_), JokerId::GreedyJoker)
-                        | (Jokers::LustyJoker(_), JokerId::LustyJoker)
-                        | (Jokers::WrathfulJoker(_), JokerId::WrathfulJoker)
-                        | (Jokers::GluttonousJoker(_), JokerId::GluttonousJoker)
-                        | (Jokers::JollyJoker(_), JokerId::JollyJoker)
-                        | (Jokers::ZanyJoker(_), JokerId::ZanyJoker)
-                        | (Jokers::MadJoker(_), JokerId::MadJoker)
-                        | (Jokers::CrazyJoker(_), JokerId::CrazyJoker)
-                        | (Jokers::DrollJoker(_), JokerId::DrollJoker)
-                        | (Jokers::SlyJoker(_), JokerId::SlyJoker)
-                        | (Jokers::WilyJoker(_), JokerId::WilyJoker)
-                        | (Jokers::CleverJoker(_), JokerId::CleverJoker)
-                        | (Jokers::DeviousJoker(_), JokerId::DeviousJoker)
-                        | (Jokers::CraftyJoker(_), JokerId::CraftyJoker)
-                )
-            })
+            .find(|j| j.matches_joker_id(joker_id))
             .cloned()
             .ok_or(GameError::NoJokerMatch)?;
 
@@ -650,7 +665,10 @@ mod tests {
         game.start();
         game.stage = Stage::Shop();
         game.money = 20;
-        game.shop.refresh();
+
+        // Set up shop with known jokers for deterministic testing
+        use crate::joker::compat::TheJoker;
+        game.shop.jokers = vec![Jokers::TheJoker(TheJoker {})];
 
         // Test buying a joker in a specific slot
         let action = Action::BuyJoker {
@@ -676,7 +694,10 @@ mod tests {
         game.start();
         game.stage = Stage::Shop();
         game.money = 40;
-        game.shop.refresh();
+
+        // Set up shop with known jokers for deterministic testing
+        use crate::joker::compat::{GreedyJoker, TheJoker};
+        game.shop.jokers = vec![Jokers::TheJoker(TheJoker {}), Jokers::GreedyJoker(GreedyJoker {})];
 
         // Buy first joker at end (slot 0)
         let action1 = Action::BuyJoker {
@@ -731,7 +752,10 @@ mod tests {
         game.start();
         game.stage = Stage::Shop();
         game.money = 20;
-        game.shop.refresh();
+
+        // Set up shop with known jokers for deterministic testing
+        use crate::joker::compat::TheJoker;
+        game.shop.jokers = vec![Jokers::TheJoker(TheJoker {})];
 
         // Simulate having voucher that expands slots to 10
         game.config.joker_slots = 10;
@@ -756,7 +780,10 @@ mod tests {
         game.start();
         game.stage = Stage::Shop();
         game.money = 1; // Not enough for any joker
-        game.shop.refresh();
+
+        // Set up shop with known jokers for deterministic testing
+        use crate::joker::compat::TheJoker;
+        game.shop.jokers = vec![Jokers::TheJoker(TheJoker {})];
 
         let action = Action::BuyJoker {
             joker_id: JokerId::Joker,

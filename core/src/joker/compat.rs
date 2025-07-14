@@ -300,6 +300,51 @@ impl Jokers {
     pub(crate) fn by_rarity(rarity: Rarity) -> Vec<Self> {
         Self::iter().filter(|j| j.rarity() == rarity).collect()
     }
+
+    /// Convert this Jokers variant to its corresponding JokerId
+    pub(crate) fn to_joker_id(&self) -> crate::joker::JokerId {
+        use crate::joker::JokerId;
+        match self {
+            Jokers::TheJoker(_) => JokerId::Joker,
+            Jokers::GreedyJoker(_) => JokerId::GreedyJoker,
+            Jokers::LustyJoker(_) => JokerId::LustyJoker,
+            Jokers::WrathfulJoker(_) => JokerId::WrathfulJoker,
+            Jokers::GluttonousJoker(_) => JokerId::GluttonousJoker,
+            Jokers::JollyJoker(_) => JokerId::JollyJoker,
+            Jokers::ZanyJoker(_) => JokerId::ZanyJoker,
+            Jokers::MadJoker(_) => JokerId::MadJoker,
+            Jokers::CrazyJoker(_) => JokerId::CrazyJoker,
+            Jokers::DrollJoker(_) => JokerId::DrollJoker,
+            Jokers::SlyJoker(_) => JokerId::SlyJoker,
+            Jokers::WilyJoker(_) => JokerId::WilyJoker,
+            Jokers::CleverJoker(_) => JokerId::CleverJoker,
+            Jokers::DeviousJoker(_) => JokerId::DeviousJoker,
+            Jokers::CraftyJoker(_) => JokerId::CraftyJoker,
+        }
+    }
+
+    /// Check if this Jokers variant matches the given JokerId
+    pub(crate) fn matches_joker_id(&self, joker_id: crate::joker::JokerId) -> bool {
+        use crate::joker::JokerId;
+        matches!(
+            (self, joker_id),
+            (Jokers::TheJoker(_), JokerId::Joker)
+                | (Jokers::GreedyJoker(_), JokerId::GreedyJoker)
+                | (Jokers::LustyJoker(_), JokerId::LustyJoker)
+                | (Jokers::WrathfulJoker(_), JokerId::WrathfulJoker)
+                | (Jokers::GluttonousJoker(_), JokerId::GluttonousJoker)
+                | (Jokers::JollyJoker(_), JokerId::JollyJoker)
+                | (Jokers::ZanyJoker(_), JokerId::ZanyJoker)
+                | (Jokers::MadJoker(_), JokerId::MadJoker)
+                | (Jokers::CrazyJoker(_), JokerId::CrazyJoker)
+                | (Jokers::DrollJoker(_), JokerId::DrollJoker)
+                | (Jokers::SlyJoker(_), JokerId::SlyJoker)
+                | (Jokers::WilyJoker(_), JokerId::WilyJoker)
+                | (Jokers::CleverJoker(_), JokerId::CleverJoker)
+                | (Jokers::DeviousJoker(_), JokerId::DeviousJoker)
+                | (Jokers::CraftyJoker(_), JokerId::CraftyJoker)
+        )
+    }
 }
 
 impl fmt::Display for Jokers {
