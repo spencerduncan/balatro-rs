@@ -96,12 +96,11 @@ mod tests {
     fn test_action_enum_extensibility() {
         use balatro_rs::action::{Action, MoveDirection};
         use balatro_rs::card::{Card, Suit, Value};
-        use balatro_rs::joker::compat::{Jokers, TheJoker};
+        use balatro_rs::joker::JokerId;
         use balatro_rs::stage::Blind;
 
         // Create valid instances for testing
         let test_card = Card::new(Value::King, Suit::Heart);
-        let test_joker = Jokers::TheJoker(TheJoker {});
 
         // Current actions should still work (using correct variants)
         let _select_card = Action::SelectCard(test_card.clone());
@@ -109,7 +108,7 @@ mod tests {
         let _play = Action::Play();
         let _discard = Action::Discard();
         let _cash_out = Action::CashOut(100);
-        let _buy_joker = Action::BuyJoker(test_joker);
+        let _buy_joker = Action::BuyJoker { joker_id: JokerId::Joker, slot: 0 };
         let _next_round = Action::NextRound();
         let _select_blind = Action::SelectBlind(Blind::Small);
 
