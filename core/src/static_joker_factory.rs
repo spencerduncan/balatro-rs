@@ -338,7 +338,7 @@ impl StaticJokerFactory {
             .expect("Valid joker configuration"),
         )
     }
-    
+
     /// Test-only methods that return concrete types for internal testing
     #[cfg(test)]
     pub fn create_greedy_joker_concrete() -> StaticJoker {
