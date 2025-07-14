@@ -1,7 +1,7 @@
-use std::collections::HashMap;
-use std::sync::{Arc, RwLock, OnceLock};
-use crate::joker::{Joker, JokerId, JokerRarity};
 use crate::error::GameError;
+use crate::joker::{Joker, JokerId, JokerRarity};
+use std::collections::HashMap;
+use std::sync::{Arc, OnceLock, RwLock};
 
 /// Definition of a joker's metadata and properties
 #[derive(Debug, Clone)]
@@ -55,11 +55,11 @@ impl JokerRegistry {
         factory: JokerFactory,
     ) -> Result<(), GameError> {
         let id = definition.id;
-        
+
         if self.definitions.contains_key(&id) {
-            return Err(GameError::InvalidOperation(
-                format!("Joker {:?} is already registered", id)
-            ));
+            return Err(GameError::InvalidOperation(format!(
+                "Joker {id:?} is already registered"
+            )));
         }
 
         self.definitions.insert(id, definition);
@@ -77,7 +77,7 @@ impl JokerRegistry {
         self.factories
             .get(id)
             .map(|factory| factory())
-            .ok_or_else(|| GameError::JokerNotFound(format!("{:?}", id)))
+            .ok_or_else(|| GameError::JokerNotFound(format!("{id:?}")))
     }
 
     /// Returns all registered joker definitions
@@ -128,20 +128,20 @@ static JOKER_REGISTRY: OnceLock<Arc<RwLock<JokerRegistry>>> = OnceLock::new();
 fn get_registry() -> &'static Arc<RwLock<JokerRegistry>> {
     JOKER_REGISTRY.get_or_init(|| {
         let mut registry = JokerRegistry::new();
-        
+
         // Initialize with existing joker implementations
         // This will be populated by the initialization module
         initialize_default_jokers(&mut registry);
-        
+
         Arc::new(RwLock::new(registry))
     })
 }
 
 /// Initializes the registry with default joker implementations
 fn initialize_default_jokers(_registry: &mut JokerRegistry) {
-    // This function will be expanded as jokers are implemented
-    // For now, we'll add a placeholder comment
+    // TODO: This function will be expanded as jokers are implemented
     // The actual registration will happen in a separate initialization module
+    // which will call registry.register() for each joker type
 }
 
 /// Convenience functions for working with the global registry
@@ -152,7 +152,9 @@ pub mod registry {
     pub fn create_joker(id: &JokerId) -> Result<Box<dyn Joker>, GameError> {
         get_registry()
             .read()
-            .map_err(|_| GameError::InvalidOperation("Failed to acquire registry lock".to_string()))?
+            .map_err(|_| {
+                GameError::InvalidOperation("Failed to acquire registry lock".to_string())
+            })?
             .create_joker(id)
     }
 
@@ -177,17 +179,22 @@ pub mod registry {
         get_registry()
             .read()
             .map_err(|_| GameError::InvalidOperation("Failed to acquire registry lock".to_string()))
-            .map(|registry| registry.definitions_by_rarity(rarity).into_iter().cloned().collect())
+            .map(|registry| {
+                registry
+                    .definitions_by_rarity(rarity)
+                    .into_iter()
+                    .cloned()
+                    .collect()
+            })
     }
 
     /// Registers a joker definition with factory (mainly for tests and extensions)
-    pub fn register(
-        definition: JokerDefinition,
-        factory: JokerFactory,
-    ) -> Result<(), GameError> {
+    pub fn register(definition: JokerDefinition, factory: JokerFactory) -> Result<(), GameError> {
         get_registry()
             .write()
-            .map_err(|_| GameError::InvalidOperation("Failed to acquire registry write lock".to_string()))?
+            .map_err(|_| {
+                GameError::InvalidOperation("Failed to acquire registry write lock".to_string())
+            })?
             .register(definition, factory)
     }
 }
@@ -206,7 +213,7 @@ mod tests {
     #[test]
     fn test_register_joker() {
         let mut registry = JokerRegistry::new();
-        
+
         let definition = JokerDefinition {
             id: JokerId::Joker,
             name: "The Joker".to_string(),
@@ -218,7 +225,7 @@ mod tests {
         let result = registry.register(definition.clone(), || Box::new(TheJoker));
         assert!(result.is_ok());
         assert_eq!(registry.count(), 1);
-        
+
         // Test duplicate registration
         let duplicate_result = registry.register(definition, || Box::new(TheJoker));
         assert!(duplicate_result.is_err());
@@ -227,7 +234,7 @@ mod tests {
     #[test]
     fn test_create_joker() {
         let mut registry = JokerRegistry::new();
-        
+
         let definition = JokerDefinition {
             id: JokerId::Joker,
             name: "The Joker".to_string(),
@@ -236,11 +243,13 @@ mod tests {
             unlock_condition: None,
         };
 
-        registry.register(definition, || Box::new(TheJoker)).unwrap();
-        
+        registry
+            .register(definition, || Box::new(TheJoker))
+            .unwrap();
+
         let joker = registry.create_joker(&JokerId::Joker);
         assert!(joker.is_ok());
-        
+
         let missing = registry.create_joker(&JokerId::GreedyJoker);
         assert!(missing.is_err());
     }
@@ -248,7 +257,7 @@ mod tests {
     #[test]
     fn test_get_definition() {
         let mut registry = JokerRegistry::new();
-        
+
         let definition = JokerDefinition {
             id: JokerId::Joker,
             name: "The Joker".to_string(),
@@ -257,8 +266,10 @@ mod tests {
             unlock_condition: None,
         };
 
-        registry.register(definition.clone(), || Box::new(TheJoker)).unwrap();
-        
+        registry
+            .register(definition.clone(), || Box::new(TheJoker))
+            .unwrap();
+
         let retrieved = registry.get_definition(&JokerId::Joker);
         assert!(retrieved.is_some());
         assert_eq!(retrieved.unwrap().name, "The Joker");
@@ -267,37 +278,41 @@ mod tests {
     #[test]
     fn test_filter_by_rarity() {
         let mut registry = JokerRegistry::new();
-        
+
         // Add common joker
-        registry.register(
-            JokerDefinition {
-                id: JokerId::Joker,
-                name: "The Joker".to_string(),
-                description: "+4 Mult".to_string(),
-                rarity: JokerRarity::Common,
-                unlock_condition: None,
-            },
-            || Box::new(TheJoker)
-        ).unwrap();
+        registry
+            .register(
+                JokerDefinition {
+                    id: JokerId::Joker,
+                    name: "The Joker".to_string(),
+                    description: "+4 Mult".to_string(),
+                    rarity: JokerRarity::Common,
+                    unlock_condition: None,
+                },
+                || Box::new(TheJoker),
+            )
+            .unwrap();
 
         // Add rare joker
-        registry.register(
-            JokerDefinition {
-                id: JokerId::GreedyJoker,
-                name: "Greedy Joker".to_string(),
-                description: "Test".to_string(),
-                rarity: JokerRarity::Rare,
-                unlock_condition: None,
-            },
-            || Box::new(TheJoker) // Using TheJoker as placeholder
-        ).unwrap();
+        registry
+            .register(
+                JokerDefinition {
+                    id: JokerId::GreedyJoker,
+                    name: "Greedy Joker".to_string(),
+                    description: "Test".to_string(),
+                    rarity: JokerRarity::Rare,
+                    unlock_condition: None,
+                },
+                || Box::new(TheJoker), // Using TheJoker as placeholder
+            )
+            .unwrap();
 
         let common_jokers = registry.definitions_by_rarity(JokerRarity::Common);
         assert_eq!(common_jokers.len(), 1);
-        
+
         let rare_jokers = registry.definitions_by_rarity(JokerRarity::Rare);
         assert_eq!(rare_jokers.len(), 1);
-        
+
         let legendary_jokers = registry.definitions_by_rarity(JokerRarity::Legendary);
         assert_eq!(legendary_jokers.len(), 0);
     }
@@ -305,30 +320,34 @@ mod tests {
     #[test]
     fn test_unlocked_definitions() {
         let mut registry = JokerRegistry::new();
-        
+
         // Add unlocked joker
-        registry.register(
-            JokerDefinition {
-                id: JokerId::Joker,
-                name: "The Joker".to_string(),
-                description: "+4 Mult".to_string(),
-                rarity: JokerRarity::Common,
-                unlock_condition: None,
-            },
-            || Box::new(TheJoker)
-        ).unwrap();
+        registry
+            .register(
+                JokerDefinition {
+                    id: JokerId::Joker,
+                    name: "The Joker".to_string(),
+                    description: "+4 Mult".to_string(),
+                    rarity: JokerRarity::Common,
+                    unlock_condition: None,
+                },
+                || Box::new(TheJoker),
+            )
+            .unwrap();
 
         // Add locked joker
-        registry.register(
-            JokerDefinition {
-                id: JokerId::GreedyJoker,
-                name: "Greedy Joker".to_string(),
-                description: "Test".to_string(),
-                rarity: JokerRarity::Common,
-                unlock_condition: Some(UnlockCondition::ReachAnte(5)),
-            },
-            || Box::new(TheJoker)
-        ).unwrap();
+        registry
+            .register(
+                JokerDefinition {
+                    id: JokerId::GreedyJoker,
+                    name: "Greedy Joker".to_string(),
+                    description: "Test".to_string(),
+                    rarity: JokerRarity::Common,
+                    unlock_condition: Some(UnlockCondition::ReachAnte(5)),
+                },
+                || Box::new(TheJoker),
+            )
+            .unwrap();
 
         let unlocked = registry.unlocked_definitions(|condition| condition.is_none());
         assert_eq!(unlocked.len(), 1);
@@ -337,12 +356,12 @@ mod tests {
 
     #[test]
     fn test_thread_safety() {
-        use std::thread;
         use std::sync::Arc;
-        
+        use std::thread;
+
         let registry = Arc::new(RwLock::new(JokerRegistry::new()));
         let registry_clone = Arc::clone(&registry);
-        
+
         // Write in one thread
         let write_handle = thread::spawn(move || {
             let mut reg = registry_clone.write().unwrap();
@@ -354,18 +373,19 @@ mod tests {
                     rarity: JokerRarity::Common,
                     unlock_condition: None,
                 },
-                || Box::new(TheJoker)
-            ).unwrap();
+                || Box::new(TheJoker),
+            )
+            .unwrap();
         });
-        
+
         write_handle.join().unwrap();
-        
+
         // Read in another thread
         let read_handle = thread::spawn(move || {
             let reg = registry.read().unwrap();
             assert_eq!(reg.count(), 1);
         });
-        
+
         read_handle.join().unwrap();
     }
 }
