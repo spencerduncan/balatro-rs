@@ -125,7 +125,7 @@ jobs:
       
       - name: Generate code coverage
         run: |
-          cargo tarpaulin --verbose --all-features --workspace --timeout 120 --out xml
+          cargo tarpaulin --verbose --all-features --timeout 120 --out xml -p balatro-rs
       
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v3
