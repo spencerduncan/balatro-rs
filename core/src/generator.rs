@@ -125,10 +125,11 @@ impl Game {
             return None;
         }
         // Cannot buy if all joker slots full
-        if self.jokers.len() >= self.config.joker_slots {
+        if self.joker_count() >= self.config.joker_slots {
             return None;
         }
-        self.shop.gen_moves_buy_joker(self.money)
+        self.shop
+            .gen_moves_buy_joker(self.money, self.jokers.len(), self.config.joker_slots)
     }
 
     // Get all legal actions that can be executed given current state

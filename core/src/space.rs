@@ -219,7 +219,36 @@ impl ActionSpace {
             n if (self.buy_joker_min()..=self.buy_joker_max()).contains(&n) => {
                 let n_offset = n - self.buy_joker_min();
                 if let Some(joker) = game.shop.joker_from_index(n_offset) {
-                    Ok(Action::BuyJoker(joker))
+                    // TODO: For backward compatibility, just append to the end
+                    // In the future, this should be updated to support slot selection
+                    let slot = game.jokers.len();
+
+                    // Map old Joker enum to new JokerId
+                    let joker_id = match &joker {
+                        crate::joker::Jokers::TheJoker(_) => crate::joker::JokerId::Joker,
+                        crate::joker::Jokers::GreedyJoker(_) => crate::joker::JokerId::GreedyJoker,
+                        crate::joker::Jokers::LustyJoker(_) => crate::joker::JokerId::LustyJoker,
+                        crate::joker::Jokers::WrathfulJoker(_) => {
+                            crate::joker::JokerId::WrathfulJoker
+                        }
+                        crate::joker::Jokers::GluttonousJoker(_) => {
+                            crate::joker::JokerId::GluttonousJoker
+                        }
+                        crate::joker::Jokers::JollyJoker(_) => crate::joker::JokerId::JollyJoker,
+                        crate::joker::Jokers::ZanyJoker(_) => crate::joker::JokerId::ZanyJoker,
+                        crate::joker::Jokers::MadJoker(_) => crate::joker::JokerId::MadJoker,
+                        crate::joker::Jokers::CrazyJoker(_) => crate::joker::JokerId::CrazyJoker,
+                        crate::joker::Jokers::DrollJoker(_) => crate::joker::JokerId::DrollJoker,
+                        crate::joker::Jokers::SlyJoker(_) => crate::joker::JokerId::SlyJoker,
+                        crate::joker::Jokers::WilyJoker(_) => crate::joker::JokerId::WilyJoker,
+                        crate::joker::Jokers::CleverJoker(_) => crate::joker::JokerId::CleverJoker,
+                        crate::joker::Jokers::DeviousJoker(_) => {
+                            crate::joker::JokerId::DeviousJoker
+                        }
+                        crate::joker::Jokers::CraftyJoker(_) => crate::joker::JokerId::CraftyJoker,
+                    };
+
+                    Ok(Action::BuyJoker { joker_id, slot })
                 } else {
                     Err(ActionSpaceError::InvalidActionConversion)
                 }

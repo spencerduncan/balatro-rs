@@ -7,7 +7,7 @@ use crate::deck::Deck;
 use crate::effect::{EffectRegistry, Effects};
 use crate::error::GameError;
 use crate::hand::{MadeHand, SelectHand};
-use crate::joker::{Jokers, OldJoker as Joker};
+use crate::joker::{JokerId, Jokers, OldJoker as Joker};
 use crate::shop::Shop;
 use crate::stage::{Blind, End, Stage};
 
@@ -87,6 +87,14 @@ impl Game {
 
     pub fn is_over(&self) -> bool {
         self.result().is_some()
+    }
+
+    pub fn get_joker_at_slot(&self, slot: usize) -> Option<&Jokers> {
+        self.jokers.get(slot)
+    }
+
+    pub fn joker_count(&self) -> usize {
+        self.jokers.len()
     }
 
     fn clear_blind(&mut self) {
@@ -215,6 +223,7 @@ impl Game {
         Ok(())
     }
 
+    #[allow(dead_code)] // Kept for backward compatibility
     pub(crate) fn buy_joker(&mut self, joker: Jokers) -> Result<(), GameError> {
         if self.stage != Stage::Shop() {
             return Err(GameError::InvalidStage);
@@ -230,6 +239,80 @@ impl Game {
         self.jokers.push(joker);
         self.effect_registry
             .register_jokers(self.jokers.clone(), &self.clone());
+        Ok(())
+    }
+
+    pub(crate) fn buy_joker_with_slot(
+        &mut self,
+        joker_id: JokerId,
+        slot: usize,
+    ) -> Result<(), GameError> {
+        // Validate stage
+        if self.stage != Stage::Shop() {
+            return Err(GameError::InvalidStage);
+        }
+
+        // Validate slot index - must be within current jokers or at the end
+        if slot > self.jokers.len() {
+            return Err(GameError::InvalidSlot);
+        }
+
+        // Check if we've reached the joker limit
+        if self.jokers.len() >= self.config.joker_slots && slot == self.jokers.len() {
+            return Err(GameError::NoAvailableSlot);
+        }
+
+        // Check if joker is available in shop
+        if !self.shop.has_joker(joker_id) {
+            return Err(GameError::JokerNotInShop);
+        }
+
+        // Find the matching Jokers enum from shop (temporary until shop uses JokerId)
+        let joker = self
+            .shop
+            .jokers
+            .iter()
+            .find(|j| {
+                matches!(
+                    (j, joker_id),
+                    (Jokers::TheJoker(_), JokerId::Joker)
+                        | (Jokers::GreedyJoker(_), JokerId::GreedyJoker)
+                        | (Jokers::LustyJoker(_), JokerId::LustyJoker)
+                        | (Jokers::WrathfulJoker(_), JokerId::WrathfulJoker)
+                        | (Jokers::GluttonousJoker(_), JokerId::GluttonousJoker)
+                        | (Jokers::JollyJoker(_), JokerId::JollyJoker)
+                        | (Jokers::ZanyJoker(_), JokerId::ZanyJoker)
+                        | (Jokers::MadJoker(_), JokerId::MadJoker)
+                        | (Jokers::CrazyJoker(_), JokerId::CrazyJoker)
+                        | (Jokers::DrollJoker(_), JokerId::DrollJoker)
+                        | (Jokers::SlyJoker(_), JokerId::SlyJoker)
+                        | (Jokers::WilyJoker(_), JokerId::WilyJoker)
+                        | (Jokers::CleverJoker(_), JokerId::CleverJoker)
+                        | (Jokers::DeviousJoker(_), JokerId::DeviousJoker)
+                        | (Jokers::CraftyJoker(_), JokerId::CraftyJoker)
+                )
+            })
+            .cloned()
+            .ok_or(GameError::NoJokerMatch)?;
+
+        // Check if player has enough money (use actual joker cost)
+        if joker.cost() > self.money {
+            return Err(GameError::InvalidBalance);
+        }
+
+        // Purchase joker from shop
+        self.shop.buy_joker(&joker)?;
+
+        // Deduct money
+        self.money -= joker.cost();
+
+        // Insert joker at specified slot
+        self.jokers.insert(slot, joker.clone());
+
+        // Update effect registry
+        self.effect_registry
+            .register_jokers(self.jokers.clone(), &self.clone());
+
         Ok(())
     }
 
@@ -328,9 +411,9 @@ impl Game {
                 Stage::PostBlind() => self.cashout(),
                 _ => Err(GameError::InvalidAction),
             },
-            Action::BuyJoker(joker) => match self.stage {
-                Stage::Shop() => self.buy_joker(joker),
-                _ => Err(GameError::InvalidAction),
+            Action::BuyJoker { joker_id, slot } => match self.stage {
+                Stage::Shop() => self.buy_joker_with_slot(joker_id, slot),
+                _ => Err(GameError::InvalidStage),
             },
             Action::NextRound() => match self.stage {
                 Stage::Shop() => self.next_round(),
@@ -382,6 +465,7 @@ impl Default for Game {
 mod tests {
     use super::*;
     use crate::card::{Suit, Value};
+    use crate::joker::JokerId;
 
     #[test]
     fn test_constructor() {
@@ -558,5 +642,165 @@ mod tests {
         g.buy_joker(j1.clone()).expect("buy joker");
         assert_eq!(g.money, 10 - j1.cost());
         assert_eq!(g.jokers.len(), 1);
+    }
+
+    #[test]
+    fn test_buy_joker_with_slot_specification() {
+        let mut game = Game::default();
+        game.start();
+        game.stage = Stage::Shop();
+        game.money = 20;
+        game.shop.refresh();
+
+        // Test buying a joker in a specific slot
+        let action = Action::BuyJoker {
+            joker_id: JokerId::Joker,
+            slot: 0,
+        };
+
+        let result = game.handle_action(action);
+        assert!(result.is_ok());
+
+        // Verify joker is in the correct slot
+        assert!(game.get_joker_at_slot(0).is_some());
+        assert!(matches!(
+            game.get_joker_at_slot(0),
+            Some(Jokers::TheJoker(_))
+        ));
+        assert_eq!(game.joker_count(), 1);
+    }
+
+    #[test]
+    fn test_buy_joker_insert_at_position() {
+        let mut game = Game::default();
+        game.start();
+        game.stage = Stage::Shop();
+        game.money = 40;
+        game.shop.refresh();
+
+        // Buy first joker at end (slot 0)
+        let action1 = Action::BuyJoker {
+            joker_id: JokerId::Joker,
+            slot: 0,
+        };
+        game.handle_action(action1).unwrap();
+
+        // Buy another joker at position 0 (should push first joker to position 1)
+        let action2 = Action::BuyJoker {
+            joker_id: JokerId::GreedyJoker,
+            slot: 0,
+        };
+        let result = game.handle_action(action2);
+
+        assert!(result.is_ok());
+        assert_eq!(game.joker_count(), 2);
+        // GreedyJoker should be at position 0
+        assert!(matches!(
+            game.get_joker_at_slot(0),
+            Some(Jokers::GreedyJoker(_))
+        ));
+        // TheJoker should have moved to position 1
+        assert!(matches!(
+            game.get_joker_at_slot(1),
+            Some(Jokers::TheJoker(_))
+        ));
+    }
+
+    #[test]
+    fn test_buy_joker_invalid_slot() {
+        let mut game = Game::default();
+        game.start();
+        game.stage = Stage::Shop();
+        game.money = 20;
+        game.shop.refresh();
+
+        // Test buying in slot beyond limit (default is 5 slots, so 0-4 are valid)
+        let action = Action::BuyJoker {
+            joker_id: JokerId::Joker,
+            slot: 5,
+        };
+
+        let result = game.handle_action(action);
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), GameError::InvalidSlot));
+    }
+
+    #[test]
+    fn test_buy_joker_expanded_slots() {
+        let mut game = Game::default();
+        game.start();
+        game.stage = Stage::Shop();
+        game.money = 20;
+        game.shop.refresh();
+
+        // Simulate having voucher that expands slots to 10
+        game.config.joker_slots = 10;
+
+        // Now slot 5 should be valid
+        let action = Action::BuyJoker {
+            joker_id: JokerId::Joker,
+            slot: 5,
+        };
+
+        let result = game.handle_action(action);
+        assert!(result.is_ok());
+        assert!(matches!(
+            game.get_joker_at_slot(5),
+            Some(Jokers::TheJoker(_))
+        ));
+    }
+
+    #[test]
+    fn test_buy_joker_insufficient_money() {
+        let mut game = Game::default();
+        game.start();
+        game.stage = Stage::Shop();
+        game.money = 1; // Not enough for any joker
+        game.shop.refresh();
+
+        let action = Action::BuyJoker {
+            joker_id: JokerId::Joker,
+            slot: 0,
+        };
+
+        let result = game.handle_action(action);
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), GameError::InvalidBalance));
+    }
+
+    #[test]
+    fn test_buy_joker_not_in_shop() {
+        let mut game = Game::default();
+        game.start();
+        game.stage = Stage::Shop();
+        game.money = 20;
+        game.shop.refresh();
+
+        // Try to buy a joker that's not currently in the shop
+        let action = Action::BuyJoker {
+            joker_id: JokerId::CavendishJoker, // Unlikely to be in shop
+            slot: 0,
+        };
+
+        let result = game.handle_action(action);
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), GameError::JokerNotInShop));
+    }
+
+    #[test]
+    fn test_buy_joker_wrong_stage() {
+        let mut game = Game::default();
+        game.start();
+        game.stage = Stage::Blind(Blind::Small);
+        game.money = 20;
+
+        let action = Action::BuyJoker {
+            joker_id: JokerId::Joker,
+            slot: 0,
+        };
+
+        let result = game.handle_action(action);
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), GameError::InvalidStage));
     }
 }
