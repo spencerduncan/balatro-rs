@@ -378,6 +378,136 @@ mod tests {
     }
 
     #[test]
+    fn test_suit_jokers_greedy() {
+        let joker = crate::static_joker_factory::StaticJokerFactory::create_greedy_joker();
+
+        // Test properties
+        assert_eq!(joker.id(), JokerId::GreedyJoker);
+        assert_eq!(joker.name(), "Greedy Joker");
+        assert_eq!(joker.mult_bonus, Some(3));
+        assert!(joker.per_card);
+
+        // Test condition checking
+        let diamond_card = Card::new(Value::Ace, Suit::Diamond);
+        let heart_card = Card::new(Value::King, Suit::Heart);
+
+        assert!(joker.check_card_condition(&diamond_card));
+        assert!(!joker.check_card_condition(&heart_card));
+
+        // Test effect
+        let effect = joker.create_effect();
+        assert_eq!(effect.mult, 3);
+    }
+
+    #[test]
+    fn test_suit_jokers_lusty() {
+        let joker = crate::static_joker_factory::StaticJokerFactory::create_lusty_joker();
+
+        // Test properties
+        assert_eq!(joker.id(), JokerId::LustyJoker);
+        assert_eq!(joker.name(), "Lusty Joker");
+        assert_eq!(joker.mult_bonus, Some(3));
+        assert!(joker.per_card);
+
+        // Test condition checking
+        let heart_card = Card::new(Value::Ace, Suit::Heart);
+        let spade_card = Card::new(Value::King, Suit::Spade);
+
+        assert!(joker.check_card_condition(&heart_card));
+        assert!(!joker.check_card_condition(&spade_card));
+
+        // Test effect
+        let effect = joker.create_effect();
+        assert_eq!(effect.mult, 3);
+    }
+
+    #[test]
+    fn test_suit_jokers_wrathful() {
+        let joker = crate::static_joker_factory::StaticJokerFactory::create_wrathful_joker();
+
+        // Test properties
+        assert_eq!(joker.id(), JokerId::WrathfulJoker);
+        assert_eq!(joker.name(), "Wrathful Joker");
+        assert_eq!(joker.mult_bonus, Some(3));
+        assert!(joker.per_card);
+
+        // Test condition checking
+        let spade_card = Card::new(Value::Ace, Suit::Spade);
+        let club_card = Card::new(Value::King, Suit::Club);
+
+        assert!(joker.check_card_condition(&spade_card));
+        assert!(!joker.check_card_condition(&club_card));
+
+        // Test effect
+        let effect = joker.create_effect();
+        assert_eq!(effect.mult, 3);
+    }
+
+    #[test]
+    fn test_suit_jokers_gluttonous() {
+        let joker = crate::static_joker_factory::StaticJokerFactory::create_gluttonous_joker();
+
+        // Test properties
+        assert_eq!(joker.id(), JokerId::GluttonousJoker);
+        assert_eq!(joker.name(), "Gluttonous Joker");
+        assert_eq!(joker.mult_bonus, Some(3));
+        assert!(joker.per_card);
+
+        // Test condition checking
+        let club_card = Card::new(Value::Ace, Suit::Club);
+        let diamond_card = Card::new(Value::King, Suit::Diamond);
+
+        assert!(joker.check_card_condition(&club_card));
+        assert!(!joker.check_card_condition(&diamond_card));
+
+        // Test effect
+        let effect = joker.create_effect();
+        assert_eq!(effect.mult, 3);
+    }
+
+    #[test]
+    fn test_suit_jokers_isolation() {
+        // Create all four suit jokers
+        let greedy = crate::static_joker_factory::StaticJokerFactory::create_greedy_joker();
+        let lusty = crate::static_joker_factory::StaticJokerFactory::create_lusty_joker();
+        let wrathful = crate::static_joker_factory::StaticJokerFactory::create_wrathful_joker();
+        let gluttonous = crate::static_joker_factory::StaticJokerFactory::create_gluttonous_joker();
+
+        // Create one card of each suit
+        let diamond_card = Card::new(Value::Ace, Suit::Diamond);
+        let heart_card = Card::new(Value::King, Suit::Heart);
+        let spade_card = Card::new(Value::Queen, Suit::Spade);
+        let club_card = Card::new(Value::Jack, Suit::Club);
+
+        // Each joker should only match its own suit
+        assert!(greedy.check_card_condition(&diamond_card));
+        assert!(!greedy.check_card_condition(&heart_card));
+        assert!(!greedy.check_card_condition(&spade_card));
+        assert!(!greedy.check_card_condition(&club_card));
+
+        assert!(!lusty.check_card_condition(&diamond_card));
+        assert!(lusty.check_card_condition(&heart_card));
+        assert!(!lusty.check_card_condition(&spade_card));
+        assert!(!lusty.check_card_condition(&club_card));
+
+        assert!(!wrathful.check_card_condition(&diamond_card));
+        assert!(!wrathful.check_card_condition(&heart_card));
+        assert!(wrathful.check_card_condition(&spade_card));
+        assert!(!wrathful.check_card_condition(&club_card));
+
+        assert!(!gluttonous.check_card_condition(&diamond_card));
+        assert!(!gluttonous.check_card_condition(&heart_card));
+        assert!(!gluttonous.check_card_condition(&spade_card));
+        assert!(gluttonous.check_card_condition(&club_card));
+
+        // All should give the same +3 mult effect
+        assert_eq!(greedy.create_effect().mult, 3);
+        assert_eq!(lusty.create_effect().mult, 3);
+        assert_eq!(wrathful.create_effect().mult, 3);
+        assert_eq!(gluttonous.create_effect().mult, 3);
+    }
+
+    #[test]
     fn test_any_rank_condition() {
         let joker =
             StaticJoker::builder(JokerId::EvenSteven, "Even Bonus", "Even cards give bonus")
