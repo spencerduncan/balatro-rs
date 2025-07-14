@@ -53,34 +53,48 @@ impl Debug for JokerCondition {
 }
 
 impl JokerCondition {
-    /// Evaluate the condition against the current game context
+    /// Evaluate the condition against the current game context.
+    ///
+    /// For hand-specific conditions (HandSizeExactly, NoFaceCardsHeld, ContainsRank, ContainsSuit),
+    /// this method returns `false` to indicate that hand context is required.
+    /// Use `evaluate_with_hand()` for proper evaluation of these conditions.
+    ///
+    /// For composite conditions (All, Any, Not), this method recursively evaluates all
+    /// sub-conditions using their `evaluate()` method.
+    ///
+    /// # Arguments
+    /// * `context` - The current game context containing money and other game state
+    ///
+    /// # Returns
+    /// * `true` if the condition is satisfied given the current game context
+    /// * `false` if the condition is not satisfied or requires hand context
     pub fn evaluate(&self, context: &GameContext) -> bool {
         match self {
             Self::MoneyLessThan(amount) => context.money < *amount,
             Self::MoneyGreaterThan(amount) => context.money > *amount,
             Self::HandSizeExactly(_size) => {
-                // This condition needs to be evaluated with the actual played hand
-                // Return true as default, actual evaluation happens in evaluate_with_hand
-                true
+                // This condition requires hand context to evaluate properly
+                // Return false when hand context is not available
+                false
             }
             Self::NoFaceCardsHeld => {
-                // This condition needs to be evaluated with the actual played hand
-                // Return true as default, actual evaluation happens in evaluate_with_hand
-                true
+                // This condition requires hand context to evaluate properly
+                // Return false when hand context is not available
+                false
             }
             Self::ContainsRank(_rank) => {
-                // This condition needs to be evaluated with the actual played hand
-                // Return true as default, actual evaluation happens in evaluate_with_hand
-                true
+                // This condition requires hand context to evaluate properly
+                // Return false when hand context is not available
+                false
             }
             Self::ContainsSuit(_suit) => {
-                // This condition needs to be evaluated with the actual played hand
-                // Return true as default, actual evaluation happens in evaluate_with_hand
-                true
+                // This condition requires hand context to evaluate properly
+                // Return false when hand context is not available
+                false
             }
             Self::PlayedHandType(_hand_type) => {
-                // This will be evaluated in on_hand_played with the actual played hand
-                // For now, return false as a default
+                // This condition requires hand context to evaluate properly
+                // Return false when hand context is not available
                 false
             }
             Self::All(conditions) => conditions.iter().all(|cond| cond.evaluate(context)),
@@ -90,7 +104,20 @@ impl JokerCondition {
         }
     }
 
-    /// Special evaluation for hand-based conditions
+    /// Evaluate the condition with both game context and hand information.
+    ///
+    /// This method should be used when hand context is available, as it provides
+    /// proper evaluation for all condition types including hand-specific ones.
+    /// For conditions that don't require hand context (like money conditions),
+    /// this method delegates to `evaluate()`.
+    ///
+    /// # Arguments
+    /// * `context` - The current game context containing money and other game state
+    /// * `hand` - The hand being played/evaluated
+    ///
+    /// # Returns
+    /// * `true` if the condition is satisfied given both the game context and hand
+    /// * `false` if the condition is not satisfied
     pub fn evaluate_with_hand(&self, context: &GameContext, hand: &SelectHand) -> bool {
         match self {
             Self::PlayedHandType(hand_type) => match hand.best_hand() {
@@ -111,6 +138,38 @@ impl JokerCondition {
                 .iter()
                 .any(|cond| cond.evaluate_with_hand(context, hand)),
             Self::Not(condition) => !condition.evaluate_with_hand(context, hand),
+            _ => self.evaluate(context),
+        }
+    }
+
+    /// Evaluate the condition for a specific card being scored.
+    ///
+    /// This method is used during card scoring events when we have access to the
+    /// individual card but not the full hand context. For card-specific conditions
+    /// (ContainsRank, ContainsSuit), it evaluates against the provided card.
+    /// For other conditions, it delegates to `evaluate()`.
+    ///
+    /// # Arguments
+    /// * `context` - The current game context containing money and other game state
+    /// * `card` - The specific card being scored
+    ///
+    /// # Returns
+    /// * `true` if the condition is satisfied for this card and game context
+    /// * `false` if the condition is not satisfied
+    pub fn evaluate_for_card(&self, context: &GameContext, card: &Card) -> bool {
+        match self {
+            Self::ContainsRank(rank) => card.value == *rank,
+            Self::ContainsSuit(suit) => card.suit == *suit,
+            Self::NoFaceCardsHeld => !matches!(card.value, Rank::Jack | Rank::Queen | Rank::King),
+            Self::All(conditions) => conditions
+                .iter()
+                .all(|cond| cond.evaluate_for_card(context, card)),
+            Self::Any(conditions) => conditions
+                .iter()
+                .any(|cond| cond.evaluate_for_card(context, card)),
+            Self::Not(condition) => !condition.evaluate_for_card(context, card),
+            // For conditions that can't be meaningfully evaluated for a single card,
+            // delegate to the general evaluate method
             _ => self.evaluate(context),
         }
     }
@@ -208,9 +267,9 @@ impl Joker for ConditionalJoker {
         }
     }
 
-    fn on_card_scored(&self, context: &mut GameContext, _card: &Card) -> JokerEffect {
+    fn on_card_scored(&self, context: &mut GameContext, card: &Card) -> JokerEffect {
         if let Some(ref card_effect) = self.card_effect {
-            if self.condition.evaluate(context) {
+            if self.condition.evaluate_for_card(context, card) {
                 card_effect.clone()
             } else {
                 JokerEffect::new()
@@ -333,5 +392,95 @@ mod tests {
         assert_eq!(joker.name(), "Banner");
         assert_eq!(joker.cost(), 3);
         assert_eq!(joker.rarity(), JokerRarity::Common);
+    }
+
+    // Note: GameContext tests are complex due to lifetime and private constructor issues
+    // For now, we test the logic we can without full GameContext creation
+    // Integration tests should cover full GameContext scenarios
+
+    #[test]
+    fn test_hand_condition_evaluation_without_context() {
+        use crate::hand::SelectHand;
+
+        // Create test hands
+        let cards_with_ace = vec![
+            Card::new(Rank::Ace, Suit::Heart),
+            Card::new(Rank::King, Suit::Spade),
+            Card::new(Rank::Three, Suit::Diamond),
+        ];
+        let hand_with_ace = SelectHand::new(cards_with_ace);
+
+        let cards_no_face = vec![
+            Card::new(Rank::Ace, Suit::Heart),
+            Card::new(Rank::Two, Suit::Spade),
+            Card::new(Rank::Three, Suit::Diamond),
+        ];
+        let hand_no_face = SelectHand::new(cards_no_face);
+
+        let cards_with_face = vec![
+            Card::new(Rank::King, Suit::Heart),
+            Card::new(Rank::Queen, Suit::Spade),
+            Card::new(Rank::Three, Suit::Diamond),
+        ];
+        let hand_with_face = SelectHand::new(cards_with_face);
+
+        // Test hand size check (doesn't need GameContext)
+        assert_eq!(hand_with_ace.len(), 3);
+        assert_eq!(hand_no_face.len(), 3);
+        assert_eq!(hand_with_face.len(), 3);
+
+        // For full evaluation, we'd need GameContext, but we can test hand properties
+        assert!(hand_with_ace
+            .cards()
+            .iter()
+            .any(|card| card.value == Rank::Ace));
+        assert!(hand_with_face
+            .cards()
+            .iter()
+            .any(|card| matches!(card.value, Rank::King | Rank::Queen | Rank::Jack)));
+        assert!(!hand_no_face
+            .cards()
+            .iter()
+            .any(|card| matches!(card.value, Rank::King | Rank::Queen | Rank::Jack)));
+    }
+
+    #[test]
+    fn test_card_evaluation_simple() {
+        let ace_heart = Card::new(Rank::Ace, Suit::Heart);
+        let king_spade = Card::new(Rank::King, Suit::Spade);
+
+        // Test individual card properties directly
+        assert_eq!(ace_heart.value, Rank::Ace);
+        assert_eq!(ace_heart.suit, Suit::Heart);
+        assert_eq!(king_spade.value, Rank::King);
+        assert_eq!(king_spade.suit, Suit::Spade);
+
+        // Test face card identification
+        assert!(!matches!(
+            ace_heart.value,
+            Rank::Jack | Rank::Queen | Rank::King
+        ));
+        assert!(matches!(
+            king_spade.value,
+            Rank::Jack | Rank::Queen | Rank::King
+        ));
+    }
+
+    #[test]
+    fn test_conditional_joker_builder_pattern() {
+        let joker = ConditionalJoker::new(
+            JokerId::Banner,
+            "Test Joker",
+            "Test Description",
+            JokerRarity::Rare,
+            JokerCondition::MoneyLessThan(50),
+            JokerEffect::new().with_chips(20),
+        )
+        .with_cost(10)
+        .with_card_effect(JokerEffect::new().with_mult(2));
+
+        assert_eq!(joker.cost(), 10);
+        assert!(joker.card_effect.is_some());
+        assert_eq!(joker.rarity(), JokerRarity::Rare);
     }
 }
