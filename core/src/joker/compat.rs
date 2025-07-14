@@ -320,6 +320,8 @@ mod tests {
     use crate::card::{Card, Suit, Value};
     use crate::game::Game;
     use crate::hand::SelectHand;
+    use crate::joker::{JokerId, JokerRarity};
+    use crate::joker_factory::JokerFactory;
     use crate::stage::{Blind, Stage};
 
     use super::*;
@@ -677,5 +679,70 @@ mod tests {
         let after = 536;
         let j = Jokers::CraftyJoker(CraftyJoker {});
         score_before_after_joker(j, hand, before, after);
+    }
+
+    /// Test for Issue #87: Basic Joker Implementation
+    /// Validates all acceptance criteria:
+    /// - Joker provides +4 mult unconditionally
+    /// - Test coverage for basic functionality  
+    /// - Integration with scoring system
+    /// - Proper joker registration
+    #[test]
+    fn test_issue_87_basic_joker_acceptance_criteria() {
+        // Test 1: Verify joker provides exactly +4 mult with single card
+        let king = Card::new(Value::King, Suit::Heart);
+        let single_hand = SelectHand::new(vec![king]);
+
+        // High card (level 1) -> 5 chips, 1 mult
+        // King -> 10 chips
+        // Base calculation: (5 + 10) * 1 = 15
+        let before_single = 15;
+        // With TheJoker (+4 mult): (5 + 10) * (1 + 4) = 75
+        let after_single = 75;
+
+        let joker = Jokers::TheJoker(TheJoker {});
+        score_before_after_joker(joker.clone(), single_hand, before_single, after_single);
+
+        // Test 2: Verify joker works unconditionally with different hand types
+        let ace_spade = Card::new(Value::Ace, Suit::Spade);
+        let ace_heart = Card::new(Value::Ace, Suit::Heart);
+        let pair_hand = SelectHand::new(vec![ace_spade, ace_heart]);
+
+        // Pair (level 1) -> 10 chips, 2 mult
+        // Two Aces -> 22 chips
+        // Base calculation: (10 + 22) * 2 = 64
+        let before_pair = 64;
+        // With TheJoker (+4 mult): (10 + 22) * (2 + 4) = 192
+        let after_pair = 192;
+
+        score_before_after_joker(joker.clone(), pair_hand, before_pair, after_pair);
+
+        // Test 3: Verify joker is properly registered in factory
+        let created_joker = JokerFactory::create(JokerId::Joker);
+        assert!(
+            created_joker.is_some(),
+            "TheJoker should be registered in JokerFactory"
+        );
+
+        let joker_instance = created_joker.unwrap();
+        assert_eq!(joker_instance.id(), JokerId::Joker);
+        assert_eq!(joker_instance.name(), "Joker");
+        assert_eq!(joker_instance.description(), "+4 Mult");
+        assert_eq!(joker_instance.rarity(), JokerRarity::Common);
+        assert_eq!(joker_instance.cost(), 2);
+
+        // Test 4: Verify joker appears in common rarity list
+        let common_jokers = JokerFactory::get_by_rarity(JokerRarity::Common);
+        assert!(
+            common_jokers.contains(&JokerId::Joker),
+            "TheJoker should be listed in Common rarity jokers"
+        );
+
+        // Test 5: Verify joker is in implemented jokers list
+        let all_implemented = JokerFactory::get_all_implemented();
+        assert!(
+            all_implemented.contains(&JokerId::Joker),
+            "TheJoker should be in the list of all implemented jokers"
+        );
     }
 }
