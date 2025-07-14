@@ -1,6 +1,6 @@
 use crate::game::Game;
 use crate::hand::MadeHand;
-use crate::joker::{Joker, Jokers};
+use crate::joker::{OldJoker as Joker, Jokers};
 use std::sync::{Arc, Mutex};
 
 #[derive(Debug, Clone)]
