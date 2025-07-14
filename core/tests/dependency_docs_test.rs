@@ -75,7 +75,8 @@ fn pyo3_version_is_secure() {
 
     for file in cargo_files {
         if Path::new(file).exists() {
-            let content = fs::read_to_string(file).unwrap_or_else(|_| panic!("Failed to read {file}"));
+            let content =
+                fs::read_to_string(file).unwrap_or_else(|_| panic!("Failed to read {file}"));
 
             if content.contains("pyo3") {
                 // Check that pyo3 version is at least 0.24.1
