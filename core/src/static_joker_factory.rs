@@ -1,7 +1,7 @@
-use crate::joker::{JokerId, JokerRarity};
-use crate::static_joker::{StaticJoker, StaticCondition};
 use crate::card::{Suit, Value};
+use crate::joker::{JokerId, JokerRarity};
 use crate::rank::HandRank;
+use crate::static_joker::{StaticCondition, StaticJoker};
 
 /// Factory functions for creating static jokers using the framework
 pub struct StaticJokerFactory;
@@ -15,7 +15,7 @@ impl StaticJokerFactory {
                 .cost(2)
                 .mult(4)
                 .per_hand()
-                .build()
+                .build(),
         )
     }
 
@@ -25,14 +25,14 @@ impl StaticJokerFactory {
             StaticJoker::builder(
                 JokerId::GreedyJoker,
                 "Greedy Joker",
-                "Played cards with Diamond suit give +3 Mult when scored"
+                "Played cards with Diamond suit give +3 Mult when scored",
             )
             .rarity(JokerRarity::Common)
             .cost(5)
             .mult(3)
             .condition(StaticCondition::SuitScored(Suit::Diamond))
             .per_card()
-            .build()
+            .build(),
         )
     }
 
@@ -42,14 +42,14 @@ impl StaticJokerFactory {
             StaticJoker::builder(
                 JokerId::LustyJoker,
                 "Lusty Joker",
-                "Played cards with Heart suit give +3 Mult when scored"
+                "Played cards with Heart suit give +3 Mult when scored",
             )
             .rarity(JokerRarity::Common)
             .cost(5)
             .mult(3)
             .condition(StaticCondition::SuitScored(Suit::Heart))
             .per_card()
-            .build()
+            .build(),
         )
     }
 
@@ -59,14 +59,14 @@ impl StaticJokerFactory {
             StaticJoker::builder(
                 JokerId::WrathfulJoker,
                 "Wrathful Joker",
-                "Played cards with Spade suit give +3 Mult when scored"
+                "Played cards with Spade suit give +3 Mult when scored",
             )
             .rarity(JokerRarity::Common)
             .cost(5)
             .mult(3)
             .condition(StaticCondition::SuitScored(Suit::Spade))
             .per_card()
-            .build()
+            .build(),
         )
     }
 
@@ -76,14 +76,14 @@ impl StaticJokerFactory {
             StaticJoker::builder(
                 JokerId::GluttonousJoker,
                 "Gluttonous Joker",
-                "Played cards with Club suit give +3 Mult when scored"
+                "Played cards with Club suit give +3 Mult when scored",
             )
             .rarity(JokerRarity::Common)
             .cost(5)
             .mult(3)
             .condition(StaticCondition::SuitScored(Suit::Club))
             .per_card()
-            .build()
+            .build(),
         )
     }
 
@@ -93,14 +93,14 @@ impl StaticJokerFactory {
             StaticJoker::builder(
                 JokerId::JollyJoker,
                 "Jolly Joker",
-                "+8 Mult if played hand contains a Pair"
+                "+8 Mult if played hand contains a Pair",
             )
             .rarity(JokerRarity::Common)
             .cost(3)
             .mult(8)
             .condition(StaticCondition::HandType(HandRank::OnePair))
             .per_hand()
-            .build()
+            .build(),
         )
     }
 
@@ -110,14 +110,14 @@ impl StaticJokerFactory {
             StaticJoker::builder(
                 JokerId::ZanyJoker,
                 "Zany Joker",
-                "+12 Mult if played hand contains a Three of a Kind"
+                "+12 Mult if played hand contains a Three of a Kind",
             )
             .rarity(JokerRarity::Common)
             .cost(4)
             .mult(12)
             .condition(StaticCondition::HandType(HandRank::ThreeOfAKind))
             .per_hand()
-            .build()
+            .build(),
         )
     }
 
@@ -127,14 +127,14 @@ impl StaticJokerFactory {
             StaticJoker::builder(
                 JokerId::MadJoker,
                 "Mad Joker",
-                "+10 Mult if played hand contains a Two Pair"
+                "+10 Mult if played hand contains a Two Pair",
             )
             .rarity(JokerRarity::Common)
             .cost(4)
             .mult(10)
             .condition(StaticCondition::HandType(HandRank::TwoPair))
             .per_hand()
-            .build()
+            .build(),
         )
     }
 
@@ -144,14 +144,14 @@ impl StaticJokerFactory {
             StaticJoker::builder(
                 JokerId::CrazyJoker,
                 "Crazy Joker",
-                "+12 Mult if played hand contains a Straight"
+                "+12 Mult if played hand contains a Straight",
             )
             .rarity(JokerRarity::Common)
             .cost(4)
             .mult(12)
             .condition(StaticCondition::HandType(HandRank::Straight))
             .per_hand()
-            .build()
+            .build(),
         )
     }
 
@@ -161,14 +161,14 @@ impl StaticJokerFactory {
             StaticJoker::builder(
                 JokerId::DrollJoker,
                 "Droll Joker",
-                "+10 Mult if played hand contains a Flush"
+                "+10 Mult if played hand contains a Flush",
             )
             .rarity(JokerRarity::Common)
             .cost(4)
             .mult(10)
             .condition(StaticCondition::HandType(HandRank::Flush))
             .per_hand()
-            .build()
+            .build(),
         )
     }
 
@@ -178,14 +178,14 @@ impl StaticJokerFactory {
             StaticJoker::builder(
                 JokerId::SlyJoker,
                 "Sly Joker",
-                "+50 Chips if played hand contains a Pair"
+                "+50 Chips if played hand contains a Pair",
             )
             .rarity(JokerRarity::Common)
             .cost(3)
             .chips(50)
             .condition(StaticCondition::HandType(HandRank::OnePair))
             .per_hand()
-            .build()
+            .build(),
         )
     }
 
@@ -195,14 +195,14 @@ impl StaticJokerFactory {
             StaticJoker::builder(
                 JokerId::WilyJoker,
                 "Wily Joker",
-                "+100 Chips if played hand contains a Three of a Kind"
+                "+100 Chips if played hand contains a Three of a Kind",
             )
             .rarity(JokerRarity::Common)
             .cost(4)
             .chips(100)
             .condition(StaticCondition::HandType(HandRank::ThreeOfAKind))
             .per_hand()
-            .build()
+            .build(),
         )
     }
 
@@ -212,14 +212,14 @@ impl StaticJokerFactory {
             StaticJoker::builder(
                 JokerId::CleverJoker,
                 "Clever Joker",
-                "+80 Chips if played hand contains a Two Pair"
+                "+80 Chips if played hand contains a Two Pair",
             )
             .rarity(JokerRarity::Common)
             .cost(4)
             .chips(80)
             .condition(StaticCondition::HandType(HandRank::TwoPair))
             .per_hand()
-            .build()
+            .build(),
         )
     }
 
@@ -229,14 +229,14 @@ impl StaticJokerFactory {
             StaticJoker::builder(
                 JokerId::DeviousJoker,
                 "Devious Joker",
-                "+100 Chips if played hand contains a Straight"
+                "+100 Chips if played hand contains a Straight",
             )
             .rarity(JokerRarity::Common)
             .cost(4)
             .chips(100)
             .condition(StaticCondition::HandType(HandRank::Straight))
             .per_hand()
-            .build()
+            .build(),
         )
     }
 
@@ -246,14 +246,14 @@ impl StaticJokerFactory {
             StaticJoker::builder(
                 JokerId::CraftyJoker,
                 "Crafty Joker",
-                "+80 Chips if played hand contains a Flush"
+                "+80 Chips if played hand contains a Flush",
             )
             .rarity(JokerRarity::Common)
             .cost(4)
             .chips(80)
             .condition(StaticCondition::HandType(HandRank::Flush))
             .per_hand()
-            .build()
+            .build(),
         )
     }
 
@@ -263,7 +263,7 @@ impl StaticJokerFactory {
             StaticJoker::builder(
                 JokerId::EvenSteven,
                 "Even Steven",
-                "Played cards with even rank give +4 Mult when scored"
+                "Played cards with even rank give +4 Mult when scored",
             )
             .rarity(JokerRarity::Common)
             .cost(4)
@@ -273,10 +273,10 @@ impl StaticJokerFactory {
                 Value::Four,
                 Value::Six,
                 Value::Eight,
-                Value::Ten
+                Value::Ten,
             ]))
             .per_card()
-            .build()
+            .build(),
         )
     }
 
@@ -286,7 +286,7 @@ impl StaticJokerFactory {
             StaticJoker::builder(
                 JokerId::OddTodd,
                 "Odd Todd",
-                "Played cards with odd rank give +31 Chips when scored"
+                "Played cards with odd rank give +31 Chips when scored",
             )
             .rarity(JokerRarity::Common)
             .cost(4)
@@ -296,10 +296,10 @@ impl StaticJokerFactory {
                 Value::Five,
                 Value::Seven,
                 Value::Nine,
-                Value::Ace
+                Value::Ace,
             ]))
             .per_card()
-            .build()
+            .build(),
         )
     }
 
@@ -309,7 +309,7 @@ impl StaticJokerFactory {
             StaticJoker::builder(
                 JokerId::Scholar,
                 "Scholar",
-                "Played Aces give +20 Chips and +4 Mult when scored"
+                "Played Aces give +20 Chips and +4 Mult when scored",
             )
             .rarity(JokerRarity::Common)
             .cost(4)
@@ -317,7 +317,7 @@ impl StaticJokerFactory {
             .mult(4)
             .condition(StaticCondition::RankScored(Value::Ace))
             .per_card()
-            .build()
+            .build(),
         )
     }
 }
@@ -340,7 +340,7 @@ mod tests {
         let greedy = StaticJokerFactory::create_greedy_joker();
         assert_eq!(greedy.id(), JokerId::GreedyJoker);
         assert_eq!(greedy.rarity(), JokerRarity::Common);
-        
+
         let lusty = StaticJokerFactory::create_lusty_joker();
         assert_eq!(lusty.id(), JokerId::LustyJoker);
     }
@@ -350,7 +350,7 @@ mod tests {
         let jolly = StaticJokerFactory::create_jolly_joker();
         assert_eq!(jolly.id(), JokerId::JollyJoker);
         assert_eq!(jolly.cost(), 3);
-        
+
         let zany = StaticJokerFactory::create_zany_joker();
         assert_eq!(zany.id(), JokerId::ZanyJoker);
         assert_eq!(zany.cost(), 4);
@@ -360,6 +360,9 @@ mod tests {
     fn test_chip_joker_creation() {
         let sly = StaticJokerFactory::create_sly_joker();
         assert_eq!(sly.id(), JokerId::SlyJoker);
-        assert_eq!(sly.description(), "+50 Chips if played hand contains a Pair");
+        assert_eq!(
+            sly.description(),
+            "+50 Chips if played hand contains a Pair"
+        );
     }
 }

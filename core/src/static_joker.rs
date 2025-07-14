@@ -49,7 +49,11 @@ pub struct StaticJoker {
 
 impl StaticJoker {
     /// Create a new static joker builder
-    pub fn builder(id: JokerId, name: &'static str, description: &'static str) -> StaticJokerBuilder {
+    pub fn builder(
+        id: JokerId,
+        name: &'static str,
+        description: &'static str,
+    ) -> StaticJokerBuilder {
         StaticJokerBuilder {
             id,
             name,
@@ -143,7 +147,9 @@ impl StaticJoker {
             }
             _ => {
                 // For suit/rank conditions on hands, check if any card matches
-                hand.cards().iter().any(|card| self.check_card_condition(card))
+                hand.cards()
+                    .iter()
+                    .any(|card| self.check_card_condition(card))
             }
         }
     }
@@ -166,19 +172,19 @@ impl StaticJoker {
     /// Create the effect based on configured bonuses
     fn create_effect(&self) -> JokerEffect {
         let mut effect = JokerEffect::new();
-        
+
         if let Some(chips) = self.chips_bonus {
             effect = effect.with_chips(chips);
         }
-        
+
         if let Some(mult) = self.mult_bonus {
             effect = effect.with_mult(mult);
         }
-        
+
         if let Some(multiplier) = self.mult_multiplier {
             effect = effect.with_mult_multiplier(multiplier);
         }
-        
+
         effect
     }
 }
@@ -260,15 +266,11 @@ mod tests {
 
     #[test]
     fn test_static_joker_builder() {
-        let joker = StaticJoker::builder(
-            JokerId::Joker,
-            "Test Joker",
-            "A test joker"
-        )
-        .rarity(JokerRarity::Common)
-        .mult(4)
-        .per_hand()
-        .build();
+        let joker = StaticJoker::builder(JokerId::Joker, "Test Joker", "A test joker")
+            .rarity(JokerRarity::Common)
+            .mult(4)
+            .per_hand()
+            .build();
 
         assert_eq!(joker.id(), JokerId::Joker);
         assert_eq!(joker.name(), "Test Joker");
@@ -279,15 +281,11 @@ mod tests {
 
     #[test]
     fn test_condition_always() {
-        let joker = StaticJoker::builder(
-            JokerId::Joker,
-            "Always Joker", 
-            "Always gives bonus"
-        )
-        .mult(5)
-        .condition(StaticCondition::Always)
-        .per_hand()
-        .build();
+        let joker = StaticJoker::builder(JokerId::Joker, "Always Joker", "Always gives bonus")
+            .mult(5)
+            .condition(StaticCondition::Always)
+            .per_hand()
+            .build();
 
         let effect = joker.create_effect();
         assert_eq!(effect.mult, 5);
@@ -295,15 +293,12 @@ mod tests {
 
     #[test]
     fn test_suit_condition() {
-        let joker = StaticJoker::builder(
-            JokerId::GreedyJoker,
-            "Diamond Joker",
-            "Diamonds give bonus"
-        )
-        .mult(3)
-        .condition(StaticCondition::SuitScored(Suit::Diamond))
-        .per_card()
-        .build();
+        let joker =
+            StaticJoker::builder(JokerId::GreedyJoker, "Diamond Joker", "Diamonds give bonus")
+                .mult(3)
+                .condition(StaticCondition::SuitScored(Suit::Diamond))
+                .per_card()
+                .build();
 
         let diamond_card = Card::new(Value::King, Suit::Diamond);
         let heart_card = Card::new(Value::King, Suit::Heart);
@@ -314,16 +309,12 @@ mod tests {
 
     #[test]
     fn test_rank_condition() {
-        let joker = StaticJoker::builder(
-            JokerId::Scholar,
-            "Ace Bonus",
-            "Aces give bonus"
-        )
-        .chips(20)
-        .mult(4)
-        .condition(StaticCondition::RankScored(Value::Ace))
-        .per_card()
-        .build();
+        let joker = StaticJoker::builder(JokerId::Scholar, "Ace Bonus", "Aces give bonus")
+            .chips(20)
+            .mult(4)
+            .condition(StaticCondition::RankScored(Value::Ace))
+            .per_card()
+            .build();
 
         let ace_card = Card::new(Value::Ace, Suit::Spade);
         let king_card = Card::new(Value::King, Suit::Spade);
@@ -334,15 +325,14 @@ mod tests {
 
     #[test]
     fn test_any_suit_condition() {
-        let joker = StaticJoker::builder(
-            JokerId::RedCard,
-            "Red Bonus",
-            "Red cards give bonus"
-        )
-        .mult(2)
-        .condition(StaticCondition::AnySuitScored(vec![Suit::Heart, Suit::Diamond]))
-        .per_card()
-        .build();
+        let joker = StaticJoker::builder(JokerId::RedCard, "Red Bonus", "Red cards give bonus")
+            .mult(2)
+            .condition(StaticCondition::AnySuitScored(vec![
+                Suit::Heart,
+                Suit::Diamond,
+            ]))
+            .per_card()
+            .build();
 
         let heart_card = Card::new(Value::Ten, Suit::Heart);
         let diamond_card = Card::new(Value::Ten, Suit::Diamond);
@@ -355,17 +345,18 @@ mod tests {
 
     #[test]
     fn test_any_rank_condition() {
-        let joker = StaticJoker::builder(
-            JokerId::EvenSteven,
-            "Even Bonus",
-            "Even cards give bonus"
-        )
-        .mult(4)
-        .condition(StaticCondition::AnyRankScored(vec![
-            Value::Two, Value::Four, Value::Six, Value::Eight, Value::Ten
-        ]))
-        .per_card()
-        .build();
+        let joker =
+            StaticJoker::builder(JokerId::EvenSteven, "Even Bonus", "Even cards give bonus")
+                .mult(4)
+                .condition(StaticCondition::AnyRankScored(vec![
+                    Value::Two,
+                    Value::Four,
+                    Value::Six,
+                    Value::Eight,
+                    Value::Ten,
+                ]))
+                .per_card()
+                .build();
 
         let even_card = Card::new(Value::Eight, Suit::Club);
         let odd_card = Card::new(Value::Seven, Suit::Club);
@@ -376,16 +367,12 @@ mod tests {
 
     #[test]
     fn test_multiple_bonuses() {
-        let joker = StaticJoker::builder(
-            JokerId::Scholar,
-            "Multi Bonus",
-            "Multiple effects"
-        )
-        .chips(50)
-        .mult(10)
-        .mult_multiplier(1.2)
-        .per_hand()
-        .build();
+        let joker = StaticJoker::builder(JokerId::Scholar, "Multi Bonus", "Multiple effects")
+            .chips(50)
+            .mult(10)
+            .mult_multiplier(1.2)
+            .per_hand()
+            .build();
 
         let effect = joker.create_effect();
         assert_eq!(effect.chips, 50);
@@ -395,14 +382,10 @@ mod tests {
 
     #[test]
     fn test_cost_override() {
-        let joker = StaticJoker::builder(
-            JokerId::Joker,
-            "Expensive",
-            "Costs more"
-        )
-        .rarity(JokerRarity::Common)
-        .cost(10)
-        .build();
+        let joker = StaticJoker::builder(JokerId::Joker, "Expensive", "Costs more")
+            .rarity(JokerRarity::Common)
+            .cost(10)
+            .build();
 
         assert_eq!(joker.cost(), 10);
     }
@@ -439,7 +422,7 @@ mod tests {
         let joker = StaticJoker::builder(
             JokerId::JollyJoker,
             "Pair Bonus",
-            "+8 Mult if played hand contains a Pair"
+            "+8 Mult if played hand contains a Pair",
         )
         .mult(8)
         .condition(StaticCondition::HandType(HandRank::OnePair))
@@ -487,7 +470,7 @@ mod tests {
         let flush_joker = StaticJoker::builder(
             JokerId::DrollJoker,
             "Flush Bonus",
-            "+10 Mult if played hand contains a Flush"
+            "+10 Mult if played hand contains a Flush",
         )
         .mult(10)
         .condition(StaticCondition::HandType(HandRank::Flush))
