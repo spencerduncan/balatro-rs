@@ -508,3 +508,140 @@ impl Joker for CraftyJoker {
         }
     }
 }
+
+// Money-Based Conditional Jokers for Issue #82
+
+// Business Card: face cards give $2 when scored
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct BusinessCard;
+
+impl Joker for BusinessCard {
+    fn id(&self) -> JokerId {
+        JokerId::BusinessCard
+    }
+
+    fn name(&self) -> &str {
+        "Business Card"
+    }
+
+    fn description(&self) -> &str {
+        "Face cards give $2 when scored"
+    }
+
+    fn rarity(&self) -> JokerRarity {
+        JokerRarity::Common
+    }
+
+    fn cost(&self) -> usize {
+        4
+    }
+
+    fn on_card_scored(&self, _context: &mut GameContext, card: &Card) -> JokerEffect {
+        if card.is_face() {
+            JokerEffect::new().with_money(2)
+        } else {
+            JokerEffect::new()
+        }
+    }
+}
+
+// Egg: gains $3 sell value at round end
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct Egg;
+
+impl Joker for Egg {
+    fn id(&self) -> JokerId {
+        JokerId::EggJoker
+    }
+
+    fn name(&self) -> &str {
+        "Egg"
+    }
+
+    fn description(&self) -> &str {
+        "Gains $3 sell value at end of round"
+    }
+
+    fn rarity(&self) -> JokerRarity {
+        JokerRarity::Common
+    }
+
+    fn cost(&self) -> usize {
+        3
+    }
+
+    fn on_round_end(&self, _context: &mut GameContext) -> JokerEffect {
+        // Note: This will need custom logic to increase sell value
+        // For now, return empty effect - actual sell value increase
+        // would need to be handled by the game state system
+        JokerEffect::new()
+    }
+}
+
+// Burglar: gain $3 when Blind selected, +1 hands
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct Burglar;
+
+impl Joker for Burglar {
+    fn id(&self) -> JokerId {
+        JokerId::Burglar
+    }
+
+    fn name(&self) -> &str {
+        "Burglar"
+    }
+
+    fn description(&self) -> &str {
+        "Gain $3 when Blind selected, +1 hands"
+    }
+
+    fn rarity(&self) -> JokerRarity {
+        JokerRarity::Uncommon
+    }
+
+    fn cost(&self) -> usize {
+        6
+    }
+
+    fn on_blind_start(&self, _context: &mut GameContext) -> JokerEffect {
+        JokerEffect::new().with_money(3)
+    }
+
+    fn modify_hand_size(&self, _context: &GameContext, base_size: usize) -> usize {
+        base_size + 1
+    }
+}
+
+// Runner Joker implementation
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct Runner;
+
+impl Joker for Runner {
+    fn id(&self) -> JokerId {
+        JokerId::Runner
+    }
+
+    fn name(&self) -> &str {
+        "Runner"
+    }
+
+    fn description(&self) -> &str {
+        "+15 Chips if played hand contains a Straight"
+    }
+
+    fn rarity(&self) -> JokerRarity {
+        JokerRarity::Common
+    }
+
+    fn cost(&self) -> usize {
+        3
+    }
+
+    fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
+        if hand.is_straight().is_some() {
+            JokerEffect::new().with_chips(15)
+        } else {
+            JokerEffect::new()
+        }
+    }
+}
