@@ -12,10 +12,13 @@ pub mod hand;
 pub mod joker;
 pub mod joker_factory;
 pub mod joker_impl;
+pub mod joker_registry;
 pub mod rank;
 pub mod shop;
 pub mod space;
 pub mod stage;
+pub mod static_joker;
+pub mod static_joker_factory;
 
 #[cfg(test)]
 mod tests {
