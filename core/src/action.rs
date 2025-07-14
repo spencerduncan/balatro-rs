@@ -1,5 +1,5 @@
 use crate::card::Card;
-use crate::joker::Jokers;
+use crate::joker::JokerId;
 use crate::stage::Blind;
 use pyo3::pyclass;
 use std::fmt;
@@ -34,7 +34,7 @@ pub enum Action {
     Play(),
     Discard(),
     CashOut(usize),
-    BuyJoker(Jokers),
+    BuyJoker { joker_id: JokerId, slot: usize },
     NextRound(),
     SelectBlind(Blind),
     // SkipBlind(Blind),
@@ -58,8 +58,8 @@ impl fmt::Display for Action {
             Self::CashOut(reward) => {
                 write!(f, "CashOut: {reward}")
             }
-            Self::BuyJoker(joker) => {
-                write!(f, "BuyJoker: {joker}")
+            Self::BuyJoker { joker_id, slot } => {
+                write!(f, "BuyJoker: {joker_id:?} at slot {slot}")
             }
             Self::NextRound() => {
                 write!(f, "NextRound")

@@ -119,20 +119,21 @@ impl Game {
     }
 
     // Get buy joker actions
-    fn gen_actions_buy_joker(&self) -> Option<impl Iterator<Item = Action>> {
+    fn gen_actions_buy_joker(&self) -> Option<impl Iterator<Item = Action> + use<'_>> {
         // If stage is not shop, cannot buy
         if self.stage != Stage::Shop() {
             return None;
         }
         // Cannot buy if all joker slots full
-        if self.jokers.len() >= self.config.joker_slots {
+        if self.joker_count() >= self.config.joker_slots {
             return None;
         }
-        self.shop.gen_moves_buy_joker(self.money)
+        self.shop
+            .gen_moves_buy_joker(self.money, self.jokers.len(), self.config.joker_slots)
     }
 
     // Get all legal actions that can be executed given current state
-    pub fn gen_actions(&self) -> impl Iterator<Item = Action> {
+    pub fn gen_actions(&self) -> impl Iterator<Item = Action> + use<'_> {
         let select_cards = self.gen_actions_select_card();
         let plays = self.gen_actions_play();
         let discards = self.gen_actions_discard();
