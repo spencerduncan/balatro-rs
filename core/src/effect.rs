@@ -1,6 +1,6 @@
 use crate::game::Game;
 use crate::hand::MadeHand;
-use crate::joker::{Joker, Jokers};
+use crate::joker::{Jokers, OldJoker as Joker};
 use std::sync::{Arc, Mutex};
 
 // Type aliases to simplify complex types

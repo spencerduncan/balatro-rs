@@ -1,6 +1,6 @@
 use crate::action::{Action, MoveDirection};
 use crate::game::Game;
-use crate::joker::Joker;
+use crate::joker::OldJoker as Joker;
 use crate::space::ActionSpace;
 use crate::stage::{Blind, Stage};
 

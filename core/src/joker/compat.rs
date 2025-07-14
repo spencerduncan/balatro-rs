@@ -2,11 +2,14 @@ use crate::card::Suit;
 use crate::effect::Effects;
 use crate::game::Game;
 use crate::hand::MadeHand;
+use crate::joker::{Categories, Joker as NewJoker, JokerRarity as Rarity};
 use pyo3::pyclass;
+use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::sync::{Arc, Mutex};
 use strum::{EnumIter, IntoEnumIterator};
 
+/// Old-style Joker trait for compatibility
 pub trait Joker: std::fmt::Debug + Clone {
     fn name(&self) -> String;
     fn desc(&self) -> String;
@@ -16,50 +19,206 @@ pub trait Joker: std::fmt::Debug + Clone {
     fn effects(&self, game: &Game) -> Vec<Effects>;
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub enum Categories {
-    MultPlus,
-    MultMult,
-    Chips,
-    Economy,
-    Retrigger,
-    Effect,
-}
+// Macro to create joker wrapper structs
+macro_rules! impl_joker_wrapper {
+    ($name:ident, $category:expr, $effect:expr) => {
+        #[derive(Debug, Clone, Default, Eq, PartialEq, Hash, Serialize, Deserialize)]
+        #[cfg_attr(feature = "python", pyclass(eq))]
+        pub struct $name {}
 
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub enum Rarity {
-    Common,
-    Uncommon,
-    Rare,
-    Legendary,
-}
-
-impl fmt::Display for Rarity {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Self::Common => {
-                write!(f, "Common")
+        impl Joker for $name {
+            fn name(&self) -> String {
+                let joker = crate::joker_impl::$name;
+                NewJoker::name(&joker).to_string()
             }
-            Self::Uncommon => {
-                write!(f, "Uncommon")
+            fn desc(&self) -> String {
+                let joker = crate::joker_impl::$name;
+                NewJoker::description(&joker).to_string()
             }
-            Self::Rare => {
-                write!(f, "Rare")
+            fn cost(&self) -> usize {
+                let joker = crate::joker_impl::$name;
+                NewJoker::cost(&joker)
             }
-            Self::Legendary => {
-                write!(f, "Legendary")
+            fn rarity(&self) -> Rarity {
+                let joker = crate::joker_impl::$name;
+                NewJoker::rarity(&joker)
+            }
+            fn categories(&self) -> Vec<Categories> {
+                vec![$category]
+            }
+            fn effects(&self, _game: &Game) -> Vec<Effects> {
+                vec![Effects::OnScore(Arc::new(Mutex::new($effect)))]
             }
         }
-    }
+    };
 }
 
-// We could pass around `Box<dyn Joker>` but it doesn't work so nice with pyo3 and serde.
-// Since we know all variants (one for each joker), we define an enum that implements
-// our `Joker` trait. This macro just reduces the amount of boilerplate we have to copy
-// to match each joker and call its methods.
-// It ends up creating an enum `Jokers` that contains each joker struct (where each struct impl `Joker`), and we impl `Joker`
-// for `Jokers` enum by matching each case and calling underlying methods.
-// https://stackoverflow.com/questions/63848427/using-enums-for-dynamic-polymorphism-in-rust/63849405#63849405
+// Implement all the joker wrappers
+impl_joker_wrapper!(
+    TheJoker,
+    Categories::MultPlus,
+    |g: &mut Game, _hand: MadeHand| {
+        g.mult += 4;
+    }
+);
+
+impl_joker_wrapper!(
+    GreedyJoker,
+    Categories::MultPlus,
+    |g: &mut Game, hand: MadeHand| {
+        let diamonds = hand
+            .hand
+            .suits()
+            .iter()
+            .filter(|s| **s == Suit::Diamond)
+            .count();
+        g.mult += diamonds * 3
+    }
+);
+
+impl_joker_wrapper!(
+    LustyJoker,
+    Categories::MultPlus,
+    |g: &mut Game, hand: MadeHand| {
+        let hearts = hand
+            .hand
+            .suits()
+            .iter()
+            .filter(|s| **s == Suit::Heart)
+            .count();
+        g.mult += hearts * 3
+    }
+);
+
+impl_joker_wrapper!(
+    WrathfulJoker,
+    Categories::MultPlus,
+    |g: &mut Game, hand: MadeHand| {
+        let spades = hand
+            .hand
+            .suits()
+            .iter()
+            .filter(|s| **s == Suit::Spade)
+            .count();
+        g.mult += spades * 3
+    }
+);
+
+impl_joker_wrapper!(
+    GluttonousJoker,
+    Categories::MultPlus,
+    |g: &mut Game, hand: MadeHand| {
+        let clubs = hand
+            .hand
+            .suits()
+            .iter()
+            .filter(|s| **s == Suit::Club)
+            .count();
+        g.mult += clubs * 3
+    }
+);
+
+impl_joker_wrapper!(
+    JollyJoker,
+    Categories::MultPlus,
+    |g: &mut Game, hand: MadeHand| {
+        if hand.hand.is_pair().is_some() {
+            g.mult += 8
+        }
+    }
+);
+
+impl_joker_wrapper!(
+    ZanyJoker,
+    Categories::MultPlus,
+    |g: &mut Game, hand: MadeHand| {
+        if hand.hand.is_three_of_kind().is_some() {
+            g.mult += 12
+        }
+    }
+);
+
+impl_joker_wrapper!(
+    MadJoker,
+    Categories::MultPlus,
+    |g: &mut Game, hand: MadeHand| {
+        if hand.hand.is_two_pair().is_some() {
+            g.mult += 10
+        }
+    }
+);
+
+impl_joker_wrapper!(
+    CrazyJoker,
+    Categories::MultPlus,
+    |g: &mut Game, hand: MadeHand| {
+        if hand.hand.is_straight().is_some() {
+            g.mult += 12
+        }
+    }
+);
+
+impl_joker_wrapper!(
+    DrollJoker,
+    Categories::MultPlus,
+    |g: &mut Game, hand: MadeHand| {
+        if hand.hand.is_flush().is_some() {
+            g.mult += 10
+        }
+    }
+);
+
+impl_joker_wrapper!(
+    SlyJoker,
+    Categories::Chips,
+    |g: &mut Game, hand: MadeHand| {
+        if hand.hand.is_pair().is_some() {
+            g.chips += 50
+        }
+    }
+);
+
+impl_joker_wrapper!(
+    WilyJoker,
+    Categories::Chips,
+    |g: &mut Game, hand: MadeHand| {
+        if hand.hand.is_three_of_kind().is_some() {
+            g.chips += 100
+        }
+    }
+);
+
+impl_joker_wrapper!(
+    CleverJoker,
+    Categories::Chips,
+    |g: &mut Game, hand: MadeHand| {
+        if hand.hand.is_two_pair().is_some() {
+            g.chips += 80
+        }
+    }
+);
+
+impl_joker_wrapper!(
+    DeviousJoker,
+    Categories::Chips,
+    |g: &mut Game, hand: MadeHand| {
+        if hand.hand.is_straight().is_some() {
+            g.chips += 100
+        }
+    }
+);
+
+impl_joker_wrapper!(
+    CraftyJoker,
+    Categories::Chips,
+    |g: &mut Game, hand: MadeHand| {
+        if hand.hand.is_flush().is_some() {
+            g.chips += 80
+        }
+    }
+);
+
+// Macro to create the enum of all jokers
 macro_rules! make_jokers {
     ($($x:ident), *) => {
         #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -118,6 +277,7 @@ macro_rules! make_jokers {
     }
 }
 
+// Create the Jokers enum
 make_jokers!(
     TheJoker,
     GreedyJoker,
@@ -137,8 +297,8 @@ make_jokers!(
 );
 
 impl Jokers {
-    pub(crate) fn by_rarity(rarirty: Rarity) -> Vec<Self> {
-        Self::iter().filter(|j| j.rarity() == rarirty).collect()
+    pub(crate) fn by_rarity(rarity: Rarity) -> Vec<Self> {
+        Self::iter().filter(|j| j.rarity() == rarity).collect()
     }
 }
 
@@ -155,473 +315,10 @@ impl fmt::Display for Jokers {
     }
 }
 
-#[derive(Debug, Clone, Default, Eq, PartialEq, Hash, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(feature = "python", pyclass(eq))]
-pub struct TheJoker {}
-
-impl Joker for TheJoker {
-    fn name(&self) -> String {
-        "Joker".to_string()
-    }
-    fn desc(&self) -> String {
-        "+4 Mult".to_string()
-    }
-    fn cost(&self) -> usize {
-        2
-    }
-    fn rarity(&self) -> Rarity {
-        Rarity::Common
-    }
-    fn categories(&self) -> Vec<Categories> {
-        vec![Categories::MultPlus]
-    }
-    fn effects(&self, _in: &Game) -> Vec<Effects> {
-        fn apply(g: &mut Game, _hand: MadeHand) {
-            g.mult += 4;
-        }
-        vec![Effects::OnScore(Arc::new(Mutex::new(apply)))]
-    }
-}
-
-#[derive(Debug, Clone, Default, Eq, PartialEq, Hash, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(feature = "python", pyclass(eq))]
-pub struct GreedyJoker {}
-
-impl Joker for GreedyJoker {
-    fn name(&self) -> String {
-        "Greedy Joker".to_string()
-    }
-    fn desc(&self) -> String {
-        "Played cards with diamond suit give +3 mult when scored ".to_string()
-    }
-    fn cost(&self) -> usize {
-        5
-    }
-    fn rarity(&self) -> Rarity {
-        Rarity::Common
-    }
-    fn categories(&self) -> Vec<Categories> {
-        vec![Categories::MultPlus]
-    }
-    fn effects(&self, _in: &Game) -> Vec<Effects> {
-        fn apply(g: &mut Game, hand: MadeHand) {
-            let diamonds = hand
-                .hand
-                .suits()
-                .iter()
-                .filter(|s| **s == Suit::Diamond)
-                .count();
-            g.mult += diamonds * 3
-        }
-        vec![Effects::OnScore(Arc::new(Mutex::new(apply)))]
-    }
-}
-
-#[derive(Debug, Clone, Default, Eq, PartialEq, Hash, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(feature = "python", pyclass(eq))]
-pub struct LustyJoker {}
-
-impl Joker for LustyJoker {
-    fn name(&self) -> String {
-        "Lusty Joker".to_string()
-    }
-    fn desc(&self) -> String {
-        "Played cards with heart suit give +3 mult when scored ".to_string()
-    }
-    fn cost(&self) -> usize {
-        5
-    }
-    fn rarity(&self) -> Rarity {
-        Rarity::Common
-    }
-    fn categories(&self) -> Vec<Categories> {
-        vec![Categories::MultPlus]
-    }
-    fn effects(&self, _in: &Game) -> Vec<Effects> {
-        fn apply(g: &mut Game, hand: MadeHand) {
-            let hearts = hand
-                .hand
-                .suits()
-                .iter()
-                .filter(|s| **s == Suit::Heart)
-                .count();
-            g.mult += hearts * 3
-        }
-        vec![Effects::OnScore(Arc::new(Mutex::new(apply)))]
-    }
-}
-
-#[derive(Debug, Clone, Default, Eq, PartialEq, Hash, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(feature = "python", pyclass(eq))]
-pub struct WrathfulJoker {}
-
-impl Joker for WrathfulJoker {
-    fn name(&self) -> String {
-        "Wrathful Joker".to_string()
-    }
-    fn desc(&self) -> String {
-        "Played cards with spade suit give +3 mult when scored ".to_string()
-    }
-    fn cost(&self) -> usize {
-        5
-    }
-    fn rarity(&self) -> Rarity {
-        Rarity::Common
-    }
-    fn categories(&self) -> Vec<Categories> {
-        vec![Categories::MultPlus]
-    }
-    fn effects(&self, _in: &Game) -> Vec<Effects> {
-        fn apply(g: &mut Game, hand: MadeHand) {
-            let spades = hand
-                .hand
-                .suits()
-                .iter()
-                .filter(|s| **s == Suit::Spade)
-                .count();
-            g.mult += spades * 3
-        }
-        vec![Effects::OnScore(Arc::new(Mutex::new(apply)))]
-    }
-}
-
-#[derive(Debug, Clone, Default, Eq, PartialEq, Hash, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(feature = "python", pyclass(eq))]
-pub struct GluttonousJoker {}
-
-impl Joker for GluttonousJoker {
-    fn name(&self) -> String {
-        "Gluttonous Joker".to_string()
-    }
-    fn desc(&self) -> String {
-        "Played cards with club suit give +3 mult when scored ".to_string()
-    }
-    fn cost(&self) -> usize {
-        5
-    }
-    fn rarity(&self) -> Rarity {
-        Rarity::Common
-    }
-    fn categories(&self) -> Vec<Categories> {
-        vec![Categories::MultPlus]
-    }
-    fn effects(&self, _in: &Game) -> Vec<Effects> {
-        fn apply(g: &mut Game, hand: MadeHand) {
-            let clubs = hand
-                .hand
-                .suits()
-                .iter()
-                .filter(|s| **s == Suit::Club)
-                .count();
-            g.mult += clubs * 3
-        }
-        vec![Effects::OnScore(Arc::new(Mutex::new(apply)))]
-    }
-}
-
-#[derive(Debug, Clone, Default, Eq, PartialEq, Hash, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(feature = "python", pyclass(eq))]
-pub struct JollyJoker {}
-
-impl Joker for JollyJoker {
-    fn name(&self) -> String {
-        "Jolly Joker".to_string()
-    }
-    fn desc(&self) -> String {
-        "+8 mult if played hand contains a pair".to_string()
-    }
-    fn cost(&self) -> usize {
-        3
-    }
-    fn rarity(&self) -> Rarity {
-        Rarity::Common
-    }
-    fn categories(&self) -> Vec<Categories> {
-        vec![Categories::MultPlus]
-    }
-    fn effects(&self, _in: &Game) -> Vec<Effects> {
-        fn apply(g: &mut Game, hand: MadeHand) {
-            if hand.hand.is_pair().is_some() {
-                g.mult += 8
-            }
-        }
-        vec![Effects::OnScore(Arc::new(Mutex::new(apply)))]
-    }
-}
-
-#[derive(Debug, Clone, Default, Eq, PartialEq, Hash, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(feature = "python", pyclass(eq))]
-pub struct ZanyJoker {}
-
-impl Joker for ZanyJoker {
-    fn name(&self) -> String {
-        "Zany Joker".to_string()
-    }
-    fn desc(&self) -> String {
-        "+12 mult if played hand contains a three of a kind".to_string()
-    }
-    fn cost(&self) -> usize {
-        4
-    }
-    fn rarity(&self) -> Rarity {
-        Rarity::Common
-    }
-    fn categories(&self) -> Vec<Categories> {
-        vec![Categories::MultPlus]
-    }
-    fn effects(&self, _in: &Game) -> Vec<Effects> {
-        fn apply(g: &mut Game, hand: MadeHand) {
-            if hand.hand.is_three_of_kind().is_some() {
-                g.mult += 12
-            }
-        }
-        vec![Effects::OnScore(Arc::new(Mutex::new(apply)))]
-    }
-}
-
-#[derive(Debug, Clone, Default, Eq, PartialEq, Hash, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(feature = "python", pyclass(eq))]
-pub struct MadJoker {}
-
-impl Joker for MadJoker {
-    fn name(&self) -> String {
-        "Mad Joker".to_string()
-    }
-    fn desc(&self) -> String {
-        "+10 mult if played hand contains a two pair".to_string()
-    }
-    fn cost(&self) -> usize {
-        4
-    }
-    fn rarity(&self) -> Rarity {
-        Rarity::Common
-    }
-    fn categories(&self) -> Vec<Categories> {
-        vec![Categories::MultPlus]
-    }
-    fn effects(&self, _in: &Game) -> Vec<Effects> {
-        fn apply(g: &mut Game, hand: MadeHand) {
-            if hand.hand.is_two_pair().is_some() {
-                g.mult += 10
-            }
-        }
-        vec![Effects::OnScore(Arc::new(Mutex::new(apply)))]
-    }
-}
-
-#[derive(Debug, Clone, Default, Eq, PartialEq, Hash, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(feature = "python", pyclass(eq))]
-pub struct CrazyJoker {}
-
-impl Joker for CrazyJoker {
-    fn name(&self) -> String {
-        "Crazy Joker".to_string()
-    }
-    fn desc(&self) -> String {
-        "+12 mult if played hand contains a straight".to_string()
-    }
-    fn cost(&self) -> usize {
-        4
-    }
-    fn rarity(&self) -> Rarity {
-        Rarity::Common
-    }
-    fn categories(&self) -> Vec<Categories> {
-        vec![Categories::MultPlus]
-    }
-    fn effects(&self, _in: &Game) -> Vec<Effects> {
-        fn apply(g: &mut Game, hand: MadeHand) {
-            if hand.hand.is_straight().is_some() {
-                g.mult += 12
-            }
-        }
-        vec![Effects::OnScore(Arc::new(Mutex::new(apply)))]
-    }
-}
-
-#[derive(Debug, Clone, Default, Eq, PartialEq, Hash, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(feature = "python", pyclass(eq))]
-pub struct DrollJoker {}
-
-impl Joker for DrollJoker {
-    fn name(&self) -> String {
-        "Droll Joker".to_string()
-    }
-    fn desc(&self) -> String {
-        "+10 mult if played hand contains a flush".to_string()
-    }
-    fn cost(&self) -> usize {
-        4
-    }
-    fn rarity(&self) -> Rarity {
-        Rarity::Common
-    }
-    fn categories(&self) -> Vec<Categories> {
-        vec![Categories::MultPlus]
-    }
-    fn effects(&self, _in: &Game) -> Vec<Effects> {
-        fn apply(g: &mut Game, hand: MadeHand) {
-            if hand.hand.is_flush().is_some() {
-                g.mult += 10
-            }
-        }
-        vec![Effects::OnScore(Arc::new(Mutex::new(apply)))]
-    }
-}
-
-#[derive(Debug, Clone, Default, Eq, PartialEq, Hash, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(feature = "python", pyclass(eq))]
-pub struct SlyJoker {}
-
-impl Joker for SlyJoker {
-    fn name(&self) -> String {
-        "Sly Joker".to_string()
-    }
-    fn desc(&self) -> String {
-        "+50 chips if played hand contains a pair".to_string()
-    }
-    fn cost(&self) -> usize {
-        3
-    }
-    fn rarity(&self) -> Rarity {
-        Rarity::Common
-    }
-    fn categories(&self) -> Vec<Categories> {
-        vec![Categories::Chips]
-    }
-    fn effects(&self, _in: &Game) -> Vec<Effects> {
-        fn apply(g: &mut Game, hand: MadeHand) {
-            if hand.hand.is_pair().is_some() {
-                g.chips += 50
-            }
-        }
-        vec![Effects::OnScore(Arc::new(Mutex::new(apply)))]
-    }
-}
-
-#[derive(Debug, Clone, Default, Eq, PartialEq, Hash, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(feature = "python", pyclass(eq))]
-pub struct WilyJoker {}
-
-impl Joker for WilyJoker {
-    fn name(&self) -> String {
-        "Wily Joker".to_string()
-    }
-    fn desc(&self) -> String {
-        "+100 chips if played hand contains a three of a kind".to_string()
-    }
-    fn cost(&self) -> usize {
-        4
-    }
-    fn rarity(&self) -> Rarity {
-        Rarity::Common
-    }
-    fn categories(&self) -> Vec<Categories> {
-        vec![Categories::Chips]
-    }
-    fn effects(&self, _in: &Game) -> Vec<Effects> {
-        fn apply(g: &mut Game, hand: MadeHand) {
-            if hand.hand.is_three_of_kind().is_some() {
-                g.chips += 100
-            }
-        }
-        vec![Effects::OnScore(Arc::new(Mutex::new(apply)))]
-    }
-}
-
-#[derive(Debug, Clone, Default, Eq, PartialEq, Hash, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(feature = "python", pyclass(eq))]
-pub struct CleverJoker {}
-
-impl Joker for CleverJoker {
-    fn name(&self) -> String {
-        "Clever Joker".to_string()
-    }
-    fn desc(&self) -> String {
-        "+80 chips if played hand contains a two pair".to_string()
-    }
-    fn cost(&self) -> usize {
-        4
-    }
-    fn rarity(&self) -> Rarity {
-        Rarity::Common
-    }
-    fn categories(&self) -> Vec<Categories> {
-        vec![Categories::Chips]
-    }
-    fn effects(&self, _in: &Game) -> Vec<Effects> {
-        fn apply(g: &mut Game, hand: MadeHand) {
-            if hand.hand.is_two_pair().is_some() {
-                g.chips += 80
-            }
-        }
-        vec![Effects::OnScore(Arc::new(Mutex::new(apply)))]
-    }
-}
-
-#[derive(Debug, Clone, Default, Eq, PartialEq, Hash, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(feature = "python", pyclass(eq))]
-pub struct DeviousJoker {}
-
-impl Joker for DeviousJoker {
-    fn name(&self) -> String {
-        "Devious Joker".to_string()
-    }
-    fn desc(&self) -> String {
-        "+100 chips if played hand contains a straight".to_string()
-    }
-    fn cost(&self) -> usize {
-        4
-    }
-    fn rarity(&self) -> Rarity {
-        Rarity::Common
-    }
-    fn categories(&self) -> Vec<Categories> {
-        vec![Categories::Chips]
-    }
-    fn effects(&self, _in: &Game) -> Vec<Effects> {
-        fn apply(g: &mut Game, hand: MadeHand) {
-            if hand.hand.is_straight().is_some() {
-                g.chips += 100
-            }
-        }
-        vec![Effects::OnScore(Arc::new(Mutex::new(apply)))]
-    }
-}
-
-#[derive(Debug, Clone, Default, Eq, PartialEq, Hash, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(feature = "python", pyclass(eq))]
-pub struct CraftyJoker {}
-
-impl Joker for CraftyJoker {
-    fn name(&self) -> String {
-        "Crafty Joker".to_string()
-    }
-    fn desc(&self) -> String {
-        "+80 chips if played hand contains a flush".to_string()
-    }
-    fn cost(&self) -> usize {
-        4
-    }
-    fn rarity(&self) -> Rarity {
-        Rarity::Common
-    }
-    fn categories(&self) -> Vec<Categories> {
-        vec![Categories::Chips]
-    }
-    fn effects(&self, _in: &Game) -> Vec<Effects> {
-        fn apply(g: &mut Game, hand: MadeHand) {
-            if hand.hand.is_flush().is_some() {
-                g.chips += 80
-            }
-        }
-        vec![Effects::OnScore(Arc::new(Mutex::new(apply)))]
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use crate::card::{Card, Suit, Value};
+    use crate::game::Game;
     use crate::hand::SelectHand;
     use crate::stage::{Blind, Stage};
 
