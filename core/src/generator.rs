@@ -119,7 +119,7 @@ impl Game {
     }
 
     // Get buy joker actions
-    fn gen_actions_buy_joker(&self) -> Option<impl Iterator<Item = Action>> {
+    fn gen_actions_buy_joker(&self) -> Option<impl Iterator<Item = Action> + use<'_>> {
         // If stage is not shop, cannot buy
         if self.stage != Stage::Shop() {
             return None;
@@ -133,7 +133,7 @@ impl Game {
     }
 
     // Get all legal actions that can be executed given current state
-    pub fn gen_actions(&self) -> impl Iterator<Item = Action> {
+    pub fn gen_actions(&self) -> impl Iterator<Item = Action> + use<'_> {
         let select_cards = self.gen_actions_select_card();
         let plays = self.gen_actions_play();
         let discards = self.gen_actions_discard();

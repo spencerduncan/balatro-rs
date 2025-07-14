@@ -70,7 +70,7 @@ impl Shop {
 
         // Use iterator chain without intermediate Vec allocation for better performance
         let has_affordable_jokers = self.jokers.iter().any(|j| j.cost() <= balance);
-        
+
         if !has_affordable_jokers {
             return None;
         }
@@ -85,7 +85,7 @@ impl Shop {
 
                     // Generate an action for each available slot (0 to current_joker_count inclusive)
                     (0..=current_joker_count).map(move |slot| Action::BuyJoker { joker_id, slot })
-                })
+                }),
         )
     }
 }

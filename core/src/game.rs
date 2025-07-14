@@ -697,7 +697,10 @@ mod tests {
 
         // Set up shop with known jokers for deterministic testing
         use crate::joker::compat::{GreedyJoker, TheJoker};
-        game.shop.jokers = vec![Jokers::TheJoker(TheJoker {}), Jokers::GreedyJoker(GreedyJoker {})];
+        game.shop.jokers = vec![
+            Jokers::TheJoker(TheJoker {}),
+            Jokers::GreedyJoker(GreedyJoker {}),
+        ];
 
         // Buy first joker at end (slot 0)
         let action1 = Action::BuyJoker {
