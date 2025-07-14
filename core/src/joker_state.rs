@@ -72,14 +72,21 @@ impl JokerState {
     }
 
     /// Set custom data value
-    pub fn set_custom<T: Serialize>(&mut self, key: &str, value: T) -> Result<(), serde_json::Error> {
+    pub fn set_custom<T: Serialize>(
+        &mut self,
+        key: &str,
+        value: T,
+    ) -> Result<(), serde_json::Error> {
         let json_value = serde_json::to_value(value)?;
         self.custom_data.insert(key.to_string(), json_value);
         Ok(())
     }
 
     /// Get custom data value
-    pub fn get_custom<T: for<'de> Deserialize<'de>>(&self, key: &str) -> Result<Option<T>, serde_json::Error> {
+    pub fn get_custom<T: for<'de> Deserialize<'de>>(
+        &self,
+        key: &str,
+    ) -> Result<Option<T>, serde_json::Error> {
         match self.custom_data.get(key) {
             Some(value) => Ok(Some(serde_json::from_value(value.clone())?)),
             None => Ok(None),
@@ -126,7 +133,7 @@ impl JokerStateManager {
         F: FnOnce(&mut JokerState),
     {
         let mut states = self.states.write().unwrap();
-        let state = states.entry(joker_id).or_insert_with(JokerState::default);
+        let state = states.entry(joker_id).or_default();
         update_fn(state);
     }
 
@@ -183,7 +190,12 @@ impl JokerStateManager {
     }
 
     /// Set custom data for a joker
-    pub fn set_custom_data<T: Serialize>(&self, joker_id: JokerId, key: &str, value: T) -> Result<(), serde_json::Error> {
+    pub fn set_custom_data<T: Serialize>(
+        &self,
+        joker_id: JokerId,
+        key: &str,
+        value: T,
+    ) -> Result<(), serde_json::Error> {
         let json_value = serde_json::to_value(value)?;
         self.update_state(joker_id, |state| {
             state.custom_data.insert(key.to_string(), json_value);
@@ -192,7 +204,11 @@ impl JokerStateManager {
     }
 
     /// Get custom data for a joker
-    pub fn get_custom_data<T: for<'de> Deserialize<'de>>(&self, joker_id: JokerId, key: &str) -> Result<Option<T>, serde_json::Error> {
+    pub fn get_custom_data<T: for<'de> Deserialize<'de>>(
+        &self,
+        joker_id: JokerId,
+        key: &str,
+    ) -> Result<Option<T>, serde_json::Error> {
         let state = self.get_state(joker_id);
         state.get_custom(key)
     }
@@ -227,7 +243,7 @@ mod tests {
         let mut state = JokerState::with_triggers(3);
         assert_eq!(state.triggers_remaining, Some(3));
         assert!(state.has_triggers());
-        
+
         // Use triggers
         assert!(state.use_trigger());
         assert_eq!(state.triggers_remaining, Some(2));
@@ -250,17 +266,17 @@ mod tests {
     #[test]
     fn test_custom_data() {
         let mut state = JokerState::new();
-        
+
         // Set and get string
         state.set_custom("name", "test").unwrap();
         let name: Option<String> = state.get_custom("name").unwrap();
         assert_eq!(name, Some("test".to_string()));
-        
+
         // Set and get number
         state.set_custom("count", 42).unwrap();
         let count: Option<i32> = state.get_custom("count").unwrap();
         assert_eq!(count, Some(42));
-        
+
         // Non-existent key
         let missing: Option<String> = state.get_custom("missing").unwrap();
         assert_eq!(missing, None);
@@ -270,21 +286,21 @@ mod tests {
     fn test_state_manager_basic_ops() {
         let manager = JokerStateManager::new();
         let joker_id = JokerId::Joker;
-        
+
         // Initially no state
         assert!(!manager.has_state(joker_id));
         assert_eq!(manager.count(), 0);
-        
+
         // Get creates default state
         let state = manager.get_state(joker_id);
         assert_eq!(state.accumulated_value, 0.0);
-        
+
         // Set state
         let new_state = JokerState::with_accumulated_value(15.0);
         manager.set_state(joker_id, new_state);
         assert!(manager.has_state(joker_id));
         assert_eq!(manager.count(), 1);
-        
+
         let retrieved = manager.get_state(joker_id);
         assert_eq!(retrieved.accumulated_value, 15.0);
     }
@@ -293,20 +309,20 @@ mod tests {
     fn test_state_manager_update() {
         let manager = JokerStateManager::new();
         let joker_id = JokerId::Joker;
-        
+
         // Update non-existent state (creates default)
         manager.update_state(joker_id, |state| {
             state.add_value(10.0);
         });
-        
+
         let state = manager.get_state(joker_id);
         assert_eq!(state.accumulated_value, 10.0);
-        
+
         // Update existing state
         manager.update_state(joker_id, |state| {
             state.add_value(5.0);
         });
-        
+
         let state = manager.get_state(joker_id);
         assert_eq!(state.accumulated_value, 15.0);
     }
@@ -315,10 +331,10 @@ mod tests {
     fn test_state_manager_accumulated_value() {
         let manager = JokerStateManager::new();
         let joker_id = JokerId::Joker;
-        
+
         manager.add_accumulated_value(joker_id, 3.0);
         manager.add_accumulated_value(joker_id, 2.0);
-        
+
         let state = manager.get_state(joker_id);
         assert_eq!(state.accumulated_value, 5.0);
     }
@@ -327,11 +343,11 @@ mod tests {
     fn test_state_manager_triggers() {
         let manager = JokerStateManager::new();
         let joker_id = JokerId::Joker;
-        
+
         // Set state with limited triggers
         let state = JokerState::with_triggers(2);
         manager.set_state(joker_id, state);
-        
+
         assert!(manager.has_triggers(joker_id));
         assert!(manager.use_trigger(joker_id));
         assert!(manager.has_triggers(joker_id));
@@ -344,8 +360,10 @@ mod tests {
     fn test_state_manager_custom_data() {
         let manager = JokerStateManager::new();
         let joker_id = JokerId::Joker;
-        
-        manager.set_custom_data(joker_id, "test_key", "test_value").unwrap();
+
+        manager
+            .set_custom_data(joker_id, "test_key", "test_value")
+            .unwrap();
         let value: Option<String> = manager.get_custom_data(joker_id, "test_key").unwrap();
         assert_eq!(value, Some("test_value".to_string()));
     }
@@ -354,10 +372,10 @@ mod tests {
     fn test_state_manager_remove() {
         let manager = JokerStateManager::new();
         let joker_id = JokerId::Joker;
-        
+
         manager.add_accumulated_value(joker_id, 10.0);
         assert!(manager.has_state(joker_id));
-        
+
         let removed = manager.remove_state(joker_id);
         assert!(removed.is_some());
         assert_eq!(removed.unwrap().accumulated_value, 10.0);
@@ -367,11 +385,11 @@ mod tests {
     #[test]
     fn test_state_manager_clear() {
         let manager = JokerStateManager::new();
-        
+
         manager.add_accumulated_value(JokerId::Joker, 10.0);
         manager.add_accumulated_value(JokerId::GreedyJoker, 20.0);
         assert_eq!(manager.count(), 2);
-        
+
         manager.clear();
         assert_eq!(manager.count(), 0);
     }
@@ -379,10 +397,10 @@ mod tests {
     #[test]
     fn test_state_manager_active_jokers() {
         let manager = JokerStateManager::new();
-        
+
         manager.add_accumulated_value(JokerId::Joker, 10.0);
         manager.add_accumulated_value(JokerId::GreedyJoker, 20.0);
-        
+
         let active = manager.get_active_jokers();
         assert_eq!(active.len(), 2);
         assert!(active.contains(&JokerId::Joker));
