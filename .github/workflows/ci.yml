@@ -15,7 +15,7 @@ jobs:
     name: Test Suite
     runs-on: ubuntu-latest
     container:
-      image: rust:1.75-slim
+      image: rust:slim
     steps:
       - uses: actions/checkout@v4
       
@@ -49,7 +49,7 @@ jobs:
     name: Rustfmt
     runs-on: ubuntu-latest
     container:
-      image: rust:1.75-slim
+      image: rust:slim
     steps:
       - uses: actions/checkout@v4
       
@@ -63,7 +63,7 @@ jobs:
     name: Clippy
     runs-on: ubuntu-latest
     container:
-      image: rust:1.75-slim
+      image: rust:slim
     steps:
       - uses: actions/checkout@v4
       
@@ -100,7 +100,7 @@ jobs:
     name: Code Coverage
     runs-on: ubuntu-latest
     container:
-      image: rust:1.75
+      image: rust:latest
     steps:
       - uses: actions/checkout@v4
       
@@ -170,7 +170,7 @@ jobs:
     name: Build All Workspace Members
     runs-on: ubuntu-latest
     container:
-      image: rust:1.75-slim
+      image: rust:slim
     strategy:
       matrix:
         member: [balatro-rs, balatro-cli, pylatro]
@@ -208,7 +208,7 @@ jobs:
     name: Benchmark Compilation Check
     runs-on: ubuntu-latest
     container:
-      image: rust:1.75-slim
+      image: rust:slim
     steps:
       - uses: actions/checkout@v4
       

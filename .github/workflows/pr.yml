@@ -13,7 +13,7 @@ jobs:
     name: Quick PR Check
     runs-on: ubuntu-latest
     container:
-      image: rust:1.75-slim
+      image: rust:slim
     steps:
       - uses: actions/checkout@v4
       

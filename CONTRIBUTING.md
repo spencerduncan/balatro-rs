@@ -5,7 +5,7 @@ Thank you for your interest in contributing to balatro-rs! This document provide
 ## Development Setup
 
 ### Prerequisites
-- Rust 1.75.0 or later (see `rust-toolchain.toml`)
+- Rust stable (see `rust-toolchain.toml`)
 - Python 3.8+ (for pylatro development)
 - Git
 
