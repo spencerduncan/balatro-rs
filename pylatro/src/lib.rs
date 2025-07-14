@@ -38,6 +38,12 @@ impl GameEngine {
         self.game.handle_action_index(index)
     }
 
+    fn get_action_name(&self, index: usize) -> Result<String, GameError> {
+        let space = self.game.gen_action_space();
+        let action = space.to_action(index, &self.game)?;
+        Ok(format!("{}", action))
+    }
+
     #[getter]
     fn state(&self) -> GameState {
         GameState {
@@ -118,6 +124,20 @@ impl GameState {
     #[getter]
     fn money(&self) -> usize {
         self.game.money
+    }
+    #[getter]
+    fn ante(&self) -> usize {
+        match self.game.ante_current {
+            balatro_rs::ante::Ante::Zero => 0,
+            balatro_rs::ante::Ante::One => 1,
+            balatro_rs::ante::Ante::Two => 2,
+            balatro_rs::ante::Ante::Three => 3,
+            balatro_rs::ante::Ante::Four => 4,
+            balatro_rs::ante::Ante::Five => 5,
+            balatro_rs::ante::Ante::Six => 6,
+            balatro_rs::ante::Ante::Seven => 7,
+            balatro_rs::ante::Ante::Eight => 8,
+        }
     }
 
     fn __repr__(&self) -> String {
