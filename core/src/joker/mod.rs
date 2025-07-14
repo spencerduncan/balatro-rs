@@ -393,10 +393,7 @@ mod tests {
     #[test]
     fn test_joker_trait_bounds() {
         // This won't compile if Joker doesn't have Send + Sync bounds
-        fn assert_joker_bounds<T: Joker>() {}
-        // Use the function to avoid dead code warning
-        fn _use_assert<T: Joker>() {
-            assert_joker_bounds::<T>();
-        }
+        fn assert_send_sync<T: Send + Sync>() {}
+        assert_send_sync::<Box<dyn Joker>>();
     }
 }

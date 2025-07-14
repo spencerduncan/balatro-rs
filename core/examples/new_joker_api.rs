@@ -1,4 +1,4 @@
-use balatro_rs::joker::{GameContext, Joker, JokerEffect, JokerId, JokerRarity};
+use balatro_rs::joker::{Joker, JokerEffect, JokerId, JokerRarity};
 use balatro_rs::joker_factory::JokerFactory;
 use balatro_rs::joker_impl::TheJoker;
 
@@ -23,7 +23,7 @@ fn main() {
     println!("\nCommon jokers available: {:?}", common_jokers);
 
     // Example 4: Demonstrating JokerEffect
-    let mut effect = JokerEffect::new().with_mult(4).with_chips(50);
+    let effect = JokerEffect::new().with_mult(4).with_chips(50);
 
     println!("\nJoker Effect:");
     println!("  Mult: {}", effect.mult);
