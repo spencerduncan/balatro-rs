@@ -16,6 +16,8 @@ pub mod rank;
 pub mod shop;
 pub mod space;
 pub mod stage;
+pub mod static_joker;
+pub mod static_joker_factory;
 
 #[cfg(test)]
 mod tests {
