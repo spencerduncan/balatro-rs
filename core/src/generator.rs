@@ -285,8 +285,10 @@ mod tests {
         let ace = Card::new(Value::Ace, Suit::Heart);
         let king = Card::new(Value::King, Suit::Diamond);
 
-        let mut g = Game::default();
-        g.stage = Stage::Blind(Blind::Small);
+        let mut g = Game {
+            stage: Stage::Blind(Blind::Small),
+            ..Default::default()
+        };
 
         // nothing selected, nothing to play
         assert!(g.gen_actions_discard().is_none());
@@ -308,8 +310,10 @@ mod tests {
         let ace = Card::new(Value::Ace, Suit::Heart);
         let king = Card::new(Value::King, Suit::Diamond);
 
-        let mut g = Game::default();
-        g.stage = Stage::Blind(Blind::Small);
+        let mut g = Game {
+            stage: Stage::Blind(Blind::Small),
+            ..Default::default()
+        };
 
         // nothing selected, nothing to discard
         assert!(g.gen_actions_discard().is_none());
@@ -406,8 +410,10 @@ mod tests {
 
     #[test]
     fn test_unmask_action_space_move_cards() {
-        let mut g = Game::default();
-        g.stage = Stage::Blind(Blind::Small);
+        let mut g = Game {
+            stage: Stage::Blind(Blind::Small),
+            ..Default::default()
+        };
         let mut space = ActionSpace::from(g.config.clone());
 
         // Default action space everything should be masked, since no cards available yet

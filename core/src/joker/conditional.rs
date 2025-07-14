@@ -456,8 +456,8 @@ mod tests {
 
         // We'll test these conditions using a mock context in integration tests
         // For now, just verify they can be created and formatted
-        assert_eq!(format!("{:?}", less_than_100), "MoneyLessThan(100)");
-        assert_eq!(format!("{:?}", greater_than_25), "MoneyGreaterThan(25)");
+        assert_eq!(format!("{less_than_100:?}"), "MoneyLessThan(100)");
+        assert_eq!(format!("{greater_than_25:?}"), "MoneyGreaterThan(25)");
     }
 
     #[test]
@@ -469,11 +469,11 @@ mod tests {
         let size_two = JokerCondition::HandSizeExactly(2);
         let played_flush = JokerCondition::PlayedHandType(HandRank::Flush);
 
-        assert_eq!(format!("{:?}", no_face), "NoFaceCardsHeld");
-        assert_eq!(format!("{:?}", contains_king), "ContainsRank(King)");
-        assert_eq!(format!("{:?}", contains_heart), "ContainsSuit(Heart)");
-        assert_eq!(format!("{:?}", size_two), "HandSizeExactly(2)");
-        assert_eq!(format!("{:?}", played_flush), "PlayedHandType(Flush)");
+        assert_eq!(format!("{no_face:?}"), "NoFaceCardsHeld");
+        assert_eq!(format!("{contains_king:?}"), "ContainsRank(King)");
+        assert_eq!(format!("{contains_heart:?}"), "ContainsSuit(Heart)");
+        assert_eq!(format!("{size_two:?}"), "HandSizeExactly(2)");
+        assert_eq!(format!("{played_flush:?}"), "PlayedHandType(Flush)");
     }
 
     #[test]
@@ -492,13 +492,13 @@ mod tests {
         let not_condition = JokerCondition::Not(Box::new(JokerCondition::Always));
 
         // Test formatting
-        assert!(format!("{:?}", all_condition).contains("All"));
-        assert!(format!("{:?}", any_condition).contains("Any"));
-        assert!(format!("{:?}", not_condition).contains("Not"));
+        assert!(format!("{all_condition:?}").contains("All"));
+        assert!(format!("{any_condition:?}").contains("Any"));
+        assert!(format!("{not_condition:?}").contains("Not"));
 
         // Test Always condition
         let always = JokerCondition::Always;
-        assert_eq!(format!("{:?}", always), "Always");
+        assert_eq!(format!("{always:?}"), "Always");
     }
 
     #[test]
@@ -520,12 +520,14 @@ mod tests {
 
     // Mock GameContext for testing - contains only the fields we need to test
     #[derive(Debug)]
+    #[allow(dead_code)]
     struct MockGameContext {
         pub money: i32,
         pub chips: i32,
         pub mult: i32,
     }
 
+    #[allow(dead_code)]
     impl MockGameContext {
         fn new(money: i32) -> Self {
             Self {

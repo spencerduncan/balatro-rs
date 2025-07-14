@@ -62,9 +62,8 @@ fn all_dependencies_are_justified() {
 
     for dep in dependencies {
         assert!(
-            content.contains(&format!("### {}", dep)),
-            "Dependency '{}' must have a justification section",
-            dep
+            content.contains(&format!("### {dep}")),
+            "Dependency '{dep}' must have a justification section"
         );
     }
 }
@@ -76,7 +75,7 @@ fn pyo3_version_is_secure() {
 
     for file in cargo_files {
         if Path::new(file).exists() {
-            let content = fs::read_to_string(file).expect(&format!("Failed to read {}", file));
+            let content = fs::read_to_string(file).unwrap_or_else(|_| panic!("Failed to read {file}"));
 
             if content.contains("pyo3") {
                 // Check that pyo3 version is at least 0.24.1
@@ -88,8 +87,7 @@ fn pyo3_version_is_secure() {
                     content.contains("version = \"0.24") ||
                     content.contains("version = \"0.25") ||
                     content.contains("version = \"1."),
-                    "pyo3 version must be at least 0.24.1 to address RUSTSEC-2025-0020 vulnerability in {}",
-                    file
+                    "pyo3 version must be at least 0.24.1 to address RUSTSEC-2025-0020 vulnerability in {file}"
                 );
             }
         }

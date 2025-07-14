@@ -411,7 +411,6 @@ impl StaticJokerFactory {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::joker::Joker;
 
     #[test]
     fn test_basic_joker_creation() {
