@@ -47,7 +47,7 @@ impl SelectHand {
         self.0.iter().map(|x| x.value).sorted().collect()
     }
     pub(crate) fn cards(&self) -> Vec<Card> {
-        return self.0.clone();
+        self.0.clone()
     }
 
     // Get map of each value with corresponding cards.
@@ -64,10 +64,10 @@ impl SelectHand {
             }
         }
         // Return sorted by value
-        return counts
+        counts
             .into_iter()
             .sorted_by(|a, b| Ord::cmp(&b.0, &a.0))
-            .collect();
+            .collect()
     }
 
     // Get all suits in a hand
@@ -89,10 +89,10 @@ impl SelectHand {
             }
         }
         // Return sorted by suit
-        return counts
+        counts
             .into_iter()
             .sorted_by(|a, b| Ord::cmp(&b.0, &a.0))
-            .collect();
+            .collect()
     }
 
     /// Can play any number of cards, it is our responsibility
@@ -217,7 +217,7 @@ impl SelectHand {
             });
         }
         // We didn't match any known hand, oops...
-        return Err(PlayHandError::UnknownHand);
+        Err(PlayHandError::UnknownHand)
     }
 
     pub(crate) fn is_highcard(&self) -> Option<SelectHand> {
@@ -227,11 +227,11 @@ impl SelectHand {
         if let Some((_value, cards)) = self
             .values_freq()
             .into_iter()
-            .find(|(_key, val)| val.len() >= 1)
+            .find(|(_key, val)| !val.is_empty())
         {
-            return Some(SelectHand::new(cards));
+            Some(SelectHand::new(cards))
         } else {
-            return None;
+            None
         }
     }
 
@@ -244,9 +244,9 @@ impl SelectHand {
             .into_iter()
             .find(|(_key, val)| val.len() >= 2)
         {
-            return Some(SelectHand::new(cards));
+            Some(SelectHand::new(cards))
         } else {
-            return None;
+            None
         }
     }
 
@@ -260,9 +260,7 @@ impl SelectHand {
             .values_freq()
             .into_iter()
             .find(|(_key, val)| val.len() >= 2);
-        if first.is_none() {
-            return None;
-        }
+        first.as_ref()?;
         let first_val = first
             .as_ref()
             .unwrap()
@@ -276,15 +274,13 @@ impl SelectHand {
             .values_freq()
             .into_iter()
             .find(|(key, val)| *key != first_val && val.len() >= 2);
-        if second.is_none() {
-            return None;
-        }
+        second.as_ref()?;
 
         // Combine first and second pair
         let mut cards: Vec<Card> = Vec::new();
         cards.extend(first.unwrap().1);
         cards.extend(second.unwrap().1);
-        return Some(SelectHand::new(cards));
+        Some(SelectHand::new(cards))
     }
 
     pub(crate) fn is_three_of_kind(&self) -> Option<SelectHand> {
@@ -296,9 +292,9 @@ impl SelectHand {
             .into_iter()
             .find(|(_key, val)| val.len() >= 3)
         {
-            return Some(SelectHand::new(cards));
+            Some(SelectHand::new(cards))
         } else {
-            return None;
+            None
         }
     }
 
@@ -326,7 +322,7 @@ impl SelectHand {
                 return Some(self.clone());
             }
         }
-        return None;
+        None
     }
 
     pub(crate) fn is_flush(&self) -> Option<SelectHand> {
@@ -338,9 +334,9 @@ impl SelectHand {
             .into_iter()
             .find(|(_key, val)| val.len() == 5)
         {
-            return Some(SelectHand::new(cards));
+            Some(SelectHand::new(cards))
         } else {
-            return None;
+            None
         }
     }
 
@@ -354,9 +350,7 @@ impl SelectHand {
             .values_freq()
             .into_iter()
             .find(|(_key, val)| val.len() >= 3);
-        if three.is_none() {
-            return None;
-        }
+        three.as_ref()?;
         let three_val = three
             .as_ref()
             .unwrap()
@@ -370,15 +364,13 @@ impl SelectHand {
             .values_freq()
             .into_iter()
             .find(|(key, val)| *key != three_val && val.len() >= 2);
-        if two.is_none() {
-            return None;
-        }
+        two.as_ref()?;
 
         // Combine 3ok and 2ok
         let mut cards: Vec<Card> = Vec::new();
         cards.extend(three.unwrap().1);
         cards.extend(two.unwrap().1);
-        return Some(SelectHand::new(cards));
+        Some(SelectHand::new(cards))
     }
 
     pub(crate) fn is_four_of_kind(&self) -> Option<SelectHand> {
@@ -390,9 +382,9 @@ impl SelectHand {
             .into_iter()
             .find(|(_key, val)| val.len() >= 4)
         {
-            return Some(SelectHand::new(cards));
+            Some(SelectHand::new(cards))
         } else {
-            return None;
+            None
         }
     }
 
@@ -400,7 +392,7 @@ impl SelectHand {
         if self.is_flush().is_some() && self.is_straight().is_some() {
             return Some(self.clone());
         }
-        return None;
+        None
     }
 
     pub(crate) fn is_royal_flush(&self) -> Option<SelectHand> {
@@ -415,7 +407,7 @@ impl SelectHand {
         {
             return Some(self.clone());
         }
-        return None;
+        None
     }
 
     pub(crate) fn is_five_of_kind(&self) -> Option<SelectHand> {
@@ -427,9 +419,9 @@ impl SelectHand {
             .into_iter()
             .find(|(_key, val)| val.len() >= 5)
         {
-            return Some(SelectHand::new(cards));
+            Some(SelectHand::new(cards))
         } else {
-            return None;
+            None
         }
     }
 
@@ -437,14 +429,14 @@ impl SelectHand {
         if self.is_flush().is_some() && self.is_fullhouse().is_some() {
             return Some(self.clone());
         }
-        return None;
+        None
     }
 
     pub(crate) fn is_flush_five(&self) -> Option<SelectHand> {
         if self.is_flush().is_some() && self.is_five_of_kind().is_some() {
             return Some(self.clone());
         }
-        return None;
+        None
     }
 }
 
@@ -462,7 +454,7 @@ impl fmt::Display for SelectHand {
             write!(f, "{}", card)?;
         }
         write!(f, "]")?;
-        return Ok(());
+        Ok(())
     }
 }
 
@@ -524,7 +516,7 @@ mod tests {
         assert_eq!(freq.get(&Value::Four).unwrap()[0].value, Value::Four);
 
         // Check ordered by value
-        assert_eq!(freq.into_iter().nth(0).unwrap().0, Value::King)
+        assert_eq!(freq.into_iter().next().unwrap().0, Value::King)
     }
 
     #[test]

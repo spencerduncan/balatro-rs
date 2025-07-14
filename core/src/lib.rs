@@ -32,7 +32,7 @@ mod tests {
         while !g.is_over() {
             // Get all available actions
             let actions: Vec<Action> = g.gen_actions().collect();
-            if actions.len() == 0 {
+            if actions.is_empty() {
                 break;
             }
 

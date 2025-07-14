@@ -172,7 +172,7 @@ impl Card {
         Self {
             value,
             suit,
-            id: id,
+            id,
             edition: Edition::Base,
             enhancement: None,
             seal: None,
@@ -180,10 +180,7 @@ impl Card {
     }
 
     pub fn is_face(&self) -> bool {
-        match self.value {
-            Value::Jack | Value::Queen | Value::King => true,
-            _ => false,
-        }
+        matches!(self.value, Value::Jack | Value::Queen | Value::King)
     }
 
     pub fn is_even(&self) -> bool {
@@ -257,36 +254,36 @@ mod tests {
     #[test]
     fn test_face() {
         let king = Card::new(Value::King, Suit::Heart);
-        assert_eq!(king.is_face(), true);
+        assert!(king.is_face());
         let two = Card::new(Value::Two, Suit::Diamond);
-        assert_eq!(two.is_face(), false);
+        assert!(!two.is_face());
     }
 
     #[test]
     fn test_even_odd() {
         // ace is odd
         let ace = Card::new(Value::Ace, Suit::Spade);
-        assert_eq!(ace.is_even(), false);
-        assert_eq!(ace.is_odd(), true);
+        assert!(!ace.is_even());
+        assert!(ace.is_odd());
 
         // two is even
         let two = Card::new(Value::Two, Suit::Diamond);
-        assert_eq!(two.is_even(), true);
-        assert_eq!(two.is_odd(), false);
+        assert!(two.is_even());
+        assert!(!two.is_odd());
 
         // three is odd
         let three = Card::new(Value::Three, Suit::Heart);
-        assert_eq!(three.is_even(), false);
-        assert_eq!(three.is_odd(), true);
+        assert!(!three.is_even());
+        assert!(three.is_odd());
 
         // ten is even
         let ten = Card::new(Value::Ten, Suit::Heart);
-        assert_eq!(ten.is_even(), true);
-        assert_eq!(ten.is_odd(), false);
+        assert!(ten.is_even());
+        assert!(!ten.is_odd());
 
         //king is neither odd nor even
         let king = Card::new(Value::King, Suit::Club);
-        assert_eq!(king.is_even(), false);
-        assert_eq!(king.is_odd(), false);
+        assert!(!king.is_even());
+        assert!(!king.is_odd());
     }
 }

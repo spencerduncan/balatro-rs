@@ -138,7 +138,7 @@ make_jokers!(
 
 impl Jokers {
     pub(crate) fn by_rarity(rarirty: Rarity) -> Vec<Self> {
-        return Self::iter().filter(|j| j.rarity() == rarirty).collect();
+        Self::iter().filter(|j| j.rarity() == rarirty).collect()
     }
 }
 
