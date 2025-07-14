@@ -115,10 +115,49 @@ impl JokerStateManager {
         }
     }
 
-    /// Get a copy of a joker's state (creates default if not exists)
-    pub fn get_state(&self, joker_id: JokerId) -> JokerState {
+    /// Get a copy of a joker's state if it exists
+    pub fn get_state(&self, joker_id: JokerId) -> Option<JokerState> {
         let states = self.states.read().unwrap();
-        states.get(&joker_id).cloned().unwrap_or_default()
+        states.get(&joker_id).cloned()
+    }
+
+    /// Get a copy of a joker's state or create default if not exists
+    pub fn get_or_default(&self, joker_id: JokerId) -> JokerState {
+        self.get_state(joker_id).unwrap_or_default()
+    }
+
+    /// Get or insert a joker's state with a custom initialization function
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use balatro_rs::{JokerStateManager, JokerId, JokerState};
+    /// let manager = JokerStateManager::new();
+    ///
+    /// // Get or create state with initial triggers
+    /// let state = manager.get_or_insert_with(JokerId::Joker, || {
+    ///     JokerState::with_triggers(5)
+    /// });
+    ///
+    /// // Get or create state with initial accumulated value
+    /// let state = manager.get_or_insert_with(JokerId::GreedyJoker, || {
+    ///     JokerState::with_accumulated_value(100.0)
+    /// });
+    /// ```
+    pub fn get_or_insert_with<F>(&self, joker_id: JokerId, init_fn: F) -> JokerState
+    where
+        F: FnOnce() -> JokerState,
+    {
+        // First check if state exists
+        if let Some(state) = self.get_state(joker_id) {
+            return state;
+        }
+
+        // If not, create and insert new state
+        let mut states = self.states.write().unwrap();
+        let state = init_fn();
+        states.insert(joker_id, state.clone());
+        state
     }
 
     /// Set a joker's state
@@ -128,6 +167,23 @@ impl JokerStateManager {
     }
 
     /// Update a joker's state with a closure
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use balatro_rs::{JokerStateManager, JokerId};
+    /// let manager = JokerStateManager::new();
+    ///
+    /// // Add to accumulated value
+    /// manager.update_state(JokerId::Joker, |state| {
+    ///     state.accumulated_value += 10.0;
+    /// });
+    ///
+    /// // Set custom data
+    /// manager.update_state(JokerId::Joker, |state| {
+    ///     state.set_custom("combo_count", 5).unwrap();
+    /// });
+    /// ```
     pub fn update_state<F>(&self, joker_id: JokerId, update_fn: F)
     where
         F: FnOnce(&mut JokerState),
@@ -174,22 +230,87 @@ impl JokerStateManager {
         });
     }
 
-    /// Use a trigger for a joker (returns true if triggers remain)
+    /// Use a trigger for a joker (returns true if trigger was successfully used)
+    ///
+    /// This will create a default state if none exists. Default states have
+    /// unlimited triggers (always returns true).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use balatro_rs::joker_state::{JokerStateManager, JokerState};
+    /// # use balatro_rs::joker::JokerId;
+    /// let manager = JokerStateManager::new();
+    /// let joker_id = JokerId::Joker;
+    ///
+    /// // Using trigger on non-existent state creates default (unlimited triggers)
+    /// assert!(manager.use_trigger(joker_id));
+    /// assert!(manager.use_trigger(joker_id)); // Still true - unlimited
+    ///
+    /// // Set limited triggers
+    /// manager.set_state(joker_id, JokerState::with_triggers(2));
+    /// assert!(manager.use_trigger(joker_id)); // Uses first trigger
+    /// assert!(manager.use_trigger(joker_id)); // Uses second trigger
+    /// assert!(!manager.use_trigger(joker_id)); // No triggers left
+    /// ```
     pub fn use_trigger(&self, joker_id: JokerId) -> bool {
-        let mut result = true;
-        self.update_state(joker_id, |state| {
-            result = state.use_trigger();
-        });
-        result
+        let mut states = self.states.write().unwrap();
+
+        // Get or create the state
+        let state = states.entry(joker_id).or_default();
+
+        // Use the trigger and return the result directly
+        state.use_trigger()
     }
 
     /// Check if a joker has triggers available
+    ///
+    /// This is a read-only operation that does not create state.
+    /// Returns `false` if no state exists for the joker.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use balatro_rs::joker_state::{JokerStateManager, JokerState};
+    /// # use balatro_rs::joker::JokerId;
+    /// let manager = JokerStateManager::new();
+    /// let joker_id = JokerId::Joker;
+    ///
+    /// // No state exists yet
+    /// assert!(!manager.has_triggers(joker_id));
+    ///
+    /// // After creating state with triggers
+    /// manager.set_state(joker_id, JokerState::with_triggers(2));
+    /// assert!(manager.has_triggers(joker_id));
+    /// ```
     pub fn has_triggers(&self, joker_id: JokerId) -> bool {
-        let state = self.get_state(joker_id);
-        state.has_triggers()
+        match self.get_state(joker_id) {
+            Some(state) => state.has_triggers(),
+            None => false, // No state means no triggers available
+        }
     }
 
     /// Set custom data for a joker
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use balatro_rs::{JokerStateManager, JokerId};
+    /// let manager = JokerStateManager::new();
+    ///
+    /// // Store a simple value
+    /// manager.set_custom_data(JokerId::Joker, "level", 3).unwrap();
+    ///
+    /// // Store a complex structure
+    /// #[derive(serde::Serialize)]
+    /// struct ComboData {
+    ///     count: u32,
+    ///     multiplier: f64,
+    /// }
+    ///
+    /// let combo = ComboData { count: 5, multiplier: 1.5 };
+    /// manager.set_custom_data(JokerId::Joker, "combo", combo).unwrap();
+    /// ```
     pub fn set_custom_data<T: Serialize>(
         &self,
         joker_id: JokerId,
@@ -204,13 +325,46 @@ impl JokerStateManager {
     }
 
     /// Get custom data for a joker
+    ///
+    /// Returns None if the joker has no state or the key doesn't exist.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use balatro_rs::joker_state::{JokerStateManager, JokerState};
+    /// # use balatro_rs::joker::JokerId;
+    /// # use std::collections::HashMap;
+    /// let manager = JokerStateManager::new();
+    /// let joker_id = JokerId::Joker;
+    ///
+    /// // Set and retrieve data
+    /// manager.set_custom_data(joker_id, "level", 5).unwrap();
+    /// let level: Option<i32> = manager.get_custom_data(joker_id, "level").unwrap();
+    /// assert_eq!(level, Some(5));
+    ///
+    /// // Non-existent key returns None
+    /// let missing: Option<String> = manager.get_custom_data(joker_id, "missing").unwrap();
+    /// assert_eq!(missing, None);
+    ///
+    /// // Complex types
+    /// #[derive(serde::Deserialize, serde::Serialize)]
+    /// struct Stats { wins: u32, losses: u32 }
+    ///
+    /// let stats = Stats { wins: 10, losses: 2 };
+    /// manager.set_custom_data(joker_id, "stats", stats).unwrap();
+    /// let retrieved: Option<Stats> = manager.get_custom_data(joker_id, "stats").unwrap();
+    /// assert!(retrieved.is_some());
+    /// assert_eq!(retrieved.unwrap().wins, 10);
+    /// ```
     pub fn get_custom_data<T: for<'de> Deserialize<'de>>(
         &self,
         joker_id: JokerId,
         key: &str,
     ) -> Result<Option<T>, serde_json::Error> {
-        let state = self.get_state(joker_id);
-        state.get_custom(key)
+        match self.get_state(joker_id) {
+            Some(state) => state.get_custom(key),
+            None => Ok(None), // No state means no custom data
+        }
     }
 }
 
@@ -291,9 +445,9 @@ mod tests {
         assert!(!manager.has_state(joker_id));
         assert_eq!(manager.count(), 0);
 
-        // Get creates default state
+        // Get returns None when no state exists
         let state = manager.get_state(joker_id);
-        assert_eq!(state.accumulated_value, 0.0);
+        assert!(state.is_none());
 
         // Set state
         let new_state = JokerState::with_accumulated_value(15.0);
@@ -302,7 +456,8 @@ mod tests {
         assert_eq!(manager.count(), 1);
 
         let retrieved = manager.get_state(joker_id);
-        assert_eq!(retrieved.accumulated_value, 15.0);
+        assert!(retrieved.is_some());
+        assert_eq!(retrieved.unwrap().accumulated_value, 15.0);
     }
 
     #[test]
@@ -316,7 +471,8 @@ mod tests {
         });
 
         let state = manager.get_state(joker_id);
-        assert_eq!(state.accumulated_value, 10.0);
+        assert!(state.is_some());
+        assert_eq!(state.unwrap().accumulated_value, 10.0);
 
         // Update existing state
         manager.update_state(joker_id, |state| {
@@ -324,7 +480,8 @@ mod tests {
         });
 
         let state = manager.get_state(joker_id);
-        assert_eq!(state.accumulated_value, 15.0);
+        assert!(state.is_some());
+        assert_eq!(state.unwrap().accumulated_value, 15.0);
     }
 
     #[test]
@@ -336,7 +493,8 @@ mod tests {
         manager.add_accumulated_value(joker_id, 2.0);
 
         let state = manager.get_state(joker_id);
-        assert_eq!(state.accumulated_value, 5.0);
+        assert!(state.is_some());
+        assert_eq!(state.unwrap().accumulated_value, 5.0);
     }
 
     #[test]
