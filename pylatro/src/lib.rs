@@ -1,5 +1,6 @@
 use balatro_rs::action::Action;
 use balatro_rs::card::Card;
+use balatro_rs::concurrent_state::LockFreeStateSnapshot;
 use balatro_rs::config::Config;
 use balatro_rs::error::GameError;
 use balatro_rs::game::Game;
@@ -49,6 +50,44 @@ impl GameEngine {
         GameState {
             game: self.game.clone(),
         }
+    }
+
+    /// Get lightweight state snapshot for high-frequency access
+    #[getter]
+    fn lightweight_state(&self) -> LightweightGameState {
+        let snapshot = self.game.get_lock_free_state_snapshot();
+        LightweightGameState { snapshot }
+    }
+
+    /// Concurrent-safe access to money value
+    fn get_money_concurrent(&self) -> usize {
+        self.game.get_money_concurrent()
+    }
+
+    /// Concurrent-safe access to chips value
+    fn get_chips_concurrent(&self) -> usize {
+        self.game.get_chips_concurrent()
+    }
+
+    /// Concurrent-safe access to score value
+    fn get_score_concurrent(&self) -> usize {
+        self.game.get_score_concurrent()
+    }
+
+    /// Concurrent-safe access to stage value
+    fn get_stage_concurrent(&self) -> String {
+        self.game.get_stage_concurrent()
+    }
+
+    /// Enable action caching for improved performance
+    fn enable_action_caching(&mut self, ttl_ms: u64) {
+        let ttl = std::time::Duration::from_millis(ttl_ms);
+        self.game.enable_action_caching(ttl);
+    }
+
+    /// Generate actions with caching optimization
+    fn get_cached_actions(&self) -> Vec<Action> {
+        self.game.gen_actions_cached()
     }
     #[getter]
     fn is_over(&self) -> bool {
@@ -145,11 +184,73 @@ impl GameState {
     }
 }
 
+/// Lightweight game state for high-frequency access without cloning
+#[pyclass]
+struct LightweightGameState {
+    snapshot: LockFreeStateSnapshot,
+}
+
+#[pymethods]
+impl LightweightGameState {
+    #[getter]
+    fn money(&self) -> usize {
+        self.snapshot.money
+    }
+
+    #[getter]
+    fn chips(&self) -> usize {
+        self.snapshot.chips
+    }
+
+    #[getter]
+    fn mult(&self) -> usize {
+        self.snapshot.mult
+    }
+
+    #[getter]
+    fn score(&self) -> usize {
+        self.snapshot.score
+    }
+
+    #[getter]
+    fn stage(&self) -> String {
+        self.snapshot.stage.clone()
+    }
+
+    #[getter]
+    fn round(&self) -> usize {
+        self.snapshot.round
+    }
+
+    #[getter]
+    fn plays_remaining(&self) -> usize {
+        self.snapshot.plays_remaining
+    }
+
+    #[getter]
+    fn discards_remaining(&self) -> usize {
+        self.snapshot.discards_remaining
+    }
+
+    fn __repr__(&self) -> String {
+        format!(
+            "LightweightGameState(money={}, chips={}, mult={}, score={}, stage='{}', round={})",
+            self.snapshot.money,
+            self.snapshot.chips,
+            self.snapshot.mult,
+            self.snapshot.score,
+            self.snapshot.stage,
+            self.snapshot.round
+        )
+    }
+}
+
 #[pymodule]
 fn pylatro(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Config>()?;
     m.add_class::<GameEngine>()?;
     m.add_class::<GameState>()?;
+    m.add_class::<LightweightGameState>()?;
     m.add_class::<Stage>()?;
     Ok(())
 }

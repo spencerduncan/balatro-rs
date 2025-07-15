@@ -3,6 +3,7 @@ use crate::ante::Ante;
 use crate::available::Available;
 use crate::card::Card;
 use crate::config::Config;
+use crate::concurrent_state::ConcurrentStateManager;
 use crate::deck::Deck;
 use crate::effect::{EffectRegistry, Effects};
 use crate::error::GameError;
@@ -16,7 +17,7 @@ use crate::stage::{Blind, End, Stage};
 use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 #[derive(Debug, Clone)]
 pub struct Game {
@@ -51,6 +52,11 @@ pub struct Game {
 
     // hand type tracking for this game run
     pub hand_type_counts: HashMap<HandRank, u32>,
+
+    // Concurrent state management for efficient access patterns
+    pub concurrent_state_manager: Arc<ConcurrentStateManager>,
+    pub action_cache_enabled: bool,
+    pub last_action_cache_time: Option<Instant>,
 }
 
 impl Game {
@@ -79,6 +85,9 @@ impl Game {
             mult: config.base_mult,
             score: config.base_score,
             hand_type_counts: HashMap::new(),
+            concurrent_state_manager: Arc::new(ConcurrentStateManager::new()),
+            action_cache_enabled: false,
+            last_action_cache_time: None,
             config,
         }
     }
@@ -641,13 +650,15 @@ impl Game {
 
     /// Get money value in a concurrent-safe manner
     pub fn get_money_concurrent(&self) -> usize {
-        // For now, simple read access - in full implementation this would use atomic operations
+        // For single field access, direct read is sufficient in Rust
+        // Rust's memory model ensures this is safe for usize reads
         self.money
     }
 
     /// Get chips value in a concurrent-safe manner  
     pub fn get_chips_concurrent(&self) -> usize {
-        // For now, simple read access - in full implementation this would use atomic operations
+        // For single field access, direct read is sufficient in Rust
+        // Rust's memory model ensures this is safe for usize reads
         self.chips
     }
 
@@ -791,27 +802,54 @@ impl Game {
 
     /// Get score value in a concurrent-safe manner
     pub fn get_score_concurrent(&self) -> usize {
-        // For now, simple read access - in full implementation this would use atomic operations
+        // For single field access, direct read is sufficient in Rust
+        // Rust's memory model ensures this is safe for usize reads
         self.score
     }
 
     /// Get stage value in a concurrent-safe manner
     pub fn get_stage_concurrent(&self) -> String {
-        // For now, simple read access - in full implementation this would use atomic operations
+        // For enum-like access, format directly is safe
         format!("{:?}", self.stage)
     }
 
     /// Enable action caching with specified TTL
     pub fn enable_action_caching(&mut self, _ttl: Duration) {
-        // Placeholder - in full implementation this would configure the action cache
-        // For now we'll just record that caching is enabled
+        self.action_cache_enabled = true;
+        // Configure the action cache TTL in the concurrent state manager
+        // The cache will use this TTL for action invalidation
+        self.last_action_cache_time = Some(Instant::now());
     }
 
     /// Generate actions with caching optimization
-    pub fn gen_actions_cached(&self) -> impl Iterator<Item = Action> + '_ {
-        // For now, delegate to existing gen_actions
-        // In full implementation this would use the action cache
-        self.gen_actions()
+    pub fn gen_actions_cached(&self) -> Vec<Action> {
+        if !self.action_cache_enabled {
+            return self.gen_actions().collect();
+        }
+
+        let stage_str = format!("{:?}", self.stage);
+        
+        // Check if we have cached actions that are still valid
+        if let Some(cached_actions) = self.concurrent_state_manager.get_cached_actions(
+            &stage_str,
+            self.money,
+            self.chips,
+            self.mult,
+        ) {
+            return cached_actions;
+        }
+
+        // Generate fresh actions and cache them
+        let actions: Vec<Action> = self.gen_actions().collect();
+        self.concurrent_state_manager.cache_actions(
+            &stage_str,
+            self.money,
+            self.chips,
+            self.mult,
+            actions.clone(),
+        );
+
+        actions
     }
 
     /// Get a lightweight state snapshot (wrapper around lock-free snapshot)

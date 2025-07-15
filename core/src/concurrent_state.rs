@@ -96,6 +96,7 @@ impl ActionCache {
 }
 
 /// Concurrent state manager for thread-safe operations
+#[derive(Debug)]
 pub struct ConcurrentStateManager {
     state_cache: RwLock<HashMap<String, LockFreeStateSnapshot>>,
     action_cache: RwLock<ActionCache>,

@@ -65,12 +65,12 @@ fn test_cached_action_generation() {
 
     // First call should cache the result
     let start = Instant::now();
-    let actions1: Vec<Action> = game.gen_actions_cached().collect();
+    let actions1: Vec<Action> = game.gen_actions_cached();
     let first_duration = start.elapsed();
 
     // Second call should be faster due to caching
     let start = Instant::now();
-    let actions2: Vec<Action> = game.gen_actions_cached().collect();
+    let actions2: Vec<Action> = game.gen_actions_cached();
     let second_duration = start.elapsed();
 
     // Verify results are identical

@@ -109,7 +109,7 @@ fn bench_cached_action_generation(c: &mut Criterion) {
     group.bench_function("cached_generation", |b| {
         b.iter(|| {
             for _ in 0..10 {
-                let actions: Vec<_> = black_box(game.gen_actions_cached().collect());
+                let actions: Vec<_> = black_box(game.gen_actions_cached());
                 black_box(actions);
             }
         })
