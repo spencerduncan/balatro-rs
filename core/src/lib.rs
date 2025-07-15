@@ -1,8 +1,10 @@
 pub mod action;
 pub mod ante;
 pub mod available;
+pub mod boss_blinds;
 pub mod card;
 pub mod config;
+pub mod consumables;
 pub mod deck;
 pub mod effect;
 pub mod error;
@@ -18,8 +20,10 @@ pub mod rank;
 pub mod shop;
 pub mod space;
 pub mod stage;
+pub mod state_version;
 pub mod static_joker;
 pub mod static_joker_factory;
+pub mod vouchers;
 
 #[cfg(test)]
 mod tests {
