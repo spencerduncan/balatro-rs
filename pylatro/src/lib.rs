@@ -3,10 +3,12 @@ use balatro_rs::card::Card;
 use balatro_rs::config::Config;
 use balatro_rs::error::GameError;
 use balatro_rs::game::Game;
+use balatro_rs::joker::compat::Joker as OldJoker;
 use balatro_rs::joker::{JokerId, JokerRarity, Jokers};
 use balatro_rs::joker_registry::{registry, JokerDefinition, UnlockCondition};
 use balatro_rs::stage::{End, Stage};
 use pyo3::prelude::*;
+use pyo3::{PyResult, Python};
 
 #[pyclass]
 struct GameEngine {
@@ -173,8 +175,22 @@ impl GameState {
         self.game.required_score()
     }
     #[getter]
-    fn jokers(&self) -> Vec<Jokers> {
-        self.game.jokers.clone()
+    fn jokers(&self) -> PyResult<Vec<Jokers>> {
+        // Emit deprecation warning
+        Python::with_gil(|py| {
+            let warnings = py.import("warnings")?;
+            warnings.call_method1(
+                "warn",
+                (
+                    "GameState.jokers is deprecated. Use GameState.joker_ids with GameEngine.get_joker_info() instead. \
+                     The jokers property will be removed in a future version. \
+                     See migration guide for details.",
+                    py.get_type::<pyo3::exceptions::PyDeprecationWarning>(),
+                    2  // stacklevel - show warning at caller's location
+                ),
+            )?;
+            Ok(self.game.jokers.clone())
+        })
     }
 
     /// Get joker IDs using the new JokerId system
@@ -193,6 +209,34 @@ impl GameState {
     #[getter]
     fn joker_slots_total(&self) -> usize {
         self.game.config.joker_slots_max
+    }
+
+    /// Get joker names for easy migration from old API
+    ///
+    /// This is a convenience method to help users migrate from:
+    /// `[j.name() for j in state.jokers]`
+    /// to:
+    /// `state.get_joker_names()`
+    fn get_joker_names(&self) -> Vec<String> {
+        self.game
+            .jokers
+            .iter()
+            .map(|j| j.name().to_string())
+            .collect()
+    }
+
+    /// Get joker descriptions for easy migration from old API
+    ///
+    /// This is a convenience method to help users migrate from:
+    /// `[j.desc() for j in state.jokers]`
+    /// to:
+    /// `state.get_joker_descriptions()`
+    fn get_joker_descriptions(&self) -> Vec<String> {
+        self.game
+            .jokers
+            .iter()
+            .map(|j| j.desc().to_string())
+            .collect()
     }
 
     #[getter]
