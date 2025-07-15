@@ -87,11 +87,7 @@ fn test_migration_no_old_effects_enum() {
     // This test should pass after migration by ensuring old system components
     // are no longer accessible or used
 
-    // After migration, these should NOT be importable:
-    // use balatro_rs::effect::Effects;        // Should not exist
-    // use balatro_rs::effect::EffectRegistry; // Should not exist
-
-    // Only new system should be available
+    // Only new structured system should be available
     let game = Game::default();
 
     // New joker system should work

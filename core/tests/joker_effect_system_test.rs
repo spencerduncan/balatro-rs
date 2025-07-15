@@ -132,14 +132,7 @@ fn test_joker_effect_modifiers() {
 /// Test that the old Effects enum system is completely removed
 #[test]
 fn test_old_effects_enum_removed() {
-    // This test ensures we can't accidentally use the old system
-    // If this compiles, it means the old Effects enum is still present
-
-    // This should NOT compile after migration:
-    // use balatro_rs::effect::Effects;  // Should be removed
-    // use balatro_rs::effect::EffectRegistry;  // Should be removed
-
-    // Instead, we should only be able to use the new system:
+    // This test ensures we can only use the new structured JokerEffect system
     let joker = JokerFactory::create(JokerId::Joker).expect("Can create joker");
     assert!(joker.id() == JokerId::Joker);
 }

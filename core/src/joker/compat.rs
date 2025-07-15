@@ -1,13 +1,9 @@
-// use crate::card::Suit; // No longer needed
-// use crate::effect::Effects; // Removed - no longer using Effects enum
 use crate::game::Game;
-// use crate::hand::MadeHand; // No longer needed
 use crate::joker::{Categories, Joker as NewJoker, JokerRarity as Rarity};
 #[cfg(feature = "python")]
 use pyo3::pyclass;
 use serde::{Deserialize, Serialize};
 use std::fmt;
-// use std::sync::{Arc, Mutex}; // No longer needed - Effects system removed
 use strum::{EnumIter, IntoEnumIterator};
 
 /// Old-style Joker trait for compatibility
