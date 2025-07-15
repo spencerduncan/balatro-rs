@@ -182,11 +182,51 @@ fn get_registry() -> &'static Arc<RwLock<JokerRegistry>> {
 /// Initializes the registry with default joker implementations
 fn initialize_default_jokers(registry: &mut JokerRegistry) {
     // Register basic jokers
-    register_joker(registry, JokerId::Joker, "Joker", "+4 Mult", JokerRarity::Common, None, create_the_joker);
-    register_joker(registry, JokerId::GreedyJoker, "Greedy Joker", "Played cards with Diamond suit give +3 Mult when scored", JokerRarity::Common, None, create_greedy_joker);
-    register_joker(registry, JokerId::LustyJoker, "Lusty Joker", "Played cards with Heart suit give +3 Mult when scored", JokerRarity::Common, None, create_lusty_joker);
-    register_joker(registry, JokerId::WrathfulJoker, "Wrathful Joker", "Played cards with Spade suit give +3 Mult when scored", JokerRarity::Common, None, create_wrathful_joker);
-    register_joker(registry, JokerId::GluttonousJoker, "Gluttonous Joker", "Played cards with Club suit give +3 Mult when scored", JokerRarity::Common, None, create_gluttonous_joker);
+    register_joker(
+        registry,
+        JokerId::Joker,
+        "Joker",
+        "+4 Mult",
+        JokerRarity::Common,
+        None,
+        create_the_joker,
+    );
+    register_joker(
+        registry,
+        JokerId::GreedyJoker,
+        "Greedy Joker",
+        "Played cards with Diamond suit give +3 Mult when scored",
+        JokerRarity::Common,
+        None,
+        create_greedy_joker,
+    );
+    register_joker(
+        registry,
+        JokerId::LustyJoker,
+        "Lusty Joker",
+        "Played cards with Heart suit give +3 Mult when scored",
+        JokerRarity::Common,
+        None,
+        create_lusty_joker,
+    );
+    register_joker(
+        registry,
+        JokerId::WrathfulJoker,
+        "Wrathful Joker",
+        "Played cards with Spade suit give +3 Mult when scored",
+        JokerRarity::Common,
+        None,
+        create_wrathful_joker,
+    );
+    register_joker(
+        registry,
+        JokerId::GluttonousJoker,
+        "Gluttonous Joker",
+        "Played cards with Club suit give +3 Mult when scored",
+        JokerRarity::Common,
+        None,
+        create_gluttonous_joker,
+    );
 }
 
 // Factory functions for creating joker instances
@@ -227,7 +267,7 @@ fn register_joker(
         rarity,
         unlock_condition,
     };
-    
+
     if let Err(e) = registry.register(definition, factory) {
         eprintln!("Failed to register joker {id:?}: {e}");
     }

@@ -16,21 +16,21 @@ pub struct JokerMetadata {
     pub rarity: JokerRarity,
     pub cost: i32,
     pub sell_value: i32,
-    
+
     /// Effect information
     pub effect_type: String,
     pub effect_description: String,
     pub scaling_info: Option<HashMap<String, String>>,
-    
+
     /// Conditional information
     pub triggers_on: Vec<String>,
     pub conditions: Vec<String>,
-    
+
     /// State information
     pub uses_state: bool,
     pub max_triggers: Option<i32>,
     pub persistent_data: bool,
-    
+
     /// Unlock information
     pub unlock_condition: Option<UnlockCondition>,
     pub is_unlocked: bool,
@@ -46,16 +46,16 @@ impl JokerMetadata {
             JokerRarity::Rare => 8,
             JokerRarity::Legendary => 20,
         };
-        
+
         // Calculate sell value (half of cost)
         let sell_value = cost / 2;
-        
+
         // Determine effect type based on description and ID
         let effect_type = determine_effect_type(&definition.id, &definition.description);
-        
+
         // Determine triggers and conditions based on joker type
         let (triggers_on, conditions) = determine_triggers_and_conditions(&definition.id);
-        
+
         Self {
             id: definition.id,
             name: definition.name.clone(),
@@ -68,8 +68,8 @@ impl JokerMetadata {
             scaling_info: None, // TODO: Extract from joker implementations
             triggers_on,
             conditions,
-            uses_state: false, // TODO: Determine from joker implementation
-            max_triggers: None, // TODO: Extract from joker implementation
+            uses_state: false,      // TODO: Determine from joker implementation
+            max_triggers: None,     // TODO: Extract from joker implementation
             persistent_data: false, // TODO: Determine from joker implementation
             unlock_condition: definition.unlock_condition.clone(),
             is_unlocked,
@@ -93,7 +93,10 @@ fn determine_effect_type(id: &JokerId, description: &str) -> &'static str {
     } else {
         match id {
             JokerId::Joker => "Basic Mult",
-            JokerId::GreedyJoker | JokerId::LustyJoker | JokerId::WrathfulJoker | JokerId::GluttonousJoker => "Conditional Mult",
+            JokerId::GreedyJoker
+            | JokerId::LustyJoker
+            | JokerId::WrathfulJoker
+            | JokerId::GluttonousJoker => "Conditional Mult",
             _ => "Effect",
         }
     }
@@ -103,10 +106,22 @@ fn determine_effect_type(id: &JokerId, description: &str) -> &'static str {
 fn determine_triggers_and_conditions(id: &JokerId) -> (Vec<String>, Vec<String>) {
     match id {
         JokerId::Joker => (vec!["hand_played".to_string()], vec![]),
-        JokerId::GreedyJoker => (vec!["card_scored".to_string()], vec!["suit:Diamond".to_string()]),
-        JokerId::LustyJoker => (vec!["card_scored".to_string()], vec!["suit:Heart".to_string()]),
-        JokerId::WrathfulJoker => (vec!["card_scored".to_string()], vec!["suit:Spade".to_string()]),
-        JokerId::GluttonousJoker => (vec!["card_scored".to_string()], vec!["suit:Club".to_string()]),
+        JokerId::GreedyJoker => (
+            vec!["card_scored".to_string()],
+            vec!["suit:Diamond".to_string()],
+        ),
+        JokerId::LustyJoker => (
+            vec!["card_scored".to_string()],
+            vec!["suit:Heart".to_string()],
+        ),
+        JokerId::WrathfulJoker => (
+            vec!["card_scored".to_string()],
+            vec!["suit:Spade".to_string()],
+        ),
+        JokerId::GluttonousJoker => (
+            vec!["card_scored".to_string()],
+            vec!["suit:Club".to_string()],
+        ),
         _ => (vec![], vec![]),
     }
 }

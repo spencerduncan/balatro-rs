@@ -1,3 +1,5 @@
+#![allow(deprecated)] // Allow deprecated to_object calls temporarily - will be fixed in PyO3 migration
+
 use balatro_rs::action::Action;
 use balatro_rs::card::Card;
 use balatro_rs::config::Config;
@@ -279,19 +281,65 @@ impl GameEngine {
         let active_jokers = &state.jokers;
 
         // Find the joker in active jokers
-        let joker_state = active_jokers.iter().find(|j| j.to_joker_id() == joker_id);
+        let joker_found = active_jokers.iter().any(|j| j.to_joker_id() == joker_id);
 
-        if let Some(_joker) = joker_state {
-            pyo3::Python::with_gil(|py| {
-                let dict = pyo3::types::PyDict::new(py);
-                let _ = dict.set_item("accumulated_value", 0.0f64); // TODO: Get from actual joker state
-                let _ = dict.set_item("triggers_remaining", py.None()); // TODO: Get from actual joker state
-                let _ = dict.set_item("get_custom_data", pyo3::types::PyDict::new(py));
-                let _ = dict.set_item("has_custom_data", false);
-                let _ = dict.set_item("get_all_custom_keys", pyo3::types::PyList::empty(py));
+        if joker_found {
+            // Get actual state from the joker state manager
+            if let Some(joker_state) = state.joker_state_manager.get_state(joker_id) {
+                pyo3::Python::with_gil(|py| {
+                    let dict = pyo3::types::PyDict::new(py);
+                    let _ = dict.set_item("accumulated_value", joker_state.accumulated_value);
+                    let _ = dict.set_item("triggers_remaining", joker_state.triggers_remaining);
 
-                Some(dict.into())
-            })
+                    // Create custom data dictionary
+                    let custom_data_dict = pyo3::types::PyDict::new(py);
+                    for (key, value) in &joker_state.custom_data {
+                        // Convert serde_json::Value to Python object
+                        let py_value = match value {
+                            serde_json::Value::Null => py.None(),
+                            serde_json::Value::Bool(b) => b.to_object(py),
+                            serde_json::Value::Number(n) => {
+                                if let Some(i) = n.as_i64() {
+                                    i.to_object(py)
+                                } else if let Some(f) = n.as_f64() {
+                                    f.to_object(py)
+                                } else {
+                                    py.None()
+                                }
+                            }
+                            serde_json::Value::String(s) => s.to_object(py),
+                            serde_json::Value::Array(_) | serde_json::Value::Object(_) => {
+                                // For complex types, serialize to string for now
+                                serde_json::to_string(value)
+                                    .unwrap_or_default()
+                                    .to_object(py)
+                            }
+                        };
+                        let _ = custom_data_dict.set_item(key, py_value);
+                    }
+                    let _ = dict.set_item("custom_data", custom_data_dict);
+
+                    let _ = dict.set_item("has_custom_data", !joker_state.custom_data.is_empty());
+
+                    // Create list of custom data keys
+                    let keys_vec: Vec<String> = joker_state.custom_data.keys().cloned().collect();
+                    let _ = dict.set_item("custom_data_keys", keys_vec);
+
+                    Some(dict.into())
+                })
+            } else {
+                // Joker is active but has no state yet - return default state
+                pyo3::Python::with_gil(|py| {
+                    let dict = pyo3::types::PyDict::new(py);
+                    let _ = dict.set_item("accumulated_value", 0.0f64);
+                    let _ = dict.set_item("triggers_remaining", py.None());
+                    let _ = dict.set_item("custom_data", pyo3::types::PyDict::new(py));
+                    let _ = dict.set_item("has_custom_data", false);
+                    let _ = dict.set_item("custom_data_keys", Vec::<String>::new());
+
+                    Some(dict.into())
+                })
+            }
         } else {
             None
         }
@@ -305,8 +353,45 @@ impl GameEngine {
             for joker in &self.game.jokers {
                 let joker_id = joker.to_joker_id();
                 let state_dict = pyo3::types::PyDict::new(py);
-                let _ = state_dict.set_item("accumulated_value", 0.0f64);
-                let _ = state_dict.set_item("triggers_remaining", py.None());
+
+                // Get actual state from the joker state manager
+                if let Some(joker_state) = self.game.joker_state_manager.get_state(joker_id) {
+                    let _ = state_dict.set_item("accumulated_value", joker_state.accumulated_value);
+                    let _ =
+                        state_dict.set_item("triggers_remaining", joker_state.triggers_remaining);
+
+                    // Add custom data
+                    let custom_data_dict = pyo3::types::PyDict::new(py);
+                    for (key, value) in &joker_state.custom_data {
+                        let py_value = match value {
+                            serde_json::Value::Null => py.None(),
+                            serde_json::Value::Bool(b) => b.to_object(py),
+                            serde_json::Value::Number(n) => {
+                                if let Some(i) = n.as_i64() {
+                                    i.to_object(py)
+                                } else if let Some(f) = n.as_f64() {
+                                    f.to_object(py)
+                                } else {
+                                    py.None()
+                                }
+                            }
+                            serde_json::Value::String(s) => s.to_object(py),
+                            serde_json::Value::Array(_) | serde_json::Value::Object(_) => {
+                                serde_json::to_string(value)
+                                    .unwrap_or_default()
+                                    .to_object(py)
+                            }
+                        };
+                        let _ = custom_data_dict.set_item(key, py_value);
+                    }
+                    let _ = state_dict.set_item("custom_data", custom_data_dict);
+                } else {
+                    // No state exists yet - return default values
+                    let _ = state_dict.set_item("accumulated_value", 0.0f64);
+                    let _ = state_dict.set_item("triggers_remaining", py.None());
+                    let _ = state_dict.set_item("custom_data", pyo3::types::PyDict::new(py));
+                }
+
                 let _ = dict.set_item(format!("{joker_id:?}"), state_dict);
             }
 
@@ -482,6 +567,118 @@ impl GameEngine {
         })
     }
 
+    /// Get custom data for a specific joker
+    fn get_joker_custom_data(&self, joker_id: JokerId, key: &str) -> Option<pyo3::PyObject> {
+        if let Some(joker_state) = self.game.joker_state_manager.get_state(joker_id) {
+            if let Some(value) = joker_state.custom_data.get(key) {
+                pyo3::Python::with_gil(|py| {
+                    let py_value = match value {
+                        serde_json::Value::Null => py.None(),
+                        serde_json::Value::Bool(b) => b.to_object(py),
+                        serde_json::Value::Number(n) => {
+                            if let Some(i) = n.as_i64() {
+                                i.to_object(py)
+                            } else if let Some(f) = n.as_f64() {
+                                f.to_object(py)
+                            } else {
+                                py.None()
+                            }
+                        }
+                        serde_json::Value::String(s) => s.to_object(py),
+                        serde_json::Value::Array(_) | serde_json::Value::Object(_) => {
+                            serde_json::to_string(value)
+                                .unwrap_or_default()
+                                .to_object(py)
+                        }
+                    };
+                    Some(py_value)
+                })
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
+
+    /// Check if a joker has custom data for a specific key
+    fn joker_has_custom_data(&self, joker_id: JokerId, key: &str) -> bool {
+        if let Some(joker_state) = self.game.joker_state_manager.get_state(joker_id) {
+            joker_state.custom_data.contains_key(key)
+        } else {
+            false
+        }
+    }
+
+    /// Get all custom data keys for a specific joker
+    fn get_joker_custom_data_keys(&self, joker_id: JokerId) -> Vec<String> {
+        if let Some(joker_state) = self.game.joker_state_manager.get_state(joker_id) {
+            joker_state.custom_data.keys().cloned().collect()
+        } else {
+            Vec::new()
+        }
+    }
+
+    /// Set custom data for a specific joker (string values only for simplicity)
+    fn set_joker_custom_data(&mut self, joker_id: JokerId, key: &str, value: String) -> bool {
+        // Check if joker is active
+        let joker_exists = self.game.jokers.iter().any(|j| j.to_joker_id() == joker_id);
+
+        if joker_exists {
+            // Ensure the joker has state first
+            self.game.joker_state_manager.ensure_state_exists(joker_id);
+
+            // Set the custom data
+            matches!(
+                self.game
+                    .joker_state_manager
+                    .set_custom_data(joker_id, key, value),
+                Ok(())
+            )
+        } else {
+            false
+        }
+    }
+
+    /// Get accumulated value for a specific joker
+    fn get_joker_accumulated_value(&self, joker_id: JokerId) -> Option<f64> {
+        self.game
+            .joker_state_manager
+            .get_accumulated_value(joker_id)
+    }
+
+    /// Add to a joker's accumulated value
+    fn add_joker_accumulated_value(&mut self, joker_id: JokerId, value: f64) -> bool {
+        // Check if joker is active
+        let joker_exists = self.game.jokers.iter().any(|j| j.to_joker_id() == joker_id);
+
+        if joker_exists {
+            self.game
+                .joker_state_manager
+                .add_accumulated_value(joker_id, value);
+            true
+        } else {
+            false
+        }
+    }
+
+    /// Check if a joker has triggers available
+    fn joker_has_triggers(&self, joker_id: JokerId) -> bool {
+        self.game.joker_state_manager.has_triggers(joker_id)
+    }
+
+    /// Use a trigger for a joker (returns true if trigger was used successfully)
+    fn use_joker_trigger(&mut self, joker_id: JokerId) -> bool {
+        // Check if joker is active
+        let joker_exists = self.game.jokers.iter().any(|j| j.to_joker_id() == joker_id);
+
+        if joker_exists {
+            self.game.joker_state_manager.use_trigger(joker_id)
+        } else {
+            false
+        }
+    }
+
     #[getter]
     fn state(&self) -> GameState {
         GameState {
@@ -605,8 +802,45 @@ impl GameState {
             for joker in &self.game.jokers {
                 let joker_id = joker.to_joker_id();
                 let state_dict = pyo3::types::PyDict::new(py);
-                let _ = state_dict.set_item("accumulated_value", 0.0f64);
-                let _ = state_dict.set_item("triggers_remaining", py.None());
+
+                // Get actual state from the joker state manager
+                if let Some(joker_state) = self.game.joker_state_manager.get_state(joker_id) {
+                    let _ = state_dict.set_item("accumulated_value", joker_state.accumulated_value);
+                    let _ =
+                        state_dict.set_item("triggers_remaining", joker_state.triggers_remaining);
+
+                    // Add custom data
+                    let custom_data_dict = pyo3::types::PyDict::new(py);
+                    for (key, value) in &joker_state.custom_data {
+                        let py_value = match value {
+                            serde_json::Value::Null => py.None(),
+                            serde_json::Value::Bool(b) => b.to_object(py),
+                            serde_json::Value::Number(n) => {
+                                if let Some(i) = n.as_i64() {
+                                    i.to_object(py)
+                                } else if let Some(f) = n.as_f64() {
+                                    f.to_object(py)
+                                } else {
+                                    py.None()
+                                }
+                            }
+                            serde_json::Value::String(s) => s.to_object(py),
+                            serde_json::Value::Array(_) | serde_json::Value::Object(_) => {
+                                serde_json::to_string(value)
+                                    .unwrap_or_default()
+                                    .to_object(py)
+                            }
+                        };
+                        let _ = custom_data_dict.set_item(key, py_value);
+                    }
+                    let _ = state_dict.set_item("custom_data", custom_data_dict);
+                } else {
+                    // No state exists yet - return default values
+                    let _ = state_dict.set_item("accumulated_value", 0.0f64);
+                    let _ = state_dict.set_item("triggers_remaining", py.None());
+                    let _ = state_dict.set_item("custom_data", pyo3::types::PyDict::new(py));
+                }
+
                 let _ = dict.set_item(format!("{joker_id:?}"), state_dict);
             }
 
@@ -621,7 +855,16 @@ impl GameState {
 
             for joker in &self.game.jokers {
                 let joker_id = joker.to_joker_id();
-                let _ = dict.set_item(format!("{joker_id:?}"), 0.0f64); // TODO: Get from actual joker state
+
+                // Get actual accumulated value from the joker state manager
+                let accumulated_value =
+                    if let Some(joker_state) = self.game.joker_state_manager.get_state(joker_id) {
+                        joker_state.accumulated_value
+                    } else {
+                        0.0f64 // Default value if no state exists
+                    };
+
+                let _ = dict.set_item(format!("{joker_id:?}"), accumulated_value);
             }
 
             dict.into()
@@ -635,7 +878,16 @@ impl GameState {
 
             for joker in &self.game.jokers {
                 let joker_id = joker.to_joker_id();
-                let _ = dict.set_item(format!("{joker_id:?}"), py.None()); // TODO: Get from actual joker state
+
+                // Get actual triggers remaining from the joker state manager
+                let triggers_remaining =
+                    if let Some(joker_state) = self.game.joker_state_manager.get_state(joker_id) {
+                        joker_state.triggers_remaining
+                    } else {
+                        None // Default value if no state exists
+                    };
+
+                let _ = dict.set_item(format!("{joker_id:?}"), triggers_remaining);
             }
 
             dict.into()
