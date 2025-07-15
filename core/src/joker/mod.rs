@@ -1,6 +1,7 @@
 use crate::card::Card;
 use crate::hand::{Hand, SelectHand};
 use crate::stage::Stage;
+#[cfg(feature = "python")]
 use pyo3::pyclass;
 use serde::{Deserialize, Serialize};
 use std::fmt;

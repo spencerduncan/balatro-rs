@@ -3,6 +3,7 @@ use crate::effect::Effects;
 use crate::game::Game;
 use crate::hand::MadeHand;
 use crate::joker::{Categories, Joker as NewJoker, JokerRarity as Rarity};
+#[cfg(feature = "python")]
 use pyo3::pyclass;
 use serde::{Deserialize, Serialize};
 use std::fmt;
