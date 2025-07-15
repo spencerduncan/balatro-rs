@@ -28,6 +28,7 @@ impl JokerFactory {
             // Jokers from main branch
             JokerId::Supernova => Some(Box::new(SupernovaJoker)),
             JokerId::SpaceJoker => Some(Box::new(SpaceJoker)),
+            JokerId::IceCream => Some(Box::new(IceCreamJoker::new())),
 
             // Static jokers from StaticJokerFactory
             JokerId::RedCard => Some(StaticJokerFactory::create_red_card()),
@@ -69,6 +70,7 @@ impl JokerFactory {
                 DeviousJoker,
                 CraftyJoker,
                 Supernova,
+                IceCream,
                 // New static jokers
                 FacelessJoker,
                 Square,
@@ -112,6 +114,7 @@ impl JokerFactory {
             CraftyJoker,
             Supernova,
             SpaceJoker,
+            IceCream,
             // New fully implemented static jokers
             RedCard,
             BlueJoker,
