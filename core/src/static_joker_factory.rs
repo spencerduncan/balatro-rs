@@ -29,7 +29,7 @@ impl StaticJokerFactory {
                 "Played cards with Diamond suit give +3 Mult when scored",
             )
             .rarity(JokerRarity::Common)
-            .cost(2)
+            .cost(5)
             .mult(3)
             .condition(StaticCondition::SuitScored(Suit::Diamond))
             .per_card()
@@ -47,7 +47,7 @@ impl StaticJokerFactory {
                 "Played cards with Heart suit give +3 Mult when scored",
             )
             .rarity(JokerRarity::Common)
-            .cost(2)
+            .cost(5)
             .mult(3)
             .condition(StaticCondition::SuitScored(Suit::Heart))
             .per_card()
@@ -65,7 +65,7 @@ impl StaticJokerFactory {
                 "Played cards with Spade suit give +3 Mult when scored",
             )
             .rarity(JokerRarity::Common)
-            .cost(2)
+            .cost(5)
             .mult(3)
             .condition(StaticCondition::SuitScored(Suit::Spade))
             .per_card()
@@ -83,7 +83,7 @@ impl StaticJokerFactory {
                 "Played cards with Club suit give +3 Mult when scored",
             )
             .rarity(JokerRarity::Common)
-            .cost(2)
+            .cost(5)
             .mult(3)
             .condition(StaticCondition::SuitScored(Suit::Club))
             .per_card()
@@ -348,7 +348,7 @@ impl StaticJokerFactory {
             "Played cards with Diamond suit give +3 Mult when scored",
         )
         .rarity(JokerRarity::Common)
-        .cost(2)
+        .cost(5)
         .mult(3)
         .condition(StaticCondition::SuitScored(Suit::Diamond))
         .per_card()
@@ -365,7 +365,7 @@ impl StaticJokerFactory {
             "Played cards with Heart suit give +3 Mult when scored",
         )
         .rarity(JokerRarity::Common)
-        .cost(2)
+        .cost(5)
         .mult(3)
         .condition(StaticCondition::SuitScored(Suit::Heart))
         .per_card()
@@ -382,7 +382,7 @@ impl StaticJokerFactory {
             "Played cards with Spade suit give +3 Mult when scored",
         )
         .rarity(JokerRarity::Common)
-        .cost(2)
+        .cost(5)
         .mult(3)
         .condition(StaticCondition::SuitScored(Suit::Spade))
         .per_card()
@@ -399,7 +399,7 @@ impl StaticJokerFactory {
             "Played cards with Club suit give +3 Mult when scored",
         )
         .rarity(JokerRarity::Common)
-        .cost(2)
+        .cost(5)
         .mult(3)
         .condition(StaticCondition::SuitScored(Suit::Club))
         .per_card()
@@ -433,7 +433,7 @@ mod tests {
             "Played cards with Diamond suit give +3 Mult when scored"
         );
         assert_eq!(greedy.rarity(), JokerRarity::Common);
-        assert_eq!(greedy.cost(), 2);
+        assert_eq!(greedy.cost(), 5);
 
         // Test Lusty Joker (Heart)
         let lusty = StaticJokerFactory::create_lusty_joker();
@@ -597,8 +597,6 @@ mod tests {
         // Test that jokers have appropriate costs based on rarity/power
         let basic_jokers = vec![
             StaticJokerFactory::create_joker(),        // 2
-            StaticJokerFactory::create_greedy_joker(), // 2
-            StaticJokerFactory::create_lusty_joker(),  // 2
         ];
 
         let mid_tier_jokers = vec![
@@ -609,6 +607,13 @@ mod tests {
         let higher_tier_jokers = vec![
             StaticJokerFactory::create_zany_joker(), // 4
             StaticJokerFactory::create_wily_joker(), // 4
+        ];
+
+        let suit_jokers = vec![
+            StaticJokerFactory::create_greedy_joker(),    // 5
+            StaticJokerFactory::create_lusty_joker(),     // 5
+            StaticJokerFactory::create_wrathful_joker(),  // 5
+            StaticJokerFactory::create_gluttonous_joker(), // 5
         ];
 
         // Verify cost progression
@@ -622,6 +627,10 @@ mod tests {
 
         for joker in higher_tier_jokers {
             assert_eq!(joker.cost(), 4);
+        }
+
+        for joker in suit_jokers {
+            assert_eq!(joker.cost(), 5);
         }
     }
 
