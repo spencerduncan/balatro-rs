@@ -10,7 +10,7 @@ use crate::effect::{EffectRegistry, Effects};
 use crate::error::GameError;
 use crate::hand::{MadeHand, SelectHand};
 use crate::joker::{JokerId, Jokers, OldJoker as Joker};
-use crate::joker_state::JokerStateManager;
+use crate::joker_state::{JokerState, JokerStateManager};
 use crate::rank::HandRank;
 use crate::shop::Shop;
 use crate::stage::{Blind, End, Stage};
@@ -699,6 +699,205 @@ impl fmt::Display for Game {
 impl Default for Game {
     fn default() -> Self {
         Self::new(Config::default())
+    }
+}
+
+/// Serializable representation of game state, excluding non-serializable fields
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct SaveableGameState {
+    pub version: u32,
+    pub timestamp: u64,
+    pub config: Config,
+    pub shop: Shop,
+    pub deck: Deck,
+    pub available: Available,
+    pub discarded: Vec<Card>,
+    pub blind: Option<Blind>,
+    pub stage: Stage,
+    pub ante_start: Ante,
+    pub ante_end: Ante,
+    pub ante_current: Ante,
+    pub action_history: Vec<Action>,
+    pub round: usize,
+    pub jokers: Vec<Jokers>,
+    pub joker_states: HashMap<JokerId, JokerState>,
+    pub plays: usize,
+    pub discards: usize,
+    pub reward: usize,
+    pub money: usize,
+    pub chips: usize,
+    pub mult: usize,
+    pub score: usize,
+    pub hand_type_counts: HashMap<HandRank, u32>,
+}
+
+const SAVE_VERSION: u32 = 1;
+
+/// Errors that can occur during save/load operations
+#[derive(Debug)]
+pub enum SaveLoadError {
+    SerializationError(serde_json::Error),
+    DeserializationError(serde_json::Error),
+    InvalidVersion(u32),
+    MissingField(String),
+    ValidationError(String),
+}
+
+impl fmt::Display for SaveLoadError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            SaveLoadError::SerializationError(e) => write!(f, "Serialization error: {e}"),
+            SaveLoadError::DeserializationError(e) => write!(f, "Deserialization error: {e}"),
+            SaveLoadError::InvalidVersion(v) => write!(f, "Unsupported save version: {v}"),
+            SaveLoadError::MissingField(field) => write!(f, "Missing required field: {field}"),
+            SaveLoadError::ValidationError(msg) => write!(f, "Validation error: {msg}"),
+        }
+    }
+}
+
+impl std::error::Error for SaveLoadError {}
+
+impl Game {
+    /// Save the current game state to JSON string
+    pub fn save_state_to_json(&self) -> Result<String, SaveLoadError> {
+        // Extract joker states from the state manager
+        let joker_states = self.joker_state_manager.snapshot_all();
+
+        let saveable_state = SaveableGameState {
+            version: SAVE_VERSION,
+            timestamp: std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs(),
+            config: self.config.clone(),
+            shop: self.shop.clone(),
+            deck: self.deck.clone(),
+            available: self.available.clone(),
+            discarded: self.discarded.clone(),
+            blind: self.blind,
+            stage: self.stage,
+            ante_start: self.ante_start,
+            ante_end: self.ante_end,
+            ante_current: self.ante_current,
+            action_history: self.action_history.clone(),
+            round: self.round,
+            jokers: self.jokers.clone(),
+            joker_states,
+            plays: self.plays,
+            discards: self.discards,
+            reward: self.reward,
+            money: self.money,
+            chips: self.chips,
+            mult: self.mult,
+            score: self.score,
+            hand_type_counts: self.hand_type_counts.clone(),
+        };
+
+        serde_json::to_string_pretty(&saveable_state).map_err(SaveLoadError::SerializationError)
+    }
+
+    /// Load game state from JSON string
+    pub fn load_state_from_json(json: &str) -> Result<Self, SaveLoadError> {
+        let saveable_state: SaveableGameState =
+            serde_json::from_str(json).map_err(SaveLoadError::DeserializationError)?;
+
+        // Validate version
+        if saveable_state.version > SAVE_VERSION {
+            return Err(SaveLoadError::InvalidVersion(saveable_state.version));
+        }
+
+        // Create new game instance with reconstructed state
+        let mut game = Game {
+            config: saveable_state.config,
+            shop: saveable_state.shop,
+            deck: saveable_state.deck,
+            available: saveable_state.available,
+            discarded: saveable_state.discarded,
+            blind: saveable_state.blind,
+            stage: saveable_state.stage,
+            ante_start: saveable_state.ante_start,
+            ante_end: saveable_state.ante_end,
+            ante_current: saveable_state.ante_current,
+            action_history: saveable_state.action_history,
+            round: saveable_state.round,
+            jokers: saveable_state.jokers,
+            plays: saveable_state.plays,
+            discards: saveable_state.discards,
+            reward: saveable_state.reward,
+            money: saveable_state.money,
+            chips: saveable_state.chips,
+            mult: saveable_state.mult,
+            score: saveable_state.score,
+            hand_type_counts: saveable_state.hand_type_counts,
+            // Non-serializable fields must be reconstructed
+            effect_registry: EffectRegistry::new(),
+            joker_state_manager: Arc::new(JokerStateManager::new()),
+        };
+
+        // Restore joker states to the state manager
+        game.joker_state_manager
+            .restore_from_snapshot(saveable_state.joker_states);
+
+        // Reconstruct effect registry from jokers
+        game.reconstruct_effects();
+
+        Ok(game)
+    }
+
+    /// Reconstruct the effect registry from current jokers
+    fn reconstruct_effects(&mut self) {
+        self.effect_registry = EffectRegistry::new();
+
+        // Re-register all jokers with the effect registry
+        let jokers = self.jokers.clone(); // Clone to avoid borrowing issues
+        for joker in jokers {
+            let effects = joker.effects(self);
+            for effect in effects {
+                match effect {
+                    Effects::OnPlay(_) => self.effect_registry.on_play.push(effect),
+                    Effects::OnDiscard(_) => self.effect_registry.on_discard.push(effect),
+                    Effects::OnScore(_) => self.effect_registry.on_score.push(effect),
+                    Effects::OnHandRank(_) => self.effect_registry.on_handrank.push(effect),
+                }
+            }
+        }
+    }
+
+    /// Add a joker to the game (for testing purposes)
+    pub fn add_joker(&mut self, joker: Box<dyn crate::joker::Joker>) {
+        use crate::joker::compat::{GreedyJoker, TheJoker};
+
+        // Convert new joker trait to old Jokers enum for compatibility
+        // This is a simplified implementation for testing
+        let joker_id = joker.id();
+        let jokers_enum = match joker_id {
+            JokerId::Joker => Jokers::TheJoker(TheJoker::default()),
+            JokerId::GreedyJoker => Jokers::GreedyJoker(GreedyJoker::default()),
+            // Add more mappings as needed for testing
+            _ => Jokers::TheJoker(TheJoker::default()), // Default fallback
+        };
+
+        self.jokers.push(jokers_enum.clone());
+
+        // Initialize state for the new joker
+        self.joker_state_manager.ensure_state_exists(joker_id);
+
+        // Register with effect registry (do this separately to avoid borrowing issues)
+        self.register_joker_effects(jokers_enum);
+    }
+
+    /// Helper method to register joker effects
+    fn register_joker_effects(&mut self, joker: Jokers) {
+        // Clone joker for effects to avoid borrowing issues
+        let effects = joker.effects(self);
+        for effect in effects {
+            match effect {
+                Effects::OnPlay(_) => self.effect_registry.on_play.push(effect),
+                Effects::OnDiscard(_) => self.effect_registry.on_discard.push(effect),
+                Effects::OnScore(_) => self.effect_registry.on_score.push(effect),
+                Effects::OnHandRank(_) => self.effect_registry.on_handrank.push(effect),
+            }
+        }
     }
 }
 
