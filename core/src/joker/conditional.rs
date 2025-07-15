@@ -537,7 +537,6 @@ mod tests {
             }
         }
     }
-
     // Helper function to test money conditions without full GameContext
     fn test_money_condition_simple(condition: &JokerCondition, money: i32) -> bool {
         match condition {
