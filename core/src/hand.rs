@@ -1,5 +1,6 @@
 use indexmap::IndexMap;
 use itertools::Itertools;
+#[cfg(feature = "python")]
 use pyo3::pyclass;
 use std::fmt;
 
