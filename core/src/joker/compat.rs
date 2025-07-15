@@ -1,13 +1,13 @@
-use crate::card::Suit;
-use crate::effect::Effects;
+// use crate::card::Suit; // No longer needed
+// use crate::effect::Effects; // Removed - no longer using Effects enum
 use crate::game::Game;
-use crate::hand::MadeHand;
+// use crate::hand::MadeHand; // No longer needed
 use crate::joker::{Categories, Joker as NewJoker, JokerRarity as Rarity};
 #[cfg(feature = "python")]
 use pyo3::pyclass;
 use serde::{Deserialize, Serialize};
 use std::fmt;
-use std::sync::{Arc, Mutex};
+// use std::sync::{Arc, Mutex}; // No longer needed - Effects system removed
 use strum::{EnumIter, IntoEnumIterator};
 
 /// Old-style Joker trait for compatibility
@@ -17,7 +17,11 @@ pub trait Joker: std::fmt::Debug + Clone {
     fn cost(&self) -> usize;
     fn rarity(&self) -> Rarity;
     fn categories(&self) -> Vec<Categories>;
-    fn effects(&self, game: &Game) -> Vec<Effects>;
+    fn effects(&self, _game: &Game) -> Vec<()> {
+        // Effects system replaced with structured JokerEffect system
+        // This method kept for backward compatibility but returns empty vector
+        Vec::new()
+    }
 }
 
 // Macro to create joker wrapper structs
@@ -47,8 +51,10 @@ macro_rules! impl_joker_wrapper {
             fn categories(&self) -> Vec<Categories> {
                 vec![$category]
             }
-            fn effects(&self, _game: &Game) -> Vec<Effects> {
-                vec![Effects::OnScore(Arc::new(Mutex::new($effect)))]
+            fn effects(&self, _game: &Game) -> Vec<()> {
+                // Effects system replaced with structured JokerEffect system
+                // Actual effects are now handled by the new joker trait implementations
+                Vec::new()
             }
         }
     };
@@ -267,13 +273,10 @@ impl Joker for IceCreamJoker {
         vec![Categories::Chips]
     }
 
-    fn effects(&self, _game: &Game) -> Vec<Effects> {
-        let chips_to_add = self.remaining_chips.max(0);
-        vec![Effects::OnScore(Arc::new(Mutex::new(
-            move |g: &mut Game, _hand: MadeHand| {
-                g.chips += chips_to_add as usize;
-            },
-        )))]
+    fn effects(&self, _game: &Game) -> Vec<()> {
+        // Effects system replaced with structured JokerEffect system
+        // IceCreamJoker effects now handled by the new trait implementation
+        Vec::new()
     }
 }
 
@@ -325,12 +328,10 @@ macro_rules! make_jokers {
                     )*
                 }
             }
-            fn effects(&self, game: &Game) -> Vec<Effects> {
-                match self {
-                    $(
-                        Jokers::$x(joker) => joker.effects(game),
-                    )*
-                }
+            fn effects(&self, _game: &Game) -> Vec<()> {
+                // Effects system replaced with structured JokerEffect system
+                // All joker effects now handled by the new trait implementations
+                Vec::new()
             }
         }
     }

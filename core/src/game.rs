@@ -4,10 +4,10 @@ use crate::available::Available;
 use crate::card::Card;
 use crate::config::Config;
 use crate::deck::Deck;
-use crate::effect::{EffectRegistry, Effects};
 use crate::error::GameError;
 use crate::hand::{MadeHand, SelectHand};
 use crate::joker::{GameContext, Joker, JokerId, Jokers, OldJoker as OldJokerTrait};
+use crate::joker_factory::JokerFactory;
 use crate::joker_state::JokerStateManager;
 use crate::rank::HandRank;
 use crate::shop::Shop;
@@ -32,10 +32,8 @@ pub struct Game {
     pub action_history: Vec<Action>,
     pub round: usize,
 
-    // jokers and their effects (both old and new systems)
+    // jokers using structured JokerEffect system
     pub jokers: Vec<Box<dyn Joker>>,
-    pub old_jokers: Vec<Jokers>,
-    pub effect_registry: EffectRegistry,
     pub joker_state_manager: Arc<JokerStateManager>,
 
     // playing
@@ -63,8 +61,6 @@ impl Game {
             discarded: Vec::new(),
             action_history: Vec::new(),
             jokers: Vec::new(),
-            old_jokers: Vec::new(),
-            effect_registry: EffectRegistry::new(),
             joker_state_manager: Arc::new(JokerStateManager::new()),
             blind: None,
             stage: Stage::PreBlind(),
@@ -143,10 +139,10 @@ impl Game {
     /// * `slot` - The zero-based index of the joker slot to check
     ///
     /// # Returns
-    /// * `Some(&Jokers)` if a joker exists at the specified slot
+    /// * `Some(&dyn Joker)` if a joker exists at the specified slot
     /// * `None` if the slot is empty or the index is out of bounds
-    pub fn get_joker_at_slot(&self, slot: usize) -> Option<&Jokers> {
-        self.old_jokers.get(slot)
+    pub fn get_joker_at_slot(&self, slot: usize) -> Option<&dyn Joker> {
+        self.jokers.get(slot).map(|j| j.as_ref())
     }
 
     /// Returns the total number of jokers currently owned by the player.
@@ -154,7 +150,7 @@ impl Game {
     /// # Returns
     /// The count of jokers in the player's collection
     pub fn joker_count(&self) -> usize {
-        self.old_jokers.len()
+        self.jokers.len()
     }
 
     /// Returns the number of times a specific hand type has been played this game run.
@@ -260,14 +256,7 @@ impl Game {
         let card_chips: usize = hand.hand.cards().iter().map(|c| c.chips()).sum();
         self.chips += card_chips;
 
-        // Apply effects from old system (backwards compatibility)
-        for e in self.effect_registry.on_score.clone() {
-            if let Effects::OnScore(f) = e {
-                f.lock().unwrap()(self, hand.clone())
-            }
-        }
-
-        // Apply JokerEffect from new joker system
+        // Apply JokerEffect from structured joker system
         if !self.jokers.is_empty() {
             let (joker_chips, joker_mult, joker_money, _messages) =
                 self.process_joker_effects(&hand);
@@ -394,18 +383,24 @@ impl Game {
         if self.stage != Stage::Shop() {
             return Err(GameError::InvalidStage);
         }
-        if self.old_jokers.len() >= self.config.joker_slots {
+        if self.jokers.len() >= self.config.joker_slots {
             return Err(GameError::NoAvailableSlot);
         }
         if joker.cost() > self.money {
             return Err(GameError::InvalidBalance);
         }
-        self.shop.buy_joker(&joker)?;
-        self.money -= joker.cost();
-        self.old_jokers.push(joker);
-        self.effect_registry
-            .register_jokers(self.old_jokers.clone(), &Game::default());
-        Ok(())
+        // Convert old joker to new system and add to jokers vec
+        if let Some(new_joker) = JokerFactory::create(joker.to_joker_id()) {
+            self.shop.buy_joker(&joker)?;
+            self.money -= joker.cost();
+            self.jokers.push(new_joker);
+            Ok(())
+        } else {
+            Err(GameError::InvalidOperation(format!(
+                "Cannot create joker {:?} - not available in new system",
+                joker.to_joker_id()
+            )))
+        }
     }
 
     /// Purchases a joker from the shop and places it at the specified slot.
@@ -446,7 +441,7 @@ impl Game {
         }
 
         // Check if we've reached the joker limit
-        if self.old_jokers.len() >= self.config.joker_slots {
+        if self.jokers.len() >= self.config.joker_slots {
             return Err(GameError::NoAvailableSlot);
         }
 
@@ -456,7 +451,7 @@ impl Game {
         }
 
         // Find the matching Jokers enum from shop (temporary until shop uses JokerId)
-        let joker = self
+        let shop_joker = self
             .shop
             .jokers
             .iter()
@@ -465,30 +460,30 @@ impl Game {
             .ok_or(GameError::NoJokerMatch)?;
 
         // Check if player has enough money (use actual joker cost)
-        if joker.cost() > self.money {
+        if shop_joker.cost() > self.money {
             return Err(GameError::InvalidBalance);
         }
 
+        // Create new joker using JokerFactory
+        let new_joker = JokerFactory::create(joker_id).ok_or_else(|| {
+            GameError::InvalidOperation(format!(
+                "Cannot create joker {joker_id:?} - not available in new system"
+            ))
+        })?;
+
         // Purchase joker from shop
-        self.shop.buy_joker(&joker)?;
+        self.shop.buy_joker(&shop_joker)?;
 
         // Deduct money
-        self.money -= joker.cost();
+        self.money -= shop_joker.cost();
 
         // Insert joker at specified slot, expanding vector if necessary
-        if slot >= self.old_jokers.len() {
-            // Resize vector to accommodate the slot, filling gaps with default joker
-            use crate::joker::compat::TheJoker;
-            let default_joker = Jokers::TheJoker(TheJoker {});
-            self.old_jokers.resize(slot, default_joker);
-            self.old_jokers.push(joker.clone());
+        if slot >= self.jokers.len() {
+            // For simplicity, just push at the end if slot is beyond current length
+            self.jokers.push(new_joker);
         } else {
-            self.old_jokers.insert(slot, joker.clone());
+            self.jokers.insert(slot, new_joker);
         }
-
-        // Update effect registry
-        self.effect_registry
-            .register_jokers(self.old_jokers.clone(), &Game::default());
 
         Ok(())
     }
@@ -617,8 +612,8 @@ impl fmt::Display for Game {
         writeln!(f, "selected length: {}", self.available.selected().len())?;
         writeln!(f, "discard length: {}", self.discarded.len())?;
         writeln!(f, "jokers: ")?;
-        for j in self.old_jokers.clone() {
-            writeln!(f, "{j}")?
+        for j in &self.jokers {
+            writeln!(f, "{j:?}")?
         }
         writeln!(f, "action history length: {}", self.action_history.len())?;
         writeln!(f, "blind: {:?}", self.blind)?;
@@ -653,10 +648,6 @@ impl Clone for Game {
             ante_current: self.ante_current,
             action_history: self.action_history.clone(),
             round: self.round,
-
-            // Clone the old jokers system (works fine)
-            old_jokers: self.old_jokers.clone(),
-            effect_registry: self.effect_registry.clone(),
 
             // For new jokers, create empty vec since Box<dyn Joker> can't be cloned
             // This is a limitation we'll need to address later
@@ -855,7 +846,7 @@ mod tests {
         let j1 = g.shop.joker_from_index(0).expect("is joker");
         g.buy_joker(j1.clone()).expect("buy joker");
         assert_eq!(g.money, 10 - j1.cost());
-        assert_eq!(g.old_jokers.len(), 1);
+        assert_eq!(g.jokers.len(), 1);
     }
 
     #[test]
@@ -880,10 +871,10 @@ mod tests {
 
         // Verify joker is in the correct slot
         assert!(game.get_joker_at_slot(0).is_some());
-        assert!(matches!(
-            game.get_joker_at_slot(0),
-            Some(Jokers::TheJoker(_))
-        ));
+        assert_eq!(
+            game.get_joker_at_slot(0).map(|j| j.id()),
+            Some(JokerId::Joker)
+        );
         assert_eq!(game.joker_count(), 1);
     }
 
@@ -918,15 +909,15 @@ mod tests {
         assert!(result.is_ok());
         assert_eq!(game.joker_count(), 2);
         // GreedyJoker should be at position 0
-        assert!(matches!(
-            game.get_joker_at_slot(0),
-            Some(Jokers::GreedyJoker(_))
-        ));
+        assert_eq!(
+            game.get_joker_at_slot(0).map(|j| j.id()),
+            Some(JokerId::GreedyJoker)
+        );
         // TheJoker should have moved to position 1
-        assert!(matches!(
-            game.get_joker_at_slot(1),
-            Some(Jokers::TheJoker(_))
-        ));
+        assert_eq!(
+            game.get_joker_at_slot(1).map(|j| j.id()),
+            Some(JokerId::Joker)
+        );
     }
 
     #[test]
@@ -970,10 +961,10 @@ mod tests {
 
         let result = game.handle_action(action);
         assert!(result.is_ok());
-        assert!(matches!(
-            game.get_joker_at_slot(5),
-            Some(Jokers::TheJoker(_))
-        ));
+        assert_eq!(
+            game.get_joker_at_slot(5).map(|j| j.id()),
+            Some(JokerId::Joker)
+        );
     }
 
     #[test]

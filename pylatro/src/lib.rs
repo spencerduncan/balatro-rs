@@ -119,7 +119,9 @@ impl GameState {
     }
     #[getter]
     fn jokers(&self) -> Vec<Jokers> {
-        self.game.old_jokers.clone()
+        // TODO: Convert new joker system to old Jokers enum for Python compatibility
+        // For now, return empty vector during migration
+        Vec::new()
     }
     #[getter]
     fn money(&self) -> usize {

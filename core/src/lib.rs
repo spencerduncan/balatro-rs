@@ -6,7 +6,7 @@ pub mod card;
 pub mod config;
 pub mod consumables;
 pub mod deck;
-pub mod effect;
+// pub mod effect; // Removed - Effects system replaced with structured JokerEffect system
 pub mod error;
 pub mod game;
 pub mod generator;
