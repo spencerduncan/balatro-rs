@@ -33,3 +33,7 @@ colored = ["dep:colored"]
 [[bench]]
 name = "benchmark"
 harness = false
+
+[[bench]]
+name = "state_benchmark"
+harness = false
