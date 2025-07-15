@@ -12,6 +12,7 @@ pub mod game;
 pub mod generator;
 pub mod hand;
 pub mod joker;
+pub mod joker_effect_processor;
 pub mod joker_factory;
 pub mod joker_impl;
 pub mod joker_registry;

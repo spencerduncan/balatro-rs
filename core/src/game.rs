@@ -8,6 +8,7 @@ use crate::effect::{EffectRegistry, Effects};
 use crate::error::GameError;
 use crate::hand::{MadeHand, SelectHand};
 use crate::joker::{JokerId, Jokers, OldJoker as Joker};
+use crate::joker_effect_processor::JokerEffectProcessor;
 use crate::joker_state::JokerStateManager;
 use crate::rank::HandRank;
 use crate::shop::Shop;
@@ -35,6 +36,7 @@ pub struct Game {
     // jokers and their effects
     pub jokers: Vec<Jokers>,
     pub effect_registry: EffectRegistry,
+    pub joker_effect_processor: JokerEffectProcessor,
     pub joker_state_manager: Arc<JokerStateManager>,
 
     // playing
@@ -63,6 +65,7 @@ impl Game {
             action_history: Vec::new(),
             jokers: Vec::new(),
             effect_registry: EffectRegistry::new(),
+            joker_effect_processor: JokerEffectProcessor::new(),
             joker_state_manager: Arc::new(JokerStateManager::new()),
             blind: None,
             stage: Stage::PreBlind(),
@@ -223,11 +226,17 @@ impl Game {
         self.chips += card_chips;
 
         // Apply effects that modify game.chips and game.mult
+        // TODO: This maintains backwards compatibility with old effect system
         for e in self.effect_registry.on_score.clone() {
             if let Effects::OnScore(f) = e {
                 f.lock().unwrap()(self, hand.clone())
             }
         }
+
+        // Apply new joker effect processing system
+        // Note: For now, this doesn't process effects since we're using the old joker system
+        // When migrating to new jokers, this will replace the above effect_registry loop
+        self.apply_joker_effects_to_score(&hand);
 
         // compute score
         let score = self.chips * self.mult;
@@ -236,6 +245,32 @@ impl Game {
         self.mult = self.config.base_mult;
         self.chips = self.config.base_chips;
         score
+    }
+
+    /// Apply joker effects to the current scoring using the new effect processor
+    /// This method bridges the old and new joker systems
+    fn apply_joker_effects_to_score(&mut self, _hand: &MadeHand) {
+        // TODO: When we have new-style jokers, process them here
+        // For now, this is a placeholder that demonstrates the integration point
+
+        // Example of how this would work with new jokers:
+        // let game_context = self.create_game_context();
+        // let hand_result = self.joker_effect_processor.process_hand_effects(
+        //     &self.new_jokers,
+        //     &mut game_context,
+        //     &hand.hand
+        // );
+        // self.apply_accumulated_effect(&hand_result.accumulated_effect);
+
+        // For each card in the hand, we would also process card effects:
+        // for card in hand.hand.cards() {
+        //     let card_result = self.joker_effect_processor.process_card_effects(
+        //         &self.new_jokers,
+        //         &mut game_context,
+        //         card
+        //     );
+        //     self.apply_accumulated_effect(&card_result.accumulated_effect);
+        // }
     }
 
     pub fn required_score(&self) -> usize {
