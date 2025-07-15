@@ -9,6 +9,9 @@ pub use legacy::*;
 // Legacy shop implementation
 mod legacy;
 
+// Weighted shop generation implementation
+pub mod generation;
+
 /// Enhanced shop trait for generating shop contents with weighted randomization
 /// and support for various item types including jokers, consumables, vouchers, and packs.
 ///
