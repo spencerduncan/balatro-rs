@@ -1,5 +1,6 @@
 use crate::joker::{Joker, JokerId, JokerRarity};
 use crate::joker_impl::*;
+use crate::static_joker_factory::StaticJokerFactory;
 
 /// Factory for creating joker instances by ID
 pub struct JokerFactory;
@@ -23,9 +24,30 @@ impl JokerFactory {
             JokerId::CleverJoker => Some(Box::new(CleverJoker)),
             JokerId::DeviousJoker => Some(Box::new(DeviousJoker)),
             JokerId::CraftyJoker => Some(Box::new(CraftyJoker)),
+
+            // Money-based conditional jokers
+            JokerId::BusinessCard => Some(Box::new(BusinessCard)),
+            JokerId::EggJoker => Some(Box::new(Egg)),
+            JokerId::Burglar => Some(Box::new(Burglar)),
+
+            // Hand type conditional jokers from main branch
             JokerId::Supernova => Some(Box::new(SupernovaJoker)),
-            JokerId::Runner => Some(Box::new(RunnerJoker)),
             JokerId::SpaceJoker => Some(Box::new(SpaceJoker)),
+            JokerId::IceCream => Some(Box::new(IceCreamJoker::new())),
+            JokerId::Runner => Some(Box::new(RunnerJoker)),
+
+            // Static jokers from StaticJokerFactory
+            JokerId::RedCard => Some(StaticJokerFactory::create_red_card()),
+            JokerId::BlueJoker => Some(StaticJokerFactory::create_blue_joker()),
+            JokerId::FacelessJoker => Some(StaticJokerFactory::create_faceless_joker()),
+            JokerId::Square => Some(StaticJokerFactory::create_square()),
+            JokerId::Walkie => Some(StaticJokerFactory::create_walkie()),
+
+            // Placeholder jokers with TODO comments
+            JokerId::HalfJoker => Some(StaticJokerFactory::create_half_joker()),
+            JokerId::Banner => Some(StaticJokerFactory::create_banner()),
+            JokerId::AbstractJoker => Some(StaticJokerFactory::create_abstract_joker()),
+            JokerId::SteelJoker => Some(StaticJokerFactory::create_steel_joker()),
             // TODO: Implement remaining jokers
             _ => None,
         }
@@ -52,13 +74,26 @@ impl JokerFactory {
                 CleverJoker,
                 DeviousJoker,
                 CraftyJoker,
+                // Money-based conditional jokers
+                BusinessCard,
+                EggJoker,
+                // Hand type conditional jokers
                 Supernova,
+                IceCream,
                 Runner,
-                // Add more common jokers here
+                // New static jokers
+                FacelessJoker,
+                Square,
+                Walkie,
+                HalfJoker,
+                Banner,
+                AbstractJoker,
             ],
             JokerRarity::Uncommon => vec![
-                SpaceJoker,
-                // TODO: Add more uncommon jokers
+                // Money-based conditional jokers
+                Burglar,    // Hand type conditional jokers
+                SpaceJoker, // New static jokers
+                RedCard, BlueJoker, SteelJoker,
             ],
             JokerRarity::Rare => vec![
                 // TODO: Add rare jokers
@@ -88,9 +123,108 @@ impl JokerFactory {
             CleverJoker,
             DeviousJoker,
             CraftyJoker,
+            // Money-based conditional jokers
+            BusinessCard,
+            EggJoker,
+            Burglar,
+            // Hand type conditional jokers
             Supernova,
-            Runner,
             SpaceJoker,
+            IceCream,
+            Runner,
+            // New fully implemented static jokers
+            RedCard,
+            BlueJoker,
+            FacelessJoker,
+            Square,
+            Walkie,
+            // Note: HalfJoker, Banner, AbstractJoker, and SteelJoker are placeholders
         ]
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_create_new_static_jokers() {
+        // Test fully implemented jokers
+        let red_card = JokerFactory::create(JokerId::RedCard);
+        assert!(red_card.is_some());
+        assert_eq!(red_card.unwrap().id(), JokerId::RedCard);
+
+        let blue_joker = JokerFactory::create(JokerId::BlueJoker);
+        assert!(blue_joker.is_some());
+        assert_eq!(blue_joker.unwrap().id(), JokerId::BlueJoker);
+
+        let faceless = JokerFactory::create(JokerId::FacelessJoker);
+        assert!(faceless.is_some());
+        assert_eq!(faceless.unwrap().id(), JokerId::FacelessJoker);
+
+        let square = JokerFactory::create(JokerId::Square);
+        assert!(square.is_some());
+        assert_eq!(square.unwrap().id(), JokerId::Square);
+
+        let walkie = JokerFactory::create(JokerId::Walkie);
+        assert!(walkie.is_some());
+        assert_eq!(walkie.unwrap().id(), JokerId::Walkie);
+
+        let runner = JokerFactory::create(JokerId::Runner);
+        assert!(runner.is_some());
+        assert_eq!(runner.unwrap().id(), JokerId::Runner);
+    }
+
+    #[test]
+    fn test_create_placeholder_jokers() {
+        // Test placeholder jokers are created (even though they don't work correctly yet)
+        let half = JokerFactory::create(JokerId::HalfJoker);
+        assert!(half.is_some());
+        assert_eq!(half.unwrap().id(), JokerId::HalfJoker);
+
+        let banner = JokerFactory::create(JokerId::Banner);
+        assert!(banner.is_some());
+        assert_eq!(banner.unwrap().id(), JokerId::Banner);
+
+        let abstract_joker = JokerFactory::create(JokerId::AbstractJoker);
+        assert!(abstract_joker.is_some());
+        assert_eq!(abstract_joker.unwrap().id(), JokerId::AbstractJoker);
+
+        let steel = JokerFactory::create(JokerId::SteelJoker);
+        assert!(steel.is_some());
+        assert_eq!(steel.unwrap().id(), JokerId::SteelJoker);
+    }
+
+    #[test]
+    fn test_new_jokers_in_rarity_lists() {
+        let common_jokers = JokerFactory::get_by_rarity(JokerRarity::Common);
+        assert!(common_jokers.contains(&JokerId::FacelessJoker));
+        assert!(common_jokers.contains(&JokerId::Square));
+        assert!(common_jokers.contains(&JokerId::Walkie));
+        assert!(common_jokers.contains(&JokerId::Runner));
+        assert!(common_jokers.contains(&JokerId::HalfJoker));
+        assert!(common_jokers.contains(&JokerId::Banner));
+        assert!(common_jokers.contains(&JokerId::AbstractJoker));
+
+        let uncommon_jokers = JokerFactory::get_by_rarity(JokerRarity::Uncommon);
+        assert!(uncommon_jokers.contains(&JokerId::RedCard));
+        assert!(uncommon_jokers.contains(&JokerId::BlueJoker));
+        assert!(uncommon_jokers.contains(&JokerId::SteelJoker));
+    }
+
+    #[test]
+    fn test_new_jokers_in_implemented_list() {
+        let implemented = JokerFactory::get_all_implemented();
+
+        // Fully implemented jokers should be in the list
+        assert!(implemented.contains(&JokerId::RedCard));
+        assert!(implemented.contains(&JokerId::BlueJoker));
+        assert!(implemented.contains(&JokerId::FacelessJoker));
+        assert!(implemented.contains(&JokerId::Square));
+        assert!(implemented.contains(&JokerId::Walkie));
+        assert!(implemented.contains(&JokerId::Runner));
+
+        // Note: Placeholder jokers (HalfJoker, Banner, AbstractJoker, SteelJoker)
+        // are intentionally not in get_all_implemented() as they're not complete
     }
 }

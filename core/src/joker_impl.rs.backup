@@ -510,6 +510,7 @@ impl Joker for CraftyJoker {
     }
 }
 
+<<<<<<< HEAD
 // Money-Based Conditional Jokers for Issue #82
 
 // Business Card: face cards have 1 in 2 chance of giving $2 when scored
@@ -566,6 +567,23 @@ impl Joker for Egg {
 
     fn description(&self) -> &str {
         "Gains $3 sell value at end of round"
+=======
+// Supernova implementation - tracks hand types played this game run
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct SupernovaJoker;
+
+impl Joker for SupernovaJoker {
+    fn id(&self) -> JokerId {
+        JokerId::Supernova
+    }
+
+    fn name(&self) -> &str {
+        "Supernova"
+    }
+
+    fn description(&self) -> &str {
+        "Mult equal to times this poker hand has been played"
+>>>>>>> origin/main
     }
 
     fn rarity(&self) -> JokerRarity {
@@ -576,6 +594,7 @@ impl Joker for Egg {
         3
     }
 
+<<<<<<< HEAD
     fn sell_value(&self, accumulated_bonus: f64) -> usize {
         // Base sell value (cost / 2) + accumulated bonus from rounds
         (self.cost() / 2) + (accumulated_bonus as usize)
@@ -621,31 +640,12 @@ impl Joker for Burglar {
     }
 }
 
-// Supernova implementation - tracks hand types played this game run
+// Runner Joker implementation
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct SupernovaJoker;
+pub struct Runner;
 
-impl Joker for SupernovaJoker {
-    fn id(&self) -> JokerId {
-        JokerId::Supernova
-    }
-
-    fn name(&self) -> &str {
-        "Supernova"
-    }
-
-    fn description(&self) -> &str {
-        "Mult equal to times this poker hand has been played"
-    }
-
-    fn rarity(&self) -> JokerRarity {
-        JokerRarity::Common
-    }
-
-    fn cost(&self) -> usize {
-        3
-    }
-
+impl Joker for Runner {
+=======
     fn on_hand_played(&self, context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
         // First determine what hand type was played
         if let Ok(made_hand) = hand.best_hand() {
@@ -712,6 +712,7 @@ impl Joker for IceCreamJoker {
 pub struct RunnerJoker;
 
 impl Joker for RunnerJoker {
+>>>>>>> origin/main
     fn id(&self) -> JokerId {
         JokerId::Runner
     }
@@ -732,6 +733,68 @@ impl Joker for RunnerJoker {
         3
     }
 
+<<<<<<< HEAD
+    fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
+        // Check for straight in any form: straight, straight flush, or royal flush
+        if hand.is_straight().is_some()
+            || hand.is_straight_flush().is_some()
+            || hand.is_royal_flush().is_some()
+        {
+            JokerEffect::new().with_chips(15)
+        } else {
+            JokerEffect::new()
+        }
+    }
+}
+
+// Supernova Joker implementation - adds hand played to mult
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct SupernovaJoker;
+
+impl Joker for SupernovaJoker {
+    fn id(&self) -> JokerId {
+        JokerId::Supernova
+    }
+
+    fn name(&self) -> &str {
+        "Supernova"
+    }
+
+    fn description(&self) -> &str {
+        "Adds hand played to Mult"
+    }
+
+    fn rarity(&self) -> JokerRarity {
+        JokerRarity::Common
+    }
+
+    fn cost(&self) -> usize {
+        4
+    }
+
+    fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
+        // Get the hand rank and convert to mult value
+        if let Ok(made_hand) = hand.best_hand() {
+            let mult_bonus = match made_hand.rank {
+                crate::rank::HandRank::HighCard => 1,
+                crate::rank::HandRank::OnePair => 2,
+                crate::rank::HandRank::TwoPair => 2,
+                crate::rank::HandRank::ThreeOfAKind => 3,
+                crate::rank::HandRank::Straight => 4,
+                crate::rank::HandRank::Flush => 4,
+                crate::rank::HandRank::FullHouse => 5,
+                crate::rank::HandRank::FourOfAKind => 7,
+                crate::rank::HandRank::StraightFlush => 8,
+                crate::rank::HandRank::RoyalFlush => 10,
+                crate::rank::HandRank::FiveOfAKind => 12,
+                crate::rank::HandRank::FlushHouse => 14,
+                crate::rank::HandRank::FlushFive => 16,
+            };
+            JokerEffect::new().with_mult(mult_bonus)
+        } else {
+            JokerEffect::new()
+        }
+=======
     fn on_hand_played(&self, context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
         // Check if hand contains a straight (any type)
         let is_straight = hand.is_straight().is_some()
@@ -758,14 +821,21 @@ impl Joker for RunnerJoker {
 
         // Always give the accumulated bonus regardless of hand type
         JokerEffect::new().with_chips(new_accumulated)
+>>>>>>> origin/main
     }
 }
 
 // Space Joker implementation - 1 in 4 chance for +1 hand level
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
+<<<<<<< HEAD
+pub struct SpaceJokerImpl;
+
+impl Joker for SpaceJokerImpl {
+=======
 pub struct SpaceJoker;
 
 impl Joker for SpaceJoker {
+>>>>>>> origin/main
     fn id(&self) -> JokerId {
         JokerId::SpaceJoker
     }
@@ -775,7 +845,11 @@ impl Joker for SpaceJoker {
     }
 
     fn description(&self) -> &str {
+<<<<<<< HEAD
+        "1 in 4 chance to upgrade level of played hand"
+=======
         "1 in 4 chance to upgrade level of played poker hand"
+>>>>>>> origin/main
     }
 
     fn rarity(&self) -> JokerRarity {
@@ -783,6 +857,20 @@ impl Joker for SpaceJoker {
     }
 
     fn cost(&self) -> usize {
+<<<<<<< HEAD
+        5
+    }
+
+    fn on_hand_played(&self, _context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
+        // 1 in 4 chance (25%) to trigger
+        let mut rng = thread_rng();
+        if rng.gen_bool(0.25) {
+            // For now, provide a placeholder effect since hand level upgrading requires game state changes
+            // In a full implementation, this would need to modify the hand level in the game state
+            // TODO: Implement actual hand level upgrade functionality
+            let mut effect = JokerEffect::new();
+            effect.message = Some("Space Joker activated! +1 hand level".to_string());
+=======
         6
     }
 
@@ -794,16 +882,21 @@ impl Joker for SpaceJoker {
             // For now, return a message effect
             let mut effect = JokerEffect::new();
             effect.message = Some("Space Joker activated! Hand level upgraded!".to_string());
+>>>>>>> origin/main
             effect
         } else {
             JokerEffect::new()
         }
     }
 }
+<<<<<<< HEAD
+=======
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::card::{Card, Suit, Value};
+    use crate::hand::SelectHand;
     use crate::joker::{JokerId, JokerRarity};
     use crate::joker_factory::JokerFactory;
 
@@ -883,3 +976,4 @@ mod tests {
                                                     // But the effect should return 0 chips (tested by max(0) in on_hand_played)
     }
 }
+>>>>>>> origin/main
