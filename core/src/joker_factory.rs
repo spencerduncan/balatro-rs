@@ -24,9 +24,11 @@ impl JokerFactory {
             JokerId::CleverJoker => Some(Box::new(CleverJoker)),
             JokerId::DeviousJoker => Some(Box::new(DeviousJoker)),
             JokerId::CraftyJoker => Some(Box::new(CraftyJoker)),
+            
+            // Jokers from main branch
             JokerId::Supernova => Some(Box::new(SupernovaJoker)),
             JokerId::SpaceJoker => Some(Box::new(SpaceJoker)),
-
+            
             // Static jokers from StaticJokerFactory
             JokerId::RedCard => Some(StaticJokerFactory::create_red_card()),
             JokerId::BlueJoker => Some(StaticJokerFactory::create_blue_joker()),
@@ -34,7 +36,7 @@ impl JokerFactory {
             JokerId::Square => Some(StaticJokerFactory::create_square()),
             JokerId::Walkie => Some(StaticJokerFactory::create_walkie()),
             JokerId::Runner => Some(Box::new(RunnerJoker)),
-
+            
             // Placeholder jokers with TODO comments
             JokerId::HalfJoker => Some(StaticJokerFactory::create_half_joker()),
             JokerId::Banner => Some(StaticJokerFactory::create_banner()),
@@ -77,8 +79,11 @@ impl JokerFactory {
                 AbstractJoker,
             ],
             JokerRarity::Uncommon => vec![
-                SpaceJoker, // New static jokers
-                RedCard, BlueJoker, SteelJoker,
+                SpaceJoker,
+                // New static jokers
+                RedCard,
+                BlueJoker,
+                SteelJoker,
             ],
             JokerRarity::Rare => vec![
                 // TODO: Add rare jokers
@@ -194,7 +199,7 @@ mod tests {
     #[test]
     fn test_new_jokers_in_implemented_list() {
         let implemented = JokerFactory::get_all_implemented();
-
+        
         // Fully implemented jokers should be in the list
         assert!(implemented.contains(&JokerId::RedCard));
         assert!(implemented.contains(&JokerId::BlueJoker));
@@ -202,7 +207,7 @@ mod tests {
         assert!(implemented.contains(&JokerId::Square));
         assert!(implemented.contains(&JokerId::Walkie));
         assert!(implemented.contains(&JokerId::Runner));
-
+        
         // Note: Placeholder jokers (HalfJoker, Banner, AbstractJoker, SteelJoker)
         // are intentionally not in get_all_implemented() as they're not complete
     }
