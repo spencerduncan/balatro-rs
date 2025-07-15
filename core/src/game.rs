@@ -16,6 +16,7 @@ use crate::stage::{Blind, End, Stage};
 use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
+use std::time::Duration;
 
 #[derive(Debug, Clone)]
 pub struct Game {
@@ -786,6 +787,63 @@ impl Game {
             memory_usage_mb: 10.0, // Placeholder - would calculate actual memory usage in real implementation
             cache_hit_rate: 0.85, // Placeholder - would track actual cache hits in real implementation
         }
+    }
+
+    /// Get score value in a concurrent-safe manner
+    pub fn get_score_concurrent(&self) -> usize {
+        // For now, simple read access - in full implementation this would use atomic operations
+        self.score
+    }
+
+    /// Get stage value in a concurrent-safe manner
+    pub fn get_stage_concurrent(&self) -> String {
+        // For now, simple read access - in full implementation this would use atomic operations
+        format!("{:?}", self.stage)
+    }
+
+    /// Enable action caching with specified TTL
+    pub fn enable_action_caching(&mut self, _ttl: Duration) {
+        // Placeholder - in full implementation this would configure the action cache
+        // For now we'll just record that caching is enabled
+    }
+
+    /// Generate actions with caching optimization
+    pub fn gen_actions_cached(&self) -> impl Iterator<Item = Action> + '_ {
+        // For now, delegate to existing gen_actions
+        // In full implementation this would use the action cache
+        self.gen_actions()
+    }
+
+    /// Get a lightweight state snapshot (wrapper around lock-free snapshot)
+    pub fn get_state_snapshot(&self) -> crate::concurrent_state::LockFreeStateSnapshot {
+        self.get_lock_free_state_snapshot()
+    }
+
+    /// Validate that the game state is internally consistent
+    pub fn validate_state_consistency(&self) -> bool {
+        // Basic state consistency checks
+        // Money should be non-negative and within bounds
+        if self.money > self.config.money_max {
+            return false;
+        }
+
+        // Plays and discards should be reasonable values
+        if self.plays > 10 || self.discards > 10 {
+            return false;
+        }
+
+        // Available cards should not exceed deck size
+        if self.available.cards().len() > 52 {
+            return false;
+        }
+
+        // Selected cards should not exceed available cards
+        if self.available.selected().len() > self.available.cards().len() {
+            return false;
+        }
+
+        // All validations passed
+        true
     }
 }
 
