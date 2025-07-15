@@ -14,6 +14,7 @@ pub mod hand;
 pub mod joker;
 pub mod joker_factory;
 pub mod joker_impl;
+pub mod joker_metadata;
 pub mod joker_registry;
 pub mod joker_state;
 pub mod rank;

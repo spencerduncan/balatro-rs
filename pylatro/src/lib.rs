@@ -4,6 +4,7 @@ use balatro_rs::config::Config;
 use balatro_rs::error::GameError;
 use balatro_rs::game::Game;
 use balatro_rs::joker::{JokerId, JokerRarity, Jokers};
+use balatro_rs::joker_metadata::JokerMetadata;
 use balatro_rs::joker_registry::{registry, JokerDefinition, UnlockCondition};
 use balatro_rs::stage::{End, Stage};
 use pyo3::prelude::*;
@@ -97,6 +98,388 @@ impl GameEngine {
         };
 
         Ok(cost)
+    }
+
+    /// Get comprehensive metadata for a specific joker
+    fn get_joker_metadata(&self, joker_id: JokerId) -> Result<Option<JokerMetadata>, GameError> {
+        let definition = registry::get_definition(&joker_id)?;
+
+        match definition {
+            Some(def) => {
+                // For now, assume all jokers are unlocked
+                let is_unlocked = true;
+                let metadata = JokerMetadata::from_definition(&def, is_unlocked);
+                Ok(Some(metadata))
+            }
+            None => Ok(None),
+        }
+    }
+
+    /// Get basic properties as dictionary
+    fn get_joker_properties(&self, joker_id: JokerId) -> Option<pyo3::PyObject> {
+        let definition = match registry::get_definition(&joker_id) {
+            Ok(Some(def)) => def,
+            Ok(None) => return None,
+            Err(_) => return None,
+        };
+
+        let cost = match definition.rarity {
+            JokerRarity::Common => 3,
+            JokerRarity::Uncommon => 6,
+            JokerRarity::Rare => 8,
+            JokerRarity::Legendary => 20,
+        };
+
+        pyo3::Python::with_gil(|py| {
+            let dict = pyo3::types::PyDict::new(py);
+            let _ = dict.set_item("name", &definition.name);
+            let _ = dict.set_item("description", &definition.description);
+            let _ = dict.set_item("rarity", format!("{:?}", definition.rarity));
+            let _ = dict.set_item("cost", cost);
+
+            Some(dict.into())
+        })
+    }
+
+    /// Get joker effect descriptions and parameters
+    fn get_joker_effect_info(&self, joker_id: JokerId) -> Option<pyo3::PyObject> {
+        let definition = match registry::get_definition(&joker_id) {
+            Ok(Some(def)) => def,
+            Ok(None) => return None,
+            Err(_) => return None,
+        };
+
+        // Determine effect type and triggers based on joker ID
+        let (effect_type, triggers_on) = match joker_id {
+            JokerId::Joker => ("Basic Mult", vec!["hand_played"]),
+            JokerId::GreedyJoker
+            | JokerId::LustyJoker
+            | JokerId::WrathfulJoker
+            | JokerId::GluttonousJoker => ("Conditional Mult", vec!["card_scored"]),
+            _ => ("Effect", vec![]),
+        };
+
+        pyo3::Python::with_gil(|py| {
+            let dict = pyo3::types::PyDict::new(py);
+            let _ = dict.set_item("effect_type", effect_type);
+            let _ = dict.set_item("description", &definition.description);
+            let _ = dict.set_item("parameters", pyo3::types::PyDict::new(py)); // TODO: Extract from joker implementation
+            let _ = dict.set_item("triggers_on", triggers_on);
+
+            Some(dict.into())
+        })
+    }
+
+    /// Get unlock condition and status
+    fn get_joker_unlock_status(&self, joker_id: JokerId) -> Option<pyo3::PyObject> {
+        let definition = match registry::get_definition(&joker_id) {
+            Ok(Some(def)) => def,
+            Ok(None) => return None,
+            Err(_) => return None,
+        };
+
+        pyo3::Python::with_gil(|py| {
+            let dict = pyo3::types::PyDict::new(py);
+            let _ = dict.set_item("is_unlocked", true); // For now, assume all jokers are unlocked
+
+            // Add unlock condition if it exists
+            match &definition.unlock_condition {
+                Some(condition) => {
+                    let _ = dict.set_item("unlock_condition", format!("{condition:?}"));
+                }
+                None => {
+                    let _ = dict.set_item("unlock_condition", py.None());
+                }
+            }
+
+            Some(dict.into())
+        })
+    }
+
+    /// Get metadata for multiple jokers efficiently
+    /// Returns a dictionary with JokerId objects as keys and JokerMetadata as values
+    fn get_multiple_joker_metadata(&self, joker_ids: Vec<JokerId>) -> pyo3::PyObject {
+        pyo3::Python::with_gil(|py| {
+            let dict = pyo3::types::PyDict::new(py);
+
+            for joker_id in joker_ids {
+                if let Ok(Some(metadata)) = self.get_joker_metadata(joker_id) {
+                    let _ = dict.set_item(format!("{joker_id:?}"), metadata);
+                }
+            }
+
+            dict.into()
+        })
+    }
+
+    /// Get metadata for all jokers in the registry  
+    /// Returns a dictionary with JokerId string names as keys and JokerMetadata as values
+    fn get_all_joker_metadata(&self) -> pyo3::PyObject {
+        pyo3::Python::with_gil(|py| {
+            let dict = pyo3::types::PyDict::new(py);
+
+            // Get all available jokers and their metadata
+            if let Ok(all_jokers) = registry::all_definitions() {
+                for definition in all_jokers {
+                    if let Ok(Some(metadata)) = self.get_joker_metadata(definition.id) {
+                        let _ = dict.set_item(format!("{0:?}", definition.id), metadata);
+                    }
+                }
+            }
+
+            dict.into()
+        })
+    }
+
+    /// Get jokers by rarity with optional full metadata
+    #[pyo3(signature = (rarity, include_metadata=true))]
+    fn get_jokers_by_rarity(
+        &self,
+        rarity: JokerRarity,
+        include_metadata: bool,
+    ) -> Vec<JokerMetadata> {
+        let include_full = include_metadata;
+
+        if let Ok(jokers) = registry::definitions_by_rarity(rarity) {
+            jokers
+                .into_iter()
+                .filter_map(|def| {
+                    if include_full {
+                        self.get_joker_metadata(def.id).ok().flatten()
+                    } else {
+                        // Create minimal metadata
+                        Some(JokerMetadata::from_definition(&def, true))
+                    }
+                })
+                .collect()
+        } else {
+            Vec::new()
+        }
+    }
+
+    /// Get metadata for all currently unlocked jokers
+    fn get_unlocked_jokers_metadata(&self) -> Vec<JokerMetadata> {
+        if let Ok(all_jokers) = registry::all_definitions() {
+            all_jokers
+                .into_iter()
+                .filter_map(|def| {
+                    // For now, assume all jokers are unlocked
+                    self.get_joker_metadata(def.id).ok().flatten()
+                })
+                .collect()
+        } else {
+            Vec::new()
+        }
+    }
+
+    /// Get joker state information for a specific joker
+    fn get_joker_state_info(&self, joker_id: JokerId) -> Option<pyo3::PyObject> {
+        // Check if this joker is currently active in the game
+        let state = &self.game;
+        let active_jokers = &state.jokers;
+
+        // Find the joker in active jokers
+        let joker_state = active_jokers.iter().find(|j| j.to_joker_id() == joker_id);
+
+        if let Some(_joker) = joker_state {
+            pyo3::Python::with_gil(|py| {
+                let dict = pyo3::types::PyDict::new(py);
+                let _ = dict.set_item("accumulated_value", 0.0f64); // TODO: Get from actual joker state
+                let _ = dict.set_item("triggers_remaining", py.None()); // TODO: Get from actual joker state
+                let _ = dict.set_item("get_custom_data", pyo3::types::PyDict::new(py));
+                let _ = dict.set_item("has_custom_data", false);
+                let _ = dict.set_item("get_all_custom_keys", pyo3::types::PyList::empty(py));
+
+                Some(dict.into())
+            })
+        } else {
+            None
+        }
+    }
+
+    /// Get state for all active jokers
+    fn get_active_jokers_state(&self) -> pyo3::PyObject {
+        pyo3::Python::with_gil(|py| {
+            let dict = pyo3::types::PyDict::new(py);
+
+            for joker in &self.game.jokers {
+                let joker_id = joker.to_joker_id();
+                let state_dict = pyo3::types::PyDict::new(py);
+                let _ = state_dict.set_item("accumulated_value", 0.0f64);
+                let _ = state_dict.set_item("triggers_remaining", py.None());
+                let _ = dict.set_item(format!("{joker_id:?}"), state_dict);
+            }
+
+            dict.into()
+        })
+    }
+
+    /// Search jokers by name or description
+    fn search_jokers(&self, query: &str) -> Vec<JokerMetadata> {
+        let query_lower = query.to_lowercase();
+
+        if let Ok(all_jokers) = registry::all_definitions() {
+            all_jokers
+                .into_iter()
+                .filter(|def| {
+                    def.name.to_lowercase().contains(&query_lower)
+                        || def.description.to_lowercase().contains(&query_lower)
+                })
+                .filter_map(|def| self.get_joker_metadata(def.id).ok().flatten())
+                .collect()
+        } else {
+            Vec::new()
+        }
+    }
+
+    /// Filter jokers by multiple criteria
+    #[pyo3(signature = (rarity=None, unlocked_only=false, affordable_only=false))]
+    fn filter_jokers(
+        &self,
+        rarity: Option<JokerRarity>,
+        unlocked_only: bool,
+        affordable_only: bool,
+    ) -> Vec<JokerMetadata> {
+        if let Ok(all_jokers) = registry::all_definitions() {
+            all_jokers
+                .into_iter()
+                .filter(|def| {
+                    // Filter by rarity if specified
+                    if let Some(r) = rarity {
+                        if def.rarity != r {
+                            return false;
+                        }
+                    }
+
+                    // Filter by unlock status if requested
+                    if unlocked_only {
+                        // For now, assume all are unlocked
+                    }
+
+                    // Filter by affordability if requested
+                    if affordable_only {
+                        let cost = match def.rarity {
+                            JokerRarity::Common => 3,
+                            JokerRarity::Uncommon => 6,
+                            JokerRarity::Rare => 8,
+                            JokerRarity::Legendary => 20,
+                        };
+                        if self.game.money < cost {
+                            return false;
+                        }
+                    }
+
+                    true
+                })
+                .filter_map(|def| self.get_joker_metadata(def.id).ok().flatten())
+                .collect()
+        } else {
+            Vec::new()
+        }
+    }
+
+    /// Get jokers within a cost range
+    fn get_jokers_by_cost_range(&self, min_cost: i32, max_cost: i32) -> Vec<JokerMetadata> {
+        if let Ok(all_jokers) = registry::all_definitions() {
+            all_jokers
+                .into_iter()
+                .filter_map(|def| {
+                    let cost = match def.rarity {
+                        JokerRarity::Common => 3,
+                        JokerRarity::Uncommon => 6,
+                        JokerRarity::Rare => 8,
+                        JokerRarity::Legendary => 20,
+                    };
+
+                    if cost >= min_cost && cost <= max_cost {
+                        self.get_joker_metadata(def.id).ok().flatten()
+                    } else {
+                        None
+                    }
+                })
+                .collect()
+        } else {
+            Vec::new()
+        }
+    }
+
+    /// Get joker categories
+    fn get_joker_categories(&self) -> pyo3::PyObject {
+        pyo3::Python::with_gil(|py| {
+            let dict = pyo3::types::PyDict::new(py);
+
+            // Basic categorization based on joker types
+            let _ = dict.set_item("Basic Scoring", vec![JokerId::Joker]);
+            let _ = dict.set_item(
+                "Suit-based",
+                vec![
+                    JokerId::GreedyJoker,
+                    JokerId::LustyJoker,
+                    JokerId::WrathfulJoker,
+                    JokerId::GluttonousJoker,
+                ],
+            );
+
+            dict.into()
+        })
+    }
+
+    /// Get joker registry statistics
+    fn get_joker_statistics(&self) -> pyo3::PyObject {
+        pyo3::Python::with_gil(|py| {
+            let dict = pyo3::types::PyDict::new(py);
+
+            if let Ok(all_jokers) = registry::all_definitions() {
+                let total = all_jokers.len();
+                let _ = dict.set_item("total_jokers", total);
+
+                // Count by rarity
+                let rarity_dict = pyo3::types::PyDict::new(py);
+                let mut common_count = 0;
+                let mut uncommon_count = 0;
+                let mut rare_count = 0;
+                let mut legendary_count = 0;
+
+                for joker in &all_jokers {
+                    match joker.rarity {
+                        JokerRarity::Common => common_count += 1,
+                        JokerRarity::Uncommon => uncommon_count += 1,
+                        JokerRarity::Rare => rare_count += 1,
+                        JokerRarity::Legendary => legendary_count += 1,
+                    }
+                }
+
+                let _ = rarity_dict.set_item("Common", common_count);
+                let _ = rarity_dict.set_item("Uncommon", uncommon_count);
+                let _ = rarity_dict.set_item("Rare", rare_count);
+                let _ = rarity_dict.set_item("Legendary", legendary_count);
+                let _ = dict.set_item("by_rarity", rarity_dict);
+
+                // For now, assume all are unlocked
+                let _ = dict.set_item("unlocked_count", total);
+            } else {
+                let _ = dict.set_item("total_jokers", 0);
+                let _ = dict.set_item("by_rarity", pyo3::types::PyDict::new(py));
+                let _ = dict.set_item("unlocked_count", 0);
+            }
+
+            dict.into()
+        })
+    }
+
+    /// Analyze joker synergies
+    fn analyze_joker_synergies(&self, _joker_ids: Vec<JokerId>) -> pyo3::PyObject {
+        pyo3::Python::with_gil(|py| {
+            let dict = pyo3::types::PyDict::new(py);
+
+            // Basic synergy analysis - this would be expanded with actual game logic
+            let _ = dict.set_item("synergy_score", 0.0f64);
+            let _ = dict.set_item("compatible", true);
+            let _ = dict.set_item("conflicts", pyo3::types::PyList::empty(py));
+            let _ = dict.set_item("recommendations", pyo3::types::PyList::empty(py));
+
+            dict.into()
+        })
     }
 
     #[getter]
@@ -214,6 +597,51 @@ impl GameState {
         }
     }
 
+    /// Get all active joker states
+    fn get_joker_states(&self) -> pyo3::PyObject {
+        pyo3::Python::with_gil(|py| {
+            let dict = pyo3::types::PyDict::new(py);
+
+            for joker in &self.game.jokers {
+                let joker_id = joker.to_joker_id();
+                let state_dict = pyo3::types::PyDict::new(py);
+                let _ = state_dict.set_item("accumulated_value", 0.0f64);
+                let _ = state_dict.set_item("triggers_remaining", py.None());
+                let _ = dict.set_item(format!("{joker_id:?}"), state_dict);
+            }
+
+            dict.into()
+        })
+    }
+
+    /// Get accumulated values for all jokers
+    fn get_joker_accumulated_values(&self) -> pyo3::PyObject {
+        pyo3::Python::with_gil(|py| {
+            let dict = pyo3::types::PyDict::new(py);
+
+            for joker in &self.game.jokers {
+                let joker_id = joker.to_joker_id();
+                let _ = dict.set_item(format!("{joker_id:?}"), 0.0f64); // TODO: Get from actual joker state
+            }
+
+            dict.into()
+        })
+    }
+
+    /// Get triggers remaining for all jokers
+    fn get_joker_triggers_remaining(&self) -> pyo3::PyObject {
+        pyo3::Python::with_gil(|py| {
+            let dict = pyo3::types::PyDict::new(py);
+
+            for joker in &self.game.jokers {
+                let joker_id = joker.to_joker_id();
+                let _ = dict.set_item(format!("{joker_id:?}"), py.None()); // TODO: Get from actual joker state
+            }
+
+            dict.into()
+        })
+    }
+
     fn __repr__(&self) -> String {
         format!("GameState:\n{}", self.game)
     }
@@ -230,6 +658,7 @@ fn pylatro(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<JokerId>()?;
     m.add_class::<JokerRarity>()?;
     m.add_class::<JokerDefinition>()?;
+    m.add_class::<JokerMetadata>()?;
     m.add_class::<UnlockCondition>()?;
 
     Ok(())
