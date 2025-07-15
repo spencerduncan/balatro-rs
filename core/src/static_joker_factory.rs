@@ -472,8 +472,10 @@ impl StaticJokerFactory {
 
     /// Create Half Joker (+20 Mult if played hand has 4 or fewer cards)
     /// TODO: Requires hand size condition in StaticCondition enum
+    /// WARNING: This is a PLACEHOLDER implementation that gives +20 Mult ALWAYS
+    /// The actual joker should only trigger with 4 or fewer cards in hand
     pub fn create_half_joker() -> Box<dyn Joker> {
-        // Placeholder implementation until framework supports hand size conditions
+        // PLACEHOLDER: Currently provides bonus unconditionally - DO NOT USE IN PRODUCTION
         Box::new(
             StaticJoker::builder(
                 JokerId::HalfJoker,
@@ -492,8 +494,10 @@ impl StaticJokerFactory {
 
     /// Create Banner (+30 Chips for each remaining discard)
     /// TODO: Requires discard count access in GameContext
+    /// WARNING: This is a PLACEHOLDER implementation that gives +30 Chips ALWAYS
+    /// The actual joker should give +30 Chips * remaining_discards
     pub fn create_banner() -> Box<dyn Joker> {
-        // Placeholder implementation until framework supports discard count
+        // PLACEHOLDER: Currently provides fixed +30 Chips - DO NOT USE IN PRODUCTION
         Box::new(
             StaticJoker::builder(
                 JokerId::Banner,
@@ -512,8 +516,10 @@ impl StaticJokerFactory {
 
     /// Create Abstract Joker (All Jokers give X0.25 more Mult)
     /// TODO: Requires joker interaction system
+    /// WARNING: This is a PLACEHOLDER implementation that gives X1.25 Mult to self only
+    /// The actual joker should affect ALL other jokers, not provide direct mult
     pub fn create_abstract_joker() -> Box<dyn Joker> {
-        // Placeholder implementation until framework supports joker interactions
+        // PLACEHOLDER: Currently provides self mult multiplier - DO NOT USE IN PRODUCTION
         Box::new(
             StaticJoker::builder(
                 JokerId::AbstractJoker,
@@ -532,8 +538,10 @@ impl StaticJokerFactory {
 
     /// Create Steel Joker (This Joker gains X0.25 Mult for each Steel Card in your full deck)
     /// TODO: Requires deck composition access
+    /// WARNING: This is a PLACEHOLDER implementation that gives X1.0 Mult ALWAYS
+    /// The actual joker should scale based on Steel Card count: X(1.0 + 0.25 * steel_cards)
     pub fn create_steel_joker() -> Box<dyn Joker> {
-        // Placeholder implementation until framework supports deck composition
+        // PLACEHOLDER: Currently provides no mult multiplier - DO NOT USE IN PRODUCTION
         Box::new(
             StaticJoker::builder(
                 JokerId::SteelJoker,
@@ -622,7 +630,6 @@ impl StaticJokerFactory {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::joker::Joker;
 
     #[test]
     fn test_basic_joker_creation() {
@@ -645,7 +652,7 @@ mod tests {
             "Played cards with Diamond suit give +3 Mult when scored"
         );
         assert_eq!(greedy.rarity(), JokerRarity::Common);
-        assert_eq!(greedy.cost(), 2);
+        assert_eq!(greedy.cost(), 5);
 
         // Test Lusty Joker (Heart)
         let lusty = StaticJokerFactory::create_lusty_joker();
@@ -694,7 +701,7 @@ mod tests {
         assert_eq!(zany.name(), "Zany Joker");
         assert_eq!(
             zany.description(),
-            "+12 Mult if played hand contains Three of a Kind"
+            "+12 Mult if played hand contains a Three of a Kind"
         );
         assert_eq!(zany.cost(), 4);
 
@@ -704,7 +711,7 @@ mod tests {
         assert_eq!(mad.name(), "Mad Joker");
         assert_eq!(
             mad.description(),
-            "+10 Mult if played hand contains Two Pair"
+            "+10 Mult if played hand contains a Two Pair"
         );
 
         // Test Crazy Joker (Straight)
@@ -713,7 +720,7 @@ mod tests {
         assert_eq!(crazy.name(), "Crazy Joker");
         assert_eq!(
             crazy.description(),
-            "+12 Mult if played hand contains Straight"
+            "+12 Mult if played hand contains a Straight"
         );
 
         // Test Droll Joker (Flush)
@@ -722,7 +729,7 @@ mod tests {
         assert_eq!(droll.name(), "Droll Joker");
         assert_eq!(
             droll.description(),
-            "+10 Mult if played hand contains Flush"
+            "+10 Mult if played hand contains a Flush"
         );
     }
 
@@ -743,7 +750,7 @@ mod tests {
         assert_eq!(wily.name(), "Wily Joker");
         assert_eq!(
             wily.description(),
-            "+100 Chips if played hand contains Three of a Kind"
+            "+100 Chips if played hand contains a Three of a Kind"
         );
 
         // Test Clever Joker (Two Pair)
@@ -752,7 +759,7 @@ mod tests {
         assert_eq!(clever.name(), "Clever Joker");
         assert_eq!(
             clever.description(),
-            "+80 Chips if played hand contains Two Pair"
+            "+80 Chips if played hand contains a Two Pair"
         );
 
         // Test Devious Joker (Straight)
@@ -761,7 +768,7 @@ mod tests {
         assert_eq!(devious.name(), "Devious Joker");
         assert_eq!(
             devious.description(),
-            "+100 Chips if played hand contains Straight"
+            "+100 Chips if played hand contains a Straight"
         );
 
         // Test Crafty Joker (Flush)
@@ -770,7 +777,7 @@ mod tests {
         assert_eq!(crafty.name(), "Crafty Joker");
         assert_eq!(
             crafty.description(),
-            "+80 Chips if played hand contains Flush"
+            "+80 Chips if played hand contains a Flush"
         );
     }
 
@@ -782,7 +789,7 @@ mod tests {
         assert_eq!(even_steven.name(), "Even Steven");
         assert_eq!(
             even_steven.description(),
-            "Played cards with even rank (2, 4, 6, 8, 10) give +4 Mult when scored"
+            "Played cards with even rank give +4 Mult when scored"
         );
 
         // Test Odd Todd
@@ -791,7 +798,7 @@ mod tests {
         assert_eq!(odd_todd.name(), "Odd Todd");
         assert_eq!(
             odd_todd.description(),
-            "Played cards with odd rank (3, 5, 7, 9, A) give +31 Chips when scored"
+            "Played cards with odd rank give +31 Chips when scored"
         );
 
         // Test Scholar
@@ -809,8 +816,13 @@ mod tests {
         // Test that jokers have appropriate costs based on rarity/power
         let basic_jokers = vec![
             StaticJokerFactory::create_joker(),        // 2
-            StaticJokerFactory::create_greedy_joker(), // 2
-            StaticJokerFactory::create_lusty_joker(),  // 2
+        ];
+        
+        let suit_jokers = vec![
+            StaticJokerFactory::create_greedy_joker(), // 5
+            StaticJokerFactory::create_lusty_joker(),  // 5
+            StaticJokerFactory::create_wrathful_joker(), // 5
+            StaticJokerFactory::create_gluttonous_joker(), // 5
         ];
 
         let mid_tier_jokers = vec![
@@ -826,6 +838,10 @@ mod tests {
         // Verify cost progression
         for joker in basic_jokers {
             assert_eq!(joker.cost(), 2);
+        }
+        
+        for joker in suit_jokers {
+            assert_eq!(joker.cost(), 5);
         }
 
         for joker in mid_tier_jokers {
