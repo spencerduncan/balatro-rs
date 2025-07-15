@@ -2,8 +2,11 @@ use balatro_rs::card::{Card, Suit, Value};
 use balatro_rs::hand::Hand;
 use balatro_rs::joker::{GameContext, Joker, JokerId, JokerRarity};
 use balatro_rs::joker_impl::{Burglar, BusinessCard, Egg};
+use balatro_rs::joker_state::JokerStateManager;
+use balatro_rs::rank::HandRank;
 use balatro_rs::stage::{Blind, Stage};
-use std::sync::OnceLock;
+use std::collections::HashMap;
+use std::sync::{Arc, OnceLock};
 
 fn create_test_context() -> GameContext<'static> {
     static STAGE: Stage = Stage::Blind(Blind::Small);
@@ -13,6 +16,14 @@ fn create_test_context() -> GameContext<'static> {
         // Create an empty hand using the safe constructor
         Hand::new(Vec::new())
     });
+
+    // Create static hand type counts for testing
+    static HAND_TYPE_COUNTS: OnceLock<HashMap<HandRank, u32>> = OnceLock::new();
+    let hand_type_counts = HAND_TYPE_COUNTS.get_or_init(|| HashMap::new());
+
+    // Create static joker state manager for testing  
+    static JOKER_STATE_MANAGER: OnceLock<Arc<JokerStateManager>> = OnceLock::new();
+    let joker_state_manager = JOKER_STATE_MANAGER.get_or_init(|| Arc::new(JokerStateManager::new()));
 
     GameContext {
         chips: 0,
@@ -26,6 +37,8 @@ fn create_test_context() -> GameContext<'static> {
         jokers: &[],
         hand,
         discarded: &[],
+        hand_type_counts,
+        joker_state_manager,
     }
 }
 
