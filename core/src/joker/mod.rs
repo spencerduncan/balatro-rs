@@ -331,6 +331,9 @@ pub struct JokerEffect {
     /// Applied for the current round only.
     pub discard_mod: i32,
 
+    /// Sell value increase for this joker
+    pub sell_value_increase: i32,
+
     /// Custom message to display to the player.
     ///
     /// Used for jokers with special effects, Easter eggs, or important notifications.
@@ -364,6 +367,18 @@ impl JokerEffect {
     /// Set mult multiplier
     pub fn with_mult_multiplier(mut self, multiplier: f32) -> Self {
         self.mult_multiplier = multiplier;
+        self
+    }
+
+    /// Set sell value increase
+    pub fn with_sell_value_increase(mut self, increase: i32) -> Self {
+        self.sell_value_increase = increase;
+        self
+    }
+
+    /// Set custom message
+    pub fn with_message(mut self, message: String) -> Self {
+        self.message = Some(message);
         self
     }
 }
@@ -552,6 +567,11 @@ pub trait Joker: Send + Sync + std::fmt::Debug {
             JokerRarity::Rare => 8,
             JokerRarity::Legendary => 20,
         }
+    }
+
+    /// Get the current sell value (defaults to cost / 2)
+    fn sell_value(&self, accumulated_bonus: f64) -> usize {
+        (self.cost() / 2) + (accumulated_bonus as usize)
     }
 
     // Lifecycle hooks with default implementations
