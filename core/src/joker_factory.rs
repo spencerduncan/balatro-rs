@@ -23,8 +23,13 @@ impl JokerFactory {
             JokerId::CleverJoker => Some(Box::new(CleverJoker)),
             JokerId::DeviousJoker => Some(Box::new(DeviousJoker)),
             JokerId::CraftyJoker => Some(Box::new(CraftyJoker)),
-            JokerId::Supernova => Some(Box::new(SupernovaJoker)),
+            // Money-based conditional jokers
+            JokerId::BusinessCard => Some(Box::new(BusinessCard)),
+            JokerId::EggJoker => Some(Box::new(Egg)),
+            JokerId::Burglar => Some(Box::new(Burglar)),
+            // Hand type conditional jokers
             JokerId::Runner => Some(Box::new(RunnerJoker)),
+            JokerId::Supernova => Some(Box::new(SupernovaJoker)),
             JokerId::SpaceJoker => Some(Box::new(SpaceJoker)),
             JokerId::IceCream => Some(Box::new(IceCreamJoker::new())),
             // TODO: Implement remaining jokers
@@ -53,12 +58,19 @@ impl JokerFactory {
                 CleverJoker,
                 DeviousJoker,
                 CraftyJoker,
-                Supernova,
+                // Money-based conditional jokers
+                BusinessCard,
+                EggJoker,
+                // Hand type conditional jokers
                 Runner,
+                Supernova,
                 IceCream,
                 // Add more common jokers here
             ],
             JokerRarity::Uncommon => vec![
+                // Money-based conditional jokers
+                Burglar,
+                // Hand type conditional jokers
                 SpaceJoker,
                 // TODO: Add more uncommon jokers
             ],
@@ -90,8 +102,13 @@ impl JokerFactory {
             CleverJoker,
             DeviousJoker,
             CraftyJoker,
-            Supernova,
+            // Money-based conditional jokers
+            BusinessCard,
+            EggJoker,
+            Burglar,
+            // Hand type conditional jokers
             Runner,
+            Supernova,
             SpaceJoker,
             IceCream,
         ]
