@@ -92,13 +92,13 @@ impl StaticJokerFactory {
         )
     }
 
-    /// Create Jolly Joker (+8 Mult if played hand contains a Pair)
+    /// Create Jolly Joker (+8 Mult if played hand contains Pair)
     pub fn create_jolly_joker() -> Box<dyn Joker> {
         Box::new(
             StaticJoker::builder(
                 JokerId::JollyJoker,
                 "Jolly Joker",
-                "+8 Mult if played hand contains a Pair",
+                "+8 Mult if played hand contains Pair",
             )
             .rarity(JokerRarity::Common)
             .cost(3)
@@ -110,13 +110,13 @@ impl StaticJokerFactory {
         )
     }
 
-    /// Create Zany Joker (+12 Mult if played hand contains a Three of a Kind)
+    /// Create Zany Joker (+12 Mult if played hand contains Three of a Kind)
     pub fn create_zany_joker() -> Box<dyn Joker> {
         Box::new(
             StaticJoker::builder(
                 JokerId::ZanyJoker,
                 "Zany Joker",
-                "+12 Mult if played hand contains a Three of a Kind",
+                "+12 Mult if played hand contains Three of a Kind",
             )
             .rarity(JokerRarity::Common)
             .cost(4)
@@ -128,13 +128,13 @@ impl StaticJokerFactory {
         )
     }
 
-    /// Create Mad Joker (+10 Mult if played hand contains a Two Pair)
+    /// Create Mad Joker (+10 Mult if played hand contains Two Pair)
     pub fn create_mad_joker() -> Box<dyn Joker> {
         Box::new(
             StaticJoker::builder(
                 JokerId::MadJoker,
                 "Mad Joker",
-                "+10 Mult if played hand contains a Two Pair",
+                "+10 Mult if played hand contains Two Pair",
             )
             .rarity(JokerRarity::Common)
             .cost(4)
@@ -146,13 +146,13 @@ impl StaticJokerFactory {
         )
     }
 
-    /// Create Crazy Joker (+12 Mult if played hand contains a Straight)
+    /// Create Crazy Joker (+12 Mult if played hand contains Straight)
     pub fn create_crazy_joker() -> Box<dyn Joker> {
         Box::new(
             StaticJoker::builder(
                 JokerId::CrazyJoker,
                 "Crazy Joker",
-                "+12 Mult if played hand contains a Straight",
+                "+12 Mult if played hand contains Straight",
             )
             .rarity(JokerRarity::Common)
             .cost(4)
@@ -164,13 +164,13 @@ impl StaticJokerFactory {
         )
     }
 
-    /// Create Droll Joker (+10 Mult if played hand contains a Flush)
+    /// Create Droll Joker (+10 Mult if played hand contains Flush)
     pub fn create_droll_joker() -> Box<dyn Joker> {
         Box::new(
             StaticJoker::builder(
                 JokerId::DrollJoker,
                 "Droll Joker",
-                "+10 Mult if played hand contains a Flush",
+                "+10 Mult if played hand contains Flush",
             )
             .rarity(JokerRarity::Common)
             .cost(4)
@@ -182,13 +182,13 @@ impl StaticJokerFactory {
         )
     }
 
-    /// Create Sly Joker (+50 Chips if played hand contains a Pair)
+    /// Create Sly Joker (+50 Chips if played hand contains Pair)
     pub fn create_sly_joker() -> Box<dyn Joker> {
         Box::new(
             StaticJoker::builder(
                 JokerId::SlyJoker,
                 "Sly Joker",
-                "+50 Chips if played hand contains a Pair",
+                "+50 Chips if played hand contains Pair",
             )
             .rarity(JokerRarity::Common)
             .cost(3)
@@ -200,13 +200,13 @@ impl StaticJokerFactory {
         )
     }
 
-    /// Create Wily Joker (+100 Chips if played hand contains a Three of a Kind)
+    /// Create Wily Joker (+100 Chips if played hand contains Three of a Kind)
     pub fn create_wily_joker() -> Box<dyn Joker> {
         Box::new(
             StaticJoker::builder(
                 JokerId::WilyJoker,
                 "Wily Joker",
-                "+100 Chips if played hand contains a Three of a Kind",
+                "+100 Chips if played hand contains Three of a Kind",
             )
             .rarity(JokerRarity::Common)
             .cost(4)
@@ -218,13 +218,13 @@ impl StaticJokerFactory {
         )
     }
 
-    /// Create Clever Joker (+80 Chips if played hand contains a Two Pair)
+    /// Create Clever Joker (+80 Chips if played hand contains Two Pair)
     pub fn create_clever_joker() -> Box<dyn Joker> {
         Box::new(
             StaticJoker::builder(
                 JokerId::CleverJoker,
                 "Clever Joker",
-                "+80 Chips if played hand contains a Two Pair",
+                "+80 Chips if played hand contains Two Pair",
             )
             .rarity(JokerRarity::Common)
             .cost(4)
@@ -236,13 +236,13 @@ impl StaticJokerFactory {
         )
     }
 
-    /// Create Devious Joker (+100 Chips if played hand contains a Straight)
+    /// Create Devious Joker (+100 Chips if played hand contains Straight)
     pub fn create_devious_joker() -> Box<dyn Joker> {
         Box::new(
             StaticJoker::builder(
                 JokerId::DeviousJoker,
                 "Devious Joker",
-                "+100 Chips if played hand contains a Straight",
+                "+100 Chips if played hand contains Straight",
             )
             .rarity(JokerRarity::Common)
             .cost(4)
@@ -254,13 +254,13 @@ impl StaticJokerFactory {
         )
     }
 
-    /// Create Crafty Joker (+80 Chips if played hand contains a Flush)
+    /// Create Crafty Joker (+80 Chips if played hand contains Flush)
     pub fn create_crafty_joker() -> Box<dyn Joker> {
         Box::new(
             StaticJoker::builder(
                 JokerId::CraftyJoker,
                 "Crafty Joker",
-                "+80 Chips if played hand contains a Flush",
+                "+80 Chips if played hand contains Flush",
             )
             .rarity(JokerRarity::Common)
             .cost(4)
@@ -272,13 +272,13 @@ impl StaticJokerFactory {
         )
     }
 
-    /// Create Even Steven (Even cards give +4 Mult when scored)
+    /// Create Even Steven (Even cards (2, 4, 6, 8, 10) give +4 Mult when scored)
     pub fn create_even_steven() -> Box<dyn Joker> {
         Box::new(
             StaticJoker::builder(
                 JokerId::EvenSteven,
                 "Even Steven",
-                "Played cards with even rank give +4 Mult when scored",
+                "Played cards with even rank (2, 4, 6, 8, 10) give +4 Mult when scored",
             )
             .rarity(JokerRarity::Common)
             .cost(4)
@@ -296,13 +296,13 @@ impl StaticJokerFactory {
         )
     }
 
-    /// Create Odd Todd (Odd cards give +31 Chips when scored)
+    /// Create Odd Todd (Odd cards (3, 5, 7, 9, A) give +31 Chips when scored)
     pub fn create_odd_todd() -> Box<dyn Joker> {
         Box::new(
             StaticJoker::builder(
                 JokerId::OddTodd,
                 "Odd Todd",
-                "Played cards with odd rank give +31 Chips when scored",
+                "Played cards with odd rank (3, 5, 7, 9, A) give +31 Chips when scored",
             )
             .rarity(JokerRarity::Common)
             .cost(4)
@@ -689,10 +689,7 @@ mod tests {
         let jolly = StaticJokerFactory::create_jolly_joker();
         assert_eq!(jolly.id(), JokerId::JollyJoker);
         assert_eq!(jolly.name(), "Jolly Joker");
-        assert_eq!(
-            jolly.description(),
-            "+8 Mult if played hand contains a Pair"
-        );
+        assert_eq!(jolly.description(), "+8 Mult if played hand contains Pair");
         assert_eq!(jolly.cost(), 3);
 
         // Test Zany Joker (Three of a Kind)
@@ -739,10 +736,7 @@ mod tests {
         let sly = StaticJokerFactory::create_sly_joker();
         assert_eq!(sly.id(), JokerId::SlyJoker);
         assert_eq!(sly.name(), "Sly Joker");
-        assert_eq!(
-            sly.description(),
-            "+50 Chips if played hand contains a Pair"
-        );
+        assert_eq!(sly.description(), "+50 Chips if played hand contains Pair");
 
         // Test Wily Joker (Three of a Kind)
         let wily = StaticJokerFactory::create_wily_joker();
@@ -817,13 +811,6 @@ mod tests {
         let basic_jokers = vec![
             StaticJokerFactory::create_joker(),        // 2
         ];
-        
-        let suit_jokers = vec![
-            StaticJokerFactory::create_greedy_joker(), // 5
-            StaticJokerFactory::create_lusty_joker(),  // 5
-            StaticJokerFactory::create_wrathful_joker(), // 5
-            StaticJokerFactory::create_gluttonous_joker(), // 5
-        ];
 
         let mid_tier_jokers = vec![
             StaticJokerFactory::create_jolly_joker(), // 3
@@ -833,6 +820,13 @@ mod tests {
         let higher_tier_jokers = vec![
             StaticJokerFactory::create_zany_joker(), // 4
             StaticJokerFactory::create_wily_joker(), // 4
+        ];
+
+        let suit_jokers = vec![
+            StaticJokerFactory::create_greedy_joker(),    // 5
+            StaticJokerFactory::create_lusty_joker(),     // 5
+            StaticJokerFactory::create_wrathful_joker(),  // 5
+            StaticJokerFactory::create_gluttonous_joker(), // 5
         ];
 
         // Verify cost progression
@@ -850,6 +844,10 @@ mod tests {
 
         for joker in higher_tier_jokers {
             assert_eq!(joker.cost(), 4);
+        }
+
+        for joker in suit_jokers {
+            assert_eq!(joker.cost(), 5);
         }
     }
 

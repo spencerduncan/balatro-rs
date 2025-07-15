@@ -25,20 +25,24 @@ impl JokerFactory {
             JokerId::DeviousJoker => Some(Box::new(DeviousJoker)),
             JokerId::CraftyJoker => Some(Box::new(CraftyJoker)),
             
+            // Jokers from main branch
+            JokerId::Supernova => Some(Box::new(SupernovaJoker)),
+            JokerId::Runner => Some(Box::new(RunnerJoker)),
+            JokerId::SpaceJoker => Some(Box::new(SpaceJoker)),
+            
             // Static jokers from StaticJokerFactory
             JokerId::RedCard => Some(StaticJokerFactory::create_red_card()),
             JokerId::BlueJoker => Some(StaticJokerFactory::create_blue_joker()),
             JokerId::FacelessJoker => Some(StaticJokerFactory::create_faceless_joker()),
             JokerId::Square => Some(StaticJokerFactory::create_square()),
             JokerId::Walkie => Some(StaticJokerFactory::create_walkie()),
-            JokerId::Runner => Some(StaticJokerFactory::create_runner()),
+            // Note: Runner is already implemented as RunnerJoker above
             
             // Placeholder jokers with TODO comments
             JokerId::HalfJoker => Some(StaticJokerFactory::create_half_joker()),
             JokerId::Banner => Some(StaticJokerFactory::create_banner()),
             JokerId::AbstractJoker => Some(StaticJokerFactory::create_abstract_joker()),
             JokerId::SteelJoker => Some(StaticJokerFactory::create_steel_joker()),
-            
             // TODO: Implement remaining jokers
             _ => None,
         }
@@ -65,16 +69,18 @@ impl JokerFactory {
                 CleverJoker,
                 DeviousJoker,
                 CraftyJoker,
+                Supernova,
+                Runner,
                 // New static jokers
                 FacelessJoker,
                 Square,
                 Walkie,
-                Runner,
                 HalfJoker,
                 Banner,
                 AbstractJoker,
             ],
             JokerRarity::Uncommon => vec![
+                SpaceJoker,
                 // New static jokers
                 RedCard,
                 BlueJoker,
@@ -108,13 +114,15 @@ impl JokerFactory {
             CleverJoker,
             DeviousJoker,
             CraftyJoker,
+            Supernova,
+            Runner,
+            SpaceJoker,
             // New fully implemented static jokers
             RedCard,
             BlueJoker,
             FacelessJoker,
             Square,
             Walkie,
-            Runner,
             // Note: HalfJoker, Banner, AbstractJoker, and SteelJoker are placeholders
         ]
     }

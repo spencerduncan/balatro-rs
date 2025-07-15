@@ -1,6 +1,11 @@
 use crate::card::Card;
 use crate::hand::{Hand, SelectHand};
+use crate::joker_state::JokerStateManager;
+use crate::rank::HandRank;
 use crate::stage::Stage;
+use std::collections::HashMap;
+use std::sync::Arc;
+#[cfg(feature = "python")]
 use pyo3::pyclass;
 use serde::{Deserialize, Serialize};
 use std::fmt;
@@ -288,6 +293,23 @@ pub struct GameContext<'a> {
     pub hand: &'a Hand,
     /// Discarded cards
     pub discarded: &'a [Card],
+    /// Joker state manager for persistent state
+    pub joker_state_manager: &'a Arc<JokerStateManager>,
+    /// Hand type counts for this game run
+    pub hand_type_counts: &'a HashMap<HandRank, u32>,
+}
+
+impl<'a> GameContext<'a> {
+    /// Get the number of times a specific hand type has been played this game run.
+    ///
+    /// # Arguments
+    /// * `hand_rank` - The hand rank to check the count for
+    ///
+    /// # Returns
+    /// The number of times this hand type has been played (0 if never played)
+    pub fn get_hand_type_count(&self, hand_rank: HandRank) -> u32 {
+        self.hand_type_counts.get(&hand_rank).copied().unwrap_or(0)
+    }
 }
 
 /// Core trait that all jokers must implement
@@ -385,6 +407,13 @@ pub mod compat;
 
 // Include the conditional joker framework
 pub mod conditional;
+
+// Include hand composition jokers (Ride the Bus, Blackboard, DNA)
+pub mod hand_composition_jokers;
+
+// Include tests for hand composition jokers (Ride the Bus, Blackboard, DNA)
+#[cfg(test)]
+mod hand_composition_tests;
 
 // Re-export important types
 pub use conditional::{ConditionalJoker, JokerCondition};
