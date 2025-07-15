@@ -1,6 +1,8 @@
 use crate::card::Card;
 use crate::hand::{Hand, SelectHand};
+use crate::joker_state::JokerStateManager;
 use crate::stage::Stage;
+use std::sync::Arc;
 #[cfg(feature = "python")]
 use pyo3::pyclass;
 use serde::{Deserialize, Serialize};
@@ -289,6 +291,8 @@ pub struct GameContext<'a> {
     pub hand: &'a Hand,
     /// Discarded cards
     pub discarded: &'a [Card],
+    /// Joker state manager for persistent state
+    pub joker_state_manager: &'a Arc<JokerStateManager>,
 }
 
 /// Core trait that all jokers must implement

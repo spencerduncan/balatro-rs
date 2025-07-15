@@ -1,6 +1,7 @@
 use crate::card::{Card, Suit};
 use crate::hand::SelectHand;
 use crate::joker::{GameContext, Joker, JokerEffect, JokerId, JokerRarity};
+use rand::prelude::*;
 use serde::{Deserialize, Serialize};
 
 // Basic Joker implementation
@@ -503,6 +504,149 @@ impl Joker for CraftyJoker {
     fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
         if hand.is_flush().is_some() {
             JokerEffect::new().with_chips(80)
+        } else {
+            JokerEffect::new()
+        }
+    }
+}
+
+// Supernova implementation - tracks hand types played this game run
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct SupernovaJoker;
+
+impl Joker for SupernovaJoker {
+    fn id(&self) -> JokerId {
+        JokerId::Supernova
+    }
+
+    fn name(&self) -> &str {
+        "Supernova"
+    }
+
+    fn description(&self) -> &str {
+        "Mult equal to times this poker hand has been played"
+    }
+
+    fn rarity(&self) -> JokerRarity {
+        JokerRarity::Common
+    }
+
+    fn cost(&self) -> usize {
+        3
+    }
+
+    fn on_hand_played(&self, context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
+        // First determine what hand type was played
+        if let Ok(made_hand) = hand.best_hand() {
+            let hand_rank = made_hand.rank;
+            let hand_type = format!("{:?}", hand_rank); // Convert HandRank to string
+            
+            // Increment the count for this hand type
+            let current_count: i32 = context.joker_state_manager
+                .get_custom_data(self.id(), &hand_type)
+                .unwrap_or(Some(0))
+                .unwrap_or(0);
+            
+            let new_count = current_count + 1;
+            
+            // Update the count for this hand type
+            context.joker_state_manager
+                .set_custom_data(self.id(), &hand_type, new_count)
+                .unwrap_or(());
+            
+            // Return mult equal to the new count
+            JokerEffect::new().with_mult(new_count)
+        } else {
+            JokerEffect::new()
+        }
+    }
+}
+
+// Runner implementation - accumulates chips when straights are played, gives bonus on every hand
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct RunnerJoker;
+
+impl Joker for RunnerJoker {
+    fn id(&self) -> JokerId {
+        JokerId::Runner
+    }
+
+    fn name(&self) -> &str {
+        "Runner"
+    }
+
+    fn description(&self) -> &str {
+        "+15 Chips if played hand contains a Straight"
+    }
+
+    fn rarity(&self) -> JokerRarity {
+        JokerRarity::Common
+    }
+
+    fn cost(&self) -> usize {
+        3
+    }
+
+    fn on_hand_played(&self, context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
+        // Check if hand contains a straight (any type)
+        let is_straight = hand.is_straight().is_some() || 
+                         hand.is_straight_flush().is_some() || 
+                         hand.is_royal_flush().is_some();
+        
+        // Get current accumulated chips
+        let current_accumulated = context.joker_state_manager
+            .get_state(self.id())
+            .map(|state| state.accumulated_value as i32)
+            .unwrap_or(0);
+        
+        // If it's a straight, accumulate +15 chips BEFORE giving the bonus
+        let new_accumulated = if is_straight {
+            let new_value = current_accumulated + 15;
+            context.joker_state_manager.add_accumulated_value(self.id(), 15.0);
+            new_value
+        } else {
+            current_accumulated
+        };
+        
+        // Always give the accumulated bonus regardless of hand type
+        JokerEffect::new().with_chips(new_accumulated)
+    }
+}
+
+// Space Joker implementation - 1 in 4 chance for +1 hand level
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct SpaceJoker;
+
+impl Joker for SpaceJoker {
+    fn id(&self) -> JokerId {
+        JokerId::SpaceJoker
+    }
+
+    fn name(&self) -> &str {
+        "Space Joker"
+    }
+
+    fn description(&self) -> &str {
+        "1 in 4 chance to upgrade level of played poker hand"
+    }
+
+    fn rarity(&self) -> JokerRarity {
+        JokerRarity::Uncommon
+    }
+
+    fn cost(&self) -> usize {
+        6
+    }
+
+    fn on_hand_played(&self, _context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
+        // 1 in 4 chance (25% probability)
+        let mut rng = thread_rng();
+        if rng.gen_ratio(1, 4) {
+            // TODO: Implement hand level upgrade effect
+            // For now, return a message effect
+            let mut effect = JokerEffect::new();
+            effect.message = Some("Space Joker activated! Hand level upgraded!".to_string());
+            effect
         } else {
             JokerEffect::new()
         }

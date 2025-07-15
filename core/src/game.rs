@@ -8,10 +8,12 @@ use crate::effect::{EffectRegistry, Effects};
 use crate::error::GameError;
 use crate::hand::{MadeHand, SelectHand};
 use crate::joker::{JokerId, Jokers, OldJoker as Joker};
+use crate::joker_state::JokerStateManager;
 use crate::shop::Shop;
 use crate::stage::{Blind, End, Stage};
 
 use std::fmt;
+use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct Game {
@@ -31,6 +33,7 @@ pub struct Game {
     // jokers and their effects
     pub jokers: Vec<Jokers>,
     pub effect_registry: EffectRegistry,
+    pub joker_state_manager: Arc<JokerStateManager>,
 
     // playing
     pub plays: usize,
@@ -55,6 +58,7 @@ impl Game {
             action_history: Vec::new(),
             jokers: Vec::new(),
             effect_registry: EffectRegistry::new(),
+            joker_state_manager: Arc::new(JokerStateManager::new()),
             blind: None,
             stage: Stage::PreBlind(),
             ante_start,
