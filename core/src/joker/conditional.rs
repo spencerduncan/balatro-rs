@@ -461,24 +461,6 @@ mod tests {
         assert_eq!(joker.rarity(), JokerRarity::Common);
     }
 
-    // Mock GameContext for testing - contains only the fields we need to test
-    #[derive(Debug)]
-    struct MockGameContext {
-        pub money: i32,
-        pub chips: i32,
-        pub mult: i32,
-    }
-
-    impl MockGameContext {
-        fn new(money: i32) -> Self {
-            Self {
-                money,
-                chips: 0,
-                mult: 0,
-            }
-        }
-    }
-
     // Helper function to test money conditions without full GameContext
     fn test_money_condition_simple(condition: &JokerCondition, money: i32) -> bool {
         match condition {
