@@ -286,13 +286,13 @@ impl Game {
             return Err(GameError::InvalidStage);
         }
 
-        // Validate slot index - must be within current jokers or at the end
-        if slot > self.jokers.len() {
+        // Validate slot index - must be within expanded joker slot limit
+        if slot >= self.config.joker_slots {
             return Err(GameError::InvalidSlot);
         }
 
         // Check if we've reached the joker limit
-        if self.jokers.len() >= self.config.joker_slots && slot == self.jokers.len() {
+        if self.jokers.len() >= self.config.joker_slots {
             return Err(GameError::NoAvailableSlot);
         }
 
@@ -321,8 +321,16 @@ impl Game {
         // Deduct money
         self.money -= joker.cost();
 
-        // Insert joker at specified slot
-        self.jokers.insert(slot, joker.clone());
+        // Insert joker at specified slot, expanding vector if necessary
+        if slot >= self.jokers.len() {
+            // Resize vector to accommodate the slot, filling gaps with default joker
+            use crate::joker::compat::TheJoker;
+            let default_joker = Jokers::TheJoker(TheJoker {});
+            self.jokers.resize(slot, default_joker);
+            self.jokers.push(joker.clone());
+        } else {
+            self.jokers.insert(slot, joker.clone());
+        }
 
         // Update effect registry
         self.effect_registry
