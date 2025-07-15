@@ -15,8 +15,8 @@ fn test_pyclass_types_exist() {
     // Test that Action enum works with PyO3
     let action = Action::Play();
     match action {
-        Action::Play() => assert!(true),
-        _ => assert!(false),
+        Action::Play() => (), // Expected case
+        _ => panic!("Expected Action::Play()"),
     }
 
     // Test that Stage enum works

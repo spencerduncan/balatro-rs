@@ -131,7 +131,8 @@ impl JokerStateManager {
     /// # Examples
     ///
     /// ```
-    /// # use balatro_rs::{JokerStateManager, JokerId, JokerState};
+    /// # use balatro_rs::joker_state::{JokerStateManager, JokerState};
+    /// # use balatro_rs::joker::JokerId;
     /// let manager = JokerStateManager::new();
     ///
     /// // Get or create state with initial triggers
@@ -171,7 +172,8 @@ impl JokerStateManager {
     /// # Examples
     ///
     /// ```
-    /// # use balatro_rs::{JokerStateManager, JokerId};
+    /// # use balatro_rs::joker_state::JokerStateManager;
+    /// # use balatro_rs::joker::JokerId;
     /// let manager = JokerStateManager::new();
     ///
     /// // Add to accumulated value
@@ -295,7 +297,8 @@ impl JokerStateManager {
     /// # Examples
     ///
     /// ```
-    /// # use balatro_rs::{JokerStateManager, JokerId};
+    /// # use balatro_rs::joker_state::JokerStateManager;
+    /// # use balatro_rs::joker::JokerId;
     /// let manager = JokerStateManager::new();
     ///
     /// // Store a simple value
