@@ -8,10 +8,14 @@ use crate::effect::{EffectRegistry, Effects};
 use crate::error::GameError;
 use crate::hand::{MadeHand, SelectHand};
 use crate::joker::{JokerId, Jokers, OldJoker as Joker};
+use crate::joker_state::JokerStateManager;
+use crate::rank::HandRank;
 use crate::shop::Shop;
 use crate::stage::{Blind, End, Stage};
 
+use std::collections::HashMap;
 use std::fmt;
+use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct Game {
@@ -31,6 +35,7 @@ pub struct Game {
     // jokers and their effects
     pub jokers: Vec<Jokers>,
     pub effect_registry: EffectRegistry,
+    pub joker_state_manager: Arc<JokerStateManager>,
 
     // playing
     pub plays: usize,
@@ -42,6 +47,9 @@ pub struct Game {
     pub chips: usize,
     pub mult: usize,
     pub score: usize,
+
+    // hand type tracking for this game run
+    pub hand_type_counts: HashMap<HandRank, u32>,
 }
 
 impl Game {
@@ -55,6 +63,7 @@ impl Game {
             action_history: Vec::new(),
             jokers: Vec::new(),
             effect_registry: EffectRegistry::new(),
+            joker_state_manager: Arc::new(JokerStateManager::new()),
             blind: None,
             stage: Stage::PreBlind(),
             ante_start,
@@ -68,6 +77,7 @@ impl Game {
             chips: config.base_chips,
             mult: config.base_mult,
             score: config.base_score,
+            hand_type_counts: HashMap::new(),
             config,
         }
     }
@@ -107,6 +117,25 @@ impl Game {
     /// The count of jokers in the player's collection
     pub fn joker_count(&self) -> usize {
         self.jokers.len()
+    }
+
+    /// Returns the number of times a specific hand type has been played this game run.
+    ///
+    /// # Arguments
+    /// * `hand_rank` - The hand rank to check the count for
+    ///
+    /// # Returns
+    /// The number of times this hand type has been played (0 if never played)
+    pub fn get_hand_type_count(&self, hand_rank: HandRank) -> u32 {
+        self.hand_type_counts.get(&hand_rank).copied().unwrap_or(0)
+    }
+
+    /// Increments the count for a specific hand type.
+    ///
+    /// # Arguments
+    /// * `hand_rank` - The hand rank to increment
+    pub fn increment_hand_type_count(&mut self, hand_rank: HandRank) {
+        *self.hand_type_counts.entry(hand_rank).or_insert(0) += 1;
     }
 
     fn clear_blind(&mut self) {
@@ -157,6 +186,10 @@ impl Game {
         self.plays -= 1;
         let selected = SelectHand::new(self.available.selected());
         let best = selected.best_hand()?;
+
+        // Track hand type for game statistics
+        self.increment_hand_type_count(best.rank);
+
         let score = self.calc_score(best);
         let clear_blind = self.handle_score(score)?;
         self.discarded.extend(self.available.selected());
@@ -286,13 +319,13 @@ impl Game {
             return Err(GameError::InvalidStage);
         }
 
-        // Validate slot index - must be within current jokers or at the end
-        if slot > self.jokers.len() {
+        // Validate slot index - must be within expanded joker slot limit
+        if slot >= self.config.joker_slots {
             return Err(GameError::InvalidSlot);
         }
 
         // Check if we've reached the joker limit
-        if self.jokers.len() >= self.config.joker_slots && slot == self.jokers.len() {
+        if self.jokers.len() >= self.config.joker_slots {
             return Err(GameError::NoAvailableSlot);
         }
 
@@ -321,8 +354,16 @@ impl Game {
         // Deduct money
         self.money -= joker.cost();
 
-        // Insert joker at specified slot
-        self.jokers.insert(slot, joker.clone());
+        // Insert joker at specified slot, expanding vector if necessary
+        if slot >= self.jokers.len() {
+            // Resize vector to accommodate the slot, filling gaps with default joker
+            use crate::joker::compat::TheJoker;
+            let default_joker = Jokers::TheJoker(TheJoker {});
+            self.jokers.resize(slot, default_joker);
+            self.jokers.push(joker.clone());
+        } else {
+            self.jokers.insert(slot, joker.clone());
+        }
 
         // Update effect registry
         self.effect_registry

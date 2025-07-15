@@ -22,6 +22,12 @@ pub enum JokerCondition {
     ContainsSuit(Suit),
     /// Played hand is of the specified type
     PlayedHandType(HandRank),
+    /// All held cards have the same suit
+    AllSameSuit,
+    /// All held cards have the same rank
+    AllSameRank,
+    /// All held cards have the same suit OR all have the same rank
+    AllSameSuitOrRank,
     /// Composite condition - all must be true
     All(Vec<JokerCondition>),
     /// Composite condition - at least one must be true
@@ -44,6 +50,9 @@ impl Debug for JokerCondition {
             Self::ContainsRank(rank) => write!(f, "ContainsRank({rank:?})"),
             Self::ContainsSuit(suit) => write!(f, "ContainsSuit({suit:?})"),
             Self::PlayedHandType(hand_type) => write!(f, "PlayedHandType({hand_type:?})"),
+            Self::AllSameSuit => write!(f, "AllSameSuit"),
+            Self::AllSameRank => write!(f, "AllSameRank"),
+            Self::AllSameSuitOrRank => write!(f, "AllSameSuitOrRank"),
             Self::All(conditions) => write!(f, "All({conditions:?})"),
             Self::Any(conditions) => write!(f, "Any({conditions:?})"),
             Self::Not(condition) => write!(f, "Not({condition:?})"),
@@ -97,6 +106,21 @@ impl JokerCondition {
                 // Return false when hand context is not available
                 false
             }
+            Self::AllSameSuit => {
+                // This condition requires hand context to evaluate properly
+                // Return false when hand context is not available
+                false
+            }
+            Self::AllSameRank => {
+                // This condition requires hand context to evaluate properly
+                // Return false when hand context is not available
+                false
+            }
+            Self::AllSameSuitOrRank => {
+                // This condition requires hand context to evaluate properly
+                // Return false when hand context is not available
+                false
+            }
             Self::All(conditions) => conditions.iter().all(|cond| cond.evaluate(context)),
             Self::Any(conditions) => conditions.iter().any(|cond| cond.evaluate(context)),
             Self::Not(condition) => !condition.evaluate(context),
@@ -131,6 +155,36 @@ impl JokerCondition {
                 .any(|card| matches!(card.value, Rank::Jack | Rank::Queen | Rank::King)),
             Self::ContainsRank(rank) => hand.cards().iter().any(|card| card.value == *rank),
             Self::ContainsSuit(suit) => hand.cards().iter().any(|card| card.suit == *suit),
+            Self::AllSameSuit => {
+                let cards = hand.cards();
+                if cards.is_empty() {
+                    false // Empty hand is not considered uniform for joker purposes
+                } else {
+                    let first_suit = cards[0].suit;
+                    cards.iter().all(|card| card.suit == first_suit)
+                }
+            }
+            Self::AllSameRank => {
+                let cards = hand.cards();
+                if cards.is_empty() {
+                    false // Empty hand is not considered uniform for joker purposes
+                } else {
+                    let first_rank = cards[0].value;
+                    cards.iter().all(|card| card.value == first_rank)
+                }
+            }
+            Self::AllSameSuitOrRank => {
+                let cards = hand.cards();
+                if cards.is_empty() {
+                    false // Empty hand is not considered uniform for joker purposes
+                } else {
+                    let first_suit = cards[0].suit;
+                    let first_rank = cards[0].value;
+                    let all_same_suit = cards.iter().all(|card| card.suit == first_suit);
+                    let all_same_rank = cards.iter().all(|card| card.value == first_rank);
+                    all_same_suit || all_same_rank
+                }
+            }
             Self::All(conditions) => conditions
                 .iter()
                 .all(|cond| cond.evaluate_with_hand(context, hand)),
@@ -170,6 +224,9 @@ impl JokerCondition {
             Self::Not(condition) => !condition.evaluate_for_card(context, card),
             // For conditions that can't be meaningfully evaluated for a single card,
             // delegate to the general evaluate method
+            Self::AllSameSuit | Self::AllSameRank | Self::AllSameSuitOrRank => {
+                self.evaluate(context)
+            }
             _ => self.evaluate(context),
         }
     }
@@ -399,8 +456,8 @@ mod tests {
 
         // We'll test these conditions using a mock context in integration tests
         // For now, just verify they can be created and formatted
-        assert_eq!(format!("{:?}", less_than_100), "MoneyLessThan(100)");
-        assert_eq!(format!("{:?}", greater_than_25), "MoneyGreaterThan(25)");
+        assert_eq!(format!("{less_than_100:?}"), "MoneyLessThan(100)");
+        assert_eq!(format!("{greater_than_25:?}"), "MoneyGreaterThan(25)");
     }
 
     #[test]
@@ -412,11 +469,11 @@ mod tests {
         let size_two = JokerCondition::HandSizeExactly(2);
         let played_flush = JokerCondition::PlayedHandType(HandRank::Flush);
 
-        assert_eq!(format!("{:?}", no_face), "NoFaceCardsHeld");
-        assert_eq!(format!("{:?}", contains_king), "ContainsRank(King)");
-        assert_eq!(format!("{:?}", contains_heart), "ContainsSuit(Heart)");
-        assert_eq!(format!("{:?}", size_two), "HandSizeExactly(2)");
-        assert_eq!(format!("{:?}", played_flush), "PlayedHandType(Flush)");
+        assert_eq!(format!("{no_face:?}"), "NoFaceCardsHeld");
+        assert_eq!(format!("{contains_king:?}"), "ContainsRank(King)");
+        assert_eq!(format!("{contains_heart:?}"), "ContainsSuit(Heart)");
+        assert_eq!(format!("{size_two:?}"), "HandSizeExactly(2)");
+        assert_eq!(format!("{played_flush:?}"), "PlayedHandType(Flush)");
     }
 
     #[test]
@@ -435,13 +492,13 @@ mod tests {
         let not_condition = JokerCondition::Not(Box::new(JokerCondition::Always));
 
         // Test formatting
-        assert!(format!("{:?}", all_condition).contains("All"));
-        assert!(format!("{:?}", any_condition).contains("Any"));
-        assert!(format!("{:?}", not_condition).contains("Not"));
+        assert!(format!("{all_condition:?}").contains("All"));
+        assert!(format!("{any_condition:?}").contains("Any"));
+        assert!(format!("{not_condition:?}").contains("Not"));
 
         // Test Always condition
         let always = JokerCondition::Always;
-        assert_eq!(format!("{:?}", always), "Always");
+        assert_eq!(format!("{always:?}"), "Always");
     }
 
     #[test]
@@ -463,12 +520,14 @@ mod tests {
 
     // Mock GameContext for testing - contains only the fields we need to test
     #[derive(Debug)]
+    #[allow(dead_code)]
     struct MockGameContext {
         pub money: i32,
         pub chips: i32,
         pub mult: i32,
     }
 
+    #[allow(dead_code)]
     impl MockGameContext {
         fn new(money: i32) -> Self {
             Self {

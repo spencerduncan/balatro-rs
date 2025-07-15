@@ -28,9 +28,10 @@ impl JokerFactory {
             JokerId::EggJoker => Some(Box::new(Egg)),
             JokerId::Burglar => Some(Box::new(Burglar)),
             // Hand type conditional jokers
-            JokerId::Runner => Some(Box::new(Runner)),
+            JokerId::Runner => Some(Box::new(RunnerJoker)),
             JokerId::Supernova => Some(Box::new(SupernovaJoker)),
-            JokerId::SpaceJoker => Some(Box::new(SpaceJokerImpl)),
+            JokerId::SpaceJoker => Some(Box::new(SpaceJoker)),
+            JokerId::IceCream => Some(Box::new(IceCreamJoker::new())),
             // TODO: Implement remaining jokers
             _ => None,
         }
@@ -63,6 +64,7 @@ impl JokerFactory {
                 // Hand type conditional jokers
                 Runner,
                 Supernova,
+                IceCream,
                 // Add more common jokers here
             ],
             JokerRarity::Uncommon => vec![
@@ -108,6 +110,7 @@ impl JokerFactory {
             Runner,
             Supernova,
             SpaceJoker,
+            IceCream,
         ]
     }
 }
