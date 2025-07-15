@@ -1,6 +1,7 @@
 use crate::action::{Action, MoveDirection};
 use crate::game::Game;
 use crate::joker::OldJoker as Joker;
+use crate::shop::packs::{DefaultPackGenerator, PackGenerator};
 use crate::space::ActionSpace;
 use crate::stage::{Blind, Stage};
 
@@ -132,6 +133,65 @@ impl Game {
             .gen_moves_buy_joker(self.money, self.jokers.len(), self.config.joker_slots)
     }
 
+    // Get buy pack actions
+    fn gen_actions_buy_pack(&self) -> Option<impl Iterator<Item = Action> + use<'_>> {
+        // If stage is not shop, cannot buy packs
+        if self.stage != Stage::Shop() {
+            return None;
+        }
+
+        let generator = DefaultPackGenerator;
+        let available_pack_types = generator.available_pack_types(self);
+
+        Some(
+            available_pack_types
+                .into_iter()
+                .map(|pack_type| Action::BuyPack { pack_type }),
+        )
+    }
+
+    // Get open pack actions
+    fn gen_actions_open_pack(&self) -> Option<impl Iterator<Item = Action> + use<'_>> {
+        // Can only open packs if there are packs in inventory and no pack is currently open
+        if self.pack_inventory.is_empty() || self.open_pack.is_some() {
+            return None;
+        }
+
+        Some((0..self.pack_inventory.len()).map(|pack_id| Action::OpenPack { pack_id }))
+    }
+
+    // Get select from pack actions
+    fn gen_actions_select_from_pack(&self) -> Option<impl Iterator<Item = Action> + use<'_>> {
+        // Can only select if a pack is currently open
+        let open_pack_state = self.open_pack.as_ref()?;
+
+        Some(
+            (0..open_pack_state.pack.options.len()).map(move |option_index| {
+                Action::SelectFromPack {
+                    pack_id: open_pack_state.pack_id,
+                    option_index,
+                }
+            }),
+        )
+    }
+
+    // Get skip pack actions
+    fn gen_actions_skip_pack(&self) -> Option<impl Iterator<Item = Action> + use<'_>> {
+        // Can only skip if a pack is currently open and skippable
+        let open_pack_state = self.open_pack.as_ref()?;
+
+        if !open_pack_state.pack.can_skip {
+            return None;
+        }
+
+        Some(
+            vec![Action::SkipPack {
+                pack_id: open_pack_state.pack_id,
+            }]
+            .into_iter(),
+        )
+    }
+
     // Get all legal actions that can be executed given current state
     pub fn gen_actions(&self) -> impl Iterator<Item = Action> + use<'_> {
         let select_cards = self.gen_actions_select_card();
@@ -142,6 +202,10 @@ impl Game {
         let next_rounds = self.gen_actions_next_round();
         let select_blinds = self.gen_actions_select_blind();
         let buy_jokers = self.gen_actions_buy_joker();
+        let buy_packs = self.gen_actions_buy_pack();
+        let open_packs = self.gen_actions_open_pack();
+        let select_from_packs = self.gen_actions_select_from_pack();
+        let skip_packs = self.gen_actions_skip_pack();
 
         select_cards
             .into_iter()
@@ -153,6 +217,10 @@ impl Game {
             .chain(next_rounds.into_iter().flatten())
             .chain(select_blinds.into_iter().flatten())
             .chain(buy_jokers.into_iter().flatten())
+            .chain(buy_packs.into_iter().flatten())
+            .chain(open_packs.into_iter().flatten())
+            .chain(select_from_packs.into_iter().flatten())
+            .chain(skip_packs.into_iter().flatten())
     }
 
     fn unmask_action_space_select_cards(&self, space: &mut ActionSpace) {

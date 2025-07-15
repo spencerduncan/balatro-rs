@@ -12,6 +12,7 @@ use crate::hand::{MadeHand, SelectHand};
 use crate::joker::{JokerId, Jokers, OldJoker as Joker};
 use crate::joker_state::JokerStateManager;
 use crate::rank::HandRank;
+use crate::shop::packs::{OpenPackState, Pack};
 use crate::shop::Shop;
 use crate::stage::{Blind, End, Stage};
 use crate::state_version::StateVersion;
@@ -75,6 +76,13 @@ pub struct Game {
     /// Current boss blind state and effects
     pub boss_blind_state: BossBlindState,
 
+    /// Pack system state
+    /// Packs currently in the player's inventory
+    pub pack_inventory: Vec<Pack>,
+
+    /// Currently opened pack that player is choosing from
+    pub open_pack: Option<OpenPackState>,
+
     /// Version of the game state for serialization compatibility
     pub state_version: StateVersion,
 }
@@ -115,6 +123,11 @@ impl Game {
             consumables_in_hand: Vec::new(),
             vouchers: VoucherCollection::new(),
             boss_blind_state: BossBlindState::new(),
+
+            // Initialize pack system fields
+            pack_inventory: Vec::new(),
+            open_pack: None,
+
             state_version: StateVersion::current(),
 
             config,
@@ -411,6 +424,125 @@ impl Game {
         Ok(())
     }
 
+    /// Pack System Methods
+    /// Buy a pack of the specified type
+    pub(crate) fn buy_pack(
+        &mut self,
+        pack_type: crate::shop::packs::PackType,
+    ) -> Result<(), GameError> {
+        use crate::shop::packs::{DefaultPackGenerator, PackGenerator};
+
+        // Check if player has enough money
+        let cost = pack_type.base_cost();
+        if self.money < cost {
+            return Err(GameError::InvalidBalance);
+        }
+
+        // Generate the pack
+        let generator = DefaultPackGenerator;
+        let mut pack = generator.generate_pack(pack_type, self)?;
+        pack.generate_contents(self)?;
+
+        // Deduct money
+        self.money -= cost;
+
+        // Add pack to inventory
+        self.pack_inventory.push(pack);
+
+        Ok(())
+    }
+
+    /// Open a pack from inventory
+    pub(crate) fn open_pack(&mut self, pack_id: usize) -> Result<(), GameError> {
+        // Check if pack exists in inventory
+        if pack_id >= self.pack_inventory.len() {
+            return Err(GameError::InvalidAction);
+        }
+
+        // Check if another pack is already open
+        if self.open_pack.is_some() {
+            return Err(GameError::InvalidAction);
+        }
+
+        // Remove pack from inventory and open it
+        let pack = self.pack_inventory.remove(pack_id);
+        self.open_pack = Some(OpenPackState::new(pack, pack_id));
+
+        Ok(())
+    }
+
+    /// Select an option from the currently opened pack
+    pub(crate) fn select_from_pack(
+        &mut self,
+        pack_id: usize,
+        option_index: usize,
+    ) -> Result<(), GameError> {
+        // Check if a pack is open
+        let open_pack_state = self.open_pack.take().ok_or(GameError::InvalidAction)?;
+
+        // Verify pack ID matches
+        if open_pack_state.pack_id != pack_id {
+            return Err(GameError::InvalidAction);
+        }
+
+        // Select the option
+        let selected_item = open_pack_state.pack.select_option(option_index)?;
+
+        // Process the selected item based on its type
+        self.process_pack_item(selected_item)?;
+
+        Ok(())
+    }
+
+    /// Skip the currently opened pack
+    pub(crate) fn skip_pack(&mut self, pack_id: usize) -> Result<(), GameError> {
+        // Check if a pack is open
+        let open_pack_state = self.open_pack.take().ok_or(GameError::InvalidAction)?;
+
+        // Verify pack ID matches
+        if open_pack_state.pack_id != pack_id {
+            return Err(GameError::InvalidAction);
+        }
+
+        // Check if pack can be skipped
+        if !open_pack_state.pack.can_skip {
+            return Err(GameError::InvalidAction);
+        }
+
+        // Pack is simply consumed (no further action needed)
+        Ok(())
+    }
+
+    /// Process an item selected from a pack
+    fn process_pack_item(&mut self, item: crate::shop::ShopItem) -> Result<(), GameError> {
+        use crate::shop::ShopItem;
+
+        match item {
+            ShopItem::PlayingCard(card) => {
+                // Add card to deck
+                self.deck.extend(vec![card]);
+                Ok(())
+            }
+            ShopItem::Joker(_joker_id) => {
+                // Convert joker_id to Jokers and add to jokers
+                // This is a simplified implementation
+                use crate::joker::compat::TheJoker;
+                let joker = Jokers::TheJoker(TheJoker {});
+                self.jokers.push(joker);
+                Ok(())
+            }
+            ShopItem::Consumable(_consumable_type) => {
+                // Add consumable to hand (simplified)
+                // TODO: Implement proper consumable handling
+                Ok(())
+            }
+            _ => {
+                // Other item types not yet implemented
+                Ok(())
+            }
+        }
+    }
+
     fn select_blind(&mut self, blind: Blind) -> Result<(), GameError> {
         // can only set blind if stage is pre blind
         if self.stage != Stage::PreBlind() {
@@ -518,6 +650,16 @@ impl Game {
                 Stage::PreBlind() => self.select_blind(blind),
                 _ => Err(GameError::InvalidAction),
             },
+            Action::BuyPack { pack_type } => match self.stage {
+                Stage::Shop() => self.buy_pack(pack_type),
+                _ => Err(GameError::InvalidStage),
+            },
+            Action::OpenPack { pack_id } => self.open_pack(pack_id),
+            Action::SelectFromPack {
+                pack_id,
+                option_index,
+            } => self.select_from_pack(pack_id, option_index),
+            Action::SkipPack { pack_id } => self.skip_pack(pack_id),
         }
     }
 
