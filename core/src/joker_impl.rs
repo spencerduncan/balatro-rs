@@ -512,7 +512,7 @@ impl Joker for CraftyJoker {
 
 // Money-Based Conditional Jokers for Issue #82
 
-// Business Card: face cards give $2 when scored
+// Business Card: face cards have 1 in 2 chance of giving $2 when scored
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct BusinessCard;
 
@@ -526,7 +526,7 @@ impl Joker for BusinessCard {
     }
 
     fn description(&self) -> &str {
-        "Face cards give $2 when scored"
+        "Face cards have 1 in 2 chance of giving $2 when scored"
     }
 
     fn rarity(&self) -> JokerRarity {
@@ -539,7 +539,12 @@ impl Joker for BusinessCard {
 
     fn on_card_scored(&self, _context: &mut GameContext, card: &Card) -> JokerEffect {
         if card.is_face() {
-            JokerEffect::new().with_money(2)
+            let mut rng = thread_rng();
+            if rng.gen_bool(0.5) {
+                JokerEffect::new().with_money(2)
+            } else {
+                JokerEffect::new()
+            }
         } else {
             JokerEffect::new()
         }
@@ -583,7 +588,7 @@ impl Joker for Egg {
     }
 }
 
-// Burglar: gain $3 when Blind selected, +1 hands
+// Burglar: gain +3 hands when Blind selected, lose all discards
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Burglar;
 
@@ -597,7 +602,7 @@ impl Joker for Burglar {
     }
 
     fn description(&self) -> &str {
-        "Gain $3 when Blind selected, +1 hands"
+        "Gain +3 hands when Blind selected, lose all discards"
     }
 
     fn rarity(&self) -> JokerRarity {
@@ -609,11 +614,10 @@ impl Joker for Burglar {
     }
 
     fn on_blind_start(&self, _context: &mut GameContext) -> JokerEffect {
-        JokerEffect::new().with_money(3)
-    }
-
-    fn modify_hand_size(&self, _context: &GameContext, base_size: usize) -> usize {
-        base_size.saturating_add(1)
+        let mut effect = JokerEffect::new();
+        effect.hand_size_mod = 3;
+        effect.discard_mod = -999; // Set to very negative to remove all discards
+        effect
     }
 }
 

@@ -39,28 +39,33 @@ mod business_card_tests {
 
         assert_eq!(joker.id(), JokerId::BusinessCard);
         assert_eq!(joker.name(), "Business Card");
-        assert_eq!(joker.description(), "Face cards give $2 when scored");
+        assert_eq!(
+            joker.description(),
+            "Face cards have 1 in 2 chance of giving $2 when scored"
+        );
         assert_eq!(joker.rarity(), JokerRarity::Common);
         assert_eq!(joker.cost(), 4);
     }
 
     #[test]
-    fn test_business_card_face_card_gives_money() {
+    fn test_business_card_face_card_rng_behavior() {
         let joker = BusinessCard::default();
         let mut context = create_test_context();
 
-        // Test each face card gives money
+        // Test face cards have random chance of giving money
         let jack = Card::new(Value::Jack, Suit::Heart);
-        let effect = joker.on_card_scored(&mut context, &jack);
-        assert_eq!(effect.money, 2);
 
-        let queen = Card::new(Value::Queen, Suit::Diamond);
-        let effect = joker.on_card_scored(&mut context, &queen);
-        assert_eq!(effect.money, 2);
+        // Run multiple times to verify RNG behavior
+        let mut money_results = Vec::new();
+        for _ in 0..50 {
+            let effect = joker.on_card_scored(&mut context, &jack);
+            money_results.push(effect.money);
+        }
 
-        let king = Card::new(Value::King, Suit::Club);
-        let effect = joker.on_card_scored(&mut context, &king);
-        assert_eq!(effect.money, 2);
+        // Should have some 0s and some 2s, but not all the same
+        assert!(money_results.contains(&0));
+        assert!(money_results.contains(&2));
+        assert!(money_results.iter().all(|&x| x == 0 || x == 2));
     }
 
     #[test]
@@ -188,20 +193,27 @@ mod burglar_tests {
 
         assert_eq!(joker.id(), JokerId::Burglar);
         assert_eq!(joker.name(), "Burglar");
-        assert_eq!(joker.description(), "Gain $3 when Blind selected, +1 hands");
+        assert_eq!(
+            joker.description(),
+            "Gain +3 hands when Blind selected, lose all discards"
+        );
         assert_eq!(joker.rarity(), JokerRarity::Uncommon);
         assert_eq!(joker.cost(), 6);
     }
 
     #[test]
-    fn test_burglar_blind_start_gives_money() {
+    fn test_burglar_blind_start_effects() {
         let joker = Burglar::default();
         let mut context = create_test_context();
 
         let effect = joker.on_blind_start(&mut context);
-        assert_eq!(effect.money, 3);
 
-        // Should only give money, no other effects
+        // Should give +3 hands and lose all discards
+        assert_eq!(effect.hand_size_mod, 3);
+        assert_eq!(effect.discard_mod, -999);
+
+        // Should not affect other game values
+        assert_eq!(effect.money, 0);
         assert_eq!(effect.chips, 0);
         assert_eq!(effect.mult, 0);
         assert_eq!(effect.mult_multiplier, 0.0);
@@ -211,19 +223,14 @@ mod burglar_tests {
     }
 
     #[test]
-    fn test_burglar_increases_hand_size() {
+    fn test_burglar_no_permanent_modifiers() {
         let joker = Burglar::default();
         let context = create_test_context();
 
-        // Test hand size modifier
-        let base_hand_size = 8;
-        let modified_size = joker.modify_hand_size(&context, base_hand_size);
-        assert_eq!(modified_size, 9);
-
-        // Test with different base sizes
-        assert_eq!(joker.modify_hand_size(&context, 5), 6);
-        assert_eq!(joker.modify_hand_size(&context, 10), 11);
-        assert_eq!(joker.modify_hand_size(&context, 0), 1);
+        // Burglar doesn't use permanent modifiers like modify_hand_size
+        // Its effects are applied through JokerEffect on blind start
+        assert_eq!(joker.modify_hand_size(&context, 8), 8);
+        assert_eq!(joker.modify_discards(&context, 3), 3);
     }
 
     #[test]
@@ -265,19 +272,20 @@ mod integration_tests {
         let burglar = Burglar::default();
         let mut context = create_test_context();
 
-        // Test burglar gives money on blind start
+        // Test burglar gives hand size mod and discard mod on blind start
         let burglar_effect = burglar.on_blind_start(&mut context);
-        assert_eq!(burglar_effect.money, 3);
+        assert_eq!(burglar_effect.hand_size_mod, 3);
+        assert_eq!(burglar_effect.discard_mod, -999);
 
-        // Test business card gives money on face card scoring
+        // Test business card has chance to give money on face card scoring
         let jack = Card::new(Value::Jack, Suit::Heart);
         let business_effect = business_card.on_card_scored(&mut context, &jack);
-        assert_eq!(business_effect.money, 2);
+        assert!(business_effect.money == 0 || business_effect.money == 2);
 
-        // Test burglar modifies hand size
+        // Test burglar doesn't use permanent modifiers
         let base_size = 8;
         let modified_size = burglar.modify_hand_size(&context, base_size);
-        assert_eq!(modified_size, 9);
+        assert_eq!(modified_size, 8);
     }
 
     #[test]
@@ -291,14 +299,14 @@ mod integration_tests {
 
         let jack = Card::new(Value::Jack, Suit::Heart);
         let effect = business_card.on_card_scored(&mut low_money_context, &jack);
-        assert_eq!(effect.money, 2);
+        assert!(effect.money == 0 || effect.money == 2);
 
         // High money scenario
         let mut high_money_context = create_test_context();
         high_money_context.money = 100;
 
         let effect = business_card.on_card_scored(&mut high_money_context, &jack);
-        assert_eq!(effect.money, 2);
+        assert!(effect.money == 0 || effect.money == 2);
     }
 
     #[test]
