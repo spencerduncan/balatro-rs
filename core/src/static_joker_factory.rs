@@ -590,7 +590,7 @@ mod tests {
     fn test_joker_cost_distribution() {
         // Test that jokers have appropriate costs based on rarity/power
         let basic_jokers = vec![
-            StaticJokerFactory::create_joker(),        // 2
+            StaticJokerFactory::create_joker(), // 2
         ];
 
         let mid_tier_jokers = vec![
@@ -604,9 +604,9 @@ mod tests {
         ];
 
         let suit_jokers = vec![
-            StaticJokerFactory::create_greedy_joker(),    // 5
-            StaticJokerFactory::create_lusty_joker(),     // 5
-            StaticJokerFactory::create_wrathful_joker(),  // 5
+            StaticJokerFactory::create_greedy_joker(),     // 5
+            StaticJokerFactory::create_lusty_joker(),      // 5
+            StaticJokerFactory::create_wrathful_joker(),   // 5
             StaticJokerFactory::create_gluttonous_joker(), // 5
         ];
 

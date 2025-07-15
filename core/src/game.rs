@@ -186,10 +186,10 @@ impl Game {
         self.plays -= 1;
         let selected = SelectHand::new(self.available.selected());
         let best = selected.best_hand()?;
-        
+
         // Track hand type for game statistics
         self.increment_hand_type_count(best.rank);
-        
+
         let score = self.calc_score(best);
         let clear_blind = self.handle_score(score)?;
         self.discarded.extend(self.available.selected());
