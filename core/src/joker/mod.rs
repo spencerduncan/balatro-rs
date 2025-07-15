@@ -1,11 +1,12 @@
 use crate::card::Card;
 use crate::hand::{Hand, SelectHand};
-use crate::joker_state::JokerStateManager;
+use crate::joker_state::{JokerState, JokerStateManager};
 use crate::rank::HandRank;
 use crate::stage::Stage;
 #[cfg(feature = "python")]
 use pyo3::pyclass;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
@@ -331,6 +332,9 @@ pub struct JokerEffect {
     /// Applied for the current round only.
     pub discard_mod: i32,
 
+    /// Sell value increase for this joker
+    pub sell_value_increase: i32,
+
     /// Custom message to display to the player.
     ///
     /// Used for jokers with special effects, Easter eggs, or important notifications.
@@ -364,6 +368,18 @@ impl JokerEffect {
     /// Set mult multiplier
     pub fn with_mult_multiplier(mut self, multiplier: f32) -> Self {
         self.mult_multiplier = multiplier;
+        self
+    }
+
+    /// Set sell value increase
+    pub fn with_sell_value_increase(mut self, increase: i32) -> Self {
+        self.sell_value_increase = increase;
+        self
+    }
+
+    /// Set custom message
+    pub fn with_message(mut self, message: String) -> Self {
+        self.message = Some(message);
         self
     }
 }
@@ -554,6 +570,11 @@ pub trait Joker: Send + Sync + std::fmt::Debug {
         }
     }
 
+    /// Get the current sell value (defaults to cost / 2)
+    fn sell_value(&self, accumulated_bonus: f64) -> usize {
+        (self.cost() / 2) + (accumulated_bonus as usize)
+    }
+
     // Lifecycle hooks with default implementations
 
     /// Called when a hand is played and scored.
@@ -685,6 +706,123 @@ pub trait Joker: Send + Sync + std::fmt::Debug {
         JokerEffect::new()
     }
 
+    // State lifecycle hooks with default implementations
+
+    /// Called when a joker is first created or purchased.
+    ///
+    /// This hook is useful for jokers that need to initialize state, set up
+    /// counters, or perform one-time setup operations when they enter the game.
+    ///
+    /// # Arguments
+    /// * `context` - Mutable reference to the current game context
+    ///
+    /// # Returns
+    /// A `JokerEffect` describing any bonuses to apply when the joker is created.
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// fn on_created(&self, context: &mut GameContext) -> JokerEffect {
+    ///     // Initialize joker-specific state
+    ///     context.joker_state_manager.set_custom_data(
+    ///         self.id(),
+    ///         "creation_round",
+    ///         context.round
+    ///     );
+    ///     JokerEffect::new()
+    /// }
+    /// ```
+    fn on_created(&self, _context: &mut GameContext) -> JokerEffect {
+        JokerEffect::new()
+    }
+
+    /// Called when a joker becomes active in the game.
+    ///
+    /// This hook is useful for jokers that need to register themselves for
+    /// specific events, start accumulating bonuses, or activate special mechanics.
+    /// Different from creation - activation can happen multiple times if a joker
+    /// is temporarily deactivated and reactivated.
+    ///
+    /// # Arguments
+    /// * `context` - Mutable reference to the current game context
+    ///
+    /// # Returns
+    /// A `JokerEffect` describing any bonuses to apply when the joker activates.
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// fn on_activated(&self, context: &mut GameContext) -> JokerEffect {
+    ///     // Reset activation-specific counters
+    ///     context.joker_state_manager.set_custom_data(
+    ///         self.id(),
+    ///         "active_since_round",
+    ///         context.round
+    ///     );
+    ///     JokerEffect::new().with_message("Joker activated!".to_string())
+    /// }
+    /// ```
+    fn on_activated(&self, _context: &mut GameContext) -> JokerEffect {
+        JokerEffect::new()
+    }
+
+    /// Called when a joker becomes inactive.
+    ///
+    /// This hook is useful for jokers that need to pause their effects,
+    /// save temporary state, or clean up active resources while remaining
+    /// in the player's collection. The joker may be reactivated later.
+    ///
+    /// # Arguments
+    /// * `context` - Mutable reference to the current game context
+    ///
+    /// # Returns
+    /// A `JokerEffect` describing any final bonuses before deactivation.
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// fn on_deactivated(&self, context: &mut GameContext) -> JokerEffect {
+    ///     // Save current progress before going inactive
+    ///     let current_progress = self.calculate_progress(context);
+    ///     context.joker_state_manager.set_custom_data(
+    ///         self.id(),
+    ///         "saved_progress",
+    ///         current_progress
+    ///     );
+    ///     JokerEffect::new()
+    /// }
+    /// ```
+    fn on_deactivated(&self, _context: &mut GameContext) -> JokerEffect {
+        JokerEffect::new()
+    }
+
+    /// Called when a joker is permanently removed from the game.
+    ///
+    /// This hook is useful for jokers that need to perform cleanup operations,
+    /// transfer state to other jokers, or apply final effects before being
+    /// destroyed. This is the final method called before the joker is removed.
+    ///
+    /// # Arguments
+    /// * `context` - Mutable reference to the current game context
+    ///
+    /// # Returns
+    /// A `JokerEffect` describing any final bonuses before cleanup.
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// fn on_cleanup(&self, context: &mut GameContext) -> JokerEffect {
+    ///     // Transfer accumulated value to money before destruction
+    ///     let accumulated = context.joker_state_manager
+    ///         .get_accumulated_value(self.id())
+    ///         .unwrap_or(0.0);
+    ///     
+    ///     // Clean up state
+    ///     context.joker_state_manager.remove_state(self.id());
+    ///     
+    ///     JokerEffect::new().with_money(accumulated as i32)
+    /// }
+    /// ```
+    fn on_cleanup(&self, _context: &mut GameContext) -> JokerEffect {
+        JokerEffect::new()
+    }
+
     // Modifier hooks with default implementations
 
     /// Modify the base chips value before scoring calculations.
@@ -771,6 +909,186 @@ pub trait Joker: Send + Sync + std::fmt::Debug {
     /// ```
     fn modify_discards(&self, _context: &GameContext, base_discards: usize) -> usize {
         base_discards
+    }
+
+    // State serialization hooks with default implementations
+
+    /// Serialize joker-specific state for persistence.
+    ///
+    /// This hook allows jokers to define custom serialization logic for their state.
+    /// The default implementation uses the standard JokerState serialization.
+    ///
+    /// # Arguments
+    /// * `context` - Reference to the current game context
+    /// * `state` - The joker's current state to serialize
+    ///
+    /// # Returns
+    /// A Result containing the serialized state as JSON Value or an error
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// fn serialize_state(&self, context: &GameContext, state: &JokerState) -> Result<Value, serde_json::Error> {
+    ///     // Custom serialization for complex joker state
+    ///     let mut custom_state = serde_json::to_value(state)?;
+    ///     custom_state["joker_type"] = Value::String(self.name().to_string());
+    ///     custom_state["creation_timestamp"] = Value::Number(
+    ///         serde_json::Number::from(context.round)
+    ///     );
+    ///     Ok(custom_state)
+    /// }
+    /// ```
+    fn serialize_state(
+        &self,
+        _context: &GameContext,
+        state: &JokerState,
+    ) -> Result<Value, serde_json::Error> {
+        serde_json::to_value(state)
+    }
+
+    /// Deserialize joker-specific state from persistence.
+    ///
+    /// This hook allows jokers to define custom deserialization logic for their state.
+    /// The default implementation uses the standard JokerState deserialization.
+    ///
+    /// # Arguments
+    /// * `context` - Reference to the current game context
+    /// * `data` - The serialized state data to deserialize
+    ///
+    /// # Returns
+    /// A Result containing the deserialized JokerState or an error
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// fn deserialize_state(&self, context: &GameContext, data: &Value) -> Result<JokerState, serde_json::Error> {
+    ///     // Custom deserialization with validation
+    ///     let mut state: JokerState = serde_json::from_value(data.clone())?;
+    ///     
+    ///     // Validate and migrate old state format if needed
+    ///     if let Some(version) = data.get("version") {
+    ///         if version.as_u64() == Some(1) {
+    ///             // Migrate from version 1 to current format
+    ///             state.accumulated_value *= 2.0; // Example migration
+    ///         }
+    ///     }
+    ///     
+    ///     Ok(state)
+    /// }
+    /// ```
+    fn deserialize_state(
+        &self,
+        _context: &GameContext,
+        data: &Value,
+    ) -> Result<JokerState, serde_json::Error> {
+        serde_json::from_value(data.clone())
+    }
+
+    /// Validate the integrity of a joker's state.
+    ///
+    /// This hook allows jokers to define custom validation rules for their state.
+    /// Called after deserialization to ensure state integrity.
+    ///
+    /// # Arguments
+    /// * `context` - Reference to the current game context
+    /// * `state` - The state to validate
+    ///
+    /// # Returns
+    /// Ok(()) if state is valid, Err with description if invalid
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// fn validate_state(&self, context: &GameContext, state: &JokerState) -> Result<(), String> {
+    ///     // Custom validation for this joker type
+    ///     if state.accumulated_value < 0.0 {
+    ///         return Err("Accumulated value cannot be negative for this joker".to_string());
+    ///     }
+    ///     
+    ///     if let Some(level) = state.get_custom::<i32>("level").unwrap_or(None) {
+    ///         if level > 100 {
+    ///             return Err("Level cannot exceed 100".to_string());
+    ///         }
+    ///     }
+    ///     
+    ///     Ok(())
+    /// }
+    /// ```
+    fn validate_state(&self, _context: &GameContext, _state: &JokerState) -> Result<(), String> {
+        Ok(())
+    }
+
+    /// Initialize default state for a new joker instance.
+    ///
+    /// This hook allows jokers to define their initial state when first created.
+    /// Called when a joker is purchased or otherwise added to the game.
+    ///
+    /// # Arguments
+    /// * `context` - Reference to the current game context
+    ///
+    /// # Returns
+    /// The initial JokerState for this joker instance
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// fn initialize_state(&self, context: &GameContext) -> JokerState {
+    ///     let mut state = JokerState::new();
+    ///     
+    ///     // Set initial values based on game context
+    ///     state.set_custom("creation_round", context.round).unwrap();
+    ///     state.set_custom("level", 1).unwrap();
+    ///     
+    ///     // Some jokers start with triggers based on ante
+    ///     if context.ante <= 3 {
+    ///         state.triggers_remaining = Some(5);
+    ///     } else {
+    ///         state.triggers_remaining = Some(3);
+    ///     }
+    ///     
+    ///     state
+    /// }
+    /// ```
+    fn initialize_state(&self, _context: &GameContext) -> JokerState {
+        JokerState::new()
+    }
+
+    /// Migrate state from an older version.
+    ///
+    /// This hook allows jokers to handle state migration when loading save games
+    /// from older versions of the game. Useful for maintaining compatibility.
+    ///
+    /// # Arguments
+    /// * `context` - Reference to the current game context
+    /// * `old_state` - The state in the old format
+    /// * `from_version` - The version the state is being migrated from
+    ///
+    /// # Returns
+    /// The migrated state in the current format, or an error if migration fails
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// fn migrate_state(&self, context: &GameContext, old_state: &Value, from_version: u32) -> Result<JokerState, String> {
+    ///     match from_version {
+    ///         1 => {
+    ///             // Migrate from version 1
+    ///             let mut state: JokerState = serde_json::from_value(old_state.clone())
+    ///                 .map_err(|e| format!("Failed to parse v1 state: {}", e))?;
+    ///             
+    ///             // In v1, accumulated_value was stored as integer
+    ///             if let Some(old_value) = old_state.get("old_accumulated") {
+    ///                 state.accumulated_value = old_value.as_i64().unwrap_or(0) as f64;
+    ///             }
+    ///             
+    ///             Ok(state)
+    ///         }
+    ///         _ => Err(format!("Unknown version: {}", from_version))
+    ///     }
+    /// }
+    /// ```
+    fn migrate_state(
+        &self,
+        _context: &GameContext,
+        old_state: &Value,
+        _from_version: u32,
+    ) -> Result<JokerState, String> {
+        serde_json::from_value(old_state.clone()).map_err(|e| format!("Migration failed: {e}"))
     }
 }
 
