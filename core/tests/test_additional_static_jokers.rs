@@ -1,3 +1,7 @@
+// Tests for additional static jokers (Issue #90)
+// Note: Runner is implemented as RunnerJoker in joker_impl.rs, not as a static joker
+// This file tests 9 jokers: 5 fully implemented + 4 placeholders
+
 use balatro_rs::joker::{JokerId, JokerRarity};
 use balatro_rs::static_joker_factory::StaticJokerFactory;
 
@@ -66,18 +70,7 @@ fn test_walkie_joker() {
     assert_eq!(joker.cost(), 3);
 }
 
-#[test]
-fn test_runner_joker() {
-    let joker = StaticJokerFactory::create_runner();
-    assert_eq!(joker.id(), JokerId::Runner);
-    assert_eq!(joker.name(), "Runner");
-    assert_eq!(
-        joker.description(),
-        "+15 Chips if played hand contains a Straight"
-    );
-    assert_eq!(joker.rarity(), JokerRarity::Common);
-    assert_eq!(joker.cost(), 3);
-}
+// Note: Runner is implemented as RunnerJoker in joker_impl.rs, not as a static joker
 
 // Tests for jokers that need framework extensions
 #[test]
