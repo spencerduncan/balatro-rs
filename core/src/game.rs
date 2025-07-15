@@ -1,8 +1,10 @@
 use crate::action::{Action, MoveDirection};
 use crate::ante::Ante;
 use crate::available::Available;
+use crate::boss_blinds::BossBlindState;
 use crate::card::Card;
 use crate::config::Config;
+use crate::consumables::ConsumableId;
 use crate::deck::Deck;
 use crate::effect::{EffectRegistry, Effects};
 use crate::error::GameError;
@@ -12,11 +14,16 @@ use crate::joker_state::JokerStateManager;
 use crate::rank::HandRank;
 use crate::shop::Shop;
 use crate::stage::{Blind, End, Stage};
+use crate::state_version::StateVersion;
+use crate::vouchers::VoucherCollection;
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
 
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone)]
 pub struct Game {
     pub config: Config,
@@ -34,7 +41,14 @@ pub struct Game {
 
     // jokers and their effects
     pub jokers: Vec<Jokers>,
+
+    #[cfg_attr(feature = "serde", serde(skip, default = "EffectRegistry::new"))]
     pub effect_registry: EffectRegistry,
+
+    #[cfg_attr(
+        feature = "serde",
+        serde(skip, default = "default_joker_state_manager")
+    )]
     pub joker_state_manager: Arc<JokerStateManager>,
 
     // playing
@@ -50,6 +64,24 @@ pub struct Game {
 
     // hand type tracking for this game run
     pub hand_type_counts: HashMap<HandRank, u32>,
+
+    // Extended state for consumables, vouchers, and boss blinds
+    /// Consumable cards currently in the player's hand
+    pub consumables_in_hand: Vec<ConsumableId>,
+
+    /// Collection of owned vouchers with purchase tracking
+    pub vouchers: VoucherCollection,
+
+    /// Current boss blind state and effects
+    pub boss_blind_state: BossBlindState,
+
+    /// Version of the game state for serialization compatibility
+    pub state_version: StateVersion,
+}
+
+#[cfg(feature = "serde")]
+fn default_joker_state_manager() -> Arc<JokerStateManager> {
+    Arc::new(JokerStateManager::new())
 }
 
 impl Game {
@@ -78,6 +110,13 @@ impl Game {
             mult: config.base_mult,
             score: config.base_score,
             hand_type_counts: HashMap::new(),
+
+            // Initialize extended state fields
+            consumables_in_hand: Vec::new(),
+            vouchers: VoucherCollection::new(),
+            boss_blind_state: BossBlindState::new(),
+            state_version: StateVersion::current(),
+
             config,
         }
     }
@@ -486,6 +525,152 @@ impl Game {
         let space = self.gen_action_space();
         let action = space.to_action(index, self)?;
         self.handle_action(action)
+    }
+
+    /// Remove a joker from the specified slot and clean up its state.
+    ///
+    /// # Arguments
+    /// * `slot` - The zero-based index of the joker slot to remove from
+    ///
+    /// # Returns
+    /// * `Ok(())` if the joker was successfully removed
+    /// * `Err(GameError::InvalidSlot)` if the slot index is out of bounds
+    pub fn remove_joker(&mut self, slot: usize) -> Result<(), crate::error::GameError> {
+        use crate::error::GameError;
+
+        if slot >= self.jokers.len() {
+            return Err(GameError::InvalidSlot);
+        }
+
+        // Get the joker before removing it to clean up its state
+        let joker = &self.jokers[slot];
+        let joker_id = joker.to_joker_id();
+
+        // Remove the joker from the collection
+        self.jokers.remove(slot);
+
+        // Clean up the joker's state
+        self.joker_state_manager.remove_state(joker_id);
+
+        Ok(())
+    }
+
+    /// Sell a joker from the specified slot, awarding money and cleaning up its state.
+    ///
+    /// # Arguments
+    /// * `slot` - The zero-based index of the joker slot to sell
+    ///
+    /// # Returns
+    /// * `Ok(())` if the joker was successfully sold
+    /// * `Err(GameError::InvalidSlot)` if the slot index is out of bounds
+    pub fn sell_joker(&mut self, slot: usize) -> Result<(), crate::error::GameError> {
+        use crate::error::GameError;
+
+        if slot >= self.jokers.len() {
+            return Err(GameError::InvalidSlot);
+        }
+
+        // Get sell value and joker ID before removing
+        let joker = &self.jokers[slot];
+        let sell_value = joker.cost() / 2; // Standard sell value is half the cost
+        let joker_id = joker.to_joker_id();
+
+        // Award money for selling the joker
+        self.money += sell_value;
+
+        // Remove the joker from the collection
+        self.jokers.remove(slot);
+
+        // Clean up the joker's state
+        self.joker_state_manager.remove_state(joker_id);
+
+        Ok(())
+    }
+
+    /// Validate that joker state is consistent with actual jokers in play.
+    ///
+    /// # Returns
+    /// * `Ok(())` if the state is consistent
+    /// * `Err(GameError::InvalidOperation)` if inconsistencies are found
+    pub fn validate_joker_state(&self) -> Result<(), crate::error::GameError> {
+        use crate::error::GameError;
+
+        // Get all joker IDs currently in play
+        let current_jokers: std::collections::HashSet<_> = self
+            .jokers
+            .iter()
+            .map(|joker| joker.to_joker_id())
+            .collect();
+
+        // Get all joker IDs with state
+        let state_jokers: std::collections::HashSet<_> = self
+            .joker_state_manager
+            .get_active_jokers()
+            .into_iter()
+            .collect();
+
+        // Check for state without corresponding jokers
+        for state_joker in &state_jokers {
+            if !current_jokers.contains(state_joker) {
+                return Err(GameError::InvalidOperation(format!(
+                    "Found state for joker {state_joker:?} but no corresponding joker in play"
+                )));
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Clean up orphaned joker state (state for jokers no longer in play).
+    pub fn cleanup_joker_state(&mut self) {
+        // Get all joker IDs currently in play
+        let current_jokers: std::collections::HashSet<_> = self
+            .jokers
+            .iter()
+            .map(|joker| joker.to_joker_id())
+            .collect();
+
+        // Get all joker IDs with state
+        let state_jokers: Vec<_> = self
+            .joker_state_manager
+            .get_active_jokers()
+            .into_iter()
+            .collect();
+
+        // Remove state for jokers no longer in play
+        for state_joker in state_jokers {
+            if !current_jokers.contains(&state_joker) {
+                self.joker_state_manager.remove_state(state_joker);
+            }
+        }
+    }
+
+    /// Reset the game to its initial state, clearing all jokers and their state.
+    pub fn reset_game(&mut self) {
+        // Clear all jokers
+        self.jokers.clear();
+
+        // Clear all joker state
+        self.joker_state_manager.clear();
+
+        // Reset other game state to initial values
+        self.round = self.config.round_start;
+        self.plays = self.config.plays;
+        self.discards = self.config.discards;
+        self.money = self.config.money_start;
+        self.chips = self.config.base_chips;
+        self.mult = self.config.base_mult;
+        self.score = self.config.base_score;
+        self.ante_current = self.ante_start;
+        self.stage = Stage::PreBlind();
+        self.hand_type_counts.clear();
+        self.action_history.clear();
+        self.discarded.clear();
+
+        // Reset deck and available cards
+        self.deck = crate::deck::Deck::default();
+        self.available = crate::available::Available::default();
+        self.blind = None;
     }
 }
 
