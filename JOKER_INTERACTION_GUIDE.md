@@ -256,7 +256,7 @@ fn on_hand_played(&self, context: &mut GameContext, hand: &SelectHand) -> JokerE
     let state_manager = JokerStateManager::new();
     let accumulated = state_manager.get_state(&self.id())
         .map(|s| s.accumulated_value)
-        .unwrap_or(0);
+        .unwrap_or(0.0);
     
     JokerEffect::new().with_mult(accumulated)
 }

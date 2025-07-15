@@ -195,7 +195,7 @@ impl JokerStateManager {
 impl BadStateManager {
     pub fn new() -> Self {
         let mut states = HashMap::new();
-        // DON'T: Allocate states for all 186 jokers
+        // DON'T: Allocate states for all 159 jokers
         for id in all_joker_ids() {
             states.insert(id, JokerState::new());
         }
@@ -367,7 +367,7 @@ impl Joker for IncrementalJoker {
         let state_manager = JokerStateManager::new();
         let diamond_count = state_manager.get_state(&self.id())
             .map(|s| s.accumulated_value)
-            .unwrap_or(0);
+            .unwrap_or(0.0);
         
         JokerEffect::new().with_mult(diamond_count * 3)
     }

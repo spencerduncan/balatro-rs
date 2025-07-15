@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Balatro-RS joker system provides a comprehensive framework for implementing all 150 Balatro jokers with multiple implementation patterns optimized for different use cases.
+The Balatro-RS joker system provides a comprehensive framework for implementing all 159 Balatro jokers with multiple implementation patterns optimized for different use cases.
 
 ## Core API
 
@@ -41,10 +41,17 @@ Represents the effect a joker has on scoring:
 
 ```rust
 pub struct JokerEffect {
-    pub chips: i32,           // Bonus chips to add
-    pub mult: i32,            // Bonus mult to add  
-    pub money: i32,           // Money to award
-    pub mult_multiplier: f32, // Multiplier to apply to mult
+    pub chips: i32,                                // Bonus chips to add
+    pub mult: i32,                                 // Bonus mult to add  
+    pub money: i32,                                // Money to award
+    pub mult_multiplier: f32,                      // Multiplier to apply to mult
+    pub retrigger: u32,                            // Number of times to retrigger effect
+    pub destroy_self: bool,                        // Whether this joker destroys itself
+    pub destroy_others: Vec<JokerId>,              // Other jokers to destroy
+    pub transform_cards: Vec<(Card, Card)>,        // Cards to transform
+    pub hand_size_mod: i32,                        // Temporary hand size modification
+    pub discard_mod: i32,                          // Temporary discard count modification
+    pub message: Option<String>,                   // Custom message to display
 }
 
 impl JokerEffect {
@@ -53,6 +60,10 @@ impl JokerEffect {
     pub fn with_mult(self, mult: i32) -> Self;
     pub fn with_money(self, money: i32) -> Self;
     pub fn with_mult_multiplier(self, multiplier: f32) -> Self;
+    
+    // Note: Builder methods for other fields (retrigger, destroy_self, 
+    // destroy_others, transform_cards, hand_size_mod, discard_mod, message)
+    // are not yet implemented. Use struct literal syntax for these fields.
 }
 ```
 
@@ -214,17 +225,17 @@ For jokers that maintain persistent state:
 
 ```rust
 pub struct JokerState {
-    pub accumulated_value: i32,
+    pub accumulated_value: f64,
     pub triggers_remaining: Option<u32>,
-    pub custom_data: serde_json::Value,
+    pub custom_data: HashMap<String, Value>,
 }
 
 impl JokerState {
     pub fn new() -> Self;
-    pub fn with_accumulated_value(value: i32) -> Self;
-    pub fn with_triggers_remaining(triggers: u32) -> Self;
-    pub fn with_custom_data<T: Serialize>(data: T) -> Result<Self, serde_json::Error>;
-    pub fn get_custom_data<T: DeserializeOwned>(&self) -> Result<T, serde_json::Error>;
+    pub fn with_accumulated_value(value: f64) -> Self;
+    pub fn with_triggers(triggers: u32) -> Self;
+    // Note: with_custom_data method is not implemented, use direct field access
+    // Note: get_custom_data method is not implemented, use direct field access
 }
 ```
 
@@ -237,17 +248,17 @@ pub struct JokerStateManager;
 
 impl JokerStateManager {
     pub fn new() -> Self;
-    pub fn get_state(&self, joker_id: &JokerId) -> Option<JokerState>;
+    pub fn get_state(&self, joker_id: JokerId) -> Option<JokerState>;
     pub fn set_state(&self, joker_id: JokerId, state: JokerState);
-    pub fn update_state<F>(&self, joker_id: &JokerId, f: F) -> bool
+    pub fn update_state<F>(&self, joker_id: JokerId, f: F)
     where F: FnOnce(&mut JokerState);
-    pub fn clear_state(&self, joker_id: &JokerId) -> bool;
-    pub fn has_state(&self, joker_id: &JokerId) -> bool;
+    pub fn remove_state(&self, joker_id: JokerId) -> Option<JokerState>;
+    pub fn has_state(&self, joker_id: JokerId) -> bool;
     
     // Helper methods
-    pub fn increment_accumulated(&self, joker_id: &JokerId, amount: i32);
-    pub fn decrement_triggers(&self, joker_id: &JokerId) -> bool;
-    pub fn reset_triggers(&self, joker_id: &JokerId, count: u32);
+    pub fn add_accumulated_value(&self, joker_id: JokerId, value: f64);
+    pub fn use_trigger(&self, joker_id: JokerId) -> bool;
+    // Note: reset_triggers method is not implemented
 }
 ```
 
@@ -291,7 +302,7 @@ pub enum JokerCondition {
 
 ### JokerId
 
-All 186 joker identifiers are defined in the `JokerId` enum. Major categories include:
+All 159 joker identifiers are defined in the `JokerId` enum. Major categories include:
 
 - **Basic scoring jokers**: `Joker`, `GreedyJoker`, `LustyJoker`, etc.
 - **Multiplicative jokers**: `HalfJoker`, `AbstractJoker`, `SteelJoker`, etc.
