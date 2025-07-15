@@ -225,6 +225,26 @@ impl SelectHand {
         if self.len() < 1 {
             return None;
         }
+
+        // High card means no pairs, flushes, straights, etc.
+        // Check that no higher-ranking hands are present
+        if self.is_pair().is_some()
+            || self.is_two_pair().is_some()
+            || self.is_three_of_kind().is_some()
+            || self.is_straight().is_some()
+            || self.is_flush().is_some()
+            || self.is_fullhouse().is_some()
+            || self.is_four_of_kind().is_some()
+            || self.is_straight_flush().is_some()
+            || self.is_royal_flush().is_some()
+            || self.is_five_of_kind().is_some()
+            || self.is_flush_house().is_some()
+            || self.is_flush_five().is_some()
+        {
+            return None;
+        }
+
+        // If no higher hands, return the highest card
         if let Some((_value, cards)) = self
             .values_freq()
             .into_iter()
