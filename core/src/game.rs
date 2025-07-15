@@ -724,7 +724,7 @@ impl Game {
     pub fn save_state_to_json(&self) -> Result<String, SaveLoadError> {
         // Extract joker states from the state manager
         let joker_states = self.joker_state_manager.snapshot_all();
-        
+
         let saveable_state = SaveableGameState {
             version: SAVE_VERSION,
             timestamp: std::time::SystemTime::now()
@@ -754,21 +754,20 @@ impl Game {
             score: self.score,
             hand_type_counts: self.hand_type_counts.clone(),
         };
-        
-        serde_json::to_string_pretty(&saveable_state)
-            .map_err(SaveLoadError::SerializationError)
+
+        serde_json::to_string_pretty(&saveable_state).map_err(SaveLoadError::SerializationError)
     }
-    
+
     /// Load game state from JSON string
     pub fn load_state_from_json(json: &str) -> Result<Self, SaveLoadError> {
-        let saveable_state: SaveableGameState = serde_json::from_str(json)
-            .map_err(SaveLoadError::DeserializationError)?;
-        
+        let saveable_state: SaveableGameState =
+            serde_json::from_str(json).map_err(SaveLoadError::DeserializationError)?;
+
         // Validate version
         if saveable_state.version > SAVE_VERSION {
             return Err(SaveLoadError::InvalidVersion(saveable_state.version));
         }
-        
+
         // Create new game instance with reconstructed state
         let mut game = Game {
             config: saveable_state.config,
@@ -796,20 +795,21 @@ impl Game {
             effect_registry: EffectRegistry::new(),
             joker_state_manager: Arc::new(JokerStateManager::new()),
         };
-        
+
         // Restore joker states to the state manager
-        game.joker_state_manager.restore_from_snapshot(saveable_state.joker_states);
-        
+        game.joker_state_manager
+            .restore_from_snapshot(saveable_state.joker_states);
+
         // Reconstruct effect registry from jokers
         game.reconstruct_effects();
-        
+
         Ok(game)
     }
-    
+
     /// Reconstruct the effect registry from current jokers
     fn reconstruct_effects(&mut self) {
         self.effect_registry = EffectRegistry::new();
-        
+
         // Re-register all jokers with the effect registry
         let jokers = self.jokers.clone(); // Clone to avoid borrowing issues
         for joker in jokers {
@@ -824,11 +824,11 @@ impl Game {
             }
         }
     }
-    
+
     /// Add a joker to the game (for testing purposes)
     pub fn add_joker(&mut self, joker: Box<dyn crate::joker::Joker>) {
-        use crate::joker::compat::{TheJoker, GreedyJoker};
-        
+        use crate::joker::compat::{GreedyJoker, TheJoker};
+
         // Convert new joker trait to old Jokers enum for compatibility
         // This is a simplified implementation for testing
         let joker_id = joker.id();
@@ -838,16 +838,16 @@ impl Game {
             // Add more mappings as needed for testing
             _ => Jokers::TheJoker(TheJoker::default()), // Default fallback
         };
-        
+
         self.jokers.push(jokers_enum.clone());
-        
+
         // Initialize state for the new joker
         self.joker_state_manager.ensure_state_exists(joker_id);
-        
+
         // Register with effect registry (do this separately to avoid borrowing issues)
         self.register_joker_effects(jokers_enum);
     }
-    
+
     /// Helper method to register joker effects
     fn register_joker_effects(&mut self, joker: Jokers) {
         // Clone joker for effects to avoid borrowing issues

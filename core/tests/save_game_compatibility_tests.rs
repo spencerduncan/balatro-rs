@@ -1,8 +1,8 @@
+use balatro_rs::ante::Ante;
+use balatro_rs::config::Config;
 use balatro_rs::game::Game;
 use balatro_rs::joker::JokerId;
 use balatro_rs::joker_state::{JokerPersistenceManager, JokerStateManager};
-use balatro_rs::config::Config;
-use balatro_rs::ante::Ante;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -15,12 +15,14 @@ mod corrupted_save_handling_tests {
     fn test_handle_completely_invalid_json() {
         let corrupted_json = "{ this is not valid json at all!";
         let result = Game::load_state_from_json(corrupted_json);
-        
+
         assert!(result.is_err());
         if let Err(e) = result {
             println!("Error message: {}", e.to_string());
             // Just check that it's a deserialization error for now
-            assert!(e.to_string().contains("Deserialization") || e.to_string().contains("expected"));
+            assert!(
+                e.to_string().contains("Deserialization") || e.to_string().contains("expected")
+            );
         }
     }
 
@@ -28,7 +30,7 @@ mod corrupted_save_handling_tests {
     fn test_handle_valid_json_invalid_structure() {
         let invalid_structure = r#"{"valid": "json", "but": "wrong", "structure": 123}"#;
         let result = Game::load_state_from_json(invalid_structure);
-        
+
         assert!(result.is_err());
         if let Err(e) = result {
             assert!(e.to_string().contains("structure") || e.to_string().contains("field"));
@@ -39,7 +41,7 @@ mod corrupted_save_handling_tests {
     fn test_handle_missing_required_fields() {
         let missing_fields = r#"{"money": 100, "chips": 50}"#; // Missing many required fields
         let result = Game::load_state_from_json(missing_fields);
-        
+
         assert!(result.is_err());
     }
 
@@ -47,14 +49,14 @@ mod corrupted_save_handling_tests {
     fn test_handle_corrupted_joker_state_data() {
         let state_manager = Arc::new(JokerStateManager::new());
         let persistence = JokerPersistenceManager::new(state_manager);
-        
+
         // Create corrupted joker state data
         let mut corrupted_states = HashMap::new();
         corrupted_states.insert(
             JokerId::Joker,
-            Value::String("this should be an object, not a string".to_string())
+            Value::String("this should be an object, not a string".to_string()),
         );
-        
+
         let result = persistence.validate_state_data(&corrupted_states);
         assert!(result.is_err());
     }
@@ -63,10 +65,10 @@ mod corrupted_save_handling_tests {
     fn test_partial_corruption_recovery() {
         let state_manager = Arc::new(JokerStateManager::new());
         let persistence = JokerPersistenceManager::new(state_manager);
-        
+
         // Mix of valid and invalid joker states
         let mut mixed_states = HashMap::new();
-        
+
         // Valid state
         mixed_states.insert(
             JokerId::Joker,
@@ -74,21 +76,18 @@ mod corrupted_save_handling_tests {
                 "accumulated_value": 10.0,
                 "triggers_remaining": null,
                 "custom_data": {}
-            })
+            }),
         );
-        
+
         // Invalid state
-        mixed_states.insert(
-            JokerId::GreedyJoker,
-            Value::String("corrupted".to_string())
-        );
-        
+        mixed_states.insert(JokerId::GreedyJoker, Value::String("corrupted".to_string()));
+
         let result = persistence.load_states_with_recovery(&mixed_states);
-        
+
         // Should recover valid states and report errors for invalid ones
         assert!(result.is_ok());
         let (loaded_states, errors) = result.unwrap();
-        
+
         assert_eq!(loaded_states.len(), 1); // Only valid state loaded
         assert_eq!(errors.len(), 1); // One error reported
         assert!(loaded_states.contains_key(&JokerId::Joker));
@@ -99,7 +98,7 @@ mod corrupted_save_handling_tests {
     fn test_unknown_joker_id_handling() {
         let state_manager = Arc::new(JokerStateManager::new());
         let persistence = JokerPersistenceManager::new(state_manager);
-        
+
         // JSON with unknown joker ID (could happen with version differences)
         let unknown_joker_json = r#"{
             "version": 1,
@@ -117,9 +116,9 @@ mod corrupted_save_handling_tests {
                 "game_ante": 1
             }
         }"#;
-        
+
         let result = persistence.load_from_json_with_unknown_handling(unknown_joker_json);
-        
+
         // Should handle unknown jokers gracefully (skip them with warning)
         if let Err(e) = &result {
             println!("Error: {}", e);
@@ -143,22 +142,23 @@ mod save_load_integration_tests {
         game.money = 500;
         game.ante_current = Ante::Three;
         game.round = 5;
-        
+
         // Add a joker with some state
         game.add_joker(Box::new(TheJoker));
-        game.joker_state_manager.add_accumulated_value(JokerId::Joker, 25.0);
-        
+        game.joker_state_manager
+            .add_accumulated_value(JokerId::Joker, 25.0);
+
         // Save the game
         let saved_json = game.save_state_to_json().expect("Save should succeed");
-        
+
         // Load the game
         let loaded_game = Game::load_state_from_json(&saved_json).expect("Load should succeed");
-        
+
         // Verify state preservation
         assert_eq!(loaded_game.money, 500);
         assert_eq!(loaded_game.ante_current, Ante::Three);
         assert_eq!(loaded_game.round, 5);
-        
+
         // Verify joker state preservation
         let joker_state = loaded_game.joker_state_manager.get_state(JokerId::Joker);
         assert!(joker_state.is_some());
@@ -168,35 +168,42 @@ mod save_load_integration_tests {
     #[test]
     fn test_save_load_with_multiple_jokers() {
         let mut game = Game::new(Config::default());
-        
+
         // Add multiple jokers with different states
         game.add_joker(Box::new(TheJoker));
-        game.joker_state_manager.add_accumulated_value(JokerId::Joker, 10.0);
-        
+        game.joker_state_manager
+            .add_accumulated_value(JokerId::Joker, 10.0);
+
         // Save and load
         let saved_json = game.save_state_to_json().expect("Save should succeed");
         let loaded_game = Game::load_state_from_json(&saved_json).expect("Load should succeed");
-        
+
         // Verify all joker states preserved
         assert_eq!(game.jokers.len(), loaded_game.jokers.len());
-        
+
         let original_state = game.joker_state_manager.get_state(JokerId::Joker).unwrap();
-        let loaded_state = loaded_game.joker_state_manager.get_state(JokerId::Joker).unwrap();
-        assert_eq!(original_state.accumulated_value, loaded_state.accumulated_value);
+        let loaded_state = loaded_game
+            .joker_state_manager
+            .get_state(JokerId::Joker)
+            .unwrap();
+        assert_eq!(
+            original_state.accumulated_value,
+            loaded_state.accumulated_value
+        );
     }
 
     #[test]
     fn test_save_load_preserves_effect_registry() {
         let mut game = Game::new(Config::default());
         game.add_joker(Box::new(TheJoker));
-        
+
         // Verify effect registry is functional before save
         let initial_effects_count = game.effect_registry.count_registered_effects();
-        
+
         // Save and load
         let saved_json = game.save_state_to_json().expect("Save should succeed");
         let loaded_game = Game::load_state_from_json(&saved_json).expect("Load should succeed");
-        
+
         // Verify effect registry was reconstructed properly
         let final_effects_count = loaded_game.effect_registry.count_registered_effects();
         assert_eq!(initial_effects_count, final_effects_count);
@@ -213,12 +220,12 @@ mod save_format_versioning_tests {
         let mut game = Game::new(Config::default());
         game.money = 100;
         let full_save = game.save_state_to_json().unwrap();
-        
+
         // Parse and modify to simulate v1 format
         let mut save_data: serde_json::Value = serde_json::from_str(&full_save).unwrap();
         save_data["version"] = serde_json::Value::Number(serde_json::Number::from(1));
         save_data["money"] = serde_json::Value::Number(serde_json::Number::from(100));
-        
+
         // Add joker state
         let joker_state = serde_json::json!({
             "accumulated_value": 5.0,
@@ -226,15 +233,15 @@ mod save_format_versioning_tests {
             "custom_data": {}
         });
         save_data["joker_states"]["Joker"] = joker_state;
-        
+
         let v1_save_data = serde_json::to_string(&save_data).unwrap();
-        
+
         let result = Game::load_state_from_json(&v1_save_data);
         if let Err(e) = &result {
             println!("Migration error: {}", e);
         }
         assert!(result.is_ok());
-        
+
         let loaded_game = result.unwrap();
         assert_eq!(loaded_game.money, 100);
         // Verify migration worked correctly
@@ -245,16 +252,16 @@ mod save_format_versioning_tests {
         // Create a proper save file and modify the version to be from the future
         let game = Game::new(Config::default());
         let save_data = game.save_state_to_json().unwrap();
-        
+
         // Parse and modify to have a future version
         let mut future_save: serde_json::Value = serde_json::from_str(&save_data).unwrap();
         future_save["version"] = serde_json::Value::Number(serde_json::Number::from(999));
         future_save["new_future_field"] = serde_json::Value::String("some_value".to_string());
-        
+
         let future_save_data = serde_json::to_string(&future_save).unwrap();
-        
+
         let result = Game::load_state_from_json(&future_save_data);
-        
+
         // Should either load with warnings or fail gracefully
         match result {
             Ok(_) => {
@@ -264,7 +271,11 @@ mod save_format_versioning_tests {
             Err(e) => {
                 // If it fails, should be due to version incompatibility
                 println!("Future version error: {}", e.to_string());
-                assert!(e.to_string().contains("version") || e.to_string().contains("unsupported") || e.to_string().contains("Invalid"));
+                assert!(
+                    e.to_string().contains("version")
+                        || e.to_string().contains("unsupported")
+                        || e.to_string().contains("Invalid")
+                );
             }
         }
     }
@@ -273,19 +284,21 @@ mod save_format_versioning_tests {
     fn test_save_format_validation() {
         let mut game = Game::new(Config::default());
         game.money = 150;
-        
+
         let saved_json = game.save_state_to_json().expect("Save should succeed");
-        
+
         // Parse and validate save format structure
         let save_data: Value = serde_json::from_str(&saved_json).expect("Should be valid JSON");
-        
+
         // Verify required fields are present
         assert!(save_data.get("version").is_some());
         assert!(save_data.get("money").is_some());
         assert!(save_data.get("joker_states").is_some());
-        
+
         // Verify version is current
-        let version = save_data["version"].as_u64().expect("Version should be number");
+        let version = save_data["version"]
+            .as_u64()
+            .expect("Version should be number");
         assert!(version >= 1);
     }
 }

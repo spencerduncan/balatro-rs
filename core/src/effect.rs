@@ -42,7 +42,7 @@ impl EffectRegistry {
             }
         }
     }
-    
+
     /// Register a single joker with the effect registry
     pub fn register_joker(&mut self, joker: Jokers, game: &Game) {
         for e in joker.effects(game) {
@@ -54,7 +54,7 @@ impl EffectRegistry {
             }
         }
     }
-    
+
     /// Count the total number of registered effects
     pub fn count_registered_effects(&self) -> usize {
         self.on_play.len() + self.on_discard.len() + self.on_score.len() + self.on_handrank.len()
