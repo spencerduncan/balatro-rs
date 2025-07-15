@@ -348,7 +348,7 @@ impl StaticJokerFactory {
             "Played cards with Diamond suit give +3 Mult when scored",
         )
         .rarity(JokerRarity::Common)
-        .cost(5)
+        .cost(2)
         .mult(3)
         .condition(StaticCondition::SuitScored(Suit::Diamond))
         .per_card()
@@ -365,7 +365,7 @@ impl StaticJokerFactory {
             "Played cards with Heart suit give +3 Mult when scored",
         )
         .rarity(JokerRarity::Common)
-        .cost(5)
+        .cost(2)
         .mult(3)
         .condition(StaticCondition::SuitScored(Suit::Heart))
         .per_card()
@@ -382,7 +382,7 @@ impl StaticJokerFactory {
             "Played cards with Spade suit give +3 Mult when scored",
         )
         .rarity(JokerRarity::Common)
-        .cost(5)
+        .cost(2)
         .mult(3)
         .condition(StaticCondition::SuitScored(Suit::Spade))
         .per_card()
@@ -399,7 +399,7 @@ impl StaticJokerFactory {
             "Played cards with Club suit give +3 Mult when scored",
         )
         .rarity(JokerRarity::Common)
-        .cost(5)
+        .cost(2)
         .mult(3)
         .condition(StaticCondition::SuitScored(Suit::Club))
         .per_card()
