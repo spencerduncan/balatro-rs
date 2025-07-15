@@ -21,9 +21,10 @@ fn create_test_context() -> GameContext<'static> {
     static HAND_TYPE_COUNTS: OnceLock<HashMap<HandRank, u32>> = OnceLock::new();
     let hand_type_counts = HAND_TYPE_COUNTS.get_or_init(|| HashMap::new());
 
-    // Create static joker state manager for testing  
+    // Create static joker state manager for testing
     static JOKER_STATE_MANAGER: OnceLock<Arc<JokerStateManager>> = OnceLock::new();
-    let joker_state_manager = JOKER_STATE_MANAGER.get_or_init(|| Arc::new(JokerStateManager::new()));
+    let joker_state_manager =
+        JOKER_STATE_MANAGER.get_or_init(|| Arc::new(JokerStateManager::new()));
 
     GameContext {
         chips: 0,
@@ -125,7 +126,7 @@ mod business_card_tests {
         // Test face cards from all suits have probabilistic behavior
         for suit in [Suit::Heart, Suit::Diamond, Suit::Club, Suit::Spade] {
             let jack = Card::new(Value::Jack, suit);
-            
+
             // Run multiple times to verify RNG behavior for this suit
             let mut money_results = Vec::new();
             for _ in 0..50 {
@@ -134,9 +135,21 @@ mod business_card_tests {
             }
 
             // Should have both 0 and 2 results for face cards (50% chance)
-            assert!(money_results.contains(&0), "Jack of {:?} should sometimes give $0", suit);
-            assert!(money_results.contains(&2), "Jack of {:?} should sometimes give $2", suit);
-            assert!(money_results.iter().all(|&x| x == 0 || x == 2), "Jack of {:?} should only give $0 or $2", suit);
+            assert!(
+                money_results.contains(&0),
+                "Jack of {:?} should sometimes give $0",
+                suit
+            );
+            assert!(
+                money_results.contains(&2),
+                "Jack of {:?} should sometimes give $2",
+                suit
+            );
+            assert!(
+                money_results.iter().all(|&x| x == 0 || x == 2),
+                "Jack of {:?} should only give $0 or $2",
+                suit
+            );
         }
     }
 }

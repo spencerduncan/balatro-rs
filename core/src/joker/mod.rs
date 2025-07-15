@@ -330,10 +330,10 @@ pub struct JokerEffect {
     /// Positive values give extra discards, negative values reduce discards.
     /// Applied for the current round only.
     pub discard_mod: i32,
-    
+
     /// Sell value increase for this joker
     pub sell_value_increase: i32,
-    
+
     /// Custom message to display to the player.
     ///
     /// Used for jokers with special effects, Easter eggs, or important notifications.
