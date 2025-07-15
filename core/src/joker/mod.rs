@@ -210,30 +210,133 @@ impl fmt::Display for JokerRarity {
     }
 }
 
-/// Effect that a joker can apply
+/// Effect that a joker can apply to modify game state.
+///
+/// `JokerEffect` represents the comprehensive impact a joker can have on the game
+/// when triggered. Effects can modify scoring, award resources, trigger special
+/// mechanics, or even destroy jokers and transform cards.
+///
+/// # Effect Categories
+///
+/// ## Scoring Effects
+/// - **Chips**: Bonus chips added to hand total (`chips`)
+/// - **Mult**: Bonus mult added to hand total (`mult`)
+/// - **Mult Multiplier**: Percentage multiplier applied to total mult (`mult_multiplier`)
+///
+/// ## Resource Effects  
+/// - **Money**: Coins awarded to the player (`money`)
+/// - **Hand Size**: Temporary hand size modification (`hand_size_mod`)
+/// - **Discards**: Temporary discard count modification (`discard_mod`)
+///
+/// ## Special Effects
+/// - **Retrigger**: Number of times to retrigger the effect (`retrigger`)
+/// - **Self Destruction**: Whether this joker destroys itself (`destroy_self`)
+/// - **Other Destruction**: Other jokers to destroy (`destroy_others`)
+/// - **Card Transformation**: Cards to transform into other cards (`transform_cards`)
+/// - **Messages**: Custom messages to display (`message`)
+///
+/// # Application Order
+///
+/// Effects are applied during scoring in this order:
+/// 1. **Chips**: Base chips + all chip bonuses  
+/// 2. **Mult**: Base mult + all mult bonuses
+/// 3. **Mult Multipliers**: Apply all multipliers to total mult
+/// 4. **Final Score**: (Total Chips) × (Total Mult)
+/// 5. **Resources**: Award money and apply modifiers
+/// 6. **Special Effects**: Handle retriggering, destruction, transformation
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// use balatro_rs::joker::JokerEffect;
+///
+/// // Simple scoring bonus
+/// let effect = JokerEffect::new().with_mult(5);
+///
+/// // Combined scoring effect
+/// let effect = JokerEffect::new()
+///     .with_chips(50)
+///     .with_mult(3)
+///     .with_money(2);
+///
+/// // Multiplicative effect
+/// let effect = JokerEffect::new().with_mult_multiplier(1.5); // +50% mult
+///
+/// // Complex effect with multiplicative bonus
+/// let effect = JokerEffect::new()
+///     .with_mult(10)
+///     .with_mult_multiplier(2.0);
+/// ```
+///
+/// # Performance Notes
+///
+/// `JokerEffect` instances are created frequently during scoring. The builder
+/// pattern methods consume and return `self` to enable efficient method chaining
+/// without additional allocations.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct JokerEffect {
-    /// Additional chips to add
+    /// Additional chips to add to the hand's base chips.
+    ///
+    /// Applied before mult calculations. Positive values increase the score.
     pub chips: i32,
-    /// Additional mult to add
+
+    /// Additional mult to add to the hand's base mult.
+    ///
+    /// Applied before mult multipliers. Positive values increase the score.
     pub mult: i32,
-    /// Additional money to add
+
+    /// Money to award to the player.
+    ///
+    /// Applied immediately after hand scoring. Positive values give money.
     pub money: i32,
-    /// Multiplier to apply to mult (e.g., 2.0 for 2x mult)
+
+    /// Multiplier to apply to the total mult.
+    ///
+    /// Applied after all mult bonuses are summed. For example:
+    /// - 1.0 = no change (100%)
+    /// - 1.5 = +50% mult
+    /// - 2.0 = double mult (200%)
     pub mult_multiplier: f32,
-    /// Number of times to retrigger
+
+    /// Number of times to retrigger this effect.
+    ///
+    /// A value of 2 means the effect triggers 3 times total (1 + 2 retriggers).
     pub retrigger: u32,
-    /// Whether to destroy this joker
+
+    /// Whether this joker should destroy itself after applying the effect.
+    ///
+    /// Used for one-time jokers or jokers with limited uses.
     pub destroy_self: bool,
-    /// Other jokers to destroy
+
+    /// Other jokers to destroy when this effect is applied.
+    ///
+    /// Used for jokers that consume other jokers for powerful effects.
     pub destroy_others: Vec<JokerId>,
-    /// Cards to transform
+
+    /// Cards to transform into other cards.
+    ///
+    /// Each tuple represents (source_card, target_card). Used for jokers
+    /// that modify the deck or hand composition.
     pub transform_cards: Vec<(Card, Card)>,
-    /// New hand size modifier
+
+    /// Temporary modification to hand size.
+    ///
+    /// Positive values increase hand size, negative values decrease it.
+    /// Applied for the current hand only.
     pub hand_size_mod: i32,
-    /// New discard modifier  
+
+    /// Temporary modification to discard count.
+    ///
+    /// Positive values give extra discards, negative values reduce discards.
+    /// Applied for the current round only.
     pub discard_mod: i32,
-    /// Custom message to display
+
+    /// Sell value increase for this joker
+    pub sell_value_increase: i32,
+
+    /// Custom message to display to the player.
+    ///
+    /// Used for jokers with special effects, Easter eggs, or important notifications.
     pub message: Option<String>,
 }
 
@@ -264,6 +367,18 @@ impl JokerEffect {
     /// Set mult multiplier
     pub fn with_mult_multiplier(mut self, multiplier: f32) -> Self {
         self.mult_multiplier = multiplier;
+        self
+    }
+
+    /// Set sell value increase
+    pub fn with_sell_value_increase(mut self, increase: i32) -> Self {
+        self.sell_value_increase = increase;
+        self
+    }
+
+    /// Set custom message
+    pub fn with_message(mut self, message: String) -> Self {
+        self.message = Some(message);
         self
     }
 }
@@ -312,21 +427,139 @@ impl<'a> GameContext<'a> {
     }
 }
 
-/// Core trait that all jokers must implement
+/// Core trait that all jokers must implement.
+///
+/// This trait defines the interface for all joker implementations in the Balatro-RS system.
+/// Jokers can modify game scoring through lifecycle hooks and provide static information
+/// about their identity and behavior.
+///
+/// # Implementation Patterns
+///
+/// There are several patterns for implementing jokers:
+///
+/// ## 1. Direct Implementation
+/// For complex jokers requiring custom logic:
+/// ```rust,ignore
+/// use balatro_rs::joker::{Joker, JokerId, JokerRarity, JokerEffect, GameContext};
+/// use balatro_rs::card::Card;
+/// use balatro_rs::hand::SelectHand;
+///
+/// #[derive(Debug)]
+/// struct CustomJoker;
+///
+/// impl Joker for CustomJoker {
+///     fn id(&self) -> JokerId { JokerId::CustomJoker }
+///     fn name(&self) -> &str { "Custom Joker" }
+///     fn description(&self) -> &str { "Complex custom logic" }
+///     fn rarity(&self) -> JokerRarity { JokerRarity::Common }
+///     
+///     fn on_card_scored(&self, context: &mut GameContext, card: &Card) -> JokerEffect {
+///         // Custom scoring logic
+///         if self.complex_condition(context, card) {
+///             JokerEffect::new().with_mult(5)
+///         } else {
+///             JokerEffect::new()
+///         }
+///     }
+/// }
+/// ```
+///
+/// ## 2. Static Joker Framework
+/// For simple conditional jokers:
+/// ```rust,ignore
+/// use balatro_rs::static_joker::{StaticJoker, StaticCondition};
+/// use balatro_rs::card::Suit;
+///
+/// let greedy_joker = StaticJoker::builder(
+///     JokerId::GreedyJoker,
+///     "Greedy Joker",
+///     "+3 Mult per Diamond"
+/// )
+/// .rarity(JokerRarity::Common)
+/// .mult(3)
+/// .condition(StaticCondition::SuitScored(Suit::Diamond))
+/// .per_card()
+/// .build()?;
+/// ```
+///
+/// # Lifecycle Events
+///
+/// Jokers integrate with the game through well-defined lifecycle events that mirror
+/// Balatro's game flow:
+///
+/// 1. **Blind Start**: `on_blind_start()` - Called when a new blind begins
+/// 2. **Hand Play**: `on_hand_played()` - Called when a hand is played for scoring
+/// 3. **Card Scoring**: `on_card_scored()` - Called for each individual scoring card
+/// 4. **Discard**: `on_discard()` - Called when cards are discarded
+/// 5. **Shop**: `on_shop_open()` - Called when entering the shop
+/// 6. **Round End**: `on_round_end()` - Called at the end of each round
+///
+/// # Effect Application
+///
+/// Joker effects are applied in a specific order to ensure consistent behavior:
+/// 1. Chips calculation: Base chips + chip bonuses
+/// 2. Mult calculation: Base mult + mult bonuses
+/// 3. Mult multiplication: Apply mult multipliers
+/// 4. Final score: chips × mult
+///
+/// # Thread Safety
+///
+/// All joker implementations must be `Send + Sync` to support concurrent access
+/// in multi-threaded environments and RL training scenarios.
+///
+/// # Performance Considerations
+///
+/// - `on_card_scored()` is called most frequently and should be optimized
+/// - Use early returns for non-matching conditions
+/// - Avoid expensive operations in hot paths
+/// - Consider caching expensive calculations in joker state
 pub trait Joker: Send + Sync + std::fmt::Debug {
-    /// Get the unique identifier for this joker
+    /// Get the unique identifier for this joker.
+    ///
+    /// This ID must be unique across all joker implementations and is used for
+    /// state management, serialization, and factory creation.
+    ///
+    /// # Returns
+    /// The unique `JokerId` for this joker type.
     fn id(&self) -> JokerId;
 
-    /// Get the display name
+    /// Get the display name of this joker.
+    ///
+    /// This should be a human-readable name that matches the Balatro naming convention.
+    ///
+    /// # Returns
+    /// A string slice containing the joker's name.
     fn name(&self) -> &str;
 
-    /// Get the description
+    /// Get the description of this joker's effect.
+    ///
+    /// This should clearly describe what the joker does in a concise format
+    /// suitable for display in the user interface.
+    ///
+    /// # Returns
+    /// A string slice containing the joker's description.
     fn description(&self) -> &str;
 
-    /// Get the rarity
+    /// Get the rarity level of this joker.
+    ///
+    /// Rarity affects the base cost and availability in shops.
+    ///
+    /// # Returns
+    /// The `JokerRarity` level for this joker.
     fn rarity(&self) -> JokerRarity;
 
-    /// Get the base cost in the shop
+    /// Get the base cost of this joker in the shop.
+    ///
+    /// The default implementation uses rarity-based pricing:
+    /// - Common: 3 coins
+    /// - Uncommon: 6 coins  
+    /// - Rare: 8 coins
+    /// - Legendary: 20 coins
+    ///
+    /// Override this method for jokers with custom pricing.
+    ///
+    /// # Returns
+    /// The cost in coins to purchase this joker.
     fn cost(&self) -> usize {
         match self.rarity() {
             JokerRarity::Common => 3,
@@ -336,56 +569,226 @@ pub trait Joker: Send + Sync + std::fmt::Debug {
         }
     }
 
+    /// Get the current sell value (defaults to cost / 2)
+    fn sell_value(&self, accumulated_bonus: f64) -> usize {
+        (self.cost() / 2) + (accumulated_bonus as usize)
+    }
+
     // Lifecycle hooks with default implementations
 
-    /// Called when a hand is played and scored
+    /// Called when a hand is played and scored.
+    ///
+    /// This is the primary hook for jokers that provide per-hand effects,
+    /// such as bonuses for specific hand types (Pair, Flush, etc.).
+    ///
+    /// # Arguments
+    /// * `context` - Mutable reference to the current game context
+    /// * `hand` - The hand being played and scored
+    ///
+    /// # Returns
+    /// A `JokerEffect` describing any bonuses to apply to the hand.
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// fn on_hand_played(&self, context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
+    ///     if hand.is_pair().is_some() {
+    ///         JokerEffect::new().with_mult(8)  // +8 mult for pairs
+    ///     } else {
+    ///         JokerEffect::new()
+    ///     }
+    /// }
+    /// ```
     fn on_hand_played(&self, _context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
         JokerEffect::new()
     }
 
-    /// Called for each card as it's scored
+    /// Called for each card as it's scored.
+    ///
+    /// This is the primary hook for jokers that provide per-card effects,
+    /// such as bonuses for specific suits, ranks, or card properties.
+    ///
+    /// # Arguments
+    /// * `context` - Mutable reference to the current game context
+    /// * `card` - The individual card being scored
+    ///
+    /// # Returns
+    /// A `JokerEffect` describing any bonuses to apply for this card.
+    ///
+    /// # Performance Note
+    /// This method is called frequently (once per scoring card) and should be optimized.
+    /// Use early returns for non-matching conditions.
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// fn on_card_scored(&self, context: &mut GameContext, card: &Card) -> JokerEffect {
+    ///     if card.suit == Suit::Diamond {
+    ///         JokerEffect::new().with_mult(3)  // +3 mult per Diamond
+    ///     } else {
+    ///         JokerEffect::new()
+    ///     }
+    /// }
+    /// ```
     fn on_card_scored(&self, _context: &mut GameContext, _card: &Card) -> JokerEffect {
         JokerEffect::new()
     }
 
-    /// Called when a new blind starts
+    /// Called when a new blind starts.
+    ///
+    /// This hook is useful for jokers that need to reset state, initialize
+    /// counters, or apply one-time effects at the beginning of each blind.
+    ///
+    /// # Arguments
+    /// * `context` - Mutable reference to the current game context
+    ///
+    /// # Returns
+    /// A `JokerEffect` describing any bonuses to apply when the blind starts.
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// fn on_blind_start(&self, context: &mut GameContext) -> JokerEffect {
+    ///     // Provide bonus at start of blind
+    ///     JokerEffect::new().with_chips(10)
+    /// }
+    /// ```
     fn on_blind_start(&self, _context: &mut GameContext) -> JokerEffect {
         JokerEffect::new()
     }
 
-    /// Called when the shop opens
+    /// Called when the shop opens.
+    ///
+    /// This hook is useful for jokers that interact with the shop phase,
+    /// such as those that modify shop contents or provide shop-related bonuses.
+    ///
+    /// # Arguments
+    /// * `context` - Mutable reference to the current game context
+    ///
+    /// # Returns
+    /// A `JokerEffect` describing any bonuses to apply when entering the shop.
     fn on_shop_open(&self, _context: &mut GameContext) -> JokerEffect {
         JokerEffect::new()
     }
 
-    /// Called when cards are discarded
+    /// Called when cards are discarded.
+    ///
+    /// This hook is useful for jokers that interact with the discard pile
+    /// or provide bonuses based on discarded cards.
+    ///
+    /// # Arguments
+    /// * `context` - Mutable reference to the current game context
+    /// * `cards` - Slice of cards being discarded
+    ///
+    /// # Returns
+    /// A `JokerEffect` describing any bonuses to apply for the discard action.
     fn on_discard(&self, _context: &mut GameContext, _cards: &[Card]) -> JokerEffect {
         JokerEffect::new()
     }
 
-    /// Called at the end of each round
+    /// Called at the end of each round.
+    ///
+    /// This hook is useful for jokers that accumulate bonuses over time,
+    /// apply end-of-round effects, or clean up temporary state.
+    ///
+    /// # Arguments
+    /// * `context` - Mutable reference to the current game context
+    ///
+    /// # Returns
+    /// A `JokerEffect` describing any bonuses to apply at round end.
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// fn on_round_end(&self, context: &mut GameContext) -> JokerEffect {
+    ///     // Provide bonus at end of round
+    ///     JokerEffect::new().with_money(5)
+    /// }
+    /// ```
     fn on_round_end(&self, _context: &mut GameContext) -> JokerEffect {
         JokerEffect::new()
     }
 
     // Modifier hooks with default implementations
 
-    /// Modify base chips
+    /// Modify the base chips value before scoring calculations.
+    ///
+    /// This hook allows jokers to modify the baseline chips before any
+    /// bonuses are applied. Use this for jokers that fundamentally change
+    /// the chip calculation system.
+    ///
+    /// # Arguments
+    /// * `context` - Reference to the current game context
+    /// * `base_chips` - The current base chips value
+    ///
+    /// # Returns
+    /// The modified base chips value.
+    ///
+    /// # Note
+    /// This is different from chip bonuses applied via `JokerEffect`.
+    /// Chip bonuses are added to the final total, while this modifier
+    /// changes the base value before other calculations.
     fn modify_chips(&self, _context: &GameContext, base_chips: i32) -> i32 {
         base_chips
     }
 
-    /// Modify base mult
+    /// Modify the base mult value before scoring calculations.
+    ///
+    /// This hook allows jokers to modify the baseline mult before any
+    /// bonuses are applied. Use this for jokers that fundamentally change
+    /// the mult calculation system.
+    ///
+    /// # Arguments
+    /// * `context` - Reference to the current game context
+    /// * `base_mult` - The current base mult value
+    ///
+    /// # Returns
+    /// The modified base mult value.
+    ///
+    /// # Note
+    /// This is different from mult bonuses applied via `JokerEffect`.
+    /// Mult bonuses are added to the final total, while this modifier
+    /// changes the base value before other calculations.
     fn modify_mult(&self, _context: &GameContext, base_mult: i32) -> i32 {
         base_mult
     }
 
-    /// Modify hand size
+    /// Modify the maximum hand size.
+    ///
+    /// This hook allows jokers to permanently change the number of cards
+    /// the player can hold in their hand.
+    ///
+    /// # Arguments
+    /// * `context` - Reference to the current game context
+    /// * `base_size` - The current base hand size
+    ///
+    /// # Returns
+    /// The modified hand size.
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// fn modify_hand_size(&self, _context: &GameContext, base_size: usize) -> usize {
+    ///     base_size + 2  // +2 hand size
+    /// }
+    /// ```
     fn modify_hand_size(&self, _context: &GameContext, base_size: usize) -> usize {
         base_size
     }
 
-    /// Modify number of discards
+    /// Modify the number of discards available per round.
+    ///
+    /// This hook allows jokers to change the number of discards the player
+    /// can use each round.
+    ///
+    /// # Arguments
+    /// * `context` - Reference to the current game context
+    /// * `base_discards` - The current base number of discards
+    ///
+    /// # Returns
+    /// The modified number of discards.
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// fn modify_discards(&self, _context: &GameContext, base_discards: usize) -> usize {
+    ///     base_discards + 1  // +1 discard per round
+    /// }
+    /// ```
     fn modify_discards(&self, _context: &GameContext, base_discards: usize) -> usize {
         base_discards
     }

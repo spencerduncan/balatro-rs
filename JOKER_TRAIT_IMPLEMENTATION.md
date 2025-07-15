@@ -2,14 +2,14 @@
 
 ## Summary
 
-Successfully implemented the core Joker trait definition as specified in issue #52. The implementation provides a foundation for all 150 joker implementations with comprehensive lifecycle hooks and a clean API.
+Successfully implemented the core Joker trait definition as specified in issue #52. The implementation provides a foundation for all 159 joker implementations with comprehensive lifecycle hooks and a clean API.
 
 ## Implementation Details
 
 ### Files Created/Modified
 
 1. **core/src/joker/mod.rs** - Main joker trait definition
-   - `JokerId` enum with all 150 joker identifiers
+   - `JokerId` enum with all 159 joker identifiers
    - `JokerRarity` enum (Common, Uncommon, Rare, Legendary)
    - `JokerEffect` struct for return values
    - `GameContext` struct for state access

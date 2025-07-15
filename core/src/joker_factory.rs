@@ -25,10 +25,16 @@ impl JokerFactory {
             JokerId::DeviousJoker => Some(Box::new(DeviousJoker)),
             JokerId::CraftyJoker => Some(Box::new(CraftyJoker)),
 
-            // Jokers from main branch
+            // Money-based conditional jokers
+            JokerId::BusinessCard => Some(Box::new(BusinessCard)),
+            JokerId::EggJoker => Some(Box::new(Egg)),
+            JokerId::Burglar => Some(Box::new(Burglar)),
+            
+            // Hand type conditional jokers from main branch
             JokerId::Supernova => Some(Box::new(SupernovaJoker)),
             JokerId::SpaceJoker => Some(Box::new(SpaceJoker)),
             JokerId::IceCream => Some(Box::new(IceCreamJoker::new())),
+            JokerId::Runner => Some(Box::new(RunnerJoker)),
 
             // Static jokers from StaticJokerFactory
             JokerId::RedCard => Some(StaticJokerFactory::create_red_card()),
@@ -36,7 +42,6 @@ impl JokerFactory {
             JokerId::FacelessJoker => Some(StaticJokerFactory::create_faceless_joker()),
             JokerId::Square => Some(StaticJokerFactory::create_square()),
             JokerId::Walkie => Some(StaticJokerFactory::create_walkie()),
-            JokerId::Runner => Some(Box::new(RunnerJoker)),
 
             // Placeholder jokers with TODO comments
             JokerId::HalfJoker => Some(StaticJokerFactory::create_half_joker()),
@@ -69,20 +74,30 @@ impl JokerFactory {
                 CleverJoker,
                 DeviousJoker,
                 CraftyJoker,
+                // Money-based conditional jokers
+                BusinessCard,
+                EggJoker,
+                // Hand type conditional jokers
                 Supernova,
                 IceCream,
+                Runner,
                 // New static jokers
                 FacelessJoker,
                 Square,
                 Walkie,
-                Runner,
                 HalfJoker,
                 Banner,
                 AbstractJoker,
             ],
             JokerRarity::Uncommon => vec![
-                SpaceJoker, // New static jokers
-                RedCard, BlueJoker, SteelJoker,
+                // Money-based conditional jokers
+                Burglar,
+                // Hand type conditional jokers
+                SpaceJoker,
+                // New static jokers
+                RedCard, 
+                BlueJoker, 
+                SteelJoker,
             ],
             JokerRarity::Rare => vec![
                 // TODO: Add rare jokers
@@ -112,16 +127,21 @@ impl JokerFactory {
             CleverJoker,
             DeviousJoker,
             CraftyJoker,
+            // Money-based conditional jokers
+            BusinessCard,
+            EggJoker,
+            Burglar,
+            // Hand type conditional jokers
             Supernova,
             SpaceJoker,
             IceCream,
+            Runner,
             // New fully implemented static jokers
             RedCard,
             BlueJoker,
             FacelessJoker,
             Square,
             Walkie,
-            Runner,
             // Note: HalfJoker, Banner, AbstractJoker, and SteelJoker are placeholders
         ]
     }
