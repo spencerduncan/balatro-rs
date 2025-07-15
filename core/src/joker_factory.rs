@@ -23,6 +23,9 @@ impl JokerFactory {
             JokerId::CleverJoker => Some(Box::new(CleverJoker)),
             JokerId::DeviousJoker => Some(Box::new(DeviousJoker)),
             JokerId::CraftyJoker => Some(Box::new(CraftyJoker)),
+            JokerId::Supernova => Some(Box::new(SupernovaJoker)),
+            JokerId::Runner => Some(Box::new(RunnerJoker)),
+            JokerId::SpaceJoker => Some(Box::new(SpaceJoker)),
             // TODO: Implement remaining jokers
             _ => None,
         }
@@ -49,10 +52,13 @@ impl JokerFactory {
                 CleverJoker,
                 DeviousJoker,
                 CraftyJoker,
+                Supernova,
+                Runner,
                 // Add more common jokers here
             ],
             JokerRarity::Uncommon => vec![
-                // TODO: Add uncommon jokers
+                SpaceJoker,
+                // TODO: Add more uncommon jokers
             ],
             JokerRarity::Rare => vec![
                 // TODO: Add rare jokers
@@ -82,6 +88,9 @@ impl JokerFactory {
             CleverJoker,
             DeviousJoker,
             CraftyJoker,
+            Supernova,
+            Runner,
+            SpaceJoker,
         ]
     }
 }
