@@ -539,12 +539,12 @@ impl Joker for SupernovaJoker {
         // First determine what hand type was played
         if let Ok(made_hand) = hand.best_hand() {
             let hand_rank = made_hand.rank;
-            
+
             // Get the count for this hand type from the centralized tracking
             // Note: This will be the count AFTER the current hand is played
             // since the game increments the count before calling joker effects
             let count = context.get_hand_type_count(hand_rank);
-            
+
             // Return mult equal to the count
             JokerEffect::new().with_mult(count as i32)
         } else {
@@ -580,25 +580,28 @@ impl Joker for RunnerJoker {
 
     fn on_hand_played(&self, context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
         // Check if hand contains a straight (any type)
-        let is_straight = hand.is_straight().is_some() || 
-                         hand.is_straight_flush().is_some() || 
-                         hand.is_royal_flush().is_some();
-        
+        let is_straight = hand.is_straight().is_some()
+            || hand.is_straight_flush().is_some()
+            || hand.is_royal_flush().is_some();
+
         // Get current accumulated chips
-        let current_accumulated = context.joker_state_manager
+        let current_accumulated = context
+            .joker_state_manager
             .get_state(self.id())
             .map(|state| state.accumulated_value as i32)
             .unwrap_or(0);
-        
+
         // If it's a straight, accumulate +15 chips BEFORE giving the bonus
         let new_accumulated = if is_straight {
             let new_value = current_accumulated + 15;
-            context.joker_state_manager.add_accumulated_value(self.id(), 15.0);
+            context
+                .joker_state_manager
+                .add_accumulated_value(self.id(), 15.0);
             new_value
         } else {
             current_accumulated
         };
-        
+
         // Always give the accumulated bonus regardless of hand type
         JokerEffect::new().with_chips(new_accumulated)
     }

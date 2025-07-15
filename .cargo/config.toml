@@ -1,0 +1,4 @@
+[env]
+# Use default python3 for better cross-environment compatibility
+# Falls back to system default Python 3.x version
+PYO3_PYTHON = "python3"
