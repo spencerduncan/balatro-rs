@@ -450,23 +450,7 @@ impl StaticJokerFactory {
         )
     }
 
-    /// Create Runner (+15 Chips if hand contains Straight)
-    pub fn create_runner() -> Box<dyn Joker> {
-        Box::new(
-            StaticJoker::builder(
-                JokerId::Runner,
-                "Runner",
-                "+15 Chips if played hand contains a Straight",
-            )
-            .rarity(JokerRarity::Common)
-            .cost(3)
-            .chips(15)
-            .condition(StaticCondition::HandType(HandRank::Straight))
-            .per_hand()
-            .build()
-            .expect("Valid joker configuration"),
-        )
-    }
+    // Note: Runner is implemented as RunnerJoker in joker_impl.rs, not as a static joker
 
     // TODO: Implement these jokers when framework supports the required conditions
 
