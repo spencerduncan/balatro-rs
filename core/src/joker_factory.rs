@@ -29,7 +29,7 @@ impl JokerFactory {
             JokerId::BusinessCard => Some(Box::new(BusinessCard)),
             JokerId::EggJoker => Some(Box::new(Egg)),
             JokerId::Burglar => Some(Box::new(Burglar)),
-            
+
             // Hand type conditional jokers from main branch
             JokerId::Supernova => Some(Box::new(SupernovaJoker)),
             JokerId::SpaceJoker => Some(Box::new(SpaceJoker)),
@@ -91,13 +91,9 @@ impl JokerFactory {
             ],
             JokerRarity::Uncommon => vec![
                 // Money-based conditional jokers
-                Burglar,
-                // Hand type conditional jokers
-                SpaceJoker,
-                // New static jokers
-                RedCard, 
-                BlueJoker, 
-                SteelJoker,
+                Burglar,    // Hand type conditional jokers
+                SpaceJoker, // New static jokers
+                RedCard, BlueJoker, SteelJoker,
             ],
             JokerRarity::Rare => vec![
                 // TODO: Add rare jokers
