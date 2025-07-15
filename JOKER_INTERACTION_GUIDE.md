@@ -198,7 +198,7 @@ Some jokers have limited uses:
 fn on_hand_played(&self, context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
     let state_manager = JokerStateManager::new();
     
-    if state_manager.decrement_triggers(&self.id()) {
+    if state_manager.use_trigger(self.id()) {
         JokerEffect::new().with_mult(50) // Big bonus but limited uses
     } else {
         JokerEffect::new()
@@ -248,7 +248,7 @@ fn on_hand_played(&self, context: &mut GameContext, hand: &SelectHand) -> JokerE
 // Pattern: Build up value over multiple rounds
 fn on_round_end(&self, context: &mut GameContext) -> JokerEffect {
     let state_manager = JokerStateManager::new();
-    state_manager.increment_accumulated(&self.id(), 2); // +2 each round
+    state_manager.add_accumulated_value(self.id(), 2.0); // +2 each round
     JokerEffect::new()
 }
 

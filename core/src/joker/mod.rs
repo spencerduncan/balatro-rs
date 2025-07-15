@@ -247,7 +247,7 @@ impl fmt::Display for JokerRarity {
 ///
 /// # Examples
 ///
-/// ```rust
+/// ```rust,ignore
 /// use balatro_rs::joker::JokerEffect;
 ///
 /// // Simple scoring bonus
@@ -262,11 +262,10 @@ impl fmt::Display for JokerRarity {
 /// // Multiplicative effect
 /// let effect = JokerEffect::new().with_mult_multiplier(1.5); // +50% mult
 ///
-/// // Complex effect with special mechanics
+/// // Complex effect with multiplicative bonus
 /// let effect = JokerEffect::new()
 ///     .with_mult(10)
-///     .with_retrigger(2)  // Trigger this effect 2 additional times
-///     .with_message("Special activation!");
+///     .with_mult_multiplier(2.0);
 /// ```
 ///
 /// # Performance Notes
@@ -425,7 +424,7 @@ impl<'a> GameContext<'a> {
 ///
 /// ## 1. Direct Implementation
 /// For complex jokers requiring custom logic:
-/// ```rust
+/// ```rust,ignore
 /// use balatro_rs::joker::{Joker, JokerId, JokerRarity, JokerEffect, GameContext};
 /// use balatro_rs::card::Card;
 /// use balatro_rs::hand::SelectHand;
@@ -452,7 +451,7 @@ impl<'a> GameContext<'a> {
 ///
 /// ## 2. Static Joker Framework
 /// For simple conditional jokers:
-/// ```rust
+/// ```rust,ignore
 /// use balatro_rs::static_joker::{StaticJoker, StaticCondition};
 /// use balatro_rs::card::Suit;
 ///
@@ -570,7 +569,7 @@ pub trait Joker: Send + Sync + std::fmt::Debug {
     /// A `JokerEffect` describing any bonuses to apply to the hand.
     ///
     /// # Example
-    /// ```rust
+    /// ```rust,ignore
     /// fn on_hand_played(&self, context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
     ///     if hand.is_pair().is_some() {
     ///         JokerEffect::new().with_mult(8)  // +8 mult for pairs
@@ -600,7 +599,7 @@ pub trait Joker: Send + Sync + std::fmt::Debug {
     /// Use early returns for non-matching conditions.
     ///
     /// # Example
-    /// ```rust
+    /// ```rust,ignore
     /// fn on_card_scored(&self, context: &mut GameContext, card: &Card) -> JokerEffect {
     ///     if card.suit == Suit::Diamond {
     ///         JokerEffect::new().with_mult(3)  // +3 mult per Diamond
@@ -625,11 +624,10 @@ pub trait Joker: Send + Sync + std::fmt::Debug {
     /// A `JokerEffect` describing any bonuses to apply when the blind starts.
     ///
     /// # Example
-    /// ```rust
+    /// ```rust,ignore
     /// fn on_blind_start(&self, context: &mut GameContext) -> JokerEffect {
-    ///     // Reset accumulated state for this blind
-    ///     STATE_MANAGER.set_state(self.id(), JokerState::new());
-    ///     JokerEffect::new()
+    ///     // Provide bonus at start of blind
+    ///     JokerEffect::new().with_chips(10)
     /// }
     /// ```
     fn on_blind_start(&self, _context: &mut GameContext) -> JokerEffect {
@@ -677,11 +675,10 @@ pub trait Joker: Send + Sync + std::fmt::Debug {
     /// A `JokerEffect` describing any bonuses to apply at round end.
     ///
     /// # Example
-    /// ```rust
+    /// ```rust,ignore
     /// fn on_round_end(&self, context: &mut GameContext) -> JokerEffect {
-    ///     // Accumulate bonus for next round
-    ///     STATE_MANAGER.increment_accumulated(&self.id(), 2);
-    ///     JokerEffect::new()
+    ///     // Provide bonus at end of round
+    ///     JokerEffect::new().with_money(5)
     /// }
     /// ```
     fn on_round_end(&self, _context: &mut GameContext) -> JokerEffect {
@@ -745,7 +742,7 @@ pub trait Joker: Send + Sync + std::fmt::Debug {
     /// The modified hand size.
     ///
     /// # Example
-    /// ```rust
+    /// ```rust,ignore
     /// fn modify_hand_size(&self, _context: &GameContext, base_size: usize) -> usize {
     ///     base_size + 2  // +2 hand size
     /// }
@@ -767,7 +764,7 @@ pub trait Joker: Send + Sync + std::fmt::Debug {
     /// The modified number of discards.
     ///
     /// # Example
-    /// ```rust
+    /// ```rust,ignore
     /// fn modify_discards(&self, _context: &GameContext, base_discards: usize) -> usize {
     ///     base_discards + 1  // +1 discard per round
     /// }

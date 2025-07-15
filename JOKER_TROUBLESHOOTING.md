@@ -190,10 +190,12 @@ fn on_card_scored(&self, context: &mut GameContext, card: &Card) -> JokerEffect 
 
 2. **Verify state initialization**:
 ```rust
-// Ensure state exists before trying to use it
+// Check if state exists before trying to use it
 fn on_blind_start(&self, context: &mut GameContext) -> JokerEffect {
-    STATE_MANAGER.ensure_state(self.id());
-    // Now state operations will work
+    let state_manager = JokerStateManager::new();
+    if state_manager.has_state(self.id()) {
+        // State exists, operations will work
+    }
     JokerEffect::new()
 }
 ```

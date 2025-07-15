@@ -60,10 +60,6 @@ impl JokerEffect {
     pub fn with_mult(self, mult: i32) -> Self;
     pub fn with_money(self, money: i32) -> Self;
     pub fn with_mult_multiplier(self, multiplier: f32) -> Self;
-    
-    // Note: Builder methods for other fields (retrigger, destroy_self, 
-    // destroy_others, transform_cards, hand_size_mod, discard_mod, message)
-    // are not yet implemented. Use struct literal syntax for these fields.
 }
 ```
 
@@ -157,7 +153,7 @@ pub struct JokerFactory;
 impl JokerFactory {
     pub fn create(id: JokerId) -> Option<Box<dyn Joker>>;
     pub fn get_by_rarity(rarity: JokerRarity) -> Vec<JokerId>;
-    pub fn all_jokers() -> Vec<JokerId>;
+    pub fn get_all_implemented() -> Vec<JokerId>;
 }
 ```
 
@@ -258,7 +254,6 @@ impl JokerStateManager {
     // Helper methods
     pub fn add_accumulated_value(&self, joker_id: JokerId, value: f64);
     pub fn use_trigger(&self, joker_id: JokerId) -> bool;
-    // Note: reset_triggers method is not implemented
 }
 ```
 
