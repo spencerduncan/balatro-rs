@@ -7,7 +7,7 @@ use crate::deck::Deck;
 use crate::effect::{EffectRegistry, Effects};
 use crate::error::GameError;
 use crate::hand::{MadeHand, SelectHand};
-use crate::joker::{JokerId, Jokers, OldJoker as Joker};
+use crate::joker::{GameContext, Joker, JokerId, Jokers, OldJoker as OldJokerTrait};
 use crate::joker_state::JokerStateManager;
 use crate::rank::HandRank;
 use crate::shop::Shop;
@@ -17,7 +17,7 @@ use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Game {
     pub config: Config,
     pub shop: Shop,
@@ -32,8 +32,9 @@ pub struct Game {
     pub action_history: Vec<Action>,
     pub round: usize,
 
-    // jokers and their effects
-    pub jokers: Vec<Jokers>,
+    // jokers and their effects (both old and new systems)
+    pub jokers: Vec<Box<dyn Joker>>,
+    pub old_jokers: Vec<Jokers>,
     pub effect_registry: EffectRegistry,
     pub joker_state_manager: Arc<JokerStateManager>,
 
@@ -62,6 +63,7 @@ impl Game {
             discarded: Vec::new(),
             action_history: Vec::new(),
             jokers: Vec::new(),
+            old_jokers: Vec::new(),
             effect_registry: EffectRegistry::new(),
             joker_state_manager: Arc::new(JokerStateManager::new()),
             blind: None,
@@ -88,6 +90,42 @@ impl Game {
         self.deal();
     }
 
+    /// Start a new blind and trigger joker lifecycle events
+    pub fn start_blind(&mut self) {
+        use crate::hand::Hand;
+
+        // Set stage to blind
+        self.stage = Stage::Blind(Blind::Small);
+        self.blind = Some(Blind::Small);
+
+        // Trigger on_blind_start for all jokers
+        for joker in &self.jokers {
+            let temp_hand = Hand::new(self.available.cards());
+            let mut context = GameContext {
+                chips: self.chips as i32,
+                mult: self.mult as i32,
+                money: self.money as i32,
+                ante: self.ante_current as u8,
+                round: self.round as u32,
+                stage: &self.stage,
+                hands_played: 0,
+                discards_used: 0,
+                jokers: &self.jokers,
+                hand: &temp_hand,
+                discarded: &self.discarded,
+                joker_state_manager: &self.joker_state_manager,
+                hand_type_counts: &self.hand_type_counts,
+            };
+
+            let effect = joker.on_blind_start(&mut context);
+
+            // Apply effects immediately
+            self.chips += effect.chips as usize;
+            self.mult += effect.mult as usize;
+            self.money += effect.money as usize;
+        }
+    }
+
     pub fn result(&self) -> Option<End> {
         match self.stage {
             Stage::End(end) => Some(end),
@@ -108,7 +146,7 @@ impl Game {
     /// * `Some(&Jokers)` if a joker exists at the specified slot
     /// * `None` if the slot is empty or the index is out of bounds
     pub fn get_joker_at_slot(&self, slot: usize) -> Option<&Jokers> {
-        self.jokers.get(slot)
+        self.old_jokers.get(slot)
     }
 
     /// Returns the total number of jokers currently owned by the player.
@@ -116,7 +154,7 @@ impl Game {
     /// # Returns
     /// The count of jokers in the player's collection
     pub fn joker_count(&self) -> usize {
-        self.jokers.len()
+        self.old_jokers.len()
     }
 
     /// Returns the number of times a specific hand type has been played this game run.
@@ -213,7 +251,7 @@ impl Game {
         Ok(())
     }
 
-    pub(crate) fn calc_score(&mut self, hand: MadeHand) -> usize {
+    pub fn calc_score(&mut self, hand: MadeHand) -> usize {
         // compute chips and mult from hand level
         self.chips += hand.rank.level().chips;
         self.mult += hand.rank.level().mult;
@@ -222,11 +260,20 @@ impl Game {
         let card_chips: usize = hand.hand.cards().iter().map(|c| c.chips()).sum();
         self.chips += card_chips;
 
-        // Apply effects that modify game.chips and game.mult
+        // Apply effects from old system (backwards compatibility)
         for e in self.effect_registry.on_score.clone() {
             if let Effects::OnScore(f) = e {
                 f.lock().unwrap()(self, hand.clone())
             }
+        }
+
+        // Apply JokerEffect from new joker system
+        if !self.jokers.is_empty() {
+            let (joker_chips, joker_mult, joker_money, _messages) =
+                self.process_joker_effects(&hand);
+            self.chips += joker_chips as usize;
+            self.mult += joker_mult as usize;
+            self.money += joker_money as usize;
         }
 
         // compute score
@@ -236,6 +283,80 @@ impl Game {
         self.mult = self.config.base_mult;
         self.chips = self.config.base_chips;
         score
+    }
+
+    /// Process JokerEffect from all jokers and return accumulated effects
+    fn process_joker_effects(&mut self, hand: &MadeHand) -> (i32, i32, i32, Vec<String>) {
+        use crate::hand::Hand;
+
+        let mut total_chips = 0i32;
+        let mut total_mult = 0i32;
+        let mut total_money = 0i32;
+        let mut messages = Vec::new();
+        let mut total_mult_multiplier = 1.0f32;
+
+        // Create game context
+        let mut context = GameContext {
+            chips: self.chips as i32,
+            mult: self.mult as i32,
+            money: self.money as i32,
+            ante: self.ante_current as u8,
+            round: self.round as u32,
+            stage: &self.stage,
+            hands_played: 0,  // TODO: track this properly
+            discards_used: 0, // TODO: track this properly
+            jokers: &self.jokers,
+            hand: &Hand::new(hand.hand.cards().to_vec()),
+            discarded: &self.discarded,
+            joker_state_manager: &self.joker_state_manager,
+            hand_type_counts: &self.hand_type_counts,
+        };
+
+        // Process hand-level effects first
+        for joker in &self.jokers {
+            let select_hand = SelectHand::new(hand.hand.cards().to_vec());
+            let effect = joker.on_hand_played(&mut context, &select_hand);
+
+            total_chips += effect.chips;
+            total_mult += effect.mult;
+            total_money += effect.money;
+
+            // Handle mult_multiplier: 0.0 means no multiplier, so treat as 1.0
+            if effect.mult_multiplier != 0.0 {
+                total_mult_multiplier *= effect.mult_multiplier;
+            }
+
+            if let Some(msg) = effect.message {
+                messages.push(msg);
+            }
+        }
+
+        // Process card-level effects
+        for card in hand.hand.cards() {
+            for joker in &self.jokers {
+                let effect = joker.on_card_scored(&mut context, &card);
+
+                total_chips += effect.chips;
+                total_mult += effect.mult;
+                total_money += effect.money;
+
+                // Handle mult_multiplier: 0.0 means no multiplier, so treat as 1.0
+                if effect.mult_multiplier != 0.0 {
+                    total_mult_multiplier *= effect.mult_multiplier;
+                }
+
+                if let Some(msg) = effect.message {
+                    messages.push(msg);
+                }
+            }
+        }
+
+        // Apply mult multiplier to the total mult bonus (not base mult)
+        if total_mult_multiplier != 1.0 {
+            total_mult = (total_mult as f32 * total_mult_multiplier) as i32;
+        }
+
+        (total_chips, total_mult, total_money, messages)
     }
 
     pub fn required_score(&self) -> usize {
@@ -273,7 +394,7 @@ impl Game {
         if self.stage != Stage::Shop() {
             return Err(GameError::InvalidStage);
         }
-        if self.jokers.len() >= self.config.joker_slots {
+        if self.old_jokers.len() >= self.config.joker_slots {
             return Err(GameError::NoAvailableSlot);
         }
         if joker.cost() > self.money {
@@ -281,9 +402,9 @@ impl Game {
         }
         self.shop.buy_joker(&joker)?;
         self.money -= joker.cost();
-        self.jokers.push(joker);
+        self.old_jokers.push(joker);
         self.effect_registry
-            .register_jokers(self.jokers.clone(), &self.clone());
+            .register_jokers(self.old_jokers.clone(), &Game::default());
         Ok(())
     }
 
@@ -325,7 +446,7 @@ impl Game {
         }
 
         // Check if we've reached the joker limit
-        if self.jokers.len() >= self.config.joker_slots {
+        if self.old_jokers.len() >= self.config.joker_slots {
             return Err(GameError::NoAvailableSlot);
         }
 
@@ -355,19 +476,19 @@ impl Game {
         self.money -= joker.cost();
 
         // Insert joker at specified slot, expanding vector if necessary
-        if slot >= self.jokers.len() {
+        if slot >= self.old_jokers.len() {
             // Resize vector to accommodate the slot, filling gaps with default joker
             use crate::joker::compat::TheJoker;
             let default_joker = Jokers::TheJoker(TheJoker {});
-            self.jokers.resize(slot, default_joker);
-            self.jokers.push(joker.clone());
+            self.old_jokers.resize(slot, default_joker);
+            self.old_jokers.push(joker.clone());
         } else {
-            self.jokers.insert(slot, joker.clone());
+            self.old_jokers.insert(slot, joker.clone());
         }
 
         // Update effect registry
         self.effect_registry
-            .register_jokers(self.jokers.clone(), &self.clone());
+            .register_jokers(self.old_jokers.clone(), &Game::default());
 
         Ok(())
     }
@@ -496,7 +617,7 @@ impl fmt::Display for Game {
         writeln!(f, "selected length: {}", self.available.selected().len())?;
         writeln!(f, "discard length: {}", self.discarded.len())?;
         writeln!(f, "jokers: ")?;
-        for j in self.jokers.clone() {
+        for j in self.old_jokers.clone() {
             writeln!(f, "{j}")?
         }
         writeln!(f, "action history length: {}", self.action_history.len())?;
@@ -514,6 +635,43 @@ impl fmt::Display for Game {
 impl Default for Game {
     fn default() -> Self {
         Self::new(Config::default())
+    }
+}
+
+impl Clone for Game {
+    fn clone(&self) -> Self {
+        Self {
+            config: self.config.clone(),
+            shop: self.shop.clone(),
+            deck: self.deck.clone(),
+            available: self.available.clone(),
+            discarded: self.discarded.clone(),
+            blind: self.blind,
+            stage: self.stage,
+            ante_start: self.ante_start,
+            ante_end: self.ante_end,
+            ante_current: self.ante_current,
+            action_history: self.action_history.clone(),
+            round: self.round,
+
+            // Clone the old jokers system (works fine)
+            old_jokers: self.old_jokers.clone(),
+            effect_registry: self.effect_registry.clone(),
+
+            // For new jokers, create empty vec since Box<dyn Joker> can't be cloned
+            // This is a limitation we'll need to address later
+            jokers: Vec::new(),
+
+            joker_state_manager: self.joker_state_manager.clone(),
+            plays: self.plays,
+            discards: self.discards,
+            reward: self.reward,
+            money: self.money,
+            chips: self.chips,
+            mult: self.mult,
+            score: self.score,
+            hand_type_counts: self.hand_type_counts.clone(),
+        }
     }
 }
 
@@ -697,7 +855,7 @@ mod tests {
         let j1 = g.shop.joker_from_index(0).expect("is joker");
         g.buy_joker(j1.clone()).expect("buy joker");
         assert_eq!(g.money, 10 - j1.cost());
-        assert_eq!(g.jokers.len(), 1);
+        assert_eq!(g.old_jokers.len(), 1);
     }
 
     #[test]

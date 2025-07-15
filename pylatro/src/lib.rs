@@ -119,7 +119,7 @@ impl GameState {
     }
     #[getter]
     fn jokers(&self) -> Vec<Jokers> {
-        self.game.jokers.clone()
+        self.game.old_jokers.clone()
     }
     #[getter]
     fn money(&self) -> usize {

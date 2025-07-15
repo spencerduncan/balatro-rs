@@ -123,7 +123,7 @@ impl SelectHand {
     // TwoPair
     // OnePair
     // HighCard
-    pub(crate) fn best_hand(&self) -> Result<MadeHand, PlayHandError> {
+    pub fn best_hand(&self) -> Result<MadeHand, PlayHandError> {
         if self.len() == 0 {
             return Err(PlayHandError::NoCards);
         }
