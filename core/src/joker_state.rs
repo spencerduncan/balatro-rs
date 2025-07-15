@@ -641,7 +641,7 @@ impl JokerStateManager {
     /// * `joker_id` - The joker ID to ensure state exists for
     pub fn ensure_state_exists(&self, joker_id: JokerId) {
         let mut states = self.states.write().unwrap();
-        states.entry(joker_id).or_insert_with(|| JokerState::new());
+        states.entry(joker_id).or_insert_with(JokerState::new);
     }
 }
 
