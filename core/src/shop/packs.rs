@@ -25,6 +25,8 @@ pub enum PackType {
     MegaArcana,
     /// Mega Celestial pack with 4-6 Planet cards (choose 1)
     MegaCelestial,
+    /// Mega Spectral pack with 4-6 Spectral cards (choose 1)
+    MegaSpectral,
 }
 
 impl PackType {
@@ -39,6 +41,7 @@ impl PackType {
             PackType::MegaBuffoon => 8,
             PackType::MegaArcana => 8,
             PackType::MegaCelestial => 8,
+            PackType::MegaSpectral => 8,
         }
     }
 
@@ -53,6 +56,7 @@ impl PackType {
             PackType::MegaBuffoon => (4, 4),   // Exactly 4 options
             PackType::MegaArcana => (4, 6),    // 4-6 options
             PackType::MegaCelestial => (4, 6), // 4-6 options
+            PackType::MegaSpectral => (4, 6),  // 4-6 options
         }
     }
 
@@ -78,6 +82,7 @@ impl std::fmt::Display for PackType {
             PackType::MegaBuffoon => write!(f, "Mega Buffoon Pack"),
             PackType::MegaArcana => write!(f, "Mega Arcana Pack"),
             PackType::MegaCelestial => write!(f, "Mega Celestial Pack"),
+            PackType::MegaSpectral => write!(f, "Mega Spectral Pack"),
         }
     }
 }
@@ -129,13 +134,14 @@ impl Pack {
 
     /// Generate pack contents based on pack type and game state
     pub fn generate_contents(&mut self, game: &Game) -> Result<(), GameError> {
+        use rand::Rng;
+
         let (min_options, max_options) = self.pack_type.option_count();
         let option_count = if min_options == max_options {
             min_options
         } else {
-            // For variable option counts, use simple logic for now
-            // TODO: Implement proper randomization based on game state
-            min_options + (game.ante_current as usize % (max_options - min_options + 1))
+            // Use proper randomization for variable option counts
+            rand::thread_rng().gen_range(min_options..=max_options)
         };
 
         self.options.clear();
@@ -151,7 +157,9 @@ impl Pack {
             PackType::Celestial | PackType::MegaCelestial => {
                 self.generate_celestial_options(option_count, game)?
             }
-            PackType::Spectral => self.generate_spectral_options(option_count, game)?,
+            PackType::Spectral | PackType::MegaSpectral => {
+                self.generate_spectral_options(option_count, game)?
+            }
         }
 
         Ok(())
@@ -159,10 +167,10 @@ impl Pack {
 
     /// Generate standard pack options (playing cards)
     fn generate_standard_options(&mut self, count: usize, _game: &Game) -> Result<(), GameError> {
-        use crate::card::{Suit, Value};
+        use crate::card::{Enhancement, Suit, Value};
+        use rand::seq::SliceRandom;
+        use rand::Rng;
 
-        // Simple implementation: create basic playing cards
-        // TODO: Add enhancement logic and better card selection
         let suits = [Suit::Heart, Suit::Diamond, Suit::Club, Suit::Spade];
         let values = [
             Value::Ace,
@@ -180,13 +188,35 @@ impl Pack {
             Value::King,
         ];
 
-        for i in 0..count {
-            let suit = suits[i % suits.len()];
-            let value = values[i % values.len()];
-            let card = Card::new(value, suit);
+        let mut rng = rand::thread_rng();
+
+        for _ in 0..count {
+            // Select random suit and value
+            let suit = *suits.choose(&mut rng).unwrap();
+            let value = *values.choose(&mut rng).unwrap();
+
+            // Create card with potential enhancement (10% chance)
+            let mut card = Card::new(value, suit);
+            if rng.gen_bool(0.1) {
+                // 10% chance for enhancement
+                let enhancements = [
+                    Enhancement::Bonus,
+                    Enhancement::Mult,
+                    Enhancement::Wild,
+                    Enhancement::Glass,
+                    Enhancement::Steel,
+                ];
+                card.enhancement = Some(*enhancements.choose(&mut rng).unwrap());
+            }
+
+            let enhancement_prefix = match card.enhancement {
+                Some(enh) => format!("{enh:?} "),
+                None => String::new(),
+            };
+            
             let option = PackOption::new(
                 ShopItem::PlayingCard(card),
-                format!("{value:?} of {suit:?}"),
+                format!("{enhancement_prefix}{value:?} of {suit:?}"),
             );
             self.options.push(option);
         }
@@ -196,12 +226,69 @@ impl Pack {
 
     /// Generate buffoon pack options (jokers)
     fn generate_buffoon_options(&mut self, count: usize, _game: &Game) -> Result<(), GameError> {
-        // Simple implementation: create basic jokers
-        // TODO: Implement proper joker selection based on rarity and game state
-        for _i in 0..count {
+        use crate::joker::JokerRarity;
+        use rand::seq::SliceRandom;
+        use rand::Rng;
+
+        let mut rng = rand::thread_rng();
+
+        // Define rarity weights: 70% Common, 25% Uncommon, 5% Rare
+        let rarities = [
+            (JokerRarity::Common, 70),
+            (JokerRarity::Uncommon, 25),
+            (JokerRarity::Rare, 5),
+        ];
+
+        // Available jokers by rarity (using the jokers we know exist)
+        let common_jokers = [
+            JokerId::Joker,
+            JokerId::GreedyJoker,
+            JokerId::LustyJoker,
+            JokerId::WrathfulJoker,
+            JokerId::GluttonousJoker,
+            JokerId::JollyJoker,
+        ];
+
+        let uncommon_jokers = [
+            JokerId::ZanyJoker,
+            JokerId::MadJoker,
+            JokerId::CrazyJoker,
+            JokerId::DrollJoker,
+        ];
+
+        let rare_jokers = [
+            JokerId::SlyJoker,
+            JokerId::WilyJoker,
+            JokerId::CleverJoker,
+            JokerId::DeviousJoker,
+        ];
+
+        for _ in 0..count {
+            // Select rarity based on weighted distribution
+            let total_weight: u32 = rarities.iter().map(|(_, weight)| weight).sum();
+            let roll = rng.gen_range(1..=total_weight);
+
+            let mut current_weight = 0;
+            let selected_rarity = rarities
+                .iter()
+                .find(|(_, weight)| {
+                    current_weight += weight;
+                    roll <= current_weight
+                })
+                .map(|(rarity, _)| *rarity)
+                .unwrap_or(JokerRarity::Common);
+
+            // Select joker based on rarity
+            let joker_id = match selected_rarity {
+                JokerRarity::Common => *common_jokers.choose(&mut rng).unwrap(),
+                JokerRarity::Uncommon => *uncommon_jokers.choose(&mut rng).unwrap(),
+                JokerRarity::Rare => *rare_jokers.choose(&mut rng).unwrap(),
+                JokerRarity::Legendary => JokerId::Joker, // Fallback to basic for legendary
+            };
+
             let option = PackOption::new(
-                ShopItem::Joker(JokerId::Joker), // Using basic joker for now
-                "Basic Joker".to_string(),
+                ShopItem::Joker(joker_id),
+                format!("{joker_id:?} Joker ({selected_rarity:?})"),
             );
             self.options.push(option);
         }
@@ -211,9 +298,8 @@ impl Pack {
 
     /// Generate arcana pack options (tarot cards)
     fn generate_arcana_options(&mut self, count: usize, _game: &Game) -> Result<(), GameError> {
-        // Simple implementation: create tarot consumables
-        // TODO: Implement proper tarot card selection
-        for _i in 0..count {
+        for _ in 0..count {
+            // Use specific Tarot consumable ID
             let option = PackOption::new(
                 ShopItem::Consumable(ConsumableType::Tarot),
                 "Tarot Card".to_string(),
@@ -226,9 +312,8 @@ impl Pack {
 
     /// Generate celestial pack options (planet cards)
     fn generate_celestial_options(&mut self, count: usize, _game: &Game) -> Result<(), GameError> {
-        // Simple implementation: create planet consumables
-        // TODO: Implement proper planet card selection
-        for _i in 0..count {
+        for _ in 0..count {
+            // Use specific Planet consumable type
             let option = PackOption::new(
                 ShopItem::Consumable(ConsumableType::Planet),
                 "Planet Card".to_string(),
@@ -241,9 +326,8 @@ impl Pack {
 
     /// Generate spectral pack options (spectral cards)
     fn generate_spectral_options(&mut self, count: usize, _game: &Game) -> Result<(), GameError> {
-        // Simple implementation: create spectral consumables
-        // TODO: Implement proper spectral card selection
-        for _i in 0..count {
+        for _ in 0..count {
+            // Use specific Spectral consumable type
             let option = PackOption::new(
                 ShopItem::Consumable(ConsumableType::Spectral),
                 "Spectral Card".to_string(),
@@ -323,6 +407,7 @@ impl PackGenerator for DefaultPackGenerator {
             PackType::MegaBuffoon,
             PackType::MegaArcana,
             PackType::MegaCelestial,
+            PackType::MegaSpectral,
         ];
 
         all_pack_types
