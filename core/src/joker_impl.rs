@@ -539,23 +539,14 @@ impl Joker for SupernovaJoker {
         // First determine what hand type was played
         if let Ok(made_hand) = hand.best_hand() {
             let hand_rank = made_hand.rank;
-            let hand_type = format!("{:?}", hand_rank); // Convert HandRank to string
             
-            // Increment the count for this hand type
-            let current_count: i32 = context.joker_state_manager
-                .get_custom_data(self.id(), &hand_type)
-                .unwrap_or(Some(0))
-                .unwrap_or(0);
+            // Get the count for this hand type from the centralized tracking
+            // Note: This will be the count AFTER the current hand is played
+            // since the game increments the count before calling joker effects
+            let count = context.get_hand_type_count(hand_rank);
             
-            let new_count = current_count + 1;
-            
-            // Update the count for this hand type
-            context.joker_state_manager
-                .set_custom_data(self.id(), &hand_type, new_count)
-                .unwrap_or(());
-            
-            // Return mult equal to the new count
-            JokerEffect::new().with_mult(new_count)
+            // Return mult equal to the count
+            JokerEffect::new().with_mult(count as i32)
         } else {
             JokerEffect::new()
         }

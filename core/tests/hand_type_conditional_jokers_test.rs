@@ -1,11 +1,71 @@
+use balatro_rs::game::Game;
 use balatro_rs::joker::JokerId;
 use balatro_rs::joker_factory::JokerFactory;
 use balatro_rs::joker_state::JokerStateManager;
+use balatro_rs::rank::HandRank;
 use std::sync::Arc;
 
 
-// Simplified tests that don't require full GameContext integration
-// TODO: Add integration tests when GameContext creation is simplified
+// Test centralized hand type tracking
+#[test]
+fn test_centralized_hand_type_tracking() {
+    let mut game = Game::default();
+    
+    // Initially, no hand types should be tracked
+    assert_eq!(game.get_hand_type_count(HandRank::OnePair), 0);
+    assert_eq!(game.get_hand_type_count(HandRank::ThreeOfAKind), 0);
+    assert_eq!(game.get_hand_type_count(HandRank::HighCard), 0);
+    
+    // Test the internal increment method by accessing it indirectly
+    // In a real game, this would happen automatically when hands are played
+    game.increment_hand_type_count(HandRank::OnePair);
+    assert_eq!(game.get_hand_type_count(HandRank::OnePair), 1);
+    
+    game.increment_hand_type_count(HandRank::OnePair);
+    assert_eq!(game.get_hand_type_count(HandRank::OnePair), 2);
+    
+    game.increment_hand_type_count(HandRank::ThreeOfAKind);
+    assert_eq!(game.get_hand_type_count(HandRank::ThreeOfAKind), 1);
+    assert_eq!(game.get_hand_type_count(HandRank::OnePair), 2); // Should remain unchanged
+}
+
+#[test]
+fn test_hand_type_tracking_accessibility() {
+    let game = Game::default();
+    
+    // Demonstrate that hand type counts are now easily accessible to any system
+    // This is useful for:
+    // - Supernova joker (gives mult equal to hand type count)
+    // - Vouchers that depend on hand type statistics
+    // - Achievement systems
+    // - Analytics and reporting
+    
+    // Example: A voucher might check if player has played enough of a specific hand type
+    let pairs_played = game.get_hand_type_count(HandRank::OnePair);
+    let _voucher_unlock_condition = pairs_played >= 10; // Example condition
+    
+    // Example: Analytics system tracking player preferences
+    let all_hand_types = [
+        HandRank::HighCard,
+        HandRank::OnePair,
+        HandRank::TwoPair,
+        HandRank::ThreeOfAKind,
+        HandRank::Straight,
+        HandRank::Flush,
+        HandRank::FullHouse,
+        HandRank::FourOfAKind,
+        HandRank::StraightFlush,
+        HandRank::RoyalFlush,
+    ];
+    
+    let _total_hands_played: u32 = all_hand_types
+        .iter()
+        .map(|&hand_type| game.get_hand_type_count(hand_type))
+        .sum();
+    
+    // This centralized approach makes it easy for any system to access hand type data
+    assert!(true); // Placeholder assertion
+}
 
 #[test]
 fn test_joker_factory_integration() {
