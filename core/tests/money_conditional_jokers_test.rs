@@ -122,11 +122,21 @@ mod business_card_tests {
         let joker = BusinessCard::default();
         let mut context = create_test_context();
 
-        // Test face cards from all suits give money
+        // Test face cards from all suits have probabilistic behavior
         for suit in [Suit::Heart, Suit::Diamond, Suit::Club, Suit::Spade] {
             let jack = Card::new(Value::Jack, suit);
-            let effect = joker.on_card_scored(&mut context, &jack);
-            assert_eq!(effect.money, 2, "Jack of {:?} should give $2", suit);
+            
+            // Run multiple times to verify RNG behavior for this suit
+            let mut money_results = Vec::new();
+            for _ in 0..50 {
+                let effect = joker.on_card_scored(&mut context, &jack);
+                money_results.push(effect.money);
+            }
+
+            // Should have both 0 and 2 results for face cards (50% chance)
+            assert!(money_results.contains(&0), "Jack of {:?} should sometimes give $0", suit);
+            assert!(money_results.contains(&2), "Jack of {:?} should sometimes give $2", suit);
+            assert!(money_results.iter().all(|&x| x == 0 || x == 2), "Jack of {:?} should only give $0 or $2", suit);
         }
     }
 }
