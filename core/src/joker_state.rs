@@ -632,7 +632,7 @@ impl JokerStateManager {
 
         result
     }
-    
+
     /// Ensure a state exists for the given joker ID
     ///
     /// Creates a default state if one doesn't already exist.
@@ -641,7 +641,7 @@ impl JokerStateManager {
     /// * `joker_id` - The joker ID to ensure state exists for
     pub fn ensure_state_exists(&self, joker_id: JokerId) {
         let mut states = self.states.write().unwrap();
-        states.entry(joker_id).or_insert_with(JokerState::new);
+        states.entry(joker_id).or_default();
     }
 }
 
@@ -908,7 +908,7 @@ impl JokerPersistenceManager {
         self.state_manager
             .restore_from_snapshot(backup.states.clone());
     }
-    
+
     /// Validate state data without loading it
     ///
     /// Checks if the provided state data is structurally valid.
@@ -922,15 +922,17 @@ impl JokerPersistenceManager {
         }
         Ok(())
     }
-    
+
     /// Load states with recovery for corrupted data
     ///
     /// Attempts to load valid states and reports errors for invalid ones.
-    pub fn load_states_with_recovery(&self, states: &HashMap<JokerId, Value>) 
-        -> Result<(HashMap<JokerId, JokerState>, Vec<String>), String> {
+    pub fn load_states_with_recovery(
+        &self,
+        states: &HashMap<JokerId, Value>,
+    ) -> Result<(HashMap<JokerId, JokerState>, Vec<String>), String> {
         let mut loaded_states = HashMap::new();
         let mut errors = Vec::new();
-        
+
         for (joker_id, value) in states {
             match serde_json::from_value::<JokerState>(value.clone()) {
                 Ok(state) => {
@@ -941,22 +943,24 @@ impl JokerPersistenceManager {
                 }
             }
         }
-        
+
         Ok((loaded_states, errors))
     }
-    
+
     /// Load from JSON with handling for unknown jokers
     ///
     /// Loads save data and gracefully handles unknown joker IDs.
-    pub fn load_from_json_with_unknown_handling(&self, json: &str) 
-        -> Result<(HashMap<JokerId, JokerState>, Vec<String>), String> {
+    pub fn load_from_json_with_unknown_handling(
+        &self,
+        json: &str,
+    ) -> Result<(HashMap<JokerId, JokerState>, Vec<String>), String> {
         // Parse as a generic Value first to handle unknown joker IDs
-        let raw_data: Value = serde_json::from_str(json)
-            .map_err(|e| format!("Failed to parse JSON: {e}"))?;
-        
+        let raw_data: Value =
+            serde_json::from_str(json).map_err(|e| format!("Failed to parse JSON: {e}"))?;
+
         let mut loaded_states = HashMap::new();
         let mut warnings = Vec::new();
-        
+
         // Extract joker_states as a generic object
         if let Some(joker_states_obj) = raw_data.get("joker_states") {
             if let Some(states_map) = joker_states_obj.as_object() {
@@ -970,7 +974,9 @@ impl JokerPersistenceManager {
                                     loaded_states.insert(joker_id, state);
                                 }
                                 Err(_) => {
-                                    warnings.push(format!("Failed to parse state for joker: {joker_id_str}"));
+                                    warnings.push(format!(
+                                        "Failed to parse state for joker: {joker_id_str}"
+                                    ));
                                 }
                             }
                         }
@@ -982,7 +988,7 @@ impl JokerPersistenceManager {
                 }
             }
         }
-        
+
         Ok((loaded_states, warnings))
     }
 }
