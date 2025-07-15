@@ -21,6 +21,13 @@ use crate::rank::HandRank;
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Hand(Vec<Card>);
 
+impl Hand {
+    /// Create a new hand from a vector of cards
+    pub fn new(cards: Vec<Card>) -> Self {
+        Self(cards)
+    }
+}
+
 // MadeHand represents actual poker hand level and associated cards from a selected hand.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
