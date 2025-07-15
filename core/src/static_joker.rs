@@ -556,6 +556,7 @@ mod tests {
         let joker = StaticJoker::builder(JokerId::Joker, "Expensive", "Costs more")
             .rarity(JokerRarity::Common)
             .cost(10)
+            .mult(1) // Add minimal bonus to satisfy validation
             .build()
             .expect("Valid joker configuration");
 
@@ -567,6 +568,7 @@ mod tests {
         // Common
         let common = StaticJoker::builder(JokerId::Joker, "Common", "")
             .rarity(JokerRarity::Common)
+            .mult(1) // Add minimal bonus to satisfy validation
             .build()
             .expect("Valid joker configuration");
         assert_eq!(common.cost(), 3);
@@ -574,6 +576,7 @@ mod tests {
         // Uncommon
         let uncommon = StaticJoker::builder(JokerId::Joker, "Uncommon", "")
             .rarity(JokerRarity::Uncommon)
+            .mult(1) // Add minimal bonus to satisfy validation
             .build()
             .expect("Valid joker configuration");
         assert_eq!(uncommon.cost(), 6);
@@ -581,6 +584,7 @@ mod tests {
         // Rare
         let rare = StaticJoker::builder(JokerId::Joker, "Rare", "")
             .rarity(JokerRarity::Rare)
+            .mult(1) // Add minimal bonus to satisfy validation
             .build()
             .expect("Valid joker configuration");
         assert_eq!(rare.cost(), 8);
@@ -588,6 +592,7 @@ mod tests {
         // Legendary
         let legendary = StaticJoker::builder(JokerId::Joker, "Legendary", "")
             .rarity(JokerRarity::Legendary)
+            .mult(1) // Add minimal bonus to satisfy validation
             .build()
             .expect("Valid joker configuration");
         assert_eq!(legendary.cost(), 20);
