@@ -20,6 +20,7 @@ pub mod rank;
 pub mod shop;
 pub mod space;
 pub mod stage;
+pub mod state_version;
 pub mod static_joker;
 pub mod static_joker_factory;
 pub mod vouchers;
