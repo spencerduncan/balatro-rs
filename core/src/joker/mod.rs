@@ -4,7 +4,7 @@ use crate::joker_state::{JokerState, JokerStateManager};
 use crate::rank::HandRank;
 use crate::stage::Stage;
 #[cfg(feature = "python")]
-use pyo3::pyclass;
+use pyo3::{pyclass, pymethods};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
@@ -193,6 +193,7 @@ pub enum JokerId {
 
 /// Joker rarity levels
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[cfg_attr(feature = "python", pyclass(eq))]
 pub enum JokerRarity {
     Common,
     Uncommon,
@@ -275,6 +276,7 @@ impl fmt::Display for JokerRarity {
 /// pattern methods consume and return `self` to enable efficient method chaining
 /// without additional allocations.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "python", pyclass)]
 pub struct JokerEffect {
     /// Additional chips to add to the hand's base chips.
     ///
@@ -380,6 +382,93 @@ impl JokerEffect {
     pub fn with_message(mut self, message: String) -> Self {
         self.message = Some(message);
         self
+    }
+}
+
+#[cfg_attr(feature = "python", pymethods)]
+impl JokerEffect {
+    /// Get additional chips bonus
+    #[cfg(feature = "python")]
+    #[getter]
+    fn chips(&self) -> i32 {
+        self.chips
+    }
+
+    /// Get additional mult bonus
+    #[cfg(feature = "python")]
+    #[getter]
+    fn mult(&self) -> i32 {
+        self.mult
+    }
+
+    /// Get money awarded
+    #[cfg(feature = "python")]
+    #[getter]
+    fn money(&self) -> i32 {
+        self.money
+    }
+
+    /// Get mult multiplier
+    #[cfg(feature = "python")]
+    #[getter]
+    fn mult_multiplier(&self) -> f32 {
+        self.mult_multiplier
+    }
+
+    /// Get retrigger count
+    #[cfg(feature = "python")]
+    #[getter]
+    fn retrigger(&self) -> u32 {
+        self.retrigger
+    }
+
+    /// Get whether this joker destroys itself
+    #[cfg(feature = "python")]
+    #[getter]
+    fn destroy_self(&self) -> bool {
+        self.destroy_self
+    }
+
+    /// Get other jokers to destroy
+    #[cfg(feature = "python")]
+    #[getter]
+    fn destroy_others(&self) -> Vec<JokerId> {
+        self.destroy_others.clone()
+    }
+
+    /// Get card transformations
+    #[cfg(feature = "python")]
+    #[getter]
+    fn transform_cards(&self) -> Vec<(Card, Card)> {
+        self.transform_cards.clone()
+    }
+
+    /// Get hand size modification
+    #[cfg(feature = "python")]
+    #[getter]
+    fn hand_size_mod(&self) -> i32 {
+        self.hand_size_mod
+    }
+
+    /// Get discard modification
+    #[cfg(feature = "python")]
+    #[getter]
+    fn discard_mod(&self) -> i32 {
+        self.discard_mod
+    }
+
+    /// Get sell value increase
+    #[cfg(feature = "python")]
+    #[getter]
+    fn sell_value_increase(&self) -> i32 {
+        self.sell_value_increase
+    }
+
+    /// Get custom message
+    #[cfg(feature = "python")]
+    #[getter]
+    fn message(&self) -> Option<String> {
+        self.message.clone()
     }
 }
 
