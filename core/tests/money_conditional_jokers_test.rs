@@ -10,10 +10,8 @@ fn create_test_context() -> GameContext<'static> {
     // Use OnceLock to initialize Hand lazily in a const context
     static HAND: OnceLock<Hand> = OnceLock::new();
     let hand = HAND.get_or_init(|| {
-        // Since Hand(Vec<Card>) has private fields, we need to use unsafe or find another way
-        // For now, let's create a hand through a supported method
-        use std::mem;
-        unsafe { mem::transmute::<Vec<Card>, Hand>(Vec::new()) }
+        // Create an empty hand using the safe constructor
+        Hand::new(Vec::new())
     });
 
     GameContext {
@@ -137,11 +135,29 @@ mod egg_tests {
 
         let effect = joker.on_round_end(&mut context);
 
-        // Currently returns empty effect - would need game state integration
-        // for actual sell value increase functionality
+        // Should increase sell value by $3 and show message
+        assert_eq!(effect.sell_value_increase, 3);
+        assert_eq!(effect.message, Some("Egg gained $3 sell value".to_string()));
+
+        // Should not affect other game values
         assert_eq!(effect.money, 0);
         assert_eq!(effect.chips, 0);
         assert_eq!(effect.mult, 0);
+    }
+
+    #[test]
+    fn test_egg_sell_value() {
+        let joker = Egg::default();
+
+        // Test base sell value (cost / 2 = 3 / 2 = 1)
+        assert_eq!(joker.sell_value(0.0), 1);
+
+        // Test with accumulated bonus
+        assert_eq!(joker.sell_value(3.0), 4); // Base 1 + 3 bonus
+        assert_eq!(joker.sell_value(9.0), 10); // Base 1 + 9 bonus
+
+        // Test with fractional bonus (should truncate)
+        assert_eq!(joker.sell_value(2.7), 3); // Base 1 + 2 bonus (truncated)
     }
 
     #[test]

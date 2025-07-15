@@ -571,11 +571,15 @@ impl Joker for Egg {
         3
     }
 
+    fn sell_value(&self, accumulated_bonus: f64) -> usize {
+        // Base sell value (cost / 2) + accumulated bonus from rounds
+        (self.cost() / 2) + (accumulated_bonus as usize)
+    }
+
     fn on_round_end(&self, _context: &mut GameContext) -> JokerEffect {
-        // Note: This will need custom logic to increase sell value
-        // For now, return empty effect - actual sell value increase
-        // would need to be handled by the game state system
         JokerEffect::new()
+            .with_sell_value_increase(3)
+            .with_message("Egg gained $3 sell value".to_string())
     }
 }
 
@@ -609,7 +613,7 @@ impl Joker for Burglar {
     }
 
     fn modify_hand_size(&self, _context: &GameContext, base_size: usize) -> usize {
-        base_size + 1
+        base_size.saturating_add(1)
     }
 }
 
@@ -640,7 +644,10 @@ impl Joker for Runner {
 
     fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
         // Check for straight in any form: straight, straight flush, or royal flush
-        if hand.is_straight().is_some() || hand.is_straight_flush().is_some() || hand.is_royal_flush().is_some() {
+        if hand.is_straight().is_some()
+            || hand.is_straight_flush().is_some()
+            || hand.is_royal_flush().is_some()
+        {
             JokerEffect::new().with_chips(15)
         } else {
             JokerEffect::new()
@@ -698,7 +705,7 @@ impl Joker for SupernovaJoker {
     }
 }
 
-// Space Joker implementation - 1 in 4 chance for +1 hand level  
+// Space Joker implementation - 1 in 4 chance for +1 hand level
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct SpaceJokerImpl;
 

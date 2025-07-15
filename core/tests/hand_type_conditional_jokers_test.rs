@@ -47,7 +47,10 @@ mod space_joker_tests {
         let joker = SpaceJokerImpl::default();
         assert_eq!(joker.id(), JokerId::SpaceJoker);
         assert_eq!(joker.name(), "Space Joker");
-        assert_eq!(joker.description(), "1 in 4 chance to upgrade level of played hand");
+        assert_eq!(
+            joker.description(),
+            "1 in 4 chance to upgrade level of played hand"
+        );
         assert_eq!(joker.rarity(), JokerRarity::Uncommon);
         assert_eq!(joker.cost(), 5);
     }
@@ -60,7 +63,10 @@ mod space_joker_tests {
         let joker = joker.unwrap();
         assert_eq!(joker.id(), JokerId::SpaceJoker);
         assert_eq!(joker.name(), "Space Joker");
-        assert_eq!(joker.description(), "1 in 4 chance to upgrade level of played hand");
+        assert_eq!(
+            joker.description(),
+            "1 in 4 chance to upgrade level of played hand"
+        );
         assert_eq!(joker.rarity(), JokerRarity::Uncommon);
         assert_eq!(joker.cost(), 5);
     }
@@ -109,10 +115,10 @@ mod functional_tests {
     #[test]
     fn test_runner_hand_creation() {
         let _runner = Runner::default();
-        
+
         // Test that various types of hands can be created
         // This verifies the test setup without accessing private methods
-        
+
         // Test regular straight - verify it's a valid 5-card sequence
         let straight_cards = vec![
             Card::new(Value::Five, Suit::Heart),
@@ -122,7 +128,7 @@ mod functional_tests {
             Card::new(Value::Nine, Suit::Heart),
         ];
         let _straight_hand = SelectHand::new(straight_cards);
-        
+
         // Test straight flush - same sequence, all hearts
         let straight_flush_cards = vec![
             Card::new(Value::Five, Suit::Heart),
@@ -132,7 +138,7 @@ mod functional_tests {
             Card::new(Value::Nine, Suit::Heart),
         ];
         let _straight_flush_hand = SelectHand::new(straight_flush_cards);
-        
+
         // Test royal flush - T, J, Q, K, A all same suit
         let royal_flush_cards = vec![
             Card::new(Value::Ten, Suit::Spade),
@@ -142,7 +148,7 @@ mod functional_tests {
             Card::new(Value::Ace, Suit::Spade),
         ];
         let _royal_flush_hand = SelectHand::new(royal_flush_cards);
-        
+
         // Test non-straight hand - gaps in sequence
         let non_straight_cards = vec![
             Card::new(Value::Two, Suit::Heart),
@@ -152,7 +158,7 @@ mod functional_tests {
             Card::new(Value::Ten, Suit::Heart),
         ];
         let _non_straight_hand = SelectHand::new(non_straight_cards);
-        
+
         // The test passes if we can create these hands without panicking
         // For actual functional testing of Runner effects, we would need GameContext
         // The important thing is that Runner's logic checks for straight conditions
@@ -162,10 +168,10 @@ mod functional_tests {
     #[test]
     fn test_supernova_hand_creation() {
         let _supernova = SupernovaJoker::default();
-        
+
         // Test that various types of hands can be created for testing Supernova
         // This verifies the test setup without accessing private methods
-        
+
         // Test pair hand - two kings with other cards
         let pair_cards = vec![
             Card::new(Value::King, Suit::Heart),
@@ -175,7 +181,7 @@ mod functional_tests {
             Card::new(Value::Ten, Suit::Heart),
         ];
         let _pair_hand = SelectHand::new(pair_cards);
-        
+
         // Test full house hand - three kings and two queens
         let full_house_cards = vec![
             Card::new(Value::King, Suit::Heart),
@@ -185,7 +191,7 @@ mod functional_tests {
             Card::new(Value::Queen, Suit::Heart),
         ];
         let _full_house_hand = SelectHand::new(full_house_cards);
-        
+
         // Test high card hand - no pairs, flushes, or straights
         let high_card_cards = vec![
             Card::new(Value::King, Suit::Heart),
@@ -195,7 +201,7 @@ mod functional_tests {
             Card::new(Value::Seven, Suit::Heart),
         ];
         let _high_card_hand = SelectHand::new(high_card_cards);
-        
+
         // The test passes if we can create these hands without panicking
         // For actual functional testing of Supernova, we would need GameContext
         // The important thing is that Supernova's logic evaluates hands and maps ranks to mult
@@ -205,12 +211,12 @@ mod functional_tests {
     #[test]
     fn test_space_joker_rng_structure() {
         let space_joker = SpaceJokerImpl::default();
-        
+
         // We can't easily test the RNG directly without complex setup,
         // but we can verify the joker structure is correct
         assert_eq!(space_joker.id(), JokerId::SpaceJoker);
         assert_eq!(space_joker.rarity(), JokerRarity::Uncommon);
-        
+
         // Test that the joker can be created and has the right properties
         // The actual RNG testing would require either:
         // 1. Seeded RNG (requires refactoring to accept RNG as parameter)
@@ -225,27 +231,27 @@ mod functional_tests {
         let runner = JokerFactory::create(JokerId::Runner);
         let supernova = JokerFactory::create(JokerId::Supernova);
         let space_joker = JokerFactory::create(JokerId::SpaceJoker);
-        
+
         assert!(runner.is_some());
         assert!(supernova.is_some());
         assert!(space_joker.is_some());
-        
+
         // Test that they have the correct properties
         assert_eq!(runner.unwrap().id(), JokerId::Runner);
         assert_eq!(supernova.unwrap().id(), JokerId::Supernova);
         assert_eq!(space_joker.unwrap().id(), JokerId::SpaceJoker);
     }
 
-    #[test] 
+    #[test]
     fn test_joker_rarity_lists() {
         let common_jokers = JokerFactory::get_by_rarity(JokerRarity::Common);
         let uncommon_jokers = JokerFactory::get_by_rarity(JokerRarity::Uncommon);
-        
+
         // Test that our jokers are in the right rarity lists
         assert!(common_jokers.contains(&JokerId::Runner));
         assert!(common_jokers.contains(&JokerId::Supernova));
         assert!(uncommon_jokers.contains(&JokerId::SpaceJoker));
-        
+
         // Test that they're in the implemented list
         let all_implemented = JokerFactory::get_all_implemented();
         assert!(all_implemented.contains(&JokerId::Runner));
