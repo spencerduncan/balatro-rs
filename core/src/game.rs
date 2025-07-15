@@ -1,8 +1,10 @@
 use crate::action::{Action, MoveDirection};
 use crate::ante::Ante;
 use crate::available::Available;
+use crate::boss_blinds::BossBlindState;
 use crate::card::Card;
 use crate::config::Config;
+use crate::consumables::ConsumableId;
 use crate::deck::Deck;
 use crate::effect::{EffectRegistry, Effects};
 use crate::error::GameError;
@@ -12,12 +14,16 @@ use crate::joker_state::{JokerState, JokerStateManager};
 use crate::rank::HandRank;
 use crate::shop::Shop;
 use crate::stage::{Blind, End, Stage};
+use crate::state_version::StateVersion;
+use crate::vouchers::VoucherCollection;
 
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
 
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone)]
 pub struct Game {
     pub config: Config,
@@ -35,7 +41,14 @@ pub struct Game {
 
     // jokers and their effects
     pub jokers: Vec<Jokers>,
+
+    #[cfg_attr(feature = "serde", serde(skip, default = "EffectRegistry::new"))]
     pub effect_registry: EffectRegistry,
+
+    #[cfg_attr(
+        feature = "serde",
+        serde(skip, default = "default_joker_state_manager")
+    )]
     pub joker_state_manager: Arc<JokerStateManager>,
 
     // playing
@@ -51,6 +64,24 @@ pub struct Game {
 
     // hand type tracking for this game run
     pub hand_type_counts: HashMap<HandRank, u32>,
+
+    // Extended state for consumables, vouchers, and boss blinds
+    /// Consumable cards currently in the player's hand
+    pub consumables_in_hand: Vec<ConsumableId>,
+
+    /// Collection of owned vouchers with purchase tracking
+    pub vouchers: VoucherCollection,
+
+    /// Current boss blind state and effects
+    pub boss_blind_state: BossBlindState,
+
+    /// Version of the game state for serialization compatibility
+    pub state_version: StateVersion,
+}
+
+#[cfg(feature = "serde")]
+fn default_joker_state_manager() -> Arc<JokerStateManager> {
+    Arc::new(JokerStateManager::new())
 }
 
 impl Game {
@@ -79,6 +110,13 @@ impl Game {
             mult: config.base_mult,
             score: config.base_score,
             hand_type_counts: HashMap::new(),
+
+            // Initialize extended state fields
+            consumables_in_hand: Vec::new(),
+            vouchers: VoucherCollection::new(),
+            boss_blind_state: BossBlindState::new(),
+            state_version: StateVersion::current(),
+
             config,
         }
     }
