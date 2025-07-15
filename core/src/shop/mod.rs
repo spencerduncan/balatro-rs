@@ -11,33 +11,207 @@ mod legacy;
 
 /// Enhanced shop trait for generating shop contents with weighted randomization
 /// and support for various item types including jokers, consumables, vouchers, and packs.
+///
+/// This trait defines the core functionality for an advanced shop system that can:
+/// - Generate shops with multiple item types using weighted probabilities
+/// - Create booster packs with appropriate contents
+/// - Handle reroll mechanics with cost considerations
+/// - Adapt generation based on game state (ante, money, existing jokers, etc.)
+///
+/// # Design Philosophy
+///
+/// The shop generator follows a data-driven approach where game state influences
+/// the probability weights for different item types. This allows for:
+/// - Dynamic difficulty scaling based on ante progression
+/// - Adaptive item generation based on player resources
+/// - Extensible voucher effects that modify shop generation
+///
+/// # Implementation Example
+///
+/// ```rust,ignore
+/// use balatro_rs::shop::{ShopGenerator, EnhancedShop, ItemWeights};
+/// 
+/// struct StandardShopGenerator;
+/// 
+/// impl ShopGenerator for StandardShopGenerator {
+///     fn generate_shop(&self, game: &Game) -> EnhancedShop {
+///         let weights = self.calculate_weights(game);
+///         // Use weights to randomly select items for each slot
+///         EnhancedShop::new()
+///     }
+/// }
+/// ```
 pub trait ShopGenerator {
-    /// Generate a complete shop based on current game state
+    /// Generate a complete shop based on current game state.
+    ///
+    /// This method should create a new shop with items appropriate for the current
+    /// game state. Factors to consider:
+    /// - Current ante (affects item rarity and costs)
+    /// - Player money (affects affordability considerations)
+    /// - Existing jokers (avoid duplicates or create synergies)
+    /// - Active vouchers (that modify shop generation)
+    ///
+    /// # Arguments
+    /// * `game` - Current game state containing all relevant context
+    ///
+    /// # Returns
+    /// A fully populated `EnhancedShop` ready for player interaction
     fn generate_shop(&self, game: &Game) -> EnhancedShop;
     
-    /// Generate a specific booster pack
+    /// Generate a specific booster pack with appropriate contents.
+    ///
+    /// Pack contents should vary based on pack type and game state:
+    /// - Standard packs: Basic playing cards
+    /// - Jumbo/Mega packs: More cards with potential enhancements
+    /// - Spectral packs: Consumable cards with powerful effects
+    ///
+    /// # Arguments
+    /// * `pack_type` - The type of pack to generate
+    /// * `game` - Current game state for contextual generation
+    ///
+    /// # Returns
+    /// A `Pack` containing appropriate items for the specified type
     fn generate_pack(&self, pack_type: PackType, game: &Game) -> Pack;
     
-    /// Calculate generation weights based on game state
+    /// Calculate generation weights based on current game state.
+    ///
+    /// Weights determine the relative probability of each item type appearing
+    /// in shop generation. This method should consider:
+    /// - Game progression (higher ante = more rare items)
+    /// - Player resources (more money = higher cost items viable)
+    /// - Existing build synergies (recommend complementary items)
+    ///
+    /// # Arguments
+    /// * `game` - Current game state to analyze
+    ///
+    /// # Returns
+    /// `ItemWeights` struct containing probability weights for each item type
     fn calculate_weights(&self, game: &Game) -> ItemWeights;
     
-    /// Reroll the shop contents
+    /// Reroll the shop contents while preserving shop state.
+    ///
+    /// This method should generate a new shop while maintaining:
+    /// - Reroll count and costs
+    /// - Any active shop modifiers
+    /// - Voucher effects on shop generation
+    ///
+    /// # Arguments
+    /// * `current_shop` - The shop being rerolled
+    /// * `game` - Current game state
+    ///
+    /// # Returns
+    /// A new `EnhancedShop` with fresh contents but preserved state
     fn reroll_shop(&self, current_shop: &EnhancedShop, game: &Game) -> EnhancedShop;
 }
 
-/// Represents all possible items that can appear in the shop
+/// Represents all possible items that can appear in the shop.
+///
+/// This enum encompasses every type of purchasable item in the enhanced shop system,
+/// providing a unified interface for shop generation, display, and purchase mechanics.
+///
+/// # Item Categories
+///
+/// - **Jokers**: Permanent modifiers that affect scoring and game mechanics
+/// - **Consumables**: Single-use cards with powerful immediate effects
+/// - **Vouchers**: Permanent upgrades that modify game rules or shop behavior
+/// - **Packs**: Containers with multiple items for batch purchasing
+/// - **Playing Cards**: Individual cards that can be added to the player's deck
+///
+/// # Design Considerations
+///
+/// Each item type has different:
+/// - **Cost structures**: Jokers use rarity-based pricing, packs have fixed costs
+/// - **Availability**: Some items may be limited by game progression
+/// - **Effects**: Items affect different aspects of the game (scoring, economy, deck composition)
 #[derive(Debug, Clone, PartialEq)]
 pub enum ShopItem {
-    /// A joker card identified by its ID
+    /// A joker card identified by its ID.
+    ///
+    /// Jokers provide ongoing effects during gameplay and are typically
+    /// the most expensive and impactful shop items.
     Joker(JokerId),
-    /// A consumable card (Tarot, Planet, Spectral)
+    
+    /// A consumable card (Tarot, Planet, Spectral).
+    ///
+    /// Consumables provide immediate effects when used and are consumed
+    /// in the process. They offer powerful but limited-use benefits.
     Consumable(ConsumableType),
-    /// A voucher that provides permanent upgrades
+    
+    /// A voucher that provides permanent upgrades.
+    ///
+    /// Vouchers modify game rules permanently, such as increasing shop
+    /// slots, reducing costs, or adding new mechanics.
     Voucher(VoucherId),
-    /// A booster pack containing multiple cards
+    
+    /// A booster pack containing multiple cards.
+    ///
+    /// Packs provide value by containing multiple items at a potentially
+    /// discounted rate compared to individual purchases.
     Pack(PackType),
-    /// A playing card that can be added to the deck
+    
+    /// A playing card that can be added to the deck.
+    ///
+    /// Individual playing cards allow precise deck customization and
+    /// can have special enhancements or properties.
     PlayingCard(Card),
+}
+
+impl ShopItem {
+    /// Get the base cost of this item in coins.
+    ///
+    /// This provides the default cost before any modifiers are applied.
+    /// Actual shop prices may differ due to vouchers, sales, or other effects.
+    pub fn base_cost(&self) -> usize {
+        match self {
+            ShopItem::Joker(joker_id) => {
+                // Would need to look up joker rarity, using placeholder for now
+                match joker_id {
+                    JokerId::Joker => 3, // Common joker base cost
+                    _ => 3, // Default for now - would implement proper rarity lookup
+                }
+            }
+            ShopItem::Consumable(consumable_type) => {
+                match consumable_type {
+                    ConsumableType::Tarot => 3,
+                    ConsumableType::Planet => 3,
+                    ConsumableType::Spectral => 4,
+                }
+            }
+            ShopItem::Voucher(_) => 10, // Standard voucher cost
+            ShopItem::Pack(pack_type) => {
+                match pack_type {
+                    PackType::Standard => 4,
+                    PackType::Jumbo => 6,
+                    PackType::Mega => 8,
+                    PackType::Spectral => 4,
+                    PackType::Enhanced => 6,
+                    PackType::Variety => 5,
+                }
+            }
+            ShopItem::PlayingCard(_) => 2, // Standard playing card cost
+        }
+    }
+    
+    /// Get a human-readable name for this item.
+    pub fn display_name(&self) -> String {
+        match self {
+            ShopItem::Joker(joker_id) => format!("{:?} Joker", joker_id),
+            ShopItem::Consumable(consumable_type) => format!("{:?} Card", consumable_type),
+            ShopItem::Voucher(voucher_id) => format!("{:?} Voucher", voucher_id),
+            ShopItem::Pack(pack_type) => format!("{:?} Pack", pack_type),
+            ShopItem::PlayingCard(card) => format!("{}", card),
+        }
+    }
+    
+    /// Check if this item type is affected by specific voucher effects.
+    pub fn is_affected_by_voucher(&self, voucher: VoucherId) -> bool {
+        match voucher {
+            VoucherId::Overstock => true, // Affects all shop items
+            VoucherId::ClearancePackage => matches!(self, ShopItem::Pack(_)),
+            VoucherId::Coupon => matches!(self, ShopItem::Joker(_)),
+            _ => false,
+        }
+    }
 }
 
 /// Types of consumable cards available in the shop
@@ -367,5 +541,113 @@ mod tests {
         assert_eq!(pack.pack_type, PackType::Standard);
         assert_eq!(pack.contents.len(), 1);
         assert_eq!(pack.cost, 4);
+    }
+
+    #[test]
+    fn test_shop_item_base_cost() {
+        let joker_item = ShopItem::Joker(JokerId::Joker);
+        let tarot_item = ShopItem::Consumable(ConsumableType::Tarot);
+        let voucher_item = ShopItem::Voucher(VoucherId::Overstock);
+        let pack_item = ShopItem::Pack(PackType::Standard);
+        let card_item = ShopItem::PlayingCard(Card::new(Value::Ace, Suit::Heart));
+        
+        assert_eq!(joker_item.base_cost(), 3);
+        assert_eq!(tarot_item.base_cost(), 3);
+        assert_eq!(voucher_item.base_cost(), 10);
+        assert_eq!(pack_item.base_cost(), 4);
+        assert_eq!(card_item.base_cost(), 2);
+    }
+
+    #[test]
+    fn test_shop_item_display_name() {
+        let joker_item = ShopItem::Joker(JokerId::Joker);
+        let tarot_item = ShopItem::Consumable(ConsumableType::Tarot);
+        let voucher_item = ShopItem::Voucher(VoucherId::Overstock);
+        
+        assert_eq!(joker_item.display_name(), "Joker Joker");
+        assert_eq!(tarot_item.display_name(), "Tarot Card");
+        assert_eq!(voucher_item.display_name(), "Overstock Voucher");
+    }
+
+    #[test]
+    fn test_shop_item_voucher_effects() {
+        let joker_item = ShopItem::Joker(JokerId::Joker);
+        let pack_item = ShopItem::Pack(PackType::Standard);
+        let card_item = ShopItem::PlayingCard(Card::new(Value::Ace, Suit::Heart));
+        
+        // Overstock affects all items
+        assert!(joker_item.is_affected_by_voucher(VoucherId::Overstock));
+        assert!(pack_item.is_affected_by_voucher(VoucherId::Overstock));
+        assert!(card_item.is_affected_by_voucher(VoucherId::Overstock));
+        
+        // ClearancePackage only affects packs
+        assert!(!joker_item.is_affected_by_voucher(VoucherId::ClearancePackage));
+        assert!(pack_item.is_affected_by_voucher(VoucherId::ClearancePackage));
+        assert!(!card_item.is_affected_by_voucher(VoucherId::ClearancePackage));
+        
+        // Coupon only affects jokers
+        assert!(joker_item.is_affected_by_voucher(VoucherId::Coupon));
+        assert!(!pack_item.is_affected_by_voucher(VoucherId::Coupon));
+        assert!(!card_item.is_affected_by_voucher(VoucherId::Coupon));
+    }
+
+    #[test]
+    fn test_pack_type_costs() {
+        assert_eq!(ShopItem::Pack(PackType::Standard).base_cost(), 4);
+        assert_eq!(ShopItem::Pack(PackType::Jumbo).base_cost(), 6);
+        assert_eq!(ShopItem::Pack(PackType::Mega).base_cost(), 8);
+        assert_eq!(ShopItem::Pack(PackType::Spectral).base_cost(), 4);
+        assert_eq!(ShopItem::Pack(PackType::Enhanced).base_cost(), 6);
+        assert_eq!(ShopItem::Pack(PackType::Variety).base_cost(), 5);
+    }
+
+    #[test]
+    fn test_consumable_type_costs() {
+        assert_eq!(ShopItem::Consumable(ConsumableType::Tarot).base_cost(), 3);
+        assert_eq!(ShopItem::Consumable(ConsumableType::Planet).base_cost(), 3);
+        assert_eq!(ShopItem::Consumable(ConsumableType::Spectral).base_cost(), 4);
+    }
+
+    #[test]
+    fn test_enhanced_shop_get_item_cost() {
+        let mut shop = EnhancedShop::new();
+        let item = ShopItem::Joker(JokerId::Joker);
+        
+        // Item not in shop
+        assert_eq!(shop.get_item_cost(&item), None);
+        
+        // Add item to shop
+        shop.slots.push(ShopSlot {
+            item: item.clone(),
+            cost: 5,
+            available: true,
+            modifiers: vec![],
+        });
+        
+        // Item in shop and available
+        assert_eq!(shop.get_item_cost(&item), Some(5));
+        
+        // Mark item as unavailable
+        shop.slots[0].available = false;
+        assert_eq!(shop.get_item_cost(&item), None);
+    }
+
+    #[test]
+    fn test_slot_modifiers() {
+        let slot = ShopSlot {
+            item: ShopItem::Joker(JokerId::Joker),
+            cost: 10,
+            available: true,
+            modifiers: vec![
+                SlotModifier::HalfPrice,
+                SlotModifier::Sale(0.2), // 20% off
+                SlotModifier::Bonus(5),
+            ],
+        };
+        
+        assert_eq!(slot.modifiers.len(), 3);
+        assert!(matches!(slot.modifiers[0], SlotModifier::HalfPrice));
+        assert!(matches!(slot.modifiers[1], SlotModifier::Sale(0.2)));
+        assert!(matches!(slot.modifiers[2], SlotModifier::Bonus(5)));
     }
 }
