@@ -659,7 +659,7 @@ impl Game {
 
         // Get the joker before removing it to clean up its state
         let joker = &self.jokers[slot];
-        let joker_id = joker.to_joker_id();
+        let joker_id = joker.id();
 
         // Remove the joker from the collection
         self.jokers.remove(slot);
@@ -688,7 +688,7 @@ impl Game {
         // Get sell value and joker ID before removing
         let joker = &self.jokers[slot];
         let sell_value = joker.cost() / 2; // Standard sell value is half the cost
-        let joker_id = joker.to_joker_id();
+        let joker_id = joker.id();
 
         // Award money for selling the joker
         self.money += sell_value;
@@ -711,11 +711,8 @@ impl Game {
         use crate::error::GameError;
 
         // Get all joker IDs currently in play
-        let current_jokers: std::collections::HashSet<_> = self
-            .jokers
-            .iter()
-            .map(|joker| joker.to_joker_id())
-            .collect();
+        let current_jokers: std::collections::HashSet<_> =
+            self.jokers.iter().map(|joker| joker.id()).collect();
 
         // Get all joker IDs with state
         let state_jokers: std::collections::HashSet<_> = self
@@ -739,11 +736,8 @@ impl Game {
     /// Clean up orphaned joker state (state for jokers no longer in play).
     pub fn cleanup_joker_state(&mut self) {
         // Get all joker IDs currently in play
-        let current_jokers: std::collections::HashSet<_> = self
-            .jokers
-            .iter()
-            .map(|joker| joker.to_joker_id())
-            .collect();
+        let current_jokers: std::collections::HashSet<_> =
+            self.jokers.iter().map(|joker| joker.id()).collect();
 
         // Get all joker IDs with state
         let state_jokers: Vec<_> = self
@@ -846,6 +840,12 @@ impl Clone for Game {
             mult: self.mult,
             score: self.score,
             hand_type_counts: self.hand_type_counts.clone(),
+
+            // Extended state fields
+            consumables_in_hand: self.consumables_in_hand.clone(),
+            vouchers: self.vouchers.clone(),
+            boss_blind_state: self.boss_blind_state.clone(),
+            state_version: self.state_version,
         }
     }
 }

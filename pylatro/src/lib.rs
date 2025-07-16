@@ -182,7 +182,7 @@ impl GameState {
     /// Get joker IDs using the new JokerId system
     #[getter]
     fn joker_ids(&self) -> Vec<JokerId> {
-        self.game.jokers.iter().map(|j| j.to_joker_id()).collect()
+        self.game.jokers.iter().map(|j| j.id()).collect()
     }
 
     /// Get number of joker slots currently in use
