@@ -1,10 +1,13 @@
 use crate::error::GameError;
 use crate::joker::{Joker, JokerId, JokerRarity};
+#[cfg(feature = "python")]
+use pyo3::{pyclass, pymethods};
 use std::collections::HashMap;
 use std::sync::{Arc, OnceLock, RwLock};
 
 /// Definition of a joker's metadata and properties
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "python", pyclass)]
 pub struct JokerDefinition {
     pub id: JokerId,
     pub name: String,
@@ -14,7 +17,8 @@ pub struct JokerDefinition {
 }
 
 /// Represents conditions that must be met to unlock a joker
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "python", pyclass(eq))]
 pub enum UnlockCondition {
     /// Reach a certain ante level
     ReachAnte(u32),
@@ -28,6 +32,44 @@ pub enum UnlockCondition {
     PlayHands(u32),
     /// Custom unlock condition with description
     Custom(String),
+}
+
+#[cfg_attr(feature = "python", pymethods)]
+impl JokerDefinition {
+    /// Get the joker ID
+    #[cfg(feature = "python")]
+    #[getter]
+    fn id(&self) -> JokerId {
+        self.id
+    }
+
+    /// Get the joker name
+    #[cfg(feature = "python")]
+    #[getter]
+    fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    /// Get the joker description
+    #[cfg(feature = "python")]
+    #[getter]
+    fn description(&self) -> String {
+        self.description.clone()
+    }
+
+    /// Get the joker rarity
+    #[cfg(feature = "python")]
+    #[getter]
+    fn rarity(&self) -> JokerRarity {
+        self.rarity
+    }
+
+    /// Get the unlock condition
+    #[cfg(feature = "python")]
+    #[getter]
+    fn unlock_condition(&self) -> Option<UnlockCondition> {
+        self.unlock_condition.clone()
+    }
 }
 
 /// Factory function type for creating joker instances

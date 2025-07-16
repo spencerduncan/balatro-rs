@@ -367,7 +367,7 @@ impl Jokers {
     }
 
     /// Convert this Jokers variant to its corresponding JokerId
-    pub(crate) fn to_joker_id(&self) -> crate::joker::JokerId {
+    pub fn to_joker_id(&self) -> crate::joker::JokerId {
         use crate::joker::JokerId;
         match self {
             Jokers::TheJoker(_) => JokerId::Joker,
