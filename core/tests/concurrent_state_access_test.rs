@@ -118,9 +118,18 @@ fn test_lock_free_state_snapshot() {
     let snapshot = game.get_state_snapshot();
 
     // Verify snapshot contains essential state
-    assert_eq!(snapshot.money, game.money.load(std::sync::atomic::Ordering::Acquire));
-    assert_eq!(snapshot.chips, game.chips.load(std::sync::atomic::Ordering::Acquire));
-    assert_eq!(snapshot.score, game.score.load(std::sync::atomic::Ordering::Acquire));
+    assert_eq!(
+        snapshot.money,
+        game.money.load(std::sync::atomic::Ordering::Acquire)
+    );
+    assert_eq!(
+        snapshot.chips,
+        game.chips.load(std::sync::atomic::Ordering::Acquire)
+    );
+    assert_eq!(
+        snapshot.score,
+        game.score.load(std::sync::atomic::Ordering::Acquire)
+    );
     assert_eq!(snapshot.stage, format!("{:?}", game.stage));
     assert_eq!(snapshot.round, game.round);
 

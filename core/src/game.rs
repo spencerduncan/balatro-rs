@@ -27,7 +27,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Game {
     pub config: Config,
     pub shop: Shop,
@@ -55,22 +55,35 @@ pub struct Game {
     pub joker_state_manager: Arc<JokerStateManager>,
 
     // playing (atomic for thread safety)
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub plays: AtomicUsize,
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub discards: AtomicUsize,
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub reward: AtomicUsize,
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub money: AtomicUsize,
 
     // for scoring (atomic for thread safety)
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub chips: AtomicUsize,
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub mult: AtomicUsize,
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub score: AtomicUsize,
 
     // hand type tracking for this game run
     pub hand_type_counts: HashMap<HandRank, u32>,
 
     // Concurrent state management for efficient access patterns
+    #[cfg_attr(
+        feature = "serde",
+        serde(skip, default = "default_concurrent_state_manager")
+    )]
     pub concurrent_state_manager: Arc<ConcurrentStateManager>,
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub action_cache_enabled: bool,
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub last_action_cache_time: Option<Instant>,
 
     // Extended state for consumables, vouchers, and boss blinds
@@ -91,6 +104,10 @@ pub struct Game {
 fn default_joker_state_manager() -> Arc<JokerStateManager> {
     Arc::new(JokerStateManager::new())
 }
+
+#[cfg(feature = "serde")]
+fn default_concurrent_state_manager() -> Arc<ConcurrentStateManager> {
+    Arc::new(ConcurrentStateManager::new())
 }
 
 impl Game {
@@ -274,7 +291,7 @@ impl Game {
             .store(self.config.base_chips, std::sync::atomic::Ordering::Release);
         self.mult
             .store(self.config.base_mult, std::sync::atomic::Ordering::Release);
-            
+
         // compute chips and mult from hand level
         self.chips.fetch_add(
             hand.rank.level().chips,
@@ -1100,13 +1117,13 @@ impl Game {
             round: self.round,
             jokers: self.jokers.clone(),
             joker_states,
-            plays: self.plays,
-            discards: self.discards,
-            reward: self.reward,
-            money: self.money,
-            chips: self.chips,
-            mult: self.mult,
-            score: self.score,
+            plays: self.plays.load(Ordering::Acquire),
+            discards: self.discards.load(Ordering::Acquire),
+            reward: self.reward.load(Ordering::Acquire),
+            money: self.money.load(Ordering::Acquire),
+            chips: self.chips.load(Ordering::Acquire),
+            mult: self.mult.load(Ordering::Acquire),
+            score: self.score.load(Ordering::Acquire),
             hand_type_counts: self.hand_type_counts.clone(),
         };
 
@@ -1138,17 +1155,24 @@ impl Game {
             action_history: saveable_state.action_history,
             round: saveable_state.round,
             jokers: saveable_state.jokers,
-            plays: saveable_state.plays,
-            discards: saveable_state.discards,
-            reward: saveable_state.reward,
-            money: saveable_state.money,
-            chips: saveable_state.chips,
-            mult: saveable_state.mult,
-            score: saveable_state.score,
+            plays: AtomicUsize::new(saveable_state.plays),
+            discards: AtomicUsize::new(saveable_state.discards),
+            reward: AtomicUsize::new(saveable_state.reward),
+            money: AtomicUsize::new(saveable_state.money),
+            chips: AtomicUsize::new(saveable_state.chips),
+            mult: AtomicUsize::new(saveable_state.mult),
+            score: AtomicUsize::new(saveable_state.score),
             hand_type_counts: saveable_state.hand_type_counts,
             // Non-serializable fields must be reconstructed
             effect_registry: EffectRegistry::new(),
             joker_state_manager: Arc::new(JokerStateManager::new()),
+            concurrent_state_manager: Arc::new(ConcurrentStateManager::new()),
+            action_cache_enabled: false,
+            last_action_cache_time: None,
+            consumables_in_hand: Vec::new(),
+            vouchers: VoucherCollection::new(),
+            boss_blind_state: BossBlindState::new(),
+            state_version: StateVersion::current(),
         };
 
         // Restore joker states to the state manager

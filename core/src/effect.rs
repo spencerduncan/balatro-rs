@@ -1,6 +1,7 @@
 use crate::game::Game;
 use crate::hand::MadeHand;
-// Removed unused joker imports
+use crate::joker::compat::Joker;
+use crate::joker::Jokers;
 use std::sync::{Arc, Mutex};
 
 // Type aliases to simplify complex types

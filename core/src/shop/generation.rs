@@ -420,7 +420,7 @@ impl ShopGenerator for WeightedGenerator {
 
     fn calculate_weights(&self, game: &Game) -> ItemWeights {
         let ante_number = self.ante_to_number(game.ante_current);
-        let money = game.money;
+        let money = game.money.load(std::sync::atomic::Ordering::Acquire);
 
         // For now, use empty voucher list since voucher system is placeholder
         // In future, would convert from game vouchers to shop vouchers
@@ -816,8 +816,8 @@ mod tests {
     #[test]
     fn test_calculate_weights_high_money_adjustment() {
         let generator = WeightedGenerator::new();
-        let mut game = Game::new(Config::default());
-        game.money = 100; // High money
+        let game = Game::new(Config::default());
+        game.money.store(100, std::sync::atomic::Ordering::Release); // High money
         let weights = generator.calculate_weights(&game);
 
         // With high money, should favor expensive items
@@ -832,7 +832,7 @@ mod tests {
         let generator = WeightedGenerator::new();
         let mut game = Game::new(Config::default());
         game.ante_current = Ante::Five; // High ante
-        game.money = 30; // Medium money to avoid money-based adjustments
+        game.money.store(30, std::sync::atomic::Ordering::Release); // Medium money to avoid money-based adjustments
         let weights = generator.calculate_weights(&game);
 
         let default_weights = ItemWeights::default();

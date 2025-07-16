@@ -30,9 +30,9 @@ fn bench_concurrent_reads(c: &mut Criterion) {
     group.bench_function("direct_field_access", |b| {
         b.iter(|| {
             for _ in 0..1000 {
-                black_box(game.money);
-                black_box(game.chips);
-                black_box(game.score);
+                black_box(game.money.load(std::sync::atomic::Ordering::Acquire));
+                black_box(game.chips.load(std::sync::atomic::Ordering::Acquire));
+                black_box(game.score.load(std::sync::atomic::Ordering::Acquire));
                 black_box(&game.stage);
             }
         })
@@ -73,13 +73,13 @@ fn bench_state_snapshots(c: &mut Criterion) {
     group.bench_function("individual_field_access", |b| {
         b.iter(|| {
             for _ in 0..100 {
-                black_box(game.money);
-                black_box(game.chips);
-                black_box(game.score);
+                black_box(game.money.load(std::sync::atomic::Ordering::Acquire));
+                black_box(game.chips.load(std::sync::atomic::Ordering::Acquire));
+                black_box(game.score.load(std::sync::atomic::Ordering::Acquire));
                 black_box(format!("{:?}", game.stage));
                 black_box(game.round);
-                black_box(game.plays);
-                black_box(game.discards);
+                black_box(game.plays.load(std::sync::atomic::Ordering::Acquire));
+                black_box(game.discards.load(std::sync::atomic::Ordering::Acquire));
             }
         })
     });
@@ -126,11 +126,15 @@ fn bench_batch_updates(c: &mut Criterion) {
     // Benchmark individual updates
     group.bench_function("individual_updates", |b| {
         b.iter(|| {
-            let mut game = Game::new(Config::default());
-            game.money = black_box(100);
-            game.chips = black_box(50);
-            game.mult = black_box(2);
-            game.score = black_box(1000);
+            let game = Game::new(Config::default());
+            game.money
+                .store(black_box(100), std::sync::atomic::Ordering::Release);
+            game.chips
+                .store(black_box(50), std::sync::atomic::Ordering::Release);
+            game.mult
+                .store(black_box(2), std::sync::atomic::Ordering::Release);
+            game.score
+                .store(black_box(1000), std::sync::atomic::Ordering::Release);
         })
     });
 
@@ -198,8 +202,13 @@ fn bench_memory_patterns(c: &mut Criterion) {
     group.bench_function("allocation_heavy", |b| {
         b.iter(|| {
             for _ in 0..1000 {
-                // Simulate cloning entire game state
-                let _cloned_game = black_box(game.clone());
+                // Simulate allocation-heavy approach by creating multiple allocations
+                let _allocated_data = black_box(vec![
+                    game.money.load(std::sync::atomic::Ordering::Acquire),
+                    game.chips.load(std::sync::atomic::Ordering::Acquire),
+                    game.score.load(std::sync::atomic::Ordering::Acquire),
+                    game.round,
+                ]);
             }
         })
     });

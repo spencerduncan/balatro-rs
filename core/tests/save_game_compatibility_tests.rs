@@ -139,7 +139,7 @@ mod save_load_integration_tests {
     fn test_full_game_save_load_roundtrip() {
         // Create a game with some state
         let mut game = Game::new(Config::default());
-        game.money = 500;
+        game.money.store(500, std::sync::atomic::Ordering::Release);
         game.ante_current = Ante::Three;
         game.round = 5;
 
@@ -155,7 +155,7 @@ mod save_load_integration_tests {
         let loaded_game = Game::load_state_from_json(&saved_json).expect("Load should succeed");
 
         // Verify state preservation
-        assert_eq!(loaded_game.money, 500);
+        assert_eq!(loaded_game.money.load(std::sync::atomic::Ordering::Acquire), 500);
         assert_eq!(loaded_game.ante_current, Ante::Three);
         assert_eq!(loaded_game.round, 5);
 
@@ -218,7 +218,7 @@ mod save_format_versioning_tests {
     fn test_version_migration_from_v1() {
         // Create a proper game first to get a valid save format, then modify it to simulate v1
         let mut game = Game::new(Config::default());
-        game.money = 100;
+        game.money.store(100, std::sync::atomic::Ordering::Release);
         let full_save = game.save_state_to_json().unwrap();
 
         // Parse and modify to simulate v1 format
@@ -243,7 +243,7 @@ mod save_format_versioning_tests {
         assert!(result.is_ok());
 
         let loaded_game = result.unwrap();
-        assert_eq!(loaded_game.money, 100);
+        assert_eq!(loaded_game.money.load(std::sync::atomic::Ordering::Acquire), 100);
         // Verify migration worked correctly
     }
 
@@ -283,7 +283,7 @@ mod save_format_versioning_tests {
     #[test]
     fn test_save_format_validation() {
         let mut game = Game::new(Config::default());
-        game.money = 150;
+        game.money.store(150, std::sync::atomic::Ordering::Release);
 
         let saved_json = game.save_state_to_json().expect("Save should succeed");
 
