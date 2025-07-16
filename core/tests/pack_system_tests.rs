@@ -1,6 +1,7 @@
 use balatro_rs::action::Action;
 use balatro_rs::game::Game;
 use balatro_rs::shop::packs::{Pack, PackType};
+use balatro_rs::vouchers::VoucherId;
 
 /// Test helper to create a game in shop stage with sufficient money
 fn create_shop_game() -> Game {
@@ -447,8 +448,8 @@ fn test_grab_bag_voucher_adds_option() {
 
     let mut game = create_shop_game();
 
-    // TODO: Add Grab Bag voucher to player inventory
-    // game.vouchers.add(VoucherId::GrabBag);
+    // Add Grab Bag voucher to player inventory
+    game.vouchers.add(VoucherId::GrabBag);
 
     // Buy a pack
     let buy_action = Action::BuyPack {
@@ -463,7 +464,10 @@ fn test_grab_bag_voucher_adds_option() {
     assert!(result.is_ok(), "Should be able to open pack");
 
     // With Grab Bag voucher, pack should have +1 option
-    // TODO: Implement when voucher integration is complete
-    // let open_pack = game.open_pack.as_ref().expect("Pack should be opened");
-    // assert_eq!(open_pack.pack.options.len(), 4, "Standard pack with Grab Bag should have 4 options");
+    let open_pack = game.open_pack.as_ref().expect("Pack should be opened");
+    assert_eq!(
+        open_pack.pack.options.len(),
+        4,
+        "Standard pack with Grab Bag should have 4 options"
+    );
 }

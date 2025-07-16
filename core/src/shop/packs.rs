@@ -1,4 +1,5 @@
 use crate::card::Card;
+use crate::consumables::ConsumableId;
 use crate::error::GameError;
 use crate::game::Game;
 use crate::joker::JokerId;
@@ -137,12 +138,17 @@ impl Pack {
         use rand::Rng;
 
         let (min_options, max_options) = self.pack_type.option_count();
-        let option_count = if min_options == max_options {
+        let mut option_count = if min_options == max_options {
             min_options
         } else {
             // Use proper randomization for variable option counts
             rand::thread_rng().gen_range(min_options..=max_options)
         };
+
+        // Check for Grab Bag voucher - adds +1 option to all packs
+        if game.vouchers.owns(crate::vouchers::VoucherId::GrabBag) {
+            option_count += 1;
+        }
 
         self.options.clear();
 
@@ -213,7 +219,7 @@ impl Pack {
                 Some(enh) => format!("{enh:?} "),
                 None => String::new(),
             };
-            
+
             let option = PackOption::new(
                 ShopItem::PlayingCard(card),
                 format!("{enhancement_prefix}{value:?} of {suit:?}"),
@@ -298,11 +304,20 @@ impl Pack {
 
     /// Generate arcana pack options (tarot cards)
     fn generate_arcana_options(&mut self, count: usize, _game: &Game) -> Result<(), GameError> {
+        use rand::seq::SliceRandom;
+
+        let tarot_cards = ConsumableId::tarot_cards();
+        let mut rng = rand::thread_rng();
+
         for _ in 0..count {
-            // Use specific Tarot consumable ID
+            // Randomly select a specific tarot card for preview info
+            let selected_tarot = tarot_cards
+                .choose(&mut rng)
+                .unwrap_or(&ConsumableId::TheFool);
+
             let option = PackOption::new(
                 ShopItem::Consumable(ConsumableType::Tarot),
-                "Tarot Card".to_string(),
+                format!("{selected_tarot}"), // Use the specific card name
             );
             self.options.push(option);
         }
@@ -312,11 +327,20 @@ impl Pack {
 
     /// Generate celestial pack options (planet cards)
     fn generate_celestial_options(&mut self, count: usize, _game: &Game) -> Result<(), GameError> {
+        use rand::seq::SliceRandom;
+
+        let planet_cards = ConsumableId::planet_cards();
+        let mut rng = rand::thread_rng();
+
         for _ in 0..count {
-            // Use specific Planet consumable type
+            // Randomly select a specific planet card for preview info
+            let selected_planet = planet_cards
+                .choose(&mut rng)
+                .unwrap_or(&ConsumableId::Mercury);
+
             let option = PackOption::new(
                 ShopItem::Consumable(ConsumableType::Planet),
-                "Planet Card".to_string(),
+                format!("{selected_planet}"), // Use the specific card name
             );
             self.options.push(option);
         }
@@ -326,11 +350,20 @@ impl Pack {
 
     /// Generate spectral pack options (spectral cards)
     fn generate_spectral_options(&mut self, count: usize, _game: &Game) -> Result<(), GameError> {
+        use rand::seq::SliceRandom;
+
+        let spectral_cards = ConsumableId::spectral_cards();
+        let mut rng = rand::thread_rng();
+
         for _ in 0..count {
-            // Use specific Spectral consumable type
+            // Randomly select a specific spectral card for preview info
+            let selected_spectral = spectral_cards
+                .choose(&mut rng)
+                .unwrap_or(&ConsumableId::Familiar);
+
             let option = PackOption::new(
                 ShopItem::Consumable(ConsumableType::Spectral),
-                "Spectral Card".to_string(),
+                format!("{selected_spectral}"), // Use the specific card name
             );
             self.options.push(option);
         }

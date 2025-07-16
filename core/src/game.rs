@@ -531,9 +531,36 @@ impl Game {
                 self.jokers.push(joker);
                 Ok(())
             }
-            ShopItem::Consumable(_consumable_type) => {
-                // Add consumable to hand (simplified)
-                // TODO: Implement proper consumable handling
+            ShopItem::Consumable(consumable_type) => {
+                use rand::seq::SliceRandom;
+
+                // Select a random consumable of the appropriate type
+                let consumable_id = match consumable_type {
+                    crate::shop::ConsumableType::Tarot => {
+                        let tarot_cards = ConsumableId::tarot_cards();
+                        tarot_cards
+                            .choose(&mut rand::thread_rng())
+                            .copied()
+                            .unwrap_or(ConsumableId::TheFool)
+                    }
+                    crate::shop::ConsumableType::Planet => {
+                        let planet_cards = ConsumableId::planet_cards();
+                        planet_cards
+                            .choose(&mut rand::thread_rng())
+                            .copied()
+                            .unwrap_or(ConsumableId::Mercury)
+                    }
+                    crate::shop::ConsumableType::Spectral => {
+                        let spectral_cards = ConsumableId::spectral_cards();
+                        spectral_cards
+                            .choose(&mut rand::thread_rng())
+                            .copied()
+                            .unwrap_or(ConsumableId::Familiar)
+                    }
+                };
+
+                // Add consumable to hand
+                self.consumables_in_hand.push(consumable_id);
                 Ok(())
             }
             _ => {
