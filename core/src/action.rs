@@ -1,5 +1,6 @@
 use crate::card::Card;
 use crate::joker::JokerId;
+use crate::shop::packs::PackType;
 use crate::stage::Blind;
 #[cfg(feature = "python")]
 use pyo3::pyclass;
@@ -36,6 +37,10 @@ pub enum Action {
     Discard(),
     CashOut(usize),
     BuyJoker { joker_id: JokerId, slot: usize },
+    BuyPack { pack_type: PackType },
+    OpenPack { pack_id: usize },
+    SelectFromPack { pack_id: usize, option_index: usize },
+    SkipPack { pack_id: usize },
     NextRound(),
     SelectBlind(Blind),
     // SkipBlind(Blind),
@@ -61,6 +66,21 @@ impl fmt::Display for Action {
             }
             Self::BuyJoker { joker_id, slot } => {
                 write!(f, "BuyJoker: {joker_id:?} at slot {slot}")
+            }
+            Self::BuyPack { pack_type } => {
+                write!(f, "BuyPack: {pack_type}")
+            }
+            Self::OpenPack { pack_id } => {
+                write!(f, "OpenPack: {pack_id}")
+            }
+            Self::SelectFromPack {
+                pack_id,
+                option_index,
+            } => {
+                write!(f, "SelectFromPack: pack {pack_id}, option {option_index}")
+            }
+            Self::SkipPack { pack_id } => {
+                write!(f, "SkipPack: {pack_id}")
             }
             Self::NextRound() => {
                 write!(f, "NextRound")
