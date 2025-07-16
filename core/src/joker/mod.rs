@@ -184,6 +184,9 @@ pub enum JokerId {
     Brainstorm,
     Invisible,
 
+    // Special system jokers
+    EmptySlot,
+
     // Modded/Extras (for future expansion to 150)
     Reserved7,
     Reserved8,
@@ -1178,6 +1181,7 @@ pub trait Joker: Send + Sync + std::fmt::Debug {
     ) -> Result<JokerState, String> {
         serde_json::from_value(old_state.clone()).map_err(|e| format!("Migration failed: {e}"))
     }
+
 }
 
 // Re-export the old Categories enum for compatibility

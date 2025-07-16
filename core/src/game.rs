@@ -180,7 +180,14 @@ impl Game {
     /// * `Some(&dyn Joker)` if a joker exists at the specified slot
     /// * `None` if the slot is empty or the index is out of bounds
     pub fn get_joker_at_slot(&self, slot: usize) -> Option<&dyn Joker> {
-        self.jokers.get(slot).map(|j| j.as_ref())
+        self.jokers.get(slot).and_then(|j| {
+            // Treat EmptySlot jokers as non-existent
+            if j.id() == JokerId::EmptySlot {
+                None
+            } else {
+                Some(j.as_ref())
+            }
+        })
     }
 
     /// Returns the total number of jokers currently owned by the player.
@@ -188,7 +195,7 @@ impl Game {
     /// # Returns
     /// The count of jokers in the player's collection
     pub fn joker_count(&self) -> usize {
-        self.jokers.len()
+        self.jokers.iter().filter(|j| j.id() != JokerId::EmptySlot).count()
     }
 
     /// Returns the number of times a specific hand type has been played this game run.
@@ -341,6 +348,11 @@ impl Game {
 
         // Process hand-level effects first
         for joker in &self.jokers {
+            // Skip EmptySlot jokers
+            if joker.id() == JokerId::EmptySlot {
+                continue;
+            }
+            
             let select_hand = SelectHand::new(hand.hand.cards().to_vec());
             let effect = joker.on_hand_played(&mut context, &select_hand);
 
@@ -361,6 +373,11 @@ impl Game {
         // Process card-level effects
         for card in hand.hand.cards() {
             for joker in &self.jokers {
+                // Skip EmptySlot jokers
+                if joker.id() == JokerId::EmptySlot {
+                    continue;
+                }
+                
                 let effect = joker.on_card_scored(&mut context, &card);
 
                 total_chips += effect.chips;
@@ -428,7 +445,7 @@ impl Game {
             return Err(GameError::InvalidBalance);
         }
         // Convert old joker to new system and add to jokers vec
-        if let Some(new_joker) = JokerFactory::create(joker.to_joker_id()) {
+        if let Some(new_joker) = JokerFactory::create_with_state(joker.to_joker_id(), Some(&joker)) {
             self.shop.buy_joker(&joker)?;
             self.money -= joker.cost();
             self.jokers.push(new_joker);
@@ -478,10 +495,6 @@ impl Game {
             return Err(GameError::InvalidSlot);
         }
 
-        // Check if we've reached the joker limit
-        if self.jokers.len() >= self.config.joker_slots {
-            return Err(GameError::NoAvailableSlot);
-        }
 
         // Check if joker is available in shop
         if !self.shop.has_joker(joker_id) {
@@ -517,7 +530,14 @@ impl Game {
 
         // Insert joker at specified slot, expanding vector if necessary
         if slot >= self.jokers.len() {
-            // For simplicity, just push at the end if slot is beyond current length
+            // Expand vector to accommodate the slot by filling with placeholder jokers
+            while self.jokers.len() < slot {
+                // Fill intermediate slots with empty placeholder jokers
+                let placeholder = JokerFactory::create(JokerId::EmptySlot)
+                    .expect("EmptySlot joker should always be available");
+                self.jokers.push(placeholder);
+            }
+            // Now place the actual joker at the target slot
             self.jokers.push(new_joker);
         } else {
             self.jokers.insert(slot, new_joker);

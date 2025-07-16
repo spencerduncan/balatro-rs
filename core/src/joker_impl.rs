@@ -801,6 +801,41 @@ impl Joker for SpaceJoker {
     }
 }
 
+// EmptySlot joker - used as placeholder for sparse joker storage
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct EmptySlotJoker;
+
+impl Joker for EmptySlotJoker {
+    fn id(&self) -> JokerId {
+        JokerId::EmptySlot
+    }
+
+    fn name(&self) -> &str {
+        "Empty Slot"
+    }
+
+    fn description(&self) -> &str {
+        "Empty joker slot"
+    }
+
+    fn rarity(&self) -> JokerRarity {
+        JokerRarity::Common
+    }
+
+    fn cost(&self) -> usize {
+        0 // Empty slots have no cost
+    }
+
+    // EmptySlot jokers don't provide any effects
+    fn on_hand_played(&self, _context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
+        JokerEffect::new()
+    }
+
+    fn on_card_scored(&self, _context: &mut GameContext, _card: &Card) -> JokerEffect {
+        JokerEffect::new()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

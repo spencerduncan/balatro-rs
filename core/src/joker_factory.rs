@@ -1,4 +1,5 @@
 use crate::joker::{Joker, JokerId, JokerRarity};
+use crate::joker::compat::Jokers;
 use crate::joker_impl::*;
 use crate::static_joker_factory::StaticJokerFactory;
 
@@ -8,6 +9,11 @@ pub struct JokerFactory;
 impl JokerFactory {
     /// Create a joker instance by its ID
     pub fn create(id: JokerId) -> Option<Box<dyn Joker>> {
+        Self::create_with_state(id, None)
+    }
+
+    /// Create a joker instance with custom state from old joker system
+    pub fn create_with_state(id: JokerId, old_joker: Option<&Jokers>) -> Option<Box<dyn Joker>> {
         match id {
             JokerId::Joker => Some(Box::new(TheJoker)),
             JokerId::GreedyJoker => Some(Box::new(GreedyJoker)),
@@ -33,7 +39,18 @@ impl JokerFactory {
             // Hand type conditional jokers from main branch
             JokerId::Supernova => Some(Box::new(SupernovaJoker)),
             JokerId::SpaceJoker => Some(Box::new(SpaceJoker)),
-            JokerId::IceCream => Some(Box::new(IceCreamJoker::new())),
+            JokerId::IceCream => {
+                let mut ice_cream = IceCreamJoker::new();
+                
+                // If we have an old joker with state, copy it
+                if let Some(old_joker) = old_joker {
+                    if let Jokers::IceCreamJoker(old_ice_cream) = old_joker {
+                        ice_cream.remaining_chips = old_ice_cream.remaining_chips;
+                    }
+                }
+                
+                Some(Box::new(ice_cream))
+            },
             JokerId::Runner => Some(Box::new(RunnerJoker)),
 
             // Static jokers from StaticJokerFactory
@@ -48,6 +65,10 @@ impl JokerFactory {
             JokerId::Banner => Some(StaticJokerFactory::create_banner()),
             JokerId::AbstractJoker => Some(StaticJokerFactory::create_abstract_joker()),
             JokerId::SteelJoker => Some(StaticJokerFactory::create_steel_joker()),
+            
+            // Special system jokers
+            JokerId::EmptySlot => Some(Box::new(EmptySlotJoker)),
+            
             // TODO: Implement remaining jokers
             _ => None,
         }
