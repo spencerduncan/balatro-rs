@@ -1,6 +1,7 @@
 #![allow(deprecated)] // Allow deprecated to_object calls temporarily - will be fixed in PyO3 migration
 
 use balatro_rs::action::Action;
+use balatro_rs::ante::Ante;
 use balatro_rs::card::Card;
 use balatro_rs::config::Config;
 use balatro_rs::error::GameError;
@@ -75,13 +76,8 @@ impl GameEngine {
         // Check if player can afford it
         if let Ok(Some(definition)) = registry::get_definition(&joker_id) {
             // Get base cost based on rarity
-            let cost = match definition.rarity {
-                JokerRarity::Common => 3,
-                JokerRarity::Uncommon => 6,
-                JokerRarity::Rare => 8,
-                JokerRarity::Legendary => 20,
-            };
-            return self.game.money >= cost;
+            let cost = calculate_joker_cost(definition.rarity);
+            return self.game.money >= cost as usize;
         }
 
         false
@@ -92,12 +88,7 @@ impl GameEngine {
         let definition = registry::get_definition(&joker_id)?
             .ok_or_else(|| GameError::JokerNotFound(format!("{joker_id:?}")))?;
 
-        let cost = match definition.rarity {
-            JokerRarity::Common => 3,
-            JokerRarity::Uncommon => 6,
-            JokerRarity::Rare => 8,
-            JokerRarity::Legendary => 20,
-        };
+        let cost = calculate_joker_cost(definition.rarity) as usize;
 
         Ok(cost)
     }
@@ -108,8 +99,12 @@ impl GameEngine {
 
         match definition {
             Some(def) => {
-                // For now, assume all jokers are unlocked
-                let is_unlocked = true;
+                // Check if joker is unlocked based on game progress
+                let is_unlocked = def
+                    .unlock_condition
+                    .as_ref()
+                    .map(|condition| evaluate_unlock_condition(condition, &self.game))
+                    .unwrap_or(true); // No unlock condition means always unlocked
                 let metadata = JokerMetadata::from_definition(&def, is_unlocked);
                 Ok(Some(metadata))
             }
@@ -125,12 +120,7 @@ impl GameEngine {
             Err(_) => return None,
         };
 
-        let cost = match definition.rarity {
-            JokerRarity::Common => 3,
-            JokerRarity::Uncommon => 6,
-            JokerRarity::Rare => 8,
-            JokerRarity::Legendary => 20,
-        };
+        let cost = calculate_joker_cost(definition.rarity);
 
         pyo3::Python::with_gil(|py| {
             let dict = pyo3::types::PyDict::new(py);
@@ -165,7 +155,9 @@ impl GameEngine {
             let dict = pyo3::types::PyDict::new(py);
             let _ = dict.set_item("effect_type", effect_type);
             let _ = dict.set_item("description", &definition.description);
-            let _ = dict.set_item("parameters", pyo3::types::PyDict::new(py)); // TODO: Extract from joker implementation
+            // Extract parameters based on joker implementation
+            let parameters = extract_joker_parameters(joker_id, py);
+            let _ = dict.set_item("parameters", parameters);
             let _ = dict.set_item("triggers_on", triggers_on);
 
             Some(dict.into())
@@ -182,7 +174,13 @@ impl GameEngine {
 
         pyo3::Python::with_gil(|py| {
             let dict = pyo3::types::PyDict::new(py);
-            let _ = dict.set_item("is_unlocked", true); // For now, assume all jokers are unlocked
+            // Check if joker is unlocked based on game progress
+            let is_unlocked = definition
+                .unlock_condition
+                .as_ref()
+                .map(|condition| evaluate_unlock_condition(condition, &self.game))
+                .unwrap_or(true); // No unlock condition means always unlocked
+            let _ = dict.set_item("is_unlocked", is_unlocked);
 
             // Add unlock condition if it exists
             match &definition.unlock_condition {
@@ -249,8 +247,13 @@ impl GameEngine {
                     if include_full {
                         self.get_joker_metadata(def.id).ok().flatten()
                     } else {
-                        // Create minimal metadata
-                        Some(JokerMetadata::from_definition(&def, true))
+                        // Create minimal metadata with proper unlock checking
+                        let is_unlocked = def
+                            .unlock_condition
+                            .as_ref()
+                            .map(|condition| evaluate_unlock_condition(condition, &self.game))
+                            .unwrap_or(true); // No unlock condition means always unlocked
+                        Some(JokerMetadata::from_definition(&def, is_unlocked))
                     }
                 })
                 .collect()
@@ -438,18 +441,20 @@ impl GameEngine {
 
                     // Filter by unlock status if requested
                     if unlocked_only {
-                        // For now, assume all are unlocked
+                        let is_unlocked = def
+                            .unlock_condition
+                            .as_ref()
+                            .map(|condition| evaluate_unlock_condition(condition, &self.game))
+                            .unwrap_or(true); // No unlock condition means always unlocked
+                        if !is_unlocked {
+                            return false;
+                        }
                     }
 
                     // Filter by affordability if requested
                     if affordable_only {
-                        let cost = match def.rarity {
-                            JokerRarity::Common => 3,
-                            JokerRarity::Uncommon => 6,
-                            JokerRarity::Rare => 8,
-                            JokerRarity::Legendary => 20,
-                        };
-                        if self.game.money < cost {
+                        let cost = calculate_joker_cost(def.rarity);
+                        if self.game.money < cost as usize {
                             return false;
                         }
                     }
@@ -469,12 +474,7 @@ impl GameEngine {
             all_jokers
                 .into_iter()
                 .filter_map(|def| {
-                    let cost = match def.rarity {
-                        JokerRarity::Common => 3,
-                        JokerRarity::Uncommon => 6,
-                        JokerRarity::Rare => 8,
-                        JokerRarity::Legendary => 20,
-                    };
+                    let cost = calculate_joker_cost(def.rarity);
 
                     if cost >= min_cost && cost <= max_cost {
                         self.get_joker_metadata(def.id).ok().flatten()
@@ -540,8 +540,17 @@ impl GameEngine {
                 let _ = rarity_dict.set_item("Legendary", legendary_count);
                 let _ = dict.set_item("by_rarity", rarity_dict);
 
-                // For now, assume all are unlocked
-                let _ = dict.set_item("unlocked_count", total);
+                // Count actually unlocked jokers
+                let unlocked_count = all_jokers
+                    .iter()
+                    .filter(|def| {
+                        def.unlock_condition
+                            .as_ref()
+                            .map(|condition| evaluate_unlock_condition(condition, &self.game))
+                            .unwrap_or(true) // No unlock condition means always unlocked
+                    })
+                    .count();
+                let _ = dict.set_item("unlocked_count", unlocked_count);
             } else {
                 let _ = dict.set_item("total_jokers", 0);
                 let _ = dict.set_item("by_rarity", pyo3::types::PyDict::new(py));
@@ -897,6 +906,96 @@ impl GameState {
     fn __repr__(&self) -> String {
         format!("GameState:\n{}", self.game)
     }
+}
+
+/// Evaluate if a joker unlock condition is met based on current game state
+fn evaluate_unlock_condition(condition: &UnlockCondition, game: &Game) -> bool {
+    match condition {
+        UnlockCondition::ReachAnte(required_ante) => {
+            // Convert current ante to u32 for comparison
+            let current_ante_num = match game.ante_current {
+                Ante::Zero => 0,
+                Ante::One => 1,
+                Ante::Two => 2,
+                Ante::Three => 3,
+                Ante::Four => 4,
+                Ante::Five => 5,
+                Ante::Six => 6,
+                Ante::Seven => 7,
+                Ante::Eight => 8,
+            };
+            current_ante_num >= *required_ante
+        }
+        UnlockCondition::HaveMoney(required_money) => game.money >= *required_money as usize,
+        UnlockCondition::ScoreInHand(required_score) => game.score >= *required_score as usize,
+        UnlockCondition::PlayHands(required_hands) => {
+            // Sum all hand type counts to get total hands played
+            let total_hands: u32 = game.hand_type_counts.values().sum();
+            total_hands >= *required_hands
+        }
+        UnlockCondition::WinWithDeck(_deck_name) => {
+            // This would require additional game state tracking for deck wins
+            // For now, return false as this feature isn't implemented
+            false
+        }
+        UnlockCondition::Custom(_description) => {
+            // Custom conditions would need specific implementation
+            // For now, return false as this requires case-by-case handling
+            false
+        }
+    }
+}
+
+/// Calculate joker cost based on rarity
+fn calculate_joker_cost(rarity: JokerRarity) -> i32 {
+    match rarity {
+        JokerRarity::Common => 3,
+        JokerRarity::Uncommon => 6,
+        JokerRarity::Rare => 8,
+        JokerRarity::Legendary => 20,
+    }
+}
+
+/// Extract joker parameters based on joker implementation type
+fn extract_joker_parameters(joker_id: JokerId, py: pyo3::Python) -> pyo3::PyObject {
+    let dict = pyo3::types::PyDict::new(py);
+
+    match joker_id {
+        JokerId::Joker => {
+            // Basic joker gives +4 mult
+            let _ = dict.set_item("mult_bonus", 4);
+        }
+        JokerId::GreedyJoker => {
+            // +3 mult for each diamond card scored
+            let _ = dict.set_item("mult_per_diamond", 3);
+            let _ = dict.set_item("target_suit", "Diamond");
+        }
+        JokerId::LustyJoker => {
+            // +3 mult for each heart card scored
+            let _ = dict.set_item("mult_per_heart", 3);
+            let _ = dict.set_item("target_suit", "Heart");
+        }
+        JokerId::WrathfulJoker => {
+            // +3 mult for each spade card scored
+            let _ = dict.set_item("mult_per_spade", 3);
+            let _ = dict.set_item("target_suit", "Spade");
+        }
+        JokerId::GluttonousJoker => {
+            // +3 mult for each club card scored
+            let _ = dict.set_item("mult_per_club", 3);
+            let _ = dict.set_item("target_suit", "Club");
+        }
+        JokerId::Runner => {
+            // +15 chips accumulated when straight is played
+            let _ = dict.set_item("chips_per_straight", 15);
+            let _ = dict.set_item("scaling_type", "accumulated");
+        }
+        _ => {
+            // Default empty parameters for unspecified jokers
+        }
+    }
+
+    dict.into()
 }
 
 #[pymodule]

@@ -40,12 +40,7 @@ impl JokerMetadata {
     /// Create a new JokerMetadata from a JokerDefinition
     pub fn from_definition(definition: &JokerDefinition, is_unlocked: bool) -> Self {
         // Extract cost based on rarity (matching existing logic)
-        let cost = match definition.rarity {
-            JokerRarity::Common => 3,
-            JokerRarity::Uncommon => 6,
-            JokerRarity::Rare => 8,
-            JokerRarity::Legendary => 20,
-        };
+        let cost = calculate_joker_cost(definition.rarity);
 
         // Calculate sell value (half of cost)
         let sell_value = cost / 2;
@@ -56,6 +51,18 @@ impl JokerMetadata {
         // Determine triggers and conditions based on joker type
         let (triggers_on, conditions) = determine_triggers_and_conditions(&definition.id);
 
+        // Extract scaling information based on joker type
+        let scaling_info = extract_scaling_info(&definition.id);
+
+        // Determine if joker uses state based on implementation type
+        let uses_state = determine_uses_state(&definition.id);
+
+        // Extract max triggers if joker has limited uses
+        let max_triggers = extract_max_triggers(&definition.id);
+
+        // Determine if joker uses persistent data
+        let persistent_data = determine_persistent_data(&definition.id);
+
         Self {
             id: definition.id,
             name: definition.name.clone(),
@@ -65,15 +72,25 @@ impl JokerMetadata {
             sell_value,
             effect_type: effect_type.to_string(),
             effect_description: definition.description.clone(),
-            scaling_info: None, // TODO: Extract from joker implementations
+            scaling_info,
             triggers_on,
             conditions,
-            uses_state: false,      // TODO: Determine from joker implementation
-            max_triggers: None,     // TODO: Extract from joker implementation
-            persistent_data: false, // TODO: Determine from joker implementation
+            uses_state,
+            max_triggers,
+            persistent_data,
             unlock_condition: definition.unlock_condition.clone(),
             is_unlocked,
         }
+    }
+}
+
+/// Calculate joker cost based on rarity
+fn calculate_joker_cost(rarity: JokerRarity) -> i32 {
+    match rarity {
+        JokerRarity::Common => 3,
+        JokerRarity::Uncommon => 6,
+        JokerRarity::Rare => 8,
+        JokerRarity::Legendary => 20,
     }
 }
 
@@ -123,6 +140,49 @@ fn determine_triggers_and_conditions(id: &JokerId) -> (Vec<String>, Vec<String>)
             vec!["suit:Club".to_string()],
         ),
         _ => (vec![], vec![]),
+    }
+}
+
+/// Extract scaling information for jokers that accumulate values
+fn extract_scaling_info(id: &JokerId) -> Option<HashMap<String, String>> {
+    match id {
+        // Runner joker accumulates chips when playing straights
+        JokerId::Runner => {
+            let mut scaling = HashMap::new();
+            scaling.insert("type".to_string(), "accumulated_chips".to_string());
+            scaling.insert("increment".to_string(), "15".to_string());
+            scaling.insert("condition".to_string(), "straight_played".to_string());
+            Some(scaling)
+        }
+        // Other jokers with scaling behavior would be added here
+        _ => None,
+    }
+}
+
+/// Determine if a joker uses state based on its implementation type
+fn determine_uses_state(id: &JokerId) -> bool {
+    match id {
+        // Jokers that accumulate values or have limited triggers use state
+        JokerId::Runner => true, // Accumulates chips
+        // Add other stateful jokers here as they are implemented
+        _ => false,
+    }
+}
+
+/// Extract maximum triggers for jokers with limited uses
+fn extract_max_triggers(_id: &JokerId) -> Option<i32> {
+    // Most jokers have unlimited triggers
+    // Future jokers with limited uses would be added here
+    None
+}
+
+/// Determine if a joker uses persistent data storage
+fn determine_persistent_data(id: &JokerId) -> bool {
+    match id {
+        // Jokers that store custom data beyond simple accumulated values
+        JokerId::Runner => true, // Uses accumulated value which persists
+        // Add other jokers that use complex state storage here
+        _ => false,
     }
 }
 
