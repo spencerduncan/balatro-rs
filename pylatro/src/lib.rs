@@ -45,12 +45,14 @@ impl GameEngine {
         Ok(format!("{action}"))
     }
 
-    #[getter]
-    fn state(&self) -> GameState {
-        GameState {
-            game: self.game.clone(),
-        }
-    }
+    // TODO: GameState getter disabled due to Game not implementing Clone (atomic fields)
+    // Use lightweight_state() getter instead for accessing game state
+    // #[getter]
+    // fn state(&self) -> GameState {
+    //     GameState {
+    //         game: self.game.clone(),
+    //     }
+    // }
 
     /// Get lightweight state snapshot for high-frequency access
     #[getter]
@@ -141,16 +143,18 @@ impl GameState {
     }
     #[getter]
     fn plays(&self) -> usize {
-        self.game.plays
+        self.game.plays.load(std::sync::atomic::Ordering::Acquire)
     }
     #[getter]
     fn discards(&self) -> usize {
-        self.game.discards
+        self.game
+            .discards
+            .load(std::sync::atomic::Ordering::Acquire)
     }
 
     #[getter]
     fn score(&self) -> usize {
-        self.game.score
+        self.game.score.load(std::sync::atomic::Ordering::Acquire)
     }
     #[getter]
     fn required_score(&self) -> usize {
@@ -162,7 +166,7 @@ impl GameState {
     }
     #[getter]
     fn money(&self) -> usize {
-        self.game.money
+        self.game.money.load(std::sync::atomic::Ordering::Acquire)
     }
     #[getter]
     fn ante(&self) -> usize {

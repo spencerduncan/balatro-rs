@@ -9,7 +9,9 @@
 //! - Data consistency across concurrent operations
 
 use crate::action::Action;
+use std::collections::hash_map::DefaultHasher;
 use std::collections::HashMap;
+use std::hash::{Hash, Hasher};
 use std::sync::RwLock;
 use std::time::{Duration, Instant};
 
@@ -47,11 +49,20 @@ pub struct PerformanceMetrics {
     pub cache_hit_rate: f64,
 }
 
+/// Efficient cache key to avoid string allocations
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct CacheKey {
+    pub stage_hash: u64, // Hash of stage enum to avoid string allocations
+    pub money: usize,
+    pub chips: usize,
+    pub mult: usize,
+}
+
 /// Cache for action generation to optimize repeated operations
 #[derive(Debug, Clone)]
 pub struct ActionCache {
     cached_actions: Vec<Action>,
-    cache_key: (String, usize, usize, usize), // stage, money, chips, mult
+    cache_key: CacheKey,
     cache_time: Instant,
     cache_ttl: Duration,
 }
@@ -66,26 +77,54 @@ impl ActionCache {
     pub fn new() -> Self {
         Self {
             cached_actions: Vec::new(),
-            cache_key: (String::new(), 0, 0, 0),
+            cache_key: CacheKey {
+                stage_hash: 0,
+                money: 0,
+                chips: 0,
+                mult: 0,
+            },
             cache_time: Instant::now(),
             cache_ttl: Duration::from_millis(100), // 100ms TTL
         }
     }
 
-    pub fn is_valid(&self, stage: &str, money: usize, chips: usize, mult: usize) -> bool {
-        let current_key = (stage.to_string(), money, chips, mult);
-        self.cache_key == current_key && self.cache_time.elapsed() < self.cache_ttl
+    /// Get cached actions if they're still valid, None otherwise
+    /// This combines validation and retrieval to avoid race conditions
+    pub fn get_if_valid(
+        &self,
+        stage_hash: u64,
+        money: usize,
+        chips: usize,
+        mult: usize,
+    ) -> Option<&[Action]> {
+        let current_key = CacheKey {
+            stage_hash,
+            money,
+            chips,
+            mult,
+        };
+
+        if self.cache_key == current_key && self.cache_time.elapsed() < self.cache_ttl {
+            Some(&self.cached_actions)
+        } else {
+            None
+        }
     }
 
     pub fn update(
         &mut self,
-        stage: &str,
+        stage_hash: u64,
         money: usize,
         chips: usize,
         mult: usize,
         actions: Vec<Action>,
     ) {
-        self.cache_key = (stage.to_string(), money, chips, mult);
+        self.cache_key = CacheKey {
+            stage_hash,
+            money,
+            chips,
+            mult,
+        };
         self.cached_actions = actions;
         self.cache_time = Instant::now();
     }
@@ -130,29 +169,27 @@ impl ConcurrentStateManager {
 
     pub fn get_cached_actions(
         &self,
-        stage: &str,
+        stage_hash: u64,
         money: usize,
         chips: usize,
         mult: usize,
     ) -> Option<Vec<Action>> {
         let cache = self.action_cache.read().ok()?;
-        if cache.is_valid(stage, money, chips, mult) {
-            Some(cache.get().to_vec())
-        } else {
-            None
-        }
+        cache
+            .get_if_valid(stage_hash, money, chips, mult)
+            .map(|actions| actions.to_vec())
     }
 
     pub fn cache_actions(
         &self,
-        stage: &str,
+        stage_hash: u64,
         money: usize,
         chips: usize,
         mult: usize,
         actions: Vec<Action>,
     ) {
         if let Ok(mut cache) = self.action_cache.write() {
-            cache.update(stage, money, chips, mult, actions);
+            cache.update(stage_hash, money, chips, mult, actions);
         }
     }
 
@@ -193,3 +230,10 @@ pub enum ConcurrentStateError {
 }
 
 pub type Result<T> = std::result::Result<T, ConcurrentStateError>;
+
+/// Utility function to compute stage hash avoiding string allocations
+pub fn compute_stage_hash(stage: &crate::stage::Stage) -> u64 {
+    let mut hasher = DefaultHasher::new();
+    std::mem::discriminant(stage).hash(&mut hasher);
+    hasher.finish()
+}

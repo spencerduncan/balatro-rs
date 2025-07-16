@@ -103,10 +103,10 @@ fn test_batch_state_updates() {
     assert!(result.is_ok(), "Batch updates failed: {:?}", result);
 
     // Verify all updates were applied
-    assert_eq!(game.money, 100);
-    assert_eq!(game.chips, 50);
-    assert_eq!(game.mult, 2);
-    assert_eq!(game.score, 1000);
+    assert_eq!(game.money.load(std::sync::atomic::Ordering::Acquire), 100);
+    assert_eq!(game.chips.load(std::sync::atomic::Ordering::Acquire), 50);
+    assert_eq!(game.mult.load(std::sync::atomic::Ordering::Acquire), 2);
+    assert_eq!(game.score.load(std::sync::atomic::Ordering::Acquire), 1000);
 }
 
 /// Test lock-free state snapshots for Python bindings
@@ -118,9 +118,9 @@ fn test_lock_free_state_snapshot() {
     let snapshot = game.get_state_snapshot();
 
     // Verify snapshot contains essential state
-    assert_eq!(snapshot.money, game.money);
-    assert_eq!(snapshot.chips, game.chips);
-    assert_eq!(snapshot.score, game.score);
+    assert_eq!(snapshot.money, game.money.load(std::sync::atomic::Ordering::Acquire));
+    assert_eq!(snapshot.chips, game.chips.load(std::sync::atomic::Ordering::Acquire));
+    assert_eq!(snapshot.score, game.score.load(std::sync::atomic::Ordering::Acquire));
     assert_eq!(snapshot.stage, format!("{:?}", game.stage));
     assert_eq!(snapshot.round, game.round);
 
@@ -174,9 +174,9 @@ fn test_state_access_performance() {
     // Benchmark direct field access
     let start = Instant::now();
     for _ in 0..10000 {
-        let _money = game.money;
-        let _chips = game.chips;
-        let _score = game.score;
+        let _money = game.money.load(std::sync::atomic::Ordering::Acquire);
+        let _chips = game.chips.load(std::sync::atomic::Ordering::Acquire);
+        let _score = game.score.load(std::sync::atomic::Ordering::Acquire);
     }
     let direct_duration = start.elapsed();
 

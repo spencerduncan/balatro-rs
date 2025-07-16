@@ -214,9 +214,9 @@ impl ActionSpace {
             }
             n if (self.play_min()..=self.play_max()).contains(&n) => Ok(Action::Play()),
             n if (self.discard_min()..=self.discard_max()).contains(&n) => Ok(Action::Discard()),
-            n if (self.cash_out_min()..=self.cash_out_max()).contains(&n) => {
-                Ok(Action::CashOut(game.reward))
-            }
+            n if (self.cash_out_min()..=self.cash_out_max()).contains(&n) => Ok(Action::CashOut(
+                game.reward.load(std::sync::atomic::Ordering::Acquire),
+            )),
             n if (self.buy_joker_min()..=self.buy_joker_max()).contains(&n) => {
                 let n_offset = n - self.buy_joker_min();
                 if let Some(joker) = game.shop.joker_from_index(n_offset) {

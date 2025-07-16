@@ -1,6 +1,6 @@
 use crate::game::Game;
 use crate::hand::MadeHand;
-use crate::joker::{Jokers, OldJoker as Joker};
+// Removed unused joker imports
 use std::sync::{Arc, Mutex};
 
 // Type aliases to simplify complex types
@@ -30,18 +30,7 @@ impl EffectRegistry {
             on_handrank: Vec::new(),
         }
     }
-    pub(crate) fn register_jokers(&mut self, jokers: Vec<Jokers>, game: &Game) {
-        for j in jokers.clone() {
-            for e in j.effects(game) {
-                match e {
-                    Effects::OnPlay(_) => self.on_play.push(e),
-                    Effects::OnDiscard(_) => self.on_discard.push(e),
-                    Effects::OnScore(_) => self.on_score.push(e),
-                    Effects::OnHandRank(_) => self.on_handrank.push(e),
-                }
-            }
-        }
-    }
+    // Removed register_jokers method - functionality moved inline to avoid borrow checker issues
 }
 
 #[derive(Clone)]

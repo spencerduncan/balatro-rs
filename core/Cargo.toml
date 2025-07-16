@@ -37,3 +37,7 @@ harness = false
 [[bench]]
 name = "state_benchmark"
 harness = false
+
+[[bench]]
+name = "efficient_state_access_benchmark"
+harness = false

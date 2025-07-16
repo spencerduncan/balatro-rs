@@ -31,7 +31,7 @@ impl Game {
             return None;
         }
         // If no plays remaining, return None
-        if self.plays == 0 {
+        if self.plays.load(std::sync::atomic::Ordering::Acquire) == 0 {
             return None;
         }
         // If no cards selected, return None
@@ -49,7 +49,7 @@ impl Game {
             return None;
         }
         // If no discards remaining, return None
-        if self.discards == 0 {
+        if self.discards.load(std::sync::atomic::Ordering::Acquire) == 0 {
             return None;
         }
         // If no cards selected, return None
@@ -93,7 +93,12 @@ impl Game {
         if self.stage != Stage::PostBlind() {
             return None;
         }
-        Some(vec![Action::CashOut(self.reward)].into_iter())
+        Some(
+            vec![Action::CashOut(
+                self.reward.load(std::sync::atomic::Ordering::Acquire),
+            )]
+            .into_iter(),
+        )
     }
 
     // Get next round action
@@ -128,8 +133,11 @@ impl Game {
         if self.joker_count() >= self.config.joker_slots {
             return None;
         }
-        self.shop
-            .gen_moves_buy_joker(self.money, self.jokers.len(), self.config.joker_slots)
+        self.shop.gen_moves_buy_joker(
+            self.money.load(std::sync::atomic::Ordering::Acquire),
+            self.jokers.len(),
+            self.config.joker_slots,
+        )
     }
 
     // Get all legal actions that can be executed given current state
@@ -184,10 +192,10 @@ impl Game {
             return;
         }
         // Can only play/discard is have remaining
-        if self.plays != 0 {
+        if self.plays.load(std::sync::atomic::Ordering::Acquire) != 0 {
             space.unmask_play();
         }
-        if self.discards != 0 {
+        if self.discards.load(std::sync::atomic::Ordering::Acquire) != 0 {
             space.unmask_discard();
         }
     }
@@ -253,7 +261,7 @@ impl Game {
             .jokers
             .iter()
             .enumerate()
-            .filter(|(_i, j)| j.cost() <= self.money)
+            .filter(|(_i, j)| j.cost() <= self.money.load(std::sync::atomic::Ordering::Acquire))
             .for_each(|(i, _j)| {
                 space
                     .unmask_buy_joker(i)

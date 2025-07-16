@@ -59,7 +59,7 @@ impl_joker_wrapper!(
     TheJoker,
     Categories::MultPlus,
     |g: &mut Game, _hand: MadeHand| {
-        g.mult += 4;
+        g.mult.fetch_add(4, std::sync::atomic::Ordering::Release);
     }
 );
 
@@ -73,7 +73,8 @@ impl_joker_wrapper!(
             .iter()
             .filter(|s| **s == Suit::Diamond)
             .count();
-        g.mult += diamonds * 3
+        g.mult
+            .fetch_add(diamonds * 3, std::sync::atomic::Ordering::Release);
     }
 );
 
@@ -87,7 +88,8 @@ impl_joker_wrapper!(
             .iter()
             .filter(|s| **s == Suit::Heart)
             .count();
-        g.mult += hearts * 3
+        g.mult
+            .fetch_add(hearts * 3, std::sync::atomic::Ordering::Release);
     }
 );
 
@@ -101,7 +103,8 @@ impl_joker_wrapper!(
             .iter()
             .filter(|s| **s == Suit::Spade)
             .count();
-        g.mult += spades * 3
+        g.mult
+            .fetch_add(spades * 3, std::sync::atomic::Ordering::Release);
     }
 );
 
@@ -115,7 +118,8 @@ impl_joker_wrapper!(
             .iter()
             .filter(|s| **s == Suit::Club)
             .count();
-        g.mult += clubs * 3
+        g.mult
+            .fetch_add(clubs * 3, std::sync::atomic::Ordering::Release);
     }
 );
 
@@ -124,7 +128,7 @@ impl_joker_wrapper!(
     Categories::MultPlus,
     |g: &mut Game, hand: MadeHand| {
         if hand.hand.is_pair().is_some() {
-            g.mult += 8
+            g.mult.fetch_add(8, std::sync::atomic::Ordering::Release);
         }
     }
 );
@@ -134,7 +138,7 @@ impl_joker_wrapper!(
     Categories::MultPlus,
     |g: &mut Game, hand: MadeHand| {
         if hand.hand.is_three_of_kind().is_some() {
-            g.mult += 12
+            g.mult.fetch_add(12, std::sync::atomic::Ordering::Release);
         }
     }
 );
@@ -144,7 +148,7 @@ impl_joker_wrapper!(
     Categories::MultPlus,
     |g: &mut Game, hand: MadeHand| {
         if hand.hand.is_two_pair().is_some() {
-            g.mult += 10
+            g.mult.fetch_add(10, std::sync::atomic::Ordering::Release);
         }
     }
 );
@@ -154,7 +158,7 @@ impl_joker_wrapper!(
     Categories::MultPlus,
     |g: &mut Game, hand: MadeHand| {
         if hand.hand.is_straight().is_some() {
-            g.mult += 12
+            g.mult.fetch_add(12, std::sync::atomic::Ordering::Release);
         }
     }
 );
@@ -164,7 +168,7 @@ impl_joker_wrapper!(
     Categories::MultPlus,
     |g: &mut Game, hand: MadeHand| {
         if hand.hand.is_flush().is_some() {
-            g.mult += 10
+            g.mult.fetch_add(10, std::sync::atomic::Ordering::Release);
         }
     }
 );
@@ -174,7 +178,7 @@ impl_joker_wrapper!(
     Categories::Chips,
     |g: &mut Game, hand: MadeHand| {
         if hand.hand.is_pair().is_some() {
-            g.chips += 50
+            g.chips.fetch_add(50, std::sync::atomic::Ordering::Release);
         }
     }
 );
@@ -184,7 +188,7 @@ impl_joker_wrapper!(
     Categories::Chips,
     |g: &mut Game, hand: MadeHand| {
         if hand.hand.is_three_of_kind().is_some() {
-            g.chips += 100
+            g.chips.fetch_add(100, std::sync::atomic::Ordering::Release);
         }
     }
 );
@@ -194,7 +198,7 @@ impl_joker_wrapper!(
     Categories::Chips,
     |g: &mut Game, hand: MadeHand| {
         if hand.hand.is_two_pair().is_some() {
-            g.chips += 80
+            g.chips.fetch_add(80, std::sync::atomic::Ordering::Release);
         }
     }
 );
@@ -204,7 +208,7 @@ impl_joker_wrapper!(
     Categories::Chips,
     |g: &mut Game, hand: MadeHand| {
         if hand.hand.is_straight().is_some() {
-            g.chips += 100
+            g.chips.fetch_add(100, std::sync::atomic::Ordering::Release);
         }
     }
 );
@@ -214,7 +218,7 @@ impl_joker_wrapper!(
     Categories::Chips,
     |g: &mut Game, hand: MadeHand| {
         if hand.hand.is_flush().is_some() {
-            g.chips += 80
+            g.chips.fetch_add(80, std::sync::atomic::Ordering::Release);
         }
     }
 );
@@ -271,7 +275,8 @@ impl Joker for IceCreamJoker {
         let chips_to_add = self.remaining_chips.max(0);
         vec![Effects::OnScore(Arc::new(Mutex::new(
             move |g: &mut Game, _hand: MadeHand| {
-                g.chips += chips_to_add as usize;
+                g.chips
+                    .fetch_add(chips_to_add as usize, std::sync::atomic::Ordering::Release);
             },
         )))]
     }
@@ -444,7 +449,8 @@ mod tests {
         assert_eq!(score, before);
 
         // Buy (and apply) the joker
-        g.money += 1000; // Give adequate money to buy
+        g.money
+            .fetch_add(1000, std::sync::atomic::Ordering::Release); // Give adequate money to buy
         g.stage = Stage::Shop();
         g.shop.jokers.push(joker.clone());
         g.buy_joker(joker).unwrap();

@@ -2,8 +2,8 @@ use crate::action::{Action, MoveDirection};
 use crate::ante::Ante;
 use crate::available::Available;
 use crate::card::Card;
-use crate::config::Config;
 use crate::concurrent_state::ConcurrentStateManager;
+use crate::config::Config;
 use crate::deck::Deck;
 use crate::effect::{EffectRegistry, Effects};
 use crate::error::GameError;
@@ -16,10 +16,11 @@ use crate::stage::{Blind, End, Stage};
 
 use std::collections::HashMap;
 use std::fmt;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Game {
     pub config: Config,
     pub shop: Shop,
@@ -39,16 +40,16 @@ pub struct Game {
     pub effect_registry: EffectRegistry,
     pub joker_state_manager: Arc<JokerStateManager>,
 
-    // playing
-    pub plays: usize,
-    pub discards: usize,
-    pub reward: usize,
-    pub money: usize,
+    // playing (atomic for thread safety)
+    pub plays: AtomicUsize,
+    pub discards: AtomicUsize,
+    pub reward: AtomicUsize,
+    pub money: AtomicUsize,
 
-    // for scoring
-    pub chips: usize,
-    pub mult: usize,
-    pub score: usize,
+    // for scoring (atomic for thread safety)
+    pub chips: AtomicUsize,
+    pub mult: AtomicUsize,
+    pub score: AtomicUsize,
 
     // hand type tracking for this game run
     pub hand_type_counts: HashMap<HandRank, u32>,
@@ -77,13 +78,13 @@ impl Game {
             ante_end: Ante::try_from(config.ante_end).unwrap_or(Ante::Eight),
             ante_current: ante_start,
             round: config.round_start,
-            plays: config.plays,
-            discards: config.discards,
-            reward: config.reward_base,
-            money: config.money_start,
-            chips: config.base_chips,
-            mult: config.base_mult,
-            score: config.base_score,
+            plays: AtomicUsize::new(config.plays),
+            discards: AtomicUsize::new(config.discards),
+            reward: AtomicUsize::new(config.reward_base),
+            money: AtomicUsize::new(config.money_start),
+            chips: AtomicUsize::new(config.base_chips),
+            mult: AtomicUsize::new(config.base_mult),
+            score: AtomicUsize::new(config.base_score),
             hand_type_counts: HashMap::new(),
             concurrent_state_manager: Arc::new(ConcurrentStateManager::new()),
             action_cache_enabled: false,
@@ -149,9 +150,12 @@ impl Game {
     }
 
     fn clear_blind(&mut self) {
-        self.score = self.config.base_score;
-        self.plays = self.config.plays;
-        self.discards = self.config.discards;
+        self.score
+            .store(self.config.base_score, std::sync::atomic::Ordering::Release);
+        self.plays
+            .store(self.config.plays, std::sync::atomic::Ordering::Release);
+        self.discards
+            .store(self.config.discards, std::sync::atomic::Ordering::Release);
         self.deal();
     }
 
@@ -190,10 +194,11 @@ impl Game {
     }
 
     pub(crate) fn play_selected(&mut self) -> Result<(), GameError> {
-        if self.plays == 0 {
+        if self.plays.load(std::sync::atomic::Ordering::Acquire) == 0 {
             return Err(GameError::NoRemainingPlays);
         }
-        self.plays -= 1;
+        self.plays
+            .fetch_sub(1, std::sync::atomic::Ordering::Release);
         let selected = SelectHand::new(self.available.selected());
         let best = selected.best_hand()?;
 
@@ -213,10 +218,11 @@ impl Game {
 
     // discard selected cards from available and draw equal number back to available
     pub(crate) fn discard_selected(&mut self) -> Result<(), GameError> {
-        if self.discards == 0 {
+        if self.discards.load(std::sync::atomic::Ordering::Acquire) == 0 {
             return Err(GameError::NoRemainingDiscards);
         }
-        self.discards -= 1;
+        self.discards
+            .fetch_sub(1, std::sync::atomic::Ordering::Release);
         self.discarded.extend(self.available.selected());
         let removed = self.available.remove_selected();
         self.draw(removed);
@@ -224,13 +230,24 @@ impl Game {
     }
 
     pub(crate) fn calc_score(&mut self, hand: MadeHand) -> usize {
+        // reset chips and mult to base values first
+        self.chips
+            .store(self.config.base_chips, std::sync::atomic::Ordering::Release);
+        self.mult
+            .store(self.config.base_mult, std::sync::atomic::Ordering::Release);
+            
         // compute chips and mult from hand level
-        self.chips += hand.rank.level().chips;
-        self.mult += hand.rank.level().mult;
+        self.chips.fetch_add(
+            hand.rank.level().chips,
+            std::sync::atomic::Ordering::Release,
+        );
+        self.mult
+            .fetch_add(hand.rank.level().mult, std::sync::atomic::Ordering::Release);
 
         // add chips for each played card
         let card_chips: usize = hand.hand.cards().iter().map(|c| c.chips()).sum();
-        self.chips += card_chips;
+        self.chips
+            .fetch_add(card_chips, std::sync::atomic::Ordering::Release);
 
         // Apply effects that modify game.chips and game.mult
         for e in self.effect_registry.on_score.clone() {
@@ -240,11 +257,14 @@ impl Game {
         }
 
         // compute score
-        let score = self.chips * self.mult;
+        let score = self.chips.load(std::sync::atomic::Ordering::Acquire)
+            * self.mult.load(std::sync::atomic::Ordering::Acquire);
 
         // reset chips and mult
-        self.mult = self.config.base_mult;
-        self.chips = self.config.base_chips;
+        self.mult
+            .store(self.config.base_mult, std::sync::atomic::Ordering::Release);
+        self.chips
+            .store(self.config.base_chips, std::sync::atomic::Ordering::Release);
         score
     }
 
@@ -260,19 +280,25 @@ impl Game {
     }
 
     fn calc_reward(&mut self, blind: Blind) -> Result<usize, GameError> {
-        let mut interest = (self.money as f32 * self.config.interest_rate).floor() as usize;
+        let mut interest = (self.money.load(std::sync::atomic::Ordering::Acquire) as f32
+            * self.config.interest_rate)
+            .floor() as usize;
         if interest > self.config.interest_max {
             interest = self.config.interest_max
         }
         let base = blind.reward();
-        let hand_bonus = self.plays * self.config.money_per_hand;
+        let hand_bonus =
+            self.plays.load(std::sync::atomic::Ordering::Acquire) * self.config.money_per_hand;
         let reward = base + interest + hand_bonus;
         Ok(reward)
     }
 
     fn cashout(&mut self) -> Result<(), GameError> {
-        self.money += self.reward;
-        self.reward = 0;
+        self.money.fetch_add(
+            self.reward.load(std::sync::atomic::Ordering::Acquire),
+            std::sync::atomic::Ordering::Release,
+        );
+        self.reward.store(0, std::sync::atomic::Ordering::Release);
         self.stage = Stage::Shop();
         self.shop.refresh();
         Ok(())
@@ -286,14 +312,23 @@ impl Game {
         if self.jokers.len() >= self.config.joker_slots {
             return Err(GameError::NoAvailableSlot);
         }
-        if joker.cost() > self.money {
+        if joker.cost() > self.money.load(std::sync::atomic::Ordering::Acquire) {
             return Err(GameError::InvalidBalance);
         }
         self.shop.buy_joker(&joker)?;
-        self.money -= joker.cost();
-        self.jokers.push(joker);
-        self.effect_registry
-            .register_jokers(self.jokers.clone(), &self.clone());
+        self.money
+            .fetch_sub(joker.cost(), std::sync::atomic::Ordering::Release);
+        self.jokers.push(joker.clone());
+        // Register the joker effects after adding it
+        let effects_to_register: Vec<_> = joker.effects(self);
+        for e in effects_to_register {
+            match e {
+                crate::effect::Effects::OnPlay(_) => self.effect_registry.on_play.push(e),
+                crate::effect::Effects::OnDiscard(_) => self.effect_registry.on_discard.push(e),
+                crate::effect::Effects::OnScore(_) => self.effect_registry.on_score.push(e),
+                crate::effect::Effects::OnHandRank(_) => self.effect_registry.on_handrank.push(e),
+            }
+        }
         Ok(())
     }
 
@@ -354,7 +389,7 @@ impl Game {
             .ok_or(GameError::NoJokerMatch)?;
 
         // Check if player has enough money (use actual joker cost)
-        if joker.cost() > self.money {
+        if joker.cost() > self.money.load(std::sync::atomic::Ordering::Acquire) {
             return Err(GameError::InvalidBalance);
         }
 
@@ -362,7 +397,8 @@ impl Game {
         self.shop.buy_joker(&joker)?;
 
         // Deduct money
-        self.money -= joker.cost();
+        self.money
+            .fetch_sub(joker.cost(), std::sync::atomic::Ordering::Release);
 
         // Insert joker at specified slot, expanding vector if necessary
         if slot >= self.jokers.len() {
@@ -375,9 +411,16 @@ impl Game {
             self.jokers.insert(slot, joker.clone());
         }
 
-        // Update effect registry
-        self.effect_registry
-            .register_jokers(self.jokers.clone(), &self.clone());
+        // Register the joker effects after adding it
+        let effects_to_register: Vec<_> = joker.effects(self);
+        for e in effects_to_register {
+            match e {
+                crate::effect::Effects::OnPlay(_) => self.effect_registry.on_play.push(e),
+                crate::effect::Effects::OnDiscard(_) => self.effect_registry.on_discard.push(e),
+                crate::effect::Effects::OnScore(_) => self.effect_registry.on_score.push(e),
+                crate::effect::Effects::OnHandRank(_) => self.effect_registry.on_handrank.push(e),
+            }
+        }
 
         Ok(())
     }
@@ -418,13 +461,14 @@ impl Game {
             return Err(GameError::InvalidStage);
         }
 
-        self.score += score;
+        self.score
+            .fetch_add(score, std::sync::atomic::Ordering::Release);
         let required = self.required_score();
 
         // blind not passed
-        if self.score < required {
+        if self.score.load(std::sync::atomic::Ordering::Acquire) < required {
             // no more hands to play -> lose
-            if self.plays == 0 {
+            if self.plays.load(std::sync::atomic::Ordering::Acquire) == 0 {
                 self.stage = Stage::End(End::Lose);
                 return Ok(false);
             } else {
@@ -437,7 +481,8 @@ impl Game {
         // score exceeds blind (blind passed).
         // handle reward then progress to next stage.
         let reward = self.calc_reward(blind)?;
-        self.reward = reward;
+        self.reward
+            .store(reward, std::sync::atomic::Ordering::Release);
 
         // passed boss blind, either win or progress ante
         if blind == Blind::Boss {
@@ -547,7 +592,8 @@ impl Game {
         let joker_id = joker.to_joker_id();
 
         // Award money for selling the joker
-        self.money += sell_value;
+        self.money
+            .fetch_add(sell_value, std::sync::atomic::Ordering::Release);
 
         // Remove the joker from the collection
         self.jokers.remove(slot);
@@ -626,12 +672,20 @@ impl Game {
 
         // Reset other game state to initial values
         self.round = self.config.round_start;
-        self.plays = self.config.plays;
-        self.discards = self.config.discards;
-        self.money = self.config.money_start;
-        self.chips = self.config.base_chips;
-        self.mult = self.config.base_mult;
-        self.score = self.config.base_score;
+        self.plays
+            .store(self.config.plays, std::sync::atomic::Ordering::Release);
+        self.discards
+            .store(self.config.discards, std::sync::atomic::Ordering::Release);
+        self.money.store(
+            self.config.money_start,
+            std::sync::atomic::Ordering::Release,
+        );
+        self.chips
+            .store(self.config.base_chips, std::sync::atomic::Ordering::Release);
+        self.mult
+            .store(self.config.base_mult, std::sync::atomic::Ordering::Release);
+        self.score
+            .store(self.config.base_score, std::sync::atomic::Ordering::Release);
         self.ante_current = self.ante_start;
         self.stage = Stage::PreBlind();
         self.hand_type_counts.clear();
@@ -650,16 +704,12 @@ impl Game {
 
     /// Get money value in a concurrent-safe manner
     pub fn get_money_concurrent(&self) -> usize {
-        // For single field access, direct read is sufficient in Rust
-        // Rust's memory model ensures this is safe for usize reads
-        self.money
+        self.money.load(Ordering::Acquire)
     }
 
     /// Get chips value in a concurrent-safe manner  
     pub fn get_chips_concurrent(&self) -> usize {
-        // For single field access, direct read is sufficient in Rust
-        // Rust's memory model ensures this is safe for usize reads
-        self.chips
+        self.chips.load(Ordering::Acquire)
     }
 
     /// Generate actions with concurrent optimization
@@ -713,12 +763,12 @@ impl Game {
         // Apply all updates atomically
         for update in updates {
             match update {
-                StateUpdate::Money(value) => self.money = value,
-                StateUpdate::Chips(value) => self.chips = value,
-                StateUpdate::Mult(value) => self.mult = value,
-                StateUpdate::Score(value) => self.score = value,
-                StateUpdate::Plays(value) => self.plays = value,
-                StateUpdate::Discards(value) => self.discards = value,
+                StateUpdate::Money(value) => self.money.store(value, Ordering::Release),
+                StateUpdate::Chips(value) => self.chips.store(value, Ordering::Release),
+                StateUpdate::Mult(value) => self.mult.store(value, Ordering::Release),
+                StateUpdate::Score(value) => self.score.store(value, Ordering::Release),
+                StateUpdate::Plays(value) => self.plays.store(value, Ordering::Release),
+                StateUpdate::Discards(value) => self.discards.store(value, Ordering::Release),
             }
         }
 
@@ -737,14 +787,14 @@ impl Game {
         use crate::concurrent_state::LockFreeStateSnapshot;
 
         LockFreeStateSnapshot {
-            money: self.money,
-            chips: self.chips,
-            mult: self.mult,
-            score: self.score,
+            money: self.money.load(Ordering::Acquire),
+            chips: self.chips.load(Ordering::Acquire),
+            mult: self.mult.load(Ordering::Acquire),
+            score: self.score.load(Ordering::Acquire),
             stage: format!("{:?}", self.stage),
             round: self.round,
-            plays_remaining: self.plays,
-            discards_remaining: self.discards,
+            plays_remaining: self.plays.load(Ordering::Acquire),
+            discards_remaining: self.discards.load(Ordering::Acquire),
         }
     }
 
@@ -779,7 +829,9 @@ impl Game {
         for _ in 0..iterations.min(100) {
             let start = Instant::now();
             // Simulate the work of a batch update without actually modifying state
-            let _fake_work = self.money + self.chips + self.mult;
+            let _fake_work = self.money.load(Ordering::Acquire)
+                + self.chips.load(Ordering::Acquire)
+                + self.mult.load(Ordering::Acquire);
             batch_update_times.push(start.elapsed());
         }
 
@@ -802,9 +854,7 @@ impl Game {
 
     /// Get score value in a concurrent-safe manner
     pub fn get_score_concurrent(&self) -> usize {
-        // For single field access, direct read is sufficient in Rust
-        // Rust's memory model ensures this is safe for usize reads
-        self.score
+        self.score.load(Ordering::Acquire)
     }
 
     /// Get stage value in a concurrent-safe manner
@@ -827,25 +877,26 @@ impl Game {
             return self.gen_actions().collect();
         }
 
-        let stage_str = format!("{:?}", self.stage);
-        
+        let stage_hash = crate::concurrent_state::compute_stage_hash(&self.stage);
+        let money = self.money.load(Ordering::Acquire);
+        let chips = self.chips.load(Ordering::Acquire);
+        let mult = self.mult.load(Ordering::Acquire);
+
         // Check if we have cached actions that are still valid
-        if let Some(cached_actions) = self.concurrent_state_manager.get_cached_actions(
-            &stage_str,
-            self.money,
-            self.chips,
-            self.mult,
-        ) {
+        if let Some(cached_actions) = self
+            .concurrent_state_manager
+            .get_cached_actions(stage_hash, money, chips, mult)
+        {
             return cached_actions;
         }
 
         // Generate fresh actions and cache them
         let actions: Vec<Action> = self.gen_actions().collect();
         self.concurrent_state_manager.cache_actions(
-            &stage_str,
-            self.money,
-            self.chips,
-            self.mult,
+            stage_hash,
+            money,
+            chips,
+            mult,
             actions.clone(),
         );
 
@@ -861,12 +912,12 @@ impl Game {
     pub fn validate_state_consistency(&self) -> bool {
         // Basic state consistency checks
         // Money should be non-negative and within bounds
-        if self.money > self.config.money_max {
+        if self.money.load(Ordering::Acquire) > self.config.money_max {
             return false;
         }
 
         // Plays and discards should be reasonable values
-        if self.plays > 10 || self.discards > 10 {
+        if self.plays.load(Ordering::Acquire) > 10 || self.discards.load(Ordering::Acquire) > 10 {
             return false;
         }
 
@@ -900,10 +951,26 @@ impl fmt::Display for Game {
         writeln!(f, "stage: {:?}", self.stage)?;
         writeln!(f, "ante: {:?}", self.ante_current)?;
         writeln!(f, "round: {}", self.round)?;
-        writeln!(f, "hands remaining: {}", self.plays)?;
-        writeln!(f, "discards remaining: {}", self.discards)?;
-        writeln!(f, "money: {}", self.money)?;
-        writeln!(f, "score: {}", self.score)
+        writeln!(
+            f,
+            "hands remaining: {}",
+            self.plays.load(std::sync::atomic::Ordering::Acquire)
+        )?;
+        writeln!(
+            f,
+            "discards remaining: {}",
+            self.discards.load(std::sync::atomic::Ordering::Acquire)
+        )?;
+        writeln!(
+            f,
+            "money: {}",
+            self.money.load(std::sync::atomic::Ordering::Acquire)
+        )?;
+        writeln!(
+            f,
+            "score: {}",
+            self.score.load(std::sync::atomic::Ordering::Acquire)
+        )
     }
 }
 
@@ -924,7 +991,7 @@ mod tests {
         let g = Game::default();
         assert_eq!(g.available.cards().len(), 0);
         assert_eq!(g.deck.len(), 52);
-        assert_eq!(g.mult, 0);
+        assert_eq!(g.mult.load(std::sync::atomic::Ordering::Acquire), 0);
     }
 
     #[test]
@@ -1031,12 +1098,12 @@ mod tests {
 
         let passed = g.handle_score(score).unwrap();
         assert!(!passed);
-        assert_eq!(g.score, score);
+        assert_eq!(g.score.load(std::sync::atomic::Ordering::Acquire), score);
 
         // Enough to pass now
         let passed = g.handle_score(1).unwrap();
         assert!(passed);
-        assert_eq!(g.score, required);
+        assert_eq!(g.score.load(std::sync::atomic::Ordering::Acquire), required);
         assert_eq!(g.stage, Stage::PostBlind());
     }
 
@@ -1064,16 +1131,26 @@ mod tests {
 
         assert_eq!(g.available.selected().len(), 5);
         // Artifically set score so blind passes
-        g.score += g.required_score();
+        g.score
+            .fetch_add(g.required_score(), std::sync::atomic::Ordering::Release);
         g.play_selected().expect("can play selected");
 
         // Should have cleared blind
         assert_eq!(g.stage, Stage::PostBlind());
         // Score should reset to 0
-        assert_eq!(g.score, g.config.base_score);
+        assert_eq!(
+            g.score.load(std::sync::atomic::Ordering::Acquire),
+            g.config.base_score
+        );
         // Plays and discards should reset
-        assert_eq!(g.plays, g.config.plays);
-        assert_eq!(g.discards, g.config.discards);
+        assert_eq!(
+            g.plays.load(std::sync::atomic::Ordering::Acquire),
+            g.config.plays
+        );
+        assert_eq!(
+            g.discards.load(std::sync::atomic::Ordering::Acquire),
+            g.config.discards
+        );
         // Deck should be length 52 - available
         assert_eq!(g.deck.len(), 52 - g.config.available);
         // Discarded should be length 0
@@ -1087,12 +1164,15 @@ mod tests {
         let mut g = Game::default();
         g.start();
         g.stage = Stage::Shop();
-        g.money = 10;
+        g.money.store(10, std::sync::atomic::Ordering::Release);
         g.shop.refresh();
 
         let j1 = g.shop.joker_from_index(0).expect("is joker");
         g.buy_joker(j1.clone()).expect("buy joker");
-        assert_eq!(g.money, 10 - j1.cost());
+        assert_eq!(
+            g.money.load(std::sync::atomic::Ordering::Acquire),
+            10 - j1.cost()
+        );
         assert_eq!(g.jokers.len(), 1);
     }
 
@@ -1101,7 +1181,7 @@ mod tests {
         let mut game = Game::default();
         game.start();
         game.stage = Stage::Shop();
-        game.money = 20;
+        game.money.store(20, std::sync::atomic::Ordering::Release);
 
         // Set up shop with known jokers for deterministic testing
         use crate::joker::compat::TheJoker;
@@ -1130,7 +1210,7 @@ mod tests {
         let mut game = Game::default();
         game.start();
         game.stage = Stage::Shop();
-        game.money = 40;
+        game.money.store(40, std::sync::atomic::Ordering::Release);
 
         // Set up shop with known jokers for deterministic testing
         use crate::joker::compat::{GreedyJoker, TheJoker};
@@ -1172,7 +1252,7 @@ mod tests {
         let mut game = Game::default();
         game.start();
         game.stage = Stage::Shop();
-        game.money = 20;
+        game.money.store(20, std::sync::atomic::Ordering::Release);
         game.shop.refresh();
 
         // Test buying in slot beyond limit (default is 5 slots, so 0-4 are valid)
@@ -1191,7 +1271,7 @@ mod tests {
         let mut game = Game::default();
         game.start();
         game.stage = Stage::Shop();
-        game.money = 20;
+        game.money.store(20, std::sync::atomic::Ordering::Release);
 
         // Set up shop with known jokers for deterministic testing
         use crate::joker::compat::TheJoker;
@@ -1219,7 +1299,7 @@ mod tests {
         let mut game = Game::default();
         game.start();
         game.stage = Stage::Shop();
-        game.money = 1; // Not enough for any joker
+        game.money.store(1, std::sync::atomic::Ordering::Release); // Not enough for any joker
 
         // Set up shop with known jokers for deterministic testing
         use crate::joker::compat::TheJoker;
@@ -1240,7 +1320,7 @@ mod tests {
         let mut game = Game::default();
         game.start();
         game.stage = Stage::Shop();
-        game.money = 20;
+        game.money.store(20, std::sync::atomic::Ordering::Release);
         game.shop.refresh();
 
         // Try to buy a joker that's not currently in the shop
@@ -1259,7 +1339,7 @@ mod tests {
         let mut game = Game::default();
         game.start();
         game.stage = Stage::Blind(Blind::Small);
-        game.money = 20;
+        game.money.store(20, std::sync::atomic::Ordering::Release);
 
         let action = Action::BuyJoker {
             joker_id: JokerId::Joker,

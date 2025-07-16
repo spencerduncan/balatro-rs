@@ -49,7 +49,7 @@ mod tests {
             // Pick a random move and execute it
             let i = rand::thread_rng().gen_range(0..actions.len());
             let action = actions[i].clone();
-            dbg!("game state:\n{}", g.clone());
+            // dbg!("game state:\n{}", g); // Removed clone - Game no longer implements Clone due to atomic fields
             dbg!("play action: {}", action.clone());
             let action_res = g.handle_action(action.clone());
             dbg!(action);
@@ -86,7 +86,7 @@ mod tests {
                 }
             }
             let action = space.to_action(i, &g).expect("valid index to action");
-            dbg!("game state:\n{}", g.clone());
+            // dbg!("game state:\n{}", g); // Removed clone - Game no longer implements Clone due to atomic fields
             dbg!("play action: {}", action.clone());
             let action_res = g.handle_action(action.clone());
             dbg!(action);

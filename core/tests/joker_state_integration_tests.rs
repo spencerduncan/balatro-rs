@@ -51,7 +51,7 @@ fn test_sell_joker_cleans_up_state() {
     game.joker_state_manager
         .set_state(JokerId::Joker, JokerState::default());
 
-    let initial_money = game.money;
+    let initial_money = game.money.load(std::sync::atomic::Ordering::Acquire);
 
     // Sell the joker
     let result = game.sell_joker(0);
@@ -59,7 +59,7 @@ fn test_sell_joker_cleans_up_state() {
 
     // Verify joker is removed and money increased
     assert_eq!(game.jokers.len(), 0);
-    assert!(game.money > initial_money);
+    assert!(game.money.load(std::sync::atomic::Ordering::Acquire) > initial_money);
 
     // Verify state is cleaned up
     assert!(game.joker_state_manager.get_state(JokerId::Joker).is_none());
