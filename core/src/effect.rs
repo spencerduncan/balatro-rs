@@ -42,6 +42,23 @@ impl EffectRegistry {
             }
         }
     }
+
+    /// Register a single joker with the effect registry
+    pub fn register_joker(&mut self, joker: Jokers, game: &Game) {
+        for e in joker.effects(game) {
+            match e {
+                Effects::OnPlay(_) => self.on_play.push(e),
+                Effects::OnDiscard(_) => self.on_discard.push(e),
+                Effects::OnScore(_) => self.on_score.push(e),
+                Effects::OnHandRank(_) => self.on_handrank.push(e),
+            }
+        }
+    }
+
+    /// Count the total number of registered effects
+    pub fn count_registered_effects(&self) -> usize {
+        self.on_play.len() + self.on_discard.len() + self.on_score.len() + self.on_handrank.len()
+    }
 }
 
 #[derive(Clone)]

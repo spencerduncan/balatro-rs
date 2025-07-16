@@ -632,6 +632,17 @@ impl JokerStateManager {
 
         result
     }
+
+    /// Ensure a state exists for the given joker ID
+    ///
+    /// Creates a default state if one doesn't already exist.
+    ///
+    /// # Arguments
+    /// * `joker_id` - The joker ID to ensure state exists for
+    pub fn ensure_state_exists(&self, joker_id: JokerId) {
+        let mut states = self.states.write().unwrap();
+        states.entry(joker_id).or_default();
+    }
 }
 
 /// Memory usage report for joker state management
@@ -896,6 +907,89 @@ impl JokerPersistenceManager {
     pub fn restore_from_backup(&self, backup: &StateBackup) {
         self.state_manager
             .restore_from_snapshot(backup.states.clone());
+    }
+
+    /// Validate state data without loading it
+    ///
+    /// Checks if the provided state data is structurally valid.
+    pub fn validate_state_data(&self, states: &HashMap<JokerId, Value>) -> Result<(), String> {
+        for (joker_id, value) in states {
+            // Try to deserialize the value to JokerState to validate structure
+            match serde_json::from_value::<JokerState>(value.clone()) {
+                Ok(_) => continue,
+                Err(e) => return Err(format!("Invalid state for joker {joker_id:?}: {e}")),
+            }
+        }
+        Ok(())
+    }
+
+    /// Load states with recovery for corrupted data
+    ///
+    /// Attempts to load valid states and reports errors for invalid ones.
+    pub fn load_states_with_recovery(
+        &self,
+        states: &HashMap<JokerId, Value>,
+    ) -> Result<(HashMap<JokerId, JokerState>, Vec<String>), String> {
+        let mut loaded_states = HashMap::new();
+        let mut errors = Vec::new();
+
+        for (joker_id, value) in states {
+            match serde_json::from_value::<JokerState>(value.clone()) {
+                Ok(state) => {
+                    loaded_states.insert(*joker_id, state);
+                }
+                Err(e) => {
+                    errors.push(format!("Failed to load state for joker {joker_id:?}: {e}"));
+                }
+            }
+        }
+
+        Ok((loaded_states, errors))
+    }
+
+    /// Load from JSON with handling for unknown jokers
+    ///
+    /// Loads save data and gracefully handles unknown joker IDs.
+    pub fn load_from_json_with_unknown_handling(
+        &self,
+        json: &str,
+    ) -> Result<(HashMap<JokerId, JokerState>, Vec<String>), String> {
+        // Parse as a generic Value first to handle unknown joker IDs
+        let raw_data: Value =
+            serde_json::from_str(json).map_err(|e| format!("Failed to parse JSON: {e}"))?;
+
+        let mut loaded_states = HashMap::new();
+        let mut warnings = Vec::new();
+
+        // Extract joker_states as a generic object
+        if let Some(joker_states_obj) = raw_data.get("joker_states") {
+            if let Some(states_map) = joker_states_obj.as_object() {
+                for (joker_id_str, state_value) in states_map {
+                    // Try to parse the joker ID string to JokerId enum
+                    match serde_json::from_str::<JokerId>(&format!("\"{joker_id_str}\"")) {
+                        Ok(joker_id) => {
+                            // Known joker ID, try to parse the state
+                            match serde_json::from_value::<JokerState>(state_value.clone()) {
+                                Ok(state) => {
+                                    loaded_states.insert(joker_id, state);
+                                }
+                                Err(_) => {
+                                    warnings.push(format!(
+                                        "Failed to parse state for joker: {joker_id_str}"
+                                    ));
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Unknown joker ID, skip with warning
+                            warnings.push(format!("Skipping unknown joker: {joker_id_str}"));
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok((loaded_states, warnings))
     }
 }
 
