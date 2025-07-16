@@ -8,9 +8,17 @@ use balatro_rs::error::GameError;
 use balatro_rs::game::Game;
 use balatro_rs::joker::{JokerId, JokerRarity, Jokers};
 use balatro_rs::joker_metadata::JokerMetadata;
-use balatro_rs::joker_registry::{registry, JokerDefinition, UnlockCondition};
+use balatro_rs::joker_registry::{
+    calculate_joker_cost, registry, JokerDefinition, UnlockCondition,
+};
 use balatro_rs::stage::{End, Stage};
 use pyo3::prelude::*;
+use std::collections::HashMap;
+
+// Security constants for input validation
+const MAX_CUSTOM_DATA_KEY_LENGTH: usize = 256;
+const MAX_CUSTOM_DATA_VALUE_LENGTH: usize = 8192;
+const MAX_SEARCH_QUERY_LENGTH: usize = 1024;
 
 #[pyclass]
 struct GameEngine {
@@ -85,8 +93,7 @@ impl GameEngine {
 
     /// Get the cost of a specific joker
     fn get_joker_cost(&self, joker_id: JokerId) -> Result<usize, GameError> {
-        let definition = registry::get_definition(&joker_id)?
-            .ok_or_else(|| GameError::JokerNotFound(format!("{joker_id:?}")))?;
+        let definition = registry::get_definition(&joker_id)?.ok_or(GameError::JokerNotFound)?;
 
         let cost = calculate_joker_cost(definition.rarity) as usize;
 
@@ -202,9 +209,21 @@ impl GameEngine {
         pyo3::Python::with_gil(|py| {
             let dict = pyo3::types::PyDict::new(py);
 
-            for joker_id in joker_ids {
-                if let Ok(Some(metadata)) = self.get_joker_metadata(joker_id) {
-                    let _ = dict.set_item(format!("{joker_id:?}"), metadata);
+            // Acquire registry lock once for batch operation - fixes N+1 pattern
+            if let Ok(all_definitions) = registry::all_definitions() {
+                let definition_map: HashMap<JokerId, &JokerDefinition> =
+                    all_definitions.iter().map(|def| (def.id, def)).collect();
+
+                for joker_id in joker_ids {
+                    if let Some(definition) = definition_map.get(&joker_id) {
+                        let is_unlocked = definition
+                            .unlock_condition
+                            .as_ref()
+                            .map(|condition| evaluate_unlock_condition(condition, &self.game))
+                            .unwrap_or(true);
+                        let metadata = JokerMetadata::from_definition(definition, is_unlocked);
+                        let _ = dict.set_item(format!("{joker_id:?}"), metadata);
+                    }
                 }
             }
 
@@ -218,12 +237,16 @@ impl GameEngine {
         pyo3::Python::with_gil(|py| {
             let dict = pyo3::types::PyDict::new(py);
 
-            // Get all available jokers and their metadata
+            // Get all available jokers and their metadata - single registry access fixes N+1 pattern
             if let Ok(all_jokers) = registry::all_definitions() {
                 for definition in all_jokers {
-                    if let Ok(Some(metadata)) = self.get_joker_metadata(definition.id) {
-                        let _ = dict.set_item(format!("{0:?}", definition.id), metadata);
-                    }
+                    let is_unlocked = definition
+                        .unlock_condition
+                        .as_ref()
+                        .map(|condition| evaluate_unlock_condition(condition, &self.game))
+                        .unwrap_or(true);
+                    let metadata = JokerMetadata::from_definition(&definition, is_unlocked);
+                    let _ = dict.set_item(format!("{0:?}", definition.id), metadata);
                 }
             }
 
@@ -403,20 +426,27 @@ impl GameEngine {
     }
 
     /// Search jokers by name or description
-    fn search_jokers(&self, query: &str) -> Vec<JokerMetadata> {
+    fn search_jokers(&self, query: &str) -> PyResult<Vec<JokerMetadata>> {
+        // Input validation for security
+        if query.len() > MAX_SEARCH_QUERY_LENGTH {
+            return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(format!(
+                "Search query too long (max {MAX_SEARCH_QUERY_LENGTH} characters)"
+            )));
+        }
+
         let query_lower = query.to_lowercase();
 
         if let Ok(all_jokers) = registry::all_definitions() {
-            all_jokers
+            Ok(all_jokers
                 .into_iter()
                 .filter(|def| {
                     def.name.to_lowercase().contains(&query_lower)
                         || def.description.to_lowercase().contains(&query_lower)
                 })
                 .filter_map(|def| self.get_joker_metadata(def.id).ok().flatten())
-                .collect()
+                .collect())
         } else {
-            Vec::new()
+            Ok(Vec::new())
         }
     }
 
@@ -629,7 +659,31 @@ impl GameEngine {
     }
 
     /// Set custom data for a specific joker (string values only for simplicity)
-    fn set_joker_custom_data(&mut self, joker_id: JokerId, key: &str, value: String) -> bool {
+    fn set_joker_custom_data(
+        &mut self,
+        joker_id: JokerId,
+        key: &str,
+        value: String,
+    ) -> PyResult<bool> {
+        // Input validation for security
+        if key.len() > MAX_CUSTOM_DATA_KEY_LENGTH {
+            return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(format!(
+                "Key too long (max {MAX_CUSTOM_DATA_KEY_LENGTH} characters)"
+            )));
+        }
+
+        if value.len() > MAX_CUSTOM_DATA_VALUE_LENGTH {
+            return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(format!(
+                "Value too long (max {MAX_CUSTOM_DATA_VALUE_LENGTH} characters)"
+            )));
+        }
+
+        if key.is_empty() {
+            return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
+                "Key cannot be empty",
+            ));
+        }
+
         // Check if joker is active
         let joker_exists = self.game.jokers.iter().any(|j| j.to_joker_id() == joker_id);
 
@@ -638,14 +692,14 @@ impl GameEngine {
             self.game.joker_state_manager.ensure_state_exists(joker_id);
 
             // Set the custom data
-            matches!(
+            Ok(matches!(
                 self.game
                     .joker_state_manager
                     .set_custom_data(joker_id, key, value),
                 Ok(())
-            )
+            ))
         } else {
-            false
+            Ok(false)
         }
     }
 
@@ -946,15 +1000,7 @@ fn evaluate_unlock_condition(condition: &UnlockCondition, game: &Game) -> bool {
     }
 }
 
-/// Calculate joker cost based on rarity
-fn calculate_joker_cost(rarity: JokerRarity) -> i32 {
-    match rarity {
-        JokerRarity::Common => 3,
-        JokerRarity::Uncommon => 6,
-        JokerRarity::Rare => 8,
-        JokerRarity::Legendary => 20,
-    }
-}
+// calculate_joker_cost function moved to core/src/joker_registry.rs to avoid duplication
 
 /// Extract joker parameters based on joker implementation type
 fn extract_joker_parameters(joker_id: JokerId, py: pyo3::Python) -> pyo3::PyObject {

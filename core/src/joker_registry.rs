@@ -5,6 +5,16 @@ use pyo3::{pyclass, pymethods};
 use std::collections::HashMap;
 use std::sync::{Arc, OnceLock, RwLock};
 
+/// Calculate joker cost based on rarity - centralized function to avoid duplication
+pub fn calculate_joker_cost(rarity: JokerRarity) -> i32 {
+    match rarity {
+        JokerRarity::Common => 3,
+        JokerRarity::Uncommon => 6,
+        JokerRarity::Rare => 8,
+        JokerRarity::Legendary => 20,
+    }
+}
+
 /// Definition of a joker's metadata and properties
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "python", pyclass)]
@@ -119,7 +129,7 @@ impl JokerRegistry {
         self.factories
             .get(id)
             .map(|factory| factory())
-            .ok_or_else(|| GameError::JokerNotFound(format!("{id:?}")))
+            .ok_or(GameError::JokerNotFound)
     }
 
     /// Returns all registered joker definitions

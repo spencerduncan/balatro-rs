@@ -1,5 +1,5 @@
 use crate::joker::{JokerId, JokerRarity};
-use crate::joker_registry::{JokerDefinition, UnlockCondition};
+use crate::joker_registry::{calculate_joker_cost, JokerDefinition, UnlockCondition};
 #[cfg(feature = "python")]
 use pyo3::{pyclass, pymethods};
 use serde::{Deserialize, Serialize};
@@ -84,15 +84,7 @@ impl JokerMetadata {
     }
 }
 
-/// Calculate joker cost based on rarity
-fn calculate_joker_cost(rarity: JokerRarity) -> i32 {
-    match rarity {
-        JokerRarity::Common => 3,
-        JokerRarity::Uncommon => 6,
-        JokerRarity::Rare => 8,
-        JokerRarity::Legendary => 20,
-    }
-}
+// calculate_joker_cost function moved to joker_registry.rs to avoid duplication
 
 /// Determine the effect type based on joker ID and description
 fn determine_effect_type(id: &JokerId, description: &str) -> &'static str {
@@ -198,15 +190,15 @@ impl JokerMetadata {
     /// Get the joker name
     #[cfg(feature = "python")]
     #[getter]
-    fn name(&self) -> String {
-        self.name.clone()
+    fn name(&self) -> &str {
+        &self.name
     }
 
     /// Get the joker description
     #[cfg(feature = "python")]
     #[getter]
-    fn description(&self) -> String {
-        self.description.clone()
+    fn description(&self) -> &str {
+        &self.description
     }
 
     /// Get the joker rarity
@@ -233,15 +225,15 @@ impl JokerMetadata {
     /// Get the effect type
     #[cfg(feature = "python")]
     #[getter]
-    fn effect_type(&self) -> String {
-        self.effect_type.clone()
+    fn effect_type(&self) -> &str {
+        &self.effect_type
     }
 
     /// Get the effect description
     #[cfg(feature = "python")]
     #[getter]
-    fn effect_description(&self) -> String {
-        self.effect_description.clone()
+    fn effect_description(&self) -> &str {
+        &self.effect_description
     }
 
     /// Get triggers
@@ -265,7 +257,7 @@ impl JokerMetadata {
         self.uses_state
     }
 
-    /// Get unlock condition
+    /// Get unlock condition  
     #[cfg(feature = "python")]
     #[getter]
     fn unlock_condition(&self) -> Option<UnlockCondition> {
