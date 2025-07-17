@@ -6,8 +6,17 @@ use crate::joker::JokerId;
 // Re-export legacy shop for backward compatibility
 pub use legacy::*;
 
+// Re-export pack types for convenience
+pub use packs::PackType;
+
 // Legacy shop implementation
 mod legacy;
+
+// Pack system implementation
+pub mod packs;
+
+// Weighted shop generation implementation
+pub mod generation;
 
 /// Enhanced shop trait for generating shop contents with weighted randomization
 /// and support for various item types including jokers, consumables, vouchers, and packs.
@@ -124,6 +133,7 @@ pub trait ShopGenerator {
 /// - **Availability**: Some items may be limited by game progression
 /// - **Effects**: Items affect different aspects of the game (scoring, economy, deck composition)
 #[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ShopItem {
     /// A joker card identified by its ID.
     ///
@@ -176,14 +186,7 @@ impl ShopItem {
                 ConsumableType::Spectral => 4,
             },
             ShopItem::Voucher(_) => 10, // Standard voucher cost
-            ShopItem::Pack(pack_type) => match pack_type {
-                PackType::Standard => 4,
-                PackType::Jumbo => 6,
-                PackType::Mega => 8,
-                PackType::Spectral => 4,
-                PackType::Enhanced => 6,
-                PackType::Variety => 5,
-            },
+            ShopItem::Pack(pack_type) => pack_type.base_cost(),
             ShopItem::PlayingCard(_) => 2, // Standard playing card cost
         }
     }
@@ -212,31 +215,16 @@ impl ShopItem {
 
 /// Types of consumable cards available in the shop
 #[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ConsumableType {
     Tarot,
     Planet,
     Spectral,
 }
 
-/// Types of booster packs available in the shop
-#[derive(Debug, Clone, PartialEq)]
-pub enum PackType {
-    /// Standard pack with playing cards
-    Standard,
-    /// Jumbo pack with more playing cards
-    Jumbo,
-    /// Mega pack with even more playing cards  
-    Mega,
-    /// Spectral pack with spectral cards
-    Spectral,
-    /// Standard pack with enhanced cards
-    Enhanced,
-    /// Variety pack with mixed content
-    Variety,
-}
-
 /// Voucher identifiers for shop vouchers
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum VoucherId {
     Overstock,
     ClearancePackage,
@@ -463,11 +451,11 @@ mod tests {
     #[test]
     fn test_pack_type_enum() {
         let standard_pack = PackType::Standard;
-        let jumbo_pack = PackType::Jumbo;
-        let mega_pack = PackType::Mega;
+        let buffoon_pack = PackType::Buffoon;
+        let mega_pack = PackType::MegaBuffoon;
 
-        assert_ne!(standard_pack, jumbo_pack);
-        assert_ne!(jumbo_pack, mega_pack);
+        assert_ne!(standard_pack, buffoon_pack);
+        assert_ne!(buffoon_pack, mega_pack);
     }
 
     #[test]
@@ -600,11 +588,13 @@ mod tests {
     #[test]
     fn test_pack_type_costs() {
         assert_eq!(ShopItem::Pack(PackType::Standard).base_cost(), 4);
-        assert_eq!(ShopItem::Pack(PackType::Jumbo).base_cost(), 6);
-        assert_eq!(ShopItem::Pack(PackType::Mega).base_cost(), 8);
+        assert_eq!(ShopItem::Pack(PackType::Buffoon).base_cost(), 4);
+        assert_eq!(ShopItem::Pack(PackType::Arcana).base_cost(), 4);
+        assert_eq!(ShopItem::Pack(PackType::Celestial).base_cost(), 4);
         assert_eq!(ShopItem::Pack(PackType::Spectral).base_cost(), 4);
-        assert_eq!(ShopItem::Pack(PackType::Enhanced).base_cost(), 6);
-        assert_eq!(ShopItem::Pack(PackType::Variety).base_cost(), 5);
+        assert_eq!(ShopItem::Pack(PackType::MegaBuffoon).base_cost(), 8);
+        assert_eq!(ShopItem::Pack(PackType::MegaArcana).base_cost(), 8);
+        assert_eq!(ShopItem::Pack(PackType::MegaCelestial).base_cost(), 8);
     }
 
     #[test]
