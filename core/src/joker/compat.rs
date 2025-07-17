@@ -362,7 +362,7 @@ impl Jokers {
     }
 
     /// Convert this Jokers variant to its corresponding JokerId
-    pub(crate) fn to_joker_id(&self) -> crate::joker::JokerId {
+    pub fn to_joker_id(&self) -> crate::joker::JokerId {
         use crate::joker::JokerId;
         match self {
             Jokers::TheJoker(_) => JokerId::Joker,
@@ -434,10 +434,8 @@ mod tests {
     use super::*;
 
     fn score_before_after_joker(joker: Jokers, hand: SelectHand, before: usize, after: usize) {
-        let mut g = Game {
-            stage: Stage::Blind(Blind::Small),
-            ..Default::default()
-        };
+        let mut g = Game::default();
+        g.stage = Stage::Blind(Blind::Small);
 
         // First score without joker
         let score = g.calc_score(hand.best_hand().unwrap());

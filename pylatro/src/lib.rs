@@ -3,7 +3,8 @@ use balatro_rs::card::Card;
 use balatro_rs::config::Config;
 use balatro_rs::error::GameError;
 use balatro_rs::game::Game;
-use balatro_rs::joker::Jokers;
+use balatro_rs::joker::{JokerId, JokerRarity, Jokers};
+use balatro_rs::joker_registry::{registry, JokerDefinition, UnlockCondition};
 use balatro_rs::stage::{End, Stage};
 use pyo3::prelude::*;
 
@@ -42,6 +43,60 @@ impl GameEngine {
         let space = self.game.gen_action_space();
         let action = space.to_action(index, &self.game)?;
         Ok(format!("{action}"))
+    }
+
+    /// Get joker information by ID
+    fn get_joker_info(&self, joker_id: JokerId) -> Result<Option<JokerDefinition>, GameError> {
+        registry::get_definition(&joker_id)
+    }
+
+    /// Get all available joker definitions, optionally filtered by rarity
+    #[pyo3(signature = (rarity=None))]
+    fn get_available_jokers(
+        &self,
+        rarity: Option<JokerRarity>,
+    ) -> Result<Vec<JokerDefinition>, GameError> {
+        match rarity {
+            Some(r) => registry::definitions_by_rarity(r),
+            None => registry::all_definitions(),
+        }
+    }
+
+    /// Check if player can afford and has space for a joker
+    fn can_buy_joker(&self, joker_id: JokerId) -> bool {
+        // Check if player has space
+        if self.game.joker_count() >= self.game.config.joker_slots_max {
+            return false;
+        }
+
+        // Check if player can afford it
+        if let Ok(Some(definition)) = registry::get_definition(&joker_id) {
+            // Get base cost based on rarity
+            let cost = match definition.rarity {
+                JokerRarity::Common => 3,
+                JokerRarity::Uncommon => 6,
+                JokerRarity::Rare => 8,
+                JokerRarity::Legendary => 20,
+            };
+            return self.game.money >= cost;
+        }
+
+        false
+    }
+
+    /// Get the cost of a specific joker
+    fn get_joker_cost(&self, joker_id: JokerId) -> Result<usize, GameError> {
+        let definition = registry::get_definition(&joker_id)?
+            .ok_or_else(|| GameError::JokerNotFound(format!("{joker_id:?}")))?;
+
+        let cost = match definition.rarity {
+            JokerRarity::Common => 3,
+            JokerRarity::Uncommon => 6,
+            JokerRarity::Rare => 8,
+            JokerRarity::Legendary => 20,
+        };
+
+        Ok(cost)
     }
 
     #[getter]
@@ -121,6 +176,25 @@ impl GameState {
     fn jokers(&self) -> Vec<Jokers> {
         self.game.jokers.clone()
     }
+
+    /// Get joker IDs using the new JokerId system
+    #[getter]
+    fn joker_ids(&self) -> Vec<JokerId> {
+        self.game.jokers.iter().map(|j| j.to_joker_id()).collect()
+    }
+
+    /// Get number of joker slots currently in use
+    #[getter]
+    fn joker_slots_used(&self) -> usize {
+        self.game.joker_count()
+    }
+
+    /// Get total number of joker slots available
+    #[getter]
+    fn joker_slots_total(&self) -> usize {
+        self.game.config.joker_slots_max
+    }
+
     #[getter]
     fn money(&self) -> usize {
         self.game.money
@@ -140,6 +214,129 @@ impl GameState {
         }
     }
 
+    // === BACKWARDS COMPATIBILITY METHODS ===
+    // These methods are deprecated and provided for backwards compatibility only.
+    // New code should use GameEngine for actions and GameState only for reading state.
+
+    /// DEPRECATED: Use GameEngine.gen_actions() instead
+    /// This method is provided for backwards compatibility only.
+    fn gen_actions(&self) -> PyResult<Vec<Action>> {
+        // Issue deprecation warning
+        Python::with_gil(|py| -> PyResult<()> {
+            let warnings = py.import("warnings")?;
+            warnings.call_method1(
+                "warn",
+                ("GameState.gen_actions() is deprecated. Use GameEngine.gen_actions() instead. GameState should only be used for reading game state, not performing actions.",),
+            )?;
+            warnings.call_method1(
+                "warn",
+                ("This method will be removed in version 2.0. Migration guide: https://github.com/spencerduncan/balatro-rs/wiki/Python-API-Migration",),
+            )?;
+            Ok(())
+        })?;
+
+        // Create temporary GameEngine for delegation
+        let temp_engine = GameEngine {
+            game: self.game.clone(),
+        };
+        Ok(temp_engine.gen_actions())
+    }
+
+    /// DEPRECATED: Use GameEngine.gen_action_space() instead
+    /// This method is provided for backwards compatibility only.
+    fn gen_action_space(&self) -> PyResult<Vec<usize>> {
+        // Issue deprecation warning
+        Python::with_gil(|py| -> PyResult<()> {
+            let warnings = py.import("warnings")?;
+            warnings.call_method1(
+                "warn",
+                ("GameState.gen_action_space() is deprecated. Use GameEngine.gen_action_space() instead. GameState should only be used for reading game state, not performing actions.",),
+            )?;
+            Ok(())
+        })?;
+
+        // Create temporary GameEngine for delegation
+        let temp_engine = GameEngine {
+            game: self.game.clone(),
+        };
+        Ok(temp_engine.gen_action_space())
+    }
+
+    /// DEPRECATED: Use GameEngine.get_action_name() instead
+    /// This method is provided for backwards compatibility only.
+    fn get_action_name(&self, index: usize) -> PyResult<String> {
+        // Issue deprecation warning
+        Python::with_gil(|py| -> PyResult<()> {
+            let warnings = py.import("warnings")?;
+            warnings.call_method1(
+                "warn",
+                ("GameState.get_action_name() is deprecated. Use GameEngine.get_action_name() instead. GameState should only be used for reading game state, not performing actions.",),
+            )?;
+            Ok(())
+        })?;
+
+        // Create temporary GameEngine for delegation
+        let temp_engine = GameEngine {
+            game: self.game.clone(),
+        };
+        temp_engine
+            .get_action_name(index)
+            .map_err(|e| PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!("{e}")))
+    }
+
+    /// DEPRECATED: This method cannot work on read-only GameState
+    /// Use GameEngine.handle_action() instead on a mutable GameEngine instance.
+    fn handle_action(&self, _action: Action) -> PyResult<()> {
+        // Issue deprecation warning and error
+        Python::with_gil(|py| -> PyResult<()> {
+            let warnings = py.import("warnings")?;
+            warnings.call_method1(
+                "warn",
+                ("GameState.handle_action() is deprecated and cannot modify game state. Use GameEngine.handle_action() instead on a mutable GameEngine instance.",),
+            )?;
+            Ok(())
+        })?;
+
+        Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(
+            "GameState.handle_action() is deprecated and non-functional. GameState is read-only. Use GameEngine.handle_action() instead on a mutable GameEngine instance."
+        ))
+    }
+
+    /// DEPRECATED: This method cannot work on read-only GameState
+    /// Use GameEngine.handle_action_index() instead on a mutable GameEngine instance.
+    fn handle_action_index(&self, _index: usize) -> PyResult<()> {
+        // Issue deprecation warning and error
+        Python::with_gil(|py| -> PyResult<()> {
+            let warnings = py.import("warnings")?;
+            warnings.call_method1(
+                "warn",
+                ("GameState.handle_action_index() is deprecated and cannot modify game state. Use GameEngine.handle_action_index() instead on a mutable GameEngine instance.",),
+            )?;
+            Ok(())
+        })?;
+
+        Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(
+            "GameState.handle_action_index() is deprecated and non-functional. GameState is read-only. Use GameEngine.handle_action_index() instead on a mutable GameEngine instance."
+        ))
+    }
+
+    /// DEPRECATED: Use GameEngine.is_over instead
+    /// This property is provided for backwards compatibility only.
+    #[getter]
+    fn is_over(&self) -> PyResult<bool> {
+        // Issue deprecation warning
+        Python::with_gil(|py| -> PyResult<()> {
+            let warnings = py.import("warnings")?;
+            warnings.call_method1(
+                "warn",
+                ("GameState.is_over is deprecated. Use GameEngine.is_over instead.",),
+            )?;
+            Ok(())
+        })?;
+
+        Ok(self.game.is_over())
+    }
+
     fn __repr__(&self) -> String {
         format!("GameState:\n{}", self.game)
     }
@@ -151,5 +348,12 @@ fn pylatro(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<GameEngine>()?;
     m.add_class::<GameState>()?;
     m.add_class::<Stage>()?;
+
+    // Add new JokerId-based types
+    m.add_class::<JokerId>()?;
+    m.add_class::<JokerRarity>()?;
+    m.add_class::<JokerDefinition>()?;
+    m.add_class::<UnlockCondition>()?;
+
     Ok(())
 }

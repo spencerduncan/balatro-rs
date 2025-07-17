@@ -724,8 +724,7 @@ mod tests {
         assert_eq!(result.jokers_processed, 1);
         assert_eq!(result.retriggered_count, 0);
         assert!(result.errors.is_empty());
-        // Processing time can be 0 on fast systems, just check it's not negative
-        assert!(result.processing_time_micros >= 0);
+        // Processing time can be 0 on fast systems
         assert_eq!(result.accumulated_effect.chips, 10);
         assert_eq!(result.accumulated_effect.mult, 5);
     }

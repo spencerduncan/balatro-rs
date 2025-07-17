@@ -1,23 +1,31 @@
 use crate::action::{Action, MoveDirection};
 use crate::ante::Ante;
 use crate::available::Available;
+use crate::boss_blinds::BossBlindState;
 use crate::card::Card;
 use crate::config::Config;
+use crate::consumables::ConsumableId;
 use crate::deck::Deck;
 use crate::effect::{EffectRegistry, Effects};
 use crate::error::GameError;
 use crate::hand::{MadeHand, SelectHand};
 use crate::joker::{JokerId, Jokers, OldJoker as Joker};
 use crate::joker_effect_processor::JokerEffectProcessor;
-use crate::joker_state::JokerStateManager;
+use crate::joker_state::{JokerState, JokerStateManager};
 use crate::rank::HandRank;
+use crate::shop::packs::{OpenPackState, Pack};
 use crate::shop::Shop;
 use crate::stage::{Blind, End, Stage};
+use crate::state_version::StateVersion;
+use crate::vouchers::VoucherCollection;
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
 
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone)]
 pub struct Game {
     pub config: Config,
@@ -35,8 +43,17 @@ pub struct Game {
 
     // jokers and their effects
     pub jokers: Vec<Jokers>,
+
+    #[cfg_attr(feature = "serde", serde(skip, default = "EffectRegistry::new"))]
     pub effect_registry: EffectRegistry,
+    
+    #[cfg_attr(feature = "serde", serde(skip, default = "JokerEffectProcessor::new"))]
     pub joker_effect_processor: JokerEffectProcessor,
+
+    #[cfg_attr(
+        feature = "serde",
+        serde(skip, default = "default_joker_state_manager")
+    )]
     pub joker_state_manager: Arc<JokerStateManager>,
 
     // playing
@@ -52,6 +69,31 @@ pub struct Game {
 
     // hand type tracking for this game run
     pub hand_type_counts: HashMap<HandRank, u32>,
+
+    // Extended state for consumables, vouchers, and boss blinds
+    /// Consumable cards currently in the player's hand
+    pub consumables_in_hand: Vec<ConsumableId>,
+
+    /// Collection of owned vouchers with purchase tracking
+    pub vouchers: VoucherCollection,
+
+    /// Current boss blind state and effects
+    pub boss_blind_state: BossBlindState,
+
+    /// Pack system state
+    /// Packs currently in the player's inventory
+    pub pack_inventory: Vec<Pack>,
+
+    /// Currently opened pack that player is choosing from
+    pub open_pack: Option<OpenPackState>,
+
+    /// Version of the game state for serialization compatibility
+    pub state_version: StateVersion,
+}
+
+#[cfg(feature = "serde")]
+fn default_joker_state_manager() -> Arc<JokerStateManager> {
+    Arc::new(JokerStateManager::new())
 }
 
 impl Game {
@@ -81,6 +123,18 @@ impl Game {
             mult: config.base_mult,
             score: config.base_score,
             hand_type_counts: HashMap::new(),
+
+            // Initialize extended state fields
+            consumables_in_hand: Vec::new(),
+            vouchers: VoucherCollection::new(),
+            boss_blind_state: BossBlindState::new(),
+
+            // Initialize pack system fields
+            pack_inventory: Vec::new(),
+            open_pack: None,
+
+            state_version: StateVersion::current(),
+
             config,
         }
     }
@@ -407,6 +461,152 @@ impl Game {
         Ok(())
     }
 
+    /// Pack System Methods
+    /// Buy a pack of the specified type
+    pub(crate) fn buy_pack(
+        &mut self,
+        pack_type: crate::shop::packs::PackType,
+    ) -> Result<(), GameError> {
+        use crate::shop::packs::{DefaultPackGenerator, PackGenerator};
+
+        // Check if player has enough money
+        let cost = pack_type.base_cost();
+        if self.money < cost {
+            return Err(GameError::InvalidBalance);
+        }
+
+        // Generate the pack
+        let generator = DefaultPackGenerator;
+        let mut pack = generator.generate_pack(pack_type, self)?;
+        pack.generate_contents(self)?;
+
+        // Deduct money
+        self.money -= cost;
+
+        // Add pack to inventory
+        self.pack_inventory.push(pack);
+
+        Ok(())
+    }
+
+    /// Open a pack from inventory
+    pub(crate) fn open_pack(&mut self, pack_id: usize) -> Result<(), GameError> {
+        // Check if pack exists in inventory
+        if pack_id >= self.pack_inventory.len() {
+            return Err(GameError::InvalidAction);
+        }
+
+        // Check if another pack is already open
+        if self.open_pack.is_some() {
+            return Err(GameError::InvalidAction);
+        }
+
+        // Remove pack from inventory and open it
+        let pack = self.pack_inventory.remove(pack_id);
+        self.open_pack = Some(OpenPackState::new(pack, pack_id));
+
+        Ok(())
+    }
+
+    /// Select an option from the currently opened pack
+    pub(crate) fn select_from_pack(
+        &mut self,
+        pack_id: usize,
+        option_index: usize,
+    ) -> Result<(), GameError> {
+        // Check if a pack is open
+        let open_pack_state = self.open_pack.take().ok_or(GameError::InvalidAction)?;
+
+        // Verify pack ID matches
+        if open_pack_state.pack_id != pack_id {
+            return Err(GameError::InvalidAction);
+        }
+
+        // Select the option
+        let selected_item = open_pack_state.pack.select_option(option_index)?;
+
+        // Process the selected item based on its type
+        self.process_pack_item(selected_item)?;
+
+        Ok(())
+    }
+
+    /// Skip the currently opened pack
+    pub(crate) fn skip_pack(&mut self, pack_id: usize) -> Result<(), GameError> {
+        // Check if a pack is open
+        let open_pack_state = self.open_pack.take().ok_or(GameError::InvalidAction)?;
+
+        // Verify pack ID matches
+        if open_pack_state.pack_id != pack_id {
+            return Err(GameError::InvalidAction);
+        }
+
+        // Check if pack can be skipped
+        if !open_pack_state.pack.can_skip {
+            return Err(GameError::InvalidAction);
+        }
+
+        // Pack is simply consumed (no further action needed)
+        Ok(())
+    }
+
+    /// Process an item selected from a pack
+    fn process_pack_item(&mut self, item: crate::shop::ShopItem) -> Result<(), GameError> {
+        use crate::shop::ShopItem;
+
+        match item {
+            ShopItem::PlayingCard(card) => {
+                // Add card to deck
+                self.deck.extend(vec![card]);
+                Ok(())
+            }
+            ShopItem::Joker(_joker_id) => {
+                // Convert joker_id to Jokers and add to jokers
+                // This is a simplified implementation
+                use crate::joker::compat::TheJoker;
+                let joker = Jokers::TheJoker(TheJoker {});
+                self.jokers.push(joker);
+                Ok(())
+            }
+            ShopItem::Consumable(consumable_type) => {
+                use rand::seq::SliceRandom;
+
+                // Select a random consumable of the appropriate type
+                let consumable_id = match consumable_type {
+                    crate::shop::ConsumableType::Tarot => {
+                        let tarot_cards = ConsumableId::tarot_cards();
+                        tarot_cards
+                            .choose(&mut rand::thread_rng())
+                            .copied()
+                            .unwrap_or(ConsumableId::TheFool)
+                    }
+                    crate::shop::ConsumableType::Planet => {
+                        let planet_cards = ConsumableId::planet_cards();
+                        planet_cards
+                            .choose(&mut rand::thread_rng())
+                            .copied()
+                            .unwrap_or(ConsumableId::Mercury)
+                    }
+                    crate::shop::ConsumableType::Spectral => {
+                        let spectral_cards = ConsumableId::spectral_cards();
+                        spectral_cards
+                            .choose(&mut rand::thread_rng())
+                            .copied()
+                            .unwrap_or(ConsumableId::Familiar)
+                    }
+                };
+
+                // Add consumable to hand
+                self.consumables_in_hand.push(consumable_id);
+                Ok(())
+            }
+            _ => {
+                // Other item types not yet implemented
+                Ok(())
+            }
+        }
+    }
+
     fn select_blind(&mut self, blind: Blind) -> Result<(), GameError> {
         // can only set blind if stage is pre blind
         if self.stage != Stage::PreBlind() {
@@ -514,6 +714,16 @@ impl Game {
                 Stage::PreBlind() => self.select_blind(blind),
                 _ => Err(GameError::InvalidAction),
             },
+            Action::BuyPack { pack_type } => match self.stage {
+                Stage::Shop() => self.buy_pack(pack_type),
+                _ => Err(GameError::InvalidStage),
+            },
+            Action::OpenPack { pack_id } => self.open_pack(pack_id),
+            Action::SelectFromPack {
+                pack_id,
+                option_index,
+            } => self.select_from_pack(pack_id, option_index),
+            Action::SkipPack { pack_id } => self.skip_pack(pack_id),
         }
     }
 
@@ -695,6 +905,224 @@ impl fmt::Display for Game {
 impl Default for Game {
     fn default() -> Self {
         Self::new(Config::default())
+    }
+}
+
+/// Serializable representation of game state, excluding non-serializable fields
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct SaveableGameState {
+    pub version: u32,
+    pub timestamp: u64,
+    pub config: Config,
+    pub shop: Shop,
+    pub deck: Deck,
+    pub available: Available,
+    pub discarded: Vec<Card>,
+    pub blind: Option<Blind>,
+    pub stage: Stage,
+    pub ante_start: Ante,
+    pub ante_end: Ante,
+    pub ante_current: Ante,
+    pub action_history: Vec<Action>,
+    pub round: usize,
+    pub jokers: Vec<Jokers>,
+    pub joker_states: HashMap<JokerId, JokerState>,
+    pub plays: usize,
+    pub discards: usize,
+    pub reward: usize,
+    pub money: usize,
+    pub chips: usize,
+    pub mult: usize,
+    pub score: usize,
+    pub hand_type_counts: HashMap<HandRank, u32>,
+    pub consumables_in_hand: Vec<ConsumableId>,
+    pub vouchers: VoucherCollection,
+    pub boss_blind_state: BossBlindState,
+    pub pack_inventory: Vec<Pack>,
+    pub open_pack: Option<OpenPackState>,
+    pub state_version: StateVersion,
+}
+
+const SAVE_VERSION: u32 = 1;
+
+/// Errors that can occur during save/load operations
+#[derive(Debug)]
+pub enum SaveLoadError {
+    SerializationError(serde_json::Error),
+    DeserializationError(serde_json::Error),
+    InvalidVersion(u32),
+    MissingField(String),
+    ValidationError(String),
+}
+
+impl fmt::Display for SaveLoadError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            SaveLoadError::SerializationError(e) => write!(f, "Serialization error: {e}"),
+            SaveLoadError::DeserializationError(e) => write!(f, "Deserialization error: {e}"),
+            SaveLoadError::InvalidVersion(v) => write!(f, "Unsupported save version: {v}"),
+            SaveLoadError::MissingField(field) => write!(f, "Missing required field: {field}"),
+            SaveLoadError::ValidationError(msg) => write!(f, "Validation error: {msg}"),
+        }
+    }
+}
+
+impl std::error::Error for SaveLoadError {}
+
+impl Game {
+    /// Save the current game state to JSON string
+    pub fn save_state_to_json(&self) -> Result<String, SaveLoadError> {
+        // Extract joker states from the state manager
+        let joker_states = self.joker_state_manager.snapshot_all();
+
+        let saveable_state = SaveableGameState {
+            version: SAVE_VERSION,
+            timestamp: std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_secs(),
+            config: self.config.clone(),
+            shop: self.shop.clone(),
+            deck: self.deck.clone(),
+            available: self.available.clone(),
+            discarded: self.discarded.clone(),
+            blind: self.blind,
+            stage: self.stage,
+            ante_start: self.ante_start,
+            ante_end: self.ante_end,
+            ante_current: self.ante_current,
+            action_history: self.action_history.clone(),
+            round: self.round,
+            jokers: self.jokers.clone(),
+            joker_states,
+            plays: self.plays,
+            discards: self.discards,
+            reward: self.reward,
+            money: self.money,
+            chips: self.chips,
+            mult: self.mult,
+            score: self.score,
+            hand_type_counts: self.hand_type_counts.clone(),
+            consumables_in_hand: self.consumables_in_hand.clone(),
+            vouchers: self.vouchers.clone(),
+            boss_blind_state: self.boss_blind_state.clone(),
+            pack_inventory: self.pack_inventory.clone(),
+            open_pack: self.open_pack.clone(),
+            state_version: self.state_version.clone(),
+        };
+
+        serde_json::to_string_pretty(&saveable_state).map_err(SaveLoadError::SerializationError)
+    }
+
+    /// Load game state from JSON string
+    pub fn load_state_from_json(json: &str) -> Result<Self, SaveLoadError> {
+        let saveable_state: SaveableGameState =
+            serde_json::from_str(json).map_err(SaveLoadError::DeserializationError)?;
+
+        // Validate version
+        if saveable_state.version > SAVE_VERSION {
+            return Err(SaveLoadError::InvalidVersion(saveable_state.version));
+        }
+
+        // Create new game instance with reconstructed state
+        let mut game = Game {
+            config: saveable_state.config,
+            shop: saveable_state.shop,
+            deck: saveable_state.deck,
+            available: saveable_state.available,
+            discarded: saveable_state.discarded,
+            blind: saveable_state.blind,
+            stage: saveable_state.stage,
+            ante_start: saveable_state.ante_start,
+            ante_end: saveable_state.ante_end,
+            ante_current: saveable_state.ante_current,
+            action_history: saveable_state.action_history,
+            round: saveable_state.round,
+            jokers: saveable_state.jokers,
+            plays: saveable_state.plays,
+            discards: saveable_state.discards,
+            reward: saveable_state.reward,
+            money: saveable_state.money,
+            chips: saveable_state.chips,
+            mult: saveable_state.mult,
+            score: saveable_state.score,
+            hand_type_counts: saveable_state.hand_type_counts,
+            consumables_in_hand: saveable_state.consumables_in_hand,
+            vouchers: saveable_state.vouchers,
+            boss_blind_state: saveable_state.boss_blind_state,
+            pack_inventory: saveable_state.pack_inventory,
+            open_pack: saveable_state.open_pack,
+            state_version: saveable_state.state_version,
+            // Non-serializable fields must be reconstructed
+            effect_registry: EffectRegistry::new(),
+            joker_effect_processor: JokerEffectProcessor::new(),
+            joker_state_manager: Arc::new(JokerStateManager::new()),
+        };
+
+        // Restore joker states to the state manager
+        game.joker_state_manager
+            .restore_from_snapshot(saveable_state.joker_states);
+
+        // Reconstruct effect registry from jokers
+        game.reconstruct_effects();
+
+        Ok(game)
+    }
+
+    /// Reconstruct the effect registry from current jokers
+    fn reconstruct_effects(&mut self) {
+        self.effect_registry = EffectRegistry::new();
+
+        // Re-register all jokers with the effect registry
+        let jokers = self.jokers.clone(); // Clone to avoid borrowing issues
+        for joker in jokers {
+            let effects = joker.effects(self);
+            for effect in effects {
+                match effect {
+                    Effects::OnPlay(_) => self.effect_registry.on_play.push(effect),
+                    Effects::OnDiscard(_) => self.effect_registry.on_discard.push(effect),
+                    Effects::OnScore(_) => self.effect_registry.on_score.push(effect),
+                    Effects::OnHandRank(_) => self.effect_registry.on_handrank.push(effect),
+                }
+            }
+        }
+    }
+
+    /// Add a joker to the game (for testing purposes)
+    pub fn add_joker(&mut self, joker: Box<dyn crate::joker::Joker>) {
+        use crate::joker::compat::{GreedyJoker, TheJoker};
+
+        // Convert new joker trait to old Jokers enum for compatibility
+        // This is a simplified implementation for testing
+        let joker_id = joker.id();
+        let jokers_enum = match joker_id {
+            JokerId::Joker => Jokers::TheJoker(TheJoker::default()),
+            JokerId::GreedyJoker => Jokers::GreedyJoker(GreedyJoker::default()),
+            // Add more mappings as needed for testing
+            _ => Jokers::TheJoker(TheJoker::default()), // Default fallback
+        };
+
+        self.jokers.push(jokers_enum.clone());
+
+        // Initialize state for the new joker
+        self.joker_state_manager.ensure_state_exists(joker_id);
+
+        // Register with effect registry (do this separately to avoid borrowing issues)
+        self.register_joker_effects(jokers_enum);
+    }
+
+    /// Helper method to register joker effects
+    fn register_joker_effects(&mut self, joker: Jokers) {
+        // Clone joker for effects to avoid borrowing issues
+        let effects = joker.effects(self);
+        for effect in effects {
+            match effect {
+                Effects::OnPlay(_) => self.effect_registry.on_play.push(effect),
+                Effects::OnDiscard(_) => self.effect_registry.on_discard.push(effect),
+                Effects::OnScore(_) => self.effect_registry.on_score.push(effect),
+                Effects::OnHandRank(_) => self.effect_registry.on_handrank.push(effect),
+            }
+        }
     }
 }
 
