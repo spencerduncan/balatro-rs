@@ -1613,3 +1613,44 @@ mod tests {
         assert!(matches!(result.unwrap_err(), GameError::InvalidStage));
     }
 }
+
+// Custom Clone implementation for Game to handle atomic fields
+impl Clone for Game {
+    fn clone(&self) -> Self {
+        Game {
+            config: self.config.clone(),
+            shop: self.shop.clone(),
+            deck: self.deck.clone(),
+            available: self.available.clone(),
+            discarded: self.discarded.clone(),
+            blind: self.blind,
+            stage: self.stage,
+            ante_start: self.ante_start,
+            ante_end: self.ante_end,
+            ante_current: self.ante_current,
+            action_history: self.action_history.clone(),
+            round: self.round,
+            jokers: self.jokers.clone(),
+            effect_registry: EffectRegistry::new(), // Create new registry for clone
+            joker_state_manager: Arc::clone(&self.joker_state_manager),
+            
+            // Clone atomic values by loading and storing
+            plays: AtomicUsize::new(self.plays.load(Ordering::Acquire)),
+            discards: AtomicUsize::new(self.discards.load(Ordering::Acquire)),
+            reward: AtomicUsize::new(self.reward.load(Ordering::Acquire)),
+            money: AtomicUsize::new(self.money.load(Ordering::Acquire)),
+            chips: AtomicUsize::new(self.chips.load(Ordering::Acquire)),
+            mult: AtomicUsize::new(self.mult.load(Ordering::Acquire)),
+            score: AtomicUsize::new(self.score.load(Ordering::Acquire)),
+            
+            hand_type_counts: self.hand_type_counts.clone(),
+            concurrent_state_manager: Arc::clone(&self.concurrent_state_manager),
+            action_cache_enabled: self.action_cache_enabled,
+            last_action_cache_time: self.last_action_cache_time,
+            consumables_in_hand: self.consumables_in_hand.clone(),
+            vouchers: self.vouchers.clone(),
+            boss_blind_state: self.boss_blind_state.clone(),
+            state_version: self.state_version,
+        }
+    }
+}

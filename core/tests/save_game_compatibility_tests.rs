@@ -155,7 +155,10 @@ mod save_load_integration_tests {
         let loaded_game = Game::load_state_from_json(&saved_json).expect("Load should succeed");
 
         // Verify state preservation
-        assert_eq!(loaded_game.money.load(std::sync::atomic::Ordering::Acquire), 500);
+        assert_eq!(
+            loaded_game.money.load(std::sync::atomic::Ordering::Acquire),
+            500
+        );
         assert_eq!(loaded_game.ante_current, Ante::Three);
         assert_eq!(loaded_game.round, 5);
 
@@ -243,7 +246,10 @@ mod save_format_versioning_tests {
         assert!(result.is_ok());
 
         let loaded_game = result.unwrap();
-        assert_eq!(loaded_game.money.load(std::sync::atomic::Ordering::Acquire), 100);
+        assert_eq!(
+            loaded_game.money.load(std::sync::atomic::Ordering::Acquire),
+            100
+        );
         // Verify migration worked correctly
     }
 
