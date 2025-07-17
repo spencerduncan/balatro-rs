@@ -1633,7 +1633,6 @@ impl Clone for Game {
             jokers: self.jokers.clone(),
             effect_registry: EffectRegistry::new(), // Create new registry for clone
             joker_state_manager: Arc::clone(&self.joker_state_manager),
-            
             // Clone atomic values by loading and storing
             plays: AtomicUsize::new(self.plays.load(Ordering::Acquire)),
             discards: AtomicUsize::new(self.discards.load(Ordering::Acquire)),
@@ -1642,7 +1641,6 @@ impl Clone for Game {
             chips: AtomicUsize::new(self.chips.load(Ordering::Acquire)),
             mult: AtomicUsize::new(self.mult.load(Ordering::Acquire)),
             score: AtomicUsize::new(self.score.load(Ordering::Acquire)),
-            
             hand_type_counts: self.hand_type_counts.clone(),
             concurrent_state_manager: Arc::clone(&self.concurrent_state_manager),
             action_cache_enabled: self.action_cache_enabled,
