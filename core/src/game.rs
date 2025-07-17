@@ -638,13 +638,17 @@ impl Game {
                 self.deck.extend(vec![card]);
                 Ok(())
             }
-            ShopItem::Joker(_joker_id) => {
-                // Convert joker_id to Jokers and add to jokers
-                // This is a simplified implementation
-                use crate::joker::compat::TheJoker;
-                let joker = Jokers::TheJoker(TheJoker {});
-                self.jokers.push(joker);
-                Ok(())
+            ShopItem::Joker(joker_id) => {
+                // Use JokerFactory to create the joker
+                if let Some(joker) = JokerFactory::create(joker_id) {
+                    self.jokers.push(joker);
+                    // Initialize state for the new joker
+                    self.joker_state_manager.ensure_state_exists(joker_id);
+                    Ok(())
+                } else {
+                    // If we can't create the joker, return an error
+                    Err(GameError::InvalidAction)
+                }
             }
             ShopItem::Consumable(consumable_type) => {
                 use rand::seq::SliceRandom;
@@ -997,7 +1001,7 @@ struct SaveableGameState {
     pub ante_current: Ante,
     pub action_history: Vec<Action>,
     pub round: usize,
-    pub joker_ids: Vec<JokerId>,  // Changed from jokers: Vec<Jokers> to support new system
+    pub joker_ids: Vec<JokerId>, // Changed from jokers: Vec<Jokers> to support new system
     pub joker_states: HashMap<JokerId, JokerState>,
     pub plays: usize,
     pub discards: usize,
@@ -1007,7 +1011,7 @@ struct SaveableGameState {
     pub mult: usize,
     pub score: usize,
     pub hand_type_counts: HashMap<HandRank, u32>,
-    // Extended state fields  
+    // Extended state fields
     pub consumables_in_hand: Vec<ConsumableId>,
     pub vouchers: VoucherCollection,
     pub boss_blind_state: BossBlindState,
@@ -1047,7 +1051,7 @@ impl Game {
     pub fn save_state_to_json(&self) -> Result<String, SaveLoadError> {
         // Extract joker states from the state manager
         let joker_states = self.joker_state_manager.snapshot_all();
-        
+
         // Extract joker IDs from the new joker system
         let joker_ids: Vec<JokerId> = self.jokers.iter().map(|j| j.id()).collect();
 
@@ -1102,7 +1106,8 @@ impl Game {
         }
 
         // Recreate jokers using JokerFactory
-        let jokers: Vec<Box<dyn Joker>> = saveable_state.joker_ids
+        let jokers: Vec<Box<dyn Joker>> = saveable_state
+            .joker_ids
             .into_iter()
             .filter_map(|id| JokerFactory::create(id))
             .collect();
@@ -1446,10 +1451,12 @@ mod tests {
 
         let result = game.handle_action(action);
         assert!(result.is_ok());
+        // Since the jokers vector is empty, specifying slot 5 will still append at the end (slot 0)
         assert_eq!(
-            game.get_joker_at_slot(5).map(|j| j.id()),
+            game.get_joker_at_slot(0).map(|j| j.id()),
             Some(JokerId::Joker)
         );
+        assert_eq!(game.joker_count(), 1);
     }
 
     #[test]

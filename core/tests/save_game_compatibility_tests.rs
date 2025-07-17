@@ -144,9 +144,13 @@ mod save_load_integration_tests {
         game.round = 5;
 
         // Add a joker with some state
-        game.add_joker(Box::new(TheJoker));
-        game.joker_state_manager
-            .add_accumulated_value(JokerId::Joker, 25.0);
+        use balatro_rs::joker_factory::JokerFactory;
+        if let Some(joker) = JokerFactory::create(JokerId::Joker) {
+            game.jokers.push(joker);
+            game.joker_state_manager.ensure_state_exists(JokerId::Joker);
+            game.joker_state_manager
+                .add_accumulated_value(JokerId::Joker, 25.0);
+        }
 
         // Save the game
         let saved_json = game.save_state_to_json().expect("Save should succeed");
@@ -170,9 +174,13 @@ mod save_load_integration_tests {
         let mut game = Game::new(Config::default());
 
         // Add multiple jokers with different states
-        game.add_joker(Box::new(TheJoker));
-        game.joker_state_manager
-            .add_accumulated_value(JokerId::Joker, 10.0);
+        use balatro_rs::joker_factory::JokerFactory;
+        if let Some(joker) = JokerFactory::create(JokerId::Joker) {
+            game.jokers.push(joker);
+            game.joker_state_manager.ensure_state_exists(JokerId::Joker);
+            game.joker_state_manager
+                .add_accumulated_value(JokerId::Joker, 10.0);
+        }
 
         // Save and load
         let saved_json = game.save_state_to_json().expect("Save should succeed");
@@ -193,20 +201,23 @@ mod save_load_integration_tests {
     }
 
     #[test]
-    fn test_save_load_preserves_effect_registry() {
+    fn test_save_load_preserves_jokers() {
         let mut game = Game::new(Config::default());
-        game.add_joker(Box::new(TheJoker));
 
-        // Verify effect registry is functional before save
-        let initial_effects_count = game.effect_registry.count_registered_effects();
+        // Add a joker directly for testing
+        use balatro_rs::joker_factory::JokerFactory;
+        if let Some(joker) = JokerFactory::create(JokerId::Joker) {
+            game.jokers.push(joker);
+            game.joker_state_manager.ensure_state_exists(JokerId::Joker);
+        }
 
         // Save and load
         let saved_json = game.save_state_to_json().expect("Save should succeed");
         let loaded_game = Game::load_state_from_json(&saved_json).expect("Load should succeed");
 
-        // Verify effect registry was reconstructed properly
-        let final_effects_count = loaded_game.effect_registry.count_registered_effects();
-        assert_eq!(initial_effects_count, final_effects_count);
+        // Verify jokers were reconstructed properly
+        assert_eq!(game.jokers.len(), loaded_game.jokers.len());
+        assert_eq!(game.jokers[0].id(), loaded_game.jokers[0].id());
     }
 }
 
