@@ -46,7 +46,7 @@ pub struct Game {
 
     #[cfg_attr(feature = "serde", serde(skip, default = "EffectRegistry::new"))]
     pub effect_registry: EffectRegistry,
-    
+
     #[cfg_attr(feature = "serde", serde(skip, default = "JokerEffectProcessor::new"))]
     pub joker_effect_processor: JokerEffectProcessor,
 
@@ -1008,7 +1008,7 @@ impl Game {
             boss_blind_state: self.boss_blind_state.clone(),
             pack_inventory: self.pack_inventory.clone(),
             open_pack: self.open_pack.clone(),
-            state_version: self.state_version.clone(),
+            state_version: self.state_version,
         };
 
         serde_json::to_string_pretty(&saveable_state).map_err(SaveLoadError::SerializationError)

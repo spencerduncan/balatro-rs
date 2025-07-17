@@ -18,7 +18,7 @@ mod corrupted_save_handling_tests {
 
         assert!(result.is_err());
         if let Err(e) = result {
-            println!("Error message: {}", e.to_string());
+            println!("Error message: {}", e);
             // Just check that it's a deserialization error for now
             assert!(
                 e.to_string().contains("Deserialization") || e.to_string().contains("expected")
@@ -121,7 +121,7 @@ mod corrupted_save_handling_tests {
 
         // Should handle unknown jokers gracefully (skip them with warning)
         if let Err(e) = &result {
-            println!("Error: {}", e);
+            println!("Error: {e}");
         }
         assert!(result.is_ok());
         let (states, warnings) = result.unwrap();
@@ -238,7 +238,7 @@ mod save_format_versioning_tests {
 
         let result = Game::load_state_from_json(&v1_save_data);
         if let Err(e) = &result {
-            println!("Migration error: {}", e);
+            println!("Migration error: {e}");
         }
         assert!(result.is_ok());
 
@@ -270,7 +270,7 @@ mod save_format_versioning_tests {
             }
             Err(e) => {
                 // If it fails, should be due to version incompatibility
-                println!("Future version error: {}", e.to_string());
+                println!("Future version error: {}", e);
                 assert!(
                     e.to_string().contains("version")
                         || e.to_string().contains("unsupported")

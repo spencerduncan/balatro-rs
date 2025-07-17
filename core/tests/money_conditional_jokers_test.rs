@@ -19,7 +19,7 @@ fn create_test_context() -> GameContext<'static> {
 
     // Create static hand type counts for testing
     static HAND_TYPE_COUNTS: OnceLock<HashMap<HandRank, u32>> = OnceLock::new();
-    let hand_type_counts = HAND_TYPE_COUNTS.get_or_init(|| HashMap::new());
+    let hand_type_counts = HAND_TYPE_COUNTS.get_or_init(HashMap::new);
 
     // Create static joker state manager for testing
     static JOKER_STATE_MANAGER: OnceLock<Arc<JokerStateManager>> = OnceLock::new();
@@ -49,7 +49,7 @@ mod business_card_tests {
 
     #[test]
     fn test_business_card_basic_properties() {
-        let joker = BusinessCard::default();
+        let joker = BusinessCard;
 
         assert_eq!(joker.id(), JokerId::BusinessCard);
         assert_eq!(joker.name(), "Business Card");
@@ -63,7 +63,7 @@ mod business_card_tests {
 
     #[test]
     fn test_business_card_face_card_rng_behavior() {
-        let joker = BusinessCard::default();
+        let joker = BusinessCard;
         let mut context = create_test_context();
 
         // Test face cards have random chance of giving money
@@ -84,7 +84,7 @@ mod business_card_tests {
 
     #[test]
     fn test_business_card_non_face_card_no_money() {
-        let joker = BusinessCard::default();
+        let joker = BusinessCard;
         let mut context = create_test_context();
 
         // Test non-face cards don't give money
@@ -103,7 +103,7 @@ mod business_card_tests {
 
     #[test]
     fn test_business_card_no_other_effects() {
-        let joker = BusinessCard::default();
+        let joker = BusinessCard;
         let mut context = create_test_context();
 
         let jack = Card::new(Value::Jack, Suit::Heart);
@@ -120,7 +120,7 @@ mod business_card_tests {
 
     #[test]
     fn test_business_card_all_suits() {
-        let joker = BusinessCard::default();
+        let joker = BusinessCard;
         let mut context = create_test_context();
 
         // Test face cards from all suits have probabilistic behavior
@@ -137,18 +137,15 @@ mod business_card_tests {
             // Should have both 0 and 2 results for face cards (50% chance)
             assert!(
                 money_results.contains(&0),
-                "Jack of {:?} should sometimes give $0",
-                suit
+                "Jack of {suit:?} should sometimes give $0"
             );
             assert!(
                 money_results.contains(&2),
-                "Jack of {:?} should sometimes give $2",
-                suit
+                "Jack of {suit:?} should sometimes give $2"
             );
             assert!(
                 money_results.iter().all(|&x| x == 0 || x == 2),
-                "Jack of {:?} should only give $0 or $2",
-                suit
+                "Jack of {suit:?} should only give $0 or $2"
             );
         }
     }
@@ -160,7 +157,7 @@ mod egg_tests {
 
     #[test]
     fn test_egg_basic_properties() {
-        let joker = Egg::default();
+        let joker = Egg;
 
         assert_eq!(joker.id(), JokerId::EggJoker);
         assert_eq!(joker.name(), "Egg");
@@ -171,7 +168,7 @@ mod egg_tests {
 
     #[test]
     fn test_egg_round_end_hook() {
-        let joker = Egg::default();
+        let joker = Egg;
         let mut context = create_test_context();
 
         let effect = joker.on_round_end(&mut context);
@@ -188,7 +185,7 @@ mod egg_tests {
 
     #[test]
     fn test_egg_sell_value() {
-        let joker = Egg::default();
+        let joker = Egg;
 
         // Test base sell value (cost / 2 = 3 / 2 = 1)
         assert_eq!(joker.sell_value(0.0), 1);
@@ -203,7 +200,7 @@ mod egg_tests {
 
     #[test]
     fn test_egg_no_other_hooks() {
-        let joker = Egg::default();
+        let joker = Egg;
         let mut context = create_test_context();
 
         // Should not respond to other game events
@@ -225,7 +222,7 @@ mod burglar_tests {
 
     #[test]
     fn test_burglar_basic_properties() {
-        let joker = Burglar::default();
+        let joker = Burglar;
 
         assert_eq!(joker.id(), JokerId::Burglar);
         assert_eq!(joker.name(), "Burglar");
@@ -239,7 +236,7 @@ mod burglar_tests {
 
     #[test]
     fn test_burglar_blind_start_effects() {
-        let joker = Burglar::default();
+        let joker = Burglar;
         let mut context = create_test_context();
 
         let effect = joker.on_blind_start(&mut context);
@@ -260,7 +257,7 @@ mod burglar_tests {
 
     #[test]
     fn test_burglar_no_permanent_modifiers() {
-        let joker = Burglar::default();
+        let joker = Burglar;
         let context = create_test_context();
 
         // Burglar doesn't use permanent modifiers like modify_hand_size
@@ -271,7 +268,7 @@ mod burglar_tests {
 
     #[test]
     fn test_burglar_no_other_hooks() {
-        let joker = Burglar::default();
+        let joker = Burglar;
         let mut context = create_test_context();
 
         // Should not respond to other game events (except blind start)
@@ -288,7 +285,7 @@ mod burglar_tests {
 
     #[test]
     fn test_burglar_other_modifiers_unchanged() {
-        let joker = Burglar::default();
+        let joker = Burglar;
         let context = create_test_context();
 
         // Should not modify other game aspects
@@ -304,8 +301,8 @@ mod integration_tests {
 
     #[test]
     fn test_multiple_jokers_interactions() {
-        let business_card = BusinessCard::default();
-        let burglar = Burglar::default();
+        let business_card = BusinessCard;
+        let burglar = Burglar;
         let mut context = create_test_context();
 
         // Test burglar gives hand size mod and discard mod on blind start
@@ -327,7 +324,7 @@ mod integration_tests {
     #[test]
     fn test_money_conditional_logic() {
         // Test that the jokers work regardless of current money state
-        let business_card = BusinessCard::default();
+        let business_card = BusinessCard;
 
         // Low money scenario
         let mut low_money_context = create_test_context();
@@ -347,11 +344,8 @@ mod integration_tests {
 
     #[test]
     fn test_joker_traits_consistency() {
-        let jokers: Vec<Box<dyn Joker>> = vec![
-            Box::new(BusinessCard::default()),
-            Box::new(Egg::default()),
-            Box::new(Burglar::default()),
-        ];
+        let jokers: Vec<Box<dyn Joker>> =
+            vec![Box::new(BusinessCard), Box::new(Egg), Box::new(Burglar)];
 
         for joker in jokers {
             // All should have valid IDs

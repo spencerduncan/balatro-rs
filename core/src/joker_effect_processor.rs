@@ -704,7 +704,7 @@ mod tests {
             processor.context().resolution_strategy,
             ConflictResolutionStrategy::Maximum
         );
-        assert_eq!(processor.context().validate_effects, false);
+        assert!(!processor.context().validate_effects);
     }
 
     #[test]

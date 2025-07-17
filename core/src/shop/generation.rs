@@ -223,7 +223,7 @@ impl WeightedGenerator {
             PackType::Variety,
         ];
 
-        let random_pack = pack_types[rng.gen_range(0..pack_types.len())].clone();
+        let random_pack = pack_types[rng.gen_range(0..pack_types.len())];
         Some(ShopItem::Pack(random_pack))
     }
 
@@ -420,7 +420,11 @@ impl ShopGenerator for WeightedGenerator {
             }
             PackType::Arcana | PackType::MegaArcana => {
                 // 2-3 or 4-6 tarot cards
-                let (min, max) = if pack_type == PackType::Arcana { (2, 3) } else { (4, 6) };
+                let (min, max) = if pack_type == PackType::Arcana {
+                    (2, 3)
+                } else {
+                    (4, 6)
+                };
                 let num_items = rng.gen_range(min..=max);
                 for _ in 0..num_items {
                     contents.push(ShopItem::Consumable(crate::shop::ConsumableType::Tarot));
@@ -428,7 +432,11 @@ impl ShopGenerator for WeightedGenerator {
             }
             PackType::Celestial | PackType::MegaCelestial => {
                 // 2-3 or 4-6 planet cards
-                let (min, max) = if pack_type == PackType::Celestial { (2, 3) } else { (4, 6) };
+                let (min, max) = if pack_type == PackType::Celestial {
+                    (2, 3)
+                } else {
+                    (4, 6)
+                };
                 let num_items = rng.gen_range(min..=max);
                 for _ in 0..num_items {
                     contents.push(ShopItem::Consumable(crate::shop::ConsumableType::Planet));
