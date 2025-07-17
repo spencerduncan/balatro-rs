@@ -51,7 +51,8 @@ pub trait Voucher {
 /// This will be extended as voucher implementations are added
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, EnumIter)]
 pub enum VoucherId {
-    // Placeholder variants - will be expanded in future implementations
+    /// Grab Bag voucher - +1 pack option for all booster packs
+    GrabBag,
     /// Placeholder for future voucher implementations
     VoucherPlaceholder,
 }
@@ -59,6 +60,7 @@ pub enum VoucherId {
 impl fmt::Display for VoucherId {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
+            VoucherId::GrabBag => write!(f, "Grab Bag"),
             VoucherId::VoucherPlaceholder => write!(f, "Voucher Placeholder"),
         }
     }
@@ -78,6 +80,7 @@ impl VoucherId {
     /// Get the prerequisite vouchers for this voucher
     pub fn prerequisites(&self) -> Vec<VoucherId> {
         match self {
+            VoucherId::GrabBag => vec![], // No prerequisites
             VoucherId::VoucherPlaceholder => vec![],
         }
     }
@@ -85,6 +88,7 @@ impl VoucherId {
     /// Get the base cost of this voucher
     pub fn base_cost(&self) -> usize {
         match self {
+            VoucherId::GrabBag => 10, // Reasonable cost for +1 pack option
             VoucherId::VoucherPlaceholder => 10,
         }
     }
