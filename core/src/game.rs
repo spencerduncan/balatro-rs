@@ -1003,6 +1003,9 @@ impl Game {
             vouchers: VoucherCollection::new(),
             boss_blind_state: BossBlindState::new(),
             state_version: StateVersion::current(),
+            // Pack system fields - default values for compatibility
+            pack_inventory: Vec::new(),
+            open_pack: None,
             // Non-serializable fields must be reconstructed
             effect_registry: EffectRegistry::new(),
             joker_state_manager: Arc::new(JokerStateManager::new()),
