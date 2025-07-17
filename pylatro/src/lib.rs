@@ -3,8 +3,8 @@ use balatro_rs::card::Card;
 use balatro_rs::config::Config;
 use balatro_rs::error::GameError;
 use balatro_rs::game::Game;
-use balatro_rs::joker::compat::Joker as OldJoker;
 use balatro_rs::joker::{JokerId, JokerRarity, Jokers};
+use balatro_rs::joker::compat::Joker;
 use balatro_rs::joker_registry::{registry, JokerDefinition, UnlockCondition};
 use balatro_rs::stage::{End, Stage};
 use pyo3::prelude::*;
@@ -13,6 +13,18 @@ use pyo3::{PyResult, Python};
 #[pyclass]
 struct GameEngine {
     game: Game,
+}
+
+impl GameEngine {
+    /// Helper method to calculate joker cost based on rarity
+    fn calculate_joker_cost(rarity: JokerRarity) -> usize {
+        match rarity {
+            JokerRarity::Common => 3,
+            JokerRarity::Uncommon => 6,
+            JokerRarity::Rare => 8,
+            JokerRarity::Legendary => 20,
+        }
+    }
 }
 
 #[pymethods]
@@ -73,13 +85,7 @@ impl GameEngine {
 
         // Check if player can afford it
         if let Ok(Some(definition)) = registry::get_definition(&joker_id) {
-            // Get base cost based on rarity
-            let cost = match definition.rarity {
-                JokerRarity::Common => 3,
-                JokerRarity::Uncommon => 6,
-                JokerRarity::Rare => 8,
-                JokerRarity::Legendary => 20,
-            };
+            let cost = Self::calculate_joker_cost(definition.rarity);
             return self.game.money >= cost;
         }
 
@@ -87,18 +93,12 @@ impl GameEngine {
     }
 
     /// Get the cost of a specific joker
-    fn get_joker_cost(&self, joker_id: JokerId) -> Result<usize, GameError> {
-        let definition = registry::get_definition(&joker_id)?
-            .ok_or_else(|| GameError::JokerNotFound(format!("{joker_id:?}")))?;
-
-        let cost = match definition.rarity {
-            JokerRarity::Common => 3,
-            JokerRarity::Uncommon => 6,
-            JokerRarity::Rare => 8,
-            JokerRarity::Legendary => 20,
-        };
-
-        Ok(cost)
+    fn get_joker_cost(&self, joker_id: JokerId) -> Result<Option<usize>, GameError> {
+        if let Some(definition) = registry::get_definition(&joker_id)? {
+            Ok(Some(Self::calculate_joker_cost(definition.rarity)))
+        } else {
+            Ok(None)
+        }
     }
 
     #[getter]
@@ -176,6 +176,9 @@ impl GameState {
     }
     #[getter]
     fn jokers(&self) -> PyResult<Vec<Jokers>> {
+        // Clone first to avoid overhead in GIL
+        let jokers_clone = self.game.jokers.clone();
+        
         // Emit deprecation warning
         Python::with_gil(|py| {
             let warnings = py.import("warnings")?;
@@ -189,8 +192,10 @@ impl GameState {
                     2  // stacklevel - show warning at caller's location
                 ),
             )?;
-            Ok(self.game.jokers.clone())
-        })
+            Ok::<(), PyErr>(())
+        })?;
+        
+        Ok(jokers_clone)
     }
 
     /// Get joker IDs using the new JokerId system
