@@ -220,7 +220,7 @@ mod save_format_versioning_tests {
     #[test]
     fn test_version_migration_from_v1() {
         // Create a proper game first to get a valid save format, then modify it to simulate v1
-        let mut game = Game::new(Config::default());
+        let game = Game::new(Config::default());
         game.money.store(100, std::sync::atomic::Ordering::Release);
         let full_save = game.save_state_to_json().unwrap();
 
@@ -288,7 +288,7 @@ mod save_format_versioning_tests {
 
     #[test]
     fn test_save_format_validation() {
-        let mut game = Game::new(Config::default());
+        let game = Game::new(Config::default());
         game.money.store(150, std::sync::atomic::Ordering::Release);
 
         let saved_json = game.save_state_to_json().expect("Save should succeed");
