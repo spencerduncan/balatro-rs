@@ -998,6 +998,14 @@ impl Game {
             mult: saveable_state.mult,
             score: saveable_state.score,
             hand_type_counts: saveable_state.hand_type_counts,
+            // Extended state fields - default values for compatibility
+            consumables_in_hand: Vec::new(),
+            vouchers: VoucherCollection::new(),
+            boss_blind_state: BossBlindState::new(),
+            state_version: StateVersion::current(),
+            // Pack system fields - default values for compatibility
+            pack_inventory: Vec::new(),
+            open_pack: None,
             // Non-serializable fields must be reconstructed
             effect_registry: EffectRegistry::new(),
             joker_state_manager: Arc::new(JokerStateManager::new()),

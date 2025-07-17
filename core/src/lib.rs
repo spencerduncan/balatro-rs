@@ -1,6 +1,7 @@
 pub mod action;
 pub mod ante;
 pub mod available;
+pub mod basic_chips_jokers;
 pub mod boss_blinds;
 pub mod card;
 pub mod config;
