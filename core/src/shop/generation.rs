@@ -223,7 +223,7 @@ impl WeightedGenerator {
             PackType::MegaBuffoon,
         ];
 
-        let random_pack = pack_types[rng.gen_range(0..pack_types.len())].clone();
+        let random_pack = pack_types[rng.gen_range(0..pack_types.len())];
         Some(ShopItem::Pack(random_pack))
     }
 
