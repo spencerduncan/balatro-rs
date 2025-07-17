@@ -107,6 +107,14 @@ impl GameEngine {
         LightweightGameState { snapshot }
     }
 
+    /// Get full game state for backwards compatibility
+    #[getter]
+    fn state(&self) -> GameState {
+        GameState {
+            game: self.game.clone(),
+        }
+    }
+
     /// Concurrent-safe access to money value
     fn get_money_concurrent(&self) -> usize {
         self.game.get_money_concurrent()
