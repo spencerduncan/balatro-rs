@@ -40,6 +40,8 @@ fn create_test_context() -> GameContext<'static> {
         discarded: &[],
         hand_type_counts,
         joker_state_manager,
+        cards_in_deck: 52,
+        stone_cards_in_deck: 0,
     }
 }
 

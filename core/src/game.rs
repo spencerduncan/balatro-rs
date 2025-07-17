@@ -1047,12 +1047,14 @@ impl Game {
             mult: saveable_state.mult,
             score: saveable_state.score,
             hand_type_counts: saveable_state.hand_type_counts,
-            consumables_in_hand: saveable_state.consumables_in_hand,
-            vouchers: saveable_state.vouchers,
-            boss_blind_state: saveable_state.boss_blind_state,
-            pack_inventory: saveable_state.pack_inventory,
-            open_pack: saveable_state.open_pack,
-            state_version: saveable_state.state_version,
+            // Extended state fields - default values for compatibility
+            consumables_in_hand: Vec::new(),
+            vouchers: VoucherCollection::new(),
+            boss_blind_state: BossBlindState::new(),
+            state_version: StateVersion::current(),
+            // Pack system fields - default values for compatibility
+            pack_inventory: Vec::new(),
+            open_pack: None,
             // Non-serializable fields must be reconstructed
             effect_registry: EffectRegistry::new(),
             joker_effect_processor: JokerEffectProcessor::new(),
