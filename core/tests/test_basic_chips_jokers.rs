@@ -16,12 +16,21 @@ fn create_test_context(money: i32, discards_used: u32) -> GameContext<'static> {
 }
 
 /// Test helper to create a GameContext with specific deck size
-fn create_test_context_with_deck(money: i32, discards_used: u32, cards_in_deck: usize) -> GameContext<'static> {
+fn create_test_context_with_deck(
+    money: i32,
+    discards_used: u32,
+    cards_in_deck: usize,
+) -> GameContext<'static> {
     create_test_context_with_deck_and_stones(money, discards_used, cards_in_deck, 0)
 }
 
 /// Test helper to create a GameContext with specific deck size and stone cards
-fn create_test_context_with_deck_and_stones(money: i32, discards_used: u32, cards_in_deck: usize, stone_cards_in_deck: usize) -> GameContext<'static> {
+fn create_test_context_with_deck_and_stones(
+    money: i32,
+    discards_used: u32,
+    cards_in_deck: usize,
+    stone_cards_in_deck: usize,
+) -> GameContext<'static> {
     static STAGE: Stage = Stage::Blind(Blind::Small);
     static HAND: OnceLock<Hand> = OnceLock::new();
     let hand = HAND.get_or_init(|| Hand::new(Vec::new()));
