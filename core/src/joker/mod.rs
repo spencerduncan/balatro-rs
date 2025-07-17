@@ -501,6 +501,10 @@ pub struct GameContext<'a> {
     pub joker_state_manager: &'a Arc<JokerStateManager>,
     /// Hand type counts for this game run
     pub hand_type_counts: &'a HashMap<HandRank, u32>,
+    /// Number of cards remaining in deck
+    pub cards_in_deck: usize,
+    /// Number of Stone cards in deck
+    pub stone_cards_in_deck: usize,
 }
 
 impl<'a> GameContext<'a> {

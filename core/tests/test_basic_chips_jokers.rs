@@ -12,6 +12,16 @@ use std::sync::{Arc, OnceLock};
 
 /// Test helper to create a basic GameContext for testing
 fn create_test_context(money: i32, discards_used: u32) -> GameContext<'static> {
+    create_test_context_with_deck(money, discards_used, 52)
+}
+
+/// Test helper to create a GameContext with specific deck size
+fn create_test_context_with_deck(money: i32, discards_used: u32, cards_in_deck: usize) -> GameContext<'static> {
+    create_test_context_with_deck_and_stones(money, discards_used, cards_in_deck, 0)
+}
+
+/// Test helper to create a GameContext with specific deck size and stone cards
+fn create_test_context_with_deck_and_stones(money: i32, discards_used: u32, cards_in_deck: usize, stone_cards_in_deck: usize) -> GameContext<'static> {
     static STAGE: Stage = Stage::Blind(Blind::Small);
     static HAND: OnceLock<Hand> = OnceLock::new();
     let hand = HAND.get_or_init(|| Hand::new(Vec::new()));
@@ -37,6 +47,8 @@ fn create_test_context(money: i32, discards_used: u32) -> GameContext<'static> {
         discarded: &[],
         hand_type_counts,
         joker_state_manager,
+        cards_in_deck,
+        stone_cards_in_deck,
     }
 }
 
@@ -175,9 +187,8 @@ mod stone_joker_tests {
     fn test_stone_joker_three_stone_cards() {
         // ARRANGE: 3 Stone cards in deck
         let joker = create_stone_joker();
-        let mut context = create_test_context(10, 2);
+        let mut context = create_test_context_with_deck_and_stones(10, 2, 52, 3);
         let hand = SelectHand::new(vec![]);
-        // TODO: Set up deck with 3 Stone cards
 
         // ACT: Trigger joker effect
         let effect = joker.on_hand_played(&mut context, &hand);
@@ -256,9 +267,8 @@ mod blue_joker_tests {
     fn test_blue_joker_empty_deck() {
         // ARRANGE: No cards remaining in deck
         let joker = create_blue_joker();
-        let mut context = create_test_context(10, 2);
+        let mut context = create_test_context_with_deck(10, 2, 0);
         let hand = SelectHand::new(vec![]);
-        // TODO: Set up deck with 0 cards remaining
 
         // ACT: Trigger joker effect
         let effect = joker.on_hand_played(&mut context, &hand);
@@ -271,9 +281,8 @@ mod blue_joker_tests {
     fn test_blue_joker_twenty_cards_in_deck() {
         // ARRANGE: 20 cards remaining in deck
         let joker = create_blue_joker();
-        let mut context = create_test_context(10, 2);
+        let mut context = create_test_context_with_deck(10, 2, 20);
         let hand = SelectHand::new(vec![]);
-        // TODO: Set up deck with 20 cards remaining
 
         // ACT: Trigger joker effect
         let effect = joker.on_hand_played(&mut context, &hand);
@@ -286,9 +295,8 @@ mod blue_joker_tests {
     fn test_blue_joker_full_deck() {
         // ARRANGE: Full 52-card deck
         let joker = create_blue_joker();
-        let mut context = create_test_context(10, 2);
+        let mut context = create_test_context_with_deck(10, 2, 52);
         let hand = SelectHand::new(vec![]);
-        // TODO: Set up deck with 52 cards
 
         // ACT: Trigger joker effect
         let effect = joker.on_hand_played(&mut context, &hand);

@@ -139,12 +139,8 @@ impl Joker for StoneJoker {
         4
     }
 
-    fn on_hand_played(&self, _context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
-        // TODO: Access deck cards and count Stone cards
-        // For now, return 0 chips until we have deck access
-        // This will be improved when we have access to game deck state
-        let _stone_card_count = 0; // Placeholder
-        let chips_bonus = 25 * _stone_card_count;
+    fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
+        let chips_bonus = 25 * context.stone_cards_in_deck as i32;
         JokerEffect::new().with_chips(chips_bonus)
     }
 }
@@ -239,12 +235,8 @@ impl Joker for BlueJoker {
         4
     }
 
-    fn on_hand_played(&self, _context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
-        // TODO: Access deck and count remaining cards
-        // For now, return 0 chips until we have deck access
-        // This will be improved when we have access to game deck state
-        let _cards_in_deck = 0; // Placeholder
-        let chips_bonus = 2 * _cards_in_deck;
+    fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
+        let chips_bonus = 2 * context.cards_in_deck as i32;
         JokerEffect::new().with_chips(chips_bonus)
     }
 }
