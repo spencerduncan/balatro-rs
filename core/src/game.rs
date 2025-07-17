@@ -10,6 +10,7 @@ use crate::effect::{EffectRegistry, Effects};
 use crate::error::GameError;
 use crate::hand::{MadeHand, SelectHand};
 use crate::joker::{JokerId, Jokers, OldJoker as Joker};
+use crate::joker_effect_processor::JokerEffectProcessor;
 use crate::joker_state::{JokerState, JokerStateManager};
 use crate::rank::HandRank;
 use crate::shop::packs::{OpenPackState, Pack};
@@ -45,6 +46,9 @@ pub struct Game {
 
     #[cfg_attr(feature = "serde", serde(skip, default = "EffectRegistry::new"))]
     pub effect_registry: EffectRegistry,
+
+    #[cfg_attr(feature = "serde", serde(skip, default = "JokerEffectProcessor::new"))]
+    pub joker_effect_processor: JokerEffectProcessor,
 
     #[cfg_attr(
         feature = "serde",
@@ -103,6 +107,7 @@ impl Game {
             action_history: Vec::new(),
             jokers: Vec::new(),
             effect_registry: EffectRegistry::new(),
+            joker_effect_processor: JokerEffectProcessor::new(),
             joker_state_manager: Arc::new(JokerStateManager::new()),
             blind: None,
             stage: Stage::PreBlind(),
@@ -275,11 +280,17 @@ impl Game {
         self.chips += card_chips;
 
         // Apply effects that modify game.chips and game.mult
+        // TODO: This maintains backwards compatibility with old effect system
         for e in self.effect_registry.on_score.clone() {
             if let Effects::OnScore(f) = e {
                 f.lock().unwrap()(self, hand.clone())
             }
         }
+
+        // Apply new joker effect processing system
+        // Note: For now, this doesn't process effects since we're using the old joker system
+        // When migrating to new jokers, this will replace the above effect_registry loop
+        self.apply_joker_effects_to_score(&hand);
 
         // compute score
         let score = self.chips * self.mult;
@@ -288,6 +299,32 @@ impl Game {
         self.mult = self.config.base_mult;
         self.chips = self.config.base_chips;
         score
+    }
+
+    /// Apply joker effects to the current scoring using the new effect processor
+    /// This method bridges the old and new joker systems
+    fn apply_joker_effects_to_score(&mut self, _hand: &MadeHand) {
+        // TODO: When we have new-style jokers, process them here
+        // For now, this is a placeholder that demonstrates the integration point
+
+        // Example of how this would work with new jokers:
+        // let game_context = self.create_game_context();
+        // let hand_result = self.joker_effect_processor.process_hand_effects(
+        //     &self.new_jokers,
+        //     &mut game_context,
+        //     &hand.hand
+        // );
+        // self.apply_accumulated_effect(&hand_result.accumulated_effect);
+
+        // For each card in the hand, we would also process card effects:
+        // for card in hand.hand.cards() {
+        //     let card_result = self.joker_effect_processor.process_card_effects(
+        //         &self.new_jokers,
+        //         &mut game_context,
+        //         card
+        //     );
+        //     self.apply_accumulated_effect(&card_result.accumulated_effect);
+        // }
     }
 
     pub fn required_score(&self) -> usize {
@@ -898,6 +935,12 @@ struct SaveableGameState {
     pub mult: usize,
     pub score: usize,
     pub hand_type_counts: HashMap<HandRank, u32>,
+    pub consumables_in_hand: Vec<ConsumableId>,
+    pub vouchers: VoucherCollection,
+    pub boss_blind_state: BossBlindState,
+    pub pack_inventory: Vec<Pack>,
+    pub open_pack: Option<OpenPackState>,
+    pub state_version: StateVersion,
 }
 
 const SAVE_VERSION: u32 = 1;
@@ -960,6 +1003,12 @@ impl Game {
             mult: self.mult,
             score: self.score,
             hand_type_counts: self.hand_type_counts.clone(),
+            consumables_in_hand: self.consumables_in_hand.clone(),
+            vouchers: self.vouchers.clone(),
+            boss_blind_state: self.boss_blind_state.clone(),
+            pack_inventory: self.pack_inventory.clone(),
+            open_pack: self.open_pack.clone(),
+            state_version: self.state_version,
         };
 
         serde_json::to_string_pretty(&saveable_state).map_err(SaveLoadError::SerializationError)
@@ -1008,6 +1057,7 @@ impl Game {
             open_pack: None,
             // Non-serializable fields must be reconstructed
             effect_registry: EffectRegistry::new(),
+            joker_effect_processor: JokerEffectProcessor::new(),
             joker_state_manager: Arc::new(JokerStateManager::new()),
         };
 

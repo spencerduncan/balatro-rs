@@ -103,7 +103,7 @@ mod tests {
         let test_card = Card::new(Value::King, Suit::Heart);
 
         // Current actions should still work (using correct variants)
-        let _select_card = Action::SelectCard(test_card.clone());
+        let _select_card = Action::SelectCard(test_card);
         let _move_card = Action::MoveCard(MoveDirection::Left, test_card);
         let _play = Action::Play();
         let _discard = Action::Discard();
