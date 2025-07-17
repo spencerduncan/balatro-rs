@@ -1,1 +1,16 @@
 /target
+
+# Python virtual environments
+.env/
+.venv/
+venv/
+env/
+pylatro/.env/
+pylatro/.venv/
+pylatro/venv/
+pylatro/env/
+*.egg-info/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
