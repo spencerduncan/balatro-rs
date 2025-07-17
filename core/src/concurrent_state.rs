@@ -232,8 +232,31 @@ pub enum ConcurrentStateError {
 pub type Result<T> = std::result::Result<T, ConcurrentStateError>;
 
 /// Utility function to compute stage hash avoiding string allocations
+/// This properly hashes all enum variant data to prevent cache key collisions
 pub fn compute_stage_hash(stage: &crate::stage::Stage) -> u64 {
     let mut hasher = DefaultHasher::new();
-    std::mem::discriminant(stage).hash(&mut hasher);
+    
+    // Hash the full stage data, not just the discriminant
+    // This prevents different Stage::Blind(X) variants from having the same hash
+    match stage {
+        crate::stage::Stage::PreBlind() => {
+            0u8.hash(&mut hasher); // Unique ID for PreBlind
+        }
+        crate::stage::Stage::Blind(blind) => {
+            1u8.hash(&mut hasher); // Unique ID for Blind variant
+            blind.hash(&mut hasher); // Hash the actual blind value
+        }
+        crate::stage::Stage::PostBlind() => {
+            2u8.hash(&mut hasher); // Unique ID for PostBlind
+        }
+        crate::stage::Stage::Shop() => {
+            3u8.hash(&mut hasher); // Unique ID for Shop
+        }
+        crate::stage::Stage::End(end) => {
+            4u8.hash(&mut hasher); // Unique ID for End variant
+            end.hash(&mut hasher); // Hash the actual end value
+        }
+    }
+    
     hasher.finish()
 }

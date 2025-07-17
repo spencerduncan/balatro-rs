@@ -312,9 +312,19 @@ impl Game {
             }
         }
 
-        // compute score
-        let score = self.chips.load(std::sync::atomic::Ordering::Acquire)
-            * self.mult.load(std::sync::atomic::Ordering::Acquire);
+        // compute score with overflow protection
+        let chips = self.chips.load(std::sync::atomic::Ordering::Acquire);
+        let mult = self.mult.load(std::sync::atomic::Ordering::Acquire);
+        
+        // Check for potential overflow before multiplication
+        let score = if mult == 0 {
+            0
+        } else if chips > usize::MAX / mult {
+            // Overflow would occur, cap at maximum reasonable score
+            1_000_000_000 // Maximum reasonable score
+        } else {
+            chips * mult
+        };
 
         // reset chips and mult
         self.mult
@@ -368,13 +378,31 @@ impl Game {
         if self.jokers.len() >= self.config.joker_slots {
             return Err(GameError::NoAvailableSlot);
         }
-        if joker.cost() > self.money.load(std::sync::atomic::Ordering::Acquire) {
-            return Err(GameError::InvalidBalance);
+
+        // Atomic money deduction with compare-and-swap to prevent race conditions
+        let joker_cost = joker.cost();
+        loop {
+            let current_money = self.money.load(std::sync::atomic::Ordering::Acquire);
+            if current_money < joker_cost {
+                return Err(GameError::InvalidBalance);
+            }
+            
+            // Atomically update money only if it hasn't changed since we read it
+            match self.money.compare_exchange_weak(
+                current_money,
+                current_money - joker_cost,
+                std::sync::atomic::Ordering::SeqCst,
+                std::sync::atomic::Ordering::Acquire,
+            ) {
+                Ok(_) => break, // Successfully deducted money
+                Err(_) => continue, // Money was modified by another thread, retry
+            }
         }
+
+        // Now that money is successfully deducted, complete the purchase
         self.shop.buy_joker(&joker)?;
-        self.money
-            .fetch_sub(joker.cost(), std::sync::atomic::Ordering::Release);
         self.jokers.push(joker.clone());
+        
         // Register the joker effects after adding it
         let effects_to_register: Vec<_> = joker.effects(self);
         for e in effects_to_register {
@@ -444,17 +472,28 @@ impl Game {
             .cloned()
             .ok_or(GameError::NoJokerMatch)?;
 
-        // Check if player has enough money (use actual joker cost)
-        if joker.cost() > self.money.load(std::sync::atomic::Ordering::Acquire) {
-            return Err(GameError::InvalidBalance);
+        // Atomic money deduction with compare-and-swap to prevent race conditions
+        let joker_cost = joker.cost();
+        loop {
+            let current_money = self.money.load(std::sync::atomic::Ordering::Acquire);
+            if current_money < joker_cost {
+                return Err(GameError::InvalidBalance);
+            }
+            
+            // Atomically update money only if it hasn't changed since we read it
+            match self.money.compare_exchange_weak(
+                current_money,
+                current_money - joker_cost,
+                std::sync::atomic::Ordering::SeqCst,
+                std::sync::atomic::Ordering::Acquire,
+            ) {
+                Ok(_) => break, // Successfully deducted money
+                Err(_) => continue, // Money was modified by another thread, retry
+            }
         }
 
-        // Purchase joker from shop
+        // Now that money is successfully deducted, complete the purchase
         self.shop.buy_joker(&joker)?;
-
-        // Deduct money
-        self.money
-            .fetch_sub(joker.cost(), std::sync::atomic::Ordering::Release);
 
         // Insert joker at specified slot, expanding vector if necessary
         if slot >= self.jokers.len() {
@@ -781,7 +820,7 @@ impl Game {
     ) -> crate::concurrent_state::Result<()> {
         use crate::concurrent_state::{ConcurrentStateError, StateUpdate};
 
-        // Validate all updates first
+        // Validate all updates first to prevent integer overflow and enforce bounds
         for update in &updates {
             match update {
                 StateUpdate::Money(value) => {
@@ -793,15 +832,54 @@ impl Game {
                             ),
                         });
                     }
+                    // Check for potential overflow in arithmetic operations
+                    if *value > usize::MAX / 2 {
+                        return Err(ConcurrentStateError::BatchUpdateFailed {
+                            message: format!("Money value {} too large, potential overflow risk", value),
+                        });
+                    }
                 }
-                StateUpdate::Chips(_) | StateUpdate::Mult(_) | StateUpdate::Score(_) => {
-                    // No validation needed for these currently
+                StateUpdate::Chips(value) => {
+                    // Chips should be within reasonable game bounds
+                    if *value > 1_000_000 {
+                        return Err(ConcurrentStateError::BatchUpdateFailed {
+                            message: format!("Chips value {} exceeds reasonable maximum", value),
+                        });
+                    }
+                    // Check for potential overflow in score calculation (chips * mult)
+                    if *value > usize::MAX / 1000 {
+                        return Err(ConcurrentStateError::BatchUpdateFailed {
+                            message: format!("Chips value {} too large, potential overflow in score calculation", value),
+                        });
+                    }
+                }
+                StateUpdate::Mult(value) => {
+                    // Mult should be within reasonable game bounds
+                    if *value > 1_000_000 {
+                        return Err(ConcurrentStateError::BatchUpdateFailed {
+                            message: format!("Mult value {} exceeds reasonable maximum", value),
+                        });
+                    }
+                    // Check for potential overflow in score calculation (chips * mult)
+                    if *value > usize::MAX / 1000 {
+                        return Err(ConcurrentStateError::BatchUpdateFailed {
+                            message: format!("Mult value {} too large, potential overflow in score calculation", value),
+                        });
+                    }
+                }
+                StateUpdate::Score(value) => {
+                    // Score should be within reasonable game bounds
+                    if *value > 1_000_000_000 {
+                        return Err(ConcurrentStateError::BatchUpdateFailed {
+                            message: format!("Score value {} exceeds reasonable maximum", value),
+                        });
+                    }
                 }
                 StateUpdate::Plays(value) => {
                     if *value > 10 {
                         // Reasonable upper bound
                         return Err(ConcurrentStateError::BatchUpdateFailed {
-                            message: format!("Plays value {value} is unreasonable"),
+                            message: format!("Plays value {} is unreasonable", value),
                         });
                     }
                 }
@@ -809,7 +887,7 @@ impl Game {
                     if *value > 10 {
                         // Reasonable upper bound
                         return Err(ConcurrentStateError::BatchUpdateFailed {
-                            message: format!("Discards value {value} is unreasonable"),
+                            message: format!("Discards value {} is unreasonable", value),
                         });
                     }
                 }
