@@ -5,7 +5,6 @@ use balatro_rs::config::Config;
 use balatro_rs::error::GameError;
 use balatro_rs::game::Game;
 use balatro_rs::joker::{JokerId, JokerRarity, Jokers};
-use balatro_rs::joker::compat::Joker;
 use balatro_rs::joker_registry::{registry, JokerDefinition, UnlockCondition};
 use balatro_rs::stage::{End, Stage};
 use pyo3::prelude::*;
@@ -241,7 +240,7 @@ impl GameState {
             )?;
             Ok::<(), PyErr>(())
         })?;
-        
+
         // TODO: Convert new joker system to old Jokers enum for Python compatibility
         // For now, return empty vector during migration
         Ok(Vec::new())
