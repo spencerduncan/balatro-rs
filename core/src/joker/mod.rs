@@ -373,6 +373,12 @@ impl JokerEffect {
         self
     }
 
+    /// Set retrigger count
+    pub fn with_retrigger(mut self, retrigger: u32) -> Self {
+        self.retrigger = retrigger;
+        self
+    }
+
     /// Set sell value increase
     pub fn with_sell_value_increase(mut self, increase: i32) -> Self {
         self.sell_value_increase = increase;
