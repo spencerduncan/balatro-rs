@@ -5,10 +5,11 @@ use balatro_rs::config::Config;
 use balatro_rs::error::GameError;
 use balatro_rs::game::Game;
 use balatro_rs::joker::{JokerId, JokerRarity, Jokers};
+use balatro_rs::joker_metadata::JokerMetadata;
 use balatro_rs::joker_registry::{registry, JokerDefinition, UnlockCondition};
 use balatro_rs::stage::{End, Stage};
 use pyo3::prelude::*;
-use pyo3::{PyResult, Python};
+use pyo3::{PyObject, PyResult, Python};
 
 /// A serializable snapshot of the game state for Python bindings
 #[derive(Clone)]
@@ -168,6 +169,76 @@ impl GameEngine {
             }
         }
         false
+    }
+
+    // Basic Metadata Access Methods
+
+    /// Get comprehensive metadata for a specific joker
+    fn get_joker_metadata(&self, joker_id: JokerId) -> PyResult<Option<JokerMetadata>> {
+        match registry::get_definition(&joker_id) {
+            Ok(Some(definition)) => {
+                // Check if joker is unlocked (simplified for now)
+                let is_unlocked = true; // TODO: Implement actual unlock checking
+                let metadata = JokerMetadata::from_definition(&definition, is_unlocked);
+                Ok(Some(metadata))
+            }
+            Ok(None) => Ok(None),
+            Err(e) => Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(format!(
+                "Failed to get joker metadata: {e}"
+            ))),
+        }
+    }
+
+    /// Get basic properties of a joker as a dictionary
+    fn get_joker_properties(&self, joker_id: JokerId) -> PyResult<Option<PyObject>> {
+        Python::with_gil(|py| match self.get_joker_metadata(joker_id)? {
+            Some(metadata) => {
+                let dict = pyo3::types::PyDict::new(py);
+                dict.set_item("id", format!("{:?}", metadata.id))?;
+                dict.set_item("name", metadata.name)?;
+                dict.set_item("description", metadata.description)?;
+                dict.set_item("rarity", format!("{:?}", metadata.rarity))?;
+                dict.set_item("cost", metadata.cost)?;
+                dict.set_item("sell_value", metadata.sell_value)?;
+                Ok(Some(dict.into()))
+            }
+            None => Ok(None),
+        })
+    }
+
+    /// Get effect information for a joker
+    fn get_joker_effect_info(&self, joker_id: JokerId) -> PyResult<Option<PyObject>> {
+        Python::with_gil(|py| match self.get_joker_metadata(joker_id)? {
+            Some(metadata) => {
+                let dict = pyo3::types::PyDict::new(py);
+                dict.set_item("effect_type", metadata.effect_type)?;
+                dict.set_item("effect_description", metadata.effect_description)?;
+                dict.set_item("triggers_on", metadata.triggers_on)?;
+                dict.set_item("conditions", metadata.conditions)?;
+                dict.set_item("uses_state", metadata.uses_state)?;
+                dict.set_item("max_triggers", metadata.max_triggers)?;
+                dict.set_item("persistent_data", metadata.persistent_data)?;
+                Ok(Some(dict.into()))
+            }
+            None => Ok(None),
+        })
+    }
+
+    /// Get unlock status and condition for a joker
+    fn get_joker_unlock_status(&self, joker_id: JokerId) -> PyResult<Option<PyObject>> {
+        Python::with_gil(|py| match self.get_joker_metadata(joker_id)? {
+            Some(metadata) => {
+                let dict = pyo3::types::PyDict::new(py);
+                dict.set_item("is_unlocked", metadata.is_unlocked)?;
+                if let Some(condition) = metadata.unlock_condition {
+                    dict.set_item("unlock_condition", format!("{condition:?}"))?;
+                } else {
+                    dict.set_item("unlock_condition", py.None())?;
+                }
+                Ok(Some(dict.into()))
+            }
+            None => Ok(None),
+        })
     }
 }
 
@@ -448,6 +519,7 @@ fn pylatro(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<JokerRarity>()?;
     m.add_class::<JokerDefinition>()?;
     m.add_class::<UnlockCondition>()?;
+    m.add_class::<JokerMetadata>()?;
 
     Ok(())
 }
