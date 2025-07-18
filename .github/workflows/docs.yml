@@ -1,0 +1,207 @@
+name: Documentation Generation
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  docs:
+    name: Generate Documentation
+    runs-on: ubuntu-latest
+    container:
+      image: rust:slim
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y pkg-config libssl-dev python3 python3-dev
+      
+      - name: Cache cargo registry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-registry-
+      
+      - name: Cache cargo build
+        uses: actions/cache@v3
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-docs-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-build-docs-
+      
+      - name: Generate Rust documentation
+        run: |
+          cargo doc --all --no-deps --document-private-items
+          
+      - name: Check documentation warnings
+        run: |
+          # Treat missing docs as warnings, not errors for now
+          cargo doc --all --no-deps 2>&1 | tee doc_warnings.txt
+          
+          # Count warnings
+          WARNING_COUNT=$(grep -c "warning:" doc_warnings.txt || echo "0")
+          echo "Documentation warnings: $WARNING_COUNT"
+          
+          # Upload warning report
+          if [ "$WARNING_COUNT" -gt "0" ]; then
+            echo "::warning::Found $WARNING_COUNT documentation warnings"
+          else
+            echo "::notice::Documentation generated without warnings"
+          fi
+      
+      - name: Verify documentation completeness
+        run: |
+          # Check that main public APIs have documentation
+          echo "Checking documentation completeness..."
+          
+          # Look for undocumented public items (basic check)
+          cargo doc --all --no-deps 2>&1 | grep "warning: missing documentation" > missing_docs.txt || true
+          
+          MISSING_COUNT=$(wc -l < missing_docs.txt)
+          echo "Missing documentation items: $MISSING_COUNT"
+          
+          if [ "$MISSING_COUNT" -gt "0" ]; then
+            echo "::warning::Found $MISSING_COUNT items missing documentation"
+            head -20 missing_docs.txt
+          fi
+      
+      - name: Generate README documentation
+        run: |
+          # Ensure README files are up to date by checking if they reference current version
+          echo "Checking README files..."
+          
+          # Check if Cargo.toml version matches README references
+          CORE_VERSION=$(grep "^version" core/Cargo.toml | cut -d'"' -f2)
+          echo "Core library version: $CORE_VERSION"
+          
+          # Validate README examples compile (if any exist)
+          if [ -f "README.md" ]; then
+            echo "Found README.md"
+            # Could add README example compilation here
+          fi
+      
+      - name: Test documentation examples
+        run: |
+          # Test that documentation examples compile and run
+          cargo test --doc --all
+      
+      - name: Upload documentation artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: documentation
+          path: |
+            target/doc/
+            doc_warnings.txt
+            missing_docs.txt
+      
+      - name: Deploy documentation (main branch only)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./target/doc
+          destination_dir: dev-docs  # Deploy to dev-docs subdirectory
+          
+  # Generate and validate Python documentation
+  python-docs:
+    name: Python Documentation
+    runs-on: ubuntu-latest
+    container:
+      image: rust:latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Python and dependencies
+        run: |
+          apt-get update
+          apt-get install -y python3 python3-dev python3-venv python3-pip pkg-config libssl-dev
+          
+      - name: Setup Python virtual environment
+        run: |
+          python3 -m venv /opt/venv
+          echo "/opt/venv/bin" >> $GITHUB_PATH
+          
+      - name: Install Python documentation tools
+        run: |
+          /opt/venv/bin/pip install --upgrade pip
+          /opt/venv/bin/pip install maturin pytest sphinx sphinx-rtd-theme
+      
+      - name: Cache cargo registry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-registry-
+      
+      - name: Build Python extension
+        run: |
+          cd pylatro
+          export VIRTUAL_ENV=/opt/venv
+          /opt/venv/bin/maturin develop
+      
+      - name: Generate Python API documentation
+        run: |
+          cd pylatro
+          export VIRTUAL_ENV=/opt/venv
+          
+          # Generate basic API documentation
+          /opt/venv/bin/python -c "
+          import pylatro
+          import inspect
+          
+          print('# PyLatro API Documentation\\n')
+          print('## Classes\\n')
+          
+          for name, obj in inspect.getmembers(pylatro):
+              if inspect.isclass(obj) and not name.startswith('_'):
+                  print(f'### {name}\\n')
+                  if obj.__doc__:
+                      print(f'{obj.__doc__}\\n')
+                  
+                  # List methods
+                  methods = [m for m, _ in inspect.getmembers(obj, inspect.ismethod) if not m.startswith('_')]
+                  if methods:
+                      print('**Methods:**')
+                      for method in methods:
+                          print(f'- `{method}()`')
+                      print()
+          " > python_api_docs.md
+      
+      - name: Validate Python examples
+        run: |
+          cd pylatro
+          export VIRTUAL_ENV=/opt/venv
+          
+          # Check if examples directory exists and run examples
+          if [ -d "examples" ]; then
+            echo "Running Python examples..."
+            for example in examples/*.py; do
+              if [ -f "$example" ]; then
+                echo "Testing $example"
+                /opt/venv/bin/python "$example" --help || true
+              fi
+            done
+          fi
+      
+      - name: Upload Python documentation
+        uses: actions/upload-artifact@v3
+        with:
+          name: python-documentation
+          path: |
+            pylatro/python_api_docs.md

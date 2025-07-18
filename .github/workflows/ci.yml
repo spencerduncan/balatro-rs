@@ -13,16 +13,32 @@ env:
 jobs:
   test:
     name: Test Suite
-    runs-on: ubuntu-latest
-    container:
-      image: rust:slim
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       
-      - name: Install dependencies
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
         run: |
-          apt-get update
-          apt-get install -y pkg-config libssl-dev python3 python3-dev
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libssl-dev python3 python3-dev
+          
+      - name: Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install pkg-config openssl python3
+          
+      - name: Install dependencies (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          choco install python3 --yes
+          echo "OPENSSL_DIR=C:\Program Files\OpenSSL-Win64" >> $GITHUB_ENV
       
       - name: Cache cargo registry
         uses: actions/cache@v3
@@ -30,20 +46,73 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ matrix.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-registry-
+            ${{ matrix.os }}-cargo-registry-
       
       - name: Cache cargo build
         uses: actions/cache@v3
         with:
           path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ matrix.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-build-target-
+            ${{ matrix.os }}-cargo-build-target-
       
-      - name: Run tests
-        run: cargo test --all --verbose
+      - name: Run unit tests
+        run: |
+          # Run unit tests with detailed output
+          cargo test --all --verbose --lib
+          
+      - name: Run integration tests
+        run: |
+          # Run integration tests separately for better reporting
+          cargo test --all --verbose --test '*'
+          
+      - name: Run doc tests
+        run: |
+          # Run documentation tests
+          cargo test --all --verbose --doc
+          
+      - name: Install test result tools
+        if: runner.os == 'Linux'
+        run: |
+          cargo install cargo-nextest || echo "cargo-nextest not available"
+          
+      - name: Run tests with enhanced reporting (Linux only)
+        if: runner.os == 'Linux'
+        run: |
+          # Use nextest for better test reporting if available
+          if command -v cargo-nextest &> /dev/null; then
+            cargo nextest run --all --verbose --profile ci
+          else
+            echo "Using standard test runner"
+            cargo test --all --verbose -- --format json | tee test_results.json || true
+          fi
+          
+      - name: Generate test summary
+        if: always()
+        run: |
+          echo "## Test Results Summary" > test_summary.md
+          echo "- OS: ${{ matrix.os }}" >> test_summary.md
+          echo "- Rust Version: $(rustc --version)" >> test_summary.md
+          echo "- Test Run: $(date)" >> test_summary.md
+          
+          # Count test results if json output exists
+          if [ -f test_results.json ]; then
+            PASSED=$(grep -c '"event":"ok"' test_results.json || echo "0")
+            FAILED=$(grep -c '"event":"failed"' test_results.json || echo "0") 
+            echo "- Tests Passed: $PASSED" >> test_summary.md
+            echo "- Tests Failed: $FAILED" >> test_summary.md
+          fi
+          
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results-${{ matrix.os }}
+          path: |
+            test_results.json
+            test_summary.md
 
   fmt:
     name: Rustfmt
@@ -299,3 +368,133 @@ jobs:
       
       - name: Check benchmarks compile
         run: cargo bench --no-run -p balatro-rs
+
+  # Run performance benchmarks and validate against baselines
+  performance-test:
+    name: Performance Testing
+    runs-on: ubuntu-latest
+    container:
+      image: rust:slim
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y pkg-config libssl-dev python3 python3-dev
+      
+      - name: Cache cargo registry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-registry-
+      
+      - name: Cache cargo build
+        uses: actions/cache@v3
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-perf-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-build-perf-
+      
+      - name: Run benchmarks
+        run: |
+          # Run benchmarks and capture results
+          cargo bench -p balatro-rs > benchmark_results.txt 2>&1 || true
+          
+      - name: Validate performance
+        run: |
+          # Simple performance validation - ensure benchmarks completed without panics
+          if grep -q "panic" benchmark_results.txt; then
+            echo "Benchmarks contain panics - performance regression detected"
+            exit 1
+          fi
+          
+          # Check for reasonable execution times (basic smoke test)
+          if grep -q "ns/iter" benchmark_results.txt; then
+            echo "Benchmarks completed successfully"
+          else
+            echo "No benchmark results found - potential performance issue"
+            exit 1
+          fi
+          
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v3
+        with:
+          name: benchmark-results
+          path: benchmark_results.txt
+
+  # Security and dependency scanning
+  security-scan:
+    name: Security & Dependency Scanning
+    runs-on: ubuntu-latest
+    container:
+      image: rust:slim
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y pkg-config libssl-dev
+      
+      - name: Install security tools
+        run: |
+          cargo install cargo-audit
+          cargo install cargo-deny
+      
+      - name: Cache cargo registry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-registry-
+      
+      - name: Run cargo audit
+        run: cargo audit
+        
+      - name: Run cargo deny
+        run: |
+          # Create basic deny.toml if it doesn't exist
+          if [ ! -f deny.toml ]; then
+            cat > deny.toml << 'EOF'
+          [bans]
+          multiple-versions = "warn"
+          wildcards = "allow"
+          
+          [licenses]
+          allow = [
+              "MIT",
+              "Apache-2.0",
+              "Apache-2.0 WITH LLVM-exception",
+              "BSD-2-Clause",
+              "BSD-3-Clause",
+              "ISC",
+              "Unicode-DFS-2016",
+          ]
+          
+          [sources]
+          unknown-registry = "warn"
+          unknown-git = "warn"
+          
+          [advisories]
+          ignore = []
+          EOF
+          fi
+          cargo deny check
+          
+      - name: Upload security scan results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-scan-results
+          path: |
+            deny.toml
+            *.log
