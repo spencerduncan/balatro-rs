@@ -327,7 +327,7 @@ class TestEnhancedGameStateProperties:
     
     def test_get_joker_states(self):
         """Test getting all active joker states"""
-        joker_states = self.state.get_joker_states()
+        joker_states = self.game.get_joker_states()
         
         assert isinstance(joker_states, dict)
         # Each key should be a JokerId, each value a JokerState
@@ -337,7 +337,7 @@ class TestEnhancedGameStateProperties:
     
     def test_get_joker_accumulated_values(self):
         """Test getting accumulated values for all jokers"""
-        accumulated_values = self.state.get_joker_accumulated_values()
+        accumulated_values = self.game.get_joker_accumulated_values()
         
         assert isinstance(accumulated_values, dict)
         # Each key should be a JokerId, each value a float
@@ -346,7 +346,7 @@ class TestEnhancedGameStateProperties:
     
     def test_get_joker_triggers_remaining(self):
         """Test getting triggers remaining for all jokers"""
-        triggers = self.state.get_joker_triggers_remaining()
+        triggers = self.game.get_joker_triggers_remaining()
         
         assert isinstance(triggers, dict)
         # Each key should be a JokerId, each value an int or None

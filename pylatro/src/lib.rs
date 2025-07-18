@@ -75,17 +75,7 @@ struct GameEngine {
     game: Game,
 }
 
-impl GameEngine {
-    /// Helper method to calculate joker cost based on rarity
-    fn calculate_joker_cost(rarity: JokerRarity) -> usize {
-        match rarity {
-            JokerRarity::Common => 3,
-            JokerRarity::Uncommon => 6,
-            JokerRarity::Rare => 8,
-            JokerRarity::Legendary => 20,
-        }
-    }
-}
+impl GameEngine {}
 
 #[pymethods]
 impl GameEngine {
@@ -145,7 +135,7 @@ impl GameEngine {
 
         // Check if player can afford it
         if let Ok(Some(definition)) = registry::get_definition(&joker_id) {
-            let cost = Self::calculate_joker_cost(definition.rarity);
+            let cost = calculate_joker_cost(definition.rarity) as usize;
             return self.game.money >= cost;
         }
 
@@ -155,7 +145,7 @@ impl GameEngine {
     /// Get the cost of a specific joker
     fn get_joker_cost(&self, joker_id: JokerId) -> Result<Option<usize>, GameError> {
         if let Some(definition) = registry::get_definition(&joker_id)? {
-            Ok(Some(Self::calculate_joker_cost(definition.rarity)))
+            Ok(Some(calculate_joker_cost(definition.rarity) as usize))
         } else {
             Ok(None)
         }
