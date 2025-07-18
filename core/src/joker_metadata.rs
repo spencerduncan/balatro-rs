@@ -170,7 +170,10 @@ fn extract_conditions(_id: &JokerId, description: &str) -> Vec<String> {
     let hand_types = ["Flush", "Straight", "Full House", "Four of a Kind", "Pair"];
     for hand_type in &hand_types {
         if description.contains(hand_type) {
-            conditions.push(format!("hand_type:{}", hand_type.to_lowercase().replace(' ', "_")));
+            conditions.push(format!(
+                "hand_type:{}",
+                hand_type.to_lowercase().replace(' ', "_")
+            ));
         }
     }
 
@@ -259,17 +262,17 @@ mod tests {
             determine_effect_type(&JokerId::Joker, "+100 Chips"),
             "additive_chips"
         );
-        assert_eq!(
-            determine_effect_type(&JokerId::Joker, "Earn $3"),
-            "economy"
-        );
+        assert_eq!(determine_effect_type(&JokerId::Joker, "Earn $3"), "economy");
     }
 
     #[test]
     fn test_trigger_extraction() {
-        let triggers = extract_triggers(&JokerId::GreedyJoker, "Played cards with Diamond suit give +3 Mult when scored");
+        let triggers = extract_triggers(
+            &JokerId::GreedyJoker,
+            "Played cards with Diamond suit give +3 Mult when scored",
+        );
         assert!(triggers.contains(&"card_scored".to_string()));
-        
+
         // Test a different joker that triggers on hand played
         let triggers2 = extract_triggers(&JokerId::IceCream, "Ice Cream gives chips");
         assert!(triggers2.contains(&"hand_played".to_string()));
@@ -277,7 +280,10 @@ mod tests {
 
     #[test]
     fn test_condition_extraction() {
-        let conditions = extract_conditions(&JokerId::GreedyJoker, "Played cards with Diamond suit give +3 Mult when scored");
+        let conditions = extract_conditions(
+            &JokerId::GreedyJoker,
+            "Played cards with Diamond suit give +3 Mult when scored",
+        );
         assert!(conditions.contains(&"suit:diamonds".to_string()));
     }
 }
