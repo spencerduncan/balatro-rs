@@ -21,19 +21,18 @@ use std::collections::HashMap;
 /// - Cryptographically secure RNG
 #[derive(Debug, Clone)]
 pub struct WeightedGenerator {
-    /// Cached weight calculations for performance optimization
-    #[allow(dead_code)]
-    weight_cache: HashMap<CacheKey, ItemWeights>,
+    // Note: Removed weight_cache due to f64 money not implementing Hash
+    // TODO: Reimplement caching with ordered-float or discrete money units if needed
     /// Random number generator state
     #[allow(dead_code)]
     rng: ThreadRng,
 }
 
 /// Cache key for weight calculations based on game state
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq)]
 struct CacheKey {
     ante: usize,
-    money: usize,
+    money: f64,
     vouchers: Vec<VoucherId>,
 }
 
@@ -41,7 +40,6 @@ impl WeightedGenerator {
     /// Create a new weighted generator with cryptographically secure RNG
     pub fn new() -> Self {
         Self {
-            weight_cache: HashMap::new(),
             rng: thread_rng(),
         }
     }
@@ -476,10 +474,10 @@ impl ShopGenerator for WeightedGenerator {
 
         // Apply money-based adjustments
         // If player has lots of money, bias toward expensive items
-        if money >= 50 {
+        if money >= 50.0 {
             weights.voucher_weight *= 1.3;
             weights.pack_weight *= 1.2;
-        } else if money <= 20 {
+        } else if money <= 20.0 {
             // If low on money, favor cheaper items
             weights.playing_card_weight *= 1.4;
             weights.consumable_weight *= 1.2;

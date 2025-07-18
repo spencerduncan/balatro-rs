@@ -453,7 +453,7 @@ impl PackGenerator for DefaultPackGenerator {
 
     fn is_pack_available(&self, pack_type: PackType, game: &Game) -> bool {
         // Basic availability logic - all packs available if player has money
-        game.money >= pack_type.base_cost()
+        game.money >= pack_type.base_cost() as f64
     }
 
     fn available_pack_types(&self, game: &Game) -> Vec<PackType> {

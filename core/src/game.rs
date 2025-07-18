@@ -39,7 +39,7 @@ pub struct Game {
     pub ante_end: Ante,
     pub ante_current: Ante,
     pub action_history: Vec<Action>,
-    pub round: usize,
+    pub round: f64,
 
     // jokers using structured JokerEffect system
     #[cfg_attr(feature = "serde", serde(skip))]
@@ -55,15 +55,15 @@ pub struct Game {
     pub joker_state_manager: Arc<JokerStateManager>,
 
     // playing
-    pub plays: usize,
-    pub discards: usize,
-    pub reward: usize,
-    pub money: usize,
+    pub plays: f64,
+    pub discards: f64,
+    pub reward: f64,
+    pub money: f64,
 
     // for scoring
-    pub chips: usize,
-    pub mult: usize,
-    pub score: usize,
+    pub chips: f64,
+    pub mult: f64,
+    pub score: f64,
 
     // hand type tracking for this game run
     pub hand_type_counts: HashMap<HandRank, u32>,
@@ -111,14 +111,14 @@ impl Game {
             ante_start,
             ante_end: Ante::try_from(config.ante_end).unwrap_or(Ante::Eight),
             ante_current: ante_start,
-            round: config.round_start,
-            plays: config.plays,
-            discards: config.discards,
-            reward: config.reward_base,
-            money: config.money_start,
-            chips: config.base_chips,
-            mult: config.base_mult,
-            score: config.base_score,
+            round: config.round_start as f64,
+            plays: config.plays as f64,
+            discards: config.discards as f64,
+            reward: config.reward_base as f64,
+            money: config.money_start as f64,
+            chips: config.base_chips as f64,
+            mult: config.base_mult as f64,
+            score: config.base_score as f64,
             hand_type_counts: HashMap::new(),
 
             // Initialize extended state fields
@@ -174,9 +174,9 @@ impl Game {
             let effect = joker.on_blind_start(&mut context);
 
             // Apply effects immediately
-            self.chips += effect.chips as usize;
-            self.mult += effect.mult as usize;
-            self.money += effect.money as usize;
+            self.chips += effect.chips as f64;
+            self.mult += effect.mult as f64;
+            self.money += effect.money as f64;
         }
     }
 
@@ -231,9 +231,9 @@ impl Game {
     }
 
     fn clear_blind(&mut self) {
-        self.score = self.config.base_score;
-        self.plays = self.config.plays;
-        self.discards = self.config.discards;
+        self.score = self.config.base_score as f64;
+        self.plays = self.config.plays as f64;
+        self.discards = self.config.discards as f64;
         self.deal();
     }
 
@@ -272,10 +272,10 @@ impl Game {
     }
 
     pub(crate) fn play_selected(&mut self) -> Result<(), GameError> {
-        if self.plays == 0 {
+        if self.plays == 0.0 {
             return Err(GameError::NoRemainingPlays);
         }
-        self.plays -= 1;
+        self.plays -= 1.0;
         let selected = SelectHand::new(self.available.selected());
         let best = selected.best_hand()?;
 
@@ -295,40 +295,40 @@ impl Game {
 
     // discard selected cards from available and draw equal number back to available
     pub(crate) fn discard_selected(&mut self) -> Result<(), GameError> {
-        if self.discards == 0 {
+        if self.discards == 0.0 {
             return Err(GameError::NoRemainingDiscards);
         }
-        self.discards -= 1;
+        self.discards -= 1.0;
         self.discarded.extend(self.available.selected());
         let removed = self.available.remove_selected();
         self.draw(removed);
         Ok(())
     }
 
-    pub fn calc_score(&mut self, hand: MadeHand) -> usize {
+    pub fn calc_score(&mut self, hand: MadeHand) -> f64 {
         // compute chips and mult from hand level
-        self.chips += hand.rank.level().chips;
-        self.mult += hand.rank.level().mult;
+        self.chips += hand.rank.level().chips as f64;
+        self.mult += hand.rank.level().mult as f64;
 
         // add chips for each played card
-        let card_chips: usize = hand.hand.cards().iter().map(|c| c.chips()).sum();
+        let card_chips: f64 = hand.hand.cards().iter().map(|c| c.chips() as f64).sum();
         self.chips += card_chips;
 
         // Apply JokerEffect from structured joker system
         if !self.jokers.is_empty() {
             let (joker_chips, joker_mult, joker_money, _messages) =
                 self.process_joker_effects(&hand);
-            self.chips += joker_chips as usize;
-            self.mult += joker_mult as usize;
-            self.money += joker_money as usize;
+            self.chips += joker_chips as f64;
+            self.mult += joker_mult as f64;
+            self.money += joker_money as f64;
         }
 
         // compute score
         let score = self.chips * self.mult;
 
         // reset chips and mult
-        self.mult = self.config.base_mult;
-        self.chips = self.config.base_chips;
+        self.mult = self.config.base_mult as f64;
+        self.chips = self.config.base_chips as f64;
         score
     }
 
@@ -408,31 +408,31 @@ impl Game {
         (total_chips, total_mult, total_money, messages)
     }
 
-    pub fn required_score(&self) -> usize {
-        let base = self.ante_current.base();
+    pub fn required_score(&self) -> f64 {
+        let base = self.ante_current.base() as f64;
 
         match self.blind {
             None => base,
             Some(Blind::Small) => base,
-            Some(Blind::Big) => (base as f32 * 1.5) as usize,
-            Some(Blind::Boss) => base * 2,
+            Some(Blind::Big) => base * 1.5,
+            Some(Blind::Boss) => base * 2.0,
         }
     }
 
-    fn calc_reward(&mut self, blind: Blind) -> Result<usize, GameError> {
-        let mut interest = (self.money as f32 * self.config.interest_rate).floor() as usize;
-        if interest > self.config.interest_max {
-            interest = self.config.interest_max
+    fn calc_reward(&mut self, blind: Blind) -> Result<f64, GameError> {
+        let mut interest = (self.money * self.config.interest_rate as f64).floor();
+        if interest > self.config.interest_max as f64 {
+            interest = self.config.interest_max as f64
         }
-        let base = blind.reward();
-        let hand_bonus = self.plays * self.config.money_per_hand;
+        let base = blind.reward() as f64;
+        let hand_bonus = self.plays * self.config.money_per_hand as f64;
         let reward = base + interest + hand_bonus;
         Ok(reward)
     }
 
     fn cashout(&mut self) -> Result<(), GameError> {
         self.money += self.reward;
-        self.reward = 0;
+        self.reward = 0.0;
         self.stage = Stage::Shop();
         self.shop.refresh();
         Ok(())
@@ -446,13 +446,13 @@ impl Game {
         if self.jokers.len() >= self.config.joker_slots {
             return Err(GameError::NoAvailableSlot);
         }
-        if joker.cost() > self.money {
+        if joker.cost() as f64 > self.money {
             return Err(GameError::InvalidBalance);
         }
         // Convert old joker to new system and add to jokers vec
         if let Some(new_joker) = JokerFactory::create(joker.to_joker_id()) {
             self.shop.buy_joker(&joker)?;
-            self.money -= joker.cost();
+            self.money -= joker.cost() as f64;
             self.jokers.push(new_joker);
             Ok(())
         } else {
@@ -520,7 +520,7 @@ impl Game {
             .ok_or(GameError::NoJokerMatch)?;
 
         // Check if player has enough money (use actual joker cost)
-        if shop_joker.cost() > self.money {
+        if shop_joker.cost() as f64 > self.money {
             return Err(GameError::InvalidBalance);
         }
 
@@ -535,7 +535,7 @@ impl Game {
         self.shop.buy_joker(&shop_joker)?;
 
         // Deduct money
-        self.money -= shop_joker.cost();
+        self.money -= shop_joker.cost() as f64;
 
         // Insert joker at specified slot, expanding vector if necessary
         if slot >= self.jokers.len() {
@@ -558,7 +558,7 @@ impl Game {
 
         // Check if player has enough money
         let cost = pack_type.base_cost();
-        if self.money < cost {
+        if self.money < cost as f64 {
             return Err(GameError::InvalidBalance);
         }
 
@@ -568,7 +568,7 @@ impl Game {
         pack.generate_contents(self)?;
 
         // Deduct money
-        self.money -= cost;
+        self.money -= cost as f64;
 
         // Add pack to inventory
         self.pack_inventory.push(pack);
@@ -723,12 +723,12 @@ impl Game {
 
     fn next_round(&mut self) -> Result<(), GameError> {
         self.stage = Stage::PreBlind();
-        self.round += 1;
+        self.round += 1.0;
         Ok(())
     }
 
     // Returns true if should clear blind after, false if not.
-    fn handle_score(&mut self, score: usize) -> Result<bool, GameError> {
+    fn handle_score(&mut self, score: f64) -> Result<bool, GameError> {
         // can only handle score if stage is blind
         if !self.stage.is_blind() {
             return Err(GameError::InvalidStage);
@@ -740,7 +740,7 @@ impl Game {
         // blind not passed
         if self.score < required {
             // no more hands to play -> lose
-            if self.plays == 0 {
+            if self.plays == 0.0 {
                 self.stage = Stage::End(End::Lose);
                 return Ok(false);
             } else {
@@ -869,7 +869,7 @@ impl Game {
 
         // Get sell value and joker ID before removing
         let joker = &self.jokers[slot];
-        let sell_value = joker.cost() / 2; // Standard sell value is half the cost
+        let sell_value = joker.cost() as f64 / 2.0; // Standard sell value is half the cost
         let joker_id = joker.id();
 
         // Award money for selling the joker
@@ -945,13 +945,13 @@ impl Game {
         self.joker_state_manager.clear();
 
         // Reset other game state to initial values
-        self.round = self.config.round_start;
-        self.plays = self.config.plays;
-        self.discards = self.config.discards;
-        self.money = self.config.money_start;
-        self.chips = self.config.base_chips;
-        self.mult = self.config.base_mult;
-        self.score = self.config.base_score;
+        self.round = self.config.round_start as f64;
+        self.plays = self.config.plays as f64;
+        self.discards = self.config.discards as f64;
+        self.money = self.config.money_start as f64;
+        self.chips = self.config.base_chips as f64;
+        self.mult = self.config.base_mult as f64;
+        self.score = self.config.base_score as f64;
         self.ante_current = self.ante_start;
         self.stage = Stage::PreBlind();
         self.hand_type_counts.clear();
@@ -1009,16 +1009,16 @@ struct SaveableGameState {
     pub ante_end: Ante,
     pub ante_current: Ante,
     pub action_history: Vec<Action>,
-    pub round: usize,
+    pub round: f64,
     pub joker_ids: Vec<JokerId>, // Changed from jokers: Vec<Jokers> to support new system
     pub joker_states: HashMap<JokerId, JokerState>,
-    pub plays: usize,
-    pub discards: usize,
-    pub reward: usize,
-    pub money: usize,
-    pub chips: usize,
-    pub mult: usize,
-    pub score: usize,
+    pub plays: f64,
+    pub discards: f64,
+    pub reward: f64,
+    pub money: f64,
+    pub chips: f64,
+    pub mult: f64,
+    pub score: f64,
     pub hand_type_counts: HashMap<HandRank, u32>,
     // Extended state fields
     pub consumables_in_hand: Vec<ConsumableId>,
