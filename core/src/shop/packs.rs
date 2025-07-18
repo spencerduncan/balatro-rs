@@ -12,6 +12,14 @@ use crate::shop::{ConsumableType, ShopItem};
 pub enum PackType {
     /// Standard pack with 3 playing cards (choose 1)
     Standard,
+    /// Jumbo pack with 5 playing cards (choose 1)
+    Jumbo,
+    /// Mega pack with 7 playing cards (choose 1)
+    Mega,
+    /// Enhanced pack with 3-4 enhanced playing cards (choose 1)
+    Enhanced,
+    /// Variety pack with mixed contents (choose 1)
+    Variety,
     /// Buffoon pack with 2 joker cards (choose 1)
     Buffoon,
     /// Arcana pack with 2-3 Tarot cards (choose 1)
@@ -35,6 +43,10 @@ impl PackType {
     pub fn base_cost(self) -> usize {
         match self {
             PackType::Standard => 4,
+            PackType::Jumbo => 6,
+            PackType::Mega => 8,
+            PackType::Enhanced => 6,
+            PackType::Variety => 5,
             PackType::Buffoon => 4,
             PackType::Arcana => 4,
             PackType::Celestial => 4,
@@ -50,6 +62,10 @@ impl PackType {
     pub fn option_count(self) -> (usize, usize) {
         match self {
             PackType::Standard => (3, 3),      // Exactly 3 options
+            PackType::Jumbo => (5, 5),         // Exactly 5 options
+            PackType::Mega => (7, 7),          // Exactly 7 options
+            PackType::Enhanced => (3, 4),      // 3-4 options
+            PackType::Variety => (3, 5),       // 3-5 options (mixed)
             PackType::Buffoon => (2, 2),       // Exactly 2 options
             PackType::Arcana => (2, 3),        // 2-3 options
             PackType::Celestial => (2, 3),     // 2-3 options
@@ -76,6 +92,10 @@ impl std::fmt::Display for PackType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             PackType::Standard => write!(f, "Standard Pack"),
+            PackType::Jumbo => write!(f, "Jumbo Pack"),
+            PackType::Mega => write!(f, "Mega Pack"),
+            PackType::Enhanced => write!(f, "Enhanced Pack"),
+            PackType::Variety => write!(f, "Variety Pack"),
             PackType::Buffoon => write!(f, "Buffoon Pack"),
             PackType::Arcana => write!(f, "Arcana Pack"),
             PackType::Celestial => write!(f, "Celestial Pack"),
@@ -153,7 +173,13 @@ impl Pack {
         self.options.clear();
 
         match self.pack_type {
-            PackType::Standard => self.generate_standard_options(option_count, game)?,
+            PackType::Standard | PackType::Jumbo | PackType::Mega | PackType::Enhanced => {
+                self.generate_standard_options(option_count, game)?
+            }
+            PackType::Variety => {
+                // Variety packs have mixed contents - for now just use standard
+                self.generate_standard_options(option_count, game)?
+            }
             PackType::Buffoon | PackType::MegaBuffoon => {
                 self.generate_buffoon_options(option_count, game)?
             }

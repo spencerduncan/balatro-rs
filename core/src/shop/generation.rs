@@ -326,17 +326,7 @@ impl ShopGenerator for WeightedGenerator {
     }
 
     fn generate_pack(&self, pack_type: PackType, game: &Game) -> Pack {
-        let cost = match pack_type {
-            PackType::Standard => 4,
-            PackType::Buffoon => 4,
-            PackType::Arcana => 4,
-            PackType::Celestial => 4,
-            PackType::Spectral => 4,
-            PackType::MegaBuffoon => 6,
-            PackType::MegaArcana => 6,
-            PackType::MegaCelestial => 6,
-            PackType::MegaSpectral => 6,
-        };
+        let cost = pack_type.base_cost();
 
         let mut contents = Vec::new();
         let mut rng = thread_rng();
@@ -359,52 +349,47 @@ impl ShopGenerator for WeightedGenerator {
                     }
                 }
             }
-            PackType::Arcana => {
-                // 2-3 tarot cards
-                let num_items = rng.gen_range(2..=3);
+            PackType::Buffoon | PackType::MegaBuffoon => {
+                // 2 or 4 jokers
+                let num_items = if pack_type == PackType::Buffoon { 2 } else { 4 };
                 for _ in 0..num_items {
-                    contents.push(ShopItem::Consumable(crate::shop::ConsumableType::Tarot));
-                }
-            }
-            PackType::Spectral => {
-                // 2-3 spectral consumables
-                let num_items = rng.gen_range(2..=3);
-                for _ in 0..num_items {
-                    contents.push(ShopItem::Consumable(crate::shop::ConsumableType::Spectral));
-                }
-            }
-            PackType::Celestial => {
-                // 2-3 planet cards
-                let num_items = rng.gen_range(2..=3);
-                for _ in 0..num_items {
-                    contents.push(ShopItem::Consumable(crate::shop::ConsumableType::Planet));
-                }
-            }
-            PackType::MegaBuffoon => {
-                // 4 jokers
-                for _ in 0..4 {
                     if let Some(joker) = self.generate_random_joker(game) {
                         contents.push(joker);
                     }
                 }
             }
-            PackType::MegaArcana => {
-                // 4-6 tarot cards
-                let num_items = rng.gen_range(4..=6);
+            PackType::Arcana | PackType::MegaArcana => {
+                // 2-3 or 4-6 tarot cards
+                let (min, max) = if pack_type == PackType::Arcana {
+                    (2, 3)
+                } else {
+                    (4, 6)
+                };
+                let num_items = rng.gen_range(min..=max);
                 for _ in 0..num_items {
                     contents.push(ShopItem::Consumable(crate::shop::ConsumableType::Tarot));
                 }
             }
-            PackType::MegaCelestial => {
-                // 4-6 planet cards
-                let num_items = rng.gen_range(4..=6);
+            PackType::Celestial | PackType::MegaCelestial => {
+                // 2-3 or 4-6 planet cards
+                let (min, max) = if pack_type == PackType::Celestial {
+                    (2, 3)
+                } else {
+                    (4, 6)
+                };
+                let num_items = rng.gen_range(min..=max);
                 for _ in 0..num_items {
                     contents.push(ShopItem::Consumable(crate::shop::ConsumableType::Planet));
                 }
             }
-            PackType::MegaSpectral => {
-                // 4-6 spectral cards
-                let num_items = rng.gen_range(4..=6);
+            PackType::Spectral | PackType::MegaSpectral => {
+                // 2-3 or 4-6 spectral cards
+                let (min, max) = if pack_type == PackType::Spectral {
+                    (2, 3)
+                } else {
+                    (4, 6)
+                };
+                let num_items = rng.gen_range(min..=max);
                 for _ in 0..num_items {
                     contents.push(ShopItem::Consumable(crate::shop::ConsumableType::Spectral));
                 }

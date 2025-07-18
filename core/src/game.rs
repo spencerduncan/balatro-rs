@@ -44,6 +44,9 @@ pub struct Game {
     #[cfg_attr(feature = "serde", serde(skip))]
     pub jokers: Vec<Box<dyn Joker>>,
 
+    #[cfg_attr(feature = "serde", serde(skip, default = "JokerEffectProcessor::new"))]
+    pub joker_effect_processor: JokerEffectProcessor,
+
     #[cfg_attr(
         feature = "serde",
         serde(skip, default = "default_joker_state_manager")
@@ -1146,6 +1149,8 @@ impl Game {
             pack_inventory: saveable_state.pack_inventory,
             open_pack: saveable_state.open_pack,
             state_version: saveable_state.state_version,
+            // Non-serializable fields must be reconstructed
+            joker_state_manager: Arc::new(JokerStateManager::new()),
         };
 
         // Restore joker states to the state manager
