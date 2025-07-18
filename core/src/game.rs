@@ -1002,6 +1002,8 @@ impl Game {
             consumables_in_hand: Vec::new(),
             vouchers: VoucherCollection::new(),
             boss_blind_state: BossBlindState::new(),
+            pack_inventory: Vec::new(),
+            open_pack: None,
             state_version: StateVersion::current(),
             // Non-serializable fields must be reconstructed
             effect_registry: EffectRegistry::new(),

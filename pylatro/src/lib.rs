@@ -1079,7 +1079,6 @@ impl GameState {
 
         Ok(self.game.is_over())
     }
-    }
 
     fn __repr__(&self) -> String {
         format!("GameState:\n{}", self.game)
