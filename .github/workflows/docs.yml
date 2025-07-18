@@ -25,7 +25,7 @@ jobs:
           apt-get install -y pkg-config libssl-dev python3 python3-dev
       
       - name: Cache cargo registry
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
@@ -35,7 +35,7 @@ jobs:
             ${{ runner.os }}-cargo-registry-
       
       - name: Cache cargo build
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: target
           key: ${{ runner.os }}-cargo-build-docs-${{ hashFiles('**/Cargo.lock') }}
@@ -99,7 +99,7 @@ jobs:
           cargo test --doc --all
       
       - name: Upload documentation artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: documentation
           path: |
@@ -140,7 +140,7 @@ jobs:
           /opt/venv/bin/pip install maturin pytest sphinx sphinx-rtd-theme
       
       - name: Cache cargo registry
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
@@ -183,7 +183,7 @@ jobs:
           fi
       
       - name: Upload Python documentation
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: python-documentation
           path: |
