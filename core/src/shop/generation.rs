@@ -223,7 +223,7 @@ impl WeightedGenerator {
             PackType::MegaBuffoon,
         ];
 
-        let random_pack = pack_types[rng.gen_range(0..pack_types.len())].clone();
+        let random_pack = pack_types[rng.gen_range(0..pack_types.len())];
         Some(ShopItem::Pack(random_pack))
     }
 
@@ -359,7 +359,11 @@ impl ShopGenerator for WeightedGenerator {
             }
             PackType::Arcana | PackType::MegaArcana => {
                 // Arcana: 2-3 tarot cards, MegaArcana: 4-6 tarot cards
-                let (min, max) = if pack_type == PackType::Arcana { (2, 3) } else { (4, 6) };
+                let (min, max) = if pack_type == PackType::Arcana {
+                    (2, 3)
+                } else {
+                    (4, 6)
+                };
                 let num_items = rng.gen_range(min..=max);
                 for _ in 0..num_items {
                     contents.push(ShopItem::Consumable(crate::shop::ConsumableType::Tarot));
@@ -367,7 +371,11 @@ impl ShopGenerator for WeightedGenerator {
             }
             PackType::Celestial | PackType::MegaCelestial => {
                 // Celestial: 2-3 planet cards, MegaCelestial: 4-6 planet cards
-                let (min, max) = if pack_type == PackType::Celestial { (2, 3) } else { (4, 6) };
+                let (min, max) = if pack_type == PackType::Celestial {
+                    (2, 3)
+                } else {
+                    (4, 6)
+                };
                 let num_items = rng.gen_range(min..=max);
                 for _ in 0..num_items {
                     contents.push(ShopItem::Consumable(crate::shop::ConsumableType::Planet));
@@ -375,7 +383,11 @@ impl ShopGenerator for WeightedGenerator {
             }
             PackType::Spectral | PackType::MegaSpectral => {
                 // Spectral: 2-3 spectral cards, MegaSpectral: 4-6 spectral cards
-                let (min, max) = if pack_type == PackType::Spectral { (2, 3) } else { (4, 6) };
+                let (min, max) = if pack_type == PackType::Spectral {
+                    (2, 3)
+                } else {
+                    (4, 6)
+                };
                 let num_items = rng.gen_range(min..=max);
                 for _ in 0..num_items {
                     contents.push(ShopItem::Consumable(crate::shop::ConsumableType::Spectral));
@@ -724,7 +736,7 @@ mod tests {
                 ShopItem::PlayingCard(_) => "playing_card",
             })
             .collect();
-        
+
         // Since shop generation is random, we just verify that items were generated
         assert_eq!(item_types.len(), 5, "Shop should have 5 items");
 
