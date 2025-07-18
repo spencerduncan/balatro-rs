@@ -33,7 +33,7 @@ impl JokerFactory {
             // Hand type conditional jokers from main branch
             JokerId::Supernova => Some(Box::new(SupernovaJoker)),
             JokerId::SpaceJoker => Some(Box::new(SpaceJoker)),
-            JokerId::IceCream => Some(Box::new(IceCreamJoker::new())),
+            JokerId::IceCream => Some(Box::new(IceCreamJoker)),
             JokerId::Runner => Some(Box::new(RunnerJoker)),
 
             // Static jokers from StaticJokerFactory
