@@ -8,6 +8,7 @@ use balatro_rs::joker::{JokerId, JokerRarity, Jokers};
 use balatro_rs::joker_registry::{registry, JokerDefinition, UnlockCondition};
 use balatro_rs::stage::{End, Stage};
 use pyo3::prelude::*;
+use pyo3::{PyResult, Python};
 
 /// A serializable snapshot of the game state for Python bindings
 #[derive(Clone)]
@@ -61,6 +62,18 @@ impl GameStateSnapshot {
 #[pyclass]
 struct GameEngine {
     game: Game,
+}
+
+impl GameEngine {
+    /// Helper method to calculate joker cost based on rarity
+    fn calculate_joker_cost(rarity: JokerRarity) -> usize {
+        match rarity {
+            JokerRarity::Common => 3,
+            JokerRarity::Uncommon => 6,
+            JokerRarity::Rare => 8,
+            JokerRarity::Legendary => 20,
+        }
+    }
 }
 
 #[pymethods]
@@ -121,13 +134,7 @@ impl GameEngine {
 
         // Check if player can afford it
         if let Ok(Some(definition)) = registry::get_definition(&joker_id) {
-            // Get base cost based on rarity
-            let cost = match definition.rarity {
-                JokerRarity::Common => 3,
-                JokerRarity::Uncommon => 6,
-                JokerRarity::Rare => 8,
-                JokerRarity::Legendary => 20,
-            };
+            let cost = Self::calculate_joker_cost(definition.rarity);
             return self.game.money >= cost;
         }
 
@@ -135,18 +142,12 @@ impl GameEngine {
     }
 
     /// Get the cost of a specific joker
-    fn get_joker_cost(&self, joker_id: JokerId) -> Result<usize, GameError> {
-        let definition = registry::get_definition(&joker_id)?
-            .ok_or_else(|| GameError::JokerNotFound(format!("{joker_id:?}")))?;
-
-        let cost = match definition.rarity {
-            JokerRarity::Common => 3,
-            JokerRarity::Uncommon => 6,
-            JokerRarity::Rare => 8,
-            JokerRarity::Legendary => 20,
-        };
-
-        Ok(cost)
+    fn get_joker_cost(&self, joker_id: JokerId) -> Result<Option<usize>, GameError> {
+        if let Some(definition) = registry::get_definition(&joker_id)? {
+            Ok(Some(Self::calculate_joker_cost(definition.rarity)))
+        } else {
+            Ok(None)
+        }
     }
 
     #[getter]
@@ -223,10 +224,26 @@ impl GameState {
         self.snapshot.required_score
     }
     #[getter]
-    fn jokers(&self) -> Vec<Jokers> {
+    fn jokers(&self) -> PyResult<Vec<Jokers>> {
+        // Emit deprecation warning
+        Python::with_gil(|py| {
+            let warnings = py.import("warnings")?;
+            warnings.call_method1(
+                "warn",
+                (
+                    "GameState.jokers is deprecated. Use GameState.joker_ids with GameEngine.get_joker_info() instead. \
+                     The jokers property will be removed in a future version. \
+                     See migration guide for details.",
+                    py.get_type::<pyo3::exceptions::PyDeprecationWarning>(),
+                    2  // stacklevel - show warning at caller's location
+                ),
+            )?;
+            Ok::<(), PyErr>(())
+        })?;
+
         // TODO: Convert new joker system to old Jokers enum for Python compatibility
         // For now, return empty vector during migration
-        Vec::new()
+        Ok(Vec::new())
     }
 
     /// Get joker IDs using the new JokerId system
@@ -245,6 +262,30 @@ impl GameState {
     #[getter]
     fn joker_slots_total(&self) -> usize {
         self.snapshot.joker_slots_max
+    }
+
+    /// Get joker names for easy migration from old API
+    ///
+    /// This is a convenience method to help users migrate from:
+    /// `[j.name() for j in state.jokers]`
+    /// to:
+    /// `state.get_joker_names()`
+    fn get_joker_names(&self) -> Vec<String> {
+        // TODO: Convert JokerIds to names once conversion is implemented
+        // For now, return empty vector during migration
+        Vec::new()
+    }
+
+    /// Get joker descriptions for easy migration from old API
+    ///
+    /// This is a convenience method to help users migrate from:
+    /// `[j.desc() for j in state.jokers]`
+    /// to:
+    /// `state.get_joker_descriptions()`
+    fn get_joker_descriptions(&self) -> Vec<String> {
+        // TODO: Convert JokerIds to descriptions once conversion is implemented
+        // For now, return empty vector during migration
+        Vec::new()
     }
 
     #[getter]

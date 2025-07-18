@@ -5,10 +5,12 @@
 .venv/
 venv/
 env/
+test_env/
 pylatro/.env/
 pylatro/.venv/
 pylatro/venv/
 pylatro/env/
+pylatro/test_env/
 *.egg-info/
 __pycache__/
 *.pyc

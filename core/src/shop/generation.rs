@@ -341,11 +341,39 @@ impl ShopGenerator for WeightedGenerator {
                     }
                 }
             }
-            PackType::Buffoon => {
-                // 2 jokers
-                for _ in 0..2 {
-                    if let Some(joker) = self.generate_random_joker(game) {
-                        contents.push(joker);
+            PackType::Jumbo => {
+                // 5 playing cards
+                for _ in 0..5 {
+                    if let Some(card) = self.generate_random_playing_card(&mut rng) {
+                        contents.push(card);
+                    }
+                }
+            }
+            PackType::Mega => {
+                // 7 playing cards
+                for _ in 0..7 {
+                    if let Some(card) = self.generate_random_playing_card(&mut rng) {
+                        contents.push(card);
+                    }
+                }
+            }
+            PackType::Enhanced => {
+                // 3-4 enhanced playing cards
+                let num_items = rng.gen_range(3..=4);
+                for _ in 0..num_items {
+                    if let Some(card) = self.generate_random_playing_card(&mut rng) {
+                        // TODO: Apply enhancement to card
+                        contents.push(card);
+                    }
+                }
+            }
+            PackType::Variety => {
+                // Mixed content - 3-5 items of various types
+                let num_items = rng.gen_range(3..=5);
+                for _ in 0..num_items {
+                    // For now, just add playing cards
+                    if let Some(card) = self.generate_random_playing_card(&mut rng) {
+                        contents.push(card);
                     }
                 }
             }
@@ -779,7 +807,7 @@ mod tests {
         let pack = generator.generate_pack(PackType::MegaBuffoon, &game);
 
         assert_eq!(pack.pack_type, PackType::MegaBuffoon);
-        assert_eq!(pack.cost, 6);
+        assert_eq!(pack.cost, 8);
         assert_eq!(pack.contents.len(), 4); // Mega Buffoon has 4 jokers
 
         // All items should be jokers

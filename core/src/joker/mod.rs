@@ -336,6 +336,7 @@ pub struct JokerEffect {
 
     /// Sell value increase for this joker
     pub sell_value_increase: i32,
+
     /// Custom message to display to the player.
     ///
     /// Used for jokers with special effects, Easter eggs, or important notifications.

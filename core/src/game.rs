@@ -9,6 +9,7 @@ use crate::deck::Deck;
 use crate::error::GameError;
 use crate::hand::{MadeHand, SelectHand};
 use crate::joker::{GameContext, Joker, JokerId, Jokers, OldJoker as OldJokerTrait};
+use crate::joker_effect_processor::JokerEffectProcessor;
 use crate::joker_factory::JokerFactory;
 use crate::joker_state::{JokerState, JokerStateManager};
 use crate::rank::HandRank;
@@ -103,6 +104,7 @@ impl Game {
             discarded: Vec::new(),
             action_history: Vec::new(),
             jokers: Vec::new(),
+            joker_effect_processor: JokerEffectProcessor::new(),
             joker_state_manager: Arc::new(JokerStateManager::new()),
             blind: None,
             stage: Stage::PreBlind(),
@@ -165,6 +167,8 @@ impl Game {
                 discarded: &self.discarded,
                 joker_state_manager: &self.joker_state_manager,
                 hand_type_counts: &self.hand_type_counts,
+                cards_in_deck: self.deck.len(),
+                stone_cards_in_deck: 0, // TODO: Track stone cards when implemented
             };
 
             let effect = joker.on_blind_start(&mut context);
@@ -353,6 +357,8 @@ impl Game {
             discarded: &self.discarded,
             joker_state_manager: &self.joker_state_manager,
             hand_type_counts: &self.hand_type_counts,
+            cards_in_deck: self.deck.len(),
+            stone_cards_in_deck: 0, // TODO: Track stone cards when implemented
         };
 
         // Process hand-level effects first
@@ -1133,6 +1139,7 @@ impl Game {
             action_history: saveable_state.action_history,
             round: saveable_state.round,
             jokers,
+            joker_effect_processor: JokerEffectProcessor::new(),
             joker_state_manager: joker_state_manager.clone(),
             plays: saveable_state.plays,
             discards: saveable_state.discards,
@@ -1149,8 +1156,6 @@ impl Game {
             pack_inventory: saveable_state.pack_inventory,
             open_pack: saveable_state.open_pack,
             state_version: saveable_state.state_version,
-            // Non-serializable fields must be reconstructed
-            joker_state_manager: Arc::new(JokerStateManager::new()),
         };
 
         // Restore joker states to the state manager
