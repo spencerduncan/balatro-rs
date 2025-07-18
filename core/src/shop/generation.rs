@@ -218,9 +218,12 @@ impl WeightedGenerator {
             PackType::Standard,
             PackType::Buffoon,
             PackType::Arcana,
-            PackType::Spectral,
             PackType::Celestial,
+            PackType::Spectral,
             PackType::MegaBuffoon,
+            PackType::MegaArcana,
+            PackType::MegaCelestial,
+            PackType::MegaSpectral,
         ];
 
         let random_pack = pack_types[rng.gen_range(0..pack_types.len())];
@@ -323,17 +326,7 @@ impl ShopGenerator for WeightedGenerator {
     }
 
     fn generate_pack(&self, pack_type: PackType, game: &Game) -> Pack {
-        let cost = match pack_type {
-            PackType::Standard => 4,
-            PackType::Buffoon => 4,
-            PackType::Arcana => 4,
-            PackType::Celestial => 4,
-            PackType::Spectral => 4,
-            PackType::MegaBuffoon => 8,
-            PackType::MegaArcana => 8,
-            PackType::MegaCelestial => 8,
-            PackType::MegaSpectral => 8,
-        };
+        let cost = pack_type.base_cost();
 
         let mut contents = Vec::new();
         let mut rng = thread_rng();
@@ -369,6 +362,26 @@ impl ShopGenerator for WeightedGenerator {
                     contents.push(ShopItem::Consumable(crate::shop::ConsumableType::Tarot));
                 }
             }
+            PackType::Enhanced => {
+                // 3-4 enhanced playing cards
+                let num_items = rng.gen_range(3..=4);
+                for _ in 0..num_items {
+                    if let Some(card) = self.generate_random_playing_card(&mut rng) {
+                        // TODO: Apply enhancement to card
+                        contents.push(card);
+                    }
+                }
+            }
+            PackType::Variety => {
+                // Mixed content - 3-5 items of various types
+                let num_items = rng.gen_range(3..=5);
+                for _ in 0..num_items {
+                    // For now, just add playing cards
+                    if let Some(card) = self.generate_random_playing_card(&mut rng) {
+                        contents.push(card);
+                    }
+                }
+            }
             PackType::Celestial | PackType::MegaCelestial => {
                 // Celestial: 2-3 planet cards, MegaCelestial: 4-6 planet cards
                 let (min, max) = if pack_type == PackType::Celestial {
@@ -391,6 +404,22 @@ impl ShopGenerator for WeightedGenerator {
                 let num_items = rng.gen_range(min..=max);
                 for _ in 0..num_items {
                     contents.push(ShopItem::Consumable(crate::shop::ConsumableType::Spectral));
+                }
+            }
+            PackType::Jumbo => {
+                // Jumbo pack: 5 playing cards
+                for _ in 0..5 {
+                    if let Some(card) = self.generate_random_playing_card(&mut rng) {
+                        contents.push(card);
+                    }
+                }
+            }
+            PackType::Mega => {
+                // Mega pack: 7 playing cards
+                for _ in 0..7 {
+                    if let Some(card) = self.generate_random_playing_card(&mut rng) {
+                        contents.push(card);
+                    }
                 }
             }
         }
@@ -790,8 +819,26 @@ mod tests {
         assert_eq!(pack.cost, 4);
         assert_eq!(pack.contents.len(), 3); // Standard pack has 3 items
 
-        // Should have at least one item
-        assert!(!pack.contents.is_empty());
+        // All items should be playing cards
+        for item in &pack.contents {
+            assert!(matches!(item, ShopItem::PlayingCard(_)));
+        }
+    }
+
+    #[test]
+    fn test_generate_pack_mega_buffoon() {
+        let generator = WeightedGenerator::new();
+        let game = Game::new(Config::default());
+        let pack = generator.generate_pack(PackType::MegaBuffoon, &game);
+
+        assert_eq!(pack.pack_type, PackType::MegaBuffoon);
+        assert_eq!(pack.cost, 8);
+        assert_eq!(pack.contents.len(), 4); // Mega Buffoon has 4 jokers
+
+        // All items should be jokers
+        for item in &pack.contents {
+            assert!(matches!(item, ShopItem::Joker(_)));
+        }
     }
 
     #[test]

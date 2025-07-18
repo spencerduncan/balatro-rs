@@ -117,8 +117,15 @@ impl JokerStateManager {
 
     /// Get a copy of a joker's state if it exists
     pub fn get_state(&self, joker_id: JokerId) -> Option<JokerState> {
-        let states = self.states.read().unwrap();
-        states.get(&joker_id).cloned()
+        match self.states.read() {
+            Ok(states) => states.get(&joker_id).cloned(),
+            Err(_) => {
+                eprintln!(
+                    "Warning: Joker state mutex poisoned, returning None for joker {joker_id:?}"
+                );
+                None
+            }
+        }
     }
 
     /// Get a copy of a joker's state or create default if not exists
@@ -155,7 +162,10 @@ impl JokerStateManager {
         }
 
         // If not, create and insert new state
-        let mut states = self.states.write().unwrap();
+        let mut states = self
+            .states
+            .write()
+            .expect("Joker state mutex poisoned - cannot create new joker state");
         let state = init_fn();
         states.insert(joker_id, state.clone());
         state
@@ -163,7 +173,10 @@ impl JokerStateManager {
 
     /// Set a joker's state
     pub fn set_state(&self, joker_id: JokerId, state: JokerState) {
-        let mut states = self.states.write().unwrap();
+        let mut states = self
+            .states
+            .write()
+            .expect("Joker state mutex poisoned - cannot set joker state");
         states.insert(joker_id, state);
     }
 
@@ -190,38 +203,62 @@ impl JokerStateManager {
     where
         F: FnOnce(&mut JokerState),
     {
-        let mut states = self.states.write().unwrap();
+        let mut states = self
+            .states
+            .write()
+            .expect("Joker state mutex poisoned - cannot update joker state");
         let state = states.entry(joker_id).or_default();
         update_fn(state);
     }
 
     /// Remove a joker's state
     pub fn remove_state(&self, joker_id: JokerId) -> Option<JokerState> {
-        let mut states = self.states.write().unwrap();
+        let mut states = self
+            .states
+            .write()
+            .expect("Joker state mutex poisoned - cannot remove joker state");
         states.remove(&joker_id)
     }
 
     /// Check if a joker has state
     pub fn has_state(&self, joker_id: JokerId) -> bool {
-        let states = self.states.read().unwrap();
-        states.contains_key(&joker_id)
+        match self.states.read() {
+            Ok(states) => states.contains_key(&joker_id),
+            Err(_) => {
+                eprintln!("Warning: Joker state mutex poisoned, returning false for has_state");
+                false
+            }
+        }
     }
 
     /// Clear all states
     pub fn clear(&self) {
-        let mut states = self.states.write().unwrap();
+        let mut states = self
+            .states
+            .write()
+            .expect("Joker state mutex poisoned - cannot clear joker states");
         states.clear();
     }
 
     /// Get all joker IDs that have state
     pub fn get_active_jokers(&self) -> Vec<JokerId> {
-        let states = self.states.read().unwrap();
-        states.keys().copied().collect()
+        match self.states.read() {
+            Ok(states) => states.keys().copied().collect(),
+            Err(_) => {
+                eprintln!(
+                    "Warning: Joker state mutex poisoned, returning empty list for active jokers"
+                );
+                Vec::new()
+            }
+        }
     }
 
     /// Get the total number of jokers with state
     pub fn count(&self) -> usize {
-        let states = self.states.read().unwrap();
+        let states = self
+            .states
+            .read()
+            .expect("Joker state mutex poisoned - cannot read joker states");
         states.len()
     }
 
@@ -256,7 +293,10 @@ impl JokerStateManager {
     /// assert!(!manager.use_trigger(joker_id)); // No triggers left
     /// ```
     pub fn use_trigger(&self, joker_id: JokerId) -> bool {
-        let mut states = self.states.write().unwrap();
+        let mut states = self
+            .states
+            .write()
+            .expect("Joker state mutex poisoned - cannot write joker states");
 
         // Get or create the state
         let state = states.entry(joker_id).or_default();
@@ -402,7 +442,10 @@ impl JokerStateManager {
     /// manager.bulk_update(updates);
     /// ```
     pub fn bulk_update(&self, updates: Vec<(JokerId, StateUpdateFn)>) {
-        let mut states = self.states.write().unwrap();
+        let mut states = self
+            .states
+            .write()
+            .expect("Joker state mutex poisoned - cannot write joker states");
         for (joker_id, update_fn) in updates {
             let state = states.entry(joker_id).or_default();
             update_fn(state);
@@ -426,7 +469,10 @@ impl JokerStateManager {
     /// assert_eq!(snapshot[&JokerId::Joker].accumulated_value, 50.0);
     /// ```
     pub fn snapshot_all(&self) -> HashMap<JokerId, JokerState> {
-        let states = self.states.read().unwrap();
+        let states = self
+            .states
+            .read()
+            .expect("Joker state mutex poisoned - cannot read joker states");
         states.clone()
     }
 
@@ -454,7 +500,10 @@ impl JokerStateManager {
     /// assert_eq!(manager.get_accumulated_value(JokerId::Joker), Some(50.0));
     /// ```
     pub fn restore_from_snapshot(&self, snapshot: HashMap<JokerId, JokerState>) {
-        let mut states = self.states.write().unwrap();
+        let mut states = self
+            .states
+            .write()
+            .expect("Joker state mutex poisoned - cannot write joker states");
         *states = snapshot;
     }
 
@@ -495,7 +544,10 @@ impl JokerStateManager {
     /// assert!(!manager.has_state(JokerId::LustyJoker));
     /// ```
     pub fn compact_states(&self, active_jokers: &[JokerId]) -> usize {
-        let mut states = self.states.write().unwrap();
+        let mut states = self
+            .states
+            .write()
+            .expect("Joker state mutex poisoned - cannot write joker states");
         let active_set: std::collections::HashSet<_> = active_jokers.iter().collect();
 
         let initial_count = states.len();
@@ -511,7 +563,10 @@ impl JokerStateManager {
     /// # Returns
     /// A StateMemoryReport with detailed memory statistics
     pub fn get_memory_usage(&self) -> StateMemoryReport {
-        let states = self.states.read().unwrap();
+        let states = self
+            .states
+            .read()
+            .expect("Joker state mutex poisoned - cannot read joker states");
 
         let total_jokers = states.len();
         let total_custom_data_entries = states.values().map(|state| state.custom_data.len()).sum();
@@ -545,7 +600,10 @@ impl JokerStateManager {
     /// # Returns
     /// A vector of validation errors found
     pub fn validate_all_states(&self) -> Vec<StateValidationError> {
-        let states = self.states.read().unwrap();
+        let states = self
+            .states
+            .read()
+            .expect("Joker state mutex poisoned - cannot read joker states");
         let mut errors = Vec::new();
 
         for (joker_id, state) in states.iter() {
@@ -605,7 +663,10 @@ impl JokerStateManager {
     /// manager.batch_set_states(batch);
     /// ```
     pub fn batch_set_states(&self, batch_states: Vec<(JokerId, JokerState)>) {
-        let mut states = self.states.write().unwrap();
+        let mut states = self
+            .states
+            .write()
+            .expect("Joker state mutex poisoned - cannot write joker states");
         for (joker_id, state) in batch_states {
             states.insert(joker_id, state);
         }
@@ -621,7 +682,10 @@ impl JokerStateManager {
     /// # Returns
     /// HashMap with requested joker states (only includes jokers that have state)
     pub fn batch_get_states(&self, joker_ids: &[JokerId]) -> HashMap<JokerId, JokerState> {
-        let states = self.states.read().unwrap();
+        let states = self
+            .states
+            .read()
+            .expect("Joker state mutex poisoned - cannot read joker states");
         let mut result = HashMap::new();
 
         for &joker_id in joker_ids {

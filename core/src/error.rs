@@ -54,6 +54,8 @@ pub enum GameError {
     InvalidOperation(String),
     #[error("Input validation error: {0}")]
     InvalidInput(String),
+    #[error("Mutex poisoned")]
+    MutexPoisoned,
 }
 
 impl std::convert::From<ActionSpaceError> for GameError {

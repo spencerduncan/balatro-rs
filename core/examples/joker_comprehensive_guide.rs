@@ -69,7 +69,7 @@ fn basic_joker_usage() -> Result<(), Box<dyn std::error::Error>> {
     let common_jokers = JokerFactory::get_by_rarity(JokerRarity::Common);
     println!("\nAvailable common jokers: {} types", common_jokers.len());
     for joker_id in common_jokers.iter().take(3) {
-        println!("  - {:?}", joker_id);
+        println!("  - {joker_id:?}");
     }
 
     println!();
@@ -195,10 +195,7 @@ fn joker_effects_demonstration() -> Result<(), Box<dyn std::error::Error>> {
     // Count diamonds in hand for demonstration
     let diamond_count = cards.iter().filter(|c| c.suit == Suit::Diamond).count();
     let total_greedy_mult = diamond_count * 3;
-    println!(
-        "  Example: {} diamonds × 3 mult = +{} mult total",
-        diamond_count, total_greedy_mult
-    );
+    println!("  Example: {diamond_count} diamonds × 3 mult = +{total_greedy_mult} mult total");
 
     println!();
     Ok(())
@@ -274,7 +271,7 @@ fn static_joker_framework_example() -> Result<(), Box<dyn std::error::Error>> {
     ];
 
     for (name, suit, _joker) in suit_jokers {
-        println!("    - {}: +3 mult per {} card", name, suit);
+        println!("    - {name}: +3 mult per {suit} card");
     }
 
     // Hand-type jokers
@@ -288,7 +285,7 @@ fn static_joker_framework_example() -> Result<(), Box<dyn std::error::Error>> {
     ];
 
     for (name, hand_type, bonus) in hand_jokers {
-        println!("    - {}: {} for {}", name, bonus, hand_type);
+        println!("    - {name}: {bonus} for {hand_type}");
     }
 
     // Rank-based jokers
