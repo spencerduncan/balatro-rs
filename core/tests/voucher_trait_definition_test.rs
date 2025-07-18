@@ -1,5 +1,5 @@
 //! Tests for Issue #16: Voucher Trait Definition
-//! 
+//!
 //! This test file verifies the implementation of the Voucher trait
 //! and related types as specified in Issue #16.
 //!
@@ -13,10 +13,10 @@
 
 #[cfg(test)]
 mod tests {
-    use balatro_rs::vouchers::{
-        Voucher, VoucherId, VoucherCollection, VoucherEffect, VoucherTier, StackingRule
-    };
     use balatro_rs::game::{Game, GameState};
+    use balatro_rs::vouchers::{
+        StackingRule, Voucher, VoucherCollection, VoucherEffect, VoucherId, VoucherTier,
+    };
     use serde_json;
 
     // Test struct that implements the new Voucher trait
@@ -181,33 +181,39 @@ mod tests {
         ];
 
         // Test filtering effects by category
-        let hand_effects: Vec<&VoucherEffect> = effects.iter()
+        let hand_effects: Vec<&VoucherEffect> = effects
+            .iter()
             .filter(|effect| effect.affects_hand())
             .collect();
         assert_eq!(hand_effects.len(), 1);
 
-        let shop_effects: Vec<&VoucherEffect> = effects.iter()
+        let shop_effects: Vec<&VoucherEffect> = effects
+            .iter()
             .filter(|effect| effect.affects_shop())
             .collect();
         assert_eq!(shop_effects.len(), 2); // JokerSlot and ExtraPackOptions
 
-        let money_effects: Vec<&VoucherEffect> = effects.iter()
+        let money_effects: Vec<&VoucherEffect> = effects
+            .iter()
             .filter(|effect| effect.affects_money())
             .collect();
         assert_eq!(money_effects.len(), 1);
 
         // Test cumulative effect calculation
-        let total_hand_size_increase = effects.iter()
+        let total_hand_size_increase = effects
+            .iter()
             .filter_map(|effect| effect.hand_size_bonus())
             .sum::<usize>();
         assert_eq!(total_hand_size_increase, 2);
 
-        let total_joker_slots = effects.iter()
+        let total_joker_slots = effects
+            .iter()
             .filter_map(|effect| effect.joker_slot_bonus())
             .sum::<usize>();
         assert_eq!(total_joker_slots, 1);
 
-        let total_money_bonus = effects.iter()
+        let total_money_bonus = effects
+            .iter()
             .filter_map(|effect| effect.money_bonus())
             .sum::<usize>();
         assert_eq!(total_money_bonus, 100);
@@ -219,36 +225,38 @@ mod tests {
         // Test VoucherId serialization
         let voucher_id = VoucherId::GrabBag;
         let id_json = serde_json::to_string(&voucher_id).expect("Failed to serialize VoucherId");
-        let deserialized_id: VoucherId = serde_json::from_str(&id_json)
-            .expect("Failed to deserialize VoucherId");
+        let deserialized_id: VoucherId =
+            serde_json::from_str(&id_json).expect("Failed to deserialize VoucherId");
         assert_eq!(voucher_id, deserialized_id);
 
         // Test VoucherTier serialization
         let tier = VoucherTier::Base;
         let tier_json = serde_json::to_string(&tier).expect("Failed to serialize VoucherTier");
-        let deserialized_tier: VoucherTier = serde_json::from_str(&tier_json)
-            .expect("Failed to deserialize VoucherTier");
+        let deserialized_tier: VoucherTier =
+            serde_json::from_str(&tier_json).expect("Failed to deserialize VoucherTier");
         assert_eq!(tier, deserialized_tier);
 
         // Test VoucherEffect serialization
         let effect = VoucherEffect::HandSizeIncrease(3);
-        let effect_json = serde_json::to_string(&effect).expect("Failed to serialize VoucherEffect");
-        let deserialized_effect: VoucherEffect = serde_json::from_str(&effect_json)
-            .expect("Failed to deserialize VoucherEffect");
+        let effect_json =
+            serde_json::to_string(&effect).expect("Failed to serialize VoucherEffect");
+        let deserialized_effect: VoucherEffect =
+            serde_json::from_str(&effect_json).expect("Failed to deserialize VoucherEffect");
         assert_eq!(effect, deserialized_effect);
 
         // Test StackingRule serialization
         let stacking = StackingRule::LimitedStacking(5);
-        let stacking_json = serde_json::to_string(&stacking).expect("Failed to serialize StackingRule");
-        let deserialized_stacking: StackingRule = serde_json::from_str(&stacking_json)
-            .expect("Failed to deserialize StackingRule");
+        let stacking_json =
+            serde_json::to_string(&stacking).expect("Failed to serialize StackingRule");
+        let deserialized_stacking: StackingRule =
+            serde_json::from_str(&stacking_json).expect("Failed to deserialize StackingRule");
         assert_eq!(stacking, deserialized_stacking);
 
         // Test VoucherCollection continues to work with new types
         let mut collection = VoucherCollection::new();
         collection.add(VoucherId::GrabBag);
-        let collection_json = serde_json::to_string(&collection)
-            .expect("Failed to serialize VoucherCollection");
+        let collection_json =
+            serde_json::to_string(&collection).expect("Failed to serialize VoucherCollection");
         let deserialized_collection: VoucherCollection = serde_json::from_str(&collection_json)
             .expect("Failed to deserialize VoucherCollection");
         assert_eq!(collection.count(), deserialized_collection.count());
@@ -266,16 +274,16 @@ mod tests {
 
         // Test that vouchers can form prerequisite chains
         let mut collection = VoucherCollection::new();
-        
+
         // Initially can purchase base voucher (no prerequisites)
         assert!(collection.can_purchase(VoucherId::GrabBag));
-        
+
         // Add base voucher
         collection.add(VoucherId::GrabBag);
-        
+
         // Can no longer purchase same voucher (already owned)
         assert!(!collection.can_purchase(VoucherId::GrabBag));
-        
+
         // Verify collection state
         assert_eq!(collection.count(), 1);
         assert!(collection.owns(VoucherId::GrabBag));
@@ -309,7 +317,7 @@ mod tests {
             match effect {
                 VoucherEffect::HandSizeIncrease(_) => {
                     // This is expected for our test voucher
-                },
+                }
                 _ => panic!("Unexpected effect type in test voucher"),
             }
         }
@@ -319,19 +327,19 @@ mod tests {
     #[test]
     fn test_voucher_scalability() {
         // This test ensures the trait design can handle the full voucher set
-        
+
         // Test that VoucherId enum can be extended
         let current_voucher_count = VoucherId::all().len();
         assert!(current_voucher_count >= 2); // At least our test vouchers
-        
+
         // Test that the trait design supports complex voucher hierarchies
         let base_tier = VoucherTier::Base;
         let upgraded_tier = VoucherTier::Upgraded;
-        
+
         // Verify tier relationships support voucher families
         assert_ne!(base_tier, upgraded_tier);
         assert!(base_tier < upgraded_tier);
-        
+
         // Test that effect system can handle diverse effect types
         let diverse_effects = vec![
             VoucherEffect::HandSizeIncrease(1),
@@ -342,7 +350,7 @@ mod tests {
             VoucherEffect::BlindScoreReduction(0.1),
             VoucherEffect::ShopSlotIncrease(1),
         ];
-        
+
         // Verify all effect types are distinct and serializable
         for effect in diverse_effects {
             let json = serde_json::to_string(&effect).expect("Effect should serialize");
@@ -360,15 +368,19 @@ mod tests {
 
         // Test that effect queries are efficient (no expensive computations)
         let start = std::time::Instant::now();
-        
+
         for _ in 0..1000 {
             let _effects = test_voucher.get_effects();
             let _stacking = test_voucher.stacking_rule();
         }
-        
+
         let duration = start.elapsed();
-        
+
         // Effect queries should be very fast (under 1ms for 1000 calls)
-        assert!(duration.as_millis() < 10, "Effect queries took too long: {:?}", duration);
+        assert!(
+            duration.as_millis() < 10,
+            "Effect queries took too long: {:?}",
+            duration
+        );
     }
 }

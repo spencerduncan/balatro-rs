@@ -49,16 +49,17 @@ impl VoucherEffect {
     pub fn is_permanent(&self) -> bool {
         match self {
             VoucherEffect::MoneyGain(_) => false, // One-time effect
-            _ => true, // Most effects are permanent
+            _ => true,                            // Most effects are permanent
         }
     }
 
     /// Check if this effect affects shop mechanics
     pub fn affects_shop(&self) -> bool {
-        matches!(self, 
-            VoucherEffect::ExtraPackOptions(_) | 
-            VoucherEffect::ShopSlotIncrease(_) |
-            VoucherEffect::JokerSlotIncrease(_)
+        matches!(
+            self,
+            VoucherEffect::ExtraPackOptions(_)
+                | VoucherEffect::ShopSlotIncrease(_)
+                | VoucherEffect::JokerSlotIncrease(_)
         )
     }
 
@@ -69,19 +70,17 @@ impl VoucherEffect {
 
     /// Check if this effect affects hand mechanics
     pub fn affects_hand(&self) -> bool {
-        matches!(self, 
-            VoucherEffect::HandSizeIncrease(_) |
-            VoucherEffect::DiscardIncrease(_) |
-            VoucherEffect::PlayIncrease(_)
+        matches!(
+            self,
+            VoucherEffect::HandSizeIncrease(_)
+                | VoucherEffect::DiscardIncrease(_)
+                | VoucherEffect::PlayIncrease(_)
         )
     }
 
     /// Check if this effect has a numeric value
     pub fn has_numeric_value(&self) -> bool {
-        match self {
-            VoucherEffect::StartingCards(_) => false,
-            _ => true,
-        }
+        !matches!(self, VoucherEffect::StartingCards(_))
     }
 
     /// Get hand size bonus if applicable
@@ -181,6 +180,12 @@ pub struct GameState {
     pub vouchers_owned: std::collections::HashSet<VoucherId>,
 }
 
+impl Default for GameState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl GameState {
     /// Create a minimal game state for testing
     pub fn new() -> Self {
@@ -208,7 +213,7 @@ impl From<&crate::game::Game> for GameState {
             crate::ante::Ante::Seven => 7,
             crate::ante::Ante::Eight => 8,
         };
-        
+
         Self {
             money: game.money,
             ante: ante_value,
