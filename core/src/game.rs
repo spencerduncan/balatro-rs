@@ -19,6 +19,9 @@ use crate::stage::{Blind, End, Stage};
 use crate::state_version::StateVersion;
 use crate::vouchers::VoucherCollection;
 
+// Re-export GameState for external use
+pub use crate::vouchers::GameState;
+
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
