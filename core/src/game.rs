@@ -154,9 +154,9 @@ impl Game {
         for joker in &self.jokers {
             let temp_hand = Hand::new(self.available.cards());
             let mut context = GameContext {
-                chips: self.chips as i32,
-                mult: self.mult as i32,
-                money: self.money as i32,
+                chips: self.chips as f64,
+                mult: self.mult as f64,
+                money: self.money as f64,
                 ante: self.ante_current as u8,
                 round: self.round as u32,
                 stage: &self.stage,
@@ -333,20 +333,20 @@ impl Game {
     }
 
     /// Process JokerEffect from all jokers and return accumulated effects
-    fn process_joker_effects(&mut self, hand: &MadeHand) -> (i32, i32, i32, Vec<String>) {
+    fn process_joker_effects(&mut self, hand: &MadeHand) -> (f64, f64, f64, Vec<String>) {
         use crate::hand::Hand;
 
-        let mut total_chips = 0i32;
-        let mut total_mult = 0i32;
-        let mut total_money = 0i32;
+        let mut total_chips = 0.0f64;
+        let mut total_mult = 0.0f64;
+        let mut total_money = 0.0f64;
         let mut messages = Vec::new();
-        let mut total_mult_multiplier = 1.0f32;
+        let mut total_mult_multiplier = 1.0f64;
 
         // Create game context
         let mut context = GameContext {
-            chips: self.chips as i32,
-            mult: self.mult as i32,
-            money: self.money as i32,
+            chips: self.chips as f64,
+            mult: self.mult as f64,
+            money: self.money as f64,
             ante: self.ante_current as u8,
             round: self.round as u32,
             stage: &self.stage,
@@ -402,7 +402,7 @@ impl Game {
 
         // Apply mult multiplier to the total mult bonus (not base mult)
         if total_mult_multiplier != 1.0 {
-            total_mult = (total_mult as f32 * total_mult_multiplier) as i32;
+            total_mult *= total_mult_multiplier;
         }
 
         (total_chips, total_mult, total_money, messages)

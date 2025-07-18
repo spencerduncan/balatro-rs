@@ -36,11 +36,11 @@ pub struct StaticJoker {
     /// Base cost override (if None, uses default for rarity)
     pub base_cost: Option<usize>,
     /// Bonus chips to add
-    pub chips_bonus: Option<i32>,
+    pub chips_bonus: Option<f64>,
     /// Bonus mult to add
-    pub mult_bonus: Option<i32>,
+    pub mult_bonus: Option<f64>,
     /// Multiplier to apply to mult
-    pub mult_multiplier: Option<f32>,
+    pub mult_multiplier: Option<f64>,
     /// Condition for when to apply the effect
     pub condition: StaticCondition,
     /// Whether the effect applies per card or per hand
@@ -196,9 +196,9 @@ pub struct StaticJokerBuilder {
     description: &'static str,
     rarity: JokerRarity,
     base_cost: Option<usize>,
-    chips_bonus: Option<i32>,
-    mult_bonus: Option<i32>,
-    mult_multiplier: Option<f32>,
+    chips_bonus: Option<f64>,
+    mult_bonus: Option<f64>,
+    mult_multiplier: Option<f64>,
     condition: StaticCondition,
     per_card: bool,
 }
@@ -214,17 +214,17 @@ impl StaticJokerBuilder {
         self
     }
 
-    pub fn chips(mut self, chips: i32) -> Self {
+    pub fn chips(mut self, chips: f64) -> Self {
         self.chips_bonus = Some(chips);
         self
     }
 
-    pub fn mult(mut self, mult: i32) -> Self {
+    pub fn mult(mut self, mult: f64) -> Self {
         self.mult_bonus = Some(mult);
         self
     }
 
-    pub fn mult_multiplier(mut self, multiplier: f32) -> Self {
+    pub fn mult_multiplier(mut self, multiplier: f64) -> Self {
         self.mult_multiplier = Some(multiplier);
         self
     }
@@ -297,7 +297,7 @@ mod tests {
     fn test_static_joker_builder() {
         let joker = StaticJoker::builder(JokerId::Joker, "Test Joker", "A test joker")
             .rarity(JokerRarity::Common)
-            .mult(4)
+            .mult(4.0)
             .per_hand()
             .build()
             .expect("Valid joker configuration");
@@ -326,7 +326,7 @@ mod tests {
     fn test_suit_condition() {
         let joker =
             StaticJoker::builder(JokerId::GreedyJoker, "Diamond Joker", "Diamonds give bonus")
-                .mult(3)
+                .mult(3.0)
                 .condition(StaticCondition::SuitScored(Suit::Diamond))
                 .per_card()
                 .build()
@@ -342,8 +342,8 @@ mod tests {
     #[test]
     fn test_rank_condition() {
         let joker = StaticJoker::builder(JokerId::Scholar, "Ace Bonus", "Aces give bonus")
-            .chips(20)
-            .mult(4)
+            .chips(20.0)
+            .mult(4.0)
             .condition(StaticCondition::RankScored(Value::Ace))
             .per_card()
             .build()
@@ -516,7 +516,7 @@ mod tests {
     fn test_any_rank_condition() {
         let joker =
             StaticJoker::builder(JokerId::EvenSteven, "Even Bonus", "Even cards give bonus")
-                .mult(4)
+                .mult(4.0)
                 .condition(StaticCondition::AnyRankScored(vec![
                     Value::Two,
                     Value::Four,
@@ -538,8 +538,8 @@ mod tests {
     #[test]
     fn test_multiple_bonuses() {
         let joker = StaticJoker::builder(JokerId::Scholar, "Multi Bonus", "Multiple effects")
-            .chips(50)
-            .mult(10)
+            .chips(50.0)
+            .mult(10.0)
             .mult_multiplier(1.2)
             .per_hand()
             .build()
@@ -556,7 +556,7 @@ mod tests {
         let joker = StaticJoker::builder(JokerId::Joker, "Expensive", "Costs more")
             .rarity(JokerRarity::Common)
             .cost(10)
-            .mult(1) // Add minimal bonus to satisfy validation
+            .mult(1.0) // Add minimal bonus to satisfy validation
             .build()
             .expect("Valid joker configuration");
 
@@ -568,7 +568,7 @@ mod tests {
         // Common
         let common = StaticJoker::builder(JokerId::Joker, "Common", "")
             .rarity(JokerRarity::Common)
-            .mult(1) // Add minimal bonus to satisfy validation
+            .mult(1.0) // Add minimal bonus to satisfy validation
             .build()
             .expect("Valid joker configuration");
         assert_eq!(common.cost(), 3);
@@ -576,7 +576,7 @@ mod tests {
         // Uncommon
         let uncommon = StaticJoker::builder(JokerId::Joker, "Uncommon", "")
             .rarity(JokerRarity::Uncommon)
-            .mult(1) // Add minimal bonus to satisfy validation
+            .mult(1.0) // Add minimal bonus to satisfy validation
             .build()
             .expect("Valid joker configuration");
         assert_eq!(uncommon.cost(), 6);
@@ -584,7 +584,7 @@ mod tests {
         // Rare
         let rare = StaticJoker::builder(JokerId::Joker, "Rare", "")
             .rarity(JokerRarity::Rare)
-            .mult(1) // Add minimal bonus to satisfy validation
+            .mult(1.0) // Add minimal bonus to satisfy validation
             .build()
             .expect("Valid joker configuration");
         assert_eq!(rare.cost(), 8);
@@ -592,7 +592,7 @@ mod tests {
         // Legendary
         let legendary = StaticJoker::builder(JokerId::Joker, "Legendary", "")
             .rarity(JokerRarity::Legendary)
-            .mult(1) // Add minimal bonus to satisfy validation
+            .mult(1.0) // Add minimal bonus to satisfy validation
             .build()
             .expect("Valid joker configuration");
         assert_eq!(legendary.cost(), 20);
@@ -605,7 +605,7 @@ mod tests {
             "Pair Bonus",
             "+8 Mult if played hand contains a Pair",
         )
-        .mult(8)
+        .mult(8.0)
         .condition(StaticCondition::HandType(HandRank::OnePair))
         .per_hand()
         .build()
@@ -654,7 +654,7 @@ mod tests {
             "Flush Bonus",
             "+10 Mult if played hand contains a Flush",
         )
-        .mult(10)
+        .mult(10.0)
         .condition(StaticCondition::HandType(HandRank::Flush))
         .per_hand()
         .build()
@@ -699,7 +699,7 @@ mod tests {
             "Two Pair Bonus",
             "+10 Mult if played hand contains Two Pair",
         )
-        .mult(10)
+        .mult(10.0)
         .condition(StaticCondition::HandType(HandRank::TwoPair))
         .per_hand()
         .build()
@@ -744,7 +744,7 @@ mod tests {
             "Three of a Kind Bonus",
             "+12 Mult if played hand contains Three of a Kind",
         )
-        .mult(12)
+        .mult(12.0)
         .condition(StaticCondition::HandType(HandRank::ThreeOfAKind))
         .per_hand()
         .build()
@@ -799,7 +799,7 @@ mod tests {
             "Straight Bonus",
             "+12 Mult if played hand contains Straight",
         )
-        .mult(12)
+        .mult(12.0)
         .condition(StaticCondition::HandType(HandRank::Straight))
         .per_hand()
         .build()
@@ -844,7 +844,7 @@ mod tests {
             "Full House Bonus",
             "+20 Chips if played hand contains Full House",
         )
-        .chips(20)
+        .chips(20.0)
         .condition(StaticCondition::HandType(HandRank::FullHouse))
         .per_hand()
         .build()
@@ -889,7 +889,7 @@ mod tests {
             "Four of a Kind Bonus",
             "+30 Chips if played hand contains Four of a Kind",
         )
-        .chips(30)
+        .chips(30.0)
         .condition(StaticCondition::HandType(HandRank::FourOfAKind))
         .per_hand()
         .build()
@@ -934,7 +934,7 @@ mod tests {
             "Straight Flush Bonus",
             "+50 Chips if played hand contains Straight Flush",
         )
-        .chips(50)
+        .chips(50.0)
         .condition(StaticCondition::HandType(HandRank::StraightFlush))
         .per_hand()
         .build()
@@ -989,7 +989,7 @@ mod tests {
             "High Card Bonus",
             "+5 Chips if played hand is High Card",
         )
-        .chips(5)
+        .chips(5.0)
         .condition(StaticCondition::HandType(HandRank::HighCard))
         .per_hand()
         .build()
@@ -1024,7 +1024,7 @@ mod tests {
             "Royal Flush Bonus",
             "+100 Chips if played hand contains Royal Flush",
         )
-        .chips(100)
+        .chips(100.0)
         .condition(StaticCondition::HandType(HandRank::RoyalFlush))
         .per_hand()
         .build()
@@ -1059,7 +1059,7 @@ mod tests {
             "Five of a Kind Bonus",
             "+50 Chips if played hand contains Five of a Kind",
         )
-        .chips(50)
+        .chips(50.0)
         .condition(StaticCondition::HandType(HandRank::FiveOfAKind))
         .per_hand()
         .build()
@@ -1094,7 +1094,7 @@ mod tests {
             "Flush House Bonus",
             "+60 Chips if played hand contains Flush House",
         )
-        .chips(60)
+        .chips(60.0)
         .condition(StaticCondition::HandType(HandRank::FlushHouse))
         .per_hand()
         .build()
@@ -1139,7 +1139,7 @@ mod tests {
             "Flush Five Bonus",
             "+80 Chips if played hand contains Flush Five",
         )
-        .chips(80)
+        .chips(80.0)
         .condition(StaticCondition::HandType(HandRank::FlushFive))
         .per_hand()
         .build()
@@ -1185,7 +1185,7 @@ mod tests {
             "Invalid Joker",
             "This should fail validation",
         )
-        .mult(8)
+        .mult(8.0)
         .condition(StaticCondition::HandType(HandRank::OnePair))
         .per_card() // This should be invalid with HandType
         .build();
@@ -1201,7 +1201,7 @@ mod tests {
             "Invalid Suit Joker",
             "This should fail validation",
         )
-        .mult(3)
+        .mult(3.0)
         .condition(StaticCondition::SuitScored(Suit::Diamond))
         .per_hand() // This should be invalid with SuitScored
         .build();
@@ -1226,7 +1226,7 @@ mod tests {
 
         // Test valid configuration
         let result = StaticJoker::builder(JokerId::Joker, "Valid Joker", "This should work")
-            .mult(4)
+            .mult(4.0)
             .condition(StaticCondition::Always)
             .per_hand()
             .build();

@@ -30,7 +30,7 @@ impl Joker for TheJoker {
     }
 
     fn on_hand_played(&self, _context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
-        JokerEffect::new().with_mult(4)
+        JokerEffect::new().with_mult(4.0)
     }
 }
 
@@ -61,7 +61,7 @@ impl Joker for GreedyJoker {
 
     fn on_card_scored(&self, _context: &mut GameContext, card: &Card) -> JokerEffect {
         if card.suit == Suit::Diamond {
-            JokerEffect::new().with_mult(3)
+            JokerEffect::new().with_mult(3.0)
         } else {
             JokerEffect::new()
         }
@@ -95,7 +95,7 @@ impl Joker for LustyJoker {
 
     fn on_card_scored(&self, _context: &mut GameContext, card: &Card) -> JokerEffect {
         if card.suit == Suit::Heart {
-            JokerEffect::new().with_mult(3)
+            JokerEffect::new().with_mult(3.0)
         } else {
             JokerEffect::new()
         }
@@ -129,7 +129,7 @@ impl Joker for WrathfulJoker {
 
     fn on_card_scored(&self, _context: &mut GameContext, card: &Card) -> JokerEffect {
         if card.suit == Suit::Spade {
-            JokerEffect::new().with_mult(3)
+            JokerEffect::new().with_mult(3.0)
         } else {
             JokerEffect::new()
         }
@@ -163,7 +163,7 @@ impl Joker for GluttonousJoker {
 
     fn on_card_scored(&self, _context: &mut GameContext, card: &Card) -> JokerEffect {
         if card.suit == Suit::Club {
-            JokerEffect::new().with_mult(3)
+            JokerEffect::new().with_mult(3.0)
         } else {
             JokerEffect::new()
         }
@@ -197,7 +197,7 @@ impl Joker for JollyJoker {
 
     fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
         if hand.is_pair().is_some() {
-            JokerEffect::new().with_mult(8)
+            JokerEffect::new().with_mult(8.0)
         } else {
             JokerEffect::new()
         }
@@ -231,7 +231,7 @@ impl Joker for ZanyJoker {
 
     fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
         if hand.is_three_of_kind().is_some() {
-            JokerEffect::new().with_mult(12)
+            JokerEffect::new().with_mult(12.0)
         } else {
             JokerEffect::new()
         }
@@ -265,7 +265,7 @@ impl Joker for MadJoker {
 
     fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
         if hand.is_two_pair().is_some() {
-            JokerEffect::new().with_mult(10)
+            JokerEffect::new().with_mult(10.0)
         } else {
             JokerEffect::new()
         }
@@ -299,7 +299,7 @@ impl Joker for CrazyJoker {
 
     fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
         if hand.is_straight().is_some() {
-            JokerEffect::new().with_mult(12)
+            JokerEffect::new().with_mult(12.0)
         } else {
             JokerEffect::new()
         }
@@ -333,7 +333,7 @@ impl Joker for DrollJoker {
 
     fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
         if hand.is_flush().is_some() {
-            JokerEffect::new().with_mult(10)
+            JokerEffect::new().with_mult(10.0)
         } else {
             JokerEffect::new()
         }
@@ -367,7 +367,7 @@ impl Joker for SlyJoker {
 
     fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
         if hand.is_pair().is_some() {
-            JokerEffect::new().with_chips(50)
+            JokerEffect::new().with_chips(50.0)
         } else {
             JokerEffect::new()
         }
@@ -401,7 +401,7 @@ impl Joker for WilyJoker {
 
     fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
         if hand.is_three_of_kind().is_some() {
-            JokerEffect::new().with_chips(100)
+            JokerEffect::new().with_chips(100.0)
         } else {
             JokerEffect::new()
         }
@@ -435,7 +435,7 @@ impl Joker for CleverJoker {
 
     fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
         if hand.is_two_pair().is_some() {
-            JokerEffect::new().with_chips(80)
+            JokerEffect::new().with_chips(80.0)
         } else {
             JokerEffect::new()
         }
@@ -469,7 +469,7 @@ impl Joker for DeviousJoker {
 
     fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
         if hand.is_straight().is_some() {
-            JokerEffect::new().with_chips(100)
+            JokerEffect::new().with_chips(100.0)
         } else {
             JokerEffect::new()
         }
@@ -503,7 +503,7 @@ impl Joker for CraftyJoker {
 
     fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
         if hand.is_flush().is_some() {
-            JokerEffect::new().with_chips(80)
+            JokerEffect::new().with_chips(80.0)
         } else {
             JokerEffect::new()
         }
@@ -541,7 +541,7 @@ impl Joker for BusinessCard {
         if card.is_face() {
             let mut rng = thread_rng();
             if rng.gen_bool(0.5) {
-                JokerEffect::new().with_money(2)
+                JokerEffect::new().with_money(2.0)
             } else {
                 JokerEffect::new()
             }
@@ -657,7 +657,7 @@ impl Joker for SupernovaJoker {
             let count = context.get_hand_type_count(hand_rank);
 
             // Return mult equal to the count
-            JokerEffect::new().with_mult(count as i32)
+            JokerEffect::new().with_mult(count as f64)
         } else {
             JokerEffect::new()
         }
@@ -722,7 +722,7 @@ impl Joker for IceCreamJoker {
                     .expect("Failed to update remaining_chips");
             });
 
-        JokerEffect::new().with_chips(chips_bonus)
+        JokerEffect::new().with_chips(chips_bonus as f64)
     }
 }
 
@@ -776,7 +776,7 @@ impl Joker for RunnerJoker {
         };
 
         // Always give the accumulated bonus regardless of hand type
-        JokerEffect::new().with_chips(new_accumulated)
+        JokerEffect::new().with_chips(new_accumulated as f64)
     }
 }
 

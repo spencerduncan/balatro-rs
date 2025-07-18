@@ -281,17 +281,17 @@ pub struct JokerEffect {
     /// Additional chips to add to the hand's base chips.
     ///
     /// Applied before mult calculations. Positive values increase the score.
-    pub chips: i32,
+    pub chips: f64,
 
     /// Additional mult to add to the hand's base mult.
     ///
     /// Applied before mult multipliers. Positive values increase the score.
-    pub mult: i32,
+    pub mult: f64,
 
     /// Money to award to the player.
     ///
     /// Applied immediately after hand scoring. Positive values give money.
-    pub money: i32,
+    pub money: f64,
 
     /// Multiplier to apply to the total mult.
     ///
@@ -299,7 +299,7 @@ pub struct JokerEffect {
     /// - 1.0 = no change (100%)
     /// - 1.5 = +50% mult
     /// - 2.0 = double mult (200%)
-    pub mult_multiplier: f32,
+    pub mult_multiplier: f64,
 
     /// Number of times to retrigger this effect.
     ///
@@ -350,25 +350,25 @@ impl JokerEffect {
     }
 
     /// Add chips
-    pub fn with_chips(mut self, chips: i32) -> Self {
+    pub fn with_chips(mut self, chips: f64) -> Self {
         self.chips = chips;
         self
     }
 
     /// Add mult
-    pub fn with_mult(mut self, mult: i32) -> Self {
+    pub fn with_mult(mut self, mult: f64) -> Self {
         self.mult = mult;
         self
     }
 
     /// Add money
-    pub fn with_money(mut self, money: i32) -> Self {
+    pub fn with_money(mut self, money: f64) -> Self {
         self.money = money;
         self
     }
 
     /// Set mult multiplier
-    pub fn with_mult_multiplier(mut self, multiplier: f32) -> Self {
+    pub fn with_mult_multiplier(mut self, multiplier: f64) -> Self {
         self.mult_multiplier = multiplier;
         self
     }
@@ -391,28 +391,28 @@ impl JokerEffect {
     /// Get additional chips bonus
     #[cfg(feature = "python")]
     #[getter]
-    fn chips(&self) -> i32 {
+    fn chips(&self) -> f64 {
         self.chips
     }
 
     /// Get additional mult bonus
     #[cfg(feature = "python")]
     #[getter]
-    fn mult(&self) -> i32 {
+    fn mult(&self) -> f64 {
         self.mult
     }
 
     /// Get money awarded
     #[cfg(feature = "python")]
     #[getter]
-    fn money(&self) -> i32 {
+    fn money(&self) -> f64 {
         self.money
     }
 
     /// Get mult multiplier
     #[cfg(feature = "python")]
     #[getter]
-    fn mult_multiplier(&self) -> f32 {
+    fn mult_multiplier(&self) -> f64 {
         self.mult_multiplier
     }
 
@@ -477,11 +477,11 @@ impl JokerEffect {
 #[derive(Debug)]
 pub struct GameContext<'a> {
     /// Current chips
-    pub chips: i32,
+    pub chips: f64,
     /// Current mult
-    pub mult: i32,
+    pub mult: f64,
     /// Current money
-    pub money: i32,
+    pub money: f64,
     /// Current ante
     pub ante: u8,
     /// Current round
@@ -935,7 +935,7 @@ pub trait Joker: Send + Sync + std::fmt::Debug {
     /// This is different from chip bonuses applied via `JokerEffect`.
     /// Chip bonuses are added to the final total, while this modifier
     /// changes the base value before other calculations.
-    fn modify_chips(&self, _context: &GameContext, base_chips: i32) -> i32 {
+    fn modify_chips(&self, _context: &GameContext, base_chips: f64) -> f64 {
         base_chips
     }
 
@@ -956,7 +956,7 @@ pub trait Joker: Send + Sync + std::fmt::Debug {
     /// This is different from mult bonuses applied via `JokerEffect`.
     /// Mult bonuses are added to the final total, while this modifier
     /// changes the base value before other calculations.
-    fn modify_mult(&self, _context: &GameContext, base_mult: i32) -> i32 {
+    fn modify_mult(&self, _context: &GameContext, base_mult: f64) -> f64 {
         base_mult
     }
 

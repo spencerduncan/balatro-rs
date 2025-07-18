@@ -47,7 +47,7 @@ impl Joker for BannerJoker {
         // Calculate discards remaining (assuming 5 total discards per round)
         const MAX_DISCARDS: u32 = 5;
         let discards_remaining = MAX_DISCARDS.saturating_sub(context.discards_used);
-        let chips_bonus = 30 * discards_remaining as i32;
+        let chips_bonus = 30.0 * discards_remaining as f64;
 
         JokerEffect::new().with_chips(chips_bonus)
     }
@@ -95,7 +95,7 @@ impl Joker for BullJoker {
     }
 
     fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
-        let chips_bonus = 2 * context.money;
+        let chips_bonus = 2.0 * context.money;
         JokerEffect::new().with_chips(chips_bonus)
     }
 }
@@ -140,7 +140,7 @@ impl Joker for StoneJoker {
     }
 
     fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
-        let chips_bonus = 25 * context.stone_cards_in_deck as i32;
+        let chips_bonus = 25.0 * context.stone_cards_in_deck as f64;
         JokerEffect::new().with_chips(chips_bonus)
     }
 }
@@ -188,7 +188,7 @@ impl Joker for ScaryFaceJoker {
 
     fn on_card_scored(&self, _context: &mut GameContext, card: &crate::card::Card) -> JokerEffect {
         match card.value {
-            Value::Jack | Value::Queen | Value::King => JokerEffect::new().with_chips(30),
+            Value::Jack | Value::Queen | Value::King => JokerEffect::new().with_chips(30.0),
             _ => JokerEffect::new(),
         }
     }
@@ -236,7 +236,7 @@ impl Joker for BlueJoker {
     }
 
     fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
-        let chips_bonus = 2 * context.cards_in_deck as i32;
+        let chips_bonus = 2.0 * context.cards_in_deck as f64;
         JokerEffect::new().with_chips(chips_bonus)
     }
 }

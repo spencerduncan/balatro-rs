@@ -9,9 +9,9 @@ use std::fmt::{self, Debug};
 #[derive(Clone, Serialize, Deserialize)]
 pub enum JokerCondition {
     /// Money is less than specified amount
-    MoneyLessThan(i32),
+    MoneyLessThan(f64),
     /// Money is greater than specified amount
-    MoneyGreaterThan(i32),
+    MoneyGreaterThan(f64),
     /// Hand size is exactly the specified value
     HandSizeExactly(usize),
     /// No face cards (J, Q, K) are held
@@ -276,7 +276,7 @@ impl ConditionalJoker {
     ///     "Test Joker",
     ///     "+10 chips when money < 50",
     ///     JokerRarity::Common,
-    ///     JokerCondition::MoneyLessThan(50),
+    ///     JokerCondition::MoneyLessThan(50.0),
     ///     JokerEffect::new().with_chips(10),
     /// );
     /// ```
@@ -447,17 +447,17 @@ mod tests {
         // we can test them independently
 
         // Test MoneyLessThan
-        let less_than_100 = JokerCondition::MoneyLessThan(100);
-        let _less_than_50 = JokerCondition::MoneyLessThan(50);
+        let less_than_100 = JokerCondition::MoneyLessThan(100.0);
+        let _less_than_50 = JokerCondition::MoneyLessThan(50.0);
 
         // Test MoneyGreaterThan
-        let greater_than_25 = JokerCondition::MoneyGreaterThan(25);
-        let _greater_than_100 = JokerCondition::MoneyGreaterThan(100);
+        let greater_than_25 = JokerCondition::MoneyGreaterThan(25.0);
+        let _greater_than_100 = JokerCondition::MoneyGreaterThan(100.0);
 
         // We'll test these conditions using a mock context in integration tests
         // For now, just verify they can be created and formatted
-        assert_eq!(format!("{less_than_100:?}"), "MoneyLessThan(100)");
-        assert_eq!(format!("{greater_than_25:?}"), "MoneyGreaterThan(25)");
+        assert_eq!(format!("{less_than_100:?}"), "MoneyLessThan(100.0)");
+        assert_eq!(format!("{greater_than_25:?}"), "MoneyGreaterThan(25.0)");
     }
 
     #[test]
@@ -480,12 +480,12 @@ mod tests {
     fn test_composite_conditions_formatting() {
         // Test composite conditions can be created and formatted
         let all_condition = JokerCondition::All(vec![
-            JokerCondition::MoneyLessThan(100),
-            JokerCondition::MoneyGreaterThan(25),
+            JokerCondition::MoneyLessThan(100.0),
+            JokerCondition::MoneyGreaterThan(25.0),
         ]);
 
         let any_condition = JokerCondition::Any(vec![
-            JokerCondition::MoneyLessThan(25),
+            JokerCondition::MoneyLessThan(25.0),
             JokerCondition::NoFaceCardsHeld,
         ]);
 
@@ -550,13 +550,13 @@ mod tests {
     #[test]
     fn test_money_condition_evaluation_simple() {
         // Test MoneyLessThan condition with simple helper
-        let less_than_100 = JokerCondition::MoneyLessThan(100);
+        let less_than_100 = JokerCondition::MoneyLessThan(100.0);
 
         assert!(test_money_condition_simple(&less_than_100, 50)); // 50 < 100
         assert!(!test_money_condition_simple(&less_than_100, 150)); // 150 >= 100
 
         // Test MoneyGreaterThan condition
-        let greater_than_75 = JokerCondition::MoneyGreaterThan(75);
+        let greater_than_75 = JokerCondition::MoneyGreaterThan(75.0);
 
         assert!(!test_money_condition_simple(&greater_than_75, 50)); // 50 <= 75
         assert!(test_money_condition_simple(&greater_than_75, 150)); // 150 > 75
@@ -594,8 +594,8 @@ mod tests {
     fn test_composite_conditions_evaluation_simple() {
         // Test All condition
         let all_condition = JokerCondition::All(vec![
-            JokerCondition::MoneyGreaterThan(25),
-            JokerCondition::MoneyLessThan(75),
+            JokerCondition::MoneyGreaterThan(25.0),
+            JokerCondition::MoneyLessThan(75.0),
         ]);
 
         // This is simplified since we can't easily test composite conditions without evaluate()
@@ -604,14 +604,14 @@ mod tests {
 
         // Test Any condition
         let any_condition = JokerCondition::Any(vec![
-            JokerCondition::MoneyLessThan(25),
-            JokerCondition::MoneyGreaterThan(75),
+            JokerCondition::MoneyLessThan(25.0),
+            JokerCondition::MoneyGreaterThan(75.0),
         ]);
 
         assert!(matches!(any_condition, JokerCondition::Any(_)));
 
         // Test Not condition
-        let not_condition = JokerCondition::Not(Box::new(JokerCondition::MoneyLessThan(75)));
+        let not_condition = JokerCondition::Not(Box::new(JokerCondition::MoneyLessThan(75.0)));
 
         assert!(matches!(not_condition, JokerCondition::Not(_)));
     }
@@ -718,7 +718,7 @@ mod tests {
             "Test Banner",
             "+10 chips when money < 100",
             JokerRarity::Common,
-            JokerCondition::MoneyLessThan(100),
+            JokerCondition::MoneyLessThan(100.0),
             JokerEffect::new().with_chips(10),
         );
 
@@ -756,8 +756,8 @@ mod tests {
         // Test nested composite conditions structure
         let nested = JokerCondition::All(vec![
             JokerCondition::Any(vec![
-                JokerCondition::MoneyLessThan(50),
-                JokerCondition::MoneyGreaterThan(75),
+                JokerCondition::MoneyLessThan(50.0),
+                JokerCondition::MoneyGreaterThan(75.0),
             ]),
             JokerCondition::Always,
         ]);
@@ -847,7 +847,7 @@ mod tests {
             "Test Joker",
             "Test Description",
             JokerRarity::Rare,
-            JokerCondition::MoneyLessThan(50),
+            JokerCondition::MoneyLessThan(50.0),
             JokerEffect::new().with_chips(20),
         )
         .with_cost(10)
