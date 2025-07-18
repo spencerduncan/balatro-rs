@@ -299,7 +299,7 @@ pub struct JokerEffect {
     /// - 1.0 = no change (100%)
     /// - 1.5 = +50% mult
     /// - 2.0 = double mult (200%)
-    pub mult_multiplier: f32,
+    pub mult_multiplier: f64,
 
     /// Number of times to retrigger this effect.
     ///
@@ -368,7 +368,7 @@ impl JokerEffect {
     }
 
     /// Set mult multiplier
-    pub fn with_mult_multiplier(mut self, multiplier: f32) -> Self {
+    pub fn with_mult_multiplier(mut self, multiplier: f64) -> Self {
         self.mult_multiplier = multiplier;
         self
     }
@@ -412,7 +412,7 @@ impl JokerEffect {
     /// Get mult multiplier
     #[cfg(feature = "python")]
     #[getter]
-    fn mult_multiplier(&self) -> f32 {
+    pub fn mult_multiplier(&self) -> f64 {
         self.mult_multiplier
     }
 
