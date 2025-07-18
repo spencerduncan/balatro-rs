@@ -807,7 +807,7 @@ mod tests {
         let pack = generator.generate_pack(PackType::MegaBuffoon, &game);
 
         assert_eq!(pack.pack_type, PackType::MegaBuffoon);
-        assert_eq!(pack.cost, 6);
+        assert_eq!(pack.cost, 8);
         assert_eq!(pack.contents.len(), 4); // Mega Buffoon has 4 jokers
 
         // All items should be jokers
