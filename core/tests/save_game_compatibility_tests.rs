@@ -133,7 +133,6 @@ mod corrupted_save_handling_tests {
 #[cfg(test)]
 mod save_load_integration_tests {
     use super::*;
-    use balatro_rs::joker_impl::TheJoker;
 
     #[test]
     fn test_full_game_save_load_roundtrip() {

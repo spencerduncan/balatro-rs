@@ -63,11 +63,11 @@ mod tests {
         let hand_size_effect = VoucherEffect::HandSizeIncrease(1);
         let joker_slot_effect = VoucherEffect::JokerSlotIncrease(1);
         let money_gain_effect = VoucherEffect::MoneyGain(50);
-        let ante_reduction_effect = VoucherEffect::AnteScaling(0.9);
+        let _ante_reduction_effect = VoucherEffect::AnteScaling(0.9);
         let pack_effect = VoucherEffect::ExtraPackOptions(1);
-        let blind_effect = VoucherEffect::BlindScoreReduction(0.1);
-        let card_effect = VoucherEffect::StartingCards(vec![]); // Empty for test
-        let shop_effect = VoucherEffect::ShopSlotIncrease(1);
+        let _blind_effect = VoucherEffect::BlindScoreReduction(0.1);
+        let _card_effect = VoucherEffect::StartingCards(vec![]); // Empty for test
+        let _shop_effect = VoucherEffect::ShopSlotIncrease(1);
 
         // Verify effects can be created and have expected properties
         match hand_size_effect {
@@ -267,7 +267,7 @@ mod tests {
     #[test]
     fn test_voucher_prerequisite_validation() {
         // Create vouchers with prerequisite relationships
-        let base_voucher = TestVoucher {
+        let _base_voucher = TestVoucher {
             id: VoucherId::GrabBag,
             tier: VoucherTier::Base,
         };
@@ -298,7 +298,7 @@ mod tests {
         };
 
         // Create a game and get its state
-        let mut game = Game::default();
+        let game = Game::default();
         let mut game_state = GameState::from(&game);
 
         // Test that voucher can check purchase conditions
