@@ -52,6 +52,8 @@ pub enum GameError {
     JokerNotFound(String),
     #[error("Invalid operation: {0}")]
     InvalidOperation(String),
+    #[error("Mutex poisoned")]
+    MutexPoisoned,
 }
 
 impl std::convert::From<ActionSpaceError> for GameError {

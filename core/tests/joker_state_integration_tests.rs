@@ -3,8 +3,8 @@
 
 use balatro_rs::config::Config;
 use balatro_rs::game::Game;
-use balatro_rs::joker::compat::TheJoker;
-use balatro_rs::joker::{JokerId, Jokers};
+use balatro_rs::joker::JokerId;
+use balatro_rs::joker_factory::JokerFactory;
 use balatro_rs::joker_state::JokerState;
 
 #[test]
@@ -13,7 +13,7 @@ fn test_joker_removal_cleans_up_state() {
     let mut game = Game::new(Config::default());
 
     // Add a joker and give it some state
-    let joker = Jokers::TheJoker(TheJoker {});
+    let joker = JokerFactory::create(JokerId::Joker).expect("Can create joker");
     game.jokers.push(joker);
 
     // Add some state for this joker
@@ -46,7 +46,7 @@ fn test_sell_joker_cleans_up_state() {
     let mut game = Game::new(Config::default());
 
     // Add a joker with state
-    let joker = Jokers::TheJoker(TheJoker {});
+    let joker = JokerFactory::create(JokerId::Joker).expect("Can create joker");
     game.jokers.push(joker);
     game.joker_state_manager
         .set_state(JokerId::Joker, JokerState::default());
@@ -75,7 +75,8 @@ fn test_remove_joker_invalid_slot() {
     assert!(result.is_err());
 
     // Add one joker, try to remove slot 1 (out of bounds)
-    game.jokers.push(Jokers::TheJoker(TheJoker {}));
+    let joker = JokerFactory::create(JokerId::Joker).expect("Can create joker");
+    game.jokers.push(joker);
     let result = game.remove_joker(1);
     assert!(result.is_err());
 }
@@ -94,7 +95,8 @@ fn test_validate_joker_state_consistency() {
     assert!(result.is_err());
 
     // Add the joker to fix consistency
-    game.jokers.push(Jokers::TheJoker(TheJoker {}));
+    let joker = JokerFactory::create(JokerId::Joker).expect("Can create joker");
+    game.jokers.push(joker);
 
     // Validation should now pass
     let result = game.validate_joker_state();
@@ -113,7 +115,8 @@ fn test_cleanup_joker_state() {
         .set_state(JokerId::LustyJoker, JokerState::default());
 
     // Add one actual joker (maps to JokerId::Joker)
-    game.jokers.push(Jokers::TheJoker(TheJoker {}));
+    let joker = JokerFactory::create(JokerId::Joker).expect("Can create joker");
+    game.jokers.push(joker);
 
     // Cleanup should remove orphaned state
     game.cleanup_joker_state();
@@ -134,8 +137,10 @@ fn test_reset_game_cleans_joker_state() {
     let mut game = Game::new(Config::default());
 
     // Add jokers and state
-    game.jokers.push(Jokers::TheJoker(TheJoker {}));
-    game.jokers.push(Jokers::TheJoker(TheJoker {}));
+    let joker = JokerFactory::create(JokerId::Joker).expect("Can create joker");
+    game.jokers.push(joker);
+    let joker = JokerFactory::create(JokerId::Joker).expect("Can create joker");
+    game.jokers.push(joker);
     game.joker_state_manager
         .set_state(JokerId::Joker, JokerState::default());
     game.joker_state_manager
@@ -159,7 +164,8 @@ fn test_joker_state_integration_during_blind() {
     let mut game = Game::new(Config::default());
 
     // Add a joker that accumulates value
-    game.jokers.push(Jokers::TheJoker(TheJoker {}));
+    let joker = JokerFactory::create(JokerId::Joker).expect("Can create joker");
+    game.jokers.push(joker);
 
     // Initial state
     let initial_state = JokerState {
@@ -198,7 +204,8 @@ fn test_multiple_joker_state_management() {
     // Add multiple jokers (using different IDs to test multiple state management)
     let joker_ids = vec![JokerId::Joker, JokerId::GreedyJoker, JokerId::LustyJoker];
     for &joker_id in &joker_ids {
-        game.jokers.push(Jokers::TheJoker(TheJoker {}));
+        let joker = JokerFactory::create(JokerId::Joker).expect("Can create joker");
+        game.jokers.push(joker);
         game.joker_state_manager.set_state(
             joker_id,
             JokerState {

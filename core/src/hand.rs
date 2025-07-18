@@ -79,6 +79,7 @@ impl SelectHand {
     }
 
     // Get all suits in a hand
+    #[allow(dead_code)] // Used by old Effects system, kept for potential future use
     pub(crate) fn suits(&self) -> Vec<Suit> {
         self.0.iter().map(|x| x.suit).sorted().collect()
     }
@@ -123,7 +124,7 @@ impl SelectHand {
     // TwoPair
     // OnePair
     // HighCard
-    pub(crate) fn best_hand(&self) -> Result<MadeHand, PlayHandError> {
+    pub fn best_hand(&self) -> Result<MadeHand, PlayHandError> {
         if self.len() == 0 {
             return Err(PlayHandError::NoCards);
         }
