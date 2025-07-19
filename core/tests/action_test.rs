@@ -1,5 +1,5 @@
 use balatro_rs::action::{Action, MoveDirection};
-use balatro_rs::card::{Card, Value, Suit};
+use balatro_rs::card::{Card, Suit, Value};
 use balatro_rs::joker::JokerId;
 use balatro_rs::shop::packs::PackType;
 use balatro_rs::stage::Blind;
@@ -156,7 +156,7 @@ mod action_tests {
         assert_eq!(Action::Play(), Action::Play());
         assert_eq!(Action::Discard(), Action::Discard());
         assert_ne!(Action::Play(), Action::Discard());
-        
+
         // Test actions with the same data
         let action1 = Action::CashOut(100);
         let action2 = Action::CashOut(100);
@@ -233,7 +233,6 @@ mod action_tests {
         assert_eq!(format!("{}", action_zero_cash), "CashOut: 0");
     }
 }
-
 
 #[cfg(all(test, feature = "serde"))]
 mod serde_tests {

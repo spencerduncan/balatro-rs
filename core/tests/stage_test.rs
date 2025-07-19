@@ -189,7 +189,7 @@ mod stage_tests {
             Stage::End(End::Win),
             Stage::End(End::Lose),
         ];
-        
+
         for stage in stages {
             let _ = format!("{:?}", stage);
         }
@@ -295,7 +295,6 @@ mod stage_tests {
         }
     }
 }
-
 
 #[cfg(all(test, feature = "serde"))]
 mod serde_tests {

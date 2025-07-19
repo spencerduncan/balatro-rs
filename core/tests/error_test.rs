@@ -187,7 +187,10 @@ mod game_error_tests {
         match game_error {
             GameError::InvalidHand(inner) => {
                 // Test that the inner error produces the expected string
-                assert_eq!(format!("{}", inner), "Played hand contains more than 5 cards");
+                assert_eq!(
+                    format!("{}", inner),
+                    "Played hand contains more than 5 cards"
+                );
             }
             _ => panic!("Expected InvalidHand variant"),
         }
