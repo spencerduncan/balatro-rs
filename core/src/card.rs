@@ -51,6 +51,26 @@ impl Value {
     pub const fn values() -> [Self; 13] {
         VALUES
     }
+    
+    /// Convert from u8 index to Value enum variant
+    pub fn from_u8(value: u8) -> Option<Self> {
+        match value {
+            0 => Some(Value::Two),
+            1 => Some(Value::Three),
+            2 => Some(Value::Four),
+            3 => Some(Value::Five),
+            4 => Some(Value::Six),
+            5 => Some(Value::Seven),
+            6 => Some(Value::Eight),
+            7 => Some(Value::Nine),
+            8 => Some(Value::Ten),
+            9 => Some(Value::Jack),
+            10 => Some(Value::Queen),
+            11 => Some(Value::King),
+            12 => Some(Value::Ace),
+            _ => None,
+        }
+    }
 }
 
 impl From<Value> for char {
