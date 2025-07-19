@@ -183,7 +183,7 @@ fn test_killscreen_behavior() {
     // 1e200 * 1e200 = 1e400 which exceeds f64 max (~1.8e308) and becomes infinity
     let extreme_joker = Box::new(TestOrderJoker::new(1, 0, 0, 1e200));
     game.jokers.push(extreme_joker);
-    
+
     // Add a second joker with the same extreme multiplier to ensure overflow
     let extreme_joker2 = Box::new(TestOrderJoker::new(2, 0, 0, 1e200));
     game.jokers.push(extreme_joker2);
@@ -202,7 +202,7 @@ fn test_killscreen_behavior() {
 
     // Score should be infinite (killscreen reached) OR we should have killscreen message
     let has_killscreen_msg = debug_messages.iter().any(|msg| msg.contains("KILLSCREEN"));
-    
+
     // Test passes if either score is infinite OR we got a killscreen message
     assert!(
         !score.is_finite() || has_killscreen_msg,
