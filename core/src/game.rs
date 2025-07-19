@@ -28,6 +28,31 @@ use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
 
+/// Maximum debug messages to keep in memory (for practical memory management)
+const MAX_DEBUG_MESSAGES: usize = 10000;
+
+/// Score breakdown for debugging and analysis
+#[derive(Debug, Clone)]
+pub struct ScoreBreakdown {
+    pub base_chips: f64,
+    pub base_mult: f64,
+    pub card_chips: f64,
+    pub joker_contributions: Vec<JokerContribution>,
+    pub final_score: f64,
+}
+
+/// Individual joker contribution to scoring
+#[derive(Debug, Clone)]
+pub struct JokerContribution {
+    pub joker_name: String,
+    pub joker_id: JokerId,
+    pub chips_added: i32,
+    pub mult_added: i32,
+    pub mult_multiplier: f64,
+    pub money_added: i32,
+    pub retrigger_count: u32,
+}
+
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug)]
 pub struct Game {
@@ -90,6 +115,14 @@ pub struct Game {
 
     /// Version of the game state for serialization compatibility
     pub state_version: StateVersion,
+
+    /// Debug logging enabled flag
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub debug_logging_enabled: bool,
+
+    /// Debug messages buffer
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub debug_messages: Vec<String>,
 }
 
 #[cfg(feature = "serde")]
@@ -134,6 +167,10 @@ impl Game {
             open_pack: None,
 
             state_version: StateVersion::current(),
+
+            // Initialize debug logging fields
+            debug_logging_enabled: false,
+            debug_messages: Vec::new(),
 
             config,
         }
@@ -319,15 +356,25 @@ impl Game {
 
         // Apply JokerEffect from structured joker system
         if !self.jokers.is_empty() {
-            let (joker_chips, joker_mult, joker_money, _messages) =
+            let (joker_chips, joker_mult, joker_money, messages) =
                 self.process_joker_effects(&hand);
             self.chips += joker_chips as f64;
             self.mult += joker_mult as f64;
             self.money += joker_money as f64;
+
+            // Log debug messages if enabled
+            for message in messages {
+                self.add_debug_message(message);
+            }
         }
 
         // compute score
         let score = self.chips * self.mult;
+        
+        // Check for killscreen condition
+        if !score.is_finite() {
+            self.add_debug_message("KILLSCREEN: Final score reached infinity!".to_string());
+        }
 
         // reset chips and mult
         self.mult = self.config.base_mult as f64;
@@ -369,13 +416,43 @@ impl Game {
             let select_hand = SelectHand::new(hand.hand.cards().to_vec());
             let effect = joker.on_hand_played(&mut context, &select_hand);
 
-            total_chips += effect.chips;
-            total_mult += effect.mult;
-            total_money += effect.money;
+            // Calculate total triggers (1 + retriggers)
+            let total_triggers = 1 + effect.retrigger;
 
-            // Handle mult_multiplier: 0.0 means no multiplier, so treat as 1.0
-            if effect.mult_multiplier != 0.0 {
-                total_mult_multiplier *= effect.mult_multiplier;
+            // Apply effect for each trigger (with killscreen detection)
+            for trigger_num in 0..total_triggers {
+                total_chips += effect.chips;
+                total_mult += effect.mult;
+                total_money += effect.money;
+
+                // Handle mult_multiplier: 0.0 means no multiplier, so treat as 1.0
+                if effect.mult_multiplier != 0.0 {
+                    total_mult_multiplier *= effect.mult_multiplier;
+                    
+                    // Killscreen detection - stop processing if we hit NaN/Infinity
+                    if !total_mult_multiplier.is_finite() {
+                        messages.push("KILLSCREEN: Score calculation reached infinity!".to_string());
+                        break;
+                    }
+                }
+
+                // Generate debug message for each trigger
+                if trigger_num == 0 && (effect.chips != 0 || effect.mult != 0 || effect.money != 0)
+                {
+                    let debug_msg = format!(
+                        "Joker '{}': +{} chips, +{} mult, +{} money{}",
+                        joker.name(),
+                        effect.chips * total_triggers as i32,
+                        effect.mult * total_triggers as i32,
+                        effect.money * total_triggers as i32,
+                        if effect.retrigger > 0 {
+                            format!(" (retrigger x{})", effect.retrigger)
+                        } else {
+                            String::new()
+                        }
+                    );
+                    messages.push(debug_msg);
+                }
             }
 
             if let Some(msg) = effect.message {
@@ -388,13 +465,50 @@ impl Game {
             for joker in &self.jokers {
                 let effect = joker.on_card_scored(&mut context, &card);
 
-                total_chips += effect.chips;
-                total_mult += effect.mult;
-                total_money += effect.money;
+                // Only process if there are actual effects
+                if effect.chips != 0
+                    || effect.mult != 0
+                    || effect.money != 0
+                    || effect.mult_multiplier != 0.0
+                {
+                    // Calculate total triggers (1 + retriggers)
+                    let total_triggers = 1 + effect.retrigger;
 
-                // Handle mult_multiplier: 0.0 means no multiplier, so treat as 1.0
-                if effect.mult_multiplier != 0.0 {
-                    total_mult_multiplier *= effect.mult_multiplier;
+                    // Apply effect for each trigger (with killscreen detection)
+                    for trigger_num in 0..total_triggers {
+                        total_chips += effect.chips;
+                        total_mult += effect.mult;
+                        total_money += effect.money;
+
+                        // Handle mult_multiplier: 0.0 means no multiplier, so treat as 1.0
+                        if effect.mult_multiplier != 0.0 {
+                            total_mult_multiplier *= effect.mult_multiplier;
+                            
+                            // Killscreen detection - stop processing if we hit NaN/Infinity
+                            if !total_mult_multiplier.is_finite() {
+                                messages.push("KILLSCREEN: Score calculation reached infinity!".to_string());
+                                break;
+                            }
+                        }
+
+                        // Generate debug message for first trigger only
+                        if trigger_num == 0 {
+                            let debug_msg = format!(
+                                "Joker '{}' on card {}: +{} chips, +{} mult, +{} money{}",
+                                joker.name(),
+                                card,
+                                effect.chips * total_triggers as i32,
+                                effect.mult * total_triggers as i32,
+                                effect.money * total_triggers as i32,
+                                if effect.retrigger > 0 {
+                                    format!(" (retrigger x{})", effect.retrigger)
+                                } else {
+                                    String::new()
+                                }
+                            );
+                            messages.push(debug_msg);
+                        }
+                    }
                 }
 
                 if let Some(msg) = effect.message {
@@ -409,6 +523,146 @@ impl Game {
         }
 
         (total_chips, total_mult, total_money, messages)
+    }
+
+    /// Calculate score with detailed breakdown for debugging and analysis
+    pub fn calc_score_with_breakdown(&mut self, hand: MadeHand) -> ScoreBreakdown {
+        use crate::hand::Hand;
+
+        // Track initial values (for potential future use)
+        let _initial_chips = self.chips;
+        let _initial_mult = self.mult;
+
+        // Calculate base values from hand level
+        let base_chips = hand.rank.level().chips as f64;
+        let base_mult = hand.rank.level().mult as f64;
+        self.chips += base_chips;
+        self.mult += base_mult;
+
+        // Calculate card contributions
+        let card_chips: f64 = hand.hand.cards().iter().map(|c| c.chips() as f64).sum();
+        self.chips += card_chips;
+
+        let mut joker_contributions = Vec::new();
+
+        // Process jokers if any exist
+        if !self.jokers.is_empty() {
+            // Create game context for jokers
+            let mut context = GameContext {
+                chips: self.chips as i32,
+                mult: self.mult as i32,
+                money: self.money as i32,
+                ante: self.ante_current as u8,
+                round: self.round as u32,
+                stage: &self.stage,
+                hands_played: 0,  // TODO: track this properly
+                discards_used: 0, // TODO: track this properly
+                jokers: &self.jokers,
+                hand: &Hand::new(hand.hand.cards().to_vec()),
+                discarded: &self.discarded,
+                joker_state_manager: &self.joker_state_manager,
+                hand_type_counts: &self.hand_type_counts,
+                cards_in_deck: self.deck.len(),
+                stone_cards_in_deck: 0, // TODO: Track stone cards when implemented
+            };
+
+            // Process each joker and track contributions
+            for joker in &self.jokers {
+                let select_hand = SelectHand::new(hand.hand.cards().to_vec());
+                let effect = joker.on_hand_played(&mut context, &select_hand);
+
+                // Create contribution record
+                let contribution = JokerContribution {
+                    joker_name: joker.name().to_string(),
+                    joker_id: joker.id(),
+                    chips_added: effect.chips,
+                    mult_added: effect.mult,
+                    mult_multiplier: if effect.mult_multiplier != 0.0 {
+                        effect.mult_multiplier
+                    } else {
+                        1.0
+                    },
+                    money_added: effect.money,
+                    retrigger_count: effect.retrigger,
+                };
+
+                // Apply effects to game state
+                self.chips += effect.chips as f64;
+                self.mult += effect.mult as f64;
+                self.money += effect.money as f64;
+
+                joker_contributions.push(contribution);
+            }
+
+            // Process card-level effects for each joker
+            for card in hand.hand.cards() {
+                for joker in &self.jokers {
+                    let effect = joker.on_card_scored(&mut context, &card);
+
+                    if effect.chips != 0 || effect.mult != 0 || effect.money != 0 {
+                        // Find existing contribution for this joker or create new one
+                        if let Some(existing) = joker_contributions
+                            .iter_mut()
+                            .find(|c| c.joker_id == joker.id())
+                        {
+                            existing.chips_added += effect.chips;
+                            existing.mult_added += effect.mult;
+                            existing.money_added += effect.money;
+                        }
+
+                        // Apply effects to game state
+                        self.chips += effect.chips as f64;
+                        self.mult += effect.mult as f64;
+                        self.money += effect.money as f64;
+                    }
+                }
+            }
+        }
+
+        // Calculate final score
+        let final_score = self.chips * self.mult;
+
+        // Log final breakdown if debug enabled
+        let msg = format!(
+            "Final score: {} chips × {} mult = {}",
+            self.chips, self.mult, final_score
+        );
+        self.add_debug_message(msg);
+
+        // Reset chips and mult to base values
+        self.mult = self.config.base_mult as f64;
+        self.chips = self.config.base_chips as f64;
+
+        ScoreBreakdown {
+            base_chips,
+            base_mult,
+            card_chips,
+            joker_contributions,
+            final_score,
+        }
+    }
+
+    /// Enable debug logging for joker scoring
+    pub fn enable_debug_logging(&mut self) {
+        self.debug_logging_enabled = true;
+        self.debug_messages.clear();
+    }
+
+    /// Get current debug messages
+    pub fn get_debug_messages(&self) -> &[String] {
+        &self.debug_messages
+    }
+    
+    /// Add a debug message with automatic memory management
+    fn add_debug_message(&mut self, message: String) {
+        if self.debug_logging_enabled {
+            self.debug_messages.push(message);
+            
+            // Keep memory usage reasonable - remove oldest messages if we exceed limit
+            if self.debug_messages.len() > MAX_DEBUG_MESSAGES {
+                self.debug_messages.drain(0..self.debug_messages.len() - MAX_DEBUG_MESSAGES);
+            }
+        }
     }
 
     pub fn required_score(&self) -> f64 {
@@ -1159,6 +1413,9 @@ impl Game {
             pack_inventory: saveable_state.pack_inventory,
             open_pack: saveable_state.open_pack,
             state_version: saveable_state.state_version,
+            // Initialize debug logging fields (not serialized)
+            debug_logging_enabled: false,
+            debug_messages: Vec::new(),
         };
 
         // Restore joker states to the state manager
