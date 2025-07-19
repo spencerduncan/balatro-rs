@@ -27,9 +27,9 @@ fn create_test_context() -> GameContext<'static> {
         JOKER_STATE_MANAGER.get_or_init(|| Arc::new(JokerStateManager::new()));
 
     GameContext {
-        chips: 0,
-        mult: 1,
-        money: 10,
+        chips: 0.0,
+        mult: 1.0,
+        money: 10.0,
         ante: 1,
         round: 1,
         stage: &STAGE,
@@ -79,9 +79,9 @@ mod business_card_tests {
         }
 
         // Should have some 0s and some 2s, but not all the same
-        assert!(money_results.contains(&0));
-        assert!(money_results.contains(&2));
-        assert!(money_results.iter().all(|&x| x == 0 || x == 2));
+        assert!(money_results.contains(&0.0));
+        assert!(money_results.contains(&2.0));
+        assert!(money_results.iter().all(|&x| x == 0.0 || x == 2.0));
     }
 
     #[test]
@@ -92,15 +92,15 @@ mod business_card_tests {
         // Test non-face cards don't give money
         let two = Card::new(Value::Two, Suit::Heart);
         let effect = joker.on_card_scored(&mut context, &two);
-        assert_eq!(effect.money, 0);
+        assert_eq!(effect.money, 0.0);
 
         let ace = Card::new(Value::Ace, Suit::Spade);
         let effect = joker.on_card_scored(&mut context, &ace);
-        assert_eq!(effect.money, 0);
+        assert_eq!(effect.money, 0.0);
 
         let ten = Card::new(Value::Ten, Suit::Diamond);
         let effect = joker.on_card_scored(&mut context, &ten);
-        assert_eq!(effect.money, 0);
+        assert_eq!(effect.money, 0.0);
     }
 
     #[test]
@@ -112,8 +112,8 @@ mod business_card_tests {
         let effect = joker.on_card_scored(&mut context, &jack);
 
         // Should only give money, no other effects
-        assert_eq!(effect.chips, 0);
-        assert_eq!(effect.mult, 0);
+        assert_eq!(effect.chips, 0.0);
+        assert_eq!(effect.mult, 0.0);
         assert_eq!(effect.mult_multiplier, 0.0);
         assert_eq!(effect.retrigger, 0);
         assert!(!effect.destroy_self);
@@ -138,15 +138,15 @@ mod business_card_tests {
 
             // Should have both 0 and 2 results for face cards (50% chance)
             assert!(
-                money_results.contains(&0),
+                money_results.contains(&0.0),
                 "Jack of {suit:?} should sometimes give $0"
             );
             assert!(
-                money_results.contains(&2),
+                money_results.contains(&2.0),
                 "Jack of {suit:?} should sometimes give $2"
             );
             assert!(
-                money_results.iter().all(|&x| x == 0 || x == 2),
+                money_results.iter().all(|&x| x == 0.0 || x == 2.0),
                 "Jack of {suit:?} should only give $0 or $2"
             );
         }
@@ -180,9 +180,9 @@ mod egg_tests {
         assert_eq!(effect.message, Some("Egg gained $3 sell value".to_string()));
 
         // Should not affect other game values
-        assert_eq!(effect.money, 0);
-        assert_eq!(effect.chips, 0);
-        assert_eq!(effect.mult, 0);
+        assert_eq!(effect.money, 0.0);
+        assert_eq!(effect.chips, 0.0);
+        assert_eq!(effect.mult, 0.0);
     }
 
     #[test]
@@ -208,13 +208,13 @@ mod egg_tests {
         // Should not respond to other game events
         let card = Card::new(Value::Ace, Suit::Heart);
         let effect = joker.on_card_scored(&mut context, &card);
-        assert_eq!(effect.money, 0);
+        assert_eq!(effect.money, 0.0);
 
         let effect = joker.on_blind_start(&mut context);
-        assert_eq!(effect.money, 0);
+        assert_eq!(effect.money, 0.0);
 
         let effect = joker.on_shop_open(&mut context);
-        assert_eq!(effect.money, 0);
+        assert_eq!(effect.money, 0.0);
     }
 }
 
@@ -248,9 +248,9 @@ mod burglar_tests {
         assert_eq!(effect.discard_mod, -999);
 
         // Should not affect other game values
-        assert_eq!(effect.money, 0);
-        assert_eq!(effect.chips, 0);
-        assert_eq!(effect.mult, 0);
+        assert_eq!(effect.money, 0.0);
+        assert_eq!(effect.chips, 0.0);
+        assert_eq!(effect.mult, 0.0);
         assert_eq!(effect.mult_multiplier, 0.0);
         assert_eq!(effect.retrigger, 0);
         assert!(!effect.destroy_self);
@@ -276,13 +276,13 @@ mod burglar_tests {
         // Should not respond to other game events (except blind start)
         let card = Card::new(Value::Ace, Suit::Heart);
         let effect = joker.on_card_scored(&mut context, &card);
-        assert_eq!(effect.money, 0);
+        assert_eq!(effect.money, 0.0);
 
         let effect = joker.on_round_end(&mut context);
-        assert_eq!(effect.money, 0);
+        assert_eq!(effect.money, 0.0);
 
         let effect = joker.on_shop_open(&mut context);
-        assert_eq!(effect.money, 0);
+        assert_eq!(effect.money, 0.0);
     }
 
     #[test]
@@ -291,8 +291,8 @@ mod burglar_tests {
         let context = create_test_context();
 
         // Should not modify other game aspects
-        assert_eq!(joker.modify_chips(&context, 100), 100);
-        assert_eq!(joker.modify_mult(&context, 5), 5);
+        assert_eq!(joker.modify_chips(&context, 100.0), 100.0);
+        assert_eq!(joker.modify_mult(&context, 5.0), 5.0);
         assert_eq!(joker.modify_discards(&context, 3), 3);
     }
 }
@@ -315,7 +315,7 @@ mod integration_tests {
         // Test business card has chance to give money on face card scoring
         let jack = Card::new(Value::Jack, Suit::Heart);
         let business_effect = business_card.on_card_scored(&mut context, &jack);
-        assert!(business_effect.money == 0 || business_effect.money == 2);
+        assert!(business_effect.money == 0.0 || business_effect.money == 2.0);
 
         // Test burglar doesn't use permanent modifiers
         let base_size = 8;
@@ -330,18 +330,18 @@ mod integration_tests {
 
         // Low money scenario
         let mut low_money_context = create_test_context();
-        low_money_context.money = 1;
+        low_money_context.money = 1.0;
 
         let jack = Card::new(Value::Jack, Suit::Heart);
         let effect = business_card.on_card_scored(&mut low_money_context, &jack);
-        assert!(effect.money == 0 || effect.money == 2);
+        assert!(effect.money == 0.0 || effect.money == 2.0);
 
         // High money scenario
         let mut high_money_context = create_test_context();
-        high_money_context.money = 100;
+        high_money_context.money = 100.0;
 
         let effect = business_card.on_card_scored(&mut high_money_context, &jack);
-        assert!(effect.money == 0 || effect.money == 2);
+        assert!(effect.money == 0.0 || effect.money == 2.0);
     }
 
     #[test]

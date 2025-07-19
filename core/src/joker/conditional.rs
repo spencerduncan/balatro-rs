@@ -43,8 +43,8 @@ pub enum JokerCondition {
 impl Debug for JokerCondition {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::MoneyLessThan(amount) => write!(f, "MoneyLessThan({amount})"),
-            Self::MoneyGreaterThan(amount) => write!(f, "MoneyGreaterThan({amount})"),
+            Self::MoneyLessThan(amount) => write!(f, "MoneyLessThan({amount:.1})"),
+            Self::MoneyGreaterThan(amount) => write!(f, "MoneyGreaterThan({amount:.1})"),
             Self::HandSizeExactly(size) => write!(f, "HandSizeExactly({size})"),
             Self::NoFaceCardsHeld => write!(f, "NoFaceCardsHeld"),
             Self::ContainsRank(rank) => write!(f, "ContainsRank({rank:?})"),
@@ -509,7 +509,7 @@ mod tests {
             "+40 chips when you have remaining discards",
             JokerRarity::Common,
             JokerCondition::Always,
-            JokerEffect::new().with_chips(40),
+            JokerEffect::new().with_chips(40.0),
         );
 
         assert_eq!(joker.id(), JokerId::Banner);
@@ -538,7 +538,7 @@ mod tests {
         }
     }
     // Helper function to test money conditions without full GameContext
-    fn test_money_condition_simple(condition: &JokerCondition, money: i32) -> bool {
+    fn test_money_condition_simple(condition: &JokerCondition, money: f64) -> bool {
         match condition {
             JokerCondition::MoneyLessThan(amount) => money < *amount,
             JokerCondition::MoneyGreaterThan(amount) => money > *amount,
@@ -552,23 +552,23 @@ mod tests {
         // Test MoneyLessThan condition with simple helper
         let less_than_100 = JokerCondition::MoneyLessThan(100.0);
 
-        assert!(test_money_condition_simple(&less_than_100, 50)); // 50 < 100
-        assert!(!test_money_condition_simple(&less_than_100, 150)); // 150 >= 100
+        assert!(test_money_condition_simple(&less_than_100, 50.0)); // 50 < 100
+        assert!(!test_money_condition_simple(&less_than_100, 150.0)); // 150 >= 100
 
         // Test MoneyGreaterThan condition
         let greater_than_75 = JokerCondition::MoneyGreaterThan(75.0);
 
-        assert!(!test_money_condition_simple(&greater_than_75, 50)); // 50 <= 75
-        assert!(test_money_condition_simple(&greater_than_75, 150)); // 150 > 75
+        assert!(!test_money_condition_simple(&greater_than_75, 50.0)); // 50 <= 75
+        assert!(test_money_condition_simple(&greater_than_75, 150.0)); // 150 > 75
     }
 
     #[test]
     fn test_always_condition_simple() {
         let always = JokerCondition::Always;
 
-        assert!(test_money_condition_simple(&always, 42));
-        assert!(test_money_condition_simple(&always, 0));
-        assert!(test_money_condition_simple(&always, 1000));
+        assert!(test_money_condition_simple(&always, 42.0));
+        assert!(test_money_condition_simple(&always, 0.0));
+        assert!(test_money_condition_simple(&always, 1000.0));
     }
 
     #[test]
@@ -583,11 +583,11 @@ mod tests {
         let played_flush = JokerCondition::PlayedHandType(HandRank::Flush);
 
         // These should all return false when no hand context is available
-        assert!(!test_money_condition_simple(&hand_size, 100));
-        assert!(!test_money_condition_simple(&no_face, 100));
-        assert!(!test_money_condition_simple(&contains_ace, 100));
-        assert!(!test_money_condition_simple(&contains_heart, 100));
-        assert!(!test_money_condition_simple(&played_flush, 100));
+        assert!(!test_money_condition_simple(&hand_size, 100.0));
+        assert!(!test_money_condition_simple(&no_face, 100.0));
+        assert!(!test_money_condition_simple(&contains_ace, 100.0));
+        assert!(!test_money_condition_simple(&contains_heart, 100.0));
+        assert!(!test_money_condition_simple(&played_flush, 100.0));
     }
 
     #[test]
@@ -719,7 +719,7 @@ mod tests {
             "+10 chips when money < 100",
             JokerRarity::Common,
             JokerCondition::MoneyLessThan(100.0),
-            JokerEffect::new().with_chips(10),
+            JokerEffect::new().with_chips(10.0),
         );
 
         assert_eq!(joker.id(), JokerId::Banner);
@@ -734,10 +734,10 @@ mod tests {
             "Custom description",
             JokerRarity::Rare,
             JokerCondition::Always,
-            JokerEffect::new().with_mult(5),
+            JokerEffect::new().with_mult(5.0),
         )
         .with_cost(15)
-        .with_card_effect(JokerEffect::new().with_chips(2));
+        .with_card_effect(JokerEffect::new().with_chips(2.0));
 
         assert_eq!(custom_joker.cost(), 15); // Custom cost overrides rarity default
         assert!(custom_joker.card_effect.is_some());
@@ -848,10 +848,10 @@ mod tests {
             "Test Description",
             JokerRarity::Rare,
             JokerCondition::MoneyLessThan(50.0),
-            JokerEffect::new().with_chips(20),
+            JokerEffect::new().with_chips(20.0),
         )
         .with_cost(10)
-        .with_card_effect(JokerEffect::new().with_mult(2));
+        .with_card_effect(JokerEffect::new().with_mult(2.0));
 
         assert_eq!(joker.cost(), 10);
         assert!(joker.card_effect.is_some());

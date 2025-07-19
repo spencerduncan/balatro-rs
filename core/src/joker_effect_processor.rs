@@ -424,7 +424,7 @@ mod tests {
         let empty_effect = JokerEffect::new();
         assert!(processor.is_empty_effect(&empty_effect));
 
-        let non_empty_effect = JokerEffect::new().with_chips(5);
+        let non_empty_effect = JokerEffect::new().with_chips(5.0);
         assert!(!processor.is_empty_effect(&non_empty_effect));
     }
 
@@ -432,13 +432,13 @@ mod tests {
     fn test_sum_effects() {
         let processor = JokerEffectProcessor::new();
         let effects = vec![
-            JokerEffect::new().with_chips(10).with_mult(2),
-            JokerEffect::new().with_chips(5).with_mult(3),
+            JokerEffect::new().with_chips(10.0).with_mult(2.0),
+            JokerEffect::new().with_chips(5.0).with_mult(3.0),
         ];
 
         let result = processor.sum_effects(&effects);
-        assert_eq!(result.chips, 15);
-        assert_eq!(result.mult, 5);
+        assert_eq!(result.chips, 15.0);
+        assert_eq!(result.mult, 5.0);
     }
 
     #[test]
@@ -471,19 +471,19 @@ mod tests {
         // Create multiple effects with different properties
         let effects = vec![
             WeightedEffect {
-                effect: JokerEffect::new().with_chips(10).with_mult(2),
+                effect: JokerEffect::new().with_chips(10.0).with_mult(2.0),
                 priority: EffectPriority::Low,
                 source_joker_id: JokerId::Joker,
                 is_retriggered: false,
             },
             WeightedEffect {
-                effect: JokerEffect::new().with_chips(5).with_mult(3).with_money(1),
+                effect: JokerEffect::new().with_chips(5.0).with_mult(3.0).with_money(1.0),
                 priority: EffectPriority::Normal,
                 source_joker_id: JokerId::GreedyJoker,
                 is_retriggered: false,
             },
             WeightedEffect {
-                effect: JokerEffect::new().with_mult_multiplier(1.5).with_money(2),
+                effect: JokerEffect::new().with_mult_multiplier(1.5).with_money(2.0),
                 priority: EffectPriority::High,
                 source_joker_id: JokerId::LustyJoker,
                 is_retriggered: false,
@@ -493,9 +493,9 @@ mod tests {
         let result = processor.accumulate_effects(&effects);
 
         // Verify accumulation
-        assert_eq!(result.chips, 15); // 10 + 5
-        assert_eq!(result.mult, 5); // 2 + 3
-        assert_eq!(result.money, 3); // 1 + 2
+        assert_eq!(result.chips, 15.0); // 10 + 5
+        assert_eq!(result.mult, 5.0); // 2 + 3
+        assert_eq!(result.money, 3.0); // 1 + 2
         assert_eq!(result.mult_multiplier, 1.5); // Only one multiplier
     }
 
@@ -504,44 +504,44 @@ mod tests {
         let processor = JokerEffectProcessor::new();
 
         let effects = vec![
-            JokerEffect::new().with_chips(10).with_mult(5),
-            JokerEffect::new().with_chips(20).with_mult(3),
-            JokerEffect::new().with_chips(5).with_mult(8),
+            JokerEffect::new().with_chips(10.0).with_mult(5.0),
+            JokerEffect::new().with_chips(20.0).with_mult(3.0),
+            JokerEffect::new().with_chips(5.0).with_mult(8.0),
         ];
 
         // Test Sum strategy (default)
         let sum_result = processor.sum_effects(&effects);
-        assert_eq!(sum_result.chips, 35); // 10 + 20 + 5
-        assert_eq!(sum_result.mult, 16); // 5 + 3 + 8
+        assert_eq!(sum_result.chips, 35.0); // 10 + 20 + 5
+        assert_eq!(sum_result.mult, 16.0); // 5 + 3 + 8
 
         // Test Maximum strategy
         let max_result = processor.max_effects(&effects);
-        assert_eq!(max_result.chips, 20); // max(10, 20, 5)
-        assert_eq!(max_result.mult, 8); // max(5, 3, 8)
+        assert_eq!(max_result.chips, 20.0); // max(10, 20, 5)
+        assert_eq!(max_result.mult, 8.0); // max(5, 3, 8)
 
         // Test Minimum strategy
         let min_result = processor.min_effects(&effects);
-        assert_eq!(min_result.chips, 5); // min(10, 20, 5)
-        assert_eq!(min_result.mult, 3); // min(5, 3, 8)
+        assert_eq!(min_result.chips, 5.0); // min(10, 20, 5)
+        assert_eq!(min_result.mult, 3.0); // min(5, 3, 8)
     }
 
     #[test]
     fn test_priority_ordering() {
         let mut weighted_effects = vec![
             WeightedEffect {
-                effect: JokerEffect::new().with_chips(10),
+                effect: JokerEffect::new().with_chips(10.0),
                 priority: EffectPriority::High,
                 source_joker_id: JokerId::Joker,
                 is_retriggered: false,
             },
             WeightedEffect {
-                effect: JokerEffect::new().with_chips(20),
+                effect: JokerEffect::new().with_chips(20.0),
                 priority: EffectPriority::Low,
                 source_joker_id: JokerId::GreedyJoker,
                 is_retriggered: false,
             },
             WeightedEffect {
-                effect: JokerEffect::new().with_chips(30),
+                effect: JokerEffect::new().with_chips(30.0),
                 priority: EffectPriority::Critical,
                 source_joker_id: JokerId::LustyJoker,
                 is_retriggered: false,
@@ -563,15 +563,15 @@ mod tests {
 
         let weighted_effects = vec![
             WeightedEffect {
-                effect: JokerEffect::new().with_chips(10).with_mult(2),
+                effect: JokerEffect::new().with_chips(10.0).with_mult(2.0),
                 priority: EffectPriority::Normal,
                 source_joker_id: JokerId::Joker,
                 is_retriggered: false,
             },
             WeightedEffect {
                 effect: JokerEffect {
-                    chips: 5,
-                    mult: 1,
+                    chips: 5.0,
+                    mult: 1.0,
                     retrigger: 2, // This effect should retrigger 2 times
                     ..Default::default()
                 },
@@ -591,8 +591,8 @@ mod tests {
         // Original: 10+5=15 chips, 2+1=3 mult
         // Retriggered: +5+5=10 chips, +1+1=2 mult
         // Total: 25 chips, 5 mult
-        assert_eq!(result.accumulated_effect.chips, 25);
-        assert_eq!(result.accumulated_effect.mult, 5);
+        assert_eq!(result.accumulated_effect.chips, 25.0);
+        assert_eq!(result.accumulated_effect.mult, 5.0);
     }
 
     #[test]
@@ -604,7 +604,7 @@ mod tests {
 
         let weighted_effects = vec![WeightedEffect {
             effect: JokerEffect {
-                chips: 10,
+                chips: 10.0,
                 retrigger: 10, // Would cause 10 retriggers, but limit is 3
                 ..Default::default()
             },
@@ -631,7 +631,7 @@ mod tests {
 
         let weighted_effects = vec![
             WeightedEffect {
-                effect: JokerEffect::new().with_chips(10),
+                effect: JokerEffect::new().with_chips(10.0),
                 priority: EffectPriority::Normal,
                 source_joker_id: JokerId::Joker,
                 is_retriggered: false,
@@ -712,7 +712,7 @@ mod tests {
         let mut processor = JokerEffectProcessor::new();
 
         let weighted_effects = vec![WeightedEffect {
-            effect: JokerEffect::new().with_chips(10).with_mult(5),
+            effect: JokerEffect::new().with_chips(10.0).with_mult(5.0),
             priority: EffectPriority::Normal,
             source_joker_id: JokerId::Joker,
             is_retriggered: false,
@@ -725,8 +725,8 @@ mod tests {
         assert_eq!(result.retriggered_count, 0);
         assert!(result.errors.is_empty());
         // Processing time can be 0 on fast systems
-        assert_eq!(result.accumulated_effect.chips, 10);
-        assert_eq!(result.accumulated_effect.mult, 5);
+        assert_eq!(result.accumulated_effect.chips, 10.0);
+        assert_eq!(result.accumulated_effect.mult, 5.0);
     }
 
     #[test]

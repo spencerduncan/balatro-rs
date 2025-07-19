@@ -104,7 +104,7 @@ mod ride_the_bus_tests {
             "+1 mult per hand without face card",
             JokerRarity::Common,
             JokerCondition::NoFaceCardsHeld,
-            JokerEffect::new().with_mult(1),
+            JokerEffect::new().with_mult(1.0),
         );
 
         assert_eq!(joker.id(), JokerId::Ride);

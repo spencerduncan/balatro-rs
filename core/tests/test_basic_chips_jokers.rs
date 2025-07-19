@@ -43,9 +43,9 @@ fn create_test_context_with_deck_and_stones(
         JOKER_STATE_MANAGER.get_or_init(|| Arc::new(JokerStateManager::new()));
 
     GameContext {
-        chips: 0,
-        mult: 1,
-        money,
+        chips: 0.0,
+        mult: 1.0,
+        money: money as f64,
         ante: 1,
         round: 1,
         stage: &STAGE,
@@ -90,9 +90,9 @@ mod banner_joker_tests {
         let effect = joker.on_hand_played(&mut context, &hand);
 
         // ASSERT: Should give 0 chips (30 * 0 remaining discards)
-        assert_eq!(effect.chips, 0);
-        assert_eq!(effect.mult, 0);
-        assert_eq!(effect.money, 0);
+        assert_eq!(effect.chips, 0.0);
+        assert_eq!(effect.mult, 0.0);
+        assert_eq!(effect.money, 0.0);
     }
 
     #[test]
@@ -106,9 +106,9 @@ mod banner_joker_tests {
         let effect = joker.on_hand_played(&mut context, &hand);
 
         // ASSERT: Should give 90 chips (30 * 3 remaining discards)
-        assert_eq!(effect.chips, 90);
-        assert_eq!(effect.mult, 0);
-        assert_eq!(effect.money, 0);
+        assert_eq!(effect.chips, 90.0);
+        assert_eq!(effect.mult, 0.0);
+        assert_eq!(effect.money, 0.0);
     }
 
     #[test]
@@ -122,7 +122,7 @@ mod banner_joker_tests {
         let effect = joker.on_hand_played(&mut context, &hand);
 
         // ASSERT: Should give 150 chips (30 * 5 remaining discards)
-        assert_eq!(effect.chips, 150);
+        assert_eq!(effect.chips, 150.0);
     }
 }
 
@@ -141,7 +141,7 @@ mod bull_joker_tests {
         let effect = joker.on_hand_played(&mut context, &hand);
 
         // ASSERT: Should give 0 chips (2 * $0)
-        assert_eq!(effect.chips, 0);
+        assert_eq!(effect.chips, 0.0);
     }
 
     #[test]
@@ -155,7 +155,7 @@ mod bull_joker_tests {
         let effect = joker.on_hand_played(&mut context, &hand);
 
         // ASSERT: Should give 20 chips (2 * $10)
-        assert_eq!(effect.chips, 20);
+        assert_eq!(effect.chips, 20.0);
     }
 
     #[test]
@@ -169,7 +169,7 @@ mod bull_joker_tests {
         let effect = joker.on_hand_played(&mut context, &hand);
 
         // ASSERT: Should give 100 chips (2 * $50)
-        assert_eq!(effect.chips, 100);
+        assert_eq!(effect.chips, 100.0);
     }
 }
 
@@ -189,7 +189,7 @@ mod stone_joker_tests {
         let effect = joker.on_hand_played(&mut context, &hand);
 
         // ASSERT: Should give 0 chips (25 * 0 Stone cards)
-        assert_eq!(effect.chips, 0);
+        assert_eq!(effect.chips, 0.0);
     }
 
     #[test]
@@ -203,7 +203,7 @@ mod stone_joker_tests {
         let effect = joker.on_hand_played(&mut context, &hand);
 
         // ASSERT: Should give 75 chips (25 * 3 Stone cards)
-        assert_eq!(effect.chips, 75);
+        assert_eq!(effect.chips, 75.0);
     }
 }
 
@@ -222,7 +222,7 @@ mod scary_face_joker_tests {
         let effect = joker.on_card_scored(&mut context, &card);
 
         // ASSERT: Should give 0 chips (not a face card)
-        assert_eq!(effect.chips, 0);
+        assert_eq!(effect.chips, 0.0);
     }
 
     #[test]
@@ -236,7 +236,7 @@ mod scary_face_joker_tests {
         let effect = joker.on_card_scored(&mut context, &jack);
 
         // ASSERT: Should give 30 chips (face card bonus)
-        assert_eq!(effect.chips, 30);
+        assert_eq!(effect.chips, 30.0);
     }
 
     #[test]
@@ -250,7 +250,7 @@ mod scary_face_joker_tests {
         let effect = joker.on_card_scored(&mut context, &queen);
 
         // ASSERT: Should give 30 chips (face card bonus)
-        assert_eq!(effect.chips, 30);
+        assert_eq!(effect.chips, 30.0);
     }
 
     #[test]
@@ -264,7 +264,7 @@ mod scary_face_joker_tests {
         let effect = joker.on_card_scored(&mut context, &king);
 
         // ASSERT: Should give 30 chips (face card bonus)
-        assert_eq!(effect.chips, 30);
+        assert_eq!(effect.chips, 30.0);
     }
 }
 
@@ -283,7 +283,7 @@ mod blue_joker_tests {
         let effect = joker.on_hand_played(&mut context, &hand);
 
         // ASSERT: Should give 0 chips (2 * 0 cards in deck)
-        assert_eq!(effect.chips, 0);
+        assert_eq!(effect.chips, 0.0);
     }
 
     #[test]
@@ -297,7 +297,7 @@ mod blue_joker_tests {
         let effect = joker.on_hand_played(&mut context, &hand);
 
         // ASSERT: Should give 40 chips (2 * 20 cards in deck)
-        assert_eq!(effect.chips, 40);
+        assert_eq!(effect.chips, 40.0);
     }
 
     #[test]
@@ -311,7 +311,7 @@ mod blue_joker_tests {
         let effect = joker.on_hand_played(&mut context, &hand);
 
         // ASSERT: Should give 104 chips (2 * 52 cards in deck)
-        assert_eq!(effect.chips, 104);
+        assert_eq!(effect.chips, 104.0);
     }
 }
 

@@ -202,9 +202,9 @@ fn test_migration_structured_effects_type_safety() {
     let temp_hand = Hand::new(vec![Card::new(Value::Ace, Suit::Heart)]);
 
     let mut context = GameContext {
-        chips: 0,
-        mult: 0,
-        money: 0,
+        chips: 0.0,
+        mult: 0.0,
+        money: 0.0,
         ante: 1,
         round: 1,
         stage: &Stage::Blind(Blind::Small),
@@ -223,9 +223,9 @@ fn test_migration_structured_effects_type_safety() {
     let effect = test_joker.on_card_scored(&mut context, &card);
 
     // Verify structured effect has expected values
-    assert_eq!(effect.chips, 10);
-    assert_eq!(effect.mult, 5);
-    assert_eq!(effect.money, 2);
+    assert_eq!(effect.chips, 10.0);
+    assert_eq!(effect.mult, 5.0);
+    assert_eq!(effect.money, 2.0);
     assert_eq!(effect.mult_multiplier, 1.5);
 
     // This demonstrates type safety - we get structured data instead of callbacks
@@ -289,9 +289,9 @@ impl Joker for TestStructuredEffectJoker {
     fn on_card_scored(&self, _context: &mut GameContext, _card: &Card) -> JokerEffect {
         // Return a structured effect with multiple properties
         JokerEffect::new()
-            .with_chips(10)
-            .with_mult(5)
-            .with_money(2)
+            .with_chips(10.0)
+            .with_mult(5.0)
+            .with_money(2.0)
             .with_mult_multiplier(1.5)
     }
 }

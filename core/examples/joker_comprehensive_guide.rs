@@ -101,7 +101,7 @@ fn joker_creation_patterns() -> Result<(), Box<dyn std::error::Error>> {
         "Even cards give +4 mult",
     )
     .rarity(JokerRarity::Common)
-    .mult(4)
+    .mult(4.0)
     .condition(StaticCondition::AnyRankScored(vec![
         Value::Two,
         Value::Four,
@@ -172,15 +172,15 @@ fn joker_effects_demonstration() -> Result<(), Box<dyn std::error::Error>> {
     println!("Effect Types:");
 
     // Mult bonus effect
-    let mult_effect = JokerEffect::new().with_mult(10);
+    let mult_effect = JokerEffect::new().with_mult(10.0);
     println!("  Mult Effect: +{} mult", mult_effect.mult);
 
     // Chips bonus effect
-    let chips_effect = JokerEffect::new().with_chips(50);
+    let chips_effect = JokerEffect::new().with_chips(50.0);
     println!("  Chips Effect: +{} chips", chips_effect.chips);
 
     // Combined effect
-    let combined_effect = JokerEffect::new().with_mult(5).with_chips(30);
+    let combined_effect = JokerEffect::new().with_mult(5.0).with_chips(30.0);
     println!(
         "  Combined: +{} mult, +{} chips",
         combined_effect.mult, combined_effect.chips

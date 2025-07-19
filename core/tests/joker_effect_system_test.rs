@@ -163,7 +163,7 @@ impl Joker for TestLifecycleJoker {
     }
 
     fn on_blind_start(&self, _context: &mut GameContext) -> JokerEffect {
-        JokerEffect::new().with_money(5)
+        JokerEffect::new().with_money(5.0)
     }
 }
 
@@ -191,6 +191,6 @@ impl Joker for TestMultiplierJoker {
     }
 
     fn on_hand_played(&self, _context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
-        JokerEffect::new().with_mult(10).with_mult_multiplier(2.0)
+        JokerEffect::new().with_mult(10.0).with_mult_multiplier(2.0)
     }
 }

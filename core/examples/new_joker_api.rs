@@ -23,7 +23,7 @@ fn main() {
     println!("\nCommon jokers available: {common_jokers:?}");
 
     // Example 4: Demonstrating JokerEffect
-    let effect = JokerEffect::new().with_mult(4).with_chips(50);
+    let effect = JokerEffect::new().with_mult(4.0).with_chips(50.0);
 
     println!("\nJoker Effect:");
     println!("  Mult: {}", effect.mult);

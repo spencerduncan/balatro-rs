@@ -305,21 +305,21 @@ mod tests {
         assert_eq!(joker.id(), JokerId::Joker);
         assert_eq!(joker.name(), "Test Joker");
         assert_eq!(joker.rarity(), JokerRarity::Common);
-        assert_eq!(joker.mult_bonus, Some(4));
+        assert_eq!(joker.mult_bonus, Some(4.0));
         assert!(!joker.per_card);
     }
 
     #[test]
     fn test_condition_always() {
         let joker = StaticJoker::builder(JokerId::Joker, "Always Joker", "Always gives bonus")
-            .mult(5)
+            .mult(5.0)
             .condition(StaticCondition::Always)
             .per_hand()
             .build()
             .expect("Valid joker configuration");
 
         let effect = joker.create_effect();
-        assert_eq!(effect.mult, 5);
+        assert_eq!(effect.mult, 5.0);
     }
 
     #[test]
@@ -359,7 +359,7 @@ mod tests {
     #[test]
     fn test_any_suit_condition() {
         let joker = StaticJoker::builder(JokerId::RedCard, "Red Bonus", "Red cards give bonus")
-            .mult(2)
+            .mult(2.0)
             .condition(StaticCondition::AnySuitScored(vec![
                 Suit::Heart,
                 Suit::Diamond,
@@ -384,7 +384,7 @@ mod tests {
         // Test properties
         assert_eq!(joker.id(), JokerId::GreedyJoker);
         assert_eq!(joker.name(), "Greedy Joker");
-        assert_eq!(joker.mult_bonus, Some(3));
+        assert_eq!(joker.mult_bonus, Some(3.0));
         assert!(joker.per_card);
 
         // Test condition checking
@@ -396,7 +396,7 @@ mod tests {
 
         // Test effect
         let effect = joker.create_effect();
-        assert_eq!(effect.mult, 3);
+        assert_eq!(effect.mult, 3.0);
     }
 
     #[test]
@@ -406,7 +406,7 @@ mod tests {
         // Test properties
         assert_eq!(joker.id(), JokerId::LustyJoker);
         assert_eq!(joker.name(), "Lusty Joker");
-        assert_eq!(joker.mult_bonus, Some(3));
+        assert_eq!(joker.mult_bonus, Some(3.0));
         assert!(joker.per_card);
 
         // Test condition checking
@@ -418,7 +418,7 @@ mod tests {
 
         // Test effect
         let effect = joker.create_effect();
-        assert_eq!(effect.mult, 3);
+        assert_eq!(effect.mult, 3.0);
     }
 
     #[test]
@@ -429,7 +429,7 @@ mod tests {
         // Test properties
         assert_eq!(joker.id(), JokerId::WrathfulJoker);
         assert_eq!(joker.name(), "Wrathful Joker");
-        assert_eq!(joker.mult_bonus, Some(3));
+        assert_eq!(joker.mult_bonus, Some(3.0));
         assert!(joker.per_card);
 
         // Test condition checking
@@ -441,7 +441,7 @@ mod tests {
 
         // Test effect
         let effect = joker.create_effect();
-        assert_eq!(effect.mult, 3);
+        assert_eq!(effect.mult, 3.0);
     }
 
     #[test]
@@ -452,7 +452,7 @@ mod tests {
         // Test properties
         assert_eq!(joker.id(), JokerId::GluttonousJoker);
         assert_eq!(joker.name(), "Gluttonous Joker");
-        assert_eq!(joker.mult_bonus, Some(3));
+        assert_eq!(joker.mult_bonus, Some(3.0));
         assert!(joker.per_card);
 
         // Test condition checking
@@ -464,7 +464,7 @@ mod tests {
 
         // Test effect
         let effect = joker.create_effect();
-        assert_eq!(effect.mult, 3);
+        assert_eq!(effect.mult, 3.0);
     }
 
     #[test]
@@ -506,10 +506,10 @@ mod tests {
         assert!(gluttonous.check_card_condition(&club_card));
 
         // All should give the same +3 mult effect
-        assert_eq!(greedy.create_effect().mult, 3);
-        assert_eq!(lusty.create_effect().mult, 3);
-        assert_eq!(wrathful.create_effect().mult, 3);
-        assert_eq!(gluttonous.create_effect().mult, 3);
+        assert_eq!(greedy.create_effect().mult, 3.0);
+        assert_eq!(lusty.create_effect().mult, 3.0);
+        assert_eq!(wrathful.create_effect().mult, 3.0);
+        assert_eq!(gluttonous.create_effect().mult, 3.0);
     }
 
     #[test]
@@ -546,8 +546,8 @@ mod tests {
             .expect("Valid joker configuration");
 
         let effect = joker.create_effect();
-        assert_eq!(effect.chips, 50);
-        assert_eq!(effect.mult, 10);
+        assert_eq!(effect.chips, 50.0);
+        assert_eq!(effect.mult, 10.0);
         assert_eq!(effect.mult_multiplier, 1.2);
     }
 
