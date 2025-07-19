@@ -77,7 +77,10 @@ fn test_migration_greedy_joker_diamonds() {
     // GreedyJoker: 2 diamonds * 3 mult each = +6 mult
     // Total: (30+57) * (4+6) = 87 * 10 = 870
     // Actual calculated score: 800 (calculation differences due to hand evaluation)
-    assert_eq!(score, 800.0, "GreedyJoker should provide +3 mult per diamond");
+    assert_eq!(
+        score, 800.0,
+        "GreedyJoker should provide +3 mult per diamond"
+    );
 }
 
 #[test]
