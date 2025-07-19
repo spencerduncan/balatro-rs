@@ -177,7 +177,6 @@ mod action_tests {
         assert_eq!(debug_string, "Play");
     }
 
-
     #[test]
     fn test_all_action_variants() {
         let card = create_test_card();

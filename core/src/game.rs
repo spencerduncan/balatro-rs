@@ -681,7 +681,7 @@ impl Game {
     }
 
     fn calc_reward(&mut self, blind: Blind) -> Result<f64, GameError> {
-        let mut interest = (self.money * self.config.interest_rate as f64).floor();
+        let mut interest = (self.money * self.config.interest_rate).floor();
         if interest > self.config.interest_max as f64 {
             interest = self.config.interest_max as f64
         }

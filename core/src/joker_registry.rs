@@ -129,7 +129,7 @@ impl JokerRegistry {
         self.factories
             .get(id)
             .map(|factory| factory())
-            .ok_or_else(|| GameError::JokerNotFound(format!("{:?}", id)))
+            .ok_or_else(|| GameError::JokerNotFound(format!("{id:?}")))
     }
 
     /// Returns all registered joker definitions
