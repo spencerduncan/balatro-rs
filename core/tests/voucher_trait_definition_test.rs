@@ -13,9 +13,9 @@
 
 #[cfg(test)]
 mod tests {
-    use balatro_rs::game::{Game, GameState};
+    use balatro_rs::game::Game;
     use balatro_rs::vouchers::{
-        StackingRule, Voucher, VoucherCollection, VoucherEffect, VoucherId, VoucherTier,
+        GameState, StackingRule, Voucher, VoucherCollection, VoucherEffect, VoucherId, VoucherTier,
     };
     use serde_json;
 
