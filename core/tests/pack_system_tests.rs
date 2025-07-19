@@ -14,7 +14,7 @@ fn create_shop_game() -> Game {
     game.stage = Stage::Shop();
 
     // Ensure player has enough money for pack purchases
-    game.money = 20;
+    game.money = 20.0;
     game
 }
 
@@ -266,7 +266,7 @@ fn test_mega_pack_variants_double_options() {
     let mut game = create_shop_game();
 
     // Ensure player has enough money for mega packs
-    game.money = 50;
+    game.money = 50.0;
 
     // Test Mega Buffoon pack
     if has_pack_available(&game, PackType::MegaBuffoon) {
@@ -393,7 +393,7 @@ fn test_insufficient_funds_pack_purchase() {
     let mut game = create_shop_game();
 
     // Set player money to insufficient amount
-    game.money = 2;
+    game.money = 2.0;
 
     // Try to buy a pack that costs $4
     let buy_action = Action::BuyPack {

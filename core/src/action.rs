@@ -29,13 +29,13 @@ impl fmt::Display for MoveDirection {
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "python", pyclass(eq))]
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Action {
     SelectCard(Card),
     MoveCard(MoveDirection, Card),
     Play(),
     Discard(),
-    CashOut(usize),
+    CashOut(f64),
     BuyJoker { joker_id: JokerId, slot: usize },
     BuyPack { pack_type: PackType },
     OpenPack { pack_id: usize },

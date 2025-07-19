@@ -44,7 +44,7 @@ fn test_migration_functional_equivalence() {
     // High card base: chips=5, mult=1, cards=A+K+Q+J+9=43 chips
     // With joker: (5+43) * (1+4) = 48 * 5 = 240
     // Actual calculated score: 80 (need to verify calculation)
-    assert_eq!(score, 80, "Basic joker should provide +4 mult bonus");
+    assert_eq!(score, 80.0, "Basic joker should provide +4 mult bonus");
 }
 
 #[test]
@@ -77,7 +77,10 @@ fn test_migration_greedy_joker_diamonds() {
     // GreedyJoker: 2 diamonds * 3 mult each = +6 mult
     // Total: (30+57) * (4+6) = 87 * 10 = 870
     // Actual calculated score: 800 (calculation differences due to hand evaluation)
-    assert_eq!(score, 800, "GreedyJoker should provide +3 mult per diamond");
+    assert_eq!(
+        score, 800.0,
+        "GreedyJoker should provide +3 mult per diamond"
+    );
 }
 
 #[test]
@@ -137,7 +140,7 @@ fn test_migration_performance_improvement() {
     );
 
     // Royal flush with jokers should produce high score
-    assert!(score > 1000, "Royal flush with jokers should score high");
+    assert!(score > 1000.0, "Royal flush with jokers should score high");
 }
 
 #[test]
@@ -239,9 +242,9 @@ fn test_migration_backward_compatibility() {
     game.start();
 
     // Game should initialize properly with new system
-    assert_eq!(game.chips, 0);
-    assert_eq!(game.mult, 0);
-    assert_eq!(game.score, 0);
+    assert_eq!(game.chips, 0.0);
+    assert_eq!(game.mult, 0.0);
+    assert_eq!(game.score, 0.0);
 
     // Joker addition should work
     let joker = JokerFactory::create(JokerId::Joker).expect("Can create joker");
@@ -255,7 +258,7 @@ fn test_migration_backward_compatibility() {
     let hand = SelectHand::new(cards).best_hand().unwrap();
 
     let score = game.calc_score(hand);
-    assert!(score > 0, "Scoring should work with new system");
+    assert!(score > 0.0, "Scoring should work with new system");
 }
 
 // Test helper joker for structured effects testing

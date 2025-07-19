@@ -15,20 +15,20 @@ use pyo3::{PyObject, PyResult, Python};
 #[derive(Clone)]
 struct GameStateSnapshot {
     stage: Stage,
-    round: usize,
+    round: f64,
     action_history: Vec<Action>,
     deck_cards: Vec<Card>,
     selected_cards: Vec<Card>,
     available_cards: Vec<Card>,
     discarded_cards: Vec<Card>,
-    plays: usize,
-    discards: usize,
-    score: usize,
-    required_score: usize,
+    plays: f64,
+    discards: f64,
+    score: f64,
+    required_score: f64,
     joker_ids: Vec<JokerId>,
     joker_count: usize,
     joker_slots_max: usize,
-    money: usize,
+    money: f64,
     ante: Ante,
     is_over: bool,
     #[allow(dead_code)]
@@ -136,7 +136,7 @@ impl GameEngine {
         // Check if player can afford it
         if let Ok(Some(definition)) = registry::get_definition(&joker_id) {
             let cost = Self::calculate_joker_cost(definition.rarity);
-            return self.game.money >= cost;
+            return self.game.money >= cost as f64;
         }
 
         false
@@ -287,7 +287,7 @@ impl GameState {
         self.snapshot.stage
     }
     #[getter]
-    fn round(&self) -> usize {
+    fn round(&self) -> f64 {
         self.snapshot.round
     }
     #[getter]
@@ -311,20 +311,20 @@ impl GameState {
         self.snapshot.discarded_cards.clone()
     }
     #[getter]
-    fn plays(&self) -> usize {
+    fn plays(&self) -> f64 {
         self.snapshot.plays
     }
     #[getter]
-    fn discards(&self) -> usize {
+    fn discards(&self) -> f64 {
         self.snapshot.discards
     }
 
     #[getter]
-    fn score(&self) -> usize {
+    fn score(&self) -> f64 {
         self.snapshot.score
     }
     #[getter]
-    fn required_score(&self) -> usize {
+    fn required_score(&self) -> f64 {
         self.snapshot.required_score
     }
     #[getter]
@@ -393,7 +393,7 @@ impl GameState {
     }
 
     #[getter]
-    fn money(&self) -> usize {
+    fn money(&self) -> f64 {
         self.snapshot.money
     }
     #[getter]
