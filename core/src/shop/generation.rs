@@ -329,27 +329,32 @@ impl ShopGenerator for WeightedGenerator {
         // Generate pack contents based on pack type
         match pack_type {
             PackType::Standard => {
-                // 4 playing cards
-                for _ in 0..4 {
+                // 3 playing cards
+                for _ in 0..3 {
                     if let Some(card) = self.generate_random_playing_card(&mut rng) {
                         contents.push(card);
                     }
                 }
             }
-            PackType::Jumbo => {
-                // 5 playing cards
-                for _ in 0..5 {
-                    if let Some(card) = self.generate_random_playing_card(&mut rng) {
-                        contents.push(card);
+            PackType::Buffoon | PackType::MegaBuffoon => {
+                // Buffoon: 2 jokers, MegaBuffoon: 4 jokers
+                let num_jokers = if pack_type == PackType::Buffoon { 2 } else { 4 };
+                for _ in 0..num_jokers {
+                    if let Some(joker) = self.generate_random_joker(game) {
+                        contents.push(joker);
                     }
                 }
             }
-            PackType::Mega => {
-                // 7 playing cards
-                for _ in 0..7 {
-                    if let Some(card) = self.generate_random_playing_card(&mut rng) {
-                        contents.push(card);
-                    }
+            PackType::Arcana | PackType::MegaArcana => {
+                // Arcana: 2-3 tarot cards, MegaArcana: 4-6 tarot cards
+                let (min, max) = if pack_type == PackType::Arcana {
+                    (2, 3)
+                } else {
+                    (4, 6)
+                };
+                let num_items = rng.gen_range(min..=max);
+                for _ in 0..num_items {
+                    contents.push(ShopItem::Consumable(crate::shop::ConsumableType::Tarot));
                 }
             }
             PackType::Enhanced => {
@@ -372,29 +377,8 @@ impl ShopGenerator for WeightedGenerator {
                     }
                 }
             }
-            PackType::Buffoon | PackType::MegaBuffoon => {
-                // 2 or 4 jokers
-                let num_items = if pack_type == PackType::Buffoon { 2 } else { 4 };
-                for _ in 0..num_items {
-                    if let Some(joker) = self.generate_random_joker(game) {
-                        contents.push(joker);
-                    }
-                }
-            }
-            PackType::Arcana | PackType::MegaArcana => {
-                // 2-3 or 4-6 tarot cards
-                let (min, max) = if pack_type == PackType::Arcana {
-                    (2, 3)
-                } else {
-                    (4, 6)
-                };
-                let num_items = rng.gen_range(min..=max);
-                for _ in 0..num_items {
-                    contents.push(ShopItem::Consumable(crate::shop::ConsumableType::Tarot));
-                }
-            }
             PackType::Celestial | PackType::MegaCelestial => {
-                // 2-3 or 4-6 planet cards
+                // Celestial: 2-3 planet cards, MegaCelestial: 4-6 planet cards
                 let (min, max) = if pack_type == PackType::Celestial {
                     (2, 3)
                 } else {
@@ -406,7 +390,7 @@ impl ShopGenerator for WeightedGenerator {
                 }
             }
             PackType::Spectral | PackType::MegaSpectral => {
-                // 2-3 or 4-6 spectral cards
+                // Spectral: 2-3 spectral cards, MegaSpectral: 4-6 spectral cards
                 let (min, max) = if pack_type == PackType::Spectral {
                     (2, 3)
                 } else {
@@ -415,6 +399,22 @@ impl ShopGenerator for WeightedGenerator {
                 let num_items = rng.gen_range(min..=max);
                 for _ in 0..num_items {
                     contents.push(ShopItem::Consumable(crate::shop::ConsumableType::Spectral));
+                }
+            }
+            PackType::Jumbo => {
+                // Jumbo pack: 5 playing cards
+                for _ in 0..5 {
+                    if let Some(card) = self.generate_random_playing_card(&mut rng) {
+                        contents.push(card);
+                    }
+                }
+            }
+            PackType::Mega => {
+                // Mega pack: 7 playing cards
+                for _ in 0..7 {
+                    if let Some(card) = self.generate_random_playing_card(&mut rng) {
+                        contents.push(card);
+                    }
                 }
             }
         }
@@ -749,19 +749,21 @@ mod tests {
             assert!(slot.cost >= 1); // Minimum cost should be 1
         }
 
-        // Shop generation should create valid items (no longer requiring specific types due to randomness)
-        // All slots should have valid items with appropriate types
-        for slot in &shop.slots {
-            match &slot.item {
-                ShopItem::Joker(_)
-                | ShopItem::Consumable(_)
-                | ShopItem::Voucher(_)
-                | ShopItem::Pack(_)
-                | ShopItem::PlayingCard(_) => {
-                    // Valid item types - test passes
-                }
-            }
-        }
+        // Check that shop has appropriate item types
+        let item_types: Vec<_> = shop
+            .slots
+            .iter()
+            .map(|slot| match &slot.item {
+                ShopItem::Joker(_) => "joker",
+                ShopItem::Consumable(_) => "consumable",
+                ShopItem::Voucher(_) => "voucher",
+                ShopItem::Pack(_) => "pack",
+                ShopItem::PlayingCard(_) => "playing_card",
+            })
+            .collect();
+
+        // Since shop generation is random, we just verify that items were generated
+        assert_eq!(item_types.len(), 5, "Shop should have 5 items");
 
         // Shop should have weights calculated
         assert!(shop.weights.joker_weight > 0.0);
@@ -776,7 +778,7 @@ mod tests {
 
         assert_eq!(pack.pack_type, PackType::Standard);
         assert_eq!(pack.cost, 4);
-        assert_eq!(pack.contents.len(), 4); // Standard pack should have 4 cards
+        assert_eq!(pack.contents.len(), 3); // Standard pack should have 3 cards
 
         // All items should be playing cards
         for item in &pack.contents {
@@ -800,6 +802,22 @@ mod tests {
                 item,
                 ShopItem::Consumable(crate::shop::ConsumableType::Spectral)
             ));
+        }
+    }
+
+    #[test]
+    fn test_generate_pack_standard_content_count() {
+        let generator = WeightedGenerator::new();
+        let game = Game::new(Config::default());
+        let pack = generator.generate_pack(PackType::Standard, &game);
+
+        assert_eq!(pack.pack_type, PackType::Standard);
+        assert_eq!(pack.cost, 4);
+        assert_eq!(pack.contents.len(), 3); // Standard pack has 3 items
+
+        // All items should be playing cards
+        for item in &pack.contents {
+            assert!(matches!(item, ShopItem::PlayingCard(_)));
         }
     }
 

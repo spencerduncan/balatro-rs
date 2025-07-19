@@ -1,7 +1,7 @@
 use crate::joker::{JokerId, JokerRarity};
 use crate::joker_registry::{calculate_joker_cost, JokerDefinition, UnlockCondition};
 #[cfg(feature = "python")]
-use pyo3::pyclass;
+use pyo3::{pyclass, pymethods};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -34,99 +34,6 @@ pub struct JokerMetadata {
     /// Unlock information
     pub unlock_condition: Option<UnlockCondition>,
     pub is_unlocked: bool,
-}
-
-#[cfg_attr(feature = "python", pyo3::pymethods)]
-impl JokerMetadata {
-    #[cfg(feature = "python")]
-    #[getter]
-    pub fn id(&self) -> JokerId {
-        self.id
-    }
-
-    #[cfg(feature = "python")]
-    #[getter]
-    pub fn name(&self) -> String {
-        self.name.clone()
-    }
-
-    #[cfg(feature = "python")]
-    #[getter]
-    pub fn description(&self) -> String {
-        self.description.clone()
-    }
-
-    #[cfg(feature = "python")]
-    #[getter]
-    pub fn rarity(&self) -> JokerRarity {
-        self.rarity
-    }
-
-    #[cfg(feature = "python")]
-    #[getter]
-    pub fn cost(&self) -> i32 {
-        self.cost
-    }
-
-    #[cfg(feature = "python")]
-    #[getter]
-    pub fn sell_value(&self) -> i32 {
-        self.sell_value
-    }
-
-    #[cfg(feature = "python")]
-    #[getter]
-    pub fn effect_type(&self) -> String {
-        self.effect_type.clone()
-    }
-
-    #[cfg(feature = "python")]
-    #[getter]
-    pub fn effect_description(&self) -> String {
-        self.effect_description.clone()
-    }
-
-    #[cfg(feature = "python")]
-    #[getter]
-    pub fn triggers_on(&self) -> Vec<String> {
-        self.triggers_on.clone()
-    }
-
-    #[cfg(feature = "python")]
-    #[getter]
-    pub fn conditions(&self) -> Vec<String> {
-        self.conditions.clone()
-    }
-
-    #[cfg(feature = "python")]
-    #[getter]
-    pub fn uses_state(&self) -> bool {
-        self.uses_state
-    }
-
-    #[cfg(feature = "python")]
-    #[getter]
-    pub fn max_triggers(&self) -> Option<i32> {
-        self.max_triggers
-    }
-
-    #[cfg(feature = "python")]
-    #[getter]
-    pub fn persistent_data(&self) -> bool {
-        self.persistent_data
-    }
-
-    #[cfg(feature = "python")]
-    #[getter]
-    pub fn unlock_condition(&self) -> Option<UnlockCondition> {
-        self.unlock_condition.clone()
-    }
-
-    #[cfg(feature = "python")]
-    #[getter]
-    pub fn is_unlocked(&self) -> bool {
-        self.is_unlocked
-    }
 }
 
 impl JokerMetadata {
@@ -314,6 +221,100 @@ fn create_effect_description(_id: &JokerId, base_description: &str) -> String {
     // For now, use the base description
     // In future PRs, this will be enhanced with more detailed effect information
     base_description.to_string()
+}
+
+#[cfg_attr(feature = "python", pymethods)]
+impl JokerMetadata {
+    /// Get the joker ID
+    #[cfg(feature = "python")]
+    #[getter]
+    fn id(&self) -> JokerId {
+        self.id
+    }
+
+    /// Get the joker name
+    #[cfg(feature = "python")]
+    #[getter]
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    /// Get the joker description
+    #[cfg(feature = "python")]
+    #[getter]
+    fn description(&self) -> &str {
+        &self.description
+    }
+
+    /// Get the joker rarity
+    #[cfg(feature = "python")]
+    #[getter]
+    fn rarity(&self) -> JokerRarity {
+        self.rarity
+    }
+
+    /// Get the joker cost
+    #[cfg(feature = "python")]
+    #[getter]
+    fn cost(&self) -> i32 {
+        self.cost
+    }
+
+    /// Get the joker sell value
+    #[cfg(feature = "python")]
+    #[getter]
+    fn sell_value(&self) -> i32 {
+        self.sell_value
+    }
+
+    /// Get the effect type
+    #[cfg(feature = "python")]
+    #[getter]
+    fn effect_type(&self) -> &str {
+        &self.effect_type
+    }
+
+    /// Get the effect description
+    #[cfg(feature = "python")]
+    #[getter]
+    fn effect_description(&self) -> &str {
+        &self.effect_description
+    }
+
+    /// Get triggers
+    #[cfg(feature = "python")]
+    #[getter]
+    fn triggers_on(&self) -> Vec<String> {
+        self.triggers_on.clone()
+    }
+
+    /// Get conditions
+    #[cfg(feature = "python")]
+    #[getter]
+    fn conditions(&self) -> Vec<String> {
+        self.conditions.clone()
+    }
+
+    /// Get whether this joker uses state
+    #[cfg(feature = "python")]
+    #[getter]
+    fn uses_state(&self) -> bool {
+        self.uses_state
+    }
+
+    /// Get unlock condition  
+    #[cfg(feature = "python")]
+    #[getter]
+    fn unlock_condition(&self) -> Option<UnlockCondition> {
+        self.unlock_condition.clone()
+    }
+
+    /// Get whether this joker is unlocked
+    #[cfg(feature = "python")]
+    #[getter]
+    fn is_unlocked(&self) -> bool {
+        self.is_unlocked
+    }
 }
 
 #[cfg(test)]

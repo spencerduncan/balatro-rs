@@ -48,10 +48,12 @@ pub enum GameError {
     InvalidSlot,
     #[error("Joker not available in shop")]
     JokerNotInShop,
-    #[error("Joker not found: {0}")]
-    JokerNotFound(String),
+    #[error("Joker not found")]
+    JokerNotFound,
     #[error("Invalid operation: {0}")]
     InvalidOperation(String),
+    #[error("Input validation error: {0}")]
+    InvalidInput(String),
     #[error("Mutex poisoned")]
     MutexPoisoned,
 }

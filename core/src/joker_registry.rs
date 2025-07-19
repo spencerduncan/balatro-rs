@@ -129,7 +129,7 @@ impl JokerRegistry {
         self.factories
             .get(id)
             .map(|factory| factory())
-            .ok_or_else(|| GameError::JokerNotFound(format!("{id:?}")))
+            .ok_or(GameError::JokerNotFound)
     }
 
     /// Returns all registered joker definitions
@@ -191,48 +191,96 @@ fn get_registry() -> &'static Arc<RwLock<JokerRegistry>> {
 
 /// Initializes the registry with default joker implementations
 fn initialize_default_jokers(registry: &mut JokerRegistry) {
-    // TODO: This function will be expanded as jokers are implemented
-    // The actual registration will happen in a separate initialization module
-    // which will call registry.register() for each joker type
-
-    // Temporarily register basic jokers for testing
-    use crate::joker_impl::TheJoker;
-
-    // Register basic Joker
-    let _ = registry.register(
-        JokerDefinition {
-            id: JokerId::Joker,
-            name: "Joker".to_string(),
-            description: "+4 Mult".to_string(),
-            rarity: JokerRarity::Common,
-            unlock_condition: None,
-        },
-        || Box::new(TheJoker),
+    // Register basic jokers
+    register_joker(
+        registry,
+        JokerId::Joker,
+        "Joker",
+        "+4 Mult",
+        JokerRarity::Common,
+        None,
+        create_the_joker,
     );
-
-    // Register Greedy Joker
-    let _ = registry.register(
-        JokerDefinition {
-            id: JokerId::GreedyJoker,
-            name: "Greedy Joker".to_string(),
-            description: "Played cards with Diamond suit give +3 Mult when scored".to_string(),
-            rarity: JokerRarity::Common,
-            unlock_condition: None,
-        },
-        || Box::new(TheJoker), // Using TheJoker as placeholder for now
+    register_joker(
+        registry,
+        JokerId::GreedyJoker,
+        "Greedy Joker",
+        "Played cards with Diamond suit give +3 Mult when scored",
+        JokerRarity::Common,
+        None,
+        create_greedy_joker,
     );
-
-    // Register Ice Cream (for testing state tracking)
-    let _ = registry.register(
-        JokerDefinition {
-            id: JokerId::IceCream,
-            name: "Ice Cream".to_string(),
-            description: "+100 Chips, -5 Chips for every hand played".to_string(),
-            rarity: JokerRarity::Common,
-            unlock_condition: None,
-        },
-        || Box::new(TheJoker), // Using TheJoker as placeholder for now
+    register_joker(
+        registry,
+        JokerId::LustyJoker,
+        "Lusty Joker",
+        "Played cards with Heart suit give +3 Mult when scored",
+        JokerRarity::Common,
+        None,
+        create_lusty_joker,
     );
+    register_joker(
+        registry,
+        JokerId::WrathfulJoker,
+        "Wrathful Joker",
+        "Played cards with Spade suit give +3 Mult when scored",
+        JokerRarity::Common,
+        None,
+        create_wrathful_joker,
+    );
+    register_joker(
+        registry,
+        JokerId::GluttonousJoker,
+        "Gluttonous Joker",
+        "Played cards with Club suit give +3 Mult when scored",
+        JokerRarity::Common,
+        None,
+        create_gluttonous_joker,
+    );
+}
+
+// Factory functions for creating joker instances
+fn create_the_joker() -> Box<dyn Joker> {
+    Box::new(crate::joker_impl::TheJoker)
+}
+
+fn create_greedy_joker() -> Box<dyn Joker> {
+    Box::new(crate::joker_impl::GreedyJoker)
+}
+
+fn create_lusty_joker() -> Box<dyn Joker> {
+    Box::new(crate::joker_impl::LustyJoker)
+}
+
+fn create_wrathful_joker() -> Box<dyn Joker> {
+    Box::new(crate::joker_impl::WrathfulJoker)
+}
+
+fn create_gluttonous_joker() -> Box<dyn Joker> {
+    Box::new(crate::joker_impl::GluttonousJoker)
+}
+
+/// Helper function to register a joker with its definition and factory
+fn register_joker(
+    registry: &mut JokerRegistry,
+    id: JokerId,
+    name: &str,
+    description: &str,
+    rarity: JokerRarity,
+    unlock_condition: Option<UnlockCondition>,
+    factory: JokerFactory,
+) {
+    let definition = JokerDefinition {
+        id,
+        name: name.to_string(),
+        description: description.to_string(),
+        rarity,
+        unlock_condition,
+    };
+
+    if let Err(e) = registry.register(definition, factory) {
+        eprintln!("Failed to register joker {id:?}: {e}");
+    }
 }
 
 /// Convenience functions for working with the global registry
