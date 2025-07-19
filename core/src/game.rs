@@ -123,11 +123,20 @@ pub struct Game {
     /// Debug messages buffer
     #[cfg_attr(feature = "serde", serde(skip))]
     pub debug_messages: Vec<String>,
+
+    /// Random number generator for secure game randomness
+    #[cfg_attr(feature = "serde", serde(skip, default = "default_game_rng"))]
+    pub rng: crate::rng::GameRng,
 }
 
 #[cfg(feature = "serde")]
 fn default_joker_state_manager() -> Arc<JokerStateManager> {
     Arc::new(JokerStateManager::new())
+}
+
+#[cfg(feature = "serde")]
+fn default_game_rng() -> crate::rng::GameRng {
+    crate::rng::GameRng::secure()
 }
 
 impl Game {
@@ -171,6 +180,9 @@ impl Game {
             // Initialize debug logging fields
             debug_logging_enabled: false,
             debug_messages: Vec::new(),
+
+            // Initialize secure RNG
+            rng: crate::rng::GameRng::secure(),
 
             config,
         }
@@ -292,7 +304,7 @@ impl Game {
         // add available back to deck and empty
         self.deck.extend(self.available.cards());
         self.available.empty();
-        self.deck.shuffle();
+        self.deck.shuffle(&self.rng);
         self.draw(self.config.available);
     }
 
@@ -921,28 +933,24 @@ impl Game {
                 }
             }
             ShopItem::Consumable(consumable_type) => {
-                use rand::seq::SliceRandom;
 
                 // Select a random consumable of the appropriate type
                 let consumable_id = match consumable_type {
                     crate::shop::ConsumableType::Tarot => {
                         let tarot_cards = ConsumableId::tarot_cards();
-                        tarot_cards
-                            .choose(&mut rand::thread_rng())
+                        self.rng.choose(&tarot_cards)
                             .copied()
                             .unwrap_or(ConsumableId::TheFool)
                     }
                     crate::shop::ConsumableType::Planet => {
                         let planet_cards = ConsumableId::planet_cards();
-                        planet_cards
-                            .choose(&mut rand::thread_rng())
+                        self.rng.choose(&planet_cards)
                             .copied()
                             .unwrap_or(ConsumableId::Mercury)
                     }
                     crate::shop::ConsumableType::Spectral => {
                         let spectral_cards = ConsumableId::spectral_cards();
-                        spectral_cards
-                            .choose(&mut rand::thread_rng())
+                        self.rng.choose(&spectral_cards)
                             .copied()
                             .unwrap_or(ConsumableId::Familiar)
                     }
@@ -1420,6 +1428,8 @@ impl Game {
             // Initialize debug logging fields (not serialized)
             debug_logging_enabled: false,
             debug_messages: Vec::new(),
+            // Initialize secure RNG (not serialized)
+            rng: crate::rng::GameRng::secure(),
         };
 
         // Restore joker states to the state manager

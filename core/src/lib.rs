@@ -19,6 +19,7 @@ pub mod joker_metadata;
 pub mod joker_registry;
 pub mod joker_state;
 pub mod rank;
+pub mod rng;
 pub mod shop;
 pub mod space;
 pub mod stage;

@@ -162,7 +162,7 @@ impl Pack {
             min_options
         } else {
             // Use proper randomization for variable option counts
-            rand::thread_rng().gen_range(min_options..=max_options)
+            game.rng.gen_range(min_options..=max_options)
         };
 
         // Check for Grab Bag voucher - adds +1 option to all packs
@@ -198,7 +198,7 @@ impl Pack {
     }
 
     /// Generate standard pack options (playing cards)
-    fn generate_standard_options(&mut self, count: usize, _game: &Game) -> Result<(), GameError> {
+    fn generate_standard_options(&mut self, count: usize, game: &Game) -> Result<(), GameError> {
         use crate::card::{Enhancement, Suit, Value};
         use rand::seq::SliceRandom;
         use rand::Rng;
@@ -220,16 +220,14 @@ impl Pack {
             Value::King,
         ];
 
-        let mut rng = rand::thread_rng();
-
         for _ in 0..count {
             // Select random suit and value
-            let suit = *suits.choose(&mut rng).unwrap();
-            let value = *values.choose(&mut rng).unwrap();
+            let suit = *game.rng.choose(&suits).unwrap();
+            let value = *game.rng.choose(&values).unwrap();
 
             // Create card with potential enhancement (10% chance)
             let mut card = Card::new(value, suit);
-            if rng.gen_bool(0.1) {
+            if game.rng.gen_bool(0.1) {
                 // 10% chance for enhancement
                 let enhancements = [
                     Enhancement::Bonus,
@@ -238,7 +236,7 @@ impl Pack {
                     Enhancement::Glass,
                     Enhancement::Steel,
                 ];
-                card.enhancement = Some(*enhancements.choose(&mut rng).unwrap());
+                card.enhancement = Some(*game.rng.choose(&enhancements).unwrap());
             }
 
             let enhancement_prefix = match card.enhancement {
@@ -257,12 +255,10 @@ impl Pack {
     }
 
     /// Generate buffoon pack options (jokers)
-    fn generate_buffoon_options(&mut self, count: usize, _game: &Game) -> Result<(), GameError> {
+    fn generate_buffoon_options(&mut self, count: usize, game: &Game) -> Result<(), GameError> {
         use crate::joker::JokerRarity;
         use rand::seq::SliceRandom;
         use rand::Rng;
-
-        let mut rng = rand::thread_rng();
 
         // Define rarity weights: 70% Common, 25% Uncommon, 5% Rare
         let rarities = [
@@ -298,7 +294,7 @@ impl Pack {
         for _ in 0..count {
             // Select rarity based on weighted distribution
             let total_weight: u32 = rarities.iter().map(|(_, weight)| weight).sum();
-            let roll = rng.gen_range(1..=total_weight);
+            let roll = game.rng.gen_range(1..=total_weight);
 
             let mut current_weight = 0;
             let selected_rarity = rarities
@@ -312,9 +308,9 @@ impl Pack {
 
             // Select joker based on rarity
             let joker_id = match selected_rarity {
-                JokerRarity::Common => *common_jokers.choose(&mut rng).unwrap(),
-                JokerRarity::Uncommon => *uncommon_jokers.choose(&mut rng).unwrap(),
-                JokerRarity::Rare => *rare_jokers.choose(&mut rng).unwrap(),
+                JokerRarity::Common => *game.rng.choose(&common_jokers).unwrap(),
+                JokerRarity::Uncommon => *game.rng.choose(&uncommon_jokers).unwrap(),
+                JokerRarity::Rare => *game.rng.choose(&rare_jokers).unwrap(),
                 JokerRarity::Legendary => JokerId::Joker, // Fallback to basic for legendary
             };
 
@@ -329,16 +325,14 @@ impl Pack {
     }
 
     /// Generate arcana pack options (tarot cards)
-    fn generate_arcana_options(&mut self, count: usize, _game: &Game) -> Result<(), GameError> {
+    fn generate_arcana_options(&mut self, count: usize, game: &Game) -> Result<(), GameError> {
         use rand::seq::SliceRandom;
 
         let tarot_cards = ConsumableId::tarot_cards();
-        let mut rng = rand::thread_rng();
 
         for _ in 0..count {
             // Randomly select a specific tarot card for preview info
-            let selected_tarot = tarot_cards
-                .choose(&mut rng)
+            let selected_tarot = game.rng.choose(&tarot_cards)
                 .unwrap_or(&ConsumableId::TheFool);
 
             let option = PackOption::new(
@@ -352,16 +346,14 @@ impl Pack {
     }
 
     /// Generate celestial pack options (planet cards)
-    fn generate_celestial_options(&mut self, count: usize, _game: &Game) -> Result<(), GameError> {
+    fn generate_celestial_options(&mut self, count: usize, game: &Game) -> Result<(), GameError> {
         use rand::seq::SliceRandom;
 
         let planet_cards = ConsumableId::planet_cards();
-        let mut rng = rand::thread_rng();
 
         for _ in 0..count {
             // Randomly select a specific planet card for preview info
-            let selected_planet = planet_cards
-                .choose(&mut rng)
+            let selected_planet = game.rng.choose(&planet_cards)
                 .unwrap_or(&ConsumableId::Mercury);
 
             let option = PackOption::new(
@@ -375,16 +367,14 @@ impl Pack {
     }
 
     /// Generate spectral pack options (spectral cards)
-    fn generate_spectral_options(&mut self, count: usize, _game: &Game) -> Result<(), GameError> {
+    fn generate_spectral_options(&mut self, count: usize, game: &Game) -> Result<(), GameError> {
         use rand::seq::SliceRandom;
 
         let spectral_cards = ConsumableId::spectral_cards();
-        let mut rng = rand::thread_rng();
 
         for _ in 0..count {
             // Randomly select a specific spectral card for preview info
-            let selected_spectral = spectral_cards
-                .choose(&mut rng)
+            let selected_spectral = game.rng.choose(&spectral_cards)
                 .unwrap_or(&ConsumableId::Familiar);
 
             let option = PackOption::new(

@@ -54,6 +54,7 @@ dependencies = [
  "itertools 0.13.0",
  "pyo3",
  "rand",
+ "rand_chacha",
  "serde",
  "serde_json",
  "strum",

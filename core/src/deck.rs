@@ -1,5 +1,5 @@
 use crate::card::{Card, Suit, Value};
-use rand::{seq::SliceRandom, thread_rng};
+use crate::rng::GameRng;
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone)]
@@ -21,8 +21,8 @@ impl Deck {
         self.cards.len()
     }
 
-    pub(crate) fn shuffle(&mut self) {
-        self.cards.shuffle(&mut thread_rng());
+    pub(crate) fn shuffle(&mut self, rng: &GameRng) {
+        rng.shuffle(&mut self.cards);
     }
 
     pub(crate) fn append(&mut self, other: &mut Vec<Card>) {
