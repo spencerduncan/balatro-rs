@@ -60,8 +60,20 @@ jobs:
       
       - name: Run tests
         run: |
-          # Run all tests with verbose output
-          cargo test --all --verbose
+          # Run all tests with verbose output and capture results
+          set +e  # Don't exit on test failure, we want to capture the results
+          cargo test --all --verbose > test_output.log 2>&1
+          TEST_EXIT_CODE=$?
+          set -e
+          
+          # Save the exit code for later use
+          echo $TEST_EXIT_CODE > test_exit_code.txt
+          
+          # Display the output (for GitHub Actions logs)
+          cat test_output.log
+          
+          # Exit with the original test exit code
+          exit $TEST_EXIT_CODE
           
       - name: Generate test summary
         if: always()
@@ -70,14 +82,42 @@ jobs:
           echo "- OS: ${{ matrix.os }}" >> test_summary.md
           echo "- Rust Version: $(rustc --version)" >> test_summary.md
           echo "- Test Run: $(date)" >> test_summary.md
-          echo "- Tests completed" >> test_summary.md
+          echo "" >> test_summary.md
+          
+          # Parse test results if output exists
+          if [ -f test_output.log ]; then
+            # Extract test summary from cargo test output
+            TOTAL_TESTS=$(grep -oE "[0-9]+ tests" test_output.log | tail -1 | grep -oE "[0-9]+" || echo "0")
+            PASSED_TESTS=$(grep -oE "[0-9]+ passed" test_output.log | tail -1 | grep -oE "[0-9]+" || echo "0")
+            FAILED_TESTS=$(grep -oE "[0-9]+ failed" test_output.log | tail -1 | grep -oE "[0-9]+" || echo "0")
+            IGNORED_TESTS=$(grep -oE "[0-9]+ ignored" test_output.log | tail -1 | grep -oE "[0-9]+" || echo "0")
+            
+            echo "### Test Results" >> test_summary.md
+            echo "- Total Tests: $TOTAL_TESTS" >> test_summary.md
+            echo "- Tests Passed: $PASSED_TESTS" >> test_summary.md
+            echo "- Tests Failed: $FAILED_TESTS" >> test_summary.md
+            echo "- Tests Ignored: $IGNORED_TESTS" >> test_summary.md
+            echo "" >> test_summary.md
+            
+            # Add status
+            if [ -f test_exit_code.txt ] && [ "$(cat test_exit_code.txt)" = "0" ]; then
+              echo "- Status: ✅ All tests passed" >> test_summary.md
+            else
+              echo "- Status: ❌ Some tests failed" >> test_summary.md
+            fi
+          else
+            echo "- Status: ⚠️ Test output not available" >> test_summary.md
+          fi
           
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-results-${{ matrix.os }}
-          path: test_summary.md
+          path: |
+            test_summary.md
+            test_output.log
+            test_exit_code.txt
 
   fmt:
     name: Rustfmt
@@ -422,10 +462,56 @@ jobs:
             ${{ runner.os }}-cargo-registry-
       
       - name: Run cargo audit
-        run: cargo audit
+        run: |
+          # Run cargo audit and capture output
+          set +e  # Don't exit on failure
+          cargo audit > cargo_audit.log 2>&1
+          AUDIT_EXIT_CODE=$?
+          set -e
+          
+          # Create audit summary
+          echo "# Cargo Audit Results" > audit_summary.md
+          echo "Exit Code: $AUDIT_EXIT_CODE" >> audit_summary.md
+          echo "Date: $(date)" >> audit_summary.md
+          echo "" >> audit_summary.md
+          
+          if [ $AUDIT_EXIT_CODE -eq 0 ]; then
+            echo "✅ No security vulnerabilities found" >> audit_summary.md
+          else
+            echo "⚠️ Security issues detected - see cargo_audit.log for details" >> audit_summary.md
+          fi
+          
+          # Display output for GitHub Actions logs
+          cat cargo_audit.log
+          
+          # Exit with original code
+          exit $AUDIT_EXIT_CODE
         
       - name: Run cargo deny
-        run: cargo deny check
+        run: |
+          # Run cargo deny and capture output
+          set +e  # Don't exit on failure
+          cargo deny check > cargo_deny.log 2>&1
+          DENY_EXIT_CODE=$?
+          set -e
+          
+          # Create deny summary
+          echo "# Cargo Deny Results" > deny_summary.md
+          echo "Exit Code: $DENY_EXIT_CODE" >> deny_summary.md
+          echo "Date: $(date)" >> deny_summary.md
+          echo "" >> deny_summary.md
+          
+          if [ $DENY_EXIT_CODE -eq 0 ]; then
+            echo "✅ All dependency checks passed" >> deny_summary.md
+          else
+            echo "⚠️ Dependency issues detected - see cargo_deny.log for details" >> deny_summary.md
+          fi
+          
+          # Display output for GitHub Actions logs
+          cat cargo_deny.log
+          
+          # Exit with original code
+          exit $DENY_EXIT_CODE
           
       - name: Upload security scan results
         if: always()
@@ -434,4 +520,7 @@ jobs:
           name: security-scan-results
           path: |
             deny.toml
-            *.log
+            cargo_audit.log
+            cargo_deny.log
+            audit_summary.md
+            deny_summary.md
