@@ -89,7 +89,7 @@ mod action_tests {
 
     #[test]
     fn test_action_cash_out_display() {
-        let action = Action::CashOut(150);
+        let action = Action::CashOut(150.0);
         assert_eq!(format!("{}", action), "CashOut: 150");
     }
 
@@ -158,14 +158,14 @@ mod action_tests {
         assert_ne!(Action::Play(), Action::Discard());
 
         // Test actions with the same data
-        let action1 = Action::CashOut(100);
-        let action2 = Action::CashOut(100);
+        let action1 = Action::CashOut(100.0);
+        let action2 = Action::CashOut(100.0);
         assert_eq!(action1, action2);
     }
 
     #[test]
     fn test_action_clone() {
-        let action = Action::CashOut(100);
+        let action = Action::CashOut(100.0);
         let cloned_action = action.clone();
         assert_eq!(action, cloned_action);
     }
@@ -177,16 +177,6 @@ mod action_tests {
         assert_eq!(debug_string, "Play");
     }
 
-    #[test]
-    fn test_action_hash() {
-        use std::collections::HashMap;
-        let mut map = HashMap::new();
-        map.insert(Action::Play(), "play_value");
-        map.insert(Action::Discard(), "discard_value");
-
-        assert_eq!(map.get(&Action::Play()), Some(&"play_value"));
-        assert_eq!(map.get(&Action::Discard()), Some(&"discard_value"));
-    }
 
     #[test]
     fn test_all_action_variants() {
@@ -198,7 +188,7 @@ mod action_tests {
             Action::MoveCard(MoveDirection::Left, card),
             Action::Play(),
             Action::Discard(),
-            Action::CashOut(100),
+            Action::CashOut(100.0),
             Action::BuyJoker {
                 joker_id: JokerId::Joker,
                 slot: 0,
@@ -226,10 +216,11 @@ mod action_tests {
     #[test]
     fn test_action_edge_cases() {
         // Test edge case values
-        let action_large_cash = Action::CashOut(usize::MAX);
-        assert!(format!("{}", action_large_cash).contains(&format!("{}", usize::MAX)));
+        let large_f64_value = 1e15_f64; // Large but representable f64 value
+        let action_large_cash = Action::CashOut(large_f64_value);
+        assert!(format!("{}", action_large_cash).contains(&format!("{}", large_f64_value)));
 
-        let action_zero_cash = Action::CashOut(0);
+        let action_zero_cash = Action::CashOut(0.0);
         assert_eq!(format!("{}", action_zero_cash), "CashOut: 0");
     }
 }

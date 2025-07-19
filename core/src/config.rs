@@ -8,7 +8,7 @@ const DEFAULT_MONEY_START: usize = 0;
 const DEFAULT_MONEY_MAX: usize = 500;
 const DEFAULT_REWARD_BASE: usize = 0;
 const DEFAULT_MONEY_PER_HAND: usize = 1;
-const DEFAULT_INTEREST_RATE: f32 = 0.2;
+const DEFAULT_INTEREST_RATE: f64 = 0.2;
 const DEFAULT_INTEREST_MAX: usize = 5;
 const DEFAULT_BASE_MULT: usize = 0;
 const DEFAULT_BASE_CHIPS: usize = 0;
@@ -35,7 +35,7 @@ pub struct Config {
     pub money_max: usize,
     pub reward_base: usize,
     pub money_per_hand: usize,
-    pub interest_rate: f32,
+    pub interest_rate: f64,
     pub interest_max: usize,
     pub base_mult: usize,
     pub base_chips: usize,

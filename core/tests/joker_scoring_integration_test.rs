@@ -253,11 +253,11 @@ struct TestOrderJoker {
     position: usize,
     mult_bonus: i32,
     chip_bonus: i32,
-    mult_multiplier: f32,
+    mult_multiplier: f64,
 }
 
 impl TestOrderJoker {
-    fn new(position: usize, mult_bonus: i32, chip_bonus: i32, mult_multiplier: f32) -> Self {
+    fn new(position: usize, mult_bonus: i32, chip_bonus: i32, mult_multiplier: f64) -> Self {
         Self {
             position,
             mult_bonus,

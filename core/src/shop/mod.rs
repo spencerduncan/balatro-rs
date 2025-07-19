@@ -260,22 +260,22 @@ pub enum SlotModifier {
     /// Item gives bonus money when purchased
     Bonus(usize),
     /// Item is on sale
-    Sale(f32), // Percentage discount (0.0 to 1.0)
+    Sale(f64), // Percentage discount (0.0 to 1.0)
 }
 
 /// Weights for different item types in shop generation
 #[derive(Debug, Clone)]
 pub struct ItemWeights {
     /// Weight for joker generation
-    pub joker_weight: f32,
+    pub joker_weight: f64,
     /// Weight for consumable generation
-    pub consumable_weight: f32,
+    pub consumable_weight: f64,
     /// Weight for voucher generation  
-    pub voucher_weight: f32,
+    pub voucher_weight: f64,
     /// Weight for pack generation
-    pub pack_weight: f32,
+    pub pack_weight: f64,
     /// Weight for playing card generation
-    pub playing_card_weight: f32,
+    pub playing_card_weight: f64,
 }
 
 impl Default for ItemWeights {
