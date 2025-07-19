@@ -36,6 +36,99 @@ pub struct JokerMetadata {
     pub is_unlocked: bool,
 }
 
+#[cfg_attr(feature = "python", pyo3::pymethods)]
+impl JokerMetadata {
+    #[cfg(feature = "python")]
+    #[getter]
+    pub fn id(&self) -> JokerId {
+        self.id
+    }
+
+    #[cfg(feature = "python")]
+    #[getter]
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    #[cfg(feature = "python")]
+    #[getter]
+    pub fn description(&self) -> String {
+        self.description.clone()
+    }
+
+    #[cfg(feature = "python")]
+    #[getter]
+    pub fn rarity(&self) -> JokerRarity {
+        self.rarity
+    }
+
+    #[cfg(feature = "python")]
+    #[getter]
+    pub fn cost(&self) -> i32 {
+        self.cost
+    }
+
+    #[cfg(feature = "python")]
+    #[getter]
+    pub fn sell_value(&self) -> i32 {
+        self.sell_value
+    }
+
+    #[cfg(feature = "python")]
+    #[getter]
+    pub fn effect_type(&self) -> String {
+        self.effect_type.clone()
+    }
+
+    #[cfg(feature = "python")]
+    #[getter]
+    pub fn effect_description(&self) -> String {
+        self.effect_description.clone()
+    }
+
+    #[cfg(feature = "python")]
+    #[getter]
+    pub fn triggers_on(&self) -> Vec<String> {
+        self.triggers_on.clone()
+    }
+
+    #[cfg(feature = "python")]
+    #[getter]
+    pub fn conditions(&self) -> Vec<String> {
+        self.conditions.clone()
+    }
+
+    #[cfg(feature = "python")]
+    #[getter]
+    pub fn uses_state(&self) -> bool {
+        self.uses_state
+    }
+
+    #[cfg(feature = "python")]
+    #[getter]
+    pub fn max_triggers(&self) -> Option<i32> {
+        self.max_triggers
+    }
+
+    #[cfg(feature = "python")]
+    #[getter]
+    pub fn persistent_data(&self) -> bool {
+        self.persistent_data
+    }
+
+    #[cfg(feature = "python")]
+    #[getter]
+    pub fn unlock_condition(&self) -> Option<UnlockCondition> {
+        self.unlock_condition.clone()
+    }
+
+    #[cfg(feature = "python")]
+    #[getter]
+    pub fn is_unlocked(&self) -> bool {
+        self.is_unlocked
+    }
+}
+
 impl JokerMetadata {
     /// Create a new JokerMetadata from a JokerDefinition
     pub fn from_definition(definition: &JokerDefinition, is_unlocked: bool) -> Self {

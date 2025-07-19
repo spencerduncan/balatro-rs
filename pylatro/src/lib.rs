@@ -240,6 +240,34 @@ impl GameEngine {
             None => Ok(None),
         })
     }
+
+    // Batch Metadata Operations
+
+    /// Get metadata for multiple jokers at once
+    fn get_multiple_joker_metadata(&self, joker_ids: Vec<JokerId>) -> PyResult<Vec<Option<JokerMetadata>>> {
+        joker_ids.into_iter()
+            .map(|id| self.get_joker_metadata(id))
+            .collect()
+    }
+
+    /// Get metadata for all registered jokers
+    fn get_all_joker_metadata(&self) -> PyResult<Vec<JokerMetadata>> {
+        match registry::all_definitions() {
+            Ok(definitions) => {
+                let metadata_list: Vec<JokerMetadata> = definitions.into_iter()
+                    .map(|def| {
+                        // Check if joker is unlocked (simplified for now)
+                        let is_unlocked = true; // TODO: Implement actual unlock checking
+                        JokerMetadata::from_definition(&def, is_unlocked)
+                    })
+                    .collect();
+                Ok(metadata_list)
+            }
+            Err(e) => Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(
+                format!("Failed to get all joker metadata: {e}")
+            )),
+        }
+    }
 }
 
 #[pyclass]
