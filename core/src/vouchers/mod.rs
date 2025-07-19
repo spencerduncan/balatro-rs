@@ -162,7 +162,9 @@ impl VoucherEffect {
             }
             VoucherEffect::AnteScaling(multiplier) => {
                 if !multiplier.is_finite() || *multiplier <= 0.0 || *multiplier > 10.0 {
-                    return Err(VoucherError::InvalidScaling { multiplier: *multiplier });
+                    return Err(VoucherError::InvalidScaling {
+                        multiplier: *multiplier,
+                    });
                 }
             }
             VoucherEffect::ExtraPackOptions(amount) => {
@@ -172,7 +174,9 @@ impl VoucherEffect {
             }
             VoucherEffect::BlindScoreReduction(multiplier) => {
                 if !multiplier.is_finite() || *multiplier <= 0.0 || *multiplier > 1.0 {
-                    return Err(VoucherError::InvalidBlindReduction { multiplier: *multiplier });
+                    return Err(VoucherError::InvalidBlindReduction {
+                        multiplier: *multiplier,
+                    });
                 }
             }
             VoucherEffect::StartingCards(cards) => {
