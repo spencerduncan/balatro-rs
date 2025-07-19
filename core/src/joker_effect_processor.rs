@@ -360,7 +360,7 @@ impl JokerEffectProcessor {
         effect.chips == 0
             && effect.mult == 0
             && effect.money == 0
-            && effect.mult_multiplier == 0.0  // Default trait gives 0.0 for f32
+            && effect.mult_multiplier == 0.0  // Default trait gives 0.0 for f64
             && effect.retrigger == 0
             && !effect.destroy_self
             && effect.destroy_others.is_empty()

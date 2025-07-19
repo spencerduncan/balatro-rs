@@ -13,7 +13,7 @@ use balatro_rs::joker_registry::{
 };
 use balatro_rs::stage::{End, Stage};
 use pyo3::prelude::*;
-use pyo3::{PyResult, Python};
+use pyo3::{PyObject, PyResult, Python};
 use std::collections::HashMap;
 
 // Security constants for input validation
@@ -25,20 +25,20 @@ const MAX_SEARCH_QUERY_LENGTH: usize = 1024;
 #[derive(Clone)]
 struct GameStateSnapshot {
     stage: Stage,
-    round: usize,
+    round: f64,
     action_history: Vec<Action>,
     deck_cards: Vec<Card>,
     selected_cards: Vec<Card>,
     available_cards: Vec<Card>,
     discarded_cards: Vec<Card>,
-    plays: usize,
-    discards: usize,
-    score: usize,
-    required_score: usize,
+    plays: f64,
+    discards: f64,
+    score: f64,
+    required_score: f64,
     joker_ids: Vec<JokerId>,
     joker_count: usize,
     joker_slots_max: usize,
-    money: usize,
+    money: f64,
     ante: Ante,
     is_over: bool,
     #[allow(dead_code)]
@@ -813,6 +813,7 @@ impl GameEngine {
         false
     }
 
+<<<<<<< HEAD
     /// Get all active joker states
     fn get_joker_states(&self) -> pyo3::PyObject {
         pyo3::Python::with_gil(|py| {
@@ -926,7 +927,7 @@ impl GameState {
         self.snapshot.stage
     }
     #[getter]
-    fn round(&self) -> usize {
+    fn round(&self) -> f64 {
         self.snapshot.round
     }
     #[getter]
@@ -950,20 +951,20 @@ impl GameState {
         self.snapshot.discarded_cards.clone()
     }
     #[getter]
-    fn plays(&self) -> usize {
+    fn plays(&self) -> f64 {
         self.snapshot.plays
     }
     #[getter]
-    fn discards(&self) -> usize {
+    fn discards(&self) -> f64 {
         self.snapshot.discards
     }
 
     #[getter]
-    fn score(&self) -> usize {
+    fn score(&self) -> f64 {
         self.snapshot.score
     }
     #[getter]
-    fn required_score(&self) -> usize {
+    fn required_score(&self) -> f64 {
         self.snapshot.required_score
     }
     #[getter]
@@ -1032,7 +1033,7 @@ impl GameState {
     }
 
     #[getter]
-    fn money(&self) -> usize {
+    fn money(&self) -> f64 {
         self.snapshot.money
     }
     #[getter]
@@ -1274,6 +1275,7 @@ fn pylatro(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<JokerDefinition>()?;
     m.add_class::<JokerMetadata>()?;
     m.add_class::<UnlockCondition>()?;
+    m.add_class::<JokerMetadata>()?;
 
     Ok(())
 }

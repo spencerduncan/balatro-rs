@@ -40,7 +40,7 @@ pub struct StaticJoker {
     /// Bonus mult to add
     pub mult_bonus: Option<i32>,
     /// Multiplier to apply to mult
-    pub mult_multiplier: Option<f32>,
+    pub mult_multiplier: Option<f64>,
     /// Condition for when to apply the effect
     pub condition: StaticCondition,
     /// Whether the effect applies per card or per hand
@@ -198,7 +198,7 @@ pub struct StaticJokerBuilder {
     base_cost: Option<usize>,
     chips_bonus: Option<i32>,
     mult_bonus: Option<i32>,
-    mult_multiplier: Option<f32>,
+    mult_multiplier: Option<f64>,
     condition: StaticCondition,
     per_card: bool,
 }
@@ -224,7 +224,7 @@ impl StaticJokerBuilder {
         self
     }
 
-    pub fn mult_multiplier(mut self, multiplier: f32) -> Self {
+    pub fn mult_multiplier(mut self, multiplier: f64) -> Self {
         self.mult_multiplier = Some(multiplier);
         self
     }
