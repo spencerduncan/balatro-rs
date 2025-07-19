@@ -191,7 +191,7 @@ fn test_joker_state_integration_during_blind() {
     assert_eq!(updated_state.triggers_remaining, Some(2));
 
     // State should persist across game operations
-    game.round += 1;
+    game.round += 1.0;
     let persistent_state = game.joker_state_manager.get_state(JokerId::Joker).unwrap();
     assert_eq!(persistent_state.accumulated_value, 15.0);
 }

@@ -55,7 +55,7 @@ impl Shop {
 
     pub(crate) fn gen_moves_buy_joker(
         &self,
-        balance: usize,
+        balance: f64,
         current_joker_count: usize,
         max_slots: usize,
     ) -> Option<impl Iterator<Item = Action> + '_> {
@@ -69,7 +69,7 @@ impl Shop {
         }
 
         // Use iterator chain without intermediate Vec allocation for better performance
-        let has_affordable_jokers = self.jokers.iter().any(|j| j.cost() <= balance);
+        let has_affordable_jokers = self.jokers.iter().any(|j| j.cost() as f64 <= balance);
 
         if !has_affordable_jokers {
             return None;
@@ -78,7 +78,7 @@ impl Shop {
         Some(
             self.jokers
                 .iter()
-                .filter(move |j| j.cost() <= balance)
+                .filter(move |j| j.cost() as f64 <= balance)
                 .flat_map(move |joker| {
                     // Map old Joker enum to new JokerId
                     let joker_id = joker.to_joker_id();

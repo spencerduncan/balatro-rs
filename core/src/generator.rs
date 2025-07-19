@@ -32,7 +32,7 @@ impl Game {
             return None;
         }
         // If no plays remaining, return None
-        if self.plays == 0 {
+        if self.plays == 0.0 {
             return None;
         }
         // If no cards selected, return None
@@ -50,7 +50,7 @@ impl Game {
             return None;
         }
         // If no discards remaining, return None
-        if self.discards == 0 {
+        if self.discards == 0.0 {
             return None;
         }
         // If no cards selected, return None
@@ -252,10 +252,10 @@ impl Game {
             return;
         }
         // Can only play/discard is have remaining
-        if self.plays != 0 {
+        if self.plays != 0.0 {
             space.unmask_play();
         }
-        if self.discards != 0 {
+        if self.discards != 0.0 {
             space.unmask_discard();
         }
     }
@@ -321,7 +321,7 @@ impl Game {
             .jokers
             .iter()
             .enumerate()
-            .filter(|(_i, j)| j.cost() <= self.money)
+            .filter(|(_i, j)| j.cost() as f64 <= self.money)
             .for_each(|(i, _j)| {
                 space
                     .unmask_buy_joker(i)
