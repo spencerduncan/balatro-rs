@@ -60,7 +60,7 @@ fn test_multiplier_stacking_f64_arithmetic() {
 
     // This test verifies that stacking preserves f64 precision
     // Exact value will depend on base score, but should use f64 arithmetic
-    assert!(score > 0);
+    assert!(score > 0.0);
 }
 
 /// Test Planet card effects use f64
@@ -111,7 +111,7 @@ fn test_multiplication_order_matches_lua() {
 
     // Verify the calculation follows Lua semantics
     // Final score = (chips) × (base_mult + additive_mult) × multiplicative_mult
-    assert!(score > 0);
+    assert!(score > 0.0);
 }
 
 /// Test edge cases with very large multipliers

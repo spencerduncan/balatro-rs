@@ -52,7 +52,7 @@ mod f64_migration_acceptance_tests {
             money_max: 10000,
             reward_base: 50,
             money_per_hand: 5,
-            interest_rate: 0.25, // This is f32
+            interest_rate: 0.25, // This is f64
             interest_max: 25,
             base_mult: 1,
             base_chips: 10,

@@ -58,7 +58,7 @@ impl WeightedGenerator {
 
     /// Get joker rarity weights based on ante progression
     #[allow(dead_code)]
-    fn get_joker_rarity_weights(&self, ante: usize) -> [f32; 4] {
+    fn get_joker_rarity_weights(&self, ante: usize) -> [f64; 4] {
         // Base weights from issue requirements
         let base_common = 70.0;
         let base_uncommon = 25.0;
@@ -66,7 +66,7 @@ impl WeightedGenerator {
         let base_legendary = 0.5;
 
         // Ante scaling: higher antes increase rare chances
-        let scaling_factor = 1.0 + (ante as f32 - 1.0) * 0.1;
+        let scaling_factor = 1.0 + (ante as f64 - 1.0) * 0.1;
 
         let scaled_rare = base_rare * scaling_factor;
         let scaled_legendary = base_legendary * scaling_factor;
@@ -254,7 +254,7 @@ impl WeightedGenerator {
 
     /// Calculate final cost after applying voucher modifiers
     fn calculate_final_cost(&self, base_cost: usize, vouchers: &[VoucherId]) -> usize {
-        let mut final_cost = base_cost as f32;
+        let mut final_cost = base_cost as f64;
 
         for &voucher in vouchers {
             match voucher {
@@ -456,7 +456,7 @@ impl ShopGenerator for WeightedGenerator {
 
         // Apply ante-based scaling
         // Higher antes should favor higher-value items
-        let ante_scale = 1.0 + (ante_number as f32 * 0.15);
+        let ante_scale = 1.0 + (ante_number as f64 * 0.15);
 
         // Adjust weights based on ante progression
         if ante_number >= 3 {
@@ -720,16 +720,16 @@ mod tests {
             }
         }
 
-        let total_generated = rarity_counts.values().sum::<usize>() as f32;
+        let total_generated = rarity_counts.values().sum::<usize>() as f64;
 
         // Check if distribution is approximately correct (within 10% tolerance)
         if let Some(&common_count) = rarity_counts.get(&JokerRarity::Common) {
-            let common_percentage = (common_count as f32 / total_generated) * 100.0;
+            let common_percentage = (common_count as f64 / total_generated) * 100.0;
             assert!(common_percentage > 60.0 && common_percentage < 80.0); // 70% ± 10%
         }
 
         if let Some(&uncommon_count) = rarity_counts.get(&JokerRarity::Uncommon) {
-            let uncommon_percentage = (uncommon_count as f32 / total_generated) * 100.0;
+            let uncommon_percentage = (uncommon_count as f64 / total_generated) * 100.0;
             assert!(uncommon_percentage > 15.0 && uncommon_percentage < 35.0); // 25% ± 10%
         }
     }
