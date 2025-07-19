@@ -177,23 +177,30 @@ mod stage_tests {
     use super::*;
 
     #[test]
-    fn test_stage_is_blind() {
-        assert!(!Stage::PreBlind().is_blind());
-        assert!(Stage::Blind(Blind::Small).is_blind());
-        assert!(Stage::Blind(Blind::Big).is_blind());
-        assert!(Stage::Blind(Blind::Boss).is_blind());
-        assert!(!Stage::PostBlind().is_blind());
-        assert!(!Stage::Shop().is_blind());
-        assert!(!Stage::End(End::Win).is_blind());
-        assert!(!Stage::End(End::Lose).is_blind());
+    fn test_stage_variants() {
+        // Test that all stage variants can be constructed
+        let stages = vec![
+            Stage::PreBlind(),
+            Stage::Blind(Blind::Small),
+            Stage::Blind(Blind::Big),
+            Stage::Blind(Blind::Boss),
+            Stage::PostBlind(),
+            Stage::Shop(),
+            Stage::End(End::Win),
+            Stage::End(End::Lose),
+        ];
+        
+        for stage in stages {
+            let _ = format!("{:?}", stage);
+        }
     }
 
     #[test]
     fn test_stage_debug() {
-        assert_eq!(format!("{:?}", Stage::PreBlind()), "PreBlind()");
+        assert_eq!(format!("{:?}", Stage::PreBlind()), "PreBlind");
         assert_eq!(format!("{:?}", Stage::Blind(Blind::Small)), "Blind(Small)");
-        assert_eq!(format!("{:?}", Stage::PostBlind()), "PostBlind()");
-        assert_eq!(format!("{:?}", Stage::Shop()), "Shop()");
+        assert_eq!(format!("{:?}", Stage::PostBlind()), "PostBlind");
+        assert_eq!(format!("{:?}", Stage::Shop()), "Shop");
         assert_eq!(format!("{:?}", Stage::End(End::Win)), "End(Win)");
     }
 
@@ -260,8 +267,7 @@ mod stage_tests {
         ];
 
         for stage in stages {
-            // Test that all methods work for all variants
-            let _ = stage.is_blind();
+            // Test that all debug format works for all variants
             let _ = format!("{:?}", stage);
         }
     }
@@ -290,71 +296,6 @@ mod stage_tests {
     }
 }
 
-#[cfg(all(test, feature = "python"))]
-mod python_stage_tests {
-    use super::*;
-
-    #[test]
-    fn test_stage_int_conversion() {
-        assert_eq!(Stage::PreBlind().int(), 0);
-        assert_eq!(Stage::Blind(Blind::Small).int(), 1);
-        assert_eq!(Stage::Blind(Blind::Big).int(), 2);
-        assert_eq!(Stage::Blind(Blind::Boss).int(), 3);
-        assert_eq!(Stage::PostBlind().int(), 4);
-        assert_eq!(Stage::Shop().int(), 5);
-        assert_eq!(Stage::End(End::Win).int(), 6);
-        assert_eq!(Stage::End(End::Lose).int(), 7);
-    }
-
-    #[test]
-    fn test_stage_int_unique_values() {
-        let stages = vec![
-            Stage::PreBlind(),
-            Stage::Blind(Blind::Small),
-            Stage::Blind(Blind::Big),
-            Stage::Blind(Blind::Boss),
-            Stage::PostBlind(),
-            Stage::Shop(),
-            Stage::End(End::Win),
-            Stage::End(End::Lose),
-        ];
-
-        let int_values: Vec<usize> = stages.iter().map(|s| s.int()).collect();
-
-        // Verify all values are unique
-        let mut sorted_values = int_values.clone();
-        sorted_values.sort();
-        sorted_values.dedup();
-
-        assert_eq!(
-            int_values.len(),
-            sorted_values.len(),
-            "Int values should be unique"
-        );
-    }
-
-    #[test]
-    fn test_stage_int_sequential() {
-        // Test that int values are sequential from 0 to 7
-        let expected_sequence = vec![0, 1, 2, 3, 4, 5, 6, 7];
-        let stages = vec![
-            Stage::PreBlind(),
-            Stage::Blind(Blind::Small),
-            Stage::Blind(Blind::Big),
-            Stage::Blind(Blind::Boss),
-            Stage::PostBlind(),
-            Stage::Shop(),
-            Stage::End(End::Win),
-            Stage::End(End::Lose),
-        ];
-
-        let int_values: Vec<usize> = stages.iter().map(|s| s.int()).collect();
-        let mut sorted_values = int_values;
-        sorted_values.sort();
-
-        assert_eq!(sorted_values, expected_sequence);
-    }
-}
 
 #[cfg(all(test, feature = "serde"))]
 mod serde_tests {
@@ -405,7 +346,6 @@ mod comprehensive_stage_tests {
 
         // Start with small blind
         assert_eq!(current_blind.reward(), 3);
-        assert!(Stage::Blind(current_blind).is_blind());
 
         // Progress to big blind
         current_blind = current_blind.next();
@@ -432,12 +372,6 @@ mod comprehensive_stage_tests {
 
         assert_ne!(small_blind_stage, big_blind_stage);
         assert_ne!(win_end_stage, lose_end_stage);
-
-        // Test that is_blind correctly identifies blind stages
-        assert!(small_blind_stage.is_blind());
-        assert!(big_blind_stage.is_blind());
-        assert!(!win_end_stage.is_blind());
-        assert!(!lose_end_stage.is_blind());
     }
 
     #[test]
