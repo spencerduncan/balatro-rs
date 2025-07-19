@@ -14,12 +14,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Download test artifacts
+      - name: Download test artifacts from CI
         uses: dawidd6/action-download-artifact@v2
         with:
           workflow: ci.yml
           workflow_conclusion: ""
           path: test-artifacts
+          if_no_artifact_found: ignore
+          
+      - name: Download test artifacts from PR workflow
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: pr.yml
+          workflow_conclusion: ""
+          path: test-artifacts
+          if_no_artifact_found: ignore
           
       - name: Download benchmark artifacts
         uses: dawidd6/action-download-artifact@v2
@@ -52,19 +61,36 @@ jobs:
           echo "## Platform Test Results" >> test_report.md
           echo "" >> test_report.md
           
-          for platform_dir in test-artifacts/test-results-*; do
-            if [ -d "$platform_dir" ]; then
-              platform_name=$(basename "$platform_dir" | sed 's/test-results-//')
-              echo "### $platform_name" >> test_report.md
-              
-              if [ -f "$platform_dir/test_summary.md" ]; then
-                cat "$platform_dir/test_summary.md" >> test_report.md
-              else
-                echo "- Status: No summary available" >> test_report.md
+          # Check if test-artifacts directory exists
+          if [ -d "test-artifacts" ]; then
+            # Use a different approach that handles the case where no matching directories exist
+            FOUND_PLATFORMS=false
+            
+            for platform_dir in test-artifacts/test-results-*; do
+              # Check if the glob actually matched any directories
+              if [ -d "$platform_dir" ]; then
+                FOUND_PLATFORMS=true
+                platform_name=$(basename "$platform_dir" | sed 's/test-results-//')
+                echo "### $platform_name" >> test_report.md
+                
+                if [ -f "$platform_dir/test_summary.md" ]; then
+                  cat "$platform_dir/test_summary.md" >> test_report.md
+                else
+                  echo "- Status: No summary available" >> test_report.md
+                fi
+                echo "" >> test_report.md
               fi
+            done
+            
+            # If no platforms were found, add a message
+            if [ "$FOUND_PLATFORMS" = false ]; then
+              echo "- Status: No test result artifacts found" >> test_report.md
               echo "" >> test_report.md
             fi
-          done
+          else
+            echo "- Status: Test artifacts directory not found" >> test_report.md
+            echo "" >> test_report.md
+          fi
           
           # Process benchmark results
           if [ -d "benchmark-artifacts" ]; then
