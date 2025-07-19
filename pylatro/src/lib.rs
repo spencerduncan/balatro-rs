@@ -813,7 +813,6 @@ impl GameEngine {
         false
     }
 
-<<<<<<< HEAD
     /// Get all active joker states
     fn get_joker_states(&self) -> pyo3::PyObject {
         pyo3::Python::with_gil(|py| {
