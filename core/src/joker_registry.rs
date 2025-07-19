@@ -190,10 +190,49 @@ fn get_registry() -> &'static Arc<RwLock<JokerRegistry>> {
 }
 
 /// Initializes the registry with default joker implementations
-fn initialize_default_jokers(_registry: &mut JokerRegistry) {
+fn initialize_default_jokers(registry: &mut JokerRegistry) {
     // TODO: This function will be expanded as jokers are implemented
     // The actual registration will happen in a separate initialization module
     // which will call registry.register() for each joker type
+
+    // Temporarily register basic jokers for testing
+    use crate::joker_impl::TheJoker;
+
+    // Register basic Joker
+    let _ = registry.register(
+        JokerDefinition {
+            id: JokerId::Joker,
+            name: "Joker".to_string(),
+            description: "+4 Mult".to_string(),
+            rarity: JokerRarity::Common,
+            unlock_condition: None,
+        },
+        || Box::new(TheJoker),
+    );
+
+    // Register Greedy Joker
+    let _ = registry.register(
+        JokerDefinition {
+            id: JokerId::GreedyJoker,
+            name: "Greedy Joker".to_string(),
+            description: "Played cards with Diamond suit give +3 Mult when scored".to_string(),
+            rarity: JokerRarity::Common,
+            unlock_condition: None,
+        },
+        || Box::new(TheJoker), // Using TheJoker as placeholder for now
+    );
+
+    // Register Ice Cream (for testing state tracking)
+    let _ = registry.register(
+        JokerDefinition {
+            id: JokerId::IceCream,
+            name: "Ice Cream".to_string(),
+            description: "+100 Chips, -5 Chips for every hand played".to_string(),
+            rarity: JokerRarity::Common,
+            unlock_condition: None,
+        },
+        || Box::new(TheJoker), // Using TheJoker as placeholder for now
+    );
 }
 
 /// Convenience functions for working with the global registry

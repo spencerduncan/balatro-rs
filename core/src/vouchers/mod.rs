@@ -437,7 +437,7 @@ impl From<&crate::game::Game> for GameState {
         };
 
         Self {
-            money: game.money,
+            money: game.money as usize,
             ante: ante_value,
             hand_size: 8, // Base hand size, vouchers would modify this
             joker_slots: game.config.joker_slots,
