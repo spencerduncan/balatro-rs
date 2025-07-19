@@ -17,27 +17,143 @@
 //! - Provides extensible trait-based architecture
 //! - Ensures compatibility with existing game flow
 
+use crate::game::Game;
+use crate::rank::HandRank;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use strum::{EnumIter, IntoEnumIterator};
+use thiserror::Error;
+
+/// Error types for consumable operations
+#[derive(Error, Debug, Clone)]
+pub enum ConsumableError {
+    #[error("Invalid target: {0}")]
+    InvalidTarget(String),
+    #[error("Insufficient resources to use consumable")]
+    InsufficientResources,
+    #[error("Invalid game state: {0}")]
+    InvalidGameState(String),
+    #[error("Effect failed to apply: {0}")]
+    EffectFailed(String),
+}
+
+/// Categories of effects that consumables can have
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, EnumIter)]
+pub enum ConsumableEffect {
+    /// Enhances cards or jokers
+    Enhancement,
+    /// Destroys cards or elements
+    Destruction,
+    /// Generates new cards or jokers
+    Generation,
+    /// Modifies game state or properties
+    Modification,
+    /// Utility effects like information or minor benefits
+    Utility,
+}
+
+impl fmt::Display for ConsumableEffect {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ConsumableEffect::Enhancement => write!(f, "Enhancement"),
+            ConsumableEffect::Destruction => write!(f, "Destruction"),
+            ConsumableEffect::Generation => write!(f, "Generation"),
+            ConsumableEffect::Modification => write!(f, "Modification"),
+            ConsumableEffect::Utility => write!(f, "Utility"),
+        }
+    }
+}
+
+/// Types of targets that consumables can affect
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum TargetType {
+    /// No target required
+    None,
+    /// Targets a specific number of cards
+    Cards(usize),
+    /// Targets a hand type
+    HandType,
+    /// Targets a joker
+    Joker,
+    /// Targets the deck
+    Deck,
+}
+
+/// Specific target for consumable application
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Target {
+    /// No target
+    None,
+    /// Target specific cards by index
+    Cards(Vec<usize>),
+    /// Target a hand type
+    HandType(HandRank),
+    /// Target a joker by index
+    Joker(usize),
+    /// Target the deck
+    Deck,
+}
+
+impl Target {
+    /// Validate if this target is valid for the current game state
+    pub fn is_valid(&self, game_state: &Game) -> bool {
+        match self {
+            Target::None => true,
+            Target::Cards(cards) => {
+                !cards.is_empty()
+                    && cards
+                        .iter()
+                        .all(|&i| i < game_state.available.cards().len())
+            }
+            Target::HandType(_) => true,
+            Target::Joker(index) => *index < game_state.jokers.len(),
+            Target::Deck => true,
+        }
+    }
+}
 
 /// Core trait that all consumable types must implement
-pub trait Consumable {
-    /// Get the name of this consumable
-    fn name(&self) -> &'static str;
-
-    /// Get the description of what this consumable does
-    fn description(&self) -> &'static str;
-
-    /// Get the cost of this consumable in the shop
-    fn cost(&self) -> usize;
-
+/// Enhanced version with target validation and effect categorization
+pub trait Consumable: Send + Sync + fmt::Debug {
     /// Get the consumable type category
     fn consumable_type(&self) -> ConsumableType;
 
+    /// Check if this consumable can be used with the given target in the current game state
+    fn can_use(&self, game_state: &Game, target: &Target) -> bool;
+
     /// Apply the effect of this consumable to the game state
-    /// Returns true if the consumable was successfully applied
-    fn apply_effect(&self, game: &mut crate::game::Game) -> bool;
+    /// Future versions will support async for animations
+    fn use_effect(&self, game_state: &mut Game, target: Target) -> Result<(), ConsumableError>;
+
+    /// Get the description of what this consumable does
+    fn get_description(&self) -> String;
+
+    /// Get the type of target this consumable requires
+    fn get_target_type(&self) -> TargetType;
+
+    /// Get the effect category for this consumable
+    fn get_effect_category(&self) -> ConsumableEffect;
+
+    // Legacy methods for backward compatibility
+    /// Get the name of this consumable
+    fn name(&self) -> &'static str {
+        "Unknown Consumable"
+    }
+
+    /// Get the description as static str (legacy)
+    fn description(&self) -> &'static str {
+        "No description available"
+    }
+
+    /// Get the cost of this consumable in the shop
+    fn cost(&self) -> usize {
+        3
+    }
+
+    /// Legacy apply effect method for backward compatibility
+    fn apply_effect(&self, game: &mut Game) -> bool {
+        self.use_effect(game, Target::None).is_ok()
+    }
 }
 
 /// Categories of consumable cards

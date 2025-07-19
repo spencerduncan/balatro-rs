@@ -61,7 +61,7 @@ impl_joker_wrapper!(
     TheJoker,
     Categories::MultPlus,
     |g: &mut Game, _hand: MadeHand| {
-        g.mult += 4;
+        g.mult += 4.0;
     }
 );
 
@@ -75,7 +75,7 @@ impl_joker_wrapper!(
             .iter()
             .filter(|s| **s == Suit::Diamond)
             .count();
-        g.mult += diamonds * 3
+        g.mult += (diamonds as f64) * 3.0
     }
 );
 
@@ -126,7 +126,7 @@ impl_joker_wrapper!(
     Categories::MultPlus,
     |g: &mut Game, hand: MadeHand| {
         if hand.hand.is_pair().is_some() {
-            g.mult += 8
+            g.mult += 8.0
         }
     }
 );
@@ -136,7 +136,7 @@ impl_joker_wrapper!(
     Categories::MultPlus,
     |g: &mut Game, hand: MadeHand| {
         if hand.hand.is_three_of_kind().is_some() {
-            g.mult += 12
+            g.mult += 12.0
         }
     }
 );
@@ -146,7 +146,7 @@ impl_joker_wrapper!(
     Categories::MultPlus,
     |g: &mut Game, hand: MadeHand| {
         if hand.hand.is_two_pair().is_some() {
-            g.mult += 10
+            g.mult += 10.0
         }
     }
 );
@@ -156,7 +156,7 @@ impl_joker_wrapper!(
     Categories::MultPlus,
     |g: &mut Game, hand: MadeHand| {
         if hand.hand.is_straight().is_some() {
-            g.mult += 12
+            g.mult += 12.0
         }
     }
 );
@@ -166,7 +166,7 @@ impl_joker_wrapper!(
     Categories::MultPlus,
     |g: &mut Game, hand: MadeHand| {
         if hand.hand.is_flush().is_some() {
-            g.mult += 10
+            g.mult += 10.0
         }
     }
 );
@@ -176,7 +176,7 @@ impl_joker_wrapper!(
     Categories::Chips,
     |g: &mut Game, hand: MadeHand| {
         if hand.hand.is_pair().is_some() {
-            g.chips += 50
+            g.chips += 50.0
         }
     }
 );
@@ -186,7 +186,7 @@ impl_joker_wrapper!(
     Categories::Chips,
     |g: &mut Game, hand: MadeHand| {
         if hand.hand.is_three_of_kind().is_some() {
-            g.chips += 100
+            g.chips += 100.0
         }
     }
 );
@@ -196,7 +196,7 @@ impl_joker_wrapper!(
     Categories::Chips,
     |g: &mut Game, hand: MadeHand| {
         if hand.hand.is_two_pair().is_some() {
-            g.chips += 80
+            g.chips += 80.0
         }
     }
 );
@@ -206,7 +206,7 @@ impl_joker_wrapper!(
     Categories::Chips,
     |g: &mut Game, hand: MadeHand| {
         if hand.hand.is_straight().is_some() {
-            g.chips += 100
+            g.chips += 100.0
         }
     }
 );
@@ -216,7 +216,7 @@ impl_joker_wrapper!(
     Categories::Chips,
     |g: &mut Game, hand: MadeHand| {
         if hand.hand.is_flush().is_some() {
-            g.chips += 80
+            g.chips += 80.0
         }
     }
 );
@@ -430,7 +430,7 @@ mod tests {
 
     use super::*;
 
-    fn score_before_after_joker(joker: Jokers, hand: SelectHand, before: usize, after: usize) {
+    fn score_before_after_joker(joker: Jokers, hand: SelectHand, before: f64, after: f64) {
         let mut g = Game::default();
         g.stage = Stage::Blind(Blind::Small);
 
@@ -439,7 +439,7 @@ mod tests {
         assert_eq!(score, before);
 
         // Buy (and apply) the joker
-        g.money += 1000; // Give adequate money to buy
+        g.money += 1000.0; // Give adequate money to buy
         g.stage = Stage::Shop();
         g.shop.jokers.push(joker.clone());
         g.buy_joker(joker).unwrap();
@@ -452,8 +452,8 @@ mod tests {
     fn score_before_after_ice_cream_with_chips(
         remaining_chips: i32,
         hand: SelectHand,
-        before: usize,
-        after: usize,
+        before: f64,
+        after: f64,
     ) {
         let mut g = Game::default();
         g.stage = Stage::Blind(Blind::Small);
@@ -463,7 +463,7 @@ mod tests {
         assert_eq!(score, before);
 
         // Buy the Ice Cream joker
-        g.money += 1000; // Give adequate money to buy
+        g.money += 1000.0; // Give adequate money to buy
         g.stage = Stage::Shop();
         let ice_cream = IceCreamJoker::new();
         g.shop.jokers.push(Jokers::IceCreamJoker(ice_cream));
@@ -493,13 +493,13 @@ mod tests {
         // High card (level 1) -> 5 chips, 1 mult
         // Played cards (1 ace) -> 11 chips
         // (5 + 11) * (1) = 16
-        let before = 16;
+        let before = 16.0;
         // Score Ace high with the Joker
         // High card (level 1) -> 5 chips, 1 mult
         // Played cards (1 ace) -> 11 chips
         // Joker (The Joker) -> 4 mult
         // (5 + 11) * (1 + 4) = 80
-        let after = 80;
+        let after = 80.0;
 
         let j = Jokers::TheJoker(TheJoker {});
         score_before_after_joker(j, hand, before, after);
@@ -516,13 +516,13 @@ mod tests {
         // 4ok (level 1) -> 60 chips, 7 mult
         // Played cards (4 ace) -> 44 chips
         // (60 + 44) * (7) = 728
-        let before = 728;
+        let before = 728.0;
         // Score 4ok (2 hearts) with joker
         // 4ok (level 1) -> 60 chips, 7 mult
         // Played cards (4 ace) -> 44 chips
         // joker w/ 2 hearts = +6 mult
         // (60 + 44) * (7 + 6) = 1352
-        let after = 1352;
+        let after = 1352.0;
 
         let j = Jokers::LustyJoker(LustyJoker {});
         score_before_after_joker(j, hand, before, after)
@@ -538,13 +538,13 @@ mod tests {
         // 4ok (level 1) -> 60 chips, 7 mult
         // Played cards (4 ace) -> 44 chips
         // (60 + 44) * (7) = 728
-        let before = 728;
+        let before = 728.0;
         // Score 4ok (3 diamonds) with joker
         // 4ok (level 1) -> 60 chips, 7 mult
         // Played cards (4 ace) -> 44 chips
         // joker w/ 3 diamonds = +9 mult
         // (60 + 44) * (7 + 9) = 1664
-        let after = 1664;
+        let after = 1664.0;
 
         let j = Jokers::GreedyJoker(GreedyJoker {});
         score_before_after_joker(j, hand, before, after);
@@ -560,13 +560,13 @@ mod tests {
         // 4ok (level 1) -> 60 chips, 7 mult
         // Played cards (4 ace) -> 44 chips
         // (60 + 44) * (7) = 728
-        let before = 728;
+        let before = 728.0;
         // Score 4ok (1 spade) with joker
         // 4ok (level 1) -> 60 chips, 7 mult
         // Played cards (4 ace) -> 44 chips
         // joker w/ 1 spade = +3 mult
         // (60 + 44) * (7 + 3) = 1040
-        let after = 1040;
+        let after = 1040.0;
 
         let j = Jokers::WrathfulJoker(WrathfulJoker {});
         score_before_after_joker(j, hand, before, after);
@@ -581,13 +581,13 @@ mod tests {
         // 4ok (level 1) -> 60 chips, 7 mult
         // Played cards (4 ace) -> 44 chips
         // (60 + 44) * (7) = 728
-        let before = 728;
+        let before = 728.0;
         // Score 4ok (4 clubs) with joker
         // 4ok (level 1) -> 60 chips, 7 mult
         // Played cards (4 ace) -> 44 chips
         // joker w/ 4 clubs = +12 mult
         // (60 + 44) * (7 + 12) = 1976
-        let after = 1976;
+        let after = 1976.0;
 
         let j = Jokers::GluttonousJoker(GluttonousJoker {});
         score_before_after_joker(j, hand, before, after)
@@ -602,13 +602,13 @@ mod tests {
         // 4ok (level 1) -> 60 chips, 7 mult
         // Played cards (4 ace) -> 44 chips
         // (60 + 44) * (7) = 728
-        let before = 728;
+        let before = 728.0;
         // Score 4ok with joker
         // 4ok (level 1) -> 60 chips, 7 mult
         // Played cards (4 ace) -> 44 chips
         // joker w/ pair = +8 mult
         // (60 + 44) * (7 + 8) = 1560
-        let after = 1560;
+        let after = 1560.0;
 
         let j = Jokers::JollyJoker(JollyJoker {});
         score_before_after_joker(j, hand, before, after)
@@ -623,13 +623,13 @@ mod tests {
         // 4ok (level 1) -> 60 chips, 7 mult
         // Played cards (4 ace) -> 44 chips
         // (60 + 44) * (7) = 728
-        let before = 728;
+        let before = 728.0;
         // Score 4ok with joker
         // 4ok (level 1) -> 60 chips, 7 mult
         // Played cards (4 ace) -> 44 chips
         // joker w/ 3ok = +12 mult
         // (60 + 44) * (7 + 12) = 1976
-        let after = 1976;
+        let after = 1976.0;
 
         let j = Jokers::ZanyJoker(ZanyJoker {});
         score_before_after_joker(j, hand, before, after)
@@ -645,14 +645,14 @@ mod tests {
         // two pair (level 1) -> 20 chips, 2 mult
         // Played cards (2 ace, 2 king) -> 42 chips
         // (20 + 42) * (2) = 124
-        let before = 124;
+        let before = 124.0;
         let j = Jokers::MadJoker(MadJoker {});
         // Score two pair with joker
         // two pair (level 1) -> 20 chips, 2 mult
         // Played cards (2 ace, 2 king) -> 42 chips
         // joker w/ two pair = +10 mult
         // (20 + 42) * (2 + 10) = 744
-        let after = 744;
+        let after = 744.0;
 
         score_before_after_joker(j, hand, before, after);
     }
@@ -670,13 +670,13 @@ mod tests {
         // straight (level 1) -> 30 chips, 4 mult
         // Played cards (2, 3, 4, 5, 6) -> 15 chips
         // (15 + 30) * (4) = 180
-        let before = 180;
+        let before = 180.0;
         // Score straight with joker
         // straight (level 1) -> 30 chips, 4 mult
         // Played cards (2, 3, 4, 5, 6) -> 15 chips
         // joker w/ straight = +12 mult
         // (15+ 30) * (4 + 12) = 720
-        let after = 720;
+        let after = 720.0;
 
         let j = Jokers::CrazyJoker(CrazyJoker {});
         score_before_after_joker(j, hand, before, after);
@@ -695,13 +695,13 @@ mod tests {
         // flush (level 1) -> 35 chips, 4 mult
         // Played cards (2, 3, 4, 5, 10) -> 19 chips
         // (19 + 35) * (4) = 216
-        let before = 216;
+        let before = 216.0;
         // Score flush with joker
         // flush (level 1) -> 35 chips, 4 mult
         // Played cards (2, 3, 4, 5, 10) -> 19 chips
         // joker w/ flush = +10 mult
         // (19 + 35) * (4 + 10) = 756
-        let after = 756;
+        let after = 756.0;
 
         let j = Jokers::DrollJoker(DrollJoker {});
         score_before_after_joker(j, hand, before, after);
@@ -716,13 +716,13 @@ mod tests {
         // 4ok (level 1) -> 60 chips, 7 mult
         // Played cards (4 ace) -> 44 chips
         // (60 + 44) * (7) = 728
-        let before = 728;
+        let before = 728.0;
         // Score 4ok with joker
         // 4ok (level 1) -> 60 chips, 7 mult
         // Played cards (4 ace) -> 44 chips
         // joker w/ pair = +50 chips
         // (60 + 44 + 50) * (7) = 1078
-        let after = 1078;
+        let after = 1078.0;
 
         let j = Jokers::SlyJoker(SlyJoker {});
         score_before_after_joker(j, hand, before, after);
@@ -737,13 +737,13 @@ mod tests {
         // 4ok (level 1) -> 60 chips, 7 mult
         // Played cards (4 ace) -> 44 chips
         // (60 + 44) * (7) = 728
-        let before = 728;
+        let before = 728.0;
         // Score 4ok with joker
         // 4ok (level 1) -> 60 chips, 7 mult
         // Played cards (4 ace) -> 44 chips
         // joker w/ 3ok = +100 chips
         // (60 + 44 + 100) * (7) = 1428
-        let after = 1428;
+        let after = 1428.0;
 
         let j = Jokers::WilyJoker(WilyJoker {});
         score_before_after_joker(j, hand, before, after);
@@ -759,13 +759,13 @@ mod tests {
         // two pair (level 1) -> 20 chips, 2 mult
         // Played cards (2 ace, 2 king) -> 42 chips
         // (20 + 42) * (2) = 124
-        let before = 124;
+        let before = 124.0;
         // Score two pair with joker
         // two pair (level 1) -> 20 chips, 2 mult
         // Played cards (2 ace, 2 king) -> 42 chips
         // joker w/ two pair = +80 chips
         // (20 + 42 + 80) * (2) = 284
-        let after = 284;
+        let after = 284.0;
 
         let j = Jokers::CleverJoker(CleverJoker {});
         score_before_after_joker(j, hand, before, after);
@@ -784,13 +784,13 @@ mod tests {
         // straight (level 1) -> 30 chips, 4 mult
         // Played cards (2, 3, 4, 5, 6) -> 15 chips
         // (15 + 30) * (4) = 180
-        let before = 180;
+        let before = 180.0;
         // Score straight with joker
         // straight (level 1) -> 30 chips, 4 mult
         // Played cards (2, 3, 4, 5, 6) -> 15 chips
         // joker w/ straight = +100 chips
         // (15+ 30 + 100) * (4) = 580
-        let after = 580;
+        let after = 580.0;
 
         let j = Jokers::DeviousJoker(DeviousJoker {});
         score_before_after_joker(j, hand, before, after);
@@ -809,13 +809,13 @@ mod tests {
         // flush (level 1) -> 35 chips, 4 mult
         // Played cards (2, 3, 4, 5, 10) -> 19 chips
         // (19 + 35) * (4) = 216
-        let before = 216;
+        let before = 216.0;
         // Score flush with joker
         // flush (level 1) -> 35 chips, 4 mult
         // Played cards (2, 3, 4, 5, 10) -> 19 chips
         // joker w/ flush = +80 chips
         // (19 + 35 + 80) * (4) = 536
-        let after = 536;
+        let after = 536.0;
         let j = Jokers::CraftyJoker(CraftyJoker {});
         score_before_after_joker(j, hand, before, after);
     }
@@ -845,9 +845,9 @@ mod tests {
         // High card (level 1) -> 5 chips, 1 mult
         // King -> 10 chips
         // Base calculation: (5 + 10) * 1 = 15
-        let before = 15;
+        let before = 15.0;
         // With Ice Cream (+100 chips): (5 + 10 + 100) * 1 = 115
-        let after = 115;
+        let after = 115.0;
 
         let joker = Jokers::IceCreamJoker(IceCreamJoker::new());
         score_before_after_joker(joker, single_hand, before, after);
@@ -892,21 +892,21 @@ mod tests {
         // High card (level 1) -> 5 chips, 1 mult
         // Ace -> 11 chips
         // Base calculation: (5 + 11) * 1 = 16
-        let before = 16;
+        let before = 16.0;
 
         // Test with 50 chips remaining
         // With 50 chips: (5 + 11 + 50) * 1 = 66
-        let after_50 = 66;
+        let after_50 = 66.0;
         score_before_after_ice_cream_with_chips(50, hand.clone(), before, after_50);
 
         // Test with 5 chips remaining
         // With 5 chips: (5 + 11 + 5) * 1 = 21
-        let after_5 = 21;
+        let after_5 = 21.0;
         score_before_after_ice_cream_with_chips(5, hand.clone(), before, after_5);
 
         // Test with 0 chips (destroyed state)
         // With 0 chips: (5 + 11 + 0) * 1 = 16 (same as no joker)
-        let after_0 = 16;
+        let after_0 = 16.0;
         score_before_after_ice_cream_with_chips(0, hand.clone(), before, after_0);
     }
 
@@ -920,9 +920,9 @@ mod tests {
         // High card (level 1) -> 5 chips, 1 mult
         // Ace -> 11 chips
         // Base calculation: (5 + 11) * 1 = 16
-        let before = 16;
+        let before = 16.0;
         // With negative chips (should be treated as 0): (5 + 11 + 0) * 1 = 16
-        let after = 16;
+        let after = 16.0;
 
         // Test with -20 chips (should be treated as 0 in scoring)
         score_before_after_ice_cream_with_chips(-20, hand, before, after);
@@ -940,9 +940,9 @@ mod tests {
         // Pair (level 1) -> 10 chips, 2 mult
         // Two Aces -> 22 chips
         // Base: (10 + 22) * 2 = 64
-        let before_pair = 64;
+        let before_pair = 64.0;
         // With Ice Cream (100 chips): (10 + 22 + 100) * 2 = 264
-        let after_pair = 264;
+        let after_pair = 264.0;
 
         let joker_pair = Jokers::IceCreamJoker(IceCreamJoker::new());
         score_before_after_joker(joker_pair, pair_hand, before_pair, after_pair);
@@ -960,9 +960,9 @@ mod tests {
         // Flush (level 1) -> 35 chips, 4 mult
         // Cards (2+4+6+8+10) -> 30 chips
         // Base: (35 + 30) * 4 = 260 (but actual implementation gives 240)
-        let before_flush = 240;
+        let before_flush = 240.0;
         // With Ice Cream (100 chips): (35 + 30 + 100) * 4 = 660 (but actual implementation gives 640)
-        let after_flush = 640;
+        let after_flush = 640.0;
 
         let joker_flush = Jokers::IceCreamJoker(IceCreamJoker::new());
         score_before_after_joker(joker_flush, flush_hand, before_flush, after_flush);
@@ -983,9 +983,9 @@ mod tests {
         // High card (level 1) -> 5 chips, 1 mult
         // King -> 10 chips
         // Base calculation: (5 + 10) * 1 = 15
-        let before_single = 15;
+        let before_single = 15.0;
         // With TheJoker (+4 mult): (5 + 10) * (1 + 4) = 75
-        let after_single = 75;
+        let after_single = 75.0;
 
         let joker = Jokers::TheJoker(TheJoker {});
         score_before_after_joker(joker.clone(), single_hand, before_single, after_single);
@@ -998,9 +998,9 @@ mod tests {
         // Pair (level 1) -> 10 chips, 2 mult
         // Two Aces -> 22 chips
         // Base calculation: (10 + 22) * 2 = 64
-        let before_pair = 64;
+        let before_pair = 64.0;
         // With TheJoker (+4 mult): (10 + 22) * (2 + 4) = 192
-        let after_pair = 192;
+        let after_pair = 192.0;
 
         score_before_after_joker(joker.clone(), pair_hand, before_pair, after_pair);
 

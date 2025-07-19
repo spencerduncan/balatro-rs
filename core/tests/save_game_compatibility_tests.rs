@@ -133,15 +133,14 @@ mod corrupted_save_handling_tests {
 #[cfg(test)]
 mod save_load_integration_tests {
     use super::*;
-    use balatro_rs::joker_impl::TheJoker;
 
     #[test]
     fn test_full_game_save_load_roundtrip() {
         // Create a game with some state
         let mut game = Game::new(Config::default());
-        game.money = 500;
+        game.money = 500.0;
         game.ante_current = Ante::Three;
-        game.round = 5;
+        game.round = 5.0;
 
         // Add a joker with some state
         use balatro_rs::joker_factory::JokerFactory;
@@ -159,9 +158,9 @@ mod save_load_integration_tests {
         let loaded_game = Game::load_state_from_json(&saved_json).expect("Load should succeed");
 
         // Verify state preservation
-        assert_eq!(loaded_game.money, 500);
+        assert_eq!(loaded_game.money, 500.0);
         assert_eq!(loaded_game.ante_current, Ante::Three);
-        assert_eq!(loaded_game.round, 5);
+        assert_eq!(loaded_game.round, 5.0);
 
         // Verify joker state preservation
         let joker_state = loaded_game.joker_state_manager.get_state(JokerId::Joker);
@@ -229,7 +228,7 @@ mod save_format_versioning_tests {
     fn test_version_migration_from_v1() {
         // Create a proper game first to get a valid save format, then modify it to simulate v1
         let mut game = Game::new(Config::default());
-        game.money = 100;
+        game.money = 100.0;
         let full_save = game.save_state_to_json().unwrap();
 
         // Parse and modify to simulate v1 format
@@ -254,7 +253,7 @@ mod save_format_versioning_tests {
         assert!(result.is_ok());
 
         let loaded_game = result.unwrap();
-        assert_eq!(loaded_game.money, 100);
+        assert_eq!(loaded_game.money, 100.0);
         // Verify migration worked correctly
     }
 
@@ -294,7 +293,7 @@ mod save_format_versioning_tests {
     #[test]
     fn test_save_format_validation() {
         let mut game = Game::new(Config::default());
-        game.money = 150;
+        game.money = 150.0;
 
         let saved_json = game.save_state_to_json().expect("Save should succeed");
 
