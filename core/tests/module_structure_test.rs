@@ -107,7 +107,7 @@ mod tests {
         let _move_card = Action::MoveCard(MoveDirection::Left, test_card);
         let _play = Action::Play();
         let _discard = Action::Discard();
-        let _cash_out = Action::CashOut(100);
+        let _cash_out = Action::CashOut(100.0);
         let _buy_joker = Action::BuyJoker {
             joker_id: JokerId::Joker,
             slot: 0,

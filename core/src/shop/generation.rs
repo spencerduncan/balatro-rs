@@ -7,7 +7,6 @@ use crate::shop::{
 };
 use rand::distributions::WeightedIndex;
 use rand::prelude::*;
-use std::collections::HashMap;
 
 /// Weighted random generator for shop items with support for rarity-based
 /// joker generation, voucher modifications, and ante-based scaling.
@@ -39,9 +38,7 @@ struct CacheKey {
 impl WeightedGenerator {
     /// Create a new weighted generator with cryptographically secure RNG
     pub fn new() -> Self {
-        Self {
-            rng: thread_rng(),
-        }
+        Self { rng: thread_rng() }
     }
 
     /// Convert Ante enum to numeric value for calculations
@@ -505,11 +502,12 @@ impl Default for WeightedGenerator {
 mod tests {
     use super::*;
     use crate::config::Config;
+    use std::collections::HashMap;
 
     #[test]
     fn test_weighted_generator_creation() {
-        let generator = WeightedGenerator::new();
-        assert!(generator.weight_cache.is_empty());
+        let _generator = WeightedGenerator::new();
+        // Generator successfully created - no cache to test since it was removed for f64 compatibility
     }
 
     #[test]
@@ -671,17 +669,17 @@ mod tests {
     fn test_cache_key_creation() {
         let key1 = CacheKey {
             ante: 1,
-            money: 100,
+            money: 100.0,
             vouchers: vec![VoucherId::Overstock],
         };
         let key2 = CacheKey {
             ante: 1,
-            money: 100,
+            money: 100.0,
             vouchers: vec![VoucherId::Overstock],
         };
         let key3 = CacheKey {
             ante: 2,
-            money: 100,
+            money: 100.0,
             vouchers: vec![VoucherId::Overstock],
         };
 
@@ -837,7 +835,7 @@ mod tests {
     fn test_calculate_weights_high_money_adjustment() {
         let generator = WeightedGenerator::new();
         let mut game = Game::new(Config::default());
-        game.money = 100; // High money
+        game.money = 100.0; // High money
         let weights = generator.calculate_weights(&game);
 
         // With high money, should favor expensive items
@@ -852,7 +850,7 @@ mod tests {
         let generator = WeightedGenerator::new();
         let mut game = Game::new(Config::default());
         game.ante_current = Ante::Five; // High ante
-        game.money = 30; // Medium money to avoid money-based adjustments
+        game.money = 30.0; // Medium money to avoid money-based adjustments
         let weights = generator.calculate_weights(&game);
 
         let default_weights = ItemWeights::default();

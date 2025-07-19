@@ -1177,7 +1177,7 @@ mod tests {
         let g = Game::default();
         assert_eq!(g.available.cards().len(), 0);
         assert_eq!(g.deck.len(), 52);
-        assert_eq!(g.mult, 0);
+        assert_eq!(g.mult, 0.0);
     }
 
     #[test]
@@ -1232,7 +1232,7 @@ mod tests {
         let cards = vec![ace, king, jack];
         let hand = SelectHand::new(cards).best_hand().unwrap();
         let score = g.calc_score(hand);
-        assert_eq!(score, 16);
+        assert_eq!(score, 16.0);
 
         // Score [Kd, Kd, Ah]
         // Pair (level 1) -> chips=10, mult=2
@@ -1241,7 +1241,7 @@ mod tests {
         let cards = vec![king, king, ace];
         let hand = SelectHand::new(cards).best_hand().unwrap();
         let score = g.calc_score(hand);
-        assert_eq!(score, 60);
+        assert_eq!(score, 60.0);
 
         // Score [Ah, Ah, Ah, Kd]
         // Three of kind (level 1) -> chips=30, mult=3
@@ -1250,7 +1250,7 @@ mod tests {
         let cards = vec![ace, ace, ace, king];
         let hand = SelectHand::new(cards).best_hand().unwrap();
         let score = g.calc_score(hand);
-        assert_eq!(score, 189);
+        assert_eq!(score, 189.0);
 
         // Score [Kd, Kd, Kd, Kd, Ah]
         // Four of kind (level 1) -> chips=60, mult=7
@@ -1259,7 +1259,7 @@ mod tests {
         let cards = vec![king, king, king, king, ace];
         let hand = SelectHand::new(cards).best_hand().unwrap();
         let score = g.calc_score(hand);
-        assert_eq!(score, 700);
+        assert_eq!(score, 700.0);
 
         // Score [Jc, Jc, Jc, Jc, Jc]
         // Flush five (level 1) -> chips=160, mult=16
@@ -1268,7 +1268,7 @@ mod tests {
         let cards = vec![jack, jack, jack, jack, jack];
         let hand = SelectHand::new(cards).best_hand().unwrap();
         let score = g.calc_score(hand);
-        assert_eq!(score, 3360);
+        assert_eq!(score, 3360.0);
     }
 
     #[test]
@@ -1280,14 +1280,14 @@ mod tests {
 
         // Not enough to pass
         let required = g.required_score();
-        let score = required - 1;
+        let score = required - 1.0;
 
         let passed = g.handle_score(score).unwrap();
         assert!(!passed);
         assert_eq!(g.score, score);
 
         // Enough to pass now
-        let passed = g.handle_score(1).unwrap();
+        let passed = g.handle_score(1.0).unwrap();
         assert!(passed);
         assert_eq!(g.score, required);
         assert_eq!(g.stage, Stage::PostBlind());
@@ -1323,10 +1323,10 @@ mod tests {
         // Should have cleared blind
         assert_eq!(g.stage, Stage::PostBlind());
         // Score should reset to 0
-        assert_eq!(g.score, g.config.base_score);
+        assert_eq!(g.score, g.config.base_score as f64);
         // Plays and discards should reset
-        assert_eq!(g.plays, g.config.plays);
-        assert_eq!(g.discards, g.config.discards);
+        assert_eq!(g.plays, g.config.plays as f64);
+        assert_eq!(g.discards, g.config.discards as f64);
         // Deck should be length 52 - available
         assert_eq!(g.deck.len(), 52 - g.config.available);
         // Discarded should be length 0
@@ -1340,12 +1340,12 @@ mod tests {
         let mut g = Game::default();
         g.start();
         g.stage = Stage::Shop();
-        g.money = 10;
+        g.money = 10.0;
         g.shop.refresh();
 
         let j1 = g.shop.joker_from_index(0).expect("is joker");
         g.buy_joker(j1.clone()).expect("buy joker");
-        assert_eq!(g.money, 10 - j1.cost());
+        assert_eq!(g.money, 10.0 - j1.cost() as f64);
         assert_eq!(g.jokers.len(), 1);
     }
 
@@ -1354,7 +1354,7 @@ mod tests {
         let mut game = Game::default();
         game.start();
         game.stage = Stage::Shop();
-        game.money = 20;
+        game.money = 20.0;
 
         // Set up shop with known jokers for deterministic testing
         use crate::joker::compat::TheJoker;
@@ -1383,7 +1383,7 @@ mod tests {
         let mut game = Game::default();
         game.start();
         game.stage = Stage::Shop();
-        game.money = 40;
+        game.money = 40.0;
 
         // Set up shop with known jokers for deterministic testing
         use crate::joker::compat::{GreedyJoker, TheJoker};
@@ -1425,7 +1425,7 @@ mod tests {
         let mut game = Game::default();
         game.start();
         game.stage = Stage::Shop();
-        game.money = 20;
+        game.money = 20.0;
         game.shop.refresh();
 
         // Test buying in slot beyond limit (default is 5 slots, so 0-4 are valid)
@@ -1444,7 +1444,7 @@ mod tests {
         let mut game = Game::default();
         game.start();
         game.stage = Stage::Shop();
-        game.money = 20;
+        game.money = 20.0;
 
         // Set up shop with known jokers for deterministic testing
         use crate::joker::compat::TheJoker;
@@ -1474,7 +1474,7 @@ mod tests {
         let mut game = Game::default();
         game.start();
         game.stage = Stage::Shop();
-        game.money = 1; // Not enough for any joker
+        game.money = 1.0; // Not enough for any joker
 
         // Set up shop with known jokers for deterministic testing
         use crate::joker::compat::TheJoker;
@@ -1495,7 +1495,7 @@ mod tests {
         let mut game = Game::default();
         game.start();
         game.stage = Stage::Shop();
-        game.money = 20;
+        game.money = 20.0;
         game.shop.refresh();
 
         // Try to buy a joker that's not currently in the shop
@@ -1514,7 +1514,7 @@ mod tests {
         let mut game = Game::default();
         game.start();
         game.stage = Stage::Blind(Blind::Small);
-        game.money = 20;
+        game.money = 20.0;
 
         let action = Action::BuyJoker {
             joker_id: JokerId::Joker,
