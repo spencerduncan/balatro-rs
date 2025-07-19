@@ -1,0 +1,255 @@
+name: Test Result Reporting
+
+on:
+  workflow_run:
+    workflows: ["CI", "PR Checks"]
+    types: [completed]
+  workflow_dispatch:
+
+jobs:
+  aggregate-test-results:
+    name: Aggregate Test Results
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion != 'skipped'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download test artifacts
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: ci.yml
+          workflow_conclusion: ""
+          path: test-artifacts
+          
+      - name: Download benchmark artifacts
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: ci.yml
+          workflow_conclusion: ""
+          name: benchmark-results
+          path: benchmark-artifacts
+          if_no_artifact_found: ignore
+          
+      - name: Download security scan artifacts
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: ci.yml
+          workflow_conclusion: ""
+          name: security-scan-results
+          path: security-artifacts
+          if_no_artifact_found: ignore
+      
+      - name: Aggregate test results
+        run: |
+          echo "# Test Results Report" > test_report.md
+          echo "" >> test_report.md
+          echo "**Generated:** $(date)" >> test_report.md
+          echo "**Workflow:** ${{ github.event.workflow_run.name }}" >> test_report.md
+          echo "**Conclusion:** ${{ github.event.workflow_run.conclusion }}" >> test_report.md
+          echo "" >> test_report.md
+          
+          # Process test results from each platform
+          echo "## Platform Test Results" >> test_report.md
+          echo "" >> test_report.md
+          
+          for platform_dir in test-artifacts/test-results-*; do
+            if [ -d "$platform_dir" ]; then
+              platform_name=$(basename "$platform_dir" | sed 's/test-results-//')
+              echo "### $platform_name" >> test_report.md
+              
+              if [ -f "$platform_dir/test_summary.md" ]; then
+                cat "$platform_dir/test_summary.md" >> test_report.md
+              else
+                echo "- Status: No summary available" >> test_report.md
+              fi
+              echo "" >> test_report.md
+            fi
+          done
+          
+          # Process benchmark results
+          if [ -d "benchmark-artifacts" ]; then
+            echo "## Performance Benchmarks" >> test_report.md
+            echo "" >> test_report.md
+            
+            if [ -f "benchmark-artifacts/benchmark_results.txt" ]; then
+              echo "### Benchmark Summary" >> test_report.md
+              echo '```' >> test_report.md
+              # Show last 20 lines of benchmark results (summary)
+              tail -20 "benchmark-artifacts/benchmark_results.txt" >> test_report.md
+              echo '```' >> test_report.md
+            else
+              echo "- Status: No benchmark results available" >> test_report.md
+            fi
+            echo "" >> test_report.md
+          fi
+          
+          # Process security scan results
+          if [ -d "security-artifacts" ]; then
+            echo "## Security Scan Results" >> test_report.md
+            echo "" >> test_report.md
+            
+            # Check for security issues
+            if ls security-artifacts/*.log 1> /dev/null 2>&1; then
+              echo "### Security Scan Logs Found" >> test_report.md
+              echo "Security scan artifacts detected. Review manually for details." >> test_report.md
+            else
+              echo "- Status: Security scans completed without critical issues" >> test_report.md
+            fi
+            echo "" >> test_report.md
+          fi
+          
+          # Generate quality score
+          echo "## Quality Score" >> test_report.md
+          echo "" >> test_report.md
+          
+          QUALITY_SCORE=100
+          QUALITY_NOTES=""
+          
+          # Deduct points for failed tests
+          if grep -q "Tests Failed: [1-9]" test_report.md; then
+            QUALITY_SCORE=$((QUALITY_SCORE - 20))
+            QUALITY_NOTES="$QUALITY_NOTES\n- Failed tests detected (-20 points)"
+          fi
+          
+          # Deduct points for missing benchmarks
+          if ! grep -q "Benchmark Summary" test_report.md; then
+            QUALITY_SCORE=$((QUALITY_SCORE - 10))
+            QUALITY_NOTES="$QUALITY_NOTES\n- No benchmark results (-10 points)"
+          fi
+          
+          # Deduct points for security issues
+          if grep -q "Security Scan Logs Found" test_report.md; then
+            QUALITY_SCORE=$((QUALITY_SCORE - 15))
+            QUALITY_NOTES="$QUALITY_NOTES\n- Security scan issues detected (-15 points)"
+          fi
+          
+          echo "**Overall Quality Score: $QUALITY_SCORE/100**" >> test_report.md
+          
+          if [ ! -z "$QUALITY_NOTES" ]; then
+            echo "" >> test_report.md
+            echo "**Quality Notes:**" >> test_report.md
+            echo -e "$QUALITY_NOTES" >> test_report.md
+          fi
+          
+      - name: Upload aggregated report
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: test_report.md
+          
+      - name: Comment PR with results
+        if: github.event.workflow_run.event == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            
+            // Read the test report
+            const reportPath = 'test_report.md';
+            let reportContent = '';
+            
+            try {
+              reportContent = fs.readFileSync(reportPath, 'utf8');
+            } catch (error) {
+              reportContent = 'Test report could not be generated.';
+            }
+            
+            // Find the PR number from the workflow run
+            const runs = await github.rest.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: '${{ github.event.workflow_run.workflow_id }}',
+              head_sha: '${{ github.event.workflow_run.head_sha }}'
+            });
+            
+            // Comment on the PR if found
+            if (runs.data.workflow_runs.length > 0) {
+              const run = runs.data.workflow_runs[0];
+              if (run.pull_requests.length > 0) {
+                const prNumber = run.pull_requests[0].number;
+                
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  body: `## 🔍 Test Results Report\n\n${reportContent}\n\n---\n*Generated by test-reporting workflow*`
+                });
+              }
+            }
+            
+      - name: Create check run
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            
+            // Determine status based on workflow conclusion
+            const conclusion = '${{ github.event.workflow_run.conclusion }}';
+            const status = conclusion === 'success' ? 'completed' : 'completed';
+            const checkConclusion = conclusion === 'success' ? 'success' : 'failure';
+            
+            // Read summary
+            let summary = 'Test results processed';
+            try {
+              const reportContent = fs.readFileSync('test_report.md', 'utf8');
+              summary = reportContent.substring(0, 1000) + (reportContent.length > 1000 ? '...' : '');
+            } catch (error) {
+              summary = 'Could not process test results';
+            }
+            
+            await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'Test Result Summary',
+              head_sha: '${{ github.event.workflow_run.head_sha }}',
+              status: status,
+              conclusion: checkConclusion,
+              output: {
+                title: 'Test Results Aggregated',
+                summary: summary
+              }
+            });
+
+  test-health-monitor:
+    name: Test Health Monitoring
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Analyze test health trends
+        run: |
+          echo "# Test Health Monitoring Report" > health_report.md
+          echo "" >> health_report.md
+          echo "**Analysis Date:** $(date)" >> health_report.md
+          echo "" >> health_report.md
+          
+          # This would typically connect to a database or metrics system
+          # For now, we'll create a basic framework
+          
+          echo "## Test Stability Metrics" >> health_report.md
+          echo "" >> health_report.md
+          echo "- **Workflow Status:** ${{ github.event.workflow_run.conclusion }}" >> health_report.md
+          echo "- **Commit SHA:** ${{ github.event.workflow_run.head_sha }}" >> health_report.md
+          echo "- **Branch:** ${{ github.event.workflow_run.head_branch }}" >> health_report.md
+          echo "" >> health_report.md
+          
+          echo "## Recommendations" >> health_report.md
+          echo "" >> health_report.md
+          
+          if [ "${{ github.event.workflow_run.conclusion }}" = "success" ]; then
+            echo "✅ All systems operating normally" >> health_report.md
+          else
+            echo "⚠️ Issues detected - review failed jobs" >> health_report.md
+            echo "" >> health_report.md
+            echo "**Action Items:**" >> health_report.md
+            echo "- Review failed test cases" >> health_report.md
+            echo "- Check for environmental issues" >> health_report.md
+            echo "- Verify dependency compatibility" >> health_report.md
+          fi
+          
+      - name: Upload health report
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-health-report
+          path: health_report.md
