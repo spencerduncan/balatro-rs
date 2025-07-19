@@ -41,7 +41,7 @@ mod move_direction_tests {
         let mut map = HashMap::new();
         map.insert(MoveDirection::Left, "left_value");
         map.insert(MoveDirection::Right, "right_value");
-        
+
         assert_eq!(map.get(&MoveDirection::Left), Some(&"left_value"));
         assert_eq!(map.get(&MoveDirection::Right), Some(&"right_value"));
     }
@@ -96,9 +96,9 @@ mod action_tests {
 
     #[test]
     fn test_action_buy_joker_display() {
-        let action = Action::BuyJoker { 
-            joker_id: JokerId::Joker, 
-            slot: 3 
+        let action = Action::BuyJoker {
+            joker_id: JokerId::Joker,
+            slot: 3,
         };
         let display_string = format!("{}", action);
         assert!(display_string.contains("BuyJoker:"));
@@ -108,8 +108,8 @@ mod action_tests {
 
     #[test]
     fn test_action_buy_pack_display() {
-        let action = Action::BuyPack { 
-            pack_type: PackType::Standard 
+        let action = Action::BuyPack {
+            pack_type: PackType::Standard,
         };
         let display_string = format!("{}", action);
         assert!(display_string.contains("BuyPack:"));
@@ -124,9 +124,9 @@ mod action_tests {
 
     #[test]
     fn test_action_select_from_pack_display() {
-        let action = Action::SelectFromPack { 
-            pack_id: 10, 
-            option_index: 2 
+        let action = Action::SelectFromPack {
+            pack_id: 10,
+            option_index: 2,
         };
         assert_eq!(format!("{}", action), "SelectFromPack: pack 10, option 2");
     }
@@ -155,7 +155,7 @@ mod action_tests {
     fn test_action_equality() {
         let card1 = create_test_card();
         let card2 = create_test_card();
-        
+
         assert_eq!(Action::Play(), Action::Play());
         assert_eq!(Action::Discard(), Action::Discard());
         assert_eq!(Action::SelectCard(card1.clone()), Action::SelectCard(card2));
@@ -182,7 +182,7 @@ mod action_tests {
         let mut map = HashMap::new();
         map.insert(Action::Play(), "play_value");
         map.insert(Action::Discard(), "discard_value");
-        
+
         assert_eq!(map.get(&Action::Play()), Some(&"play_value"));
         assert_eq!(map.get(&Action::Discard()), Some(&"discard_value"));
     }
@@ -190,7 +190,7 @@ mod action_tests {
     #[test]
     fn test_all_action_variants() {
         let card = create_test_card();
-        
+
         // Test that all action variants can be constructed without panicking
         let actions = vec![
             Action::SelectCard(card.clone()),
@@ -198,15 +198,23 @@ mod action_tests {
             Action::Play(),
             Action::Discard(),
             Action::CashOut(100),
-            Action::BuyJoker { joker_id: JokerId::Joker, slot: 0 },
-            Action::BuyPack { pack_type: PackType::Standard },
+            Action::BuyJoker {
+                joker_id: JokerId::Joker,
+                slot: 0,
+            },
+            Action::BuyPack {
+                pack_type: PackType::Standard,
+            },
             Action::OpenPack { pack_id: 1 },
-            Action::SelectFromPack { pack_id: 1, option_index: 0 },
+            Action::SelectFromPack {
+                pack_id: 1,
+                option_index: 0,
+            },
             Action::SkipPack { pack_id: 1 },
             Action::NextRound(),
             Action::SelectBlind(Blind::Small),
         ];
-        
+
         // Verify all actions can be displayed and debugged
         for action in actions {
             let _ = format!("{}", action);
@@ -219,7 +227,7 @@ mod action_tests {
         // Test edge case values
         let action_large_cash = Action::CashOut(usize::MAX);
         assert!(format!("{}", action_large_cash).contains(&format!("{}", usize::MAX)));
-        
+
         let action_zero_cash = Action::CashOut(0);
         assert_eq!(format!("{}", action_zero_cash), "CashOut: 0");
     }
@@ -266,9 +274,9 @@ mod serde_tests {
 
     #[test]
     fn test_complex_action_serde() {
-        let action = Action::BuyJoker { 
-            joker_id: JokerId::Joker, 
-            slot: 5 
+        let action = Action::BuyJoker {
+            joker_id: JokerId::Joker,
+            slot: 5,
         };
         let serialized = serde_json::to_string(&action).unwrap();
         let deserialized: Action = serde_json::from_str(&serialized).unwrap();

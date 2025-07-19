@@ -24,13 +24,13 @@ mod blind_tests {
         // Test a complete cycle
         let mut current = Blind::Small;
         assert_eq!(current, Blind::Small);
-        
+
         current = current.next();
         assert_eq!(current, Blind::Big);
-        
+
         current = current.next();
         assert_eq!(current, Blind::Boss);
-        
+
         current = current.next();
         assert_eq!(current, Blind::Small); // Back to start
     }
@@ -64,7 +64,7 @@ mod blind_tests {
         assert!(Blind::Small < Blind::Big);
         assert!(Blind::Big < Blind::Boss);
         assert!(Blind::Small < Blind::Boss);
-        
+
         // Test partial ordering
         assert!(Blind::Small <= Blind::Small);
         assert!(Blind::Small <= Blind::Big);
@@ -83,7 +83,7 @@ mod blind_tests {
         let blind = Blind::Boss;
         let copied_blind = blind; // Should be a copy due to Copy trait
         assert_eq!(blind, copied_blind);
-        
+
         // Both should still be usable
         assert_eq!(blind.reward(), 5);
         assert_eq!(copied_blind.reward(), 5);
@@ -95,7 +95,7 @@ mod blind_tests {
         map.insert(Blind::Small, "small_value");
         map.insert(Blind::Big, "big_value");
         map.insert(Blind::Boss, "boss_value");
-        
+
         assert_eq!(map.get(&Blind::Small), Some(&"small_value"));
         assert_eq!(map.get(&Blind::Big), Some(&"big_value"));
         assert_eq!(map.get(&Blind::Boss), Some(&"boss_value"));
@@ -111,7 +111,7 @@ mod blind_tests {
     #[test]
     fn test_all_blind_variants() {
         let blinds = vec![Blind::Small, Blind::Big, Blind::Boss];
-        
+
         for blind in blinds {
             // Test that all methods work for all variants
             let _ = blind.reward();
@@ -166,7 +166,7 @@ mod end_tests {
         let mut map = HashMap::new();
         map.insert(End::Win, "win_value");
         map.insert(End::Lose, "lose_value");
-        
+
         assert_eq!(map.get(&End::Win), Some(&"win_value"));
         assert_eq!(map.get(&End::Lose), Some(&"lose_value"));
     }
@@ -204,7 +204,7 @@ mod stage_tests {
         assert_eq!(Stage::Shop(), Stage::Shop());
         assert_eq!(Stage::Blind(Blind::Small), Stage::Blind(Blind::Small));
         assert_eq!(Stage::End(End::Win), Stage::End(End::Win));
-        
+
         assert_ne!(Stage::PreBlind(), Stage::PostBlind());
         assert_ne!(Stage::Blind(Blind::Small), Stage::Blind(Blind::Big));
         assert_ne!(Stage::End(End::Win), Stage::End(End::Lose));
@@ -240,7 +240,7 @@ mod stage_tests {
         map.insert(Stage::PostBlind(), "post_blind");
         map.insert(Stage::Shop(), "shop");
         map.insert(Stage::End(End::Win), "win");
-        
+
         assert_eq!(map.get(&Stage::PreBlind()), Some(&"pre_blind"));
         assert_eq!(map.get(&Stage::Blind(Blind::Small)), Some(&"small_blind"));
         assert_eq!(map.get(&Stage::Shop()), Some(&"shop"));
@@ -258,7 +258,7 @@ mod stage_tests {
             Stage::End(End::Win),
             Stage::End(End::Lose),
         ];
-        
+
         for stage in stages {
             // Test that all methods work for all variants
             let _ = stage.is_blind();
@@ -318,15 +318,19 @@ mod python_stage_tests {
             Stage::End(End::Win),
             Stage::End(End::Lose),
         ];
-        
+
         let int_values: Vec<usize> = stages.iter().map(|s| s.int()).collect();
-        
+
         // Verify all values are unique
         let mut sorted_values = int_values.clone();
         sorted_values.sort();
         sorted_values.dedup();
-        
-        assert_eq!(int_values.len(), sorted_values.len(), "Int values should be unique");
+
+        assert_eq!(
+            int_values.len(),
+            sorted_values.len(),
+            "Int values should be unique"
+        );
     }
 
     #[test]
@@ -343,11 +347,11 @@ mod python_stage_tests {
             Stage::End(End::Win),
             Stage::End(End::Lose),
         ];
-        
+
         let int_values: Vec<usize> = stages.iter().map(|s| s.int()).collect();
         let mut sorted_values = int_values;
         sorted_values.sort();
-        
+
         assert_eq!(sorted_values, expected_sequence);
     }
 }
@@ -381,7 +385,7 @@ mod serde_tests {
             Stage::Shop(),
             Stage::End(End::Lose),
         ];
-        
+
         for stage in stages {
             let serialized = serde_json::to_string(&stage).unwrap();
             let deserialized: Stage = serde_json::from_str(&serialized).unwrap();
@@ -398,21 +402,21 @@ mod comprehensive_stage_tests {
     fn test_game_flow_progression() {
         // Test a typical game flow progression
         let mut current_blind = Blind::Small;
-        
+
         // Start with small blind
         assert_eq!(current_blind.reward(), 3);
         assert!(Stage::Blind(current_blind).is_blind());
-        
+
         // Progress to big blind
         current_blind = current_blind.next();
         assert_eq!(current_blind, Blind::Big);
         assert_eq!(current_blind.reward(), 4);
-        
+
         // Progress to boss blind
         current_blind = current_blind.next();
         assert_eq!(current_blind, Blind::Boss);
         assert_eq!(current_blind.reward(), 5);
-        
+
         // Cycle back to small blind
         current_blind = current_blind.next();
         assert_eq!(current_blind, Blind::Small);
@@ -425,10 +429,10 @@ mod comprehensive_stage_tests {
         let big_blind_stage = Stage::Blind(Blind::Big);
         let win_end_stage = Stage::End(End::Win);
         let lose_end_stage = Stage::End(End::Lose);
-        
+
         assert_ne!(small_blind_stage, big_blind_stage);
         assert_ne!(win_end_stage, lose_end_stage);
-        
+
         // Test that is_blind correctly identifies blind stages
         assert!(small_blind_stage.is_blind());
         assert!(big_blind_stage.is_blind());
