@@ -194,10 +194,10 @@ fn initialize_default_jokers(registry: &mut JokerRegistry) {
     // TODO: This function will be expanded as jokers are implemented
     // The actual registration will happen in a separate initialization module
     // which will call registry.register() for each joker type
-    
+
     // Temporarily register basic jokers for testing
     use crate::joker_impl::TheJoker;
-    
+
     // Register basic Joker
     let _ = registry.register(
         JokerDefinition {
@@ -209,7 +209,7 @@ fn initialize_default_jokers(registry: &mut JokerRegistry) {
         },
         || Box::new(TheJoker),
     );
-    
+
     // Register Greedy Joker
     let _ = registry.register(
         JokerDefinition {
@@ -221,7 +221,7 @@ fn initialize_default_jokers(registry: &mut JokerRegistry) {
         },
         || Box::new(TheJoker), // Using TheJoker as placeholder for now
     );
-    
+
     // Register Ice Cream (for testing state tracking)
     let _ = registry.register(
         JokerDefinition {
