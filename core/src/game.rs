@@ -28,6 +28,9 @@ use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
 
+/// Maximum debug messages to keep in memory (for practical memory management)
+const MAX_DEBUG_MESSAGES: usize = 10000;
+
 /// Score breakdown for debugging and analysis
 #[derive(Debug, Clone)]
 pub struct ScoreBreakdown {
@@ -360,15 +363,18 @@ impl Game {
             self.money += joker_money as f64;
 
             // Log debug messages if enabled
-            if self.debug_logging_enabled {
-                for message in messages {
-                    self.debug_messages.push(message);
-                }
+            for message in messages {
+                self.add_debug_message(message);
             }
         }
 
         // compute score
         let score = self.chips * self.mult;
+        
+        // Check for killscreen condition
+        if !score.is_finite() {
+            self.add_debug_message("KILLSCREEN: Final score reached infinity!".to_string());
+        }
 
         // reset chips and mult
         self.mult = self.config.base_mult as f64;
@@ -413,7 +419,7 @@ impl Game {
             // Calculate total triggers (1 + retriggers)
             let total_triggers = 1 + effect.retrigger;
 
-            // Apply effect for each trigger
+            // Apply effect for each trigger (with killscreen detection)
             for trigger_num in 0..total_triggers {
                 total_chips += effect.chips;
                 total_mult += effect.mult;
@@ -422,6 +428,12 @@ impl Game {
                 // Handle mult_multiplier: 0.0 means no multiplier, so treat as 1.0
                 if effect.mult_multiplier != 0.0 {
                     total_mult_multiplier *= effect.mult_multiplier;
+                    
+                    // Killscreen detection - stop processing if we hit NaN/Infinity
+                    if !total_mult_multiplier.is_finite() {
+                        messages.push("KILLSCREEN: Score calculation reached infinity!".to_string());
+                        break;
+                    }
                 }
 
                 // Generate debug message for each trigger
@@ -462,7 +474,7 @@ impl Game {
                     // Calculate total triggers (1 + retriggers)
                     let total_triggers = 1 + effect.retrigger;
 
-                    // Apply effect for each trigger
+                    // Apply effect for each trigger (with killscreen detection)
                     for trigger_num in 0..total_triggers {
                         total_chips += effect.chips;
                         total_mult += effect.mult;
@@ -471,6 +483,12 @@ impl Game {
                         // Handle mult_multiplier: 0.0 means no multiplier, so treat as 1.0
                         if effect.mult_multiplier != 0.0 {
                             total_mult_multiplier *= effect.mult_multiplier;
+                            
+                            // Killscreen detection - stop processing if we hit NaN/Infinity
+                            if !total_mult_multiplier.is_finite() {
+                                messages.push("KILLSCREEN: Score calculation reached infinity!".to_string());
+                                break;
+                            }
                         }
 
                         // Generate debug message for first trigger only
@@ -574,19 +592,6 @@ impl Game {
                 self.money += effect.money as f64;
 
                 joker_contributions.push(contribution);
-
-                // Log debug message if enabled
-                if self.debug_logging_enabled {
-                    let msg = format!(
-                        "Joker '{}': +{} chips, +{} mult, +{} money, retrigger: {}",
-                        joker.name(),
-                        effect.chips,
-                        effect.mult,
-                        effect.money,
-                        effect.retrigger
-                    );
-                    self.debug_messages.push(msg);
-                }
             }
 
             // Process card-level effects for each joker
@@ -609,19 +614,6 @@ impl Game {
                         self.chips += effect.chips as f64;
                         self.mult += effect.mult as f64;
                         self.money += effect.money as f64;
-
-                        // Log debug message if enabled
-                        if self.debug_logging_enabled {
-                            let msg = format!(
-                                "Joker '{}' on card {}: +{} chips, +{} mult, +{} money",
-                                joker.name(),
-                                card,
-                                effect.chips,
-                                effect.mult,
-                                effect.money
-                            );
-                            self.debug_messages.push(msg);
-                        }
                     }
                 }
             }
@@ -631,13 +623,11 @@ impl Game {
         let final_score = self.chips * self.mult;
 
         // Log final breakdown if debug enabled
-        if self.debug_logging_enabled {
-            let msg = format!(
-                "Final score: {} chips × {} mult = {}",
-                self.chips, self.mult, final_score
-            );
-            self.debug_messages.push(msg);
-        }
+        let msg = format!(
+            "Final score: {} chips × {} mult = {}",
+            self.chips, self.mult, final_score
+        );
+        self.add_debug_message(msg);
 
         // Reset chips and mult to base values
         self.mult = self.config.base_mult as f64;
@@ -661,6 +651,18 @@ impl Game {
     /// Get current debug messages
     pub fn get_debug_messages(&self) -> &[String] {
         &self.debug_messages
+    }
+    
+    /// Add a debug message with automatic memory management
+    fn add_debug_message(&mut self, message: String) {
+        if self.debug_logging_enabled {
+            self.debug_messages.push(message);
+            
+            // Keep memory usage reasonable - remove oldest messages if we exceed limit
+            if self.debug_messages.len() > MAX_DEBUG_MESSAGES {
+                self.debug_messages.drain(0..self.debug_messages.len() - MAX_DEBUG_MESSAGES);
+            }
+        }
     }
 
     pub fn required_score(&self) -> f64 {

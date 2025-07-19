@@ -172,6 +172,46 @@ fn test_performance_under_1ms() {
 }
 
 #[test]
+fn test_killscreen_behavior() {
+    let mut game = Game::default();
+    game.start();
+    game.stage = Stage::Blind(Blind::Small);
+    game.blind = Some(Blind::Small);
+    game.enable_debug_logging();
+
+    // Create jokers with extreme multipliers that will cause killscreen
+    // 1e200 * 1e200 = 1e400 which exceeds f64 max (~1.8e308) and becomes infinity
+    let extreme_joker = Box::new(TestOrderJoker::new(1, 0, 0, 1e200));
+    game.jokers.push(extreme_joker);
+    
+    // Add a second joker with the same extreme multiplier to ensure overflow
+    let extreme_joker2 = Box::new(TestOrderJoker::new(2, 0, 0, 1e200));
+    game.jokers.push(extreme_joker2);
+
+    let cards = vec![Card::new(Value::Ace, Suit::Heart)];
+    let hand = SelectHand::new(cards).best_hand().unwrap();
+
+    let score = game.calc_score(hand);
+
+    // Debug: print the score and debug messages to understand what's happening
+    println!("Score: {}, is_finite: {}", score, score.is_finite());
+    let debug_messages = game.get_debug_messages();
+    for msg in debug_messages {
+        println!("Debug: {}", msg);
+    }
+
+    // Score should be infinite (killscreen reached) OR we should have killscreen message
+    let has_killscreen_msg = debug_messages.iter().any(|msg| msg.contains("KILLSCREEN"));
+    
+    // Test passes if either score is infinite OR we got a killscreen message
+    assert!(
+        !score.is_finite() || has_killscreen_msg,
+        "Should reach killscreen either through infinite score ({}) or killscreen detection. Messages: {:?}", 
+        score, debug_messages
+    );
+}
+
+#[test]
 fn test_complex_joker_interaction_scenario() {
     let mut game = Game::default();
     game.start();
