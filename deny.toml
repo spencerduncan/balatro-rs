@@ -1,0 +1,28 @@
+[bans]
+multiple-versions = "warn"
+wildcards = "allow"
+
+[licenses]
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-DFS-2016",
+    "MPL-2.0",
+    "Unicode-3.0",
+]
+
+[sources]
+unknown-registry = "warn"
+unknown-git = "warn"
+
+[advisories]
+# Ignore unmaintained dev dependencies in criterion
+ignore = [
+    "RUSTSEC-2021-0145",  # atty unaligned read (dev dependency)
+    "RUSTSEC-2024-0375",  # atty unmaintained (dev dependency)
+    "RUSTSEC-2021-0127",  # serde_cbor unmaintained (dev dependency)
+]
