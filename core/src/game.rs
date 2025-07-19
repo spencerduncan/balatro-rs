@@ -370,7 +370,7 @@ impl Game {
 
         // compute score
         let score = self.chips * self.mult;
-        
+
         // Check for killscreen condition
         if !score.is_finite() {
             self.add_debug_message("KILLSCREEN: Final score reached infinity!".to_string());
@@ -428,10 +428,11 @@ impl Game {
                 // Handle mult_multiplier: 0.0 means no multiplier, so treat as 1.0
                 if effect.mult_multiplier != 0.0 {
                     total_mult_multiplier *= effect.mult_multiplier;
-                    
+
                     // Killscreen detection - stop processing if we hit NaN/Infinity
                     if !total_mult_multiplier.is_finite() {
-                        messages.push("KILLSCREEN: Score calculation reached infinity!".to_string());
+                        messages
+                            .push("KILLSCREEN: Score calculation reached infinity!".to_string());
                         break;
                     }
                 }
@@ -483,10 +484,12 @@ impl Game {
                         // Handle mult_multiplier: 0.0 means no multiplier, so treat as 1.0
                         if effect.mult_multiplier != 0.0 {
                             total_mult_multiplier *= effect.mult_multiplier;
-                            
+
                             // Killscreen detection - stop processing if we hit NaN/Infinity
                             if !total_mult_multiplier.is_finite() {
-                                messages.push("KILLSCREEN: Score calculation reached infinity!".to_string());
+                                messages.push(
+                                    "KILLSCREEN: Score calculation reached infinity!".to_string(),
+                                );
                                 break;
                             }
                         }
@@ -652,15 +655,16 @@ impl Game {
     pub fn get_debug_messages(&self) -> &[String] {
         &self.debug_messages
     }
-    
+
     /// Add a debug message with automatic memory management
     fn add_debug_message(&mut self, message: String) {
         if self.debug_logging_enabled {
             self.debug_messages.push(message);
-            
+
             // Keep memory usage reasonable - remove oldest messages if we exceed limit
             if self.debug_messages.len() > MAX_DEBUG_MESSAGES {
-                self.debug_messages.drain(0..self.debug_messages.len() - MAX_DEBUG_MESSAGES);
+                self.debug_messages
+                    .drain(0..self.debug_messages.len() - MAX_DEBUG_MESSAGES);
             }
         }
     }
