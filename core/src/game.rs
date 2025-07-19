@@ -443,18 +443,21 @@ impl Game {
                 {
                     use std::fmt::Write;
                     let mut debug_msg = String::with_capacity(128); // Pre-allocate reasonable size
-                    
-                    write!(&mut debug_msg, "Joker '{}': +{} chips, +{} mult, +{} money", 
+
+                    write!(
+                        &mut debug_msg,
+                        "Joker '{}': +{} chips, +{} mult, +{} money",
                         joker.name(),
                         effect.chips * total_triggers as i32,
                         effect.mult * total_triggers as i32,
                         effect.money * total_triggers as i32
-                    ).unwrap();
-                    
+                    )
+                    .unwrap();
+
                     if effect.retrigger > 0 {
                         write!(&mut debug_msg, " (retrigger x{})", effect.retrigger).unwrap();
                     }
-                    
+
                     messages.push(debug_msg);
                 }
             }
@@ -502,19 +505,23 @@ impl Game {
                         if trigger_num == 0 {
                             use std::fmt::Write;
                             let mut debug_msg = String::with_capacity(128); // Pre-allocate reasonable size
-                            
-                            write!(&mut debug_msg, "Joker '{}' on card {}: +{} chips, +{} mult, +{} money",
+
+                            write!(
+                                &mut debug_msg,
+                                "Joker '{}' on card {}: +{} chips, +{} mult, +{} money",
                                 joker.name(),
                                 card,
                                 effect.chips * total_triggers as i32,
                                 effect.mult * total_triggers as i32,
                                 effect.money * total_triggers as i32
-                            ).unwrap();
-                            
+                            )
+                            .unwrap();
+
                             if effect.retrigger > 0 {
-                                write!(&mut debug_msg, " (retrigger x{})", effect.retrigger).unwrap();
+                                write!(&mut debug_msg, " (retrigger x{})", effect.retrigger)
+                                    .unwrap();
                             }
-                            
+
                             messages.push(debug_msg);
                         }
                     }
@@ -636,8 +643,12 @@ impl Game {
         {
             use std::fmt::Write;
             let mut msg = String::with_capacity(64);
-            write!(&mut msg, "Final score: {} chips × {} mult = {}", 
-                self.chips, self.mult, final_score).unwrap();
+            write!(
+                &mut msg,
+                "Final score: {} chips × {} mult = {}",
+                self.chips, self.mult, final_score
+            )
+            .unwrap();
             self.add_debug_message(msg);
         }
 
@@ -679,7 +690,7 @@ impl Game {
             }
         }
     }
-    
+
     /// No-op version for release builds
     #[cfg(not(debug_assertions))]
     #[inline]

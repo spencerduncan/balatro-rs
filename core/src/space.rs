@@ -328,29 +328,33 @@ impl ActionSpace {
     pub fn is_empty(&self) -> bool {
         // Use iterator for zero-copy check - more efficient than to_vec()
         let mut iter = self.iter();
-        
+
         // Check if iterator has any elements first
         let first = iter.next();
         if first.is_none() {
             return true; // Empty iterator means empty action space
         }
-        
+
         // Use fold to efficiently find min/max in single pass
-        let (min, max) = iter.fold(
-            (first.unwrap(), first.unwrap()), 
-            |(min, max), val| (min.min(val), max.max(val))
-        );
-        
+        let (min, max) = iter.fold((first.unwrap(), first.unwrap()), |(min, max), val| {
+            (min.min(val), max.max(val))
+        });
+
         min == 0 && max == 0
     }
 }
 
 impl From<Config> for ActionSpace {
     fn from(c: Config) -> Self {
+        use crate::math_safe::safe_size_for_move_operations;
+
+        // Use safe operations to prevent underflow when available_max is 0
+        let move_operations_size = safe_size_for_move_operations(c.available_max);
+
         ActionSpace {
             select_card: vec![0; c.available_max],
-            move_card_left: vec![0; c.available_max - 1], // every card but leftmost can move left
-            move_card_right: vec![0; c.available_max - 1], // every card but rightmost can move right
+            move_card_left: vec![0; move_operations_size], // every card but leftmost can move left
+            move_card_right: vec![0; move_operations_size], // every card but rightmost can move right
             play: vec![0; 1],
             discard: vec![0; 1],
             cash_out: vec![0; 1],

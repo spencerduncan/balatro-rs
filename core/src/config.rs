@@ -162,6 +162,11 @@ impl Config {
 
     #[setter]
     fn set_available_max(&mut self, i: usize) {
+        use crate::math_safe::validate_array_size;
+
+        // Validate that the size won't cause security issues
+        validate_array_size(i, "available_max").expect("Invalid available_max value");
+
         self.available_max = i;
     }
 

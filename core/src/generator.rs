@@ -486,10 +486,15 @@ mod tests {
 
         // Should be able to move left every available card except leftmost
         let available = g.available.cards().len();
-        for i in 0..available - 1 {
+
+        // Use safe range to prevent underflow when available is 0
+        use crate::math_safe::safe_size_for_move_operations;
+        let move_range_size = safe_size_for_move_operations(available);
+
+        for i in 0..move_range_size {
             assert!(space.move_card_left[i] == 1);
         }
-        for i in 0..available - 1 {
+        for i in 0..move_range_size {
             assert!(space.move_card_right[i] == 1);
         }
 
@@ -502,10 +507,10 @@ mod tests {
         // Get fresh action space and mask
         space = ActionSpace::from(g.config.clone());
         g.unmask_action_space_move_cards(&mut space);
-        for i in 0..available - 1 {
+        for i in 0..move_range_size {
             assert!(space.move_card_left[i] == 1);
         }
-        for i in 0..available - 1 {
+        for i in 0..move_range_size {
             assert!(space.move_card_right[i] == 1);
         }
     }
