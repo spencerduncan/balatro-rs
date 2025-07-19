@@ -59,6 +59,7 @@ jobs:
             ${{ matrix.os }}-cargo-build-target-
       
       - name: Run tests
+        shell: bash
         run: |
           # Run all tests with verbose output and capture results
           set +e  # Don't exit on test failure, we want to capture the results
@@ -77,6 +78,7 @@ jobs:
           
       - name: Generate test summary
         if: always()
+        shell: bash
         run: |
           echo "## Test Results Summary" > test_summary.md
           echo "- OS: ${{ matrix.os }}" >> test_summary.md
