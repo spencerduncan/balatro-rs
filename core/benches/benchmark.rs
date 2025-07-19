@@ -1,11 +1,20 @@
-use balatro_rs::{action::Action, game::Game, card::{Card, Value, Suit}, hand::SelectHand};
-use criterion::{criterion_group, criterion_main, Criterion, black_box};
+use balatro_rs::{
+    action::Action,
+    card::{Card, Suit, Value},
+    game::Game,
+    hand::SelectHand,
+};
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use rand::Rng;
 
 pub fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("run game gen actions", |b| b.iter(run_game_gen_actions));
-    c.bench_function("hand evaluation performance", |b| b.iter(|| black_box(benchmark_hand_evaluation())));
-    c.bench_function("hand evaluation batch", |b| b.iter(|| black_box(benchmark_hand_evaluation_batch())));
+    c.bench_function("hand evaluation performance", |b| {
+        b.iter(|| black_box(benchmark_hand_evaluation()))
+    });
+    c.bench_function("hand evaluation batch", |b| {
+        b.iter(|| black_box(benchmark_hand_evaluation_batch()))
+    });
 }
 
 fn run_game_gen_actions() {
@@ -30,16 +39,16 @@ fn run_game_gen_actions() {
 /// Benchmark hand evaluation with various hand types for performance testing
 fn benchmark_hand_evaluation() -> u32 {
     let mut evaluations = 0u32;
-    
+
     // Test various hand types for comprehensive performance measurement
     let test_hands = create_test_hands();
-    
+
     for hand in test_hands {
         let select_hand = SelectHand::new(hand);
         let _result = select_hand.best_hand();
         evaluations += 1;
     }
-    
+
     evaluations
 }
 
@@ -47,7 +56,7 @@ fn benchmark_hand_evaluation() -> u32 {
 fn benchmark_hand_evaluation_batch() -> u32 {
     let mut evaluations = 0u32;
     let test_hands = create_test_hands();
-    
+
     // Evaluate 1000 hands to simulate RL training scenario
     for _ in 0..1000 {
         for hand in &test_hands {
@@ -56,7 +65,7 @@ fn benchmark_hand_evaluation_batch() -> u32 {
             evaluations += 1;
         }
     }
-    
+
     evaluations
 }
 

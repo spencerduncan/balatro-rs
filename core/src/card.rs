@@ -51,7 +51,7 @@ impl Value {
     pub const fn values() -> [Self; 13] {
         VALUES
     }
-    
+
     /// Convert from u8 index to Value enum variant
     pub fn from_u8(value: u8) -> Option<Self> {
         match value {
