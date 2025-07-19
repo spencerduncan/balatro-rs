@@ -151,16 +151,16 @@ impl HandAnalysis {
         match &self.sorted_counts[..] {
             [5] => HandRank::FiveOfAKind,
             [4, 1] => HandRank::FourOfAKind,
-            [4] => HandRank::FourOfAKind,  // Handle 4-card hands with four of a kind
+            [4] => HandRank::FourOfAKind, // Handle 4-card hands with four of a kind
             [3, 2] => HandRank::FullHouse,
             [3, 1, 1] => HandRank::ThreeOfAKind,
-            [3, 1] => HandRank::ThreeOfAKind,  // Handle 4-card hands with three of a kind
+            [3, 1] => HandRank::ThreeOfAKind, // Handle 4-card hands with three of a kind
             [2, 2, 1] => HandRank::TwoPair,
-            [2, 2] => HandRank::TwoPair,  // Handle 4-card hands with two pairs
+            [2, 2] => HandRank::TwoPair, // Handle 4-card hands with two pairs
             [2, 1, 1, 1] => HandRank::OnePair,
-            [2, 1, 1] => HandRank::OnePair,  // Handle 4-card hands with one pair
-            [2, 1] => HandRank::OnePair,  // Handle 3-card hands with one pair
-            [2] => HandRank::OnePair,  // Handle 2-card hands with one pair
+            [2, 1, 1] => HandRank::OnePair, // Handle 4-card hands with one pair
+            [2, 1] => HandRank::OnePair,    // Handle 3-card hands with one pair
+            [2] => HandRank::OnePair,       // Handle 2-card hands with one pair
             _ => {
                 if self.is_flush {
                     HandRank::Flush
@@ -1411,24 +1411,24 @@ mod tests {
         let result = hand.best_hand().unwrap();
         assert_eq!(result.rank, HandRank::FlushHouse);
     }
-    
+
     #[test]
     fn test_specific_failing_case() {
         // Test the specific case that's failing in game tests
         let king = Card::new(Value::King, Suit::Diamond);
         let ace = Card::new(Value::Ace, Suit::Heart);
-        
+
         // Test [king, king, ace] should be a pair
         let cards = vec![king, king, ace];
         let hand = SelectHand::new(cards);
         let result = hand.best_hand().unwrap();
-        
+
         println!("Hand: [Kd, Kd, Ah]");
         println!("Detected rank: {:?}", result.rank);
         println!("Selected hand cards: {:?}", result.hand.cards());
         println!("Selected hand length: {}", result.hand.len());
         println!("All cards: {:?}", result.all);
-        
+
         // Should be detected as a pair
         assert_eq!(result.rank, HandRank::OnePair);
         // The pair should contain the two kings
