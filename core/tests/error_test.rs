@@ -169,8 +169,8 @@ mod game_error_tests {
 
     #[test]
     fn test_game_error_with_data() {
-        let joker_not_found = GameError::JokerNotFound("TestJoker".to_string());
-        assert_eq!(format!("{}", joker_not_found), "Joker not found: TestJoker");
+        let joker_not_found = GameError::JokerNotFound;
+        assert_eq!(format!("{}", joker_not_found), "Joker not found");
 
         let invalid_operation = GameError::InvalidOperation("test operation".to_string());
         assert_eq!(
@@ -221,8 +221,8 @@ mod game_error_tests {
     fn test_game_error_debug() {
         assert_eq!(format!("{:?}", GameError::InvalidAction), "InvalidAction");
 
-        let joker_not_found = GameError::JokerNotFound("test".to_string());
-        assert_eq!(format!("{:?}", joker_not_found), "JokerNotFound(\"test\")");
+        let joker_not_found = GameError::JokerNotFound;
+        assert_eq!(format!("{:?}", joker_not_found), "JokerNotFound");
     }
 
     #[test]
@@ -239,9 +239,9 @@ mod game_error_tests {
         let error2 = GameError::InvalidAction;
         assert_eq!(format!("{}", error1), format!("{}", error2));
 
-        let joker1 = GameError::JokerNotFound("joker1".to_string());
-        let joker2 = GameError::JokerNotFound("joker1".to_string());
-        let joker3 = GameError::JokerNotFound("joker2".to_string());
+        let joker1 = GameError::JokerNotFound;
+        let joker2 = GameError::JokerNotFound;
+        let joker3 = GameError::InvalidAction; // Use different error for inequality test
 
         assert_eq!(format!("{}", joker1), format!("{}", joker2));
         assert_ne!(format!("{}", joker1), format!("{}", joker3));
@@ -286,7 +286,7 @@ mod game_error_tests {
             GameError::InvalidActionSpace,
             GameError::InvalidSlot,
             GameError::JokerNotInShop,
-            GameError::JokerNotFound("test".to_string()),
+            GameError::JokerNotFound,
             GameError::InvalidOperation("test".to_string()),
             GameError::MutexPoisoned,
         ];
@@ -354,12 +354,12 @@ mod python_error_tests {
 
     #[test]
     fn test_complex_game_error_to_py_err() {
-        let game_error = GameError::JokerNotFound("TestJoker".to_string());
+        let game_error = GameError::JokerNotFound;
         let py_err: PyErr = game_error.into();
 
-        // The error should contain the joker name
+        // The error should contain the error message
         let error_string = py_err.to_string();
-        assert!(error_string.contains("TestJoker"));
+        assert!(error_string.contains("Joker not found"));
     }
 
     #[test]
@@ -402,7 +402,7 @@ mod comprehensive_error_tests {
     fn test_error_memory_safety() {
         // Test that errors with owned data (String) work correctly
         let long_string = "a".repeat(1000);
-        let error = GameError::JokerNotFound(long_string.clone());
+        let error = GameError::InvalidOperation(long_string.clone());
 
         assert!(format!("{}", error).contains(&long_string));
 

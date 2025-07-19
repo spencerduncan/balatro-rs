@@ -13,7 +13,7 @@ use balatro_rs::joker_registry::{
 };
 use balatro_rs::stage::{End, Stage};
 use pyo3::prelude::*;
-use pyo3::{PyObject, PyResult, Python};
+use pyo3::{PyResult, Python};
 use std::collections::HashMap;
 
 // Security constants for input validation
@@ -135,8 +135,8 @@ impl GameEngine {
 
         // Check if player can afford it
         if let Ok(Some(definition)) = registry::get_definition(&joker_id) {
-            let cost = calculate_joker_cost(definition.rarity) as usize;
-            return self.game.money >= cost;
+            let cost = calculate_joker_cost(definition.rarity);
+            return self.game.money >= cost.into();
         }
 
         false
@@ -535,7 +535,7 @@ impl GameEngine {
                     // Filter by affordability if requested
                     if affordable_only {
                         let cost = calculate_joker_cost(def.rarity);
-                        if self.game.money < cost as usize {
+                        if self.game.money < cost.into() {
                             return false;
                         }
                     }
@@ -813,7 +813,6 @@ impl GameEngine {
         false
     }
 
-<<<<<<< HEAD
     /// Get all active joker states
     fn get_joker_states(&self) -> pyo3::PyObject {
         pyo3::Python::with_gil(|py| {
@@ -1198,8 +1197,8 @@ fn evaluate_unlock_condition(condition: &UnlockCondition, game: &Game) -> bool {
             };
             current_ante_num >= *required_ante
         }
-        UnlockCondition::HaveMoney(required_money) => game.money >= *required_money as usize,
-        UnlockCondition::ScoreInHand(required_score) => game.score >= *required_score as usize,
+        UnlockCondition::HaveMoney(required_money) => game.money >= (*required_money).into(),
+        UnlockCondition::ScoreInHand(required_score) => game.score >= (*required_score) as f64,
         UnlockCondition::PlayHands(required_hands) => {
             // Sum all hand type counts to get total hands played
             let total_hands: u32 = game.hand_type_counts.values().sum();
