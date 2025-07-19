@@ -340,7 +340,7 @@ impl Game {
         let mut total_mult = 0i32;
         let mut total_money = 0i32;
         let mut messages = Vec::new();
-        let mut total_mult_multiplier = 1.0f32;
+        let mut total_mult_multiplier = 1.0f64;
 
         // Create game context
         let mut context = GameContext {
@@ -402,7 +402,7 @@ impl Game {
 
         // Apply mult multiplier to the total mult bonus (not base mult)
         if total_mult_multiplier != 1.0 {
-            total_mult = (total_mult as f32 * total_mult_multiplier) as i32;
+            total_mult = (total_mult as f64 * total_mult_multiplier) as i32;
         }
 
         (total_chips, total_mult, total_money, messages)
