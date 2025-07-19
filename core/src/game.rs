@@ -569,9 +569,9 @@ impl Game {
                 };
 
                 // Apply effects to game state
-                self.chips += effect.chips as usize;
-                self.mult += effect.mult as usize;
-                self.money += effect.money as usize;
+                self.chips += effect.chips as f64;
+                self.mult += effect.mult as f64;
+                self.money += effect.money as f64;
 
                 joker_contributions.push(contribution);
 
@@ -606,9 +606,9 @@ impl Game {
                         }
 
                         // Apply effects to game state
-                        self.chips += effect.chips as usize;
-                        self.mult += effect.mult as usize;
-                        self.money += effect.money as usize;
+                        self.chips += effect.chips as f64;
+                        self.mult += effect.mult as f64;
+                        self.money += effect.money as f64;
 
                         // Log debug message if enabled
                         if self.debug_logging_enabled {

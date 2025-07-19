@@ -30,7 +30,7 @@ fn test_joker_left_to_right_evaluation_order() {
 
     // Expected: Joker1 adds +10 mult, then Joker2 doubles it to +20
     // Base: (5 + 11) * (1 + 20) = 16 * 21 = 336
-    assert_eq!(score, 336);
+    assert_eq!(score, 336.0);
 }
 
 #[test]
@@ -59,7 +59,7 @@ fn test_lifecycle_hooks_at_correct_phases() {
 
     // Should include effects from on_hand_played
     assert!(
-        score > 16,
+        score > 16.0,
         "on_hand_played should have contributed to score"
     );
 }
@@ -81,7 +81,7 @@ fn test_retrigger_mechanics_with_stacking() {
 
     // Expected: Base effect (10 mult) * 3 total triggers = 30 mult
     // Base: (5 + 11) * (1 + 30) = 16 * 31 = 496
-    assert_eq!(score, 496);
+    assert_eq!(score, 496.0);
 }
 
 #[test]
@@ -105,11 +105,11 @@ fn test_score_breakdown_tracking() {
     // This test should pass once score breakdown is implemented
     let breakdown = game.calc_score_with_breakdown(hand);
 
-    assert!(breakdown.base_chips > 0);
-    assert!(breakdown.base_mult > 0);
-    assert!(breakdown.card_chips > 0);
+    assert!(breakdown.base_chips > 0.0);
+    assert!(breakdown.base_mult > 0.0);
+    assert!(breakdown.card_chips > 0.0);
     assert!(breakdown.joker_contributions.len() > 0);
-    assert!(breakdown.final_score > 0);
+    assert!(breakdown.final_score > 0.0);
 }
 
 #[test]
@@ -201,7 +201,7 @@ fn test_complex_joker_interaction_scenario() {
     // - Retrigger mechanics
     // The exact value depends on the final implementation
     assert!(
-        score > 100,
+        score > 100.0,
         "Complex joker interactions should produce significant score"
     );
 }
@@ -245,7 +245,7 @@ impl Joker for TestOrderJoker {
         JokerEffect::new()
             .with_chips(self.chip_bonus)
             .with_mult(self.mult_bonus)
-            .with_mult_multiplier(self.mult_multiplier)
+            .with_mult_multiplier(self.mult_multiplier as f64)
     }
 }
 
