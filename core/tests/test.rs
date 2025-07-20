@@ -1,5 +1,5 @@
 /// Integration tests for full game simulation
-/// 
+///
 /// NOTE: The main test_game function requires the "integration_tests" feature flag because:
 /// - It can be very slow (runs full game simulations)
 /// - Timing depends on random game outcomes and can be unpredictable
