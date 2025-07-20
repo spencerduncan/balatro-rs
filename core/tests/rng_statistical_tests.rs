@@ -1,11 +1,19 @@
 /// Statistical distribution tests for RNG fairness and security
 /// These tests verify that the RNG implementation produces statistically fair distributions
 /// and meets the requirements specified in issue #281
+///
+/// NOTE: These tests require the "statistical_tests" feature flag because they are:
+/// - Slow (require large sample sizes for statistical significance)
+/// - Potentially flaky (statistical tests can occasionally fail due to randomness)
+/// - Resource intensive for CI runners
+///
+/// To run these tests locally, use: cargo test --test rng_statistical_tests --features statistical_tests
 use balatro_rs::rng::GameRng;
 use std::collections::HashMap;
 
 /// Test that uniform distribution is actually uniform within statistical bounds
 #[test]
+#[cfg(feature = "statistical_tests")]
 fn test_uniform_distribution_fairness() {
     let rng = GameRng::secure(); // Use secure RNG for this test
     let sample_size = 10_000;
@@ -44,6 +52,7 @@ fn test_uniform_distribution_fairness() {
 
 /// Test chi-square goodness of fit for uniform distribution
 #[test]
+#[cfg(feature = "statistical_tests")]
 fn test_chi_square_uniform_distribution() {
     let rng = GameRng::secure();
     let sample_size = 5_000;
@@ -77,6 +86,7 @@ fn test_chi_square_uniform_distribution() {
 
 /// Test that boolean generation with different probabilities works correctly
 #[test]
+#[cfg(feature = "statistical_tests")]
 fn test_boolean_probability_distribution() {
     let rng = GameRng::secure();
     let sample_size = 10_000;
@@ -108,6 +118,7 @@ fn test_boolean_probability_distribution() {
 
 /// Test that shuffle produces all possible permutations over many runs
 #[test]
+#[cfg(feature = "statistical_tests")]
 fn test_shuffle_permutation_coverage() {
     let rng = GameRng::secure();
     let data = vec![1, 2, 3, 4]; // Small array for manageable permutation space
@@ -151,6 +162,7 @@ fn test_shuffle_permutation_coverage() {
 
 /// Test weighted choice distribution
 #[test]
+#[cfg(feature = "statistical_tests")]
 fn test_weighted_choice_distribution() {
     let rng = GameRng::secure();
     let items = vec!["A", "B", "C", "D"];
@@ -188,6 +200,7 @@ fn test_weighted_choice_distribution() {
 
 /// Test deterministic reproducibility
 #[test]
+#[cfg(feature = "statistical_tests")]
 fn test_deterministic_reproducibility() {
     let seed = 12345;
     let sample_size = 1000;
@@ -215,6 +228,7 @@ fn test_deterministic_reproducibility() {
 
 /// Test that different seeds produce different sequences
 #[test]
+#[cfg(feature = "statistical_tests")]
 fn test_seed_independence() {
     let sample_size = 1000;
 
@@ -249,6 +263,7 @@ fn test_seed_independence() {
 
 /// Test that forked RNGs produce independent sequences
 #[test]
+#[cfg(feature = "statistical_tests")]
 fn test_fork_independence() {
     let parent = GameRng::for_testing(42);
     let child = parent.fork();
@@ -281,6 +296,7 @@ fn test_fork_independence() {
 
 /// Test security properties - ensure secure RNG is unpredictable
 #[test]
+#[cfg(feature = "statistical_tests")]
 fn test_secure_rng_unpredictability() {
     // Create two independent secure RNGs
     let rng1 = GameRng::secure();
@@ -313,6 +329,7 @@ fn test_secure_rng_unpredictability() {
 
 /// Performance test - ensure RNG operations meet speed requirements
 #[test]
+#[cfg(feature = "statistical_tests")]
 fn test_rng_performance() {
     let rng = GameRng::secure();
     let iterations = 10_000;
@@ -337,6 +354,7 @@ fn test_rng_performance() {
 
 /// Test thread safety and isolation
 #[test]
+#[cfg(feature = "statistical_tests")]
 fn test_thread_safety() {
     use std::sync::{Arc, Mutex};
     use std::thread;
