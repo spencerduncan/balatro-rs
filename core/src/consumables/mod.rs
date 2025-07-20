@@ -267,10 +267,8 @@ impl JokerTarget {
 pub enum JokerTargetError {
     #[error("Joker slot {slot} is empty")]
     EmptySlot { slot: usize },
-    
     #[error("Joker at slot {slot} is not active")]
     InactiveJoker { slot: usize },
-    
     #[error("Expected joker type {expected:?} but found {actual:?}")]
     WrongJokerType {
         expected: JokerId,
