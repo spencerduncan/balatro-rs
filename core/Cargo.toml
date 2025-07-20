@@ -38,3 +38,7 @@ harness = false
 [[bench]]
 name = "state_benchmark"
 harness = false
+
+[[bench]]
+name = "actionspace_benchmark"
+harness = false

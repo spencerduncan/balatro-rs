@@ -288,27 +288,19 @@ impl SelectHand {
         let first = self
             .values_freq()
             .into_iter()
-            .find(|(_key, val)| val.len() >= 2);
-        first.as_ref()?;
-        let first_val = first
-            .as_ref()
-            .unwrap()
-            .1
-            .first()
-            .expect("values freq has empty Vec<card>")
-            .value;
+            .find(|(_key, val)| val.len() >= 2)?;
+        let first_val = first.1.first()?.value;
 
         // Next find second pair that isn't same value as first pair
         let second = self
             .values_freq()
             .into_iter()
-            .find(|(key, val)| *key != first_val && val.len() >= 2);
-        second.as_ref()?;
+            .find(|(key, val)| *key != first_val && val.len() >= 2)?;
 
         // Combine first and second pair
         let mut cards: Vec<Card> = Vec::new();
-        cards.extend(first.unwrap().1);
-        cards.extend(second.unwrap().1);
+        cards.extend(first.1);
+        cards.extend(second.1);
         Some(SelectHand::new(cards))
     }
 
@@ -380,13 +372,7 @@ impl SelectHand {
             .into_iter()
             .find(|(_key, val)| val.len() >= 3);
         three.as_ref()?;
-        let three_val = three
-            .as_ref()
-            .unwrap()
-            .1
-            .first()
-            .expect("values freq has empty Vec<card>")
-            .value;
+        let three_val = three.as_ref()?.1.first()?.value;
 
         // Next find 2ok that isn't same value as 3ok
         let two = self
@@ -397,8 +383,8 @@ impl SelectHand {
 
         // Combine 3ok and 2ok
         let mut cards: Vec<Card> = Vec::new();
-        cards.extend(three.unwrap().1);
-        cards.extend(two.unwrap().1);
+        cards.extend(three?.1);
+        cards.extend(two?.1);
         Some(SelectHand::new(cards))
     }
 

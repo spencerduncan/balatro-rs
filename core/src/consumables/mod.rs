@@ -69,32 +69,75 @@ impl fmt::Display for ConsumableEffect {
 pub enum TargetType {
     /// No target required
     None,
-    /// Targets a specific number of cards
+    /// Requires selecting specific number of cards
     Cards(usize),
-    /// Targets a hand type
+    /// Requires selecting a hand type
     HandType,
-    /// Targets a joker
+    /// Requires selecting a joker
     Joker,
     /// Targets the deck
     Deck,
+    /// Targets shop elements
+    Shop,
 }
 
 /// Specific target for consumable application
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Target {
-    /// No target
+    /// No target required
     None,
-    /// Target specific cards by index
+    /// Target specific cards by index in hand/deck
     Cards(Vec<usize>),
-    /// Target a hand type
+    /// Target a specific hand type for planet cards
     HandType(HandRank),
-    /// Target a joker by index
+    /// Target a joker by slot index
     Joker(usize),
-    /// Target the deck
+    /// Target the entire deck
     Deck,
+    /// Target shop slots for purchase effects
+    Shop(usize),
 }
 
 impl Target {
+    /// Get the target type for this target
+    pub fn target_type(&self) -> TargetType {
+        match self {
+            Target::None => TargetType::None,
+            Target::Cards(cards) => TargetType::Cards(cards.len()),
+            Target::HandType(_) => TargetType::HandType,
+            Target::Joker(_) => TargetType::Joker,
+            Target::Deck => TargetType::Deck,
+            Target::Shop(_) => TargetType::Shop,
+        }
+    }
+
+    /// Check if this target is valid for the expected target type
+    pub fn is_valid_type(&self, expected: TargetType) -> bool {
+        match (self, expected) {
+            (Target::None, TargetType::None) => true,
+            (Target::Cards(cards), TargetType::Cards(expected_count)) => {
+                cards.len() == expected_count
+            }
+            (Target::HandType(_), TargetType::HandType) => true,
+            (Target::Joker(_), TargetType::Joker) => true,
+            (Target::Deck, TargetType::Deck) => true,
+            (Target::Shop(_), TargetType::Shop) => true,
+            _ => false,
+        }
+    }
+
+    /// Get the number of cards targeted by this target
+    pub fn card_count(&self) -> usize {
+        match self {
+            Target::None => 0,
+            Target::Cards(cards) => cards.len(),
+            Target::HandType(_) => 0,
+            Target::Joker(_) => 0,
+            Target::Deck => 0,
+            Target::Shop(_) => 0,
+        }
+    }
+
     /// Validate if this target is valid for the current game state
     pub fn is_valid(&self, game_state: &Game) -> bool {
         match self {
@@ -108,6 +151,7 @@ impl Target {
             Target::HandType(_) => true,
             Target::Joker(index) => *index < game_state.jokers.len(),
             Target::Deck => true,
+            Target::Shop(_) => true, // Shop validation would require shop state
         }
     }
 }
@@ -314,6 +358,177 @@ impl ConsumableId {
             ConsumableId::Grim,
             ConsumableId::Incantation,
         ]
+    }
+}
+
+/// Fixed capacity consumable card slots for managing player inventory
+/// 
+/// This struct provides the foundation for consumable inventory management
+/// with proper capacity limits and basic slot operations. It maintains
+/// a fixed capacity (default 2) and tracks which slots are occupied.
+/// 
+/// # Thread Safety
+/// 
+/// This struct is designed to be thread-safe through the use of standard
+/// Rust collection types (Vec) and primitive types (usize), which have
+/// proper Send + Sync implementations.
+/// 
+/// # Examples
+/// 
+/// ```rust
+/// use balatro_rs::consumables::ConsumableSlots;
+/// 
+/// // Create slots with default capacity
+/// let slots = ConsumableSlots::new();
+/// assert_eq!(slots.capacity(), 2);
+/// assert!(slots.is_empty());
+/// 
+/// // Create slots with custom capacity
+/// let large_slots = ConsumableSlots::with_capacity(5);
+/// assert_eq!(large_slots.capacity(), 5);
+/// ```
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConsumableSlots {
+    /// Current maximum capacity of slots
+    capacity: usize,
+    /// Vector of optional consumable slots (storing IDs for now, will expand to full objects later)
+    slots: Vec<Option<ConsumableId>>,
+    /// Default capacity for new instances (always 2 as per Balatro base game)
+    default_capacity: usize,
+}
+
+impl ConsumableSlots {
+    /// Creates a new ConsumableSlots instance with default capacity of 2
+    /// 
+    /// This matches the base Balatro game behavior where players start
+    /// with 2 consumable slots.
+    /// 
+    /// # Examples
+    /// 
+    /// ```rust
+    /// use balatro_rs::consumables::ConsumableSlots;
+    /// 
+    /// let slots = ConsumableSlots::new();
+    /// assert_eq!(slots.capacity(), 2);
+    /// assert_eq!(slots.len(), 0);
+    /// assert!(slots.is_empty());
+    /// ```
+    pub fn new() -> Self {
+        Self::with_capacity(2)
+    }
+    
+    /// Creates a new ConsumableSlots instance with specified capacity
+    /// 
+    /// This allows for customization of slot capacity, which may be
+    /// modified by vouchers or special game modes in the future.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `capacity` - Maximum number of consumable slots
+    /// 
+    /// # Examples
+    /// 
+    /// ```rust
+    /// use balatro_rs::consumables::ConsumableSlots;
+    /// 
+    /// let slots = ConsumableSlots::with_capacity(5);
+    /// assert_eq!(slots.capacity(), 5);
+    /// assert_eq!(slots.available_slots(), 5);
+    /// ```
+    pub fn with_capacity(capacity: usize) -> Self {
+        Self {
+            capacity,
+            slots: vec![None; capacity],
+            default_capacity: 2,
+        }
+    }
+    
+    /// Returns the current maximum capacity of the slots
+    /// 
+    /// # Examples
+    /// 
+    /// ```rust
+    /// use balatro_rs::consumables::ConsumableSlots;
+    /// 
+    /// let slots = ConsumableSlots::new();
+    /// assert_eq!(slots.capacity(), 2);
+    /// 
+    /// let large_slots = ConsumableSlots::with_capacity(10);
+    /// assert_eq!(large_slots.capacity(), 10);
+    /// ```
+    pub fn capacity(&self) -> usize {
+        self.capacity
+    }
+    
+    /// Returns the number of currently occupied slots
+    /// 
+    /// This counts only the slots that contain consumables,
+    /// not the total capacity.
+    /// 
+    /// # Examples
+    /// 
+    /// ```rust
+    /// use balatro_rs::consumables::ConsumableSlots;
+    /// 
+    /// let slots = ConsumableSlots::new();
+    /// assert_eq!(slots.len(), 0); // No consumables yet
+    /// ```
+    pub fn len(&self) -> usize {
+        self.slots.iter().filter(|slot| slot.is_some()).count()
+    }
+    
+    /// Returns true if no slots are currently occupied
+    /// 
+    /// # Examples
+    /// 
+    /// ```rust
+    /// use balatro_rs::consumables::ConsumableSlots;
+    /// 
+    /// let slots = ConsumableSlots::new();
+    /// assert!(slots.is_empty());
+    /// ```
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+    
+    /// Returns true if all slots are currently occupied
+    /// 
+    /// # Examples
+    /// 
+    /// ```rust
+    /// use balatro_rs::consumables::ConsumableSlots;
+    /// 
+    /// let slots = ConsumableSlots::new();
+    /// assert!(!slots.is_full()); // Empty slots are not full
+    /// ```
+    pub fn is_full(&self) -> bool {
+        self.len() == self.capacity
+    }
+    
+    /// Returns the number of available (empty) slots
+    /// 
+    /// This is equivalent to `capacity() - len()`.
+    /// 
+    /// # Examples
+    /// 
+    /// ```rust
+    /// use balatro_rs::consumables::ConsumableSlots;
+    /// 
+    /// let slots = ConsumableSlots::new();
+    /// assert_eq!(slots.available_slots(), 2); // All slots available
+    /// 
+    /// let large_slots = ConsumableSlots::with_capacity(5);
+    /// assert_eq!(large_slots.available_slots(), 5);
+    /// ```
+    pub fn available_slots(&self) -> usize {
+        self.capacity - self.len()
+    }
+}
+
+impl Default for ConsumableSlots {
+    /// Creates ConsumableSlots with default capacity of 2
+    fn default() -> Self {
+        Self::new()
     }
 }
 

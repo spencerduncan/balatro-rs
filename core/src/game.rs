@@ -2,6 +2,7 @@ use crate::action::{Action, MoveDirection};
 use crate::ante::Ante;
 use crate::available::Available;
 use crate::boss_blinds::BossBlindState;
+use crate::bounded_action_history::BoundedActionHistory;
 use crate::card::Card;
 use crate::config::Config;
 use crate::consumables::ConsumableId;
@@ -12,6 +13,7 @@ use crate::joker::{GameContext, Joker, JokerId, Jokers, OldJoker as OldJokerTrai
 use crate::joker_effect_processor::JokerEffectProcessor;
 use crate::joker_factory::JokerFactory;
 use crate::joker_state::{JokerState, JokerStateManager};
+use crate::memory_monitor::MemoryMonitor;
 use crate::rank::HandRank;
 use crate::shop::packs::{OpenPackState, Pack};
 use crate::shop::Shop;
@@ -66,7 +68,7 @@ pub struct Game {
     pub ante_start: Ante,
     pub ante_end: Ante,
     pub ante_current: Ante,
-    pub action_history: Vec<Action>,
+    pub action_history: BoundedActionHistory,
     pub round: f64,
 
     // jokers using structured JokerEffect system
@@ -127,6 +129,10 @@ pub struct Game {
     /// Random number generator for secure game randomness
     #[cfg_attr(feature = "serde", serde(skip, default = "default_game_rng"))]
     pub rng: crate::rng::GameRng,
+
+    /// Memory monitor for tracking and controlling memory usage
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub memory_monitor: MemoryMonitor,
 }
 
 #[cfg(feature = "serde")]
@@ -147,7 +153,7 @@ impl Game {
             deck: Deck::default(),
             available: Available::default(),
             discarded: Vec::new(),
-            action_history: Vec::new(),
+            action_history: BoundedActionHistory::new(),
             jokers: Vec::new(),
             joker_effect_processor: JokerEffectProcessor::new(),
             joker_state_manager: Arc::new(JokerStateManager::new()),
@@ -183,6 +189,9 @@ impl Game {
 
             // Initialize secure RNG
             rng: crate::rng::GameRng::secure(),
+
+            // Initialize memory monitor with default configuration
+            memory_monitor: MemoryMonitor::default(),
 
             config,
         }
@@ -451,21 +460,27 @@ impl Game {
                     }
                 }
 
-                // Generate debug message for each trigger
+                // Generate debug message for each trigger (optimized for minimal allocations)
+                #[cfg(debug_assertions)]
                 if trigger_num == 0 && (effect.chips != 0 || effect.mult != 0 || effect.money != 0)
                 {
-                    let debug_msg = format!(
-                        "Joker '{}': +{} chips, +{} mult, +{} money{}",
+                    use std::fmt::Write;
+                    let mut debug_msg = String::with_capacity(128); // Pre-allocate reasonable size
+
+                    write!(
+                        &mut debug_msg,
+                        "Joker '{}': +{} chips, +{} mult, +{} money",
                         joker.name(),
                         effect.chips * total_triggers as i32,
                         effect.mult * total_triggers as i32,
-                        effect.money * total_triggers as i32,
-                        if effect.retrigger > 0 {
-                            format!(" (retrigger x{})", effect.retrigger)
-                        } else {
-                            String::new()
-                        }
-                    );
+                        effect.money * total_triggers as i32
+                    )
+                    .unwrap();
+
+                    if effect.retrigger > 0 {
+                        write!(&mut debug_msg, " (retrigger x{})", effect.retrigger).unwrap();
+                    }
+
                     messages.push(debug_msg);
                 }
             }
@@ -508,21 +523,28 @@ impl Game {
                             }
                         }
 
-                        // Generate debug message for first trigger only
+                        // Generate debug message for first trigger only (optimized)
+                        #[cfg(debug_assertions)]
                         if trigger_num == 0 {
-                            let debug_msg = format!(
-                                "Joker '{}' on card {}: +{} chips, +{} mult, +{} money{}",
+                            use std::fmt::Write;
+                            let mut debug_msg = String::with_capacity(128); // Pre-allocate reasonable size
+
+                            write!(
+                                &mut debug_msg,
+                                "Joker '{}' on card {}: +{} chips, +{} mult, +{} money",
                                 joker.name(),
                                 card,
                                 effect.chips * total_triggers as i32,
                                 effect.mult * total_triggers as i32,
-                                effect.money * total_triggers as i32,
-                                if effect.retrigger > 0 {
-                                    format!(" (retrigger x{})", effect.retrigger)
-                                } else {
-                                    String::new()
-                                }
-                            );
+                                effect.money * total_triggers as i32
+                            )
+                            .unwrap();
+
+                            if effect.retrigger > 0 {
+                                write!(&mut debug_msg, " (retrigger x{})", effect.retrigger)
+                                    .unwrap();
+                            }
+
                             messages.push(debug_msg);
                         }
                     }
@@ -640,12 +662,19 @@ impl Game {
         // Calculate final score
         let final_score = self.chips * self.mult;
 
-        // Log final breakdown if debug enabled
-        let msg = format!(
-            "Final score: {} chips × {} mult = {}",
-            self.chips, self.mult, final_score
-        );
-        self.add_debug_message(msg);
+        // Log final breakdown if debug enabled (optimized)
+        #[cfg(debug_assertions)]
+        {
+            use std::fmt::Write;
+            let mut msg = String::with_capacity(64);
+            write!(
+                &mut msg,
+                "Final score: {} chips × {} mult = {}",
+                self.chips, self.mult, final_score
+            )
+            .unwrap();
+            self.add_debug_message(msg);
+        }
 
         // Reset chips and mult to base values
         self.mult = self.config.base_mult as f64;
@@ -672,6 +701,8 @@ impl Game {
     }
 
     /// Add a debug message with automatic memory management
+    /// Only compiles in debug builds to eliminate overhead in release
+    #[cfg(debug_assertions)]
     fn add_debug_message(&mut self, message: String) {
         if self.debug_logging_enabled {
             self.debug_messages.push(message);
@@ -681,6 +712,94 @@ impl Game {
                 self.debug_messages
                     .drain(0..self.debug_messages.len() - MAX_DEBUG_MESSAGES);
             }
+        }
+    }
+
+    /// No-op version for release builds
+    #[cfg(not(debug_assertions))]
+    #[inline]
+    fn add_debug_message(&mut self, _message: String) {
+        // No-op in release builds
+    }
+
+    /// Configure memory monitoring for RL training scenarios
+    pub fn enable_rl_memory_monitoring(&mut self) {
+        let config = crate::memory_monitor::MemoryConfig::for_rl_training();
+        self.memory_monitor.update_config(config.clone());
+
+        // Update action history limit to match memory config
+        self.action_history.resize(config.max_action_history);
+    }
+
+    /// Configure memory monitoring for simulation scenarios
+    pub fn enable_simulation_memory_monitoring(&mut self) {
+        let config = crate::memory_monitor::MemoryConfig::for_simulation();
+        self.memory_monitor.update_config(config.clone());
+
+        // Update action history limit to match memory config
+        self.action_history.resize(config.max_action_history);
+    }
+
+    /// Get current memory usage statistics
+    pub fn get_memory_stats(&mut self) -> Option<crate::memory_monitor::MemoryStats> {
+        if self.memory_monitor.should_check() {
+            // Estimate memory usage
+            let estimated_bytes = self.estimate_memory_usage();
+            let stats = self.memory_monitor.check_memory(
+                estimated_bytes,
+                1, // Number of active snapshots (hard to track, estimate as 1)
+                self.action_history.total_actions(),
+            );
+            Some(stats)
+        } else {
+            self.memory_monitor.last_stats().cloned()
+        }
+    }
+
+    /// Generate a memory usage report
+    pub fn generate_memory_report(&self) -> String {
+        self.memory_monitor.generate_report()
+    }
+
+    /// Estimate current memory usage in bytes
+    fn estimate_memory_usage(&self) -> usize {
+        let mut total = std::mem::size_of::<Self>();
+
+        // Action history
+        total += self.action_history.memory_stats().estimated_bytes;
+
+        // Deck cards
+        total += self.deck.cards().len() * std::mem::size_of::<crate::card::Card>();
+
+        // Available cards
+        total += self.available.cards().len() * std::mem::size_of::<crate::card::Card>();
+
+        // Discarded cards
+        total += self.discarded.len() * std::mem::size_of::<crate::card::Card>();
+
+        // Jokers (rough estimate)
+        total += self.jokers.len() * 200; // Estimate 200 bytes per joker
+
+        // Hand type counts
+        total += self.hand_type_counts.len()
+            * (std::mem::size_of::<crate::rank::HandRank>() + std::mem::size_of::<u32>());
+
+        // Debug messages
+        total += self
+            .debug_messages
+            .iter()
+            .map(|msg| msg.len())
+            .sum::<usize>();
+
+        total
+    }
+
+    /// Check if memory usage exceeds safe limits
+    pub fn check_memory_safety(&mut self) -> bool {
+        if let Some(stats) = self.get_memory_stats() {
+            !stats.exceeds_critical(self.memory_monitor.config())
+        } else {
+            true // Assume safe if no stats available
         }
     }
 
@@ -1023,7 +1142,7 @@ impl Game {
             }
         }
 
-        let blind = self.blind.expect("stage is blind");
+        let blind = self.blind.ok_or(GameError::MissingBlindState)?;
         // score exceeds blind (blind passed).
         // handle reward then progress to next stage.
         let reward = self.calc_reward(blind)?;
@@ -1282,7 +1401,7 @@ struct SaveableGameState {
     pub ante_start: Ante,
     pub ante_end: Ante,
     pub ante_current: Ante,
-    pub action_history: Vec<Action>,
+    pub action_history: BoundedActionHistory,
     pub round: f64,
     pub joker_ids: Vec<JokerId>, // Changed from jokers: Vec<Jokers> to support new system
     pub joker_states: HashMap<JokerId, JokerState>,
@@ -1435,6 +1554,8 @@ impl Game {
             debug_messages: Vec::new(),
             // Initialize secure RNG (not serialized)
             rng: crate::rng::GameRng::secure(),
+            // Initialize memory monitor (not serialized)
+            memory_monitor: MemoryMonitor::default(),
         };
 
         // Restore joker states to the state manager

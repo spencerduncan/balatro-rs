@@ -1,14 +1,57 @@
 use balatro_rs::action::Action;
 use balatro_rs::game::Game;
-use text_io::read;
+use std::io::{self, Write};
+
+#[derive(Debug)]
+enum InputError {
+    IoError(io::Error),
+    TooManyAttempts,
+}
+
+impl From<io::Error> for InputError {
+    fn from(error: io::Error) -> Self {
+        InputError::IoError(error)
+    }
+}
+
+fn secure_input_loop(max: usize) -> Result<usize, InputError> {
+    const MAX_ATTEMPTS: usize = 3;
+    const MAX_INPUT_LENGTH: usize = 10;
+
+    for attempt in 1..=MAX_ATTEMPTS {
+        print!("Enter choice (0-{max}): ");
+        io::stdout().flush()?;
+
+        let mut input = String::new();
+        io::stdin().read_line(&mut input)?;
+
+        // Check input length to prevent memory attacks
+        if input.trim().len() > MAX_INPUT_LENGTH {
+            println!("Input too long. Attempt {attempt}/{MAX_ATTEMPTS}");
+            continue;
+        }
+
+        // Parse and validate input
+        match input.trim().parse::<usize>() {
+            Ok(i) if i <= max => return Ok(i),
+            Ok(_) => println!("Must be 0-{max}. Attempt {attempt}/{MAX_ATTEMPTS}"),
+            Err(_) => println!("Invalid number. Attempt {attempt}/{MAX_ATTEMPTS}"),
+        }
+    }
+
+    Err(InputError::TooManyAttempts)
+}
 
 fn input_loop(max: usize) -> usize {
-    loop {
-        let i: usize = read!();
-        if i <= max {
-            return i;
-        } else {
-            println!("Input must be between 0 and {max}")
+    match secure_input_loop(max) {
+        Ok(value) => value,
+        Err(InputError::TooManyAttempts) => {
+            println!("Too many invalid attempts. Exiting for security.");
+            std::process::exit(1);
+        }
+        Err(InputError::IoError(e)) => {
+            println!("IO error: {e}. Exiting.");
+            std::process::exit(1);
         }
     }
 }
