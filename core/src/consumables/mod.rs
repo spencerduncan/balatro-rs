@@ -253,9 +253,7 @@ impl Target {
                     vec![] // No valid card combinations available
                 } else if count == 1 {
                     // For single card selection, return each card as a separate target
-                    (0..hand_size)
-                        .map(|i| Target::Cards(vec![i]))
-                        .collect()
+                    (0..hand_size).map(|i| Target::Cards(vec![i])).collect()
                 } else {
                     // For multiple card selection, generate all valid combinations
                     // Limited to reasonable number of combinations for performance
@@ -287,9 +285,7 @@ impl Target {
             }
             TargetType::Joker => {
                 // Return targets for each joker slot that has a joker
-                (0..game.jokers.len())
-                    .map(|i| Target::Joker(i))
-                    .collect()
+                (0..game.jokers.len()).map(Target::Joker).collect()
             }
             TargetType::Deck => vec![Target::Deck],
             TargetType::Shop => {
@@ -376,7 +372,7 @@ impl JokerTarget {
     pub fn get_joker<'a>(&self, game: &'a Game) -> Result<&'a dyn Joker, JokerTargetError> {
         // Validate first
         self.validate(game)?;
-        
+
         // Return the joker (we know it's valid from validation)
         Ok(&*game.jokers[self.slot])
     }
@@ -395,10 +391,7 @@ pub enum JokerTargetError {
     #[error("Joker at slot {slot} is not active")]
     InactiveJoker { slot: usize },
     #[error("Expected joker type {expected:?} but found {actual:?}")]
-    WrongJokerType {
-        expected: JokerId,
-        actual: JokerId,
-    },
+    WrongJokerType { expected: JokerId, actual: JokerId },
 }
 
 /// Generate all possible combinations of selecting `count` cards from `hand_size` total cards
@@ -406,14 +399,21 @@ fn generate_card_combinations(hand_size: usize, count: usize) -> Vec<Target> {
     if count == 0 || count > hand_size {
         return vec![];
     }
-    
+
     let mut combinations = Vec::new();
     let mut current_combination = Vec::new();
-    
-    generate_combinations_recursive(0, hand_size, count, &mut current_combination, &mut combinations);
-    
-    combinations.into_iter()
-        .map(|indices| Target::Cards(indices))
+
+    generate_combinations_recursive(
+        0,
+        hand_size,
+        count,
+        &mut current_combination,
+        &mut combinations,
+    );
+
+    combinations
+        .into_iter()
+        .map(Target::Cards)
         .collect()
 }
 
@@ -429,7 +429,7 @@ fn generate_combinations_recursive(
         all_combinations.push(current.clone());
         return;
     }
-    
+
     for i in start..=(total - remaining) {
         current.push(i);
         generate_combinations_recursive(i + 1, total, remaining - 1, current, all_combinations);
@@ -675,6 +675,7 @@ pub struct ConsumableSlots {
     /// Vector of optional consumable slots
     slots: Vec<Option<Box<dyn Consumable>>>,
     /// Default capacity for new instances (always 2 as per Balatro base game)
+    #[allow(dead_code)]
     default_capacity: usize,
 }
 
@@ -717,9 +718,13 @@ impl ConsumableSlots {
     /// assert_eq!(slots.available_slots(), 5);
     /// ```
     pub fn with_capacity(capacity: usize) -> Self {
+        let mut slots = Vec::with_capacity(capacity);
+        for _ in 0..capacity {
+            slots.push(None);
+        }
         Self {
             capacity,
-            slots: vec![None; capacity],
+            slots,
             default_capacity: 2,
         }
     }
@@ -824,7 +829,7 @@ impl ConsumableSlots {
     ///
     /// let mut slots = ConsumableSlots::new();
     /// let consumable = create_consumable(); // Some consumable
-    /// 
+    ///
     /// match slots.add_consumable(consumable) {
     ///     Ok(index) => println!("Added to slot {}", index),
     ///     Err(SlotError::NoEmptySlots { capacity }) => {
@@ -865,7 +870,7 @@ impl ConsumableSlots {
     /// let mut slots = ConsumableSlots::new();
     /// // Add a consumable first
     /// let index = slots.add_consumable(create_consumable()).unwrap();
-    /// 
+    ///
     /// // Remove it
     /// match slots.remove_consumable(index) {
     ///     Ok(consumable) => println!("Removed consumable"),
@@ -886,7 +891,9 @@ impl ConsumableSlots {
             });
         }
 
-        self.slots[index].take().ok_or(SlotError::SlotEmpty { index })
+        self.slots[index]
+            .take()
+            .ok_or(SlotError::SlotEmpty { index })
     }
 
     /// Gets a reference to the consumable at the specified index
@@ -904,7 +911,7 @@ impl ConsumableSlots {
     ///
     /// let mut slots = ConsumableSlots::new();
     /// let index = slots.add_consumable(create_consumable()).unwrap();
-    /// 
+    ///
     /// if let Some(consumable) = slots.get_consumable(index) {
     ///     println!("Found consumable: {:?}", consumable);
     /// }
@@ -931,16 +938,19 @@ impl ConsumableSlots {
     ///
     /// let mut slots = ConsumableSlots::new();
     /// let index = slots.add_consumable(create_consumable()).unwrap();
-    /// 
+    ///
     /// if let Some(consumable) = slots.get_consumable_mut(index) {
     ///     // Modify consumable if needed
     /// }
     /// ```
-    pub fn get_consumable_mut(&mut self, index: usize) -> Option<&mut dyn Consumable> {
+    pub fn get_consumable_mut(&mut self, index: usize) -> Option<&mut (dyn Consumable + '_)> {
         if index >= self.capacity {
             return None;
         }
-        self.slots[index].as_mut().map(|boxed| boxed.as_mut())
+        match self.slots.get_mut(index) {
+            Some(Some(boxed)) => Some(boxed.as_mut()),
+            _ => None,
+        }
     }
 
     /// Finds the first empty slot
@@ -954,7 +964,7 @@ impl ConsumableSlots {
     ///
     /// let mut slots = ConsumableSlots::new();
     /// assert_eq!(slots.find_empty_slot(), Some(0)); // First slot is empty
-    /// 
+    ///
     /// // Fill first slot
     /// slots.add_consumable(create_consumable()).unwrap();
     /// assert_eq!(slots.find_empty_slot(), Some(1)); // Second slot is empty
@@ -980,7 +990,7 @@ impl ConsumableSlots {
     ///
     /// let mut slots = ConsumableSlots::new();
     /// slots.add_consumable(create_consumable()).unwrap();
-    /// 
+    ///
     /// // Clear the first slot
     /// slots.clear_slot(0).unwrap();
     /// assert_eq!(slots.len(), 0);
@@ -1007,7 +1017,7 @@ impl ConsumableSlots {
     ///
     /// let mut slots = ConsumableSlots::new();
     /// slots.add_consumable(create_consumable()).unwrap();
-    /// 
+    ///
     /// for consumable in slots.iter() {
     ///     println!("Consumable: {:?}", consumable);
     /// }
@@ -1034,4 +1044,3 @@ impl Default for ConsumableSlots {
 
 // Re-export commonly used types
 pub use ConsumableId::*;
-pub use SlotError;
