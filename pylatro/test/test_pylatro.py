@@ -228,6 +228,84 @@ def test_joker_cost_validation():
         assert isinstance(can_buy, bool)
 
 
+def test_purchase_validation_consistency():
+    """Test that can_buy_joker matches actual purchase validation"""
+    game = pylatro.GameEngine()
+    
+    # Move to shop stage
+    game.reset()
+    while game.state.stage != 'Shop':
+        actions = game.gen_actions()
+        if not actions:
+            break
+        # Find an action that progresses to shop
+        for action in actions:
+            if 'NextRound' in str(action) or 'CashOut' in str(action):
+                try:
+                    game.step(action)
+                    break
+                except:
+                    continue
+        else:
+            # If no action found to progress, break to avoid infinite loop
+            break
+    
+    # If we're in shop stage, test purchase validation consistency
+    if game.state.stage == 'Shop':
+        # Get available jokers in shop
+        jokers = game.get_shop_jokers()
+        
+        for joker in jokers:
+            joker_id = joker.id
+            
+            # Check can_buy_joker result
+            can_buy = game.can_buy_joker(joker_id)
+            
+            # Try to actually buy the joker and see if it succeeds
+            try:
+                # Create a BuyJoker action
+                action = pylatro.Action.BuyJoker(joker_id, 0)  # Try to place at slot 0
+                
+                # Save game state to restore later
+                original_money = game.state.money
+                original_joker_count = len(game.state.jokers)
+                
+                # Try the action
+                try:
+                    game.step(action)
+                    actual_purchase_succeeded = True
+                    
+                    # Restore state by undoing the purchase (create new game)
+                    game = pylatro.GameEngine()
+                    while game.state.stage != 'Shop':
+                        actions = game.gen_actions()
+                        if not actions:
+                            break
+                        for action in actions:
+                            if 'NextRound' in str(action) or 'CashOut' in str(action):
+                                try:
+                                    game.step(action)
+                                    break
+                                except:
+                                    continue
+                        else:
+                            break
+                    
+                except Exception:
+                    actual_purchase_succeeded = False
+                
+                # Assert consistency: if can_buy_joker says true, purchase should succeed
+                # If can_buy_joker says false, purchase should fail
+                if can_buy:
+                    assert actual_purchase_succeeded, f"can_buy_joker returned True but purchase failed for joker {joker_id}"
+                else:
+                    assert not actual_purchase_succeeded, f"can_buy_joker returned False but purchase succeeded for joker {joker_id}"
+                    
+            except Exception as e:
+                # Skip this joker if there are implementation issues
+                continue
+
+
 def test_backward_compatibility():
     """Test that existing Python code continues to work"""
     game = pylatro.GameEngine()

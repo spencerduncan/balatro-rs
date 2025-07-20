@@ -331,15 +331,24 @@ impl GameEngine {
 
     /// Check if player can afford and has space for a joker
     fn can_buy_joker(&self, joker_id: JokerId) -> bool {
-        // Check if player has space
-        if self.game.joker_count() >= self.game.config.joker_slots_max {
+        // Check if player has space - use same validation as actual purchase
+        if self.game.joker_count() >= self.game.config.joker_slots {
             return false;
         }
 
-        // Check if player can afford it
-        if let Ok(Some(definition)) = registry::get_definition(&joker_id) {
-            let cost = calculate_joker_cost(definition.rarity) as usize;
-            return self.game.money >= cost as f64;
+        // Check if game is in shop stage
+        if !matches!(self.game.stage, crate::stage::Stage::Shop()) {
+            return false;
+        }
+
+        // Check if joker is available in shop
+        if !self.game.shop.has_joker(joker_id) {
+            return false;
+        }
+
+        // Check if player can afford it - use actual shop price
+        if let Some(shop_joker) = self.game.shop.jokers.iter().find(|j| j.matches_joker_id(joker_id)) {
+            return self.game.money >= shop_joker.cost() as f64;
         }
 
         false
@@ -347,6 +356,12 @@ impl GameEngine {
 
     /// Get the cost of a specific joker
     fn get_joker_cost(&self, joker_id: JokerId) -> Result<Option<usize>, GameError> {
+        // First check if joker is available in shop - use shop price
+        if let Some(shop_joker) = self.game.shop.jokers.iter().find(|j| j.matches_joker_id(joker_id)) {
+            return Ok(Some(shop_joker.cost()));
+        }
+
+        // Otherwise use rarity-based pricing
         if let Some(definition) = registry::get_definition(&joker_id)? {
             Ok(Some(calculate_joker_cost(definition.rarity) as usize))
         } else {

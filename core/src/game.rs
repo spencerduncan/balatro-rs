@@ -1091,6 +1091,75 @@ impl Game {
         }
     }
 
+    /// Check if a consumable can be purchased.
+    ///
+    /// This method validates whether a consumable purchase is valid by checking:
+    /// - Player has sufficient money for the purchase
+    /// - There's at least one available consumable slot
+    /// - The game is in the Shop stage (correct game state)
+    ///
+    /// # Arguments
+    ///
+    /// * `consumable_type` - The type of consumable to purchase (Tarot, Planet, Spectral)
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` if the purchase can proceed
+    /// * `Err(GameError)` with specific error type if validation fails:
+    ///   - `InvalidStage` - Not in Shop stage
+    ///   - `InvalidBalance` - Insufficient money
+    ///   - `NoAvailableSlot` - No consumable slots available
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use balatro_rs::game::Game;
+    /// use balatro_rs::config::Config;
+    /// use balatro_rs::shop::ConsumableType;
+    /// use balatro_rs::stage::Stage;
+    ///
+    /// let mut game = Game::new(Config::default());
+    /// game.stage = Stage::Shop();
+    /// game.money = 10.0;
+    ///
+    /// // Check if we can purchase a Tarot card (costs 3)
+    /// assert!(game.can_purchase_consumable(ConsumableType::Tarot).is_ok());
+    ///
+    /// // With insufficient money
+    /// game.money = 2.0;
+    /// assert!(game.can_purchase_consumable(ConsumableType::Tarot).is_err());
+    /// ```
+    pub fn can_purchase_consumable(
+        &self,
+        consumable_type: crate::shop::ConsumableType,
+    ) -> Result<(), GameError> {
+        // Check if we're in the Shop stage
+        if self.stage != Stage::Shop() {
+            return Err(GameError::InvalidStage);
+        }
+
+        // Get the cost of the consumable type
+        let cost = match consumable_type {
+            crate::shop::ConsumableType::Tarot => 3,
+            crate::shop::ConsumableType::Planet => 3,
+            crate::shop::ConsumableType::Spectral => 4,
+        };
+
+        // Check if player has enough money
+        if self.money < cost as f64 {
+            return Err(GameError::InvalidBalance);
+        }
+
+        // Check if there's available consumable slot capacity
+        // Default capacity is 2, can be modified by vouchers
+        let max_consumable_slots = 2; // TODO: This should be configurable or affected by vouchers
+        if self.consumables_in_hand.len() >= max_consumable_slots {
+            return Err(GameError::NoAvailableSlot);
+        }
+
+        Ok(())
+    }
+
     fn select_blind(&mut self, blind: Blind) -> Result<(), GameError> {
         // can only set blind if stage is pre blind
         if self.stage != Stage::PreBlind() {
