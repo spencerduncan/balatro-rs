@@ -155,7 +155,6 @@ impl Pack {
 
     /// Generate pack contents based on pack type and game state
     pub fn generate_contents(&mut self, game: &Game) -> Result<(), GameError> {
-
         let (min_options, max_options) = self.pack_type.option_count();
         let mut option_count = if min_options == max_options {
             min_options
@@ -321,12 +320,13 @@ impl Pack {
 
     /// Generate arcana pack options (tarot cards)
     fn generate_arcana_options(&mut self, count: usize, game: &Game) -> Result<(), GameError> {
-
         let tarot_cards = ConsumableId::tarot_cards();
 
         for _ in 0..count {
             // Randomly select a specific tarot card for preview info
-            let selected_tarot = game.rng.choose(&tarot_cards)
+            let selected_tarot = game
+                .rng
+                .choose(&tarot_cards)
                 .unwrap_or(&ConsumableId::TheFool);
 
             let option = PackOption::new(
@@ -341,12 +341,13 @@ impl Pack {
 
     /// Generate celestial pack options (planet cards)
     fn generate_celestial_options(&mut self, count: usize, game: &Game) -> Result<(), GameError> {
-
         let planet_cards = ConsumableId::planet_cards();
 
         for _ in 0..count {
             // Randomly select a specific planet card for preview info
-            let selected_planet = game.rng.choose(&planet_cards)
+            let selected_planet = game
+                .rng
+                .choose(&planet_cards)
                 .unwrap_or(&ConsumableId::Mercury);
 
             let option = PackOption::new(
@@ -361,12 +362,13 @@ impl Pack {
 
     /// Generate spectral pack options (spectral cards)
     fn generate_spectral_options(&mut self, count: usize, game: &Game) -> Result<(), GameError> {
-
         let spectral_cards = ConsumableId::spectral_cards();
 
         for _ in 0..count {
             // Randomly select a specific spectral card for preview info
-            let selected_spectral = game.rng.choose(&spectral_cards)
+            let selected_spectral = game
+                .rng
+                .choose(&spectral_cards)
                 .unwrap_or(&ConsumableId::Familiar);
 
             let option = PackOption::new(

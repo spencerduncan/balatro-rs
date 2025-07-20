@@ -1,8 +1,15 @@
-use rand::{prelude::*, rngs::StdRng, distributions::{WeightedError, uniform::{SampleUniform, SampleRange}}};
+use rand::{
+    distributions::{
+        uniform::{SampleRange, SampleUniform},
+        WeightedError,
+    },
+    prelude::*,
+    rngs::StdRng,
+};
 use rand_chacha::ChaCha20Rng;
 use serde::{Deserialize, Serialize};
-use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::{Arc, Mutex};
 
 /// Global counter for RNG instance tracking (for audit logging)
 static RNG_INSTANCE_COUNTER: AtomicU64 = AtomicU64::new(0);
@@ -47,7 +54,7 @@ pub struct GameRng {
 }
 
 thread_local! {
-    static AUDIT_LOGS: std::cell::RefCell<Vec<RngAuditLog>> = std::cell::RefCell::new(Vec::new());
+    static AUDIT_LOGS: std::cell::RefCell<Vec<RngAuditLog>> = const { std::cell::RefCell::new(Vec::new()) };
 }
 
 /// Log an RNG audit event
@@ -57,7 +64,7 @@ fn log_rng_event(instance_id: u64, event: RngAuditEvent) {
         timestamp: std::time::SystemTime::now(),
         event_type: event,
     };
-    
+
     AUDIT_LOGS.with(|logs| {
         logs.borrow_mut().push(log_entry);
     });
@@ -77,7 +84,7 @@ impl GameRng {
     /// Create a new GameRng instance with the specified mode
     pub fn new(mode: RngMode) -> Self {
         let instance_id = RNG_INSTANCE_COUNTER.fetch_add(1, Ordering::SeqCst);
-        
+
         let result = match mode {
             RngMode::Deterministic(seed) | RngMode::Testing(seed) => {
                 let rng = StdRng::seed_from_u64(seed);
@@ -98,10 +105,10 @@ impl GameRng {
                 }
             }
         };
-        
+
         // Log the creation event
         log_rng_event(instance_id, RngAuditEvent::InstanceCreated { mode });
-        
+
         result
     }
 
@@ -200,16 +207,20 @@ impl GameRng {
     }
 
     /// Generate a weighted choice from options
-    pub fn choose_weighted<'a, T, F, B>(&self, items: &'a [T], weight_fn: F) -> Result<&'a T, WeightedError>
+    pub fn choose_weighted<'a, T, F, B>(
+        &self,
+        items: &'a [T],
+        weight_fn: F,
+    ) -> Result<&'a T, WeightedError>
     where
         F: FnMut(&T) -> B,
         B: Into<f64>,
     {
         use rand::distributions::WeightedIndex;
-        
+
         let weights: Vec<f64> = items.iter().map(weight_fn).map(Into::into).collect();
         let dist = WeightedIndex::new(&weights)?;
-        
+
         let index = match &self.mode {
             RngMode::Deterministic(_) | RngMode::Testing(_) => {
                 let mut rng = self.deterministic.as_ref().unwrap().lock().unwrap();
@@ -220,7 +231,7 @@ impl GameRng {
                 dist.sample(&mut *rng)
             }
         };
-        
+
         Ok(&items[index])
     }
 
@@ -243,15 +254,18 @@ impl GameRng {
                 RngMode::Secure
             }
         };
-        
+
         let child = Self::new(child_mode);
-        
+
         // Log the forking event
-        log_rng_event(self.instance_id, RngAuditEvent::InstanceForked { 
-            parent_id: self.instance_id, 
-            child_mode 
-        });
-        
+        log_rng_event(
+            self.instance_id,
+            RngAuditEvent::InstanceForked {
+                parent_id: self.instance_id,
+                child_mode,
+            },
+        );
+
         child
     }
 
@@ -326,7 +340,7 @@ pub fn set_thread_rng(rng: GameRng) {
     THREAD_RNG.with(|rng_cell| {
         *rng_cell.borrow_mut() = Some(rng);
     });
-    
+
     // Log the thread RNG setting event
     log_rng_event(0, RngAuditEvent::ThreadRngSet { mode });
 }
@@ -336,7 +350,7 @@ pub fn clear_thread_rng() {
     THREAD_RNG.with(|rng_cell| {
         *rng_cell.borrow_mut() = None;
     });
-    
+
     // Log the thread RNG clearing event
     log_rng_event(0, RngAuditEvent::ThreadRngCleared);
 }
@@ -353,7 +367,10 @@ mod tests {
         let _val1: u32 = rng1.gen_range(0..1000);
         let _val2: u32 = rng2.gen_range(0..1000);
 
-        assert_eq!(_val1, _val2, "Deterministic RNGs with same seed should produce same values");
+        assert_eq!(
+            _val1, _val2,
+            "Deterministic RNGs with same seed should produce same values"
+        );
     }
 
     #[test]
@@ -420,7 +437,7 @@ mod tests {
     #[test]
     fn test_thread_local_rng() {
         set_thread_rng(GameRng::for_testing(999));
-        
+
         let result = with_thread_rng(|rng| {
             assert_eq!(rng.seed(), Some(999));
             rng.gen_range(0..100u32)
@@ -435,7 +452,7 @@ mod tests {
         let rng = GameRng::for_testing(42);
         let items = vec![1, 2, 3, 4, 5];
         let weights = [1.0, 2.0, 3.0, 4.0, 5.0];
-        
+
         let choice = rng.choose_weighted(&items, |i| weights[*i - 1]).unwrap();
         assert!(items.contains(choice));
     }
@@ -443,7 +460,7 @@ mod tests {
     #[test]
     fn test_audit_logging() {
         clear_audit_logs();
-        
+
         // Create an RNG and check that creation is logged
         let rng1 = GameRng::for_testing(42);
         let logs = get_audit_logs();
@@ -454,21 +471,21 @@ mod tests {
             }
             _ => panic!("Expected InstanceCreated event"),
         }
-        
+
         // Fork the RNG and check that forking is logged
         let _rng2 = rng1.fork();
         let logs = get_audit_logs();
         assert_eq!(logs.len(), 3); // Original creation + child creation + fork event
-        
+
         // Test thread-local RNG logging
         set_thread_rng(GameRng::secure());
         let logs = get_audit_logs();
         assert!(logs.len() >= 4); // Previous logs + secure RNG creation + thread set
-        
+
         clear_thread_rng();
         let logs = get_audit_logs();
         assert!(logs.len() >= 5); // Previous logs + clear event
-        
+
         clear_audit_logs();
         assert_eq!(get_audit_logs().len(), 0);
     }
@@ -476,13 +493,13 @@ mod tests {
     #[test]
     fn test_audit_log_structure() {
         clear_audit_logs();
-        
+
         let _rng = GameRng::deterministic(12345);
         let logs = get_audit_logs();
-        
+
         assert_eq!(logs.len(), 1);
         let log = &logs[0];
-        
+
         // Check that the log has all required fields
         assert!(log.instance_id > 0);
         assert!(log.timestamp.elapsed().is_ok());

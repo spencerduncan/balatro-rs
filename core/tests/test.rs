@@ -1,4 +1,4 @@
-use balatro_rs::{action::Action, game::Game, stage::Stage, rng::GameRng};
+use balatro_rs::{action::Action, game::Game, rng::GameRng, stage::Stage};
 
 fn run_game_gen_actions() {
     let mut g = Game::default();

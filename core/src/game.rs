@@ -936,24 +936,26 @@ impl Game {
                 }
             }
             ShopItem::Consumable(consumable_type) => {
-
                 // Select a random consumable of the appropriate type
                 let consumable_id = match consumable_type {
                     crate::shop::ConsumableType::Tarot => {
                         let tarot_cards = ConsumableId::tarot_cards();
-                        self.rng.choose(&tarot_cards)
+                        self.rng
+                            .choose(&tarot_cards)
                             .copied()
                             .unwrap_or(ConsumableId::TheFool)
                     }
                     crate::shop::ConsumableType::Planet => {
                         let planet_cards = ConsumableId::planet_cards();
-                        self.rng.choose(&planet_cards)
+                        self.rng
+                            .choose(&planet_cards)
                             .copied()
                             .unwrap_or(ConsumableId::Mercury)
                     }
                     crate::shop::ConsumableType::Spectral => {
                         let spectral_cards = ConsumableId::spectral_cards();
-                        self.rng.choose(&spectral_cards)
+                        self.rng
+                            .choose(&spectral_cards)
                             .copied()
                             .unwrap_or(ConsumableId::Familiar)
                     }

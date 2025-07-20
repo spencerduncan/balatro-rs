@@ -2,10 +2,10 @@ use crate::card::Card;
 use crate::game::Game;
 use crate::joker::{JokerId, JokerRarity};
 use crate::joker_factory::JokerFactory;
+use crate::rng::GameRng;
 use crate::shop::{
     EnhancedShop, ItemWeights, Pack, PackType, ShopGenerator, ShopItem, ShopSlot, VoucherId,
 };
-use crate::rng::GameRng;
 
 /// Weighted random generator for shop items with support for rarity-based
 /// joker generation, voucher modifications, and ante-based scaling.
@@ -36,12 +36,16 @@ struct CacheKey {
 impl WeightedGenerator {
     /// Create a new weighted generator with cryptographically secure RNG
     pub fn new() -> Self {
-        Self { rng: GameRng::secure() }
+        Self {
+            rng: GameRng::secure(),
+        }
     }
 
     /// Create a new weighted generator with deterministic RNG for testing
     pub fn for_testing(seed: u64) -> Self {
-        Self { rng: GameRng::for_testing(seed) }
+        Self {
+            rng: GameRng::for_testing(seed),
+        }
     }
 
     /// Convert Ante enum to numeric value for calculations
@@ -132,12 +136,15 @@ impl WeightedGenerator {
         ];
 
         // Select rarity using weighted distribution
-        let selected_rarity = self.rng.choose_weighted(&rarities, |r| match r {
-            JokerRarity::Common => weights[0],
-            JokerRarity::Uncommon => weights[1],
-            JokerRarity::Rare => weights[2],
-            JokerRarity::Legendary => weights[3],
-        }).unwrap_or(&JokerRarity::Common);
+        let selected_rarity = self
+            .rng
+            .choose_weighted(&rarities, |r| match r {
+                JokerRarity::Common => weights[0],
+                JokerRarity::Uncommon => weights[1],
+                JokerRarity::Rare => weights[2],
+                JokerRarity::Legendary => weights[3],
+            })
+            .unwrap_or(&JokerRarity::Common);
 
         // Get available jokers for this rarity
         let available_jokers = self.get_jokers_by_rarity(*selected_rarity);
@@ -168,13 +175,16 @@ impl WeightedGenerator {
         ];
 
         // Select rarity using weighted distribution
-        let selected_rarity = self.rng.choose_weighted(&rarities, |r| match r {
-            JokerRarity::Common => weights[0],
-            JokerRarity::Uncommon => weights[1],
-            JokerRarity::Rare => weights[2],
-            JokerRarity::Legendary => weights[3],
-        }).unwrap_or(&JokerRarity::Common);
-        
+        let selected_rarity = self
+            .rng
+            .choose_weighted(&rarities, |r| match r {
+                JokerRarity::Common => weights[0],
+                JokerRarity::Uncommon => weights[1],
+                JokerRarity::Rare => weights[2],
+                JokerRarity::Legendary => weights[3],
+            })
+            .unwrap_or(&JokerRarity::Common);
+
         let available_jokers = self.get_jokers_by_rarity(*selected_rarity);
         if !available_jokers.is_empty() {
             let joker = self.rng.choose(&available_jokers).unwrap();
@@ -295,7 +305,10 @@ impl ShopGenerator for WeightedGenerator {
         ];
 
         for _ in 0..SHOP_SLOTS {
-            let item_type_index = self.rng.choose_weighted(&[0, 1, 2, 3, 4], |&i| item_weights[i]).unwrap_or(&0);
+            let item_type_index = self
+                .rng
+                .choose_weighted(&[0, 1, 2, 3, 4], |&i| item_weights[i])
+                .unwrap_or(&0);
 
             let item = match item_type_index {
                 0 => self.generate_random_joker(game),
@@ -306,19 +319,19 @@ impl ShopGenerator for WeightedGenerator {
                 _ => self.generate_random_joker(game), // Fallback
             };
 
-                if let Some(shop_item) = item {
-                    let base_cost = shop_item.base_cost();
-                    // For now, use empty voucher list since voucher system is placeholder
-                    let shop_vouchers: Vec<VoucherId> = vec![];
-                    let final_cost = self.calculate_final_cost(base_cost, &shop_vouchers);
+            if let Some(shop_item) = item {
+                let base_cost = shop_item.base_cost();
+                // For now, use empty voucher list since voucher system is placeholder
+                let shop_vouchers: Vec<VoucherId> = vec![];
+                let final_cost = self.calculate_final_cost(base_cost, &shop_vouchers);
 
-                    shop.slots.push(ShopSlot {
-                        item: shop_item,
-                        cost: final_cost,
-                        available: true,
-                        modifiers: vec![],
-                    });
-                }
+                shop.slots.push(ShopSlot {
+                    item: shop_item,
+                    cost: final_cost,
+                    available: true,
+                    modifiers: vec![],
+                });
+            }
         }
 
         shop

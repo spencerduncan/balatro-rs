@@ -34,7 +34,6 @@ mod tests {
     use crate::game::Game;
     use crate::stage::Stage;
 
-
     #[test]
     // Test executing a full game using the gen_actions api
     fn test_game_gen_actions() {
