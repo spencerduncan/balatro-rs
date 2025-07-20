@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["DisplayMode"],"mod":["format"],"struct":["DisplayF64","FormatConfig"],"trait":["F64Display"]};
