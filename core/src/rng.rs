@@ -2,6 +2,28 @@ use rand::{prelude::*, rngs::StdRng, distributions::{WeightedError, uniform::{Sa
 use rand_chacha::ChaCha20Rng;
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
+use std::sync::atomic::{AtomicU64, Ordering};
+
+/// Global counter for RNG instance tracking (for audit logging)
+static RNG_INSTANCE_COUNTER: AtomicU64 = AtomicU64::new(0);
+
+/// Audit logging for RNG operations
+#[derive(Debug, Clone)]
+pub struct RngAuditLog {
+    pub instance_id: u64,
+    pub timestamp: std::time::SystemTime,
+    pub event_type: RngAuditEvent,
+}
+
+/// Types of RNG events to audit
+#[derive(Debug, Clone)]
+pub enum RngAuditEvent {
+    InstanceCreated { mode: RngMode },
+    ModeSwitched { from: RngMode, to: RngMode },
+    InstanceForked { parent_id: u64, child_mode: RngMode },
+    ThreadRngSet { mode: RngMode },
+    ThreadRngCleared,
+}
 
 /// RNG operation modes for different security and determinism requirements
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -18,18 +40,49 @@ pub enum RngMode {
 /// Secure RNG management system addressing RNG state manipulation vulnerabilities
 #[derive(Debug, Clone)]
 pub struct GameRng {
+    instance_id: u64,
     mode: RngMode,
     deterministic: Option<Arc<Mutex<StdRng>>>,
     secure: Option<Arc<Mutex<ChaCha20Rng>>>,
 }
 
+thread_local! {
+    static AUDIT_LOGS: std::cell::RefCell<Vec<RngAuditLog>> = std::cell::RefCell::new(Vec::new());
+}
+
+/// Log an RNG audit event
+fn log_rng_event(instance_id: u64, event: RngAuditEvent) {
+    let log_entry = RngAuditLog {
+        instance_id,
+        timestamp: std::time::SystemTime::now(),
+        event_type: event,
+    };
+    
+    AUDIT_LOGS.with(|logs| {
+        logs.borrow_mut().push(log_entry);
+    });
+}
+
+/// Get current audit logs for this thread
+pub fn get_audit_logs() -> Vec<RngAuditLog> {
+    AUDIT_LOGS.with(|logs| logs.borrow().clone())
+}
+
+/// Clear audit logs for this thread
+pub fn clear_audit_logs() {
+    AUDIT_LOGS.with(|logs| logs.borrow_mut().clear());
+}
+
 impl GameRng {
     /// Create a new GameRng instance with the specified mode
     pub fn new(mode: RngMode) -> Self {
-        match mode {
+        let instance_id = RNG_INSTANCE_COUNTER.fetch_add(1, Ordering::SeqCst);
+        
+        let result = match mode {
             RngMode::Deterministic(seed) | RngMode::Testing(seed) => {
                 let rng = StdRng::seed_from_u64(seed);
                 Self {
+                    instance_id,
                     mode,
                     deterministic: Some(Arc::new(Mutex::new(rng))),
                     secure: None,
@@ -38,12 +91,18 @@ impl GameRng {
             RngMode::Secure => {
                 let rng = ChaCha20Rng::from_entropy();
                 Self {
+                    instance_id,
                     mode,
                     deterministic: None,
                     secure: Some(Arc::new(Mutex::new(rng))),
                 }
             }
-        }
+        };
+        
+        // Log the creation event
+        log_rng_event(instance_id, RngAuditEvent::InstanceCreated { mode });
+        
+        result
     }
 
     /// Create a deterministic RNG for testing with a known seed
@@ -168,22 +227,32 @@ impl GameRng {
     /// Create a fork of this RNG with the same mode but independent state
     /// Useful for creating isolated RNG instances for different game systems
     pub fn fork(&self) -> Self {
-        match self.mode {
+        let child_mode = match self.mode {
             RngMode::Deterministic(_seed) => {
                 // Create a new seed by advancing the current RNG
                 let new_seed = self.gen_range(0..u64::MAX);
-                Self::new(RngMode::Deterministic(new_seed))
+                RngMode::Deterministic(new_seed)
             }
             RngMode::Testing(seed) => {
                 // For testing, use a derived seed for reproducibility
                 let new_seed = seed.wrapping_add(1);
-                Self::new(RngMode::Testing(new_seed))
+                RngMode::Testing(new_seed)
             }
             RngMode::Secure => {
                 // Create a new secure RNG instance
-                Self::secure()
+                RngMode::Secure
             }
-        }
+        };
+        
+        let child = Self::new(child_mode);
+        
+        // Log the forking event
+        log_rng_event(self.instance_id, RngAuditEvent::InstanceForked { 
+            parent_id: self.instance_id, 
+            child_mode 
+        });
+        
+        child
     }
 
     /// Get the seed value if in deterministic or testing mode
@@ -253,9 +322,13 @@ where
 
 /// Set the thread-local RNG instance
 pub fn set_thread_rng(rng: GameRng) {
+    let mode = rng.mode();
     THREAD_RNG.with(|rng_cell| {
         *rng_cell.borrow_mut() = Some(rng);
     });
+    
+    // Log the thread RNG setting event
+    log_rng_event(0, RngAuditEvent::ThreadRngSet { mode });
 }
 
 /// Clear the thread-local RNG instance
@@ -263,6 +336,9 @@ pub fn clear_thread_rng() {
     THREAD_RNG.with(|rng_cell| {
         *rng_cell.borrow_mut() = None;
     });
+    
+    // Log the thread RNG clearing event
+    log_rng_event(0, RngAuditEvent::ThreadRngCleared);
 }
 
 #[cfg(test)]
@@ -362,5 +438,59 @@ mod tests {
         
         let choice = rng.choose_weighted(&items, |i| weights[*i - 1]).unwrap();
         assert!(items.contains(choice));
+    }
+
+    #[test]
+    fn test_audit_logging() {
+        clear_audit_logs();
+        
+        // Create an RNG and check that creation is logged
+        let rng1 = GameRng::for_testing(42);
+        let logs = get_audit_logs();
+        assert_eq!(logs.len(), 1);
+        match &logs[0].event_type {
+            RngAuditEvent::InstanceCreated { mode } => {
+                assert_eq!(*mode, RngMode::Testing(42));
+            }
+            _ => panic!("Expected InstanceCreated event"),
+        }
+        
+        // Fork the RNG and check that forking is logged
+        let _rng2 = rng1.fork();
+        let logs = get_audit_logs();
+        assert_eq!(logs.len(), 3); // Original creation + child creation + fork event
+        
+        // Test thread-local RNG logging
+        set_thread_rng(GameRng::secure());
+        let logs = get_audit_logs();
+        assert!(logs.len() >= 4); // Previous logs + secure RNG creation + thread set
+        
+        clear_thread_rng();
+        let logs = get_audit_logs();
+        assert!(logs.len() >= 5); // Previous logs + clear event
+        
+        clear_audit_logs();
+        assert_eq!(get_audit_logs().len(), 0);
+    }
+
+    #[test]
+    fn test_audit_log_structure() {
+        clear_audit_logs();
+        
+        let _rng = GameRng::deterministic(12345);
+        let logs = get_audit_logs();
+        
+        assert_eq!(logs.len(), 1);
+        let log = &logs[0];
+        
+        // Check that the log has all required fields
+        assert!(log.instance_id > 0);
+        assert!(log.timestamp.elapsed().is_ok());
+        match &log.event_type {
+            RngAuditEvent::InstanceCreated { mode } => {
+                assert_eq!(*mode, RngMode::Deterministic(12345));
+            }
+            _ => panic!("Expected InstanceCreated event"),
+        }
     }
 }
