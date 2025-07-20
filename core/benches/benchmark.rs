@@ -3,9 +3,9 @@ use balatro_rs::{
     card::{Card, Suit, Value},
     game::Game,
     hand::SelectHand,
+    rng::GameRng,
 };
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use rand::Rng;
 
 pub fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("run game gen actions", |b| b.iter(run_game_gen_actions));
@@ -19,6 +19,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
 
 fn run_game_gen_actions() {
     let mut g = Game::default();
+    let bench_rng = GameRng::for_testing(999); // Use deterministic RNG for consistent benchmarks
 
     g.start();
     while !g.is_over() {
@@ -28,8 +29,8 @@ fn run_game_gen_actions() {
             break;
         }
 
-        // Pick a random move and execute it
-        let i = rand::thread_rng().gen_range(0..actions.len());
+        // Pick a random move and execute it using deterministic RNG
+        let i = bench_rng.gen_range(0..actions.len());
         let action = actions[i].clone();
         let action_res = g.handle_action(action.clone());
         debug_assert!(action_res.is_ok());

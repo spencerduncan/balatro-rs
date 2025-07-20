@@ -3,6 +3,7 @@ pub mod ante;
 pub mod available;
 pub mod basic_chips_jokers;
 pub mod boss_blinds;
+pub mod bounded_action_history;
 pub mod card;
 pub mod config;
 pub mod consumables;
@@ -18,7 +19,11 @@ pub mod joker_impl;
 pub mod joker_metadata;
 pub mod joker_registry;
 pub mod joker_state;
+pub mod math_safe;
+pub mod memory_monitor;
 pub mod rank;
+pub mod rng;
+pub mod security_tests;
 pub mod shop;
 pub mod space;
 pub mod stage;
@@ -32,8 +37,6 @@ mod tests {
     use crate::action::Action;
     use crate::game::Game;
     use crate::stage::Stage;
-
-    use rand::Rng;
 
     #[test]
     // Test executing a full game using the gen_actions api
@@ -49,7 +52,7 @@ mod tests {
             }
 
             // Pick a random move and execute it
-            let i = rand::thread_rng().gen_range(0..actions.len());
+            let i = g.rng.gen_range(0..actions.len());
             let action = actions[i].clone();
             dbg!("game state:\n{}", &g);
             dbg!("play action: {}", action.clone());
@@ -82,7 +85,7 @@ mod tests {
             // Pick a random move and ensure its unmasked
             let mut i: usize;
             loop {
-                i = rand::thread_rng().gen_range(0..space_vec.len());
+                i = g.rng.gen_range(0..space_vec.len());
                 if space_vec[i] == 1 {
                     break;
                 }

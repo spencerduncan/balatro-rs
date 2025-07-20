@@ -2,11 +2,10 @@ use crate::card::Card;
 use crate::game::Game;
 use crate::joker::{JokerId, JokerRarity};
 use crate::joker_factory::JokerFactory;
+use crate::rng::GameRng;
 use crate::shop::{
     EnhancedShop, ItemWeights, Pack, PackType, ShopGenerator, ShopItem, ShopSlot, VoucherId,
 };
-use rand::distributions::WeightedIndex;
-use rand::prelude::*;
 
 /// Weighted random generator for shop items with support for rarity-based
 /// joker generation, voucher modifications, and ante-based scaling.
@@ -23,8 +22,7 @@ pub struct WeightedGenerator {
     // Note: Removed weight_cache due to f64 money not implementing Hash
     // TODO: Reimplement caching with ordered-float or discrete money units if needed
     /// Random number generator state
-    #[allow(dead_code)]
-    rng: ThreadRng,
+    rng: GameRng,
 }
 
 /// Cache key for weight calculations based on game state
@@ -38,7 +36,16 @@ struct CacheKey {
 impl WeightedGenerator {
     /// Create a new weighted generator with cryptographically secure RNG
     pub fn new() -> Self {
-        Self { rng: thread_rng() }
+        Self {
+            rng: GameRng::secure(),
+        }
+    }
+
+    /// Create a new weighted generator with deterministic RNG for testing
+    pub fn for_testing(seed: u64) -> Self {
+        Self {
+            rng: GameRng::for_testing(seed),
+        }
     }
 
     /// Convert Ante enum to numeric value for calculations
@@ -129,11 +136,18 @@ impl WeightedGenerator {
         ];
 
         // Select rarity using weighted distribution
-        let dist = WeightedIndex::new(weights).ok()?;
-        let selected_rarity = rarities[dist.sample(&mut self.rng)];
+        let selected_rarity = self
+            .rng
+            .choose_weighted(&rarities, |r| match r {
+                JokerRarity::Common => weights[0],
+                JokerRarity::Uncommon => weights[1],
+                JokerRarity::Rare => weights[2],
+                JokerRarity::Legendary => weights[3],
+            })
+            .unwrap_or(&JokerRarity::Common);
 
         // Get available jokers for this rarity
-        let available_jokers = self.get_jokers_by_rarity(selected_rarity);
+        let available_jokers = self.get_jokers_by_rarity(*selected_rarity);
         if available_jokers.is_empty() {
             return None;
         }
@@ -160,17 +174,21 @@ impl WeightedGenerator {
             JokerRarity::Legendary,
         ];
 
-        let mut rng = thread_rng();
-
         // Select rarity using weighted distribution
-        if let Ok(dist) = WeightedIndex::new(weights) {
-            let selected_rarity = rarities[dist.sample(&mut rng)];
-            let available_jokers = self.get_jokers_by_rarity(selected_rarity);
+        let selected_rarity = self
+            .rng
+            .choose_weighted(&rarities, |r| match r {
+                JokerRarity::Common => weights[0],
+                JokerRarity::Uncommon => weights[1],
+                JokerRarity::Rare => weights[2],
+                JokerRarity::Legendary => weights[3],
+            })
+            .unwrap_or(&JokerRarity::Common);
 
-            if !available_jokers.is_empty() {
-                let joker_index = rng.gen_range(0..available_jokers.len());
-                return Some(ShopItem::Joker(available_jokers[joker_index]));
-            }
+        let available_jokers = self.get_jokers_by_rarity(*selected_rarity);
+        if !available_jokers.is_empty() {
+            let joker = self.rng.choose(&available_jokers).unwrap();
+            return Some(ShopItem::Joker(*joker));
         }
 
         // Fallback to basic joker if weighted selection fails
@@ -178,7 +196,7 @@ impl WeightedGenerator {
     }
 
     /// Generate a random consumable
-    fn generate_random_consumable(&self, rng: &mut ThreadRng) -> Option<ShopItem> {
+    fn generate_random_consumable(&self) -> Option<ShopItem> {
         use crate::shop::ConsumableType;
         let consumable_types = [
             ConsumableType::Tarot,
@@ -186,12 +204,12 @@ impl WeightedGenerator {
             ConsumableType::Spectral,
         ];
 
-        let random_type = consumable_types[rng.gen_range(0..consumable_types.len())].clone();
+        let random_type = self.rng.choose(&consumable_types).unwrap().clone();
         Some(ShopItem::Consumable(random_type))
     }
 
     /// Generate a random voucher
-    fn generate_random_voucher(&self, rng: &mut ThreadRng) -> Option<ShopItem> {
+    fn generate_random_voucher(&self) -> Option<ShopItem> {
         let vouchers = [
             VoucherId::Overstock,
             VoucherId::ClearancePackage,
@@ -203,12 +221,12 @@ impl WeightedGenerator {
             VoucherId::Reroll,
         ];
 
-        let random_voucher = vouchers[rng.gen_range(0..vouchers.len())];
+        let random_voucher = *self.rng.choose(&vouchers).unwrap();
         Some(ShopItem::Voucher(random_voucher))
     }
 
     /// Generate a random pack
-    fn generate_random_pack(&self, rng: &mut ThreadRng) -> Option<ShopItem> {
+    fn generate_random_pack(&self) -> Option<ShopItem> {
         let pack_types = [
             PackType::Standard,
             PackType::Buffoon,
@@ -221,12 +239,12 @@ impl WeightedGenerator {
             PackType::MegaSpectral,
         ];
 
-        let random_pack = pack_types[rng.gen_range(0..pack_types.len())];
+        let random_pack = *self.rng.choose(&pack_types).unwrap();
         Some(ShopItem::Pack(random_pack))
     }
 
     /// Generate a random playing card
-    fn generate_random_playing_card(&self, rng: &mut ThreadRng) -> Option<ShopItem> {
+    fn generate_random_playing_card(&self) -> Option<ShopItem> {
         use crate::card::{Suit, Value};
 
         let suits = [Suit::Heart, Suit::Diamond, Suit::Club, Suit::Spade];
@@ -246,8 +264,8 @@ impl WeightedGenerator {
             Value::King,
         ];
 
-        let random_suit = suits[rng.gen_range(0..suits.len())];
-        let random_value = values[rng.gen_range(0..values.len())];
+        let random_suit = *self.rng.choose(&suits).unwrap();
+        let random_value = *self.rng.choose(&values).unwrap();
 
         Some(ShopItem::PlayingCard(Card::new(random_value, random_suit)))
     }
@@ -286,34 +304,33 @@ impl ShopGenerator for WeightedGenerator {
             weights.playing_card_weight,
         ];
 
-        let mut rng = thread_rng();
-
         for _ in 0..SHOP_SLOTS {
-            if let Ok(dist) = WeightedIndex::new(item_weights) {
-                let item_type_index = dist.sample(&mut rng);
+            let item_type_index = self
+                .rng
+                .choose_weighted(&[0, 1, 2, 3, 4], |&i| item_weights[i])
+                .unwrap_or(&0);
 
-                let item = match item_type_index {
-                    0 => self.generate_random_joker(game),
-                    1 => self.generate_random_consumable(&mut rng),
-                    2 => self.generate_random_voucher(&mut rng),
-                    3 => self.generate_random_pack(&mut rng),
-                    4 => self.generate_random_playing_card(&mut rng),
-                    _ => self.generate_random_joker(game), // Fallback
-                };
+            let item = match item_type_index {
+                0 => self.generate_random_joker(game),
+                1 => self.generate_random_consumable(),
+                2 => self.generate_random_voucher(),
+                3 => self.generate_random_pack(),
+                4 => self.generate_random_playing_card(),
+                _ => self.generate_random_joker(game), // Fallback
+            };
 
-                if let Some(shop_item) = item {
-                    let base_cost = shop_item.base_cost();
-                    // For now, use empty voucher list since voucher system is placeholder
-                    let shop_vouchers: Vec<VoucherId> = vec![];
-                    let final_cost = self.calculate_final_cost(base_cost, &shop_vouchers);
+            if let Some(shop_item) = item {
+                let base_cost = shop_item.base_cost();
+                // For now, use empty voucher list since voucher system is placeholder
+                let shop_vouchers: Vec<VoucherId> = vec![];
+                let final_cost = self.calculate_final_cost(base_cost, &shop_vouchers);
 
-                    shop.slots.push(ShopSlot {
-                        item: shop_item,
-                        cost: final_cost,
-                        available: true,
-                        modifiers: vec![],
-                    });
-                }
+                shop.slots.push(ShopSlot {
+                    item: shop_item,
+                    cost: final_cost,
+                    available: true,
+                    modifiers: vec![],
+                });
             }
         }
 
@@ -324,14 +341,13 @@ impl ShopGenerator for WeightedGenerator {
         let cost = pack_type.base_cost();
 
         let mut contents = Vec::new();
-        let mut rng = thread_rng();
 
         // Generate pack contents based on pack type
         match pack_type {
             PackType::Standard => {
                 // 3 playing cards
                 for _ in 0..3 {
-                    if let Some(card) = self.generate_random_playing_card(&mut rng) {
+                    if let Some(card) = self.generate_random_playing_card() {
                         contents.push(card);
                     }
                 }
@@ -352,16 +368,16 @@ impl ShopGenerator for WeightedGenerator {
                 } else {
                     (4, 6)
                 };
-                let num_items = rng.gen_range(min..=max);
+                let num_items = self.rng.gen_range(min..=max);
                 for _ in 0..num_items {
                     contents.push(ShopItem::Consumable(crate::shop::ConsumableType::Tarot));
                 }
             }
             PackType::Enhanced => {
                 // 3-4 enhanced playing cards
-                let num_items = rng.gen_range(3..=4);
+                let num_items = self.rng.gen_range(3..=4);
                 for _ in 0..num_items {
-                    if let Some(card) = self.generate_random_playing_card(&mut rng) {
+                    if let Some(card) = self.generate_random_playing_card() {
                         // TODO: Apply enhancement to card
                         contents.push(card);
                     }
@@ -369,10 +385,10 @@ impl ShopGenerator for WeightedGenerator {
             }
             PackType::Variety => {
                 // Mixed content - 3-5 items of various types
-                let num_items = rng.gen_range(3..=5);
+                let num_items = self.rng.gen_range(3..=5);
                 for _ in 0..num_items {
                     // For now, just add playing cards
-                    if let Some(card) = self.generate_random_playing_card(&mut rng) {
+                    if let Some(card) = self.generate_random_playing_card() {
                         contents.push(card);
                     }
                 }
@@ -384,7 +400,7 @@ impl ShopGenerator for WeightedGenerator {
                 } else {
                     (4, 6)
                 };
-                let num_items = rng.gen_range(min..=max);
+                let num_items = self.rng.gen_range(min..=max);
                 for _ in 0..num_items {
                     contents.push(ShopItem::Consumable(crate::shop::ConsumableType::Planet));
                 }
@@ -396,7 +412,7 @@ impl ShopGenerator for WeightedGenerator {
                 } else {
                     (4, 6)
                 };
-                let num_items = rng.gen_range(min..=max);
+                let num_items = self.rng.gen_range(min..=max);
                 for _ in 0..num_items {
                     contents.push(ShopItem::Consumable(crate::shop::ConsumableType::Spectral));
                 }
@@ -404,7 +420,7 @@ impl ShopGenerator for WeightedGenerator {
             PackType::Jumbo => {
                 // Jumbo pack: 5 playing cards
                 for _ in 0..5 {
-                    if let Some(card) = self.generate_random_playing_card(&mut rng) {
+                    if let Some(card) = self.generate_random_playing_card() {
                         contents.push(card);
                     }
                 }
@@ -412,7 +428,7 @@ impl ShopGenerator for WeightedGenerator {
             PackType::Mega => {
                 // Mega pack: 7 playing cards
                 for _ in 0..7 {
-                    if let Some(card) = self.generate_random_playing_card(&mut rng) {
+                    if let Some(card) = self.generate_random_playing_card() {
                         contents.push(card);
                     }
                 }
@@ -421,7 +437,7 @@ impl ShopGenerator for WeightedGenerator {
 
         // Ensure pack has at least one item
         if contents.is_empty() {
-            if let Some(fallback_item) = self.generate_random_playing_card(&mut rng) {
+            if let Some(fallback_item) = self.generate_random_playing_card() {
                 contents.push(fallback_item);
             }
         }

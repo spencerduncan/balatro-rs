@@ -16,3 +16,4 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+# Trigger CI re-run to validate current formatting fixes

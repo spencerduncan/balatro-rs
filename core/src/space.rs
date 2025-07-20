@@ -36,9 +36,37 @@ pub struct ActionSpace {
     pub buy_joker: Vec<usize>,
     pub next_round: Vec<usize>,
     pub select_blind: Vec<usize>,
+
+    // Performance optimization: cached flat representation
+    #[cfg_attr(feature = "serde", serde(skip))]
+    flat_actions: Vec<usize>,
+    #[cfg_attr(feature = "serde", serde(skip))]
+    cache_valid: bool,
 }
 
 impl ActionSpace {
+    // Mark the cached flat representation as invalid
+    fn invalidate_cache(&mut self) {
+        self.cache_valid = false;
+    }
+
+    // Rebuild the cached flat representation if needed
+    fn ensure_cache_valid(&mut self) {
+        if !self.cache_valid {
+            self.flat_actions.clear();
+            self.flat_actions.extend(&self.select_card);
+            self.flat_actions.extend(&self.move_card_left);
+            self.flat_actions.extend(&self.move_card_right);
+            self.flat_actions.extend(&self.play);
+            self.flat_actions.extend(&self.discard);
+            self.flat_actions.extend(&self.cash_out);
+            self.flat_actions.extend(&self.buy_joker);
+            self.flat_actions.extend(&self.next_round);
+            self.flat_actions.extend(&self.select_blind);
+            self.cache_valid = true;
+        }
+    }
+
     pub fn size(&self) -> usize {
         self.select_card.len()
             + self.move_card_left.len()
@@ -130,6 +158,7 @@ impl ActionSpace {
             return Err(ActionSpaceError::InvalidIndex);
         }
         self.select_card[i] = 1;
+        self.invalidate_cache();
         Ok(())
     }
 
@@ -138,6 +167,7 @@ impl ActionSpace {
             return Err(ActionSpaceError::InvalidIndex);
         }
         self.move_card_left[i] = 1;
+        self.invalidate_cache();
         Ok(())
     }
 
@@ -146,19 +176,23 @@ impl ActionSpace {
             return Err(ActionSpaceError::InvalidIndex);
         }
         self.move_card_right[i] = 1;
+        self.invalidate_cache();
         Ok(())
     }
 
     pub(crate) fn unmask_play(&mut self) {
         self.play[0] = 1;
+        self.invalidate_cache();
     }
 
     pub(crate) fn unmask_discard(&mut self) {
         self.discard[0] = 1;
+        self.invalidate_cache();
     }
 
     pub(crate) fn unmask_cash_out(&mut self) {
         self.cash_out[0] = 1;
+        self.invalidate_cache();
     }
 
     pub(crate) fn unmask_buy_joker(&mut self, i: usize) -> Result<(), ActionSpaceError> {
@@ -166,15 +200,18 @@ impl ActionSpace {
             return Err(ActionSpaceError::InvalidIndex);
         }
         self.buy_joker[i] = 1;
+        self.invalidate_cache();
         Ok(())
     }
 
     pub(crate) fn unmask_next_round(&mut self) {
         self.next_round[0] = 1;
+        self.invalidate_cache();
     }
 
     pub(crate) fn unmask_select_blind(&mut self) {
         self.select_blind[0] = 1;
+        self.invalidate_cache();
     }
 
     pub fn to_action(&self, index: usize, game: &Game) -> Result<Action, ActionSpaceError> {
@@ -248,6 +285,8 @@ impl ActionSpace {
     }
 
     pub fn to_vec(&self) -> Vec<usize> {
+        // For immutable access, we have to concatenate (maintains API compatibility)
+        // Users should prefer to_vec_cached() for better performance
         [
             self.select_card.clone(),
             self.move_card_left.clone(),
@@ -262,25 +301,70 @@ impl ActionSpace {
         .concat()
     }
 
+    /// High-performance zero-copy access to the action space vector.
+    /// This method uses a cached representation that is lazily computed.
+    pub fn to_vec_cached(&mut self) -> &Vec<usize> {
+        self.ensure_cache_valid();
+        &self.flat_actions
+    }
+
+    /// Get an iterator over the action space values without copying.
+    /// This provides zero-copy access for read-only operations.
+    pub fn iter(&self) -> impl Iterator<Item = usize> + '_ {
+        self.select_card
+            .iter()
+            .chain(self.move_card_left.iter())
+            .chain(self.move_card_right.iter())
+            .chain(self.play.iter())
+            .chain(self.discard.iter())
+            .chain(self.cash_out.iter())
+            .chain(self.buy_joker.iter())
+            .chain(self.next_round.iter())
+            .chain(self.select_blind.iter())
+            .copied()
+    }
+
     // True is all elements are masked
     pub fn is_empty(&self) -> bool {
-        let vec = self.to_vec();
-        (*vec.iter().min().unwrap() == 0) && (*vec.iter().max().unwrap() == 0)
+        // Use iterator for zero-copy check - more efficient than to_vec()
+        let mut iter = self.iter();
+
+        // Check if iterator has any elements first
+        let first = iter.next();
+        if first.is_none() {
+            return true; // Empty iterator means empty action space
+        }
+
+        // Use fold to efficiently find min/max in single pass
+        let (min, max) = iter.fold((first.unwrap(), first.unwrap()), |(min, max), val| {
+            (min.min(val), max.max(val))
+        });
+
+        min == 0 && max == 0
     }
 }
 
 impl From<Config> for ActionSpace {
     fn from(c: Config) -> Self {
+        use crate::math_safe::safe_size_for_move_operations;
+
+        // Use safe operations to prevent underflow when available_max is 0
+        let move_operations_size = safe_size_for_move_operations(c.available_max);
+
         ActionSpace {
             select_card: vec![0; c.available_max],
-            move_card_left: vec![0; c.available_max - 1], // every card but leftmost can move left
-            move_card_right: vec![0; c.available_max - 1], // every card but rightmost can move right
+            move_card_left: vec![0; move_operations_size], // every card but leftmost can move left
+            move_card_right: vec![0; move_operations_size], // every card but rightmost can move right
             play: vec![0; 1],
             discard: vec![0; 1],
             cash_out: vec![0; 1],
             buy_joker: vec![0; c.store_consumable_slots_max],
             next_round: vec![0; 1],
             select_blind: vec![0; 1],
+
+            // Initialize cache as invalid - will be computed on first access
+            flat_actions: Vec::new(),
+            cache_valid: false,
         }
     }
 }
@@ -288,18 +372,24 @@ impl From<Config> for ActionSpace {
 // Generate an action space vector, masked based on current state
 impl From<ActionSpace> for Vec<usize> {
     fn from(a: ActionSpace) -> Vec<usize> {
-        [
-            a.select_card,
-            a.move_card_left,
-            a.move_card_right,
-            a.play,
-            a.discard,
-            a.cash_out,
-            a.buy_joker,
-            a.next_round,
-            a.select_blind,
-        ]
-        .concat()
+        // If cache is valid, return it directly (avoid concatenation)
+        if a.cache_valid {
+            a.flat_actions
+        } else {
+            // Cache is invalid, build vector via concatenation
+            [
+                a.select_card,
+                a.move_card_left,
+                a.move_card_right,
+                a.play,
+                a.discard,
+                a.cash_out,
+                a.buy_joker,
+                a.next_round,
+                a.select_blind,
+            ]
+            .concat()
+        }
     }
 }
 

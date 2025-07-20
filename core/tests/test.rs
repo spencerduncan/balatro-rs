@@ -1,8 +1,8 @@
-use balatro_rs::{action::Action, game::Game, stage::Stage};
-use rand::Rng;
+use balatro_rs::{action::Action, game::Game, rng::GameRng, stage::Stage};
 
 fn run_game_gen_actions() {
     let mut g = Game::default();
+    let test_rng = GameRng::for_testing(42); // Use deterministic RNG for reproducible tests
 
     g.start();
     while !g.is_over() {
@@ -12,8 +12,8 @@ fn run_game_gen_actions() {
             break;
         }
 
-        // Pick a random move and execute it
-        let i = rand::thread_rng().gen_range(0..actions.len());
+        // Pick a random move and execute it using deterministic RNG
+        let i = test_rng.gen_range(0..actions.len());
         let action = actions[i].clone();
         let action_res = g.handle_action(action.clone());
         assert!(action_res.is_ok());
@@ -35,10 +35,11 @@ fn run_game_action_space() {
         let space_vec = space.to_vec();
         assert!(!space.is_empty());
 
-        // Pick a random move and ensure its unmasked
+        // Pick a random move and ensure its unmasked using deterministic RNG
+        let test_rng = GameRng::for_testing(123);
         let mut i: usize;
         loop {
-            i = rand::thread_rng().gen_range(0..space_vec.len());
+            i = test_rng.gen_range(0..space_vec.len());
             if space_vec[i] == 1 {
                 break;
             }

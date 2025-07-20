@@ -42,6 +42,10 @@ fn create_test_context_with_deck_and_stones(
     let joker_state_manager =
         JOKER_STATE_MANAGER.get_or_init(|| Arc::new(JokerStateManager::new()));
 
+    // Create static RNG for testing
+    static TEST_RNG: OnceLock<balatro_rs::rng::GameRng> = OnceLock::new();
+    let rng = TEST_RNG.get_or_init(|| balatro_rs::rng::GameRng::for_testing(42));
+
     GameContext {
         chips: 0,
         mult: 1,
@@ -58,6 +62,7 @@ fn create_test_context_with_deck_and_stones(
         joker_state_manager,
         cards_in_deck,
         stone_cards_in_deck,
+        rng,
     }
 }
 
