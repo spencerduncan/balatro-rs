@@ -1,4 +1,5 @@
 use crate::joker::{JokerId, JokerRarity};
+use crate::joker_effect_processor::EffectPriority;
 use crate::joker_registry::{calculate_joker_cost, JokerDefinition, UnlockCondition};
 #[cfg(feature = "python")]
 use pyo3::{pyclass, pymethods};
@@ -20,6 +21,7 @@ pub struct JokerMetadata {
     /// Effect information
     pub effect_type: String,
     pub effect_description: String,
+    pub effect_priority: EffectPriority,
     pub scaling_info: Option<HashMap<String, String>>,
 
     /// Conditional information
@@ -48,6 +50,9 @@ impl JokerMetadata {
         // Determine effect type based on description and ID
         let effect_type = determine_effect_type(&definition.id, &definition.description);
 
+        // Determine effect priority based on type and joker characteristics
+        let effect_priority = determine_effect_priority(&definition.id, &effect_type, &definition.description);
+
         // Extract trigger information
         let triggers_on = extract_triggers(&definition.id, &definition.description);
 
@@ -75,6 +80,7 @@ impl JokerMetadata {
             sell_value,
             effect_type,
             effect_description,
+            effect_priority,
             scaling_info: None, // Will be populated in future PRs
             triggers_on,
             conditions,
@@ -110,6 +116,38 @@ fn determine_effect_type(id: &JokerId, description: &str) -> String {
             JokerId::IceCream => "conditional_chips".to_string(),
             _ => "special".to_string(),
         }
+    }
+}
+
+/// Determine the effect priority of a joker based on its characteristics
+pub fn determine_effect_priority(id: &JokerId, effect_type: &str, description: &str) -> EffectPriority {
+    // High priority for multiplicative effects (should be processed after additive effects)
+    if effect_type == "multiplicative_mult" || description.contains("×") || description.contains("X") {
+        return EffectPriority::Critical;
+    }
+    
+    // Critical priority for special destructive or transformative effects
+    if description.contains("destroy") || description.contains("transform") || description.contains("convert") {
+        return EffectPriority::Critical;
+    }
+    
+    // High priority for economy and special state-changing effects
+    if effect_type == "economy" || effect_type == "hand_modification" || effect_type == "discard_modification" {
+        return EffectPriority::High;
+    }
+    
+    // Special handling for specific jokers that need particular ordering
+    match id {
+        // Ice Cream has conditional effects that should be processed early
+        JokerId::IceCream => EffectPriority::Low,
+        // Egg Joker affects sell values and should be processed later
+        JokerId::EggJoker => EffectPriority::High,
+        // Space Joker has multiplicative potential and should be processed later
+        JokerId::SpaceJoker => EffectPriority::High,
+        // Standard jokers with basic effects
+        JokerId::Joker | JokerId::GreedyJoker | JokerId::LustyJoker => EffectPriority::Normal,
+        // Default for all other jokers
+        _ => EffectPriority::Normal,
     }
 }
 
@@ -281,6 +319,13 @@ impl JokerMetadata {
         &self.effect_description
     }
 
+    /// Get the effect priority
+    #[cfg(feature = "python")]
+    #[getter]
+    fn effect_priority(&self) -> EffectPriority {
+        self.effect_priority
+    }
+
     /// Get triggers
     #[cfg(feature = "python")]
     #[getter]
@@ -338,6 +383,7 @@ mod tests {
         assert_eq!(metadata.cost, 3); // Common rarity
         assert_eq!(metadata.sell_value, 1); // Half of cost
         assert_eq!(metadata.effect_type, "additive_mult");
+        assert_eq!(metadata.effect_priority, EffectPriority::Normal); // Joker has Normal priority
         assert!(metadata.is_unlocked);
         assert!(!metadata.uses_state);
     }
@@ -379,5 +425,59 @@ mod tests {
             "Played cards with Diamond suit give +3 Mult when scored",
         );
         assert!(conditions.contains(&"suit:diamonds".to_string()));
+    }
+
+    #[test]
+    fn test_priority_assignment() {
+        // Test multiplicative effects get Critical priority
+        assert_eq!(
+            determine_effect_priority(&JokerId::Joker, "multiplicative_mult", "X2 Mult"),
+            EffectPriority::Critical
+        );
+        
+        // Test destructive effects get Critical priority
+        assert_eq!(
+            determine_effect_priority(&JokerId::Joker, "special", "destroy cards"),
+            EffectPriority::Critical
+        );
+        
+        // Test economy effects get High priority
+        assert_eq!(
+            determine_effect_priority(&JokerId::Joker, "economy", "Earn $5"),
+            EffectPriority::High
+        );
+        
+        // Test hand modification effects get High priority
+        assert_eq!(
+            determine_effect_priority(&JokerId::Joker, "hand_modification", "+1 hand size"),
+            EffectPriority::High
+        );
+        
+        // Test specific joker priorities
+        assert_eq!(
+            determine_effect_priority(&JokerId::IceCream, "conditional_chips", "conditional effect"),
+            EffectPriority::Low
+        );
+        
+        assert_eq!(
+            determine_effect_priority(&JokerId::EggJoker, "special", "affects sell values"),
+            EffectPriority::High
+        );
+        
+        assert_eq!(
+            determine_effect_priority(&JokerId::SpaceJoker, "special", "multiplicative potential"),
+            EffectPriority::High
+        );
+        
+        // Test standard jokers get Normal priority
+        assert_eq!(
+            determine_effect_priority(&JokerId::Joker, "additive_mult", "+4 Mult"),
+            EffectPriority::Normal
+        );
+        
+        assert_eq!(
+            determine_effect_priority(&JokerId::GreedyJoker, "additive_mult", "+3 Mult for Diamonds"),
+            EffectPriority::Normal
+        );
     }
 }

@@ -1217,6 +1217,10 @@ pub mod hand_composition_jokers;
 #[cfg(test)]
 mod hand_composition_tests;
 
+// Include testing utilities for the Joker trait system
+#[cfg(test)]
+pub mod test_utils;
+
 // Re-export important types
 pub use conditional::{ConditionalJoker, JokerCondition};
 

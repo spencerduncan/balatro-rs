@@ -1,6 +1,6 @@
 use balatro_rs::consumables::{JokerTarget, JokerTargetError, Target};
 use balatro_rs::game::Game;
-use balatro_rs::joker::{Joker, JokerId};
+use balatro_rs::joker::{Joker, JokerId, JokerRarity};
 
 /// Mock joker for testing purposes
 #[derive(Debug, Clone)]
@@ -20,32 +20,16 @@ impl Joker for MockJoker {
         self.id
     }
 
-    fn name(&self) -> &'static str {
+    fn name(&self) -> &str {
         self.name
     }
 
-    fn description(&self) -> &'static str {
+    fn description(&self) -> &str {
         "Mock joker for testing"
     }
 
-    fn cost(&self) -> usize {
-        5
-    }
-
-    fn rarity(&self) -> balatro_rs::joker::JokerRarity {
-        balatro_rs::joker::JokerRarity::Common
-    }
-
-    fn apply_effect(
-        &self,
-        _game: &mut Game,
-        _context: &balatro_rs::joker::JokerContext,
-    ) -> Result<(), balatro_rs::joker::JokerError> {
-        Ok(())
-    }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
+    fn rarity(&self) -> JokerRarity {
+        JokerRarity::Common
     }
 }
 

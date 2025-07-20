@@ -145,6 +145,52 @@ fn default_game_rng() -> crate::rng::GameRng {
     crate::rng::GameRng::secure()
 }
 
+/// Format debug message for joker effects with conditional compilation
+#[cfg(debug_assertions)]
+fn format_joker_effect_debug_message(
+    joker_name: &str,
+    effect: &crate::joker::JokerEffect,
+    total_triggers: u32,
+    card: Option<&Card>,
+) -> String {
+    use std::fmt::Write;
+    let mut debug_msg = String::with_capacity(128); // Pre-allocate reasonable size
+
+    match card {
+        None => {
+            // Hand-level format
+            write!(
+                &mut debug_msg,
+                "Joker '{}': +{} chips, +{} mult, +{} money",
+                joker_name,
+                effect.chips * total_triggers as i32,
+                effect.mult * total_triggers as i32,
+                effect.money * total_triggers as i32
+            )
+            .unwrap();
+        }
+        Some(card) => {
+            // Card-level format
+            write!(
+                &mut debug_msg,
+                "Joker '{}' on card {}: +{} chips, +{} mult, +{} money",
+                joker_name,
+                card,
+                effect.chips * total_triggers as i32,
+                effect.mult * total_triggers as i32,
+                effect.money * total_triggers as i32
+            )
+            .unwrap();
+        }
+    }
+
+    if effect.retrigger > 0 {
+        write!(&mut debug_msg, " (retrigger x{})", effect.retrigger).unwrap();
+    }
+
+    debug_msg
+}
+
 impl Game {
     pub fn new(config: Config) -> Self {
         let ante_start = Ante::try_from(config.ante_start).unwrap_or(Ante::One);
@@ -464,23 +510,12 @@ impl Game {
                 #[cfg(debug_assertions)]
                 if trigger_num == 0 && (effect.chips != 0 || effect.mult != 0 || effect.money != 0)
                 {
-                    use std::fmt::Write;
-                    let mut debug_msg = String::with_capacity(128); // Pre-allocate reasonable size
-
-                    write!(
-                        &mut debug_msg,
-                        "Joker '{}': +{} chips, +{} mult, +{} money",
+                    let debug_msg = format_joker_effect_debug_message(
                         joker.name(),
-                        effect.chips * total_triggers as i32,
-                        effect.mult * total_triggers as i32,
-                        effect.money * total_triggers as i32
-                    )
-                    .unwrap();
-
-                    if effect.retrigger > 0 {
-                        write!(&mut debug_msg, " (retrigger x{})", effect.retrigger).unwrap();
-                    }
-
+                        &effect,
+                        total_triggers,
+                        None,
+                    );
                     messages.push(debug_msg);
                 }
             }
@@ -526,25 +561,12 @@ impl Game {
                         // Generate debug message for first trigger only (optimized)
                         #[cfg(debug_assertions)]
                         if trigger_num == 0 {
-                            use std::fmt::Write;
-                            let mut debug_msg = String::with_capacity(128); // Pre-allocate reasonable size
-
-                            write!(
-                                &mut debug_msg,
-                                "Joker '{}' on card {}: +{} chips, +{} mult, +{} money",
+                            let debug_msg = format_joker_effect_debug_message(
                                 joker.name(),
-                                card,
-                                effect.chips * total_triggers as i32,
-                                effect.mult * total_triggers as i32,
-                                effect.money * total_triggers as i32
-                            )
-                            .unwrap();
-
-                            if effect.retrigger > 0 {
-                                write!(&mut debug_msg, " (retrigger x{})", effect.retrigger)
-                                    .unwrap();
-                            }
-
+                                &effect,
+                                total_triggers,
+                                Some(&card),
+                            );
                             messages.push(debug_msg);
                         }
                     }

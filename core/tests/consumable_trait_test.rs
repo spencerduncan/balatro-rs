@@ -514,3 +514,539 @@ fn test_consumable_slots_memory_efficiency() {
     assert_eq!(small_slots.capacity(), 2);
     assert_eq!(large_slots.capacity(), 100);
 }
+
+// Tests for Issue #295 - Slot Addition and Removal Operations
+
+#[test]
+fn test_add_consumable_to_empty_slots() {
+    let mut slots = ConsumableSlots::new();
+    
+    // Create mock consumables
+    let consumable1 = Box::new(MockConsumableForSlots { id: 1 });
+    let consumable2 = Box::new(MockConsumableForSlots { id: 2 });
+    
+    // Add first consumable
+    let result1 = slots.add_consumable(consumable1);
+    assert!(result1.is_ok());
+    assert_eq!(result1.unwrap(), 0);
+    assert_eq!(slots.len(), 1);
+    assert!(!slots.is_empty());
+    assert!(!slots.is_full());
+    
+    // Add second consumable
+    let result2 = slots.add_consumable(consumable2);
+    assert!(result2.is_ok());
+    assert_eq!(result2.unwrap(), 1);
+    assert_eq!(slots.len(), 2);
+    assert!(!slots.is_empty());
+    assert!(slots.is_full());
+}
+
+#[test]
+fn test_add_consumable_when_full() {
+    let mut slots = ConsumableSlots::new();
+    
+    // Fill all slots
+    slots.add_consumable(Box::new(MockConsumableForSlots { id: 1 })).unwrap();
+    slots.add_consumable(Box::new(MockConsumableForSlots { id: 2 })).unwrap();
+    
+    // Try to add one more
+    let consumable3 = Box::new(MockConsumableForSlots { id: 3 });
+    let result = slots.add_consumable(consumable3);
+    
+    assert!(result.is_err());
+    match result.unwrap_err() {
+        balatro_rs::consumables::SlotError::NoEmptySlots { capacity } => {
+            assert_eq!(capacity, 2);
+        }
+        _ => panic!("Expected NoEmptySlots error"),
+    }
+}
+
+#[test]
+fn test_remove_consumable_valid_index() {
+    let mut slots = ConsumableSlots::new();
+    
+    // Add consumables
+    slots.add_consumable(Box::new(MockConsumableForSlots { id: 1 })).unwrap();
+    slots.add_consumable(Box::new(MockConsumableForSlots { id: 2 })).unwrap();
+    
+    // Remove first consumable
+    let result = slots.remove_consumable(0);
+    assert!(result.is_ok());
+    let removed = result.unwrap();
+    assert_eq!(removed.get_mock_id(), 1);
+    assert_eq!(slots.len(), 1);
+    
+    // Remove second consumable
+    let result2 = slots.remove_consumable(1);
+    assert!(result2.is_ok());
+    let removed2 = result2.unwrap();
+    assert_eq!(removed2.get_mock_id(), 2);
+    assert_eq!(slots.len(), 0);
+    assert!(slots.is_empty());
+}
+
+#[test]
+fn test_remove_consumable_invalid_index() {
+    let mut slots = ConsumableSlots::new();
+    slots.add_consumable(Box::new(MockConsumableForSlots { id: 1 })).unwrap();
+    
+    // Try to remove from out of bounds index
+    let result = slots.remove_consumable(5);
+    assert!(result.is_err());
+    match result.unwrap_err() {
+        balatro_rs::consumables::SlotError::IndexOutOfBounds { index, capacity } => {
+            assert_eq!(index, 5);
+            assert_eq!(capacity, 2);
+        }
+        _ => panic!("Expected IndexOutOfBounds error"),
+    }
+}
+
+#[test]
+fn test_remove_consumable_from_empty_slot() {
+    let mut slots = ConsumableSlots::new();
+    slots.add_consumable(Box::new(MockConsumableForSlots { id: 1 })).unwrap();
+    
+    // Try to remove from empty slot (index 1)
+    let result = slots.remove_consumable(1);
+    assert!(result.is_err());
+    match result.unwrap_err() {
+        balatro_rs::consumables::SlotError::SlotEmpty { index } => {
+            assert_eq!(index, 1);
+        }
+        _ => panic!("Expected SlotEmpty error"),
+    }
+}
+
+#[test]
+fn test_get_consumable_valid_access() {
+    let mut slots = ConsumableSlots::new();
+    slots.add_consumable(Box::new(MockConsumableForSlots { id: 42 })).unwrap();
+    
+    // Test immutable access
+    let consumable_ref = slots.get_consumable(0);
+    assert!(consumable_ref.is_some());
+    assert_eq!(consumable_ref.unwrap().get_mock_id(), 42);
+    
+    // Test mutable access
+    let consumable_mut = slots.get_consumable_mut(0);
+    assert!(consumable_mut.is_some());
+    assert_eq!(consumable_mut.unwrap().get_mock_id(), 42);
+}
+
+#[test]
+fn test_get_consumable_invalid_access() {
+    let mut slots = ConsumableSlots::new();
+    slots.add_consumable(Box::new(MockConsumableForSlots { id: 1 })).unwrap();
+    
+    // Test out of bounds access
+    assert!(slots.get_consumable(5).is_none());
+    assert!(slots.get_consumable_mut(5).is_none());
+    
+    // Test empty slot access
+    assert!(slots.get_consumable(1).is_none());
+    assert!(slots.get_consumable_mut(1).is_none());
+}
+
+#[test]
+fn test_find_empty_slot() {
+    let mut slots = ConsumableSlots::new();
+    
+    // Initially, first slot should be empty
+    assert_eq!(slots.find_empty_slot(), Some(0));
+    
+    // Add one consumable
+    slots.add_consumable(Box::new(MockConsumableForSlots { id: 1 })).unwrap();
+    assert_eq!(slots.find_empty_slot(), Some(1));
+    
+    // Fill all slots
+    slots.add_consumable(Box::new(MockConsumableForSlots { id: 2 })).unwrap();
+    assert_eq!(slots.find_empty_slot(), None);
+    
+    // Remove one and check
+    slots.remove_consumable(0).unwrap();
+    assert_eq!(slots.find_empty_slot(), Some(0));
+}
+
+#[test]
+fn test_clear_slot() {
+    let mut slots = ConsumableSlots::new();
+    slots.add_consumable(Box::new(MockConsumableForSlots { id: 1 })).unwrap();
+    slots.add_consumable(Box::new(MockConsumableForSlots { id: 2 })).unwrap();
+    
+    // Clear first slot
+    let result = slots.clear_slot(0);
+    assert!(result.is_ok());
+    assert_eq!(slots.len(), 1);
+    assert!(slots.get_consumable(0).is_none());
+    assert!(slots.get_consumable(1).is_some());
+    
+    // Clear already empty slot (should still succeed)
+    let result2 = slots.clear_slot(0);
+    assert!(result2.is_ok());
+    assert_eq!(slots.len(), 1);
+}
+
+#[test]
+fn test_clear_slot_out_of_bounds() {
+    let mut slots = ConsumableSlots::new();
+    
+    let result = slots.clear_slot(5);
+    assert!(result.is_err());
+    match result.unwrap_err() {
+        balatro_rs::consumables::SlotError::IndexOutOfBounds { index, capacity } => {
+            assert_eq!(index, 5);
+            assert_eq!(capacity, 2);
+        }
+        _ => panic!("Expected IndexOutOfBounds error"),
+    }
+}
+
+#[test]
+fn test_consumable_slots_iterator() {
+    let mut slots = ConsumableSlots::with_capacity(4);
+    
+    // Add some consumables with gaps
+    slots.add_consumable(Box::new(MockConsumableForSlots { id: 10 })).unwrap();
+    slots.add_consumable(Box::new(MockConsumableForSlots { id: 20 })).unwrap();
+    slots.add_consumable(Box::new(MockConsumableForSlots { id: 30 })).unwrap();
+    
+    // Remove middle one to create gap
+    slots.remove_consumable(1).unwrap();
+    
+    // Iterator should skip empty slots
+    let ids: Vec<u32> = slots.iter().map(|c| c.get_mock_id()).collect();
+    assert_eq!(ids, vec![10, 30]);
+    assert_eq!(ids.len(), 2);
+}
+
+#[test]
+fn test_consumable_slots_iterator_empty() {
+    let slots = ConsumableSlots::new();
+    let count = slots.iter().count();
+    assert_eq!(count, 0);
+}
+
+#[test]
+fn test_slot_operations_with_custom_capacity() {
+    let mut slots = ConsumableSlots::with_capacity(5);
+    
+    // Fill 3 slots
+    for i in 1..=3 {
+        slots.add_consumable(Box::new(MockConsumableForSlots { id: i })).unwrap();
+    }
+    
+    assert_eq!(slots.len(), 3);
+    assert_eq!(slots.available_slots(), 2);
+    assert!(!slots.is_full());
+    
+    // Find next empty slot
+    assert_eq!(slots.find_empty_slot(), Some(3));
+    
+    // Remove middle slot
+    slots.remove_consumable(1).unwrap();
+    assert_eq!(slots.len(), 2);
+    assert_eq!(slots.find_empty_slot(), Some(1)); // Should find gap
+}
+
+#[test]
+fn test_slot_error_debug_display() {
+    use balatro_rs::consumables::SlotError;
+    
+    let error1 = SlotError::IndexOutOfBounds { index: 5, capacity: 2 };
+    let error2 = SlotError::NoEmptySlots { capacity: 3 };
+    let error3 = SlotError::SlotEmpty { index: 1 };
+    
+    // Test debug output
+    assert!(format!("{:?}", error1).contains("IndexOutOfBounds"));
+    assert!(format!("{:?}", error2).contains("NoEmptySlots"));
+    assert!(format!("{:?}", error3).contains("SlotEmpty"));
+    
+    // Test display output
+    assert!(error1.to_string().contains("out of bounds"));
+    assert!(error2.to_string().contains("No empty slots"));
+    assert!(error3.to_string().contains("already empty"));
+}
+
+// Mock consumable for slot testing
+#[derive(Debug)]
+struct MockConsumableForSlots {
+    id: u32,
+}
+
+impl MockConsumableForSlots {
+    fn get_mock_id(&self) -> u32 {
+        self.id
+    }
+}
+
+impl Consumable for MockConsumableForSlots {
+    fn consumable_type(&self) -> ConsumableType {
+        ConsumableType::Tarot
+    }
+
+    fn can_use(&self, _game_state: &Game, _target: &Target) -> bool {
+        true
+    }
+
+    fn use_effect(&self, _game_state: &mut Game, _target: Target) -> Result<(), ConsumableError> {
+        Ok(())
+    }
+
+    fn get_description(&self) -> String {
+        format!("Mock consumable {}", self.id)
+    }
+
+    fn get_target_type(&self) -> TargetType {
+        TargetType::None
+    }
+
+    fn get_effect_category(&self) -> ConsumableEffect {
+        ConsumableEffect::Utility
+    }
+}
+
+// Integration tests with actual consumable implementations
+#[test]
+fn test_integration_consumable_slots_with_real_consumables() {
+    use balatro_rs::consumables::ConsumableId;
+    
+    let mut slots = ConsumableSlots::new();
+    
+    // Create instances of different consumable types
+    let tarot_consumable = Box::new(RealConsumableWrapper {
+        id: ConsumableId::TheFool,
+        consumable_type: ConsumableType::Tarot,
+    });
+    
+    let planet_consumable = Box::new(RealConsumableWrapper {
+        id: ConsumableId::Mercury,
+        consumable_type: ConsumableType::Planet,
+    });
+    
+    // Test adding different types
+    let result1 = slots.add_consumable(tarot_consumable);
+    assert!(result1.is_ok());
+    assert_eq!(result1.unwrap(), 0);
+    
+    let result2 = slots.add_consumable(planet_consumable);
+    assert!(result2.is_ok());
+    assert_eq!(result2.unwrap(), 1);
+    
+    // Test access
+    assert!(slots.get_consumable(0).is_some());
+    assert!(slots.get_consumable(1).is_some());
+    
+    // Test type checking
+    assert_eq!(slots.get_consumable(0).unwrap().consumable_type(), ConsumableType::Tarot);
+    assert_eq!(slots.get_consumable(1).unwrap().consumable_type(), ConsumableType::Planet);
+    
+    // Test iterator with mixed types
+    let types: Vec<ConsumableType> = slots.iter().map(|c| c.consumable_type()).collect();
+    assert_eq!(types, vec![ConsumableType::Tarot, ConsumableType::Planet]);
+}
+
+#[test]
+fn test_integration_slot_operations_with_spectral_cards() {
+    let mut slots = ConsumableSlots::with_capacity(3);
+    
+    // Add spectral cards
+    let familiar = Box::new(RealConsumableWrapper {
+        id: ConsumableId::Familiar,
+        consumable_type: ConsumableType::Spectral,
+    });
+    
+    let grim = Box::new(RealConsumableWrapper {
+        id: ConsumableId::Grim,
+        consumable_type: ConsumableType::Spectral,
+    });
+    
+    let incantation = Box::new(RealConsumableWrapper {
+        id: ConsumableId::Incantation,
+        consumable_type: ConsumableType::Spectral,
+    });
+    
+    // Fill slots
+    slots.add_consumable(familiar).unwrap();
+    slots.add_consumable(grim).unwrap();
+    slots.add_consumable(incantation).unwrap();
+    
+    assert_eq!(slots.len(), 3);
+    assert!(slots.is_full());
+    
+    // Remove middle card
+    let removed = slots.remove_consumable(1).unwrap();
+    assert_eq!(removed.get_real_id(), ConsumableId::Grim);
+    
+    // Verify gap created
+    assert_eq!(slots.len(), 2);
+    assert!(slots.get_consumable(1).is_none());
+    assert!(slots.get_consumable(0).is_some());
+    assert!(slots.get_consumable(2).is_some());
+    
+    // Add new card to fill gap
+    let new_spectral = Box::new(RealConsumableWrapper {
+        id: ConsumableId::SpectralPlaceholder,
+        consumable_type: ConsumableType::Spectral,
+    });
+    
+    let new_index = slots.add_consumable(new_spectral).unwrap();
+    assert_eq!(new_index, 1); // Should fill the gap
+}
+
+#[test]
+fn test_integration_mixed_consumable_types() {
+    let mut slots = ConsumableSlots::with_capacity(4);
+    
+    // Add variety of consumable types
+    let consumables = vec![
+        Box::new(RealConsumableWrapper {
+            id: ConsumableId::TheMagician,
+            consumable_type: ConsumableType::Tarot,
+        }),
+        Box::new(RealConsumableWrapper {
+            id: ConsumableId::Venus,
+            consumable_type: ConsumableType::Planet,
+        }),
+        Box::new(RealConsumableWrapper {
+            id: ConsumableId::Familiar,
+            consumable_type: ConsumableType::Spectral,
+        }),
+        Box::new(RealConsumableWrapper {
+            id: ConsumableId::TheEmperor,
+            consumable_type: ConsumableType::Tarot,
+        }),
+    ];
+    
+    // Add all consumables
+    for (i, consumable) in consumables.into_iter().enumerate() {
+        let result = slots.add_consumable(consumable);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), i);
+    }
+    
+    // Test iteration over mixed types
+    let types: Vec<ConsumableType> = slots.iter().map(|c| c.consumable_type()).collect();
+    assert_eq!(types, vec![
+        ConsumableType::Tarot,
+        ConsumableType::Planet,
+        ConsumableType::Spectral,
+        ConsumableType::Tarot
+    ]);
+    
+    // Test targeted removal
+    slots.remove_consumable(2).unwrap(); // Remove Spectral
+    assert_eq!(slots.len(), 3);
+    
+    // Verify remaining types
+    let remaining_types: Vec<ConsumableType> = slots.iter().map(|c| c.consumable_type()).collect();
+    assert_eq!(remaining_types, vec![
+        ConsumableType::Tarot,
+        ConsumableType::Planet,
+        ConsumableType::Tarot
+    ]);
+}
+
+#[test]
+fn test_integration_consumable_descriptions() {
+    let mut slots = ConsumableSlots::new();
+    
+    let consumable = Box::new(RealConsumableWrapper {
+        id: ConsumableId::TheHighPriestess,
+        consumable_type: ConsumableType::Tarot,
+    });
+    
+    slots.add_consumable(consumable).unwrap();
+    
+    // Test that description method works through trait object
+    let stored_consumable = slots.get_consumable(0).unwrap();
+    let description = stored_consumable.get_description();
+    assert!(!description.is_empty());
+    assert!(description.contains("High Priestess"));
+}
+
+#[test]
+fn test_integration_consumable_target_types() {
+    let mut slots = ConsumableSlots::with_capacity(3);
+    
+    // Add consumables with different target types
+    let consumables = vec![
+        (ConsumableId::TheFool, TargetType::None),
+        (ConsumableId::TheMagician, TargetType::Cards(2)),
+        (ConsumableId::Mercury, TargetType::HandType),
+    ];
+    
+    for (id, expected_target) in consumables {
+        let consumable = Box::new(RealConsumableWrapper {
+            id,
+            consumable_type: id.consumable_type(),
+        });
+        
+        slots.add_consumable(consumable).unwrap();
+    }
+    
+    // Verify target types are preserved
+    assert_eq!(slots.get_consumable(0).unwrap().get_target_type(), TargetType::None);
+    assert_eq!(slots.get_consumable(1).unwrap().get_target_type(), TargetType::Cards(2));
+    assert_eq!(slots.get_consumable(2).unwrap().get_target_type(), TargetType::HandType);
+}
+
+// Real consumable wrapper for integration testing
+#[derive(Debug)]
+struct RealConsumableWrapper {
+    id: ConsumableId,
+    consumable_type: ConsumableType,
+}
+
+impl RealConsumableWrapper {
+    fn get_real_id(&self) -> ConsumableId {
+        self.id
+    }
+}
+
+impl Consumable for RealConsumableWrapper {
+    fn consumable_type(&self) -> ConsumableType {
+        self.consumable_type
+    }
+
+    fn can_use(&self, _game_state: &Game, _target: &Target) -> bool {
+        true
+    }
+
+    fn use_effect(&self, _game_state: &mut Game, _target: Target) -> Result<(), ConsumableError> {
+        Ok(())
+    }
+
+    fn get_description(&self) -> String {
+        format!("Real consumable: {}", self.id)
+    }
+
+    fn get_target_type(&self) -> TargetType {
+        match self.id {
+            ConsumableId::TheFool => TargetType::None,
+            ConsumableId::TheMagician => TargetType::Cards(2),
+            ConsumableId::TheHighPriestess => TargetType::None,
+            ConsumableId::TheEmperor => TargetType::None,
+            ConsumableId::TheHierophant => TargetType::Cards(2),
+            ConsumableId::Mercury => TargetType::HandType,
+            ConsumableId::Venus => TargetType::HandType,
+            ConsumableId::Earth => TargetType::HandType,
+            ConsumableId::Mars => TargetType::HandType,
+            ConsumableId::Jupiter => TargetType::HandType,
+            ConsumableId::Familiar => TargetType::Cards(1),
+            ConsumableId::Grim => TargetType::Cards(1),
+            ConsumableId::Incantation => TargetType::Cards(1),
+            _ => TargetType::None,
+        }
+    }
+
+    fn get_effect_category(&self) -> ConsumableEffect {
+        match self.consumable_type {
+            ConsumableType::Tarot => ConsumableEffect::Enhancement,
+            ConsumableType::Planet => ConsumableEffect::Modification,
+            ConsumableType::Spectral => ConsumableEffect::Generation,
+        }
+    }
+}

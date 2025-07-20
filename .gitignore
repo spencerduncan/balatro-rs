@@ -17,3 +17,9 @@ __pycache__/
 *.pyo
 *.pyd
 # Trigger CI re-run to validate current formatting fixes
+
+# Backup files
+*.backup
+*.bak
+*.old
+*.orig

@@ -8,6 +8,7 @@ pub mod card;
 pub mod config;
 pub mod consumables;
 pub mod deck;
+pub mod display;
 pub mod error;
 pub mod game;
 pub mod generator;

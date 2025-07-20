@@ -321,15 +321,42 @@ pub enum JokerRarity {
 
 ### Python Bindings
 
-The joker system is exposed to Python through PyO3:
+The joker system is exposed to Python through PyO3. Following the dual framework elimination, use `GameEngine` for actions and `GameState` for read-only access:
 
 ```python
-# Get jokers from game state
-jokers = game_state.jokers()
+# Create game engine (handles actions)
+engine = pylatro.GameEngine()
 
-# Each joker exposes basic information
-for joker in jokers:
-    print(f"{joker.name}: {joker.description}")
+# Access read-only state for joker information
+state = engine.state
+
+# Get joker IDs from state (new registry-based API)
+for joker_id in state.joker_ids:
+    joker_info = engine.get_joker_info(joker_id)
+    if joker_info:
+        print(f"{joker_info.name}: {joker_info.description}")
+
+# Helper methods for easy access
+joker_names = state.get_joker_names()
+joker_descriptions = state.get_joker_descriptions()
+for name, desc in zip(joker_names, joker_descriptions):
+    print(f"{name}: {desc}")
+```
+
+### Migration from Legacy API
+
+```python
+# DEPRECATED: Old dual framework API (still works with warnings)
+# state.gen_actions()     # Shows deprecation warning
+# state.is_over          # Shows deprecation warning
+# state.jokers()         # Shows deprecation warning
+
+# CURRENT: New single framework API
+engine = pylatro.GameEngine()
+actions = engine.gen_actions()     # ✅ Use GameEngine for actions
+is_over = engine.is_over          # ✅ Use GameEngine for game state
+state = engine.state              # ✅ Use GameState for read-only access
+joker_ids = state.joker_ids       # ✅ Use new registry-based API
 ```
 
 ## Error Handling

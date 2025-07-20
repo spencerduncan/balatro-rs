@@ -15,6 +15,16 @@ Understanding which operations happen most frequently helps prioritize optimizat
 3. **State Updates** (medium frequency): Called when joker state changes
 4. **Shop Operations** (low frequency): Called when entering shop
 
+### Dual Framework Elimination Benefits
+
+The elimination of the dual framework design (where both GameState and GameEngine had action methods) provides several performance improvements:
+
+- **Reduced method dispatch overhead**: Clear single path for actions
+- **Better compiler optimization**: Single code path enables better inlining
+- **Memory efficiency**: GameState objects are lightweight read-only snapshots
+- **Cache friendliness**: Clearer access patterns improve CPU cache utilization
+- **Python binding efficiency**: Fewer PyO3 method exports and cleaner FFI boundary
+
 ### Performance Targets
 
 - **Card scoring**: < 1μs per joker per card
