@@ -4,9 +4,18 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
+
+permissions:
+  contents: read
+  actions: read
+  checks: write
 
 jobs:
   quick-check:
@@ -41,8 +50,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: target
-          key: ${{ runner.os }}-cargo-build-pr-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-build-pr-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('**/*.rs') }}
           restore-keys: |
+            ${{ runner.os }}-cargo-build-pr-${{ hashFiles('**/Cargo.lock') }}-
             ${{ runner.os }}-cargo-build-pr-
       
       - name: Check formatting

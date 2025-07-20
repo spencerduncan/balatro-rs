@@ -17,6 +17,7 @@
 //! - Provides extensible trait-based architecture
 //! - Ensures compatibility with existing game flow
 
+use crate::card::Card;
 use crate::game::Game;
 use crate::joker::{Joker, JokerId};
 use crate::rank::HandRank;
@@ -54,6 +55,10 @@ pub enum SlotError {
 pub enum TargetValidationError {
     #[error("Card index {index} out of bounds (hand size: {hand_size})")]
     CardIndexOutOfBounds { index: usize, hand_size: usize },
+    #[error("Card index {index} out of bounds (deck size: {deck_size})")]
+    DeckIndexOutOfBounds { index: usize, deck_size: usize },
+    #[error("Card index {index} out of bounds (discard pile size: {discard_size})")]
+    DiscardIndexOutOfBounds { index: usize, discard_size: usize },
     #[error("Joker slot {slot} is empty or invalid (joker count: {joker_count})")]
     JokerSlotInvalid { slot: usize, joker_count: usize },
     #[error("Hand type {hand_type:?} is not available")]
@@ -62,6 +67,10 @@ pub enum TargetValidationError {
     NoCardsAvailable,
     #[error("Shop slot {slot} is invalid or empty")]
     ShopSlotInvalid { slot: usize },
+    #[error("Invalid number of cards selected: expected between {min} and {max}, got {actual}")]
+    InvalidCardCount { min: usize, max: usize, actual: usize },
+    #[error("Card at index {index} is already targeted")]
+    CardAlreadyTargeted { index: usize },
 }
 
 /// Categories of effects that consumables can have
@@ -108,13 +117,26 @@ pub enum TargetType {
     Shop,
 }
 
+/// Represents which collection of cards to target
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum CardCollection {
+    /// Cards in the player's hand
+    Hand,
+    /// Cards in the deck
+    Deck,
+    /// Cards in the discard pile
+    DiscardPile,
+    /// Cards that have been played
+    PlayedCards,
+}
+
 /// Specific target for consumable application
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Target {
     /// No target required
     None,
-    /// Target specific cards by index in hand/deck
-    Cards(Vec<usize>),
+    /// Target specific cards with full validation
+    Cards(CardTarget),
     /// Target a specific hand type for planet cards
     HandType(HandRank),
     /// Target a joker by slot index
@@ -130,7 +152,7 @@ impl Target {
     pub fn target_type(&self) -> TargetType {
         match self {
             Target::None => TargetType::None,
-            Target::Cards(cards) => TargetType::Cards(cards.len()),
+            Target::Cards(cards) => TargetType::Cards(cards.indices.len()),
             Target::HandType(_) => TargetType::HandType,
             Target::Joker(_) => TargetType::Joker,
             Target::Deck => TargetType::Deck,
@@ -143,7 +165,7 @@ impl Target {
         match (self, expected) {
             (Target::None, TargetType::None) => true,
             (Target::Cards(cards), TargetType::Cards(expected_count)) => {
-                cards.len() == expected_count
+                cards.indices.len() == expected_count
             }
             (Target::HandType(_), TargetType::HandType) => true,
             (Target::Joker(_), TargetType::Joker) => true,
@@ -157,7 +179,7 @@ impl Target {
     pub fn card_count(&self) -> usize {
         match self {
             Target::None => 0,
-            Target::Cards(cards) => cards.len(),
+            Target::Cards(cards) => cards.indices.len(),
             Target::HandType(_) => 0,
             Target::Joker(_) => 0,
             Target::Deck => 0,
@@ -174,29 +196,7 @@ impl Target {
     pub fn validate(&self, game: &Game) -> Result<(), TargetValidationError> {
         match self {
             Target::None => Ok(()),
-            Target::Cards(indices) => {
-                // Check if any cards are available
-                let hand_size = game.available.cards().len();
-                if hand_size == 0 {
-                    return Err(TargetValidationError::NoCardsAvailable);
-                }
-
-                // Check if indices list is empty
-                if indices.is_empty() {
-                    return Err(TargetValidationError::NoCardsAvailable);
-                }
-
-                // Validate each card index
-                for &index in indices {
-                    if index >= hand_size {
-                        return Err(TargetValidationError::CardIndexOutOfBounds {
-                            index,
-                            hand_size,
-                        });
-                    }
-                }
-                Ok(())
-            }
+            Target::Cards(cards) => cards.validate(game),
             Target::HandType(_hand_type) => {
                 // For now, all hand types are considered available
                 // In future implementations, we might check if the hand type
@@ -224,216 +224,203 @@ impl Target {
         }
     }
 
-    /// Convert a joker target to a JokerTarget struct for enhanced validation
-    pub fn as_joker_target(&self) -> Option<JokerTarget> {
+    /// Extract the CardTarget if this is a Cards target
+    pub fn as_card_target(&self) -> Option<&CardTarget> {
         match self {
-            Target::Joker(slot) => Some(JokerTarget::new(*slot)),
+            Target::Cards(card_target) => Some(card_target),
             _ => None,
         }
     }
 
-    /// Create a target for a joker at the specified slot
-    pub fn joker_at_slot(slot: usize) -> Self {
-        Target::Joker(slot)
+    /// Create a target for cards in hand
+    pub fn cards_in_hand(indices: Vec<usize>) -> Self {
+        Target::Cards(CardTarget::new(CardCollection::Hand, indices))
     }
 
-    /// Create a target for an active joker at the specified slot
-    /// Note: For full active joker validation, use JokerTarget::active_joker directly
-    pub fn active_joker_at_slot(slot: usize) -> Self {
-        Target::Joker(slot)
+    /// Create a target for cards in deck
+    pub fn cards_in_deck(indices: Vec<usize>) -> Self {
+        Target::Cards(CardTarget::new(CardCollection::Deck, indices))
     }
 
-    /// Get all available targets of a specific type for the current game state
-    pub fn get_available_targets(target_type: TargetType, game: &Game) -> Vec<Target> {
-        match target_type {
-            TargetType::None => vec![Target::None],
-            TargetType::Cards(count) => {
+    /// Create a target for cards in discard pile
+    pub fn cards_in_discard(indices: Vec<usize>) -> Self {
+        Target::Cards(CardTarget::new(CardCollection::DiscardPile, indices))
+    }
+
+    /// Create a target for played cards
+    pub fn cards_in_played(indices: Vec<usize>) -> Self {
+        Target::Cards(CardTarget::new(CardCollection::PlayedCards, indices))
+    }
+}
+
+
+/// Represents targeting specific cards with validation
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CardTarget {
+    /// Indices of targeted cards
+    pub indices: Vec<usize>,
+    /// Which collection the cards are from
+    pub collection: CardCollection,
+    /// Minimum number of cards required
+    pub min_cards: usize,
+    /// Maximum number of cards allowed
+    pub max_cards: usize,
+}
+
+impl CardTarget {
+    /// Create a new card target with specified indices and collection
+    pub fn new(collection: CardCollection, indices: Vec<usize>) -> Self {
+        let count = indices.len();
+        Self {
+            indices,
+            collection,
+            min_cards: count,
+            max_cards: count,
+        }
+    }
+
+    /// Create a target for a single card
+    pub fn single_card(collection: CardCollection, index: usize) -> Self {
+        Self {
+            indices: vec![index],
+            collection,
+            min_cards: 1,
+            max_cards: 1,
+        }
+    }
+
+    /// Create a target with variable card count
+    pub fn with_count_range(
+        collection: CardCollection,
+        indices: Vec<usize>,
+        min_cards: usize,
+        max_cards: usize,
+    ) -> Self {
+        Self {
+            indices,
+            collection,
+            min_cards,
+            max_cards,
+        }
+    }
+
+    /// Validate this target against the current game state
+    pub fn validate(&self, game: &Game) -> Result<(), TargetValidationError> {
+        // Validate card count
+        let count = self.indices.len();
+        if count < self.min_cards || count > self.max_cards {
+            return Err(TargetValidationError::InvalidCardCount {
+                min: self.min_cards,
+                max: self.max_cards,
+                actual: count,
+            });
+        }
+
+        // Validate indices based on collection
+        match self.collection {
+            CardCollection::Hand => {
                 let hand_size = game.available.cards().len();
-                if hand_size == 0 || count > hand_size {
-                    vec![] // No valid card combinations available
-                } else if count == 1 {
-                    // For single card selection, return each card as a separate target
-                    (0..hand_size).map(|i| Target::Cards(vec![i])).collect()
-                } else {
-                    // For multiple card selection, generate all valid combinations
-                    // Limited to reasonable number of combinations for performance
-                    if count > 5 || count > hand_size {
-                        vec![] // Too many combinations or impossible selection
-                    } else {
-                        generate_card_combinations(hand_size, count)
+                for &index in &self.indices {
+                    if index >= hand_size {
+                        return Err(TargetValidationError::CardIndexOutOfBounds {
+                            index,
+                            hand_size,
+                        });
                     }
                 }
             }
-            TargetType::HandType => {
-                // Return all possible hand types as targets
-                use HandRank::*;
-                vec![
-                    Target::HandType(HighCard),
-                    Target::HandType(OnePair),
-                    Target::HandType(TwoPair),
-                    Target::HandType(ThreeOfAKind),
-                    Target::HandType(Straight),
-                    Target::HandType(Flush),
-                    Target::HandType(FullHouse),
-                    Target::HandType(FourOfAKind),
-                    Target::HandType(StraightFlush),
-                    Target::HandType(RoyalFlush),
-                    Target::HandType(FiveOfAKind),
-                    Target::HandType(FlushHouse),
-                    Target::HandType(FlushFive),
-                ]
+            CardCollection::Deck => {
+                let deck_size = game.deck.len();
+                for &index in &self.indices {
+                    if index >= deck_size {
+                        return Err(TargetValidationError::DeckIndexOutOfBounds {
+                            index,
+                            deck_size,
+                        });
+                    }
+                }
             }
-            TargetType::Joker => {
-                // Return targets for each joker slot that has a joker
-                (0..game.jokers.len()).map(Target::Joker).collect()
+            CardCollection::DiscardPile => {
+                let discard_size = game.discarded.len();
+                for &index in &self.indices {
+                    if index >= discard_size {
+                        return Err(TargetValidationError::DiscardIndexOutOfBounds {
+                            index,
+                            discard_size,
+                        });
+                    }
+                }
             }
-            TargetType::Deck => vec![Target::Deck],
-            TargetType::Shop => {
-                // Without shop implementation, return empty
-                // In future: return available shop slots
-                vec![]
+            CardCollection::PlayedCards => {
+                // For played cards, we check against selected cards
+                let selected_size = game.available.selected().len();
+                for &index in &self.indices {
+                    if index >= selected_size {
+                        return Err(TargetValidationError::CardIndexOutOfBounds {
+                            index,
+                            hand_size: selected_size,
+                        });
+                    }
+                }
             }
         }
-    }
-}
 
-/// Target information for joker selection with enhanced validation
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct JokerTarget {
-    /// The slot index of the joker
-    pub slot: usize,
-    /// Whether the joker must be active (not disabled/sealed)
-    pub require_active: bool,
-    /// Optional requirement for specific joker type
-    pub joker_type: Option<JokerId>,
-}
-
-impl JokerTarget {
-    /// Create a new JokerTarget for any joker at the given slot
-    pub fn new(slot: usize) -> Self {
-        Self {
-            slot,
-            require_active: false,
-            joker_type: None,
-        }
-    }
-
-    /// Create a target that requires an active joker at the given slot
-    pub fn active_joker(slot: usize) -> Self {
-        Self {
-            slot,
-            require_active: true,
-            joker_type: None,
-        }
-    }
-
-    /// Create a target for a specific joker type at the given slot
-    pub fn joker_of_type(slot: usize, joker_type: JokerId) -> Self {
-        Self {
-            slot,
-            require_active: false,
-            joker_type: Some(joker_type),
-        }
-    }
-
-    /// Validate that this target is valid for the current game state
-    pub fn validate(&self, game: &Game) -> Result<(), JokerTargetError> {
-        // Check if slot is within bounds
-        if self.slot >= game.jokers.len() {
-            return Err(JokerTargetError::EmptySlot { slot: self.slot });
-        }
-
-        // Get the joker at this slot
-        let joker = &game.jokers[self.slot];
-
-        // Check if joker is active if required
-        // TODO: This will need to be updated when joker state management is fully implemented
-        // For now, we assume all jokers are active
-        if self.require_active {
-            // In the future, check joker.is_active() or similar
-            // For now, this check passes
-        }
-
-        // Check joker type if specified
-        if let Some(expected_type) = self.joker_type {
-            let actual_type = joker.id();
-            if actual_type != expected_type {
-                return Err(JokerTargetError::WrongJokerType {
-                    expected: expected_type,
-                    actual: actual_type,
-                });
+        // Check for duplicate indices
+        let mut seen = std::collections::HashSet::new();
+        for &index in &self.indices {
+            if !seen.insert(index) {
+                return Err(TargetValidationError::CardAlreadyTargeted { index });
             }
         }
 
         Ok(())
     }
 
-    /// Get the joker at this target's slot
-    pub fn get_joker<'a>(&self, game: &'a Game) -> Result<&'a dyn Joker, JokerTargetError> {
-        // Validate first
+    /// Get immutable references to the targeted cards
+    pub fn get_cards<'a>(&self, game: &'a Game) -> Result<Vec<&'a Card>, TargetValidationError> {
         self.validate(game)?;
 
-        // Return the joker (we know it's valid from validation)
-        Ok(&*game.jokers[self.slot])
+        match self.collection {
+            CardCollection::Hand => {
+                // For now, we'll return an error as accessing individual cards from Available
+                // may require modifications to the Available struct
+                Err(TargetValidationError::NoCardsAvailable)
+            }
+            CardCollection::Deck => {
+                // Note: This requires deck to expose cards, which may need modification
+                Err(TargetValidationError::NoCardsAvailable)
+            }
+            CardCollection::DiscardPile => {
+                let cards: Vec<&Card> = self.indices.iter().map(|&i| &game.discarded[i]).collect();
+                Ok(cards)
+            }
+            CardCollection::PlayedCards => {
+                // This also may require modifications to access individual selected cards
+                Err(TargetValidationError::NoCardsAvailable)
+            }
+        }
     }
 
-    /// Check if the slot is occupied (without full validation)
-    pub fn is_slot_occupied(&self, game: &Game) -> bool {
-        self.slot < game.jokers.len()
-    }
-}
+    /// Get mutable references to the targeted cards
+    pub fn get_cards_mut<'a>(
+        &self,
+        game: &'a mut Game,
+    ) -> Result<Vec<&'a mut Card>, TargetValidationError> {
+        self.validate(game)?;
 
-/// Error types specific to joker targeting
-#[derive(Debug, Error, Clone, PartialEq, Eq)]
-pub enum JokerTargetError {
-    #[error("Joker slot {slot} is empty")]
-    EmptySlot { slot: usize },
-    #[error("Joker at slot {slot} is not active")]
-    InactiveJoker { slot: usize },
-    #[error("Expected joker type {expected:?} but found {actual:?}")]
-    WrongJokerType { expected: JokerId, actual: JokerId },
-}
-
-/// Generate all possible combinations of selecting `count` cards from `hand_size` total cards
-fn generate_card_combinations(hand_size: usize, count: usize) -> Vec<Target> {
-    if count == 0 || count > hand_size {
-        return vec![];
-    }
-
-    let mut combinations = Vec::new();
-    let mut current_combination = Vec::new();
-
-    generate_combinations_recursive(
-        0,
-        hand_size,
-        count,
-        &mut current_combination,
-        &mut combinations,
-    );
-
-    combinations
-        .into_iter()
-        .map(Target::Cards)
-        .collect()
-}
-
-/// Recursive helper function to generate combinations
-fn generate_combinations_recursive(
-    start: usize,
-    total: usize,
-    remaining: usize,
-    current: &mut Vec<usize>,
-    all_combinations: &mut Vec<Vec<usize>>,
-) {
-    if remaining == 0 {
-        all_combinations.push(current.clone());
-        return;
-    }
-
-    for i in start..=(total - remaining) {
-        current.push(i);
-        generate_combinations_recursive(i + 1, total, remaining - 1, current, all_combinations);
-        current.pop();
+        match self.collection {
+            CardCollection::Hand => {
+                // This is tricky due to borrowing rules - would need to modify Available struct
+                Err(TargetValidationError::NoCardsAvailable)
+            }
+            CardCollection::Deck => Err(TargetValidationError::NoCardsAvailable),
+            CardCollection::DiscardPile => {
+                // Can't easily get mutable references to multiple cards due to borrowing rules
+                // Would need to modify implementation to handle this differently
+                Err(TargetValidationError::NoCardsAvailable)
+            }
+            CardCollection::PlayedCards => Err(TargetValidationError::NoCardsAvailable),
+        }
     }
 }
 

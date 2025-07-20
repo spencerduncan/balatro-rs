@@ -20,6 +20,7 @@ const DEFAULT_JOKER_SLOTS_MAX: usize = 10;
 const DEFAULT_AVAILABLE: usize = 8;
 const DEFAULT_AVAILABLE_MAX: usize = 24; // arbitrary
 const DEFAULT_STORE_CONSUMABLE_SLOTS_MAX: usize = 4;
+const DEFAULT_CONSUMABLE_HAND_CAPACITY: usize = 2;
 const DEFAULT_DECK_MAX: usize = 100;
 const DEFAULT_DISCARDED_MAX: usize = 100;
 const DEFAULT_SELECTED_MAX: usize = 5;
@@ -48,6 +49,7 @@ pub struct Config {
     pub available: usize,
     pub available_max: usize,
     pub store_consumable_slots_max: usize,
+    pub consumable_hand_capacity: usize,
     pub deck_max: usize,
     pub discarded_max: usize,
 }
@@ -75,6 +77,7 @@ impl Config {
             available: DEFAULT_AVAILABLE,
             available_max: DEFAULT_AVAILABLE_MAX,
             store_consumable_slots_max: DEFAULT_STORE_CONSUMABLE_SLOTS_MAX,
+            consumable_hand_capacity: DEFAULT_CONSUMABLE_HAND_CAPACITY,
             deck_max: DEFAULT_DECK_MAX,
             discarded_max: DEFAULT_DISCARDED_MAX,
         }
@@ -237,6 +240,10 @@ mod tests {
             config.store_consumable_slots_max,
             DEFAULT_STORE_CONSUMABLE_SLOTS_MAX
         );
+        assert_eq!(
+            config.consumable_hand_capacity,
+            DEFAULT_CONSUMABLE_HAND_CAPACITY
+        );
         assert_eq!(config.deck_max, DEFAULT_DECK_MAX);
         assert_eq!(config.discarded_max, DEFAULT_DISCARDED_MAX);
     }
@@ -270,6 +277,10 @@ mod tests {
             config.store_consumable_slots_max,
             new_config.store_consumable_slots_max
         );
+        assert_eq!(
+            config.consumable_hand_capacity,
+            new_config.consumable_hand_capacity
+        );
         assert_eq!(config.deck_max, new_config.deck_max);
         assert_eq!(config.discarded_max, new_config.discarded_max);
     }
@@ -296,6 +307,7 @@ mod tests {
         assert_eq!(DEFAULT_AVAILABLE, 8);
         assert_eq!(DEFAULT_AVAILABLE_MAX, 24);
         assert_eq!(DEFAULT_STORE_CONSUMABLE_SLOTS_MAX, 4);
+        assert_eq!(DEFAULT_CONSUMABLE_HAND_CAPACITY, 2);
         assert_eq!(DEFAULT_DECK_MAX, 100);
         assert_eq!(DEFAULT_DISCARDED_MAX, 100);
         assert_eq!(DEFAULT_SELECTED_MAX, 5);

@@ -11,6 +11,7 @@ use balatro_rs::joker_metadata::JokerMetadata;
 use balatro_rs::joker_registry::{
     calculate_joker_cost, registry, JokerDefinition, UnlockCondition,
 };
+use balatro_rs::shop::ConsumableType;
 use balatro_rs::stage::{End, Stage};
 use pyo3::prelude::*;
 use pyo3::{PyResult, Python};
@@ -345,6 +346,14 @@ impl GameEngine {
         false
     }
 
+    /// Check if player can afford and has space for a consumable
+    fn can_purchase_consumable(&self, consumable_type: ConsumableType) -> bool {
+        match self.game.can_purchase_consumable(consumable_type) {
+            Ok(()) => true,
+            Err(_) => false,
+        }
+    }
+
     /// Get the cost of a specific joker
     fn get_joker_cost(&self, joker_id: JokerId) -> Result<Option<usize>, GameError> {
         if let Some(definition) = registry::get_definition(&joker_id)? {
@@ -491,7 +500,8 @@ impl GameEngine {
         pyo3::Python::with_gil(|py| {
             let dict = pyo3::types::PyDict::new(py);
 
-            // Get all available jokers and their metadata - single registry access fixes N+1 pattern
+            // Get all available jokers and their metadata
+            // Single registry access fixes N+1 pattern
             if let Ok(all_jokers) = registry::all_definitions() {
                 for definition in all_jokers {
                     let is_unlocked = definition
@@ -624,7 +634,10 @@ impl GameEngine {
 
                 // Get actual state from the joker state manager
                 if let Some(joker_state) = self.game.joker_state_manager.get_state(joker_id) {
-                    let _ = state_dict.set_item("accumulated_value", joker_state.accumulated_value);
+                    let _ = state_dict.set_item(
+                        "accumulated_value",
+                        joker_state.accumulated_value,
+                    );
                     let _ =
                         state_dict.set_item("triggers_remaining", joker_state.triggers_remaining);
 
@@ -990,7 +1003,10 @@ impl GameEngine {
 
                 // Get actual state from the joker state manager
                 if let Some(joker_state) = self.game.joker_state_manager.get_state(joker_id) {
-                    let _ = state_dict.set_item("accumulated_value", joker_state.accumulated_value);
+                    let _ = state_dict.set_item(
+                        "accumulated_value",
+                        joker_state.accumulated_value,
+                    );
                     let _ =
                         state_dict.set_item("triggers_remaining", joker_state.triggers_remaining);
 
@@ -1130,7 +1146,7 @@ impl GameState {
             warnings.call_method1(
                 "warn",
                 (
-                    "GameState.jokers is deprecated. Use GameState.joker_ids with GameEngine.get_joker_info() instead. \
+                    "GameState.jokers is deprecated. Use GameState.joker_ids with \
                      The jokers property will be removed in a future version. \
                      See migration guide for details.",
                     py.get_type::<pyo3::exceptions::PyDeprecationWarning>(),
@@ -1218,7 +1234,11 @@ impl GameState {
             let warnings = py.import("warnings")?;
             warnings.call_method1(
                 "warn",
-                ("GameState.gen_actions() is deprecated. Use GameEngine.gen_actions() instead. GameState should only be used for reading game state, not performing actions.",),
+                (
+                    "GameState.gen_actions() is deprecated. Use GameEngine.gen_actions() \
+                     instead. GameState should only be used for reading game state, \
+                     not performing actions.",
+                ),
             )?;
             warnings.call_method1(
                 "warn",
@@ -1466,7 +1486,7 @@ fn pylatro(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<JokerDefinition>()?;
     m.add_class::<JokerMetadata>()?;
     m.add_class::<UnlockCondition>()?;
-    m.add_class::<JokerMetadata>()?;
+    m.add_class::<ConsumableType>()?;
 
     Ok(())
 }

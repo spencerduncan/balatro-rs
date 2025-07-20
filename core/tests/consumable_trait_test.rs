@@ -94,7 +94,7 @@ fn test_target_validation() {
 
     // Test different target types
     let no_target = Target::None;
-    let card_targets = Target::Cards(vec![0, 1]);
+    let card_targets = Target::cards_in_hand(vec![0, 1]);
     let hand_target = Target::HandType(balatro_rs::rank::HandRank::OnePair);
     let joker_target = Target::Joker(0);
     let deck_target = Target::Deck;
@@ -167,7 +167,7 @@ fn test_enhanced_consumable_trait_methods() {
             match target {
                 Target::None => true,
                 Target::Cards(cards) => {
-                    !cards.is_empty() && cards.len() <= game_state.available.cards().len()
+                    !cards.indices.is_empty() && cards.indices.len() <= game_state.available.cards().len()
                 }
                 Target::HandType(_) => true,
                 Target::Joker(_) => game_state.jokers.len() > 0,
@@ -221,10 +221,10 @@ fn test_target_type_method() {
     // Test target_type() method for all variants
     assert_eq!(Target::None.target_type(), TargetType::None);
     assert_eq!(
-        Target::Cards(vec![0, 1, 2]).target_type(),
+        Target::cards_in_hand(vec![0, 1, 2]).target_type(),
         TargetType::Cards(3)
     );
-    assert_eq!(Target::Cards(vec![]).target_type(), TargetType::Cards(0));
+    assert_eq!(Target::cards_in_hand(vec![]).target_type(), TargetType::Cards(0));
     assert_eq!(
         Target::HandType(balatro_rs::rank::HandRank::OnePair).target_type(),
         TargetType::HandType
@@ -238,8 +238,8 @@ fn test_target_type_method() {
 fn test_target_is_valid_type_method() {
     // Test is_valid_type() method for matching types
     assert!(Target::None.is_valid_type(TargetType::None));
-    assert!(Target::Cards(vec![0, 1]).is_valid_type(TargetType::Cards(2)));
-    assert!(Target::Cards(vec![]).is_valid_type(TargetType::Cards(0)));
+    assert!(Target::cards_in_hand(vec![0, 1]).is_valid_type(TargetType::Cards(2)));
+    assert!(Target::cards_in_hand(vec![]).is_valid_type(TargetType::Cards(0)));
     assert!(
         Target::HandType(balatro_rs::rank::HandRank::FullHouse).is_valid_type(TargetType::HandType)
     );
@@ -249,8 +249,8 @@ fn test_target_is_valid_type_method() {
 
     // Test is_valid_type() method for mismatched types
     assert!(!Target::None.is_valid_type(TargetType::Cards(1)));
-    assert!(!Target::Cards(vec![0]).is_valid_type(TargetType::Cards(2))); // Wrong count
-    assert!(!Target::Cards(vec![0, 1]).is_valid_type(TargetType::HandType));
+    assert!(!Target::cards_in_hand(vec![0]).is_valid_type(TargetType::Cards(2))); // Wrong count
+    assert!(!Target::cards_in_hand(vec![0, 1]).is_valid_type(TargetType::HandType));
     assert!(!Target::HandType(balatro_rs::rank::HandRank::OnePair).is_valid_type(TargetType::Joker));
     assert!(!Target::Joker(0).is_valid_type(TargetType::Deck));
     assert!(!Target::Deck.is_valid_type(TargetType::Shop));
@@ -261,9 +261,9 @@ fn test_target_is_valid_type_method() {
 fn test_target_card_count_method() {
     // Test card_count() method for all variants
     assert_eq!(Target::None.card_count(), 0);
-    assert_eq!(Target::Cards(vec![]).card_count(), 0);
-    assert_eq!(Target::Cards(vec![0]).card_count(), 1);
-    assert_eq!(Target::Cards(vec![0, 1, 2]).card_count(), 3);
+    assert_eq!(Target::cards_in_hand(vec![]).card_count(), 0);
+    assert_eq!(Target::cards_in_hand(vec![0]).card_count(), 1);
+    assert_eq!(Target::cards_in_hand(vec![0, 1, 2]).card_count(), 3);
     assert_eq!(
         Target::HandType(balatro_rs::rank::HandRank::Straight).card_count(),
         0
@@ -280,8 +280,8 @@ fn test_target_all_variants_comprehensive() {
     // Test all Target variants can be created and used
     let targets = vec![
         Target::None,
-        Target::Cards(vec![]),
-        Target::Cards(vec![0, 1, 2]),
+        Target::cards_in_hand(vec![]),
+        Target::cards_in_hand(vec![0, 1, 2]),
         Target::HandType(HandRank::HighCard),
         Target::HandType(HandRank::OnePair),
         Target::HandType(HandRank::TwoPair),

@@ -16,6 +16,11 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
+# Coverage reports
+*.lcov
+coverage/
+coverage.json
 # Trigger CI re-run to validate current formatting fixes
 
 # Backup files

@@ -31,6 +31,7 @@ impl fmt::Display for MoveDirection {
 #[cfg_attr(feature = "python", pyclass(eq))]
 #[derive(Debug, PartialEq, Clone)]
 pub enum Action {
+    // Single-target actions (existing)
     SelectCard(Card),
     MoveCard(MoveDirection, Card),
     Play(),
@@ -43,12 +44,39 @@ pub enum Action {
     SkipPack { pack_id: usize },
     NextRound(),
     SelectBlind(Blind),
+    
+    // Multi-select actions for cards
+    SelectCards(Vec<Card>),           // Select multiple cards at once
+    DeselectCard(Card),               // Deselect a specific card
+    DeselectCards(Vec<Card>),         // Deselect multiple cards
+    ToggleCardSelection(Card),        // Toggle selection state of a card
+    SelectAllCards(),                 // Select all available cards
+    DeselectAllCards(),               // Clear all card selections
+    RangeSelectCards { start: Card, end: Card }, // Select range of cards
+    
+    // Multi-select actions for jokers  
+    SelectJoker(JokerId),             // Select a joker
+    DeselectJoker(JokerId),           // Deselect a joker
+    ToggleJokerSelection(JokerId),    // Toggle joker selection
+    SelectAllJokers(),                // Select all available jokers
+    DeselectAllJokers(),              // Clear all joker selections
+    
+    // Batch operations
+    BuyJokers(Vec<(JokerId, usize)>), // Buy multiple jokers
+    SellJokers(Vec<JokerId>),         // Sell multiple jokers
+    BuyPacks(Vec<PackType>),          // Buy multiple packs
+    
+    // Multi-select control
+    ActivateMultiSelect(),            // Enter multi-select mode
+    DeactivateMultiSelect(),          // Exit multi-select mode and clear selections
+    
     // SkipBlind(Blind),
 }
 
 impl fmt::Display for Action {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
+            // Single-target actions (existing)
             Self::SelectCard(card) => {
                 write!(f, "SelectCard: {card}")
             }
@@ -87,6 +115,65 @@ impl fmt::Display for Action {
             }
             Self::SelectBlind(blind) => {
                 write!(f, "SelectBlind: {blind}")
+            }
+            
+            // Multi-select actions for cards
+            Self::SelectCards(cards) => {
+                write!(f, "SelectCards: {} cards", cards.len())
+            }
+            Self::DeselectCard(card) => {
+                write!(f, "DeselectCard: {card}")
+            }
+            Self::DeselectCards(cards) => {
+                write!(f, "DeselectCards: {} cards", cards.len())
+            }
+            Self::ToggleCardSelection(card) => {
+                write!(f, "ToggleCardSelection: {card}")
+            }
+            Self::SelectAllCards() => {
+                write!(f, "SelectAllCards")
+            }
+            Self::DeselectAllCards() => {
+                write!(f, "DeselectAllCards")
+            }
+            Self::RangeSelectCards { start, end } => {
+                write!(f, "RangeSelectCards: {start} to {end}")
+            }
+            
+            // Multi-select actions for jokers
+            Self::SelectJoker(joker_id) => {
+                write!(f, "SelectJoker: {joker_id:?}")
+            }
+            Self::DeselectJoker(joker_id) => {
+                write!(f, "DeselectJoker: {joker_id:?}")
+            }
+            Self::ToggleJokerSelection(joker_id) => {
+                write!(f, "ToggleJokerSelection: {joker_id:?}")
+            }
+            Self::SelectAllJokers() => {
+                write!(f, "SelectAllJokers")
+            }
+            Self::DeselectAllJokers() => {
+                write!(f, "DeselectAllJokers")
+            }
+            
+            // Batch operations
+            Self::BuyJokers(jokers) => {
+                write!(f, "BuyJokers: {} jokers", jokers.len())
+            }
+            Self::SellJokers(jokers) => {
+                write!(f, "SellJokers: {} jokers", jokers.len())
+            }
+            Self::BuyPacks(packs) => {
+                write!(f, "BuyPacks: {} packs", packs.len())
+            }
+            
+            // Multi-select control
+            Self::ActivateMultiSelect() => {
+                write!(f, "ActivateMultiSelect")
+            }
+            Self::DeactivateMultiSelect() => {
+                write!(f, "DeactivateMultiSelect")
             }
         }
     }

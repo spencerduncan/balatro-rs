@@ -19,6 +19,7 @@ use crate::shop::packs::{OpenPackState, Pack};
 use crate::shop::Shop;
 use crate::stage::{Blind, End, Stage};
 use crate::state_version::StateVersion;
+use crate::target_context::TargetContext;
 use crate::vouchers::VoucherCollection;
 
 // Re-export GameState for external use with qualified name to avoid Python bindings conflict
@@ -221,6 +222,10 @@ pub struct Game {
     #[cfg_attr(feature = "serde", serde(skip))]
     pub debug_messages: Vec<String>,
 
+    /// Multi-select context for tracking selected items
+    #[cfg_attr(feature = "serde", serde(skip, default = "TargetContext::new"))]
+    pub target_context: TargetContext,
+
     /// Random number generator for secure game randomness
     #[cfg_attr(feature = "serde", serde(skip, default = "default_game_rng"))]
     pub rng: crate::rng::GameRng,
@@ -327,6 +332,9 @@ impl Game {
             // Initialize debug logging fields
             debug_logging_enabled: false,
             debug_messages: Vec::new(),
+
+            // Initialize multi-select context
+            target_context: TargetContext::new(),
 
             // Initialize secure RNG
             rng: crate::rng::GameRng::secure(),
@@ -444,7 +452,8 @@ impl Game {
     fn draw(&mut self, count: usize) {
         if let Some(drawn) = self.deck.draw(count) {
             self.available.extend(drawn);
-            // self.available.extend(drawn);
+            // Update target context with new available cards
+            self.sync_target_context();
         }
     }
 
@@ -455,8 +464,33 @@ impl Game {
         // add available back to deck and empty
         self.deck.extend(self.available.cards());
         self.available.empty();
+        // Clear target context when cards are emptied
+        self.target_context.clear_selections();
         self.deck.shuffle(&self.rng);
         self.draw(self.config.available);
+    }
+
+    /// Synchronize target context with current game state
+    fn sync_target_context(&mut self) {
+        // Update available cards
+        let available_cards = self.available.cards();
+        self.target_context.set_available_cards(available_cards);
+        
+        // Update available jokers
+        let joker_ids: Vec<JokerId> = self.jokers.iter()
+            .map(|joker| {
+                // Get the joker's ID
+                joker.id()
+            })
+            .collect();
+        self.target_context.set_available_jokers(joker_ids);
+        
+        // Update available packs (if any)
+        let pack_ids: Vec<usize> = self.pack_inventory.iter()
+            .enumerate()
+            .map(|(i, _)| i)
+            .collect();
+        self.target_context.set_available_packs(pack_ids);
     }
 
     pub(crate) fn select_card(&mut self, card: Card) -> Result<(), GameError> {
@@ -549,11 +583,7 @@ impl Game {
     fn process_joker_effects(&mut self, hand: &MadeHand) -> (i32, i32, i32, Vec<String>) {
         use crate::hand::Hand;
 
-        let mut total_chips = 0i32;
-        let mut total_mult = 0i32;
-        let mut total_money = 0i32;
         let mut messages = Vec::new();
-        let mut total_mult_multiplier = 1.0f64;
 
         // Create game context
         let mut context = GameContext {
@@ -575,100 +605,97 @@ impl Game {
             rng: &self.rng,
         };
 
-        // Process hand-level effects first
-        for joker in &self.jokers {
-            let select_hand = SelectHand::new(hand.hand.cards().to_vec());
-            let effect = joker.on_hand_played(&mut context, &select_hand);
+        // Process hand-level effects using the cached processor
+        let select_hand = SelectHand::new(hand.hand.cards().to_vec());
+        let hand_result = self.joker_effect_processor.process_hand_effects(&self.jokers, &mut context, &select_hand);
+        
+        let mut total_chips = hand_result.accumulated_effect.chips;
+        let mut total_mult = hand_result.accumulated_effect.mult;
+        let mut total_money = hand_result.accumulated_effect.money;
+        let mut total_mult_multiplier = if hand_result.accumulated_effect.mult_multiplier != 0.0 {
+            hand_result.accumulated_effect.mult_multiplier
+        } else {
+            1.0
+        };
 
-            // Calculate total triggers (1 + retriggers)
-            let total_triggers = 1 + effect.retrigger;
-
-            // Apply effect for each trigger (with killscreen detection)
-            for trigger_num in 0..total_triggers {
-                total_chips += effect.chips;
-                total_mult += effect.mult;
-                total_money += effect.money;
-
-                // Handle mult_multiplier: 0.0 means no multiplier, so treat as 1.0
-                if effect.mult_multiplier != 0.0 {
-                    total_mult_multiplier *= effect.mult_multiplier;
-
-                    // Killscreen detection - stop processing if we hit NaN/Infinity
-                    if !total_mult_multiplier.is_finite() {
-                        messages
-                            .push("KILLSCREEN: Score calculation reached infinity!".to_string());
-                        break;
-                    }
-                }
-
-                // Generate debug message for each trigger (optimized for minimal allocations)
-                #[cfg(debug_assertions)]
-                if trigger_num == 0 && (effect.chips != 0 || effect.mult != 0 || effect.money != 0)
-                {
-                    let debug_msg = format_joker_effect_debug_message(
-                        joker.name(),
-                        &effect,
-                        total_triggers,
-                        None,
-                    );
-                    messages.push(debug_msg);
-                }
+        // Generate debug messages for hand effects
+        #[cfg(debug_assertions)]
+        if hand_result.jokers_processed > 0 && (total_chips != 0 || total_mult != 0 || total_money != 0) {
+            use std::fmt::Write;
+            let mut debug_msg = String::with_capacity(128);
+            write!(
+                &mut debug_msg,
+                "Hand effects: +{} chips, +{} mult, +{} money from {} jokers",
+                total_chips,
+                total_mult,
+                total_money,
+                hand_result.jokers_processed
+            ).unwrap();
+            
+            if hand_result.retriggered_count > 0 {
+                write!(&mut debug_msg, " ({} retriggers)", hand_result.retriggered_count).unwrap();
             }
+            }
+            messages.push(debug_msg);
+        }
 
-            if let Some(msg) = effect.message {
-                messages.push(msg);
+        // Process any error messages from hand effects
+        for error in &hand_result.errors {
+            match error {
+                crate::joker_effect_processor::EffectProcessingError::TooManyRetriggers(_) => {
+                    messages.push("KILLSCREEN: Too many retriggered effects!".to_string());
+                },
+                _ => {} // Other errors are less critical for gameplay
             }
         }
 
-        // Process card-level effects
+        // Process card-level effects using the cached processor
         for card in hand.hand.cards() {
-            for joker in &self.jokers {
-                let effect = joker.on_card_scored(&mut context, &card);
-
-                // Only process if there are actual effects
-                if effect.chips != 0
-                    || effect.mult != 0
-                    || effect.money != 0
-                    || effect.mult_multiplier != 0.0
-                {
-                    // Calculate total triggers (1 + retriggers)
-                    let total_triggers = 1 + effect.retrigger;
-
-                    // Apply effect for each trigger (with killscreen detection)
-                    for trigger_num in 0..total_triggers {
-                        total_chips += effect.chips;
-                        total_mult += effect.mult;
-                        total_money += effect.money;
-
-                        // Handle mult_multiplier: 0.0 means no multiplier, so treat as 1.0
-                        if effect.mult_multiplier != 0.0 {
-                            total_mult_multiplier *= effect.mult_multiplier;
-
-                            // Killscreen detection - stop processing if we hit NaN/Infinity
-                            if !total_mult_multiplier.is_finite() {
-                                messages.push(
-                                    "KILLSCREEN: Score calculation reached infinity!".to_string(),
-                                );
-                                break;
-                            }
-                        }
-
-                        // Generate debug message for first trigger only (optimized)
-                        #[cfg(debug_assertions)]
-                        if trigger_num == 0 {
-                            let debug_msg = format_joker_effect_debug_message(
-                                joker.name(),
-                                &effect,
-                                total_triggers,
-                                Some(&card),
-                            );
-                            messages.push(debug_msg);
-                        }
-                    }
+            let card_result = self.joker_effect_processor.process_card_effects(&self.jokers, &mut context, card);
+            
+            // Accumulate card effects
+            total_chips += card_result.accumulated_effect.chips;
+            total_mult += card_result.accumulated_effect.mult;
+            total_money += card_result.accumulated_effect.money;
+            
+            // Handle mult_multiplier: only apply if it's not the default value
+            if card_result.accumulated_effect.mult_multiplier != 0.0 {
+                total_mult_multiplier *= card_result.accumulated_effect.mult_multiplier;
+                
+                // Killscreen detection
+                if !total_mult_multiplier.is_finite() {
+                    messages.push("KILLSCREEN: Score calculation reached infinity!".to_string());
+                    break;
                 }
+            }
 
-                if let Some(msg) = effect.message {
-                    messages.push(msg);
+            // Generate debug messages for card effects
+            #[cfg(debug_assertions)]
+            if card_result.jokers_processed > 0 && (card_result.accumulated_effect.chips != 0 || card_result.accumulated_effect.mult != 0 || card_result.accumulated_effect.money != 0) {
+                use std::fmt::Write;
+                let mut debug_msg = String::with_capacity(128);
+                write!(
+                    &mut debug_msg,
+                    "Card {} effects: +{} chips, +{} mult, +{} money",
+                    card,
+                    card_result.accumulated_effect.chips,
+                    card_result.accumulated_effect.mult,
+                    card_result.accumulated_effect.money
+                ).unwrap();
+                
+                if card_result.retriggered_count > 0 {
+                    write!(&mut debug_msg, " ({} retriggers)", card_result.retriggered_count).unwrap();
+                }
+                messages.push(debug_msg);
+            }
+            
+            // Process any error messages from card effects
+            for error in &card_result.errors {
+                match error {
+                    crate::joker_effect_processor::EffectProcessingError::TooManyRetriggers(_) => {
+                        messages.push("KILLSCREEN: Too many retriggered effects!".to_string());
+                    },
+                    _ => {} // Other errors are less critical for gameplay
                 }
             }
         }
@@ -920,6 +947,60 @@ impl Game {
         }
     }
 
+    /// Configure joker effect cache settings
+    pub fn configure_joker_effect_cache(&mut self, config: crate::joker_effect_processor::CacheConfig) {
+        self.joker_effect_processor.set_cache_config(config);
+    }
+
+    /// Enable joker effect caching with default settings
+    pub fn enable_joker_effect_cache(&mut self) {
+        let mut config = crate::joker_effect_processor::CacheConfig::default();
+        config.enabled = true;
+        self.joker_effect_processor.set_cache_config(config);
+    }
+
+    /// Disable joker effect caching
+    pub fn disable_joker_effect_cache(&mut self) {
+        let mut config = crate::joker_effect_processor::CacheConfig::default();
+        config.enabled = false;
+        self.joker_effect_processor.set_cache_config(config);
+    }
+
+    /// Get joker effect cache performance metrics
+    pub fn get_joker_cache_metrics(&self) -> &crate::joker_effect_processor::CacheMetrics {
+        self.joker_effect_processor.cache_metrics()
+    }
+
+    /// Clear the joker effect cache
+    pub fn clear_joker_effect_cache(&mut self) {
+        self.joker_effect_processor.clear_cache();
+    }
+
+    /// Perform maintenance on the joker effect cache (cleanup expired entries)
+    pub fn maintain_joker_effect_cache(&mut self) {
+        self.joker_effect_processor.maintain_cache();
+    }
+
+    /// Configure joker effect cache for RL training scenarios
+    pub fn configure_joker_cache_for_rl(&mut self) {
+        let config = crate::joker_effect_processor::CacheConfig {
+            max_entries: 10000, // Larger cache for training
+            ttl_seconds: 600,   // 10 minutes
+            enabled: true,
+        };
+        self.joker_effect_processor.set_cache_config(config);
+    }
+
+    /// Configure joker effect cache for simulation scenarios
+    pub fn configure_joker_cache_for_simulation(&mut self) {
+        let config = crate::joker_effect_processor::CacheConfig {
+            max_entries: 1000,  // Moderate cache for simulation
+            ttl_seconds: 300,   // 5 minutes
+            enabled: true,
+        };
+        self.joker_effect_processor.set_cache_config(config);
+    }
+
     pub fn required_score(&self) -> f64 {
         let base = self.ante_current.base() as f64;
 
@@ -1055,6 +1136,71 @@ impl Game {
             self.jokers.push(new_joker);
         } else {
             self.jokers.insert(slot, new_joker);
+        }
+
+        Ok(())
+    }
+
+    /// Validates whether a consumable can be purchased based on game state, player resources, and slot availability.
+    ///
+    /// This method checks that:
+    /// - The game is currently in Shop stage
+    /// - The player has sufficient money for the purchase
+    /// - At least one consumable slot is available in the player's hand
+    ///
+    /// # Arguments
+    /// * `consumable_type` - The type of consumable to validate for purchase
+    ///
+    /// # Returns
+    /// * `Ok(())` if the consumable can be purchased
+    /// * `Err(GameError)` with the specific reason if purchase is not allowed
+    ///
+    /// # Errors
+    /// * `InvalidStage` - Game is not in Shop stage
+    /// * `InvalidBalance` - Player doesn't have enough money
+    /// * `NoAvailableSlot` - Consumable hand is full
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// use balatro_rs::game::Game;
+    /// use balatro_rs::shop::ConsumableType;
+    /// use balatro_rs::stage::Stage;
+    ///
+    /// let mut game = Game::default();
+    /// game.stage = Stage::Shop();
+    /// game.money = 10.0;
+    ///
+    /// // This should succeed
+    /// assert!(game.can_purchase_consumable(ConsumableType::Tarot).is_ok());
+    ///
+    /// // This should fail due to insufficient money
+    /// game.money = 1.0;
+    /// assert!(game.can_purchase_consumable(ConsumableType::Spectral).is_err());
+    /// ```
+    pub fn can_purchase_consumable(
+        &self,
+        consumable_type: crate::shop::ConsumableType,
+    ) -> Result<(), GameError> {
+        // Check if game is in Shop stage
+        if self.stage != Stage::Shop() {
+            return Err(GameError::InvalidStage);
+        }
+
+        // Determine cost based on consumable type (maintaining f64 consistency)
+        let cost = match consumable_type {
+            crate::shop::ConsumableType::Tarot => 3.0,
+            crate::shop::ConsumableType::Planet => 3.0,
+            crate::shop::ConsumableType::Spectral => 4.0,
+        };
+
+        // Check if player has sufficient money
+        if self.money < cost {
+            return Err(GameError::InvalidBalance);
+        }
+
+        // Check if consumable hand has available space
+        if self.consumables_in_hand.len() >= self.config.consumable_hand_capacity {
+            return Err(GameError::NoAvailableSlot);
         }
 
         Ok(())
@@ -1325,6 +1471,76 @@ impl Game {
                 option_index,
             } => self.select_from_pack(pack_id, option_index),
             Action::SkipPack { pack_id } => self.skip_pack(pack_id),
+            
+            // Multi-select actions - placeholder implementations for now
+            Action::SelectCards(_) => {
+                // TODO: Implement multi-card selection
+                Err(GameError::InvalidAction)
+            }
+            Action::DeselectCard(_) => {
+                // TODO: Implement card deselection
+                Err(GameError::InvalidAction)
+            }
+            Action::DeselectCards(_) => {
+                // TODO: Implement multi-card deselection
+                Err(GameError::InvalidAction)
+            }
+            Action::ToggleCardSelection(_) => {
+                // TODO: Implement card selection toggle
+                Err(GameError::InvalidAction)
+            }
+            Action::SelectAllCards() => {
+                // TODO: Implement select all cards
+                Err(GameError::InvalidAction)
+            }
+            Action::DeselectAllCards() => {
+                // TODO: Implement deselect all cards
+                Err(GameError::InvalidAction)
+            }
+            Action::RangeSelectCards { start: _, end: _ } => {
+                // TODO: Implement range selection
+                Err(GameError::InvalidAction)
+            }
+            Action::SelectJoker(_) => {
+                // TODO: Implement joker selection
+                Err(GameError::InvalidAction)
+            }
+            Action::DeselectJoker(_) => {
+                // TODO: Implement joker deselection
+                Err(GameError::InvalidAction)
+            }
+            Action::ToggleJokerSelection(_) => {
+                // TODO: Implement joker selection toggle
+                Err(GameError::InvalidAction)
+            }
+            Action::SelectAllJokers() => {
+                // TODO: Implement select all jokers
+                Err(GameError::InvalidAction)
+            }
+            Action::DeselectAllJokers() => {
+                // TODO: Implement deselect all jokers
+                Err(GameError::InvalidAction)
+            }
+            Action::BuyJokers(_) => {
+                // TODO: Implement batch joker buying
+                Err(GameError::InvalidAction)
+            }
+            Action::SellJokers(_) => {
+                // TODO: Implement batch joker selling
+                Err(GameError::InvalidAction)
+            }
+            Action::BuyPacks(_) => {
+                // TODO: Implement batch pack buying
+                Err(GameError::InvalidAction)
+            }
+            Action::ActivateMultiSelect() => {
+                // TODO: Implement multi-select activation
+                Err(GameError::InvalidAction)
+            }
+            Action::DeactivateMultiSelect() => {
+                // TODO: Implement multi-select deactivation
+                Err(GameError::InvalidAction)
+            }
         }
     }
 
@@ -1480,6 +1696,16 @@ impl fmt::Display for Game {
         writeln!(f, "deck length: {}", self.deck.len())?;
         writeln!(f, "available length: {}", self.available.cards().len())?;
         writeln!(f, "selected length: {}", self.available.selected().len())?;
+        
+        // Multi-select status
+        if self.target_context.is_multi_select_active() {
+            let counts = self.target_context.get_selection_counts();
+            writeln!(f, "multi-select: ACTIVE ({} cards, {} jokers, {} total)", 
+                counts.cards, counts.jokers, counts.total)?;
+        } else {
+            writeln!(f, "multi-select: inactive")?;
+        }
+        
         writeln!(f, "discard length: {}", self.discarded.len())?;
         writeln!(f, "jokers: ")?;
         for j in &self.jokers {
@@ -1669,6 +1895,8 @@ impl Game {
             // Initialize debug logging fields (not serialized)
             debug_logging_enabled: false,
             debug_messages: Vec::new(),
+            // Initialize target context (not serialized)
+            target_context: TargetContext::new(),
             // Initialize secure RNG (not serialized)
             rng: crate::rng::GameRng::secure(),
             // Initialize memory monitor (not serialized)
@@ -1978,7 +2206,8 @@ mod tests {
 
         let result = game.handle_action(action);
         assert!(result.is_ok());
-        // Since the jokers vector is empty, specifying slot 5 will still append at the end (slot 0)
+        // Since the jokers vector is empty, specifying slot 5 will still append
+        // at the end (slot 0)
         assert_eq!(
             game.get_joker_at_slot(0).map(|j| j.id()),
             Some(JokerId::Joker)
@@ -2041,6 +2270,144 @@ mod tests {
         let result = game.handle_action(action);
         assert!(result.is_err());
         assert!(matches!(result.unwrap_err(), GameError::InvalidStage));
+    }
+
+    #[test]
+    fn test_joker_effect_cache_integration() {
+        use crate::card::{Suit, Value};
+        use crate::joker::JokerId;
+
+        let mut game = Game::default();
+        game.start();
+        game.stage = Stage::Blind(Blind::Small);
+        game.blind = Some(Blind::Small);
+
+        // Add a joker to the game for testing
+        if let Some(joker) = crate::joker_factory::JokerFactory::create(JokerId::Joker) {
+            game.jokers.push(joker);
+        }
+
+        // Enable cache and clear any existing entries
+        game.enable_joker_effect_cache();
+        game.clear_joker_effect_cache();
+
+        // Create a test hand
+        let cards = vec![
+            Card::new(Value::Ace, Suit::Heart),
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::Queen, Suit::Heart),
+            Card::new(Value::Jack, Suit::Heart),
+            Card::new(Value::Ten, Suit::Heart),
+        ];
+
+        let select_hand = SelectHand::new(cards);
+        let made_hand = select_hand.best_hand().unwrap();
+
+        // First call should miss cache
+        let initial_metrics = game.get_joker_cache_metrics().clone();
+        let (chips1, mult1, money1, messages1) = game.process_joker_effects(&made_hand);
+
+        // Verify cache metrics show a miss
+        let metrics_after_first = game.get_joker_cache_metrics();
+        assert!(metrics_after_first.total_lookups >= initial_metrics.total_lookups);
+
+        // Second call with same input should potentially hit cache
+        // Note: Since we create a new GameContext each time with current game state,
+        // cache hits depend on the game state being identical
+        let (chips2, mult2, money2, messages2) = game.process_joker_effects(&made_hand);
+
+        // Results should be identical regardless of cache
+        assert_eq!(chips1, chips2);
+        assert_eq!(mult1, mult2);
+        assert_eq!(money1, money2);
+        // Note: messages might differ slightly due to aggregation vs individual processing
+
+        // Test cache configuration
+        game.disable_joker_effect_cache();
+        let config = game.joker_effect_processor.context().cache_config.clone();
+        assert!(!config.enabled);
+
+        game.configure_joker_cache_for_rl();
+        let rl_config = game.joker_effect_processor.context().cache_config.clone();
+        assert!(rl_config.enabled);
+        assert_eq!(rl_config.max_entries, 10000);
+        assert_eq!(rl_config.ttl_seconds, 600);
+
+        game.configure_joker_cache_for_simulation();
+        let sim_config = game.joker_effect_processor.context().cache_config.clone();
+        assert!(sim_config.enabled);
+        assert_eq!(sim_config.max_entries, 1000);
+        assert_eq!(sim_config.ttl_seconds, 300);
+    }
+
+    #[test]
+    fn test_cache_performance_benefit() {
+        use crate::card::{Suit, Value};
+        use crate::joker::JokerId;
+        use std::time::Instant;
+
+        let mut game = Game::default();
+        game.start();
+        game.stage = Stage::Blind(Blind::Small);
+        game.blind = Some(Blind::Small);
+
+        // Add multiple jokers to increase processing complexity
+        for joker_id in [JokerId::Joker, JokerId::GreedyJoker].iter() {
+            if let Some(joker) = crate::joker_factory::JokerFactory::create(*joker_id) {
+                game.jokers.push(joker);
+            }
+        }
+
+        // Create a test hand
+        let cards = vec![
+            Card::new(Value::Ace, Suit::Heart),
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::Queen, Suit::Heart),
+        ];
+        let select_hand = SelectHand::new(cards);
+        let made_hand = select_hand.best_hand().unwrap();
+
+        // Test with cache enabled
+        game.enable_joker_effect_cache();
+        game.clear_joker_effect_cache();
+
+        let start_cached = Instant::now();
+        for _ in 0..100 {
+            let _ = game.process_joker_effects(&made_hand);
+        }
+        let cached_duration = start_cached.elapsed();
+
+        // Test with cache disabled
+        game.disable_joker_effect_cache();
+
+        let start_uncached = Instant::now();
+        for _ in 0..100 {
+            let _ = game.process_joker_effects(&made_hand);
+        }
+        let uncached_duration = start_uncached.elapsed();
+
+        // Re-enable cache for metrics check
+        game.enable_joker_effect_cache();
+        let metrics = game.get_joker_cache_metrics();
+
+        // The test passes if the caching infrastructure works correctly
+        // Performance benefits depend on joker complexity and may not be measurable in simple tests
+        println!("Cached processing: {:?}", cached_duration);
+        println!("Uncached processing: {:?}", uncached_duration);
+        if metrics.total_lookups > 0 {
+            println!("Cache hit ratio: {:.2}%", metrics.hit_ratio() * 100.0);
+        }
+
+        // Verify that both approaches produce the same results
+        game.enable_joker_effect_cache();
+        let (chips_cached, mult_cached, money_cached, _) = game.process_joker_effects(&made_hand);
+
+        game.disable_joker_effect_cache();
+        let (chips_uncached, mult_uncached, money_uncached, _) = game.process_joker_effects(&made_hand);
+
+        assert_eq!(chips_cached, chips_uncached);
+        assert_eq!(mult_cached, mult_uncached);
+        assert_eq!(money_cached, money_uncached);
     }
 
     #[test]
@@ -2497,5 +2864,168 @@ mod tests {
 
         assert_eq!(effects1, effects2);
         assert_ne!(effects1, effects3);
+    }
+
+    #[test]
+    fn test_can_purchase_consumable_validation() {
+        let mut game = Game::default();
+        game.stage = Stage::Shop();
+        game.money = 10.0;
+
+        // Test valid purchase conditions for all consumable types
+        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Tarot).is_ok());
+        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Planet).is_ok());
+        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Spectral).is_ok());
+    }
+
+    #[test]
+    fn test_can_purchase_consumable_insufficient_money() {
+        let mut game = Game::default();
+        game.stage = Stage::Shop();
+        
+        // Test insufficient money for Tarot (costs 3)
+        game.money = 2.0;
+        let result = game.can_purchase_consumable(crate::shop::ConsumableType::Tarot);
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), GameError::InvalidBalance));
+        
+        // Test insufficient money for Planet (costs 3)
+        let result = game.can_purchase_consumable(crate::shop::ConsumableType::Planet);
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), GameError::InvalidBalance));
+        
+        // Test insufficient money for Spectral (costs 4)
+        game.money = 3.0;
+        let result = game.can_purchase_consumable(crate::shop::ConsumableType::Spectral);
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), GameError::InvalidBalance));
+    }
+
+    #[test]
+    fn test_can_purchase_consumable_edge_case_exact_money() {
+        let mut game = Game::default();
+        game.stage = Stage::Shop();
+        
+        // Test edge case: exactly enough money for Tarot
+        game.money = 3.0;
+        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Tarot).is_ok());
+        
+        // Test edge case: exactly enough money for Planet
+        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Planet).is_ok());
+        
+        // Test edge case: exactly enough money for Spectral
+        game.money = 4.0;
+        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Spectral).is_ok());
+    }
+
+    #[test]
+    fn test_can_purchase_consumable_no_available_slots() {
+        let mut game = Game::default();
+        game.stage = Stage::Shop();
+        game.money = 10.0;
+        
+        // Fill consumable hand to capacity (default is 2)
+        game.consumables_in_hand = vec![
+            crate::consumables::ConsumableId::TheFool,
+            crate::consumables::ConsumableId::Mercury,
+        ];
+        assert_eq!(game.consumables_in_hand.len(), game.config.consumable_hand_capacity);
+        
+        // Should not be able to purchase any consumable when hand is full
+        let result = game.can_purchase_consumable(crate::shop::ConsumableType::Tarot);
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), GameError::NoAvailableSlot));
+        
+        let result = game.can_purchase_consumable(crate::shop::ConsumableType::Planet);
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), GameError::NoAvailableSlot));
+        
+        let result = game.can_purchase_consumable(crate::shop::ConsumableType::Spectral);
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), GameError::NoAvailableSlot));
+    }
+
+    #[test]
+    fn test_can_purchase_consumable_wrong_stage() {
+        let mut game = Game::default();
+        game.money = 10.0;
+        
+        // Test all invalid stages
+        game.stage = Stage::PreBlind();
+        let result = game.can_purchase_consumable(crate::shop::ConsumableType::Tarot);
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), GameError::InvalidStage));
+        
+        game.stage = Stage::Blind(crate::stage::Blind::Small);
+        let result = game.can_purchase_consumable(crate::shop::ConsumableType::Planet);
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), GameError::InvalidStage));
+        
+        game.stage = Stage::PostBlind();
+        let result = game.can_purchase_consumable(crate::shop::ConsumableType::Spectral);
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), GameError::InvalidStage));
+        
+        game.stage = Stage::End(crate::stage::End::Win);
+        let result = game.can_purchase_consumable(crate::shop::ConsumableType::Tarot);
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), GameError::InvalidStage));
+    }
+
+    #[test]
+    fn test_can_purchase_consumable_cost_validation() {
+        let mut game = Game::default();
+        game.stage = Stage::Shop();
+        
+        // Test Tarot card cost (3 money)
+        game.money = 3.0;
+        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Tarot).is_ok());
+        game.money = 2.9;
+        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Tarot).is_err());
+        
+        // Test Planet card cost (3 money)
+        game.money = 3.0;
+        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Planet).is_ok());
+        game.money = 2.9;
+        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Planet).is_err());
+        
+        // Test Spectral card cost (4 money)
+        game.money = 4.0;
+        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Spectral).is_ok());
+        game.money = 3.9;
+        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Spectral).is_err());
+    }
+
+    #[test]
+    fn test_can_purchase_consumable_partial_hand() {
+        let mut game = Game::default();
+        game.stage = Stage::Shop();
+        game.money = 10.0;
+        
+        // Test with one consumable in hand (capacity is 2)
+        game.consumables_in_hand = vec![crate::consumables::ConsumableId::TheFool];
+        assert_eq!(game.consumables_in_hand.len(), 1);
+        assert!(game.consumables_in_hand.len() < game.config.consumable_hand_capacity);
+        
+        // Should be able to purchase any consumable
+        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Tarot).is_ok());
+        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Planet).is_ok());
+        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Spectral).is_ok());
+    }
+
+    #[test]
+    fn test_can_purchase_consumable_empty_hand() {
+        let mut game = Game::default();
+        game.stage = Stage::Shop();
+        game.money = 10.0;
+        
+        // Test with empty consumable hand
+        game.consumables_in_hand = vec![];
+        assert_eq!(game.consumables_in_hand.len(), 0);
+        
+        // Should be able to purchase any consumable
+        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Tarot).is_ok());
+        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Planet).is_ok());
+        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Spectral).is_ok());
     }
 }

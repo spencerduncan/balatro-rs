@@ -5,6 +5,15 @@
 
 Game engine and move generator for a simplified version of [balatro](https://www.playbalatro.com/), written in rust with python bindings
 
+## ⚠️ Breaking Changes in v1.x
+
+**f64 Migration**: All numeric game values have been migrated to f64 for Lua compatibility. This affects core game state fields and the JokerEffect system.
+
+- `Game.{chips, mult, score, money, round}`: `usize` → `f64`
+- `JokerEffect` numeric fields: `i32/f32` → `f64`
+- Save files are automatically migrated
+- **See [F64_MIGRATION_GUIDE.md](F64_MIGRATION_GUIDE.md) for detailed migration instructions**
+
 ## Overview
 
 This library implements a subset of balatro's rules allowing execution of games or simulations. It provides an exhaustive list of actions a user could take at any given stage, as well as an engine to execute those actions and progress the game.

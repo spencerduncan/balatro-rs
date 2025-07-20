@@ -6,9 +6,18 @@ on:
   pull_request:
     branches: [ main, master ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
+
+permissions:
+  contents: read
+  actions: read
+  checks: write
 
 jobs:
   test:
@@ -54,9 +63,10 @@ jobs:
         uses: actions/cache@v4
         with:
           path: target
-          key: ${{ matrix.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ matrix.os }}-cargo-build-test-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('**/*.rs') }}
           restore-keys: |
-            ${{ matrix.os }}-cargo-build-target-
+            ${{ matrix.os }}-cargo-build-test-${{ hashFiles('**/Cargo.lock') }}-
+            ${{ matrix.os }}-cargo-build-test-
       
       - name: Run tests
         shell: bash
@@ -165,9 +175,10 @@ jobs:
         uses: actions/cache@v4
         with:
           path: target
-          key: ${{ runner.os }}-cargo-build-target-clippy-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-build-clippy-${{ hashFiles('**/Cargo.lock') }}-${{ hashFiles('**/*.rs') }}
           restore-keys: |
-            ${{ runner.os }}-cargo-build-target-clippy-
+            ${{ runner.os }}-cargo-build-clippy-${{ hashFiles('**/Cargo.lock') }}-
+            ${{ runner.os }}-cargo-build-clippy-
       
       - name: Run clippy
         run: cargo clippy --all -- -D warnings

@@ -22,6 +22,7 @@ pub mod joker_registry;
 pub mod joker_state;
 pub mod math_safe;
 pub mod memory_monitor;
+pub mod multi_select;
 pub mod rank;
 pub mod rng;
 pub mod shop;
@@ -30,7 +31,11 @@ pub mod stage;
 pub mod state_version;
 pub mod static_joker;
 pub mod static_joker_factory;
+pub mod target_context;
 pub mod vouchers;
+pub mod scaling_joker;
+pub mod scaling_joker_impl;
+pub mod scaling_joker_custom;
 
 #[cfg(test)]
 mod tests {

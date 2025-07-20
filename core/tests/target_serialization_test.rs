@@ -35,9 +35,9 @@ fn test_target_serialization() {
     // Test all Target variants can be serialized and deserialized
     let targets = vec![
         Target::None,
-        Target::Cards(vec![]),
-        Target::Cards(vec![0]),
-        Target::Cards(vec![0, 1, 2]),
+        Target::cards_in_hand(vec![]),
+        Target::cards_in_hand(vec![0]),
+        Target::cards_in_hand(vec![0, 1, 2]),
         Target::HandType(HandRank::HighCard),
         Target::HandType(HandRank::OnePair),
         Target::HandType(HandRank::TwoPair),
@@ -104,7 +104,7 @@ fn test_target_json_format_stability() {
     // Test that serialized format is stable for save/load compatibility
     let test_cases = vec![
         (Target::None, r#""None""#),
-        (Target::Cards(vec![0, 1]), r#"{"Cards":[0,1]}"#),
+        (Target::cards_in_hand(vec![0, 1]), r#"{"Cards":{"indices":[0,1],"collection":"Hand","min_cards":2,"max_cards":2}}"#),
         (
             Target::HandType(HandRank::OnePair),
             r#"{"HandType":"OnePair"}"#,
@@ -130,8 +130,8 @@ fn test_target_json_format_stability() {
 fn test_complex_target_serialization() {
     // Test serialization of complex Target variants
     let complex_targets = vec![
-        Target::Cards(vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
-        Target::Cards((0..100).collect()),
+        Target::cards_in_hand(vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
+        Target::cards_in_hand((0..100).collect()),
         Target::HandType(HandRank::FlushFive),
         Target::Joker(999),
         Target::Shop(999),
@@ -156,7 +156,7 @@ fn test_backwards_compatibility_deserialization() {
     // This ensures save/load compatibility when the enum is extended in the future
     let legacy_json_examples = vec![
         (r#""None""#, Target::None),
-        (r#"{"Cards":[0]}"#, Target::Cards(vec![0])),
+        (r#"{"Cards":{"indices":[0],"collection":"Hand","min_cards":1,"max_cards":1}}"#, Target::cards_in_hand(vec![0])),
         (
             r#"{"HandType":"FullHouse"}"#,
             Target::HandType(HandRank::FullHouse),
@@ -217,7 +217,7 @@ fn test_nested_serialization_with_game_state() {
         },
         MockConsumableAction {
             consumable_id: 2,
-            target: Target::Cards(vec![0, 1]),
+            target: Target::cards_in_hand(vec![0, 1]),
             target_type: TargetType::Cards(2),
         },
         MockConsumableAction {
