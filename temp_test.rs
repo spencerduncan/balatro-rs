@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod temp_tests {
     use crate::joker::JokerEffect;
-    
+
     #[test]
     fn debug_default_values() {
         let effect = JokerEffect::new();

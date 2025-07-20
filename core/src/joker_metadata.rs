@@ -302,7 +302,7 @@ impl JokerMetadata {
         self.uses_state
     }
 
-    /// Get unlock condition  
+    /// Get unlock condition
     #[cfg(feature = "python")]
     #[getter]
     fn unlock_condition(&self) -> Option<UnlockCondition> {

@@ -225,7 +225,7 @@ impl fmt::Display for JokerRarity {
 /// - **Mult**: Bonus mult added to hand total (`mult`)
 /// - **Mult Multiplier**: Percentage multiplier applied to total mult (`mult_multiplier`)
 ///
-/// ## Resource Effects  
+/// ## Resource Effects
 /// - **Money**: Coins awarded to the player (`money`)
 /// - **Hand Size**: Temporary hand size modification (`hand_size_mod`)
 /// - **Discards**: Temporary discard count modification (`discard_mod`)
@@ -240,7 +240,7 @@ impl fmt::Display for JokerRarity {
 /// # Application Order
 ///
 /// Effects are applied during scoring in this order:
-/// 1. **Chips**: Base chips + all chip bonuses  
+/// 1. **Chips**: Base chips + all chip bonuses
 /// 2. **Mult**: Base mult + all mult bonuses
 /// 3. **Mult Multipliers**: Apply all multipliers to total mult
 /// 4. **Final Score**: (Total Chips) × (Total Mult)
@@ -552,7 +552,7 @@ impl<'a> GameContext<'a> {
 ///     fn name(&self) -> &str { "Custom Joker" }
 ///     fn description(&self) -> &str { "Complex custom logic" }
 ///     fn rarity(&self) -> JokerRarity { JokerRarity::Common }
-///     
+///
 ///     fn on_card_scored(&self, context: &mut GameContext, card: &Card) -> JokerEffect {
 ///         // Custom scoring logic
 ///         if self.complex_condition(context, card) {
@@ -652,7 +652,7 @@ pub trait Joker: Send + Sync + std::fmt::Debug {
     ///
     /// The default implementation uses rarity-based pricing:
     /// - Common: 3 coins
-    /// - Uncommon: 6 coins  
+    /// - Uncommon: 6 coins
     /// - Rare: 8 coins
     /// - Legendary: 20 coins
     ///
@@ -911,10 +911,10 @@ pub trait Joker: Send + Sync + std::fmt::Debug {
     ///     let accumulated = context.joker_state_manager
     ///         .get_accumulated_value(self.id())
     ///         .unwrap_or(0.0);
-    ///     
+    ///
     ///     // Clean up state
     ///     context.joker_state_manager.remove_state(self.id());
-    ///     
+    ///
     ///     JokerEffect::new().with_money(accumulated as i32)
     /// }
     /// ```
@@ -1061,7 +1061,7 @@ pub trait Joker: Send + Sync + std::fmt::Debug {
     /// fn deserialize_state(&self, context: &GameContext, data: &Value) -> Result<JokerState, serde_json::Error> {
     ///     // Custom deserialization with validation
     ///     let mut state: JokerState = serde_json::from_value(data.clone())?;
-    ///     
+    ///
     ///     // Validate and migrate old state format if needed
     ///     if let Some(version) = data.get("version") {
     ///         if version.as_u64() == Some(1) {
@@ -1069,7 +1069,7 @@ pub trait Joker: Send + Sync + std::fmt::Debug {
     ///             state.accumulated_value *= 2.0; // Example migration
     ///         }
     ///     }
-    ///     
+    ///
     ///     Ok(state)
     /// }
     /// ```
@@ -1100,13 +1100,13 @@ pub trait Joker: Send + Sync + std::fmt::Debug {
     ///     if state.accumulated_value < 0.0 {
     ///         return Err("Accumulated value cannot be negative for this joker".to_string());
     ///     }
-    ///     
+    ///
     ///     if let Some(level) = state.get_custom::<i32>("level").unwrap_or(None) {
     ///         if level > 100 {
     ///             return Err("Level cannot exceed 100".to_string());
     ///         }
     ///     }
-    ///     
+    ///
     ///     Ok(())
     /// }
     /// ```
@@ -1129,18 +1129,18 @@ pub trait Joker: Send + Sync + std::fmt::Debug {
     /// ```rust,ignore
     /// fn initialize_state(&self, context: &GameContext) -> JokerState {
     ///     let mut state = JokerState::new();
-    ///     
+    ///
     ///     // Set initial values based on game context
     ///     state.set_custom("creation_round", context.round).unwrap();
     ///     state.set_custom("level", 1).unwrap();
-    ///     
+    ///
     ///     // Some jokers start with triggers based on ante
     ///     if context.ante <= 3 {
     ///         state.triggers_remaining = Some(5);
     ///     } else {
     ///         state.triggers_remaining = Some(3);
     ///     }
-    ///     
+    ///
     ///     state
     /// }
     /// ```
@@ -1169,12 +1169,12 @@ pub trait Joker: Send + Sync + std::fmt::Debug {
     ///             // Migrate from version 1
     ///             let mut state: JokerState = serde_json::from_value(old_state.clone())
     ///                 .map_err(|e| format!("Failed to parse v1 state: {}", e))?;
-    ///             
+    ///
     ///             // In v1, accumulated_value was stored as integer
     ///             if let Some(old_value) = old_state.get("old_accumulated") {
     ///                 state.accumulated_value = old_value.as_i64().unwrap_or(0) as f64;
     ///             }
-    ///             
+    ///
     ///             Ok(state)
     ///         }
     ///         _ => Err(format!("Unknown version: {}", from_version))

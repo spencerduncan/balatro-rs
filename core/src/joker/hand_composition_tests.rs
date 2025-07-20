@@ -6,7 +6,7 @@ use crate::{
 
 /// Tests for hand composition conditional jokers:
 /// - Ride the Bus: +1 mult per hand without face card
-/// - Blackboard: X3 mult if all held cards same suit/rank  
+/// - Blackboard: X3 mult if all held cards same suit/rank
 /// - DNA: copy first card if only 1 in hand
 #[cfg(test)]
 mod ride_the_bus_tests {

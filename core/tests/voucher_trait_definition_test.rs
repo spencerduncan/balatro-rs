@@ -5,7 +5,7 @@
 //!
 //! Acceptance Criteria:
 //! - [x] Voucher trait defined with required methods
-//! - [x] VoucherEffect enum for effect categorization  
+//! - [x] VoucherEffect enum for effect categorization
 //! - [x] VoucherTier enum (base vs upgraded versions)
 //! - [x] Stacking rules interface defined
 //! - [x] Effect query methods for game systems

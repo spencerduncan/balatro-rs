@@ -206,7 +206,7 @@ fn test_killscreen_behavior() {
     // Test passes if either score is infinite OR we got a killscreen message
     assert!(
         !score.is_finite() || has_killscreen_msg,
-        "Should reach killscreen either through infinite score ({}) or killscreen detection. Messages: {:?}", 
+        "Should reach killscreen either through infinite score ({}) or killscreen detection. Messages: {:?}",
         score, debug_messages
     );
 }

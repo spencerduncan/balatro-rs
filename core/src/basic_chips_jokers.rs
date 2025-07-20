@@ -145,7 +145,7 @@ impl Joker for StoneJoker {
     }
 }
 
-/// Scary Face joker: +30 chips per face card scored  
+/// Scary Face joker: +30 chips per face card scored
 #[derive(Debug, Clone)]
 pub struct ScaryFaceJoker {
     pub id: JokerId,

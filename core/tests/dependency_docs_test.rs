@@ -82,7 +82,7 @@ fn pyo3_version_is_secure() {
                 // Check that pyo3 version is at least 0.24.1
                 // Handle both direct dependencies and version in curly braces
                 assert!(
-                    content.contains("pyo3 = \"0.24") || 
+                    content.contains("pyo3 = \"0.24") ||
                     content.contains("pyo3 = \"0.25") ||
                     content.contains("pyo3 = \"1.") ||
                     content.contains("version = \"0.24") ||

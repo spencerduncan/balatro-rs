@@ -161,7 +161,7 @@ fn test_state_version_migration_compatibility() {
         "blind": null,
         "stage": "PreBlind",
         "ante_start": "One",
-        "ante_end": "Eight", 
+        "ante_end": "Eight",
         "ante_current": "One",
         "action_history": [],
         "round": 1,

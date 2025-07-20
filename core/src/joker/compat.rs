@@ -971,7 +971,7 @@ mod tests {
     /// Test for Issue #87: Basic Joker Implementation
     /// Validates all acceptance criteria:
     /// - Joker provides +4 mult unconditionally
-    /// - Test coverage for basic functionality  
+    /// - Test coverage for basic functionality
     /// - Integration with scoring system
     /// - Proper joker registration
     #[test]

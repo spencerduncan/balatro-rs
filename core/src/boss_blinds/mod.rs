@@ -247,7 +247,7 @@ pub enum CounterType {
     /// Often used for boss blinds that have escalating effects
     HandsPlayed,
     /// Count of cards scored during the blind
-    /// Used for boss blinds that react to scoring mechanics  
+    /// Used for boss blinds that react to scoring mechanics
     CardsScored,
     /// Count of money spent during the blind
     /// Used for boss blinds that punish spending

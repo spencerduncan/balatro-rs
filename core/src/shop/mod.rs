@@ -270,7 +270,7 @@ pub struct ItemWeights {
     pub joker_weight: f64,
     /// Weight for consumable generation
     pub consumable_weight: f64,
-    /// Weight for voucher generation  
+    /// Weight for voucher generation
     pub voucher_weight: f64,
     /// Weight for pack generation
     pub pack_weight: f64,

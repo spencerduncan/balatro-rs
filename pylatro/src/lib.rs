@@ -282,7 +282,7 @@ impl GameEngine {
         })
     }
 
-    /// Get metadata for all jokers in the registry  
+    /// Get metadata for all jokers in the registry
     /// Returns a dictionary with JokerId string names as keys and JokerMetadata as values
     fn get_all_joker_metadata(&self) -> pyo3::PyObject {
         pyo3::Python::with_gil(|py| {

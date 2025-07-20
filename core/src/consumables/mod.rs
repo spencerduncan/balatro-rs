@@ -6,7 +6,7 @@
 //! # Module Organization
 //!
 //! - `mod.rs` - Core types and traits for consumables
-//! - `tarot.rs` - Tarot card implementations  
+//! - `tarot.rs` - Tarot card implementations
 //! - `planet.rs` - Planet card implementations
 //! - `spectral.rs` - Spectral card implementations
 //!
@@ -216,7 +216,7 @@ pub enum ConsumableId {
     // Placeholder variants - will be expanded in future implementations
     /// Placeholder for future Tarot card implementations
     TarotPlaceholder,
-    /// Placeholder for future Planet card implementations  
+    /// Placeholder for future Planet card implementations
     PlanetPlaceholder,
     /// Placeholder for future Spectral card implementations
     SpectralPlaceholder,
