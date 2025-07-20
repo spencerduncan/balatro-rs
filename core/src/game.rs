@@ -2,6 +2,7 @@ use crate::action::{Action, MoveDirection};
 use crate::ante::Ante;
 use crate::available::Available;
 use crate::boss_blinds::BossBlindState;
+use crate::bounded_action_history::BoundedActionHistory;
 use crate::card::Card;
 use crate::config::Config;
 use crate::consumables::ConsumableId;
@@ -12,6 +13,7 @@ use crate::joker::{GameContext, Joker, JokerId, Jokers, OldJoker as OldJokerTrai
 use crate::joker_effect_processor::JokerEffectProcessor;
 use crate::joker_factory::JokerFactory;
 use crate::joker_state::{JokerState, JokerStateManager};
+use crate::memory_monitor::MemoryMonitor;
 use crate::rank::HandRank;
 use crate::shop::packs::{OpenPackState, Pack};
 use crate::shop::Shop;
@@ -66,7 +68,7 @@ pub struct Game {
     pub ante_start: Ante,
     pub ante_end: Ante,
     pub ante_current: Ante,
-    pub action_history: Vec<Action>,
+    pub action_history: BoundedActionHistory,
     pub round: f64,
 
     // jokers using structured JokerEffect system
@@ -123,6 +125,10 @@ pub struct Game {
     /// Debug messages buffer
     #[cfg_attr(feature = "serde", serde(skip))]
     pub debug_messages: Vec<String>,
+
+    /// Memory monitor for tracking and controlling memory usage
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub memory_monitor: MemoryMonitor,
 }
 
 #[cfg(feature = "serde")]
@@ -138,7 +144,7 @@ impl Game {
             deck: Deck::default(),
             available: Available::default(),
             discarded: Vec::new(),
-            action_history: Vec::new(),
+            action_history: BoundedActionHistory::new(),
             jokers: Vec::new(),
             joker_effect_processor: JokerEffectProcessor::new(),
             joker_state_manager: Arc::new(JokerStateManager::new()),
@@ -171,6 +177,9 @@ impl Game {
             // Initialize debug logging fields
             debug_logging_enabled: false,
             debug_messages: Vec::new(),
+
+            // Initialize memory monitor with default configuration
+            memory_monitor: MemoryMonitor::default(),
 
             config,
         }
@@ -696,6 +705,87 @@ impl Game {
     #[inline]
     fn add_debug_message(&mut self, _message: String) {
         // No-op in release builds
+    }
+
+    /// Configure memory monitoring for RL training scenarios
+    pub fn enable_rl_memory_monitoring(&mut self) {
+        let config = crate::memory_monitor::MemoryConfig::for_rl_training();
+        self.memory_monitor.update_config(config.clone());
+
+        // Update action history limit to match memory config
+        self.action_history.resize(config.max_action_history);
+    }
+
+    /// Configure memory monitoring for simulation scenarios
+    pub fn enable_simulation_memory_monitoring(&mut self) {
+        let config = crate::memory_monitor::MemoryConfig::for_simulation();
+        self.memory_monitor.update_config(config.clone());
+
+        // Update action history limit to match memory config
+        self.action_history.resize(config.max_action_history);
+    }
+
+    /// Get current memory usage statistics
+    pub fn get_memory_stats(&mut self) -> Option<crate::memory_monitor::MemoryStats> {
+        if self.memory_monitor.should_check() {
+            // Estimate memory usage
+            let estimated_bytes = self.estimate_memory_usage();
+            let stats = self.memory_monitor.check_memory(
+                estimated_bytes,
+                1, // Number of active snapshots (hard to track, estimate as 1)
+                self.action_history.total_actions(),
+            );
+            Some(stats)
+        } else {
+            self.memory_monitor.last_stats().cloned()
+        }
+    }
+
+    /// Generate a memory usage report
+    pub fn generate_memory_report(&self) -> String {
+        self.memory_monitor.generate_report()
+    }
+
+    /// Estimate current memory usage in bytes
+    fn estimate_memory_usage(&self) -> usize {
+        let mut total = std::mem::size_of::<Self>();
+
+        // Action history
+        total += self.action_history.memory_stats().estimated_bytes;
+
+        // Deck cards
+        total += self.deck.cards().len() * std::mem::size_of::<crate::card::Card>();
+
+        // Available cards
+        total += self.available.cards().len() * std::mem::size_of::<crate::card::Card>();
+
+        // Discarded cards
+        total += self.discarded.len() * std::mem::size_of::<crate::card::Card>();
+
+        // Jokers (rough estimate)
+        total += self.jokers.len() * 200; // Estimate 200 bytes per joker
+
+        // Hand type counts
+        total += self.hand_type_counts.len()
+            * (std::mem::size_of::<crate::rank::HandRank>() + std::mem::size_of::<u32>());
+
+        // Debug messages
+        total += self
+            .debug_messages
+            .iter()
+            .map(|msg| msg.len())
+            .sum::<usize>();
+
+        total
+    }
+
+    /// Check if memory usage exceeds safe limits
+    pub fn check_memory_safety(&mut self) -> bool {
+        if let Some(stats) = self.get_memory_stats() {
+            !stats.exceeds_critical(self.memory_monitor.config())
+        } else {
+            true // Assume safe if no stats available
+        }
     }
 
     pub fn required_score(&self) -> f64 {
@@ -1298,7 +1388,7 @@ struct SaveableGameState {
     pub ante_start: Ante,
     pub ante_end: Ante,
     pub ante_current: Ante,
-    pub action_history: Vec<Action>,
+    pub action_history: BoundedActionHistory,
     pub round: f64,
     pub joker_ids: Vec<JokerId>, // Changed from jokers: Vec<Jokers> to support new system
     pub joker_states: HashMap<JokerId, JokerState>,
@@ -1449,6 +1539,8 @@ impl Game {
             // Initialize debug logging fields (not serialized)
             debug_logging_enabled: false,
             debug_messages: Vec::new(),
+            // Initialize memory monitor (not serialized)
+            memory_monitor: MemoryMonitor::default(),
         };
 
         // Restore joker states to the state manager
