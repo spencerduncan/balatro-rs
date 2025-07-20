@@ -192,8 +192,8 @@
 <a href=#192 id=192 data-nosnippet>192</a>    <span class="doccomment">/// Fuzz-style test for ActionSpace creation with random values
 <a href=#193 id=193 data-nosnippet>193</a>    </span><span class="attr">#[test]
 <a href=#194 id=194 data-nosnippet>194</a>    </span><span class="kw">fn </span>test_action_space_fuzz() {
-<a href=#195 id=195 data-nosnippet>195</a>        <span class="kw">use </span>rand::Rng;
-<a href=#196 id=196 data-nosnippet>196</a>        <span class="kw">let </span><span class="kw-2">mut </span>rng = rand::thread_rng();
+<a href=#195 id=195 data-nosnippet>195</a>        <span class="kw">use </span><span class="kw">crate</span>::rng::GameRng;
+<a href=#196 id=196 data-nosnippet>196</a>        <span class="kw">let </span>rng = GameRng::for_testing(<span class="number">42</span>);
 <a href=#197 id=197 data-nosnippet>197</a>
 <a href=#198 id=198 data-nosnippet>198</a>        <span class="comment">// Test 1000 random valid configurations
 <a href=#199 id=199 data-nosnippet>199</a>        </span><span class="kw">for _ in </span><span class="number">0</span>..<span class="number">1000 </span>{
@@ -222,8 +222,8 @@
 <a href=#222 id=222 data-nosnippet>222</a>    <span class="doccomment">/// Property-based test for arithmetic operations
 <a href=#223 id=223 data-nosnippet>223</a>    </span><span class="attr">#[test]
 <a href=#224 id=224 data-nosnippet>224</a>    </span><span class="kw">fn </span>test_arithmetic_properties() {
-<a href=#225 id=225 data-nosnippet>225</a>        <span class="kw">use </span>rand::Rng;
-<a href=#226 id=226 data-nosnippet>226</a>        <span class="kw">let </span><span class="kw-2">mut </span>rng = rand::thread_rng();
+<a href=#225 id=225 data-nosnippet>225</a>        <span class="kw">use </span><span class="kw">crate</span>::rng::GameRng;
+<a href=#226 id=226 data-nosnippet>226</a>        <span class="kw">let </span>rng = GameRng::for_testing(<span class="number">43</span>);
 <a href=#227 id=227 data-nosnippet>227</a>
 <a href=#228 id=228 data-nosnippet>228</a>        <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">100 </span>{
 <a href=#229 id=229 data-nosnippet>229</a>            <span class="kw">let </span>a = rng.gen_range(<span class="number">0</span>..<span class="number">1000</span>);
