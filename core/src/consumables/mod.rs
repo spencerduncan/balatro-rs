@@ -18,6 +18,7 @@
 //! - Ensures compatibility with existing game flow
 
 use crate::game::Game;
+use crate::joker::{Joker, JokerId};
 use crate::rank::HandRank;
 use serde::{Deserialize, Serialize};
 use std::fmt;
@@ -154,6 +155,127 @@ impl Target {
             Target::Shop(_) => true, // Shop validation would require shop state
         }
     }
+
+    /// Convert a joker target to a JokerTarget struct for enhanced validation
+    pub fn as_joker_target(&self) -> Option<JokerTarget> {
+        match self {
+            Target::Joker(slot) => Some(JokerTarget::new(*slot)),
+            _ => None,
+        }
+    }
+
+    /// Create a target for a joker at the specified slot
+    pub fn joker_at_slot(slot: usize) -> Self {
+        Target::Joker(slot)
+    }
+
+    /// Create a target for an active joker at the specified slot
+    /// Note: For full active joker validation, use JokerTarget::active_joker directly
+    pub fn active_joker_at_slot(slot: usize) -> Self {
+        Target::Joker(slot)
+    }
+}
+
+/// Target information for joker selection with enhanced validation
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct JokerTarget {
+    /// The slot index of the joker
+    pub slot: usize,
+    /// Whether the joker must be active (not disabled/sealed)
+    pub require_active: bool,
+    /// Optional requirement for specific joker type
+    pub joker_type: Option<JokerId>,
+}
+
+impl JokerTarget {
+    /// Create a new JokerTarget for any joker at the given slot
+    pub fn new(slot: usize) -> Self {
+        Self {
+            slot,
+            require_active: false,
+            joker_type: None,
+        }
+    }
+
+    /// Create a target that requires an active joker at the given slot
+    pub fn active_joker(slot: usize) -> Self {
+        Self {
+            slot,
+            require_active: true,
+            joker_type: None,
+        }
+    }
+
+    /// Create a target for a specific joker type at the given slot
+    pub fn joker_of_type(slot: usize, joker_type: JokerId) -> Self {
+        Self {
+            slot,
+            require_active: false,
+            joker_type: Some(joker_type),
+        }
+    }
+
+    /// Validate that this target is valid for the current game state
+    pub fn validate(&self, game: &Game) -> Result<(), JokerTargetError> {
+        // Check if slot is within bounds
+        if self.slot >= game.jokers.len() {
+            return Err(JokerTargetError::EmptySlot { slot: self.slot });
+        }
+
+        // Get the joker at this slot
+        let joker = &game.jokers[self.slot];
+
+        // Check if joker is active if required
+        // TODO: This will need to be updated when joker state management is fully implemented
+        // For now, we assume all jokers are active
+        if self.require_active {
+            // In the future, check joker.is_active() or similar
+            // For now, this check passes
+        }
+
+        // Check joker type if specified
+        if let Some(expected_type) = self.joker_type {
+            let actual_type = joker.id();
+            if actual_type != expected_type {
+                return Err(JokerTargetError::WrongJokerType {
+                    expected: expected_type,
+                    actual: actual_type,
+                });
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Get the joker at this target's slot
+    pub fn get_joker<'a>(&self, game: &'a Game) -> Result<&'a dyn Joker, JokerTargetError> {
+        // Validate first
+        self.validate(game)?;
+        
+        // Return the joker (we know it's valid from validation)
+        Ok(&*game.jokers[self.slot])
+    }
+
+    /// Check if the slot is occupied (without full validation)
+    pub fn is_slot_occupied(&self, game: &Game) -> bool {
+        self.slot < game.jokers.len()
+    }
+}
+
+/// Error types specific to joker targeting
+#[derive(Debug, Error, Clone, PartialEq, Eq)]
+pub enum JokerTargetError {
+    #[error("Joker slot {slot} is empty")]
+    EmptySlot { slot: usize },
+    
+    #[error("Joker at slot {slot} is not active")]
+    InactiveJoker { slot: usize },
+    
+    #[error("Expected joker type {expected:?} but found {actual:?}")]
+    WrongJokerType {
+        expected: JokerId,
+        actual: JokerId,
+    },
 }
 
 /// Core trait that all consumable types must implement
