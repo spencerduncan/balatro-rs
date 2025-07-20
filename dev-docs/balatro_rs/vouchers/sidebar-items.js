@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["GameStateError","StackingRule","VoucherEffect","VoucherError","VoucherId","VoucherTier"],"struct":["GameState","VoucherCollection","VoucherIdIter"],"trait":["Voucher"]};

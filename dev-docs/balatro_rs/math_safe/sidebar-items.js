@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["MathError"],"fn":["safe_add","safe_divide","safe_get","safe_get_mut","safe_multiply","safe_range","safe_size_for_move_operations","safe_subtract","saturating_subtract","validate_array_size"]};

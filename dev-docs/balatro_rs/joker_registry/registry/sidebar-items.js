@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["all_definitions","create_joker","definitions_by_rarity","get_definition","register"]};

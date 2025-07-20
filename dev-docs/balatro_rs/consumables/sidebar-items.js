@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ConsumableEffect","ConsumableError","ConsumableId","ConsumableType","Target","TargetType"],"struct":["ConsumableEffectIter","ConsumableIdIter","ConsumableSlots","ConsumableTypeIter"],"trait":["Consumable"]};

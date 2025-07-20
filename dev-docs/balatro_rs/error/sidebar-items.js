@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["DeveloperActionSpaceError","DeveloperGameError","DeveloperPlayHandError","ErrorDetailLevel","UserError"],"struct":["ErrorSanitizer"],"type":["ActionSpaceError","GameError","PlayHandError"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["Burglar","BusinessCard","CleverJoker","CraftyJoker","CrazyJoker","DeviousJoker","DrollJoker","Egg","GluttonousJoker","GreedyJoker","IceCreamJoker","JollyJoker","LustyJoker","MadJoker","RunnerJoker","SlyJoker","SpaceJoker","SupernovaJoker","TheJoker","WilyJoker","WrathfulJoker","ZanyJoker"]};

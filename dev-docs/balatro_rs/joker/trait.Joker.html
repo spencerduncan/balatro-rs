@@ -1,0 +1,565 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Core trait that all jokers must implement."><title>Joker in balatro_rs::joker - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-1a91846b.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="balatro_rs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.88.0 (6b00bc388 2025-06-23)" data-channel="1.88.0" data-search-js="search-f7877310.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-4e99c027.js"></script><script defer src="sidebar-items.js"></script><script defer src="../../static.files/main-7ef8a74a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc trait"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../balatro_rs/index.html">balatro_<wbr>rs</a><span class="version">0.0.1</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Joker</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#implementation-patterns" title="Implementation Patterns">Implementation Patterns</a><ul><li><a href="#1-direct-implementation" title="1. Direct Implementation">1. Direct Implementation</a></li><li><a href="#2-static-joker-framework" title="2. Static Joker Framework">2. Static Joker Framework</a></li></ul></li><li><a href="#lifecycle-events" title="Lifecycle Events">Lifecycle Events</a></li><li><a href="#effect-application" title="Effect Application">Effect Application</a></li><li><a href="#thread-safety" title="Thread Safety">Thread Safety</a></li><li><a href="#performance-considerations" title="Performance Considerations">Performance Considerations</a></li></ul><h3><a href="#required-methods">Required Methods</a></h3><ul class="block"><li><a href="#tymethod.description" title="description">description</a></li><li><a href="#tymethod.id" title="id">id</a></li><li><a href="#tymethod.name" title="name">name</a></li><li><a href="#tymethod.rarity" title="rarity">rarity</a></li></ul><h3><a href="#provided-methods">Provided Methods</a></h3><ul class="block"><li><a href="#method.cost" title="cost">cost</a></li><li><a href="#method.deserialize_state" title="deserialize_state">deserialize_state</a></li><li><a href="#method.initialize_state" title="initialize_state">initialize_state</a></li><li><a href="#method.migrate_state" title="migrate_state">migrate_state</a></li><li><a href="#method.modify_chips" title="modify_chips">modify_chips</a></li><li><a href="#method.modify_discards" title="modify_discards">modify_discards</a></li><li><a href="#method.modify_hand_size" title="modify_hand_size">modify_hand_size</a></li><li><a href="#method.modify_mult" title="modify_mult">modify_mult</a></li><li><a href="#method.on_activated" title="on_activated">on_activated</a></li><li><a href="#method.on_blind_start" title="on_blind_start">on_blind_start</a></li><li><a href="#method.on_card_scored" title="on_card_scored">on_card_scored</a></li><li><a href="#method.on_cleanup" title="on_cleanup">on_cleanup</a></li><li><a href="#method.on_created" title="on_created">on_created</a></li><li><a href="#method.on_deactivated" title="on_deactivated">on_deactivated</a></li><li><a href="#method.on_discard" title="on_discard">on_discard</a></li><li><a href="#method.on_hand_played" title="on_hand_played">on_hand_played</a></li><li><a href="#method.on_round_end" title="on_round_end">on_round_end</a></li><li><a href="#method.on_shop_open" title="on_shop_open">on_shop_open</a></li><li><a href="#method.sell_value" title="sell_value">sell_value</a></li><li><a href="#method.serialize_state" title="serialize_state">serialize_state</a></li><li><a href="#method.validate_state" title="validate_state">validate_state</a></li></ul><h3><a href="#implementors">Implementors</a></h3></section><div id="rustdoc-modnav"><h2><a href="index.html">In balatro_<wbr>rs::<wbr>joker</a></h2></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">balatro_rs</a>::<wbr><a href="index.html">joker</a></div><h1>Trait <span class="trait">Joker</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/balatro_rs/joker/mod.rs.html#618-1194">Source</a> </span></div><pre class="rust item-decl"><code>pub trait Joker:
+    <a class="trait" href="https://doc.rust-lang.org/1.88.0/core/marker/trait.Send.html" title="trait core::marker::Send">Send</a>
+    + <a class="trait" href="https://doc.rust-lang.org/1.88.0/core/marker/trait.Sync.html" title="trait core::marker::Sync">Sync</a>
+    + <a class="trait" href="https://doc.rust-lang.org/1.88.0/core/fmt/trait.Debug.html" title="trait core::fmt::Debug">Debug</a> {
+<details class="toggle type-contents-toggle"><summary class="hideme"><span>Show 25 methods</span></summary>    // Required methods
+    fn <a href="#tymethod.id" class="fn">id</a>(&amp;self) -&gt; <a class="enum" href="enum.JokerId.html" title="enum balatro_rs::joker::JokerId">JokerId</a>;
+<span class="item-spacer"></span>    fn <a href="#tymethod.name" class="fn">name</a>(&amp;self) -&gt; &amp;<a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.str.html">str</a>;
+<span class="item-spacer"></span>    fn <a href="#tymethod.description" class="fn">description</a>(&amp;self) -&gt; &amp;<a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.str.html">str</a>;
+<span class="item-spacer"></span>    fn <a href="#tymethod.rarity" class="fn">rarity</a>(&amp;self) -&gt; <a class="enum" href="enum.JokerRarity.html" title="enum balatro_rs::joker::JokerRarity">JokerRarity</a>;
+
+    // Provided methods
+    fn <a href="#method.cost" class="fn">cost</a>(&amp;self) -&gt; <a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.usize.html">usize</a> { ... }
+<span class="item-spacer"></span>    fn <a href="#method.sell_value" class="fn">sell_value</a>(&amp;self, accumulated_bonus: <a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.f64.html">f64</a>) -&gt; <a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.usize.html">usize</a> { ... }
+<span class="item-spacer"></span>    fn <a href="#method.on_hand_played" class="fn">on_hand_played</a>(
+        &amp;self,
+        _context: &amp;mut <a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;,
+        _hand: &amp;<a class="struct" href="../hand/struct.SelectHand.html" title="struct balatro_rs::hand::SelectHand">SelectHand</a>,
+    ) -&gt; <a class="struct" href="struct.JokerEffect.html" title="struct balatro_rs::joker::JokerEffect">JokerEffect</a> { ... }
+<span class="item-spacer"></span>    fn <a href="#method.on_card_scored" class="fn">on_card_scored</a>(
+        &amp;self,
+        _context: &amp;mut <a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;,
+        _card: &amp;<a class="struct" href="../card/struct.Card.html" title="struct balatro_rs::card::Card">Card</a>,
+    ) -&gt; <a class="struct" href="struct.JokerEffect.html" title="struct balatro_rs::joker::JokerEffect">JokerEffect</a> { ... }
+<span class="item-spacer"></span>    fn <a href="#method.on_blind_start" class="fn">on_blind_start</a>(&amp;self, _context: &amp;mut <a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;) -&gt; <a class="struct" href="struct.JokerEffect.html" title="struct balatro_rs::joker::JokerEffect">JokerEffect</a> { ... }
+<span class="item-spacer"></span>    fn <a href="#method.on_shop_open" class="fn">on_shop_open</a>(&amp;self, _context: &amp;mut <a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;) -&gt; <a class="struct" href="struct.JokerEffect.html" title="struct balatro_rs::joker::JokerEffect">JokerEffect</a> { ... }
+<span class="item-spacer"></span>    fn <a href="#method.on_discard" class="fn">on_discard</a>(
+        &amp;self,
+        _context: &amp;mut <a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;,
+        _cards: &amp;[<a class="struct" href="../card/struct.Card.html" title="struct balatro_rs::card::Card">Card</a>],
+    ) -&gt; <a class="struct" href="struct.JokerEffect.html" title="struct balatro_rs::joker::JokerEffect">JokerEffect</a> { ... }
+<span class="item-spacer"></span>    fn <a href="#method.on_round_end" class="fn">on_round_end</a>(&amp;self, _context: &amp;mut <a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;) -&gt; <a class="struct" href="struct.JokerEffect.html" title="struct balatro_rs::joker::JokerEffect">JokerEffect</a> { ... }
+<span class="item-spacer"></span>    fn <a href="#method.on_created" class="fn">on_created</a>(&amp;self, _context: &amp;mut <a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;) -&gt; <a class="struct" href="struct.JokerEffect.html" title="struct balatro_rs::joker::JokerEffect">JokerEffect</a> { ... }
+<span class="item-spacer"></span>    fn <a href="#method.on_activated" class="fn">on_activated</a>(&amp;self, _context: &amp;mut <a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;) -&gt; <a class="struct" href="struct.JokerEffect.html" title="struct balatro_rs::joker::JokerEffect">JokerEffect</a> { ... }
+<span class="item-spacer"></span>    fn <a href="#method.on_deactivated" class="fn">on_deactivated</a>(&amp;self, _context: &amp;mut <a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;) -&gt; <a class="struct" href="struct.JokerEffect.html" title="struct balatro_rs::joker::JokerEffect">JokerEffect</a> { ... }
+<span class="item-spacer"></span>    fn <a href="#method.on_cleanup" class="fn">on_cleanup</a>(&amp;self, _context: &amp;mut <a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;) -&gt; <a class="struct" href="struct.JokerEffect.html" title="struct balatro_rs::joker::JokerEffect">JokerEffect</a> { ... }
+<span class="item-spacer"></span>    fn <a href="#method.modify_chips" class="fn">modify_chips</a>(&amp;self, _context: &amp;<a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;, base_chips: <a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.i32.html">i32</a>) -&gt; <a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.i32.html">i32</a> { ... }
+<span class="item-spacer"></span>    fn <a href="#method.modify_mult" class="fn">modify_mult</a>(&amp;self, _context: &amp;<a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;, base_mult: <a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.i32.html">i32</a>) -&gt; <a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.i32.html">i32</a> { ... }
+<span class="item-spacer"></span>    fn <a href="#method.modify_hand_size" class="fn">modify_hand_size</a>(
+        &amp;self,
+        _context: &amp;<a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;,
+        base_size: <a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.usize.html">usize</a>,
+    ) -&gt; <a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.usize.html">usize</a> { ... }
+<span class="item-spacer"></span>    fn <a href="#method.modify_discards" class="fn">modify_discards</a>(
+        &amp;self,
+        _context: &amp;<a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;,
+        base_discards: <a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.usize.html">usize</a>,
+    ) -&gt; <a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.usize.html">usize</a> { ... }
+<span class="item-spacer"></span>    fn <a href="#method.serialize_state" class="fn">serialize_state</a>(
+        &amp;self,
+        _context: &amp;<a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;,
+        state: &amp;<a class="struct" href="../joker_state/struct.JokerState.html" title="struct balatro_rs::joker_state::JokerState">JokerState</a>,
+    ) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.88.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://docs.rs/serde_json/1.0.133/serde_json/value/enum.Value.html" title="enum serde_json::value::Value">Value</a>, <a class="struct" href="https://docs.rs/serde_json/1.0.133/serde_json/error/struct.Error.html" title="struct serde_json::error::Error">Error</a>&gt; { ... }
+<span class="item-spacer"></span>    fn <a href="#method.deserialize_state" class="fn">deserialize_state</a>(
+        &amp;self,
+        _context: &amp;<a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;,
+        data: &amp;<a class="enum" href="https://docs.rs/serde_json/1.0.133/serde_json/value/enum.Value.html" title="enum serde_json::value::Value">Value</a>,
+    ) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.88.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="../joker_state/struct.JokerState.html" title="struct balatro_rs::joker_state::JokerState">JokerState</a>, <a class="struct" href="https://docs.rs/serde_json/1.0.133/serde_json/error/struct.Error.html" title="struct serde_json::error::Error">Error</a>&gt; { ... }
+<span class="item-spacer"></span>    fn <a href="#method.validate_state" class="fn">validate_state</a>(
+        &amp;self,
+        _context: &amp;<a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;,
+        _state: &amp;<a class="struct" href="../joker_state/struct.JokerState.html" title="struct balatro_rs::joker_state::JokerState">JokerState</a>,
+    ) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.88.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.unit.html">()</a>, <a class="struct" href="https://doc.rust-lang.org/1.88.0/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>&gt; { ... }
+<span class="item-spacer"></span>    fn <a href="#method.initialize_state" class="fn">initialize_state</a>(&amp;self, _context: &amp;<a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;) -&gt; <a class="struct" href="../joker_state/struct.JokerState.html" title="struct balatro_rs::joker_state::JokerState">JokerState</a> { ... }
+<span class="item-spacer"></span>    fn <a href="#method.migrate_state" class="fn">migrate_state</a>(
+        &amp;self,
+        _context: &amp;<a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;,
+        old_state: &amp;<a class="enum" href="https://docs.rs/serde_json/1.0.133/serde_json/value/enum.Value.html" title="enum serde_json::value::Value">Value</a>,
+        _from_version: <a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.u32.html">u32</a>,
+    ) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.88.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="../joker_state/struct.JokerState.html" title="struct balatro_rs::joker_state::JokerState">JokerState</a>, <a class="struct" href="https://doc.rust-lang.org/1.88.0/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>&gt; { ... }
+</details>}</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Core trait that all jokers must implement.</p>
+<p>This trait defines the interface for all joker implementations in the Balatro-RS system.
+Jokers can modify game scoring through lifecycle hooks and provide static information
+about their identity and behavior.</p>
+<h2 id="implementation-patterns"><a class="doc-anchor" href="#implementation-patterns">§</a>Implementation Patterns</h2>
+<p>There are several patterns for implementing jokers:</p>
+<h3 id="1-direct-implementation"><a class="doc-anchor" href="#1-direct-implementation">§</a>1. Direct Implementation</h3>
+<p>For complex jokers requiring custom logic:</p>
+
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">use </span>balatro_rs::joker::{Joker, JokerId, JokerRarity, JokerEffect, GameContext};
+<span class="kw">use </span>balatro_rs::card::Card;
+<span class="kw">use </span>balatro_rs::hand::SelectHand;
+
+<span class="attr">#[derive(Debug)]
+</span><span class="kw">struct </span>CustomJoker;
+
+<span class="kw">impl </span>Joker <span class="kw">for </span>CustomJoker {
+    <span class="kw">fn </span>id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; JokerId { JokerId::CustomJoker }
+    <span class="kw">fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str { <span class="string">"Custom Joker" </span>}
+    <span class="kw">fn </span>description(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str { <span class="string">"Complex custom logic" </span>}
+    <span class="kw">fn </span>rarity(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; JokerRarity { JokerRarity::Common }
+
+    <span class="kw">fn </span>on_card_scored(<span class="kw-2">&amp;</span><span class="self">self</span>, context: <span class="kw-2">&amp;mut </span>GameContext, card: <span class="kw-2">&amp;</span>Card) -&gt; JokerEffect {
+        <span class="comment">// Custom scoring logic
+        </span><span class="kw">if </span><span class="self">self</span>.complex_condition(context, card) {
+            JokerEffect::new().with_mult(<span class="number">5</span>)
+        } <span class="kw">else </span>{
+            JokerEffect::new()
+        }
+    }
+}</code></pre></div>
+<h3 id="2-static-joker-framework"><a class="doc-anchor" href="#2-static-joker-framework">§</a>2. Static Joker Framework</h3>
+<p>For simple conditional jokers:</p>
+
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">use </span>balatro_rs::static_joker::{StaticJoker, StaticCondition};
+<span class="kw">use </span>balatro_rs::card::Suit;
+
+<span class="kw">let </span>greedy_joker = StaticJoker::builder(
+    JokerId::GreedyJoker,
+    <span class="string">"Greedy Joker"</span>,
+    <span class="string">"+3 Mult per Diamond"
+</span>)
+.rarity(JokerRarity::Common)
+.mult(<span class="number">3</span>)
+.condition(StaticCondition::SuitScored(Suit::Diamond))
+.per_card()
+.build()<span class="question-mark">?</span>;</code></pre></div>
+<h2 id="lifecycle-events"><a class="doc-anchor" href="#lifecycle-events">§</a>Lifecycle Events</h2>
+<p>Jokers integrate with the game through well-defined lifecycle events that mirror
+Balatro’s game flow:</p>
+<ol>
+<li><strong>Blind Start</strong>: <code>on_blind_start()</code> - Called when a new blind begins</li>
+<li><strong>Hand Play</strong>: <code>on_hand_played()</code> - Called when a hand is played for scoring</li>
+<li><strong>Card Scoring</strong>: <code>on_card_scored()</code> - Called for each individual scoring card</li>
+<li><strong>Discard</strong>: <code>on_discard()</code> - Called when cards are discarded</li>
+<li><strong>Shop</strong>: <code>on_shop_open()</code> - Called when entering the shop</li>
+<li><strong>Round End</strong>: <code>on_round_end()</code> - Called at the end of each round</li>
+</ol>
+<h2 id="effect-application"><a class="doc-anchor" href="#effect-application">§</a>Effect Application</h2>
+<p>Joker effects are applied in a specific order to ensure consistent behavior:</p>
+<ol>
+<li>Chips calculation: Base chips + chip bonuses</li>
+<li>Mult calculation: Base mult + mult bonuses</li>
+<li>Mult multiplication: Apply mult multipliers</li>
+<li>Final score: chips × mult</li>
+</ol>
+<h2 id="thread-safety"><a class="doc-anchor" href="#thread-safety">§</a>Thread Safety</h2>
+<p>All joker implementations must be <code>Send + Sync</code> to support concurrent access
+in multi-threaded environments and RL training scenarios.</p>
+<h2 id="performance-considerations"><a class="doc-anchor" href="#performance-considerations">§</a>Performance Considerations</h2>
+<ul>
+<li><code>on_card_scored()</code> is called most frequently and should be optimized</li>
+<li>Use early returns for non-matching conditions</li>
+<li>Avoid expensive operations in hot paths</li>
+<li>Consider caching expensive calculations in joker state</li>
+</ul>
+</div></details><h2 id="required-methods" class="section-header">Required Methods<a href="#required-methods" class="anchor">§</a></h2><div class="methods"><details class="toggle method-toggle" open><summary><section id="tymethod.id" class="method"><a class="src rightside" href="../../src/balatro_rs/joker/mod.rs.html#626">Source</a><h4 class="code-header">fn <a href="#tymethod.id" class="fn">id</a>(&amp;self) -&gt; <a class="enum" href="enum.JokerId.html" title="enum balatro_rs::joker::JokerId">JokerId</a></h4></section></summary><div class="docblock"><p>Get the unique identifier for this joker.</p>
+<p>This ID must be unique across all joker implementations and is used for
+state management, serialization, and factory creation.</p>
+<h5 id="returns"><a class="doc-anchor" href="#returns">§</a>Returns</h5>
+<p>The unique <code>JokerId</code> for this joker type.</p>
+</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.name" class="method"><a class="src rightside" href="../../src/balatro_rs/joker/mod.rs.html#634">Source</a><h4 class="code-header">fn <a href="#tymethod.name" class="fn">name</a>(&amp;self) -&gt; &amp;<a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.str.html">str</a></h4></section></summary><div class="docblock"><p>Get the display name of this joker.</p>
+<p>This should be a human-readable name that matches the Balatro naming convention.</p>
+<h5 id="returns-1"><a class="doc-anchor" href="#returns-1">§</a>Returns</h5>
+<p>A string slice containing the joker’s name.</p>
+</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.description" class="method"><a class="src rightside" href="../../src/balatro_rs/joker/mod.rs.html#643">Source</a><h4 class="code-header">fn <a href="#tymethod.description" class="fn">description</a>(&amp;self) -&gt; &amp;<a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.str.html">str</a></h4></section></summary><div class="docblock"><p>Get the description of this joker’s effect.</p>
+<p>This should clearly describe what the joker does in a concise format
+suitable for display in the user interface.</p>
+<h5 id="returns-2"><a class="doc-anchor" href="#returns-2">§</a>Returns</h5>
+<p>A string slice containing the joker’s description.</p>
+</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.rarity" class="method"><a class="src rightside" href="../../src/balatro_rs/joker/mod.rs.html#651">Source</a><h4 class="code-header">fn <a href="#tymethod.rarity" class="fn">rarity</a>(&amp;self) -&gt; <a class="enum" href="enum.JokerRarity.html" title="enum balatro_rs::joker::JokerRarity">JokerRarity</a></h4></section></summary><div class="docblock"><p>Get the rarity level of this joker.</p>
+<p>Rarity affects the base cost and availability in shops.</p>
+<h5 id="returns-3"><a class="doc-anchor" href="#returns-3">§</a>Returns</h5>
+<p>The <code>JokerRarity</code> level for this joker.</p>
+</div></details></div><h2 id="provided-methods" class="section-header">Provided Methods<a href="#provided-methods" class="anchor">§</a></h2><div class="methods"><details class="toggle method-toggle" open><summary><section id="method.cost" class="method"><a class="src rightside" href="../../src/balatro_rs/joker/mod.rs.html#665-672">Source</a><h4 class="code-header">fn <a href="#method.cost" class="fn">cost</a>(&amp;self) -&gt; <a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.usize.html">usize</a></h4></section></summary><div class="docblock"><p>Get the base cost of this joker in the shop.</p>
+<p>The default implementation uses rarity-based pricing:</p>
+<ul>
+<li>Common: 3 coins</li>
+<li>Uncommon: 6 coins</li>
+<li>Rare: 8 coins</li>
+<li>Legendary: 20 coins</li>
+</ul>
+<p>Override this method for jokers with custom pricing.</p>
+<h5 id="returns-4"><a class="doc-anchor" href="#returns-4">§</a>Returns</h5>
+<p>The cost in coins to purchase this joker.</p>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.sell_value" class="method"><a class="src rightside" href="../../src/balatro_rs/joker/mod.rs.html#675-677">Source</a><h4 class="code-header">fn <a href="#method.sell_value" class="fn">sell_value</a>(&amp;self, accumulated_bonus: <a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.f64.html">f64</a>) -&gt; <a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.usize.html">usize</a></h4></section></summary><div class="docblock"><p>Get the current sell value (defaults to cost / 2)</p>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.on_hand_played" class="method"><a class="src rightside" href="../../src/balatro_rs/joker/mod.rs.html#703-705">Source</a><h4 class="code-header">fn <a href="#method.on_hand_played" class="fn">on_hand_played</a>(
+    &amp;self,
+    _context: &amp;mut <a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;,
+    _hand: &amp;<a class="struct" href="../hand/struct.SelectHand.html" title="struct balatro_rs::hand::SelectHand">SelectHand</a>,
+) -&gt; <a class="struct" href="struct.JokerEffect.html" title="struct balatro_rs::joker::JokerEffect">JokerEffect</a></h4></section></summary><div class="docblock"><p>Called when a hand is played and scored.</p>
+<p>This is the primary hook for jokers that provide per-hand effects,
+such as bonuses for specific hand types (Pair, Flush, etc.).</p>
+<h5 id="arguments"><a class="doc-anchor" href="#arguments">§</a>Arguments</h5>
+<ul>
+<li><code>context</code> - Mutable reference to the current game context</li>
+<li><code>hand</code> - The hand being played and scored</li>
+</ul>
+<h5 id="returns-5"><a class="doc-anchor" href="#returns-5">§</a>Returns</h5>
+<p>A <code>JokerEffect</code> describing any bonuses to apply to the hand.</p>
+<h5 id="example"><a class="doc-anchor" href="#example">§</a>Example</h5>
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">fn </span>on_hand_played(<span class="kw-2">&amp;</span><span class="self">self</span>, context: <span class="kw-2">&amp;mut </span>GameContext, hand: <span class="kw-2">&amp;</span>SelectHand) -&gt; JokerEffect {
+    <span class="kw">if </span>hand.is_pair().is_some() {
+        JokerEffect::new().with_mult(<span class="number">8</span>)  <span class="comment">// +8 mult for pairs
+    </span>} <span class="kw">else </span>{
+        JokerEffect::new()
+    }
+}</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.on_card_scored" class="method"><a class="src rightside" href="../../src/balatro_rs/joker/mod.rs.html#733-735">Source</a><h4 class="code-header">fn <a href="#method.on_card_scored" class="fn">on_card_scored</a>(
+    &amp;self,
+    _context: &amp;mut <a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;,
+    _card: &amp;<a class="struct" href="../card/struct.Card.html" title="struct balatro_rs::card::Card">Card</a>,
+) -&gt; <a class="struct" href="struct.JokerEffect.html" title="struct balatro_rs::joker::JokerEffect">JokerEffect</a></h4></section></summary><div class="docblock"><p>Called for each card as it’s scored.</p>
+<p>This is the primary hook for jokers that provide per-card effects,
+such as bonuses for specific suits, ranks, or card properties.</p>
+<h5 id="arguments-1"><a class="doc-anchor" href="#arguments-1">§</a>Arguments</h5>
+<ul>
+<li><code>context</code> - Mutable reference to the current game context</li>
+<li><code>card</code> - The individual card being scored</li>
+</ul>
+<h5 id="returns-6"><a class="doc-anchor" href="#returns-6">§</a>Returns</h5>
+<p>A <code>JokerEffect</code> describing any bonuses to apply for this card.</p>
+<h5 id="performance-note"><a class="doc-anchor" href="#performance-note">§</a>Performance Note</h5>
+<p>This method is called frequently (once per scoring card) and should be optimized.
+Use early returns for non-matching conditions.</p>
+<h5 id="example-1"><a class="doc-anchor" href="#example-1">§</a>Example</h5>
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">fn </span>on_card_scored(<span class="kw-2">&amp;</span><span class="self">self</span>, context: <span class="kw-2">&amp;mut </span>GameContext, card: <span class="kw-2">&amp;</span>Card) -&gt; JokerEffect {
+    <span class="kw">if </span>card.suit == Suit::Diamond {
+        JokerEffect::new().with_mult(<span class="number">3</span>)  <span class="comment">// +3 mult per Diamond
+    </span>} <span class="kw">else </span>{
+        JokerEffect::new()
+    }
+}</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.on_blind_start" class="method"><a class="src rightside" href="../../src/balatro_rs/joker/mod.rs.html#755-757">Source</a><h4 class="code-header">fn <a href="#method.on_blind_start" class="fn">on_blind_start</a>(&amp;self, _context: &amp;mut <a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;) -&gt; <a class="struct" href="struct.JokerEffect.html" title="struct balatro_rs::joker::JokerEffect">JokerEffect</a></h4></section></summary><div class="docblock"><p>Called when a new blind starts.</p>
+<p>This hook is useful for jokers that need to reset state, initialize
+counters, or apply one-time effects at the beginning of each blind.</p>
+<h5 id="arguments-2"><a class="doc-anchor" href="#arguments-2">§</a>Arguments</h5>
+<ul>
+<li><code>context</code> - Mutable reference to the current game context</li>
+</ul>
+<h5 id="returns-7"><a class="doc-anchor" href="#returns-7">§</a>Returns</h5>
+<p>A <code>JokerEffect</code> describing any bonuses to apply when the blind starts.</p>
+<h5 id="example-2"><a class="doc-anchor" href="#example-2">§</a>Example</h5>
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">fn </span>on_blind_start(<span class="kw-2">&amp;</span><span class="self">self</span>, context: <span class="kw-2">&amp;mut </span>GameContext) -&gt; JokerEffect {
+    <span class="comment">// Provide bonus at start of blind
+    </span>JokerEffect::new().with_chips(<span class="number">10</span>)
+}</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.on_shop_open" class="method"><a class="src rightside" href="../../src/balatro_rs/joker/mod.rs.html#769-771">Source</a><h4 class="code-header">fn <a href="#method.on_shop_open" class="fn">on_shop_open</a>(&amp;self, _context: &amp;mut <a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;) -&gt; <a class="struct" href="struct.JokerEffect.html" title="struct balatro_rs::joker::JokerEffect">JokerEffect</a></h4></section></summary><div class="docblock"><p>Called when the shop opens.</p>
+<p>This hook is useful for jokers that interact with the shop phase,
+such as those that modify shop contents or provide shop-related bonuses.</p>
+<h5 id="arguments-3"><a class="doc-anchor" href="#arguments-3">§</a>Arguments</h5>
+<ul>
+<li><code>context</code> - Mutable reference to the current game context</li>
+</ul>
+<h5 id="returns-8"><a class="doc-anchor" href="#returns-8">§</a>Returns</h5>
+<p>A <code>JokerEffect</code> describing any bonuses to apply when entering the shop.</p>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.on_discard" class="method"><a class="src rightside" href="../../src/balatro_rs/joker/mod.rs.html#784-786">Source</a><h4 class="code-header">fn <a href="#method.on_discard" class="fn">on_discard</a>(
+    &amp;self,
+    _context: &amp;mut <a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;,
+    _cards: &amp;[<a class="struct" href="../card/struct.Card.html" title="struct balatro_rs::card::Card">Card</a>],
+) -&gt; <a class="struct" href="struct.JokerEffect.html" title="struct balatro_rs::joker::JokerEffect">JokerEffect</a></h4></section></summary><div class="docblock"><p>Called when cards are discarded.</p>
+<p>This hook is useful for jokers that interact with the discard pile
+or provide bonuses based on discarded cards.</p>
+<h5 id="arguments-4"><a class="doc-anchor" href="#arguments-4">§</a>Arguments</h5>
+<ul>
+<li><code>context</code> - Mutable reference to the current game context</li>
+<li><code>cards</code> - Slice of cards being discarded</li>
+</ul>
+<h5 id="returns-9"><a class="doc-anchor" href="#returns-9">§</a>Returns</h5>
+<p>A <code>JokerEffect</code> describing any bonuses to apply for the discard action.</p>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.on_round_end" class="method"><a class="src rightside" href="../../src/balatro_rs/joker/mod.rs.html#806-808">Source</a><h4 class="code-header">fn <a href="#method.on_round_end" class="fn">on_round_end</a>(&amp;self, _context: &amp;mut <a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;) -&gt; <a class="struct" href="struct.JokerEffect.html" title="struct balatro_rs::joker::JokerEffect">JokerEffect</a></h4></section></summary><div class="docblock"><p>Called at the end of each round.</p>
+<p>This hook is useful for jokers that accumulate bonuses over time,
+apply end-of-round effects, or clean up temporary state.</p>
+<h5 id="arguments-5"><a class="doc-anchor" href="#arguments-5">§</a>Arguments</h5>
+<ul>
+<li><code>context</code> - Mutable reference to the current game context</li>
+</ul>
+<h5 id="returns-10"><a class="doc-anchor" href="#returns-10">§</a>Returns</h5>
+<p>A <code>JokerEffect</code> describing any bonuses to apply at round end.</p>
+<h5 id="example-3"><a class="doc-anchor" href="#example-3">§</a>Example</h5>
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">fn </span>on_round_end(<span class="kw-2">&amp;</span><span class="self">self</span>, context: <span class="kw-2">&amp;mut </span>GameContext) -&gt; JokerEffect {
+    <span class="comment">// Provide bonus at end of round
+    </span>JokerEffect::new().with_money(<span class="number">5</span>)
+}</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.on_created" class="method"><a class="src rightside" href="../../src/balatro_rs/joker/mod.rs.html#835-837">Source</a><h4 class="code-header">fn <a href="#method.on_created" class="fn">on_created</a>(&amp;self, _context: &amp;mut <a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;) -&gt; <a class="struct" href="struct.JokerEffect.html" title="struct balatro_rs::joker::JokerEffect">JokerEffect</a></h4></section></summary><div class="docblock"><p>Called when a joker is first created or purchased.</p>
+<p>This hook is useful for jokers that need to initialize state, set up
+counters, or perform one-time setup operations when they enter the game.</p>
+<h5 id="arguments-6"><a class="doc-anchor" href="#arguments-6">§</a>Arguments</h5>
+<ul>
+<li><code>context</code> - Mutable reference to the current game context</li>
+</ul>
+<h5 id="returns-11"><a class="doc-anchor" href="#returns-11">§</a>Returns</h5>
+<p>A <code>JokerEffect</code> describing any bonuses to apply when the joker is created.</p>
+<h5 id="example-4"><a class="doc-anchor" href="#example-4">§</a>Example</h5>
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">fn </span>on_created(<span class="kw-2">&amp;</span><span class="self">self</span>, context: <span class="kw-2">&amp;mut </span>GameContext) -&gt; JokerEffect {
+    <span class="comment">// Initialize joker-specific state
+    </span>context.joker_state_manager.set_custom_data(
+        <span class="self">self</span>.id(),
+        <span class="string">"creation_round"</span>,
+        context.round
+    );
+    JokerEffect::new()
+}</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.on_activated" class="method"><a class="src rightside" href="../../src/balatro_rs/joker/mod.rs.html#864-866">Source</a><h4 class="code-header">fn <a href="#method.on_activated" class="fn">on_activated</a>(&amp;self, _context: &amp;mut <a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;) -&gt; <a class="struct" href="struct.JokerEffect.html" title="struct balatro_rs::joker::JokerEffect">JokerEffect</a></h4></section></summary><div class="docblock"><p>Called when a joker becomes active in the game.</p>
+<p>This hook is useful for jokers that need to register themselves for
+specific events, start accumulating bonuses, or activate special mechanics.
+Different from creation - activation can happen multiple times if a joker
+is temporarily deactivated and reactivated.</p>
+<h5 id="arguments-7"><a class="doc-anchor" href="#arguments-7">§</a>Arguments</h5>
+<ul>
+<li><code>context</code> - Mutable reference to the current game context</li>
+</ul>
+<h5 id="returns-12"><a class="doc-anchor" href="#returns-12">§</a>Returns</h5>
+<p>A <code>JokerEffect</code> describing any bonuses to apply when the joker activates.</p>
+<h5 id="example-5"><a class="doc-anchor" href="#example-5">§</a>Example</h5>
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">fn </span>on_activated(<span class="kw-2">&amp;</span><span class="self">self</span>, context: <span class="kw-2">&amp;mut </span>GameContext) -&gt; JokerEffect {
+    <span class="comment">// Reset activation-specific counters
+    </span>context.joker_state_manager.set_custom_data(
+        <span class="self">self</span>.id(),
+        <span class="string">"active_since_round"</span>,
+        context.round
+    );
+    JokerEffect::new().with_message(<span class="string">"Joker activated!"</span>.to_string())
+}</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.on_deactivated" class="method"><a class="src rightside" href="../../src/balatro_rs/joker/mod.rs.html#893-895">Source</a><h4 class="code-header">fn <a href="#method.on_deactivated" class="fn">on_deactivated</a>(&amp;self, _context: &amp;mut <a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;) -&gt; <a class="struct" href="struct.JokerEffect.html" title="struct balatro_rs::joker::JokerEffect">JokerEffect</a></h4></section></summary><div class="docblock"><p>Called when a joker becomes inactive.</p>
+<p>This hook is useful for jokers that need to pause their effects,
+save temporary state, or clean up active resources while remaining
+in the player’s collection. The joker may be reactivated later.</p>
+<h5 id="arguments-8"><a class="doc-anchor" href="#arguments-8">§</a>Arguments</h5>
+<ul>
+<li><code>context</code> - Mutable reference to the current game context</li>
+</ul>
+<h5 id="returns-13"><a class="doc-anchor" href="#returns-13">§</a>Returns</h5>
+<p>A <code>JokerEffect</code> describing any final bonuses before deactivation.</p>
+<h5 id="example-6"><a class="doc-anchor" href="#example-6">§</a>Example</h5>
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">fn </span>on_deactivated(<span class="kw-2">&amp;</span><span class="self">self</span>, context: <span class="kw-2">&amp;mut </span>GameContext) -&gt; JokerEffect {
+    <span class="comment">// Save current progress before going inactive
+    </span><span class="kw">let </span>current_progress = <span class="self">self</span>.calculate_progress(context);
+    context.joker_state_manager.set_custom_data(
+        <span class="self">self</span>.id(),
+        <span class="string">"saved_progress"</span>,
+        current_progress
+    );
+    JokerEffect::new()
+}</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.on_cleanup" class="method"><a class="src rightside" href="../../src/balatro_rs/joker/mod.rs.html#923-925">Source</a><h4 class="code-header">fn <a href="#method.on_cleanup" class="fn">on_cleanup</a>(&amp;self, _context: &amp;mut <a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;) -&gt; <a class="struct" href="struct.JokerEffect.html" title="struct balatro_rs::joker::JokerEffect">JokerEffect</a></h4></section></summary><div class="docblock"><p>Called when a joker is permanently removed from the game.</p>
+<p>This hook is useful for jokers that need to perform cleanup operations,
+transfer state to other jokers, or apply final effects before being
+destroyed. This is the final method called before the joker is removed.</p>
+<h5 id="arguments-9"><a class="doc-anchor" href="#arguments-9">§</a>Arguments</h5>
+<ul>
+<li><code>context</code> - Mutable reference to the current game context</li>
+</ul>
+<h5 id="returns-14"><a class="doc-anchor" href="#returns-14">§</a>Returns</h5>
+<p>A <code>JokerEffect</code> describing any final bonuses before cleanup.</p>
+<h5 id="example-7"><a class="doc-anchor" href="#example-7">§</a>Example</h5>
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">fn </span>on_cleanup(<span class="kw-2">&amp;</span><span class="self">self</span>, context: <span class="kw-2">&amp;mut </span>GameContext) -&gt; JokerEffect {
+    <span class="comment">// Transfer accumulated value to money before destruction
+    </span><span class="kw">let </span>accumulated = context.joker_state_manager
+        .get_accumulated_value(<span class="self">self</span>.id())
+        .unwrap_or(<span class="number">0.0</span>);
+
+    <span class="comment">// Clean up state
+    </span>context.joker_state_manager.remove_state(<span class="self">self</span>.id());
+
+    JokerEffect::new().with_money(accumulated <span class="kw">as </span>i32)
+}</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.modify_chips" class="method"><a class="src rightside" href="../../src/balatro_rs/joker/mod.rs.html#946-948">Source</a><h4 class="code-header">fn <a href="#method.modify_chips" class="fn">modify_chips</a>(&amp;self, _context: &amp;<a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;, base_chips: <a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.i32.html">i32</a>) -&gt; <a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.i32.html">i32</a></h4></section></summary><div class="docblock"><p>Modify the base chips value before scoring calculations.</p>
+<p>This hook allows jokers to modify the baseline chips before any
+bonuses are applied. Use this for jokers that fundamentally change
+the chip calculation system.</p>
+<h5 id="arguments-10"><a class="doc-anchor" href="#arguments-10">§</a>Arguments</h5>
+<ul>
+<li><code>context</code> - Reference to the current game context</li>
+<li><code>base_chips</code> - The current base chips value</li>
+</ul>
+<h5 id="returns-15"><a class="doc-anchor" href="#returns-15">§</a>Returns</h5>
+<p>The modified base chips value.</p>
+<h5 id="note"><a class="doc-anchor" href="#note">§</a>Note</h5>
+<p>This is different from chip bonuses applied via <code>JokerEffect</code>.
+Chip bonuses are added to the final total, while this modifier
+changes the base value before other calculations.</p>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.modify_mult" class="method"><a class="src rightside" href="../../src/balatro_rs/joker/mod.rs.html#967-969">Source</a><h4 class="code-header">fn <a href="#method.modify_mult" class="fn">modify_mult</a>(&amp;self, _context: &amp;<a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;, base_mult: <a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.i32.html">i32</a>) -&gt; <a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.i32.html">i32</a></h4></section></summary><div class="docblock"><p>Modify the base mult value before scoring calculations.</p>
+<p>This hook allows jokers to modify the baseline mult before any
+bonuses are applied. Use this for jokers that fundamentally change
+the mult calculation system.</p>
+<h5 id="arguments-11"><a class="doc-anchor" href="#arguments-11">§</a>Arguments</h5>
+<ul>
+<li><code>context</code> - Reference to the current game context</li>
+<li><code>base_mult</code> - The current base mult value</li>
+</ul>
+<h5 id="returns-16"><a class="doc-anchor" href="#returns-16">§</a>Returns</h5>
+<p>The modified base mult value.</p>
+<h5 id="note-1"><a class="doc-anchor" href="#note-1">§</a>Note</h5>
+<p>This is different from mult bonuses applied via <code>JokerEffect</code>.
+Mult bonuses are added to the final total, while this modifier
+changes the base value before other calculations.</p>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.modify_hand_size" class="method"><a class="src rightside" href="../../src/balatro_rs/joker/mod.rs.html#989-991">Source</a><h4 class="code-header">fn <a href="#method.modify_hand_size" class="fn">modify_hand_size</a>(
+    &amp;self,
+    _context: &amp;<a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;,
+    base_size: <a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.usize.html">usize</a>,
+) -&gt; <a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.usize.html">usize</a></h4></section></summary><div class="docblock"><p>Modify the maximum hand size.</p>
+<p>This hook allows jokers to permanently change the number of cards
+the player can hold in their hand.</p>
+<h5 id="arguments-12"><a class="doc-anchor" href="#arguments-12">§</a>Arguments</h5>
+<ul>
+<li><code>context</code> - Reference to the current game context</li>
+<li><code>base_size</code> - The current base hand size</li>
+</ul>
+<h5 id="returns-17"><a class="doc-anchor" href="#returns-17">§</a>Returns</h5>
+<p>The modified hand size.</p>
+<h5 id="example-8"><a class="doc-anchor" href="#example-8">§</a>Example</h5>
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">fn </span>modify_hand_size(<span class="kw-2">&amp;</span><span class="self">self</span>, _context: <span class="kw-2">&amp;</span>GameContext, base_size: usize) -&gt; usize {
+    base_size + <span class="number">2  </span><span class="comment">// +2 hand size
+</span>}</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.modify_discards" class="method"><a class="src rightside" href="../../src/balatro_rs/joker/mod.rs.html#1011-1013">Source</a><h4 class="code-header">fn <a href="#method.modify_discards" class="fn">modify_discards</a>(
+    &amp;self,
+    _context: &amp;<a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;,
+    base_discards: <a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.usize.html">usize</a>,
+) -&gt; <a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.usize.html">usize</a></h4></section></summary><div class="docblock"><p>Modify the number of discards available per round.</p>
+<p>This hook allows jokers to change the number of discards the player
+can use each round.</p>
+<h5 id="arguments-13"><a class="doc-anchor" href="#arguments-13">§</a>Arguments</h5>
+<ul>
+<li><code>context</code> - Reference to the current game context</li>
+<li><code>base_discards</code> - The current base number of discards</li>
+</ul>
+<h5 id="returns-18"><a class="doc-anchor" href="#returns-18">§</a>Returns</h5>
+<p>The modified number of discards.</p>
+<h5 id="example-9"><a class="doc-anchor" href="#example-9">§</a>Example</h5>
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">fn </span>modify_discards(<span class="kw-2">&amp;</span><span class="self">self</span>, _context: <span class="kw-2">&amp;</span>GameContext, base_discards: usize) -&gt; usize {
+    base_discards + <span class="number">1  </span><span class="comment">// +1 discard per round
+</span>}</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.serialize_state" class="method"><a class="src rightside" href="../../src/balatro_rs/joker/mod.rs.html#1041-1047">Source</a><h4 class="code-header">fn <a href="#method.serialize_state" class="fn">serialize_state</a>(
+    &amp;self,
+    _context: &amp;<a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;,
+    state: &amp;<a class="struct" href="../joker_state/struct.JokerState.html" title="struct balatro_rs::joker_state::JokerState">JokerState</a>,
+) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.88.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://docs.rs/serde_json/1.0.133/serde_json/value/enum.Value.html" title="enum serde_json::value::Value">Value</a>, <a class="struct" href="https://docs.rs/serde_json/1.0.133/serde_json/error/struct.Error.html" title="struct serde_json::error::Error">Error</a>&gt;</h4></section></summary><div class="docblock"><p>Serialize joker-specific state for persistence.</p>
+<p>This hook allows jokers to define custom serialization logic for their state.
+The default implementation uses the standard JokerState serialization.</p>
+<h5 id="arguments-14"><a class="doc-anchor" href="#arguments-14">§</a>Arguments</h5>
+<ul>
+<li><code>context</code> - Reference to the current game context</li>
+<li><code>state</code> - The joker’s current state to serialize</li>
+</ul>
+<h5 id="returns-19"><a class="doc-anchor" href="#returns-19">§</a>Returns</h5>
+<p>A Result containing the serialized state as JSON Value or an error</p>
+<h5 id="example-10"><a class="doc-anchor" href="#example-10">§</a>Example</h5>
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">fn </span>serialize_state(<span class="kw-2">&amp;</span><span class="self">self</span>, context: <span class="kw-2">&amp;</span>GameContext, state: <span class="kw-2">&amp;</span>JokerState) -&gt; <span class="prelude-ty">Result</span>&lt;Value, serde_json::Error&gt; {
+    <span class="comment">// Custom serialization for complex joker state
+    </span><span class="kw">let </span><span class="kw-2">mut </span>custom_state = serde_json::to_value(state)<span class="question-mark">?</span>;
+    custom_state[<span class="string">"joker_type"</span>] = Value::String(<span class="self">self</span>.name().to_string());
+    custom_state[<span class="string">"creation_timestamp"</span>] = Value::Number(
+        serde_json::Number::from(context.round)
+    );
+    <span class="prelude-val">Ok</span>(custom_state)
+}</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.deserialize_state" class="method"><a class="src rightside" href="../../src/balatro_rs/joker/mod.rs.html#1078-1084">Source</a><h4 class="code-header">fn <a href="#method.deserialize_state" class="fn">deserialize_state</a>(
+    &amp;self,
+    _context: &amp;<a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;,
+    data: &amp;<a class="enum" href="https://docs.rs/serde_json/1.0.133/serde_json/value/enum.Value.html" title="enum serde_json::value::Value">Value</a>,
+) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.88.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="../joker_state/struct.JokerState.html" title="struct balatro_rs::joker_state::JokerState">JokerState</a>, <a class="struct" href="https://docs.rs/serde_json/1.0.133/serde_json/error/struct.Error.html" title="struct serde_json::error::Error">Error</a>&gt;</h4></section></summary><div class="docblock"><p>Deserialize joker-specific state from persistence.</p>
+<p>This hook allows jokers to define custom deserialization logic for their state.
+The default implementation uses the standard JokerState deserialization.</p>
+<h5 id="arguments-15"><a class="doc-anchor" href="#arguments-15">§</a>Arguments</h5>
+<ul>
+<li><code>context</code> - Reference to the current game context</li>
+<li><code>data</code> - The serialized state data to deserialize</li>
+</ul>
+<h5 id="returns-20"><a class="doc-anchor" href="#returns-20">§</a>Returns</h5>
+<p>A Result containing the deserialized JokerState or an error</p>
+<h5 id="example-11"><a class="doc-anchor" href="#example-11">§</a>Example</h5>
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">fn </span>deserialize_state(<span class="kw-2">&amp;</span><span class="self">self</span>, context: <span class="kw-2">&amp;</span>GameContext, data: <span class="kw-2">&amp;</span>Value) -&gt; <span class="prelude-ty">Result</span>&lt;JokerState, serde_json::Error&gt; {
+    <span class="comment">// Custom deserialization with validation
+    </span><span class="kw">let </span><span class="kw-2">mut </span>state: JokerState = serde_json::from_value(data.clone())<span class="question-mark">?</span>;
+
+    <span class="comment">// Validate and migrate old state format if needed
+    </span><span class="kw">if let </span><span class="prelude-val">Some</span>(version) = data.get(<span class="string">"version"</span>) {
+        <span class="kw">if </span>version.as_u64() == <span class="prelude-val">Some</span>(<span class="number">1</span>) {
+            <span class="comment">// Migrate from version 1 to current format
+            </span>state.accumulated_value <span class="kw-2">*</span>= <span class="number">2.0</span>; <span class="comment">// Example migration
+        </span>}
+    }
+
+    <span class="prelude-val">Ok</span>(state)
+}</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.validate_state" class="method"><a class="src rightside" href="../../src/balatro_rs/joker/mod.rs.html#1115-1117">Source</a><h4 class="code-header">fn <a href="#method.validate_state" class="fn">validate_state</a>(
+    &amp;self,
+    _context: &amp;<a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;,
+    _state: &amp;<a class="struct" href="../joker_state/struct.JokerState.html" title="struct balatro_rs::joker_state::JokerState">JokerState</a>,
+) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.88.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.unit.html">()</a>, <a class="struct" href="https://doc.rust-lang.org/1.88.0/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>&gt;</h4></section></summary><div class="docblock"><p>Validate the integrity of a joker’s state.</p>
+<p>This hook allows jokers to define custom validation rules for their state.
+Called after deserialization to ensure state integrity.</p>
+<h5 id="arguments-16"><a class="doc-anchor" href="#arguments-16">§</a>Arguments</h5>
+<ul>
+<li><code>context</code> - Reference to the current game context</li>
+<li><code>state</code> - The state to validate</li>
+</ul>
+<h5 id="returns-21"><a class="doc-anchor" href="#returns-21">§</a>Returns</h5>
+<p>Ok(()) if state is valid, Err with description if invalid</p>
+<h5 id="example-12"><a class="doc-anchor" href="#example-12">§</a>Example</h5>
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">fn </span>validate_state(<span class="kw-2">&amp;</span><span class="self">self</span>, context: <span class="kw-2">&amp;</span>GameContext, state: <span class="kw-2">&amp;</span>JokerState) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
+    <span class="comment">// Custom validation for this joker type
+    </span><span class="kw">if </span>state.accumulated_value &lt; <span class="number">0.0 </span>{
+        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="string">"Accumulated value cannot be negative for this joker"</span>.to_string());
+    }
+
+    <span class="kw">if let </span><span class="prelude-val">Some</span>(level) = state.get_custom::&lt;i32&gt;(<span class="string">"level"</span>).unwrap_or(<span class="prelude-val">None</span>) {
+        <span class="kw">if </span>level &gt; <span class="number">100 </span>{
+            <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="string">"Level cannot exceed 100"</span>.to_string());
+        }
+    }
+
+    <span class="prelude-val">Ok</span>(())
+}</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.initialize_state" class="method"><a class="src rightside" href="../../src/balatro_rs/joker/mod.rs.html#1149-1151">Source</a><h4 class="code-header">fn <a href="#method.initialize_state" class="fn">initialize_state</a>(&amp;self, _context: &amp;<a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;) -&gt; <a class="struct" href="../joker_state/struct.JokerState.html" title="struct balatro_rs::joker_state::JokerState">JokerState</a></h4></section></summary><div class="docblock"><p>Initialize default state for a new joker instance.</p>
+<p>This hook allows jokers to define their initial state when first created.
+Called when a joker is purchased or otherwise added to the game.</p>
+<h5 id="arguments-17"><a class="doc-anchor" href="#arguments-17">§</a>Arguments</h5>
+<ul>
+<li><code>context</code> - Reference to the current game context</li>
+</ul>
+<h5 id="returns-22"><a class="doc-anchor" href="#returns-22">§</a>Returns</h5>
+<p>The initial JokerState for this joker instance</p>
+<h5 id="example-13"><a class="doc-anchor" href="#example-13">§</a>Example</h5>
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">fn </span>initialize_state(<span class="kw-2">&amp;</span><span class="self">self</span>, context: <span class="kw-2">&amp;</span>GameContext) -&gt; JokerState {
+    <span class="kw">let </span><span class="kw-2">mut </span>state = JokerState::new();
+
+    <span class="comment">// Set initial values based on game context
+    </span>state.set_custom(<span class="string">"creation_round"</span>, context.round).unwrap();
+    state.set_custom(<span class="string">"level"</span>, <span class="number">1</span>).unwrap();
+
+    <span class="comment">// Some jokers start with triggers based on ante
+    </span><span class="kw">if </span>context.ante &lt;= <span class="number">3 </span>{
+        state.triggers_remaining = <span class="prelude-val">Some</span>(<span class="number">5</span>);
+    } <span class="kw">else </span>{
+        state.triggers_remaining = <span class="prelude-val">Some</span>(<span class="number">3</span>);
+    }
+
+    state
+}</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.migrate_state" class="method"><a class="src rightside" href="../../src/balatro_rs/joker/mod.rs.html#1186-1193">Source</a><h4 class="code-header">fn <a href="#method.migrate_state" class="fn">migrate_state</a>(
+    &amp;self,
+    _context: &amp;<a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;,
+    old_state: &amp;<a class="enum" href="https://docs.rs/serde_json/1.0.133/serde_json/value/enum.Value.html" title="enum serde_json::value::Value">Value</a>,
+    _from_version: <a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.u32.html">u32</a>,
+) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.88.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="../joker_state/struct.JokerState.html" title="struct balatro_rs::joker_state::JokerState">JokerState</a>, <a class="struct" href="https://doc.rust-lang.org/1.88.0/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>&gt;</h4></section></summary><div class="docblock"><p>Migrate state from an older version.</p>
+<p>This hook allows jokers to handle state migration when loading save games
+from older versions of the game. Useful for maintaining compatibility.</p>
+<h5 id="arguments-18"><a class="doc-anchor" href="#arguments-18">§</a>Arguments</h5>
+<ul>
+<li><code>context</code> - Reference to the current game context</li>
+<li><code>old_state</code> - The state in the old format</li>
+<li><code>from_version</code> - The version the state is being migrated from</li>
+</ul>
+<h5 id="returns-23"><a class="doc-anchor" href="#returns-23">§</a>Returns</h5>
+<p>The migrated state in the current format, or an error if migration fails</p>
+<h5 id="example-14"><a class="doc-anchor" href="#example-14">§</a>Example</h5>
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">fn </span>migrate_state(<span class="kw-2">&amp;</span><span class="self">self</span>, context: <span class="kw-2">&amp;</span>GameContext, old_state: <span class="kw-2">&amp;</span>Value, from_version: u32) -&gt; <span class="prelude-ty">Result</span>&lt;JokerState, String&gt; {
+    <span class="kw">match </span>from_version {
+        <span class="number">1 </span>=&gt; {
+            <span class="comment">// Migrate from version 1
+            </span><span class="kw">let </span><span class="kw-2">mut </span>state: JokerState = serde_json::from_value(old_state.clone())
+                .map_err(|e| <span class="macro">format!</span>(<span class="string">"Failed to parse v1 state: {}"</span>, e))<span class="question-mark">?</span>;
+
+            <span class="comment">// In v1, accumulated_value was stored as integer
+            </span><span class="kw">if let </span><span class="prelude-val">Some</span>(old_value) = old_state.get(<span class="string">"old_accumulated"</span>) {
+                state.accumulated_value = old_value.as_i64().unwrap_or(<span class="number">0</span>) <span class="kw">as </span>f64;
+            }
+
+            <span class="prelude-val">Ok</span>(state)
+        }
+        <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">"Unknown version: {}"</span>, from_version))
+    }
+}</code></pre></div>
+</div></details></div><h2 id="implementors" class="section-header">Implementors<a href="#implementors" class="anchor">§</a></h2><div id="implementors-list"><section id="impl-Joker-for-BannerJoker" class="impl"><a class="src rightside" href="../../src/balatro_rs/basic_chips_jokers.rs.html#25-54">Source</a><a href="#impl-Joker-for-BannerJoker" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="trait.Joker.html" title="trait balatro_rs::joker::Joker">Joker</a> for <a class="struct" href="../basic_chips_jokers/struct.BannerJoker.html" title="struct balatro_rs::basic_chips_jokers::BannerJoker">BannerJoker</a></h3></section><section id="impl-Joker-for-BlueJoker" class="impl"><a class="src rightside" href="../../src/balatro_rs/basic_chips_jokers.rs.html#217-242">Source</a><a href="#impl-Joker-for-BlueJoker" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="trait.Joker.html" title="trait balatro_rs::joker::Joker">Joker</a> for <a class="struct" href="../basic_chips_jokers/struct.BlueJoker.html" title="struct balatro_rs::basic_chips_jokers::BlueJoker">BlueJoker</a></h3></section><section id="impl-Joker-for-BullJoker" class="impl"><a class="src rightside" href="../../src/balatro_rs/basic_chips_jokers.rs.html#76-101">Source</a><a href="#impl-Joker-for-BullJoker" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="trait.Joker.html" title="trait balatro_rs::joker::Joker">Joker</a> for <a class="struct" href="../basic_chips_jokers/struct.BullJoker.html" title="struct balatro_rs::basic_chips_jokers::BullJoker">BullJoker</a></h3></section><section id="impl-Joker-for-ScaryFaceJoker" class="impl"><a class="src rightside" href="../../src/balatro_rs/basic_chips_jokers.rs.html#168-195">Source</a><a href="#impl-Joker-for-ScaryFaceJoker" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="trait.Joker.html" title="trait balatro_rs::joker::Joker">Joker</a> for <a class="struct" href="../basic_chips_jokers/struct.ScaryFaceJoker.html" title="struct balatro_rs::basic_chips_jokers::ScaryFaceJoker">ScaryFaceJoker</a></h3></section><section id="impl-Joker-for-StoneJoker" class="impl"><a class="src rightside" href="../../src/balatro_rs/basic_chips_jokers.rs.html#121-146">Source</a><a href="#impl-Joker-for-StoneJoker" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="trait.Joker.html" title="trait balatro_rs::joker::Joker">Joker</a> for <a class="struct" href="../basic_chips_jokers/struct.StoneJoker.html" title="struct balatro_rs::basic_chips_jokers::StoneJoker">StoneJoker</a></h3></section><section id="impl-Joker-for-Burglar" class="impl"><a class="src rightside" href="../../src/balatro_rs/joker_impl.rs.html#593-620">Source</a><a href="#impl-Joker-for-Burglar" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="trait.Joker.html" title="trait balatro_rs::joker::Joker">Joker</a> for <a class="struct" href="../joker_impl/struct.Burglar.html" title="struct balatro_rs::joker_impl::Burglar">Burglar</a></h3></section><section id="impl-Joker-for-BusinessCard" class="impl"><a class="src rightside" href="../../src/balatro_rs/joker_impl.rs.html#518-550">Source</a><a href="#impl-Joker-for-BusinessCard" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="trait.Joker.html" title="trait balatro_rs::joker::Joker">Joker</a> for <a class="struct" href="../joker_impl/struct.BusinessCard.html" title="struct balatro_rs::joker_impl::BusinessCard">BusinessCard</a></h3></section><section id="impl-Joker-for-CleverJoker" class="impl"><a class="src rightside" href="../../src/balatro_rs/joker_impl.rs.html#414-442">Source</a><a href="#impl-Joker-for-CleverJoker" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="trait.Joker.html" title="trait balatro_rs::joker::Joker">Joker</a> for <a class="struct" href="../joker_impl/struct.CleverJoker.html" title="struct balatro_rs::joker_impl::CleverJoker">CleverJoker</a></h3></section><section id="impl-Joker-for-CraftyJoker" class="impl"><a class="src rightside" href="../../src/balatro_rs/joker_impl.rs.html#482-510">Source</a><a href="#impl-Joker-for-CraftyJoker" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="trait.Joker.html" title="trait balatro_rs::joker::Joker">Joker</a> for <a class="struct" href="../joker_impl/struct.CraftyJoker.html" title="struct balatro_rs::joker_impl::CraftyJoker">CraftyJoker</a></h3></section><section id="impl-Joker-for-CrazyJoker" class="impl"><a class="src rightside" href="../../src/balatro_rs/joker_impl.rs.html#278-306">Source</a><a href="#impl-Joker-for-CrazyJoker" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="trait.Joker.html" title="trait balatro_rs::joker::Joker">Joker</a> for <a class="struct" href="../joker_impl/struct.CrazyJoker.html" title="struct balatro_rs::joker_impl::CrazyJoker">CrazyJoker</a></h3></section><section id="impl-Joker-for-DeviousJoker" class="impl"><a class="src rightside" href="../../src/balatro_rs/joker_impl.rs.html#448-476">Source</a><a href="#impl-Joker-for-DeviousJoker" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="trait.Joker.html" title="trait balatro_rs::joker::Joker">Joker</a> for <a class="struct" href="../joker_impl/struct.DeviousJoker.html" title="struct balatro_rs::joker_impl::DeviousJoker">DeviousJoker</a></h3></section><section id="impl-Joker-for-DrollJoker" class="impl"><a class="src rightside" href="../../src/balatro_rs/joker_impl.rs.html#312-340">Source</a><a href="#impl-Joker-for-DrollJoker" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="trait.Joker.html" title="trait balatro_rs::joker::Joker">Joker</a> for <a class="struct" href="../joker_impl/struct.DrollJoker.html" title="struct balatro_rs::joker_impl::DrollJoker">DrollJoker</a></h3></section><section id="impl-Joker-for-Egg" class="impl"><a class="src rightside" href="../../src/balatro_rs/joker_impl.rs.html#556-587">Source</a><a href="#impl-Joker-for-Egg" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="trait.Joker.html" title="trait balatro_rs::joker::Joker">Joker</a> for <a class="struct" href="../joker_impl/struct.Egg.html" title="struct balatro_rs::joker_impl::Egg">Egg</a></h3></section><section id="impl-Joker-for-GluttonousJoker" class="impl"><a class="src rightside" href="../../src/balatro_rs/joker_impl.rs.html#142-170">Source</a><a href="#impl-Joker-for-GluttonousJoker" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="trait.Joker.html" title="trait balatro_rs::joker::Joker">Joker</a> for <a class="struct" href="../joker_impl/struct.GluttonousJoker.html" title="struct balatro_rs::joker_impl::GluttonousJoker">GluttonousJoker</a></h3></section><section id="impl-Joker-for-GreedyJoker" class="impl"><a class="src rightside" href="../../src/balatro_rs/joker_impl.rs.html#40-68">Source</a><a href="#impl-Joker-for-GreedyJoker" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="trait.Joker.html" title="trait balatro_rs::joker::Joker">Joker</a> for <a class="struct" href="../joker_impl/struct.GreedyJoker.html" title="struct balatro_rs::joker_impl::GreedyJoker">GreedyJoker</a></h3></section><section id="impl-Joker-for-IceCreamJoker" class="impl"><a class="src rightside" href="../../src/balatro_rs/joker_impl.rs.html#669-725">Source</a><a href="#impl-Joker-for-IceCreamJoker" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="trait.Joker.html" title="trait balatro_rs::joker::Joker">Joker</a> for <a class="struct" href="../joker_impl/struct.IceCreamJoker.html" title="struct balatro_rs::joker_impl::IceCreamJoker">IceCreamJoker</a></h3></section><section id="impl-Joker-for-JollyJoker" class="impl"><a class="src rightside" href="../../src/balatro_rs/joker_impl.rs.html#176-204">Source</a><a href="#impl-Joker-for-JollyJoker" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="trait.Joker.html" title="trait balatro_rs::joker::Joker">Joker</a> for <a class="struct" href="../joker_impl/struct.JollyJoker.html" title="struct balatro_rs::joker_impl::JollyJoker">JollyJoker</a></h3></section><section id="impl-Joker-for-LustyJoker" class="impl"><a class="src rightside" href="../../src/balatro_rs/joker_impl.rs.html#74-102">Source</a><a href="#impl-Joker-for-LustyJoker" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="trait.Joker.html" title="trait balatro_rs::joker::Joker">Joker</a> for <a class="struct" href="../joker_impl/struct.LustyJoker.html" title="struct balatro_rs::joker_impl::LustyJoker">LustyJoker</a></h3></section><section id="impl-Joker-for-MadJoker" class="impl"><a class="src rightside" href="../../src/balatro_rs/joker_impl.rs.html#244-272">Source</a><a href="#impl-Joker-for-MadJoker" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="trait.Joker.html" title="trait balatro_rs::joker::Joker">Joker</a> for <a class="struct" href="../joker_impl/struct.MadJoker.html" title="struct balatro_rs::joker_impl::MadJoker">MadJoker</a></h3></section><section id="impl-Joker-for-RunnerJoker" class="impl"><a class="src rightside" href="../../src/balatro_rs/joker_impl.rs.html#731-779">Source</a><a href="#impl-Joker-for-RunnerJoker" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="trait.Joker.html" title="trait balatro_rs::joker::Joker">Joker</a> for <a class="struct" href="../joker_impl/struct.RunnerJoker.html" title="struct balatro_rs::joker_impl::RunnerJoker">RunnerJoker</a></h3></section><section id="impl-Joker-for-SlyJoker" class="impl"><a class="src rightside" href="../../src/balatro_rs/joker_impl.rs.html#346-374">Source</a><a href="#impl-Joker-for-SlyJoker" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="trait.Joker.html" title="trait balatro_rs::joker::Joker">Joker</a> for <a class="struct" href="../joker_impl/struct.SlyJoker.html" title="struct balatro_rs::joker_impl::SlyJoker">SlyJoker</a></h3></section><section id="impl-Joker-for-SpaceJoker" class="impl"><a class="src rightside" href="../../src/balatro_rs/joker_impl.rs.html#785-818">Source</a><a href="#impl-Joker-for-SpaceJoker" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="trait.Joker.html" title="trait balatro_rs::joker::Joker">Joker</a> for <a class="struct" href="../joker_impl/struct.SpaceJoker.html" title="struct balatro_rs::joker_impl::SpaceJoker">SpaceJoker</a></h3></section><section id="impl-Joker-for-SupernovaJoker" class="impl"><a class="src rightside" href="../../src/balatro_rs/joker_impl.rs.html#626-663">Source</a><a href="#impl-Joker-for-SupernovaJoker" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="trait.Joker.html" title="trait balatro_rs::joker::Joker">Joker</a> for <a class="struct" href="../joker_impl/struct.SupernovaJoker.html" title="struct balatro_rs::joker_impl::SupernovaJoker">SupernovaJoker</a></h3></section><section id="impl-Joker-for-TheJoker" class="impl"><a class="src rightside" href="../../src/balatro_rs/joker_impl.rs.html#10-34">Source</a><a href="#impl-Joker-for-TheJoker" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="trait.Joker.html" title="trait balatro_rs::joker::Joker">Joker</a> for <a class="struct" href="../joker_impl/struct.TheJoker.html" title="struct balatro_rs::joker_impl::TheJoker">TheJoker</a></h3></section><section id="impl-Joker-for-WilyJoker" class="impl"><a class="src rightside" href="../../src/balatro_rs/joker_impl.rs.html#380-408">Source</a><a href="#impl-Joker-for-WilyJoker" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="trait.Joker.html" title="trait balatro_rs::joker::Joker">Joker</a> for <a class="struct" href="../joker_impl/struct.WilyJoker.html" title="struct balatro_rs::joker_impl::WilyJoker">WilyJoker</a></h3></section><section id="impl-Joker-for-WrathfulJoker" class="impl"><a class="src rightside" href="../../src/balatro_rs/joker_impl.rs.html#108-136">Source</a><a href="#impl-Joker-for-WrathfulJoker" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="trait.Joker.html" title="trait balatro_rs::joker::Joker">Joker</a> for <a class="struct" href="../joker_impl/struct.WrathfulJoker.html" title="struct balatro_rs::joker_impl::WrathfulJoker">WrathfulJoker</a></h3></section><section id="impl-Joker-for-ZanyJoker" class="impl"><a class="src rightside" href="../../src/balatro_rs/joker_impl.rs.html#210-238">Source</a><a href="#impl-Joker-for-ZanyJoker" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="trait.Joker.html" title="trait balatro_rs::joker::Joker">Joker</a> for <a class="struct" href="../joker_impl/struct.ZanyJoker.html" title="struct balatro_rs::joker_impl::ZanyJoker">ZanyJoker</a></h3></section><section id="impl-Joker-for-StaticJoker" class="impl"><a class="src rightside" href="../../src/balatro_rs/static_joker.rs.html#72-123">Source</a><a href="#impl-Joker-for-StaticJoker" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="trait.Joker.html" title="trait balatro_rs::joker::Joker">Joker</a> for <a class="struct" href="../static_joker/struct.StaticJoker.html" title="struct balatro_rs::static_joker::StaticJoker">StaticJoker</a></h3></section><section id="impl-Joker-for-ConditionalJoker" class="impl"><a class="src rightside" href="../../src/balatro_rs/joker/conditional.rs.html#365-437">Source</a><a href="#impl-Joker-for-ConditionalJoker" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="trait.Joker.html" title="trait balatro_rs::joker::Joker">Joker</a> for <a class="struct" href="conditional/struct.ConditionalJoker.html" title="struct balatro_rs::joker::conditional::ConditionalJoker">ConditionalJoker</a></h3></section><section id="impl-Joker-for-DnaJoker" class="impl"><a class="src rightside" href="../../src/balatro_rs/joker/hand_composition_jokers.rs.html#63-122">Source</a><a href="#impl-Joker-for-DnaJoker" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="trait.Joker.html" title="trait balatro_rs::joker::Joker">Joker</a> for <a class="struct" href="hand_composition_jokers/struct.DnaJoker.html" title="struct balatro_rs::joker::hand_composition_jokers::DnaJoker">DnaJoker</a></h3></section></div><script src="../../trait.impl/balatro_rs/joker/trait.Joker.js" async></script></section></div></main></body></html>

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ConflictResolutionStrategy","EffectPriority","EffectProcessingError","ProcessingMode"],"struct":["JokerEffectProcessor","ProcessingContext","ProcessingResult","WeightedEffect"]};

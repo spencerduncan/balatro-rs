@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["BlindEffect","BossBlindData","BossBlindId","CounterType"],"struct":["BossBlindIdIter","BossBlindState","HandModification"],"trait":["BossBlind","BossBlindInfo","BossBlindLifecycle","BossBlindModular","BossBlindScoring"]};

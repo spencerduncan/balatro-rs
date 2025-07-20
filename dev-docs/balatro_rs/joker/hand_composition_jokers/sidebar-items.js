@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["create_blackboard","create_dna","create_ride_the_bus"],"struct":["DnaJoker"]};

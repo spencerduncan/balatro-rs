@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["StaticCondition"],"struct":["StaticJoker","StaticJokerBuilder"]};

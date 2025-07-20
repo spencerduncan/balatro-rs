@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["LoadError","PersistenceError","StateValidationError"],"struct":["JokerPersistenceManager","JokerState","JokerStateManager","JokerValidationError","LoadResult","SaveMetadata","StateBackup","StateMemoryReport","ValidationReport","VersionedSaveData"]};
