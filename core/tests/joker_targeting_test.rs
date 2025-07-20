@@ -56,9 +56,9 @@ fn create_game_with_jokers(joker_count: usize) -> Game {
     // Add mock jokers to the game
     for i in 0..joker_count {
         let joker_id = match i % 3 {
-            0 => JokerId::JokerOne,
-            1 => JokerId::JokerTwo,
-            _ => JokerId::JokerThree,
+            0 => JokerId::Joker,
+            1 => JokerId::GreedyJoker,
+            _ => JokerId::LustyJoker,
         };
         let joker = Box::new(MockJoker::new(joker_id, "Mock Joker"));
         game.jokers.push(joker);
@@ -87,11 +87,11 @@ fn test_joker_target_active_joker() {
 
 #[test]
 fn test_joker_target_joker_of_type() {
-    let target = JokerTarget::joker_of_type(3, JokerId::JokerOne);
+    let target = JokerTarget::joker_of_type(3, JokerId::Joker);
     
     assert_eq!(target.slot, 3);
     assert!(!target.require_active);
-    assert_eq!(target.joker_type, Some(JokerId::JokerOne));
+    assert_eq!(target.joker_type, Some(JokerId::Joker));
 }
 
 #[test]
@@ -116,15 +116,15 @@ fn test_joker_target_validate_empty_slot() {
 #[test]
 fn test_joker_target_validate_wrong_joker_type() {
     let game = create_game_with_jokers(3);
-    // Slot 0 has JokerOne, but we're expecting JokerTwo
-    let target = JokerTarget::joker_of_type(0, JokerId::JokerTwo);
+    // Slot 0 has Joker, but we're expecting GreedyJoker
+    let target = JokerTarget::joker_of_type(0, JokerId::GreedyJoker);
     
     let result = target.validate(&game);
     assert!(result.is_err());
     match result.unwrap_err() {
         JokerTargetError::WrongJokerType { expected, actual } => {
-            assert_eq!(expected, JokerId::JokerTwo);
-            assert_eq!(actual, JokerId::JokerOne);
+            assert_eq!(expected, JokerId::GreedyJoker);
+            assert_eq!(actual, JokerId::Joker);
         }
         _ => panic!("Expected WrongJokerType error"),
     }
@@ -133,8 +133,8 @@ fn test_joker_target_validate_wrong_joker_type() {
 #[test]
 fn test_joker_target_validate_correct_joker_type() {
     let game = create_game_with_jokers(3);
-    // Slot 0 has JokerOne, and we're expecting JokerOne
-    let target = JokerTarget::joker_of_type(0, JokerId::JokerOne);
+    // Slot 0 has Joker, and we're expecting Joker
+    let target = JokerTarget::joker_of_type(0, JokerId::Joker);
     
     let result = target.validate(&game);
     assert!(result.is_ok());
@@ -148,7 +148,7 @@ fn test_joker_target_get_joker_valid() {
     let result = target.get_joker(&game);
     assert!(result.is_ok());
     let joker = result.unwrap();
-    assert_eq!(joker.id(), JokerId::JokerTwo); // Second joker has JokerTwo
+    assert_eq!(joker.id(), JokerId::GreedyJoker); // Second joker has GreedyJoker
 }
 
 #[test]
@@ -177,8 +177,8 @@ fn test_joker_target_error_display() {
     let empty_slot_error = JokerTargetError::EmptySlot { slot: 2 };
     let inactive_joker_error = JokerTargetError::InactiveJoker { slot: 1 };
     let wrong_type_error = JokerTargetError::WrongJokerType {
-        expected: JokerId::JokerOne,
-        actual: JokerId::JokerTwo,
+        expected: JokerId::Joker,
+        actual: JokerId::GreedyJoker,
     };
     
     assert!(empty_slot_error.to_string().contains("Joker slot 2 is empty"));
@@ -204,7 +204,7 @@ fn test_joker_target_equality_and_clone() {
 fn test_joker_target_serialization() {
     use serde_json;
     
-    let target = JokerTarget::joker_of_type(3, JokerId::JokerOne);
+    let target = JokerTarget::joker_of_type(3, JokerId::Joker);
     
     // Test serialization
     let serialized = serde_json::to_string(&target);
@@ -271,7 +271,7 @@ fn test_target_joker_methods_integration() {
     
     // Test getting the joker
     let joker = joker_target.get_joker(&game).unwrap();
-    assert_eq!(joker.id(), JokerId::JokerThree); // Third joker (index 2) has JokerThree
+    assert_eq!(joker.id(), JokerId::LustyJoker); // Third joker (index 2) has LustyJoker
 }
 
 #[test]
@@ -311,9 +311,9 @@ fn test_joker_target_comprehensive_validation() {
         (JokerTarget::new(5), false, "Targeting beyond bounds"),
         (JokerTarget::active_joker(0), true, "Active joker slot 0"),
         (JokerTarget::active_joker(10), false, "Active joker beyond bounds"),
-        (JokerTarget::joker_of_type(0, JokerId::JokerOne), true, "Correct type slot 0"),
-        (JokerTarget::joker_of_type(1, JokerId::JokerOne), false, "Wrong type slot 1"),
-        (JokerTarget::joker_of_type(2, JokerId::JokerThree), true, "Correct type slot 2"),
+        (JokerTarget::joker_of_type(0, JokerId::Joker), true, "Correct type slot 0"),
+        (JokerTarget::joker_of_type(1, JokerId::Joker), false, "Wrong type slot 1"),
+        (JokerTarget::joker_of_type(2, JokerId::LustyJoker), true, "Correct type slot 2"),
     ];
     
     for (target, should_pass, description) in test_cases {
@@ -344,7 +344,7 @@ fn test_joker_target_with_different_game_states() {
 
 #[test]
 fn test_joker_target_debug_output() {
-    let target = JokerTarget::joker_of_type(2, JokerId::JokerOne);
+    let target = JokerTarget::joker_of_type(2, JokerId::Joker);
     let debug_output = format!("{:?}", target);
     
     assert!(debug_output.contains("JokerTarget"));
