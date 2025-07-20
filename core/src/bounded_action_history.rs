@@ -9,7 +9,7 @@ pub const DEFAULT_MAX_ACTIONS: usize = 10_000;
 
 /// Bounded circular buffer for action history to prevent memory leaks
 ///
-/// This replaces the unbounded Vec<Action> with a memory-efficient circular buffer
+/// This replaces the unbounded `Vec<Action>` with a memory-efficient circular buffer
 /// that maintains only the most recent actions up to a configurable limit.
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone)]

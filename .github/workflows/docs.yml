@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: |
           apt-get update
-          apt-get install -y pkg-config libssl-dev python3 python3-dev
+          apt-get install -y pkg-config libssl-dev python3 python3-dev git
       
       - name: Cache cargo registry
         uses: actions/cache@v4
@@ -109,7 +109,7 @@ jobs:
       
       - name: Deploy documentation (main branch only)
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./target/doc
@@ -127,7 +127,7 @@ jobs:
       - name: Install Python and dependencies
         run: |
           apt-get update
-          apt-get install -y python3 python3-dev python3-venv python3-pip pkg-config libssl-dev
+          apt-get install -y python3 python3-dev python3-venv python3-pip pkg-config libssl-dev git
           
       - name: Setup Python virtual environment
         run: |
