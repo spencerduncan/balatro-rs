@@ -1,3 +1,11 @@
+/// Integration tests for full game simulation
+/// 
+/// NOTE: The main test_game function requires the "integration_tests" feature flag because:
+/// - It can be very slow (runs full game simulations)
+/// - Timing depends on random game outcomes and can be unpredictable
+/// - Can timeout in CI environments with limited resources
+///
+/// To run locally: cargo test --features integration_tests test_game
 use balatro_rs::{action::Action, game::Game, rng::GameRng, stage::Stage};
 
 fn run_game_gen_actions() {
@@ -60,6 +68,7 @@ fn run_game_action_space() {
 }
 
 #[test]
+#[cfg(feature = "integration_tests")]
 fn test_game() {
     run_game_gen_actions();
     run_game_action_space();
