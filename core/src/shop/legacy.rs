@@ -163,14 +163,15 @@ mod tests {
     #[test]
     fn test_shop_refresh_multiple_times() {
         let mut shop = Shop::new();
+        let rng = crate::rng::GameRng::for_testing(42);
 
         // First refresh
-        shop.refresh();
+        shop.refresh(&rng);
         assert_eq!(shop.jokers.len(), 2);
         let first_jokers = shop.jokers.clone();
 
         // Second refresh - should replace jokers
-        shop.refresh();
+        shop.refresh(&rng);
         assert_eq!(shop.jokers.len(), 2);
 
         // Jokers might be the same due to RNG, but structure should be consistent
@@ -180,7 +181,8 @@ mod tests {
     #[test]
     fn test_shop_joker_from_index_valid() {
         let mut shop = Shop::new();
-        shop.refresh();
+        let rng = crate::rng::GameRng::for_testing(42);
+        shop.refresh(&rng);
 
         // Test valid indices
         let joker0 = shop.joker_from_index(0);
@@ -198,7 +200,8 @@ mod tests {
     #[should_panic]
     fn test_shop_joker_from_index_invalid() {
         let mut shop = Shop::new();
-        shop.refresh();
+        let rng = crate::rng::GameRng::for_testing(42);
+        shop.refresh(&rng);
 
         // Test invalid index - should panic due to array access
         shop.joker_from_index(2);
@@ -216,7 +219,8 @@ mod tests {
     #[test]
     fn test_shop_buy_joker_success() {
         let mut shop = Shop::new();
-        shop.refresh();
+        let rng = crate::rng::GameRng::for_testing(42);
+        shop.refresh(&rng);
         let initial_count = shop.jokers.len();
         let joker_to_buy = shop.jokers[0].clone();
 
@@ -232,7 +236,8 @@ mod tests {
     #[test]
     fn test_shop_buy_joker_not_found() {
         let mut shop = Shop::new();
-        shop.refresh();
+        let rng = crate::rng::GameRng::for_testing(42);
+        shop.refresh(&rng);
         let original_jokers = shop.jokers.clone();
 
         // Create a joker that's guaranteed not to match any joker instance in the shop
@@ -277,7 +282,8 @@ mod tests {
     #[test]
     fn test_shop_buy_multiple_jokers() {
         let mut shop = Shop::new();
-        shop.refresh();
+        let rng = crate::rng::GameRng::for_testing(42);
+        shop.refresh(&rng);
 
         // Buy first joker
         let joker1 = shop.jokers[0].clone();
@@ -298,7 +304,8 @@ mod tests {
     #[test]
     fn test_shop_buy_same_joker_twice() {
         let mut shop = Shop::new();
-        shop.refresh();
+        let rng = crate::rng::GameRng::for_testing(42);
+        shop.refresh(&rng);
         let joker = shop.jokers[0].clone();
 
         // First purchase should succeed
@@ -314,7 +321,8 @@ mod tests {
     #[test]
     fn test_shop_has_joker() {
         let mut shop = Shop::new();
-        shop.refresh();
+        let rng = crate::rng::GameRng::for_testing(42);
+        shop.refresh(&rng);
 
         // The has_joker method should find jokers that match the JokerId
         // This is a basic test since we can't predict which jokers will be generated
@@ -345,7 +353,8 @@ mod tests {
     #[test]
     fn test_shop_gen_moves_buy_joker_insufficient_funds() {
         let mut shop = Shop::new();
-        shop.refresh();
+        let rng = crate::rng::GameRng::for_testing(42);
+        shop.refresh(&rng);
 
         // Test with very low balance
         let result = shop.gen_moves_buy_joker(0.0, 0, 5);
@@ -358,7 +367,8 @@ mod tests {
     #[test]
     fn test_shop_gen_moves_buy_joker_max_slots_reached() {
         let mut shop = Shop::new();
-        shop.refresh();
+        let rng = crate::rng::GameRng::for_testing(42);
+        shop.refresh(&rng);
 
         // Test when current joker count equals max slots
         let result = shop.gen_moves_buy_joker(100.0, 5, 5);
@@ -371,7 +381,8 @@ mod tests {
     #[test]
     fn test_shop_gen_moves_buy_joker_valid() {
         let mut shop = Shop::new();
-        shop.refresh();
+        let rng = crate::rng::GameRng::for_testing(42);
+        shop.refresh(&rng);
 
         let result = shop.gen_moves_buy_joker(100.0, 0, 5);
         assert!(
@@ -397,7 +408,8 @@ mod tests {
     #[test]
     fn test_shop_gen_moves_buy_joker_partial_affordability() {
         let mut shop = Shop::new();
-        shop.refresh();
+        let rng = crate::rng::GameRng::for_testing(42);
+        shop.refresh(&rng);
 
         // Assume jokers cost at least 1, test with limited funds
         let result = shop.gen_moves_buy_joker(3.0, 0, 5);
@@ -422,7 +434,8 @@ mod tests {
     #[test]
     fn test_shop_clone() {
         let mut shop = Shop::new();
-        shop.refresh();
+        let rng = crate::rng::GameRng::for_testing(42);
+        shop.refresh(&rng);
 
         let cloned_shop = shop.clone();
 
@@ -431,7 +444,7 @@ mod tests {
         assert_eq!(cloned_shop.jokers, shop.jokers);
 
         // Modifying original should not affect clone
-        shop.refresh();
+        shop.refresh(&rng);
         assert_eq!(cloned_shop.jokers.len(), 2); // Clone should still have original jokers
     }
 
@@ -457,10 +470,11 @@ mod tests {
     #[test]
     fn test_joker_generator_gen_joker() {
         let generator = JokerGenerator {};
+        let rng = crate::rng::GameRng::for_testing(42);
 
         // Generate multiple jokers to test consistency
         for _ in 0..10 {
-            let joker = generator.gen_joker();
+            let joker = generator.gen_joker(&rng);
             // All generated jokers should be valid Jokers enum variants
             assert!(matches!(
                 joker,
@@ -487,10 +501,11 @@ mod tests {
     #[test]
     fn test_shop_stress_operations() {
         let mut shop = Shop::new();
+        let rng = crate::rng::GameRng::for_testing(42);
 
         // Perform many refresh operations
         for _ in 0..100 {
-            shop.refresh();
+            shop.refresh(&rng);
             assert_eq!(shop.jokers.len(), 2);
 
             // Buy all jokers
@@ -507,7 +522,8 @@ mod tests {
     #[test]
     fn test_shop_edge_case_index_boundaries() {
         let mut shop = Shop::new();
-        shop.refresh();
+        let rng = crate::rng::GameRng::for_testing(42);
+        shop.refresh(&rng);
 
         // Test boundary indices
         assert!(shop.joker_from_index(0).is_some());

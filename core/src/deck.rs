@@ -219,11 +219,13 @@ mod tests {
 
     #[test]
     fn test_deck_shuffle() {
+        use crate::rng::GameRng;
         let mut deck = Deck::default();
         let original_cards = deck.cards();
+        let rng = GameRng::for_testing(42);
 
         // Shuffle the deck multiple times to test randomization
-        deck.shuffle();
+        deck.shuffle(&rng);
         let shuffled_cards = deck.cards();
 
         // Should have same number of cards
@@ -239,21 +241,25 @@ mod tests {
 
     #[test]
     fn test_deck_shuffle_empty() {
+        use crate::rng::GameRng;
         let mut deck = Deck::new();
+        let rng = GameRng::for_testing(42);
 
         // Shuffling empty deck should not panic
-        deck.shuffle();
+        deck.shuffle(&rng);
         assert_eq!(deck.len(), 0);
     }
 
     #[test]
     fn test_deck_shuffle_single_card() {
+        use crate::rng::GameRng;
         let mut deck = Deck::new();
         let card = Card::new(Value::Ace, Suit::Heart);
         deck.extend(vec![card]);
+        let rng = GameRng::for_testing(42);
 
         // Shuffling single card should not change anything
-        deck.shuffle();
+        deck.shuffle(&rng);
         assert_eq!(deck.len(), 1);
         assert_eq!(deck.cards()[0], card);
     }
@@ -367,6 +373,7 @@ mod tests {
     #[test]
     fn test_deck_multiple_operations() {
         let mut deck = Deck::new();
+        let rng = crate::rng::GameRng::for_testing(42);
 
         // Add some cards
         deck.extend(vec![
@@ -383,7 +390,7 @@ mod tests {
         assert_eq!(deck.len(), 2);
 
         // Shuffle remaining cards
-        deck.shuffle();
+        deck.shuffle(&rng);
         assert_eq!(deck.len(), 2);
 
         // Add more cards
@@ -415,11 +422,13 @@ mod tests {
 
     #[test]
     fn test_deck_stress_operations() {
+        use crate::rng::GameRng;
         let mut deck = Deck::default();
+        let rng = GameRng::for_testing(42);
 
         // Perform many operations to test robustness
         for _ in 0..10 {
-            deck.shuffle();
+            deck.shuffle(&rng);
 
             if deck.len() > 5 {
                 deck.draw(5).expect("Should be able to draw 5 cards");
