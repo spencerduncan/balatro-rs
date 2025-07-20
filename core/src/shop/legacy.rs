@@ -2,7 +2,6 @@ use crate::action::Action;
 use crate::error::GameError;
 use crate::joker::{JokerId, JokerRarity as Rarity, Jokers, OldJoker as Joker};
 // use rand::distributions::WeightedIndex;
-use rand::prelude::*;
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone)]
@@ -25,9 +24,9 @@ impl Shop {
         }
     }
 
-    pub(crate) fn refresh(&mut self) {
-        let j1 = self.joker_gen.gen_joker();
-        let j2 = self.joker_gen.gen_joker();
+    pub(crate) fn refresh(&mut self, rng: &crate::rng::GameRng) {
+        let j1 = self.joker_gen.gen_joker(rng);
+        let j2 = self.joker_gen.gen_joker(rng);
         self.jokers = vec![j1, j2]
     }
 
@@ -109,10 +108,10 @@ impl JokerGenerator {
     }
 
     // Generate a random new joker
-    pub(crate) fn gen_joker(&self) -> Jokers {
+    pub(crate) fn gen_joker(&self, rng: &crate::rng::GameRng) -> Jokers {
         let rarity = self.gen_rarity();
         let choices = Jokers::by_rarity(rarity);
-        let i = thread_rng().gen_range(0..choices.len());
+        let i = rng.gen_range(0..choices.len());
         // TODO: don't regenerate already generated jokers.
         // track with hashmap.
         choices[i].clone()
@@ -126,15 +125,17 @@ mod tests {
     #[test]
     fn test_shop_refresh() {
         let mut shop = Shop::new();
+        let rng = crate::rng::GameRng::for_testing(42);
         assert_eq!(shop.jokers.len(), 0);
-        shop.refresh();
+        shop.refresh(&rng);
         assert_eq!(shop.jokers.len(), 2);
     }
 
     #[test]
     fn test_shop_buy_joker() {
         let mut shop = Shop::new();
-        shop.refresh();
+        let rng = crate::rng::GameRng::for_testing(42);
+        shop.refresh(&rng);
         assert_eq!(shop.jokers.len(), 2);
         let j1 = shop.jokers[0].clone();
         assert_eq!(shop.joker_from_index(0).expect("first joker"), j1.clone());

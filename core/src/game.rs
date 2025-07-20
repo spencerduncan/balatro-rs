@@ -221,6 +221,7 @@ impl Game {
                 hand_type_counts: &self.hand_type_counts,
                 cards_in_deck: self.deck.len(),
                 stone_cards_in_deck: 0, // TODO: Track stone cards when implemented
+                rng: &self.rng,
             };
 
             let effect = joker.on_blind_start(&mut context);
@@ -421,6 +422,7 @@ impl Game {
             hand_type_counts: &self.hand_type_counts,
             cards_in_deck: self.deck.len(),
             stone_cards_in_deck: 0, // TODO: Track stone cards when implemented
+            rng: &self.rng,
         };
 
         // Process hand-level effects first
@@ -579,6 +581,7 @@ impl Game {
                 hand_type_counts: &self.hand_type_counts,
                 cards_in_deck: self.deck.len(),
                 stone_cards_in_deck: 0, // TODO: Track stone cards when implemented
+                rng: &self.rng,
             };
 
             // Process each joker and track contributions
@@ -707,7 +710,7 @@ impl Game {
         self.money += self.reward;
         self.reward = 0.0;
         self.stage = Stage::Shop();
-        self.shop.refresh();
+        self.shop.refresh(&self.rng);
         Ok(())
     }
 
@@ -1615,7 +1618,7 @@ mod tests {
         g.start();
         g.stage = Stage::Shop();
         g.money = 10.0;
-        g.shop.refresh();
+        g.shop.refresh(&g.rng);
 
         let j1 = g.shop.joker_from_index(0).expect("is joker");
         g.buy_joker(j1.clone()).expect("buy joker");
@@ -1700,7 +1703,7 @@ mod tests {
         game.start();
         game.stage = Stage::Shop();
         game.money = 20.0;
-        game.shop.refresh();
+        game.shop.refresh(&game.rng);
 
         // Test buying in slot beyond limit (default is 5 slots, so 0-4 are valid)
         let action = Action::BuyJoker {
@@ -1770,7 +1773,7 @@ mod tests {
         game.start();
         game.stage = Stage::Shop();
         game.money = 20.0;
-        game.shop.refresh();
+        game.shop.refresh(&game.rng);
 
         // Try to buy a joker that's not currently in the shop
         let action = Action::BuyJoker {

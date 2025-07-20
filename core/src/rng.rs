@@ -1,4 +1,4 @@
-use rand::{prelude::*, rngs::StdRng, distributions::{WeightedError, uniform::{SampleUniform, SampleRange}, WeightedIndex}};
+use rand::{prelude::*, rngs::StdRng, distributions::{WeightedError, uniform::{SampleUniform, SampleRange}}};
 use rand_chacha::ChaCha20Rng;
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
@@ -232,9 +232,9 @@ impl RngFactory {
     }
 }
 
-/// Thread-local RNG management for high-performance scenarios
 thread_local! {
-    static THREAD_RNG: std::cell::RefCell<Option<GameRng>> = std::cell::RefCell::new(None);
+    /// Thread-local RNG management for high-performance scenarios
+    static THREAD_RNG: std::cell::RefCell<Option<GameRng>> = const { std::cell::RefCell::new(None) };
 }
 
 /// Get or initialize the thread-local RNG instance
@@ -274,10 +274,10 @@ mod tests {
         let rng1 = GameRng::for_testing(12345);
         let rng2 = GameRng::for_testing(12345);
 
-        let val1: u32 = rng1.gen_range(0..1000);
-        let val2: u32 = rng2.gen_range(0..1000);
+        let _val1: u32 = rng1.gen_range(0..1000);
+        let _val2: u32 = rng2.gen_range(0..1000);
 
-        assert_eq!(val1, val2, "Deterministic RNGs with same seed should produce same values");
+        assert_eq!(_val1, _val2, "Deterministic RNGs with same seed should produce same values");
     }
 
     #[test]
@@ -285,8 +285,8 @@ mod tests {
         let rng1 = GameRng::secure();
         let rng2 = GameRng::secure();
 
-        let val1: u32 = rng1.gen_range(0..1000);
-        let val2: u32 = rng2.gen_range(0..1000);
+        let _val1: u32 = rng1.gen_range(0..1000);
+        let _val2: u32 = rng2.gen_range(0..1000);
 
         // While not guaranteed, extremely unlikely to be equal
         // This test may occasionally fail due to random chance

@@ -1,7 +1,6 @@
 use crate::card::{Card, Suit};
 use crate::hand::SelectHand;
 use crate::joker::{GameContext, Joker, JokerEffect, JokerId, JokerRarity};
-use rand::prelude::*;
 use serde::{Deserialize, Serialize};
 
 // Basic Joker implementation
@@ -537,10 +536,9 @@ impl Joker for BusinessCard {
         4
     }
 
-    fn on_card_scored(&self, _context: &mut GameContext, card: &Card) -> JokerEffect {
+    fn on_card_scored(&self, context: &mut GameContext, card: &Card) -> JokerEffect {
         if card.is_face() {
-            let mut rng = thread_rng();
-            if rng.gen_bool(0.5) {
+            if context.rng.gen_bool(0.5) {
                 JokerEffect::new().with_money(2)
             } else {
                 JokerEffect::new()
@@ -805,10 +803,9 @@ impl Joker for SpaceJoker {
         6
     }
 
-    fn on_hand_played(&self, _context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
+    fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
         // 1 in 4 chance (25% probability)
-        let mut rng = thread_rng();
-        if rng.gen_ratio(1, 4) {
+        if context.rng.gen_bool(0.25) {
             // TODO: Implement hand level upgrade effect
             // For now, return a message effect
             let mut effect = JokerEffect::new();

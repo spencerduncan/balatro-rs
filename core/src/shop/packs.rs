@@ -155,7 +155,6 @@ impl Pack {
 
     /// Generate pack contents based on pack type and game state
     pub fn generate_contents(&mut self, game: &Game) -> Result<(), GameError> {
-        use rand::Rng;
 
         let (min_options, max_options) = self.pack_type.option_count();
         let mut option_count = if min_options == max_options {
@@ -200,8 +199,6 @@ impl Pack {
     /// Generate standard pack options (playing cards)
     fn generate_standard_options(&mut self, count: usize, game: &Game) -> Result<(), GameError> {
         use crate::card::{Enhancement, Suit, Value};
-        use rand::seq::SliceRandom;
-        use rand::Rng;
 
         let suits = [Suit::Heart, Suit::Diamond, Suit::Club, Suit::Spade];
         let values = [
@@ -257,8 +254,6 @@ impl Pack {
     /// Generate buffoon pack options (jokers)
     fn generate_buffoon_options(&mut self, count: usize, game: &Game) -> Result<(), GameError> {
         use crate::joker::JokerRarity;
-        use rand::seq::SliceRandom;
-        use rand::Rng;
 
         // Define rarity weights: 70% Common, 25% Uncommon, 5% Rare
         let rarities = [
@@ -326,7 +321,6 @@ impl Pack {
 
     /// Generate arcana pack options (tarot cards)
     fn generate_arcana_options(&mut self, count: usize, game: &Game) -> Result<(), GameError> {
-        use rand::seq::SliceRandom;
 
         let tarot_cards = ConsumableId::tarot_cards();
 
@@ -347,7 +341,6 @@ impl Pack {
 
     /// Generate celestial pack options (planet cards)
     fn generate_celestial_options(&mut self, count: usize, game: &Game) -> Result<(), GameError> {
-        use rand::seq::SliceRandom;
 
         let planet_cards = ConsumableId::planet_cards();
 
@@ -368,7 +361,6 @@ impl Pack {
 
     /// Generate spectral pack options (spectral cards)
     fn generate_spectral_options(&mut self, count: usize, game: &Game) -> Result<(), GameError> {
-        use rand::seq::SliceRandom;
 
         let spectral_cards = ConsumableId::spectral_cards();
 
