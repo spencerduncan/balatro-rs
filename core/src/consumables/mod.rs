@@ -25,6 +25,7 @@ use std::fmt;
 use strum::{EnumIter, IntoEnumIterator};
 use thiserror::Error;
 
+
 /// Error types for consumable operations
 #[derive(Error, Debug, Clone)]
 pub enum ConsumableError {
@@ -98,30 +99,6 @@ pub enum TargetValidationError {
     },
     #[error("Card at index {index} is already targeted")]
     CardAlreadyTargeted { index: usize },
-}
-
-/// Represents different card collections that consumables can target
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum CardCollection {
-    /// Cards in the player's current hand (available cards)
-    Hand,
-    /// Cards in the deck
-    Deck,
-    /// Cards in the discard pile
-    DiscardPile,
-    /// Cards that were played/selected in the current hand
-    PlayedCards,
-}
-
-impl fmt::Display for CardCollection {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            CardCollection::Hand => write!(f, "Hand"),
-            CardCollection::Deck => write!(f, "Deck"),
-            CardCollection::DiscardPile => write!(f, "Discard Pile"),
-            CardCollection::PlayedCards => write!(f, "Played Cards"),
-        }
-    }
 }
 
 /// Categories of effects that consumables can have
@@ -383,7 +360,6 @@ fn generate_combinations_recursive(
         current.pop();
     }
 }
-
 /// Represents targeting specific cards with validation
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CardTarget {
@@ -1059,15 +1035,11 @@ impl ConsumableSlots {
     ///     // Modify consumable if needed
     /// }
     /// ```
-    pub fn get_consumable_mut(&mut self, index: usize) -> Option<&mut (dyn Consumable + '_)> {
+    pub fn get_consumable_mut(&mut self, index: usize) -> Option<&mut Box<dyn Consumable>> {
         if index >= self.capacity {
             return None;
         }
-        if let Some(ref mut slot) = self.slots[index] {
-            Some(slot.as_mut())
-        } else {
-            None
-        }
+        self.slots[index].as_mut()
     }
 
     /// Finds the first empty slot

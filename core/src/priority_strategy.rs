@@ -1,11 +1,12 @@
-use crate::joker::{JokerId, JokerMetadata};
+use crate::joker::JokerId;
+use crate::joker_metadata::JokerMetadata;
 use crate::joker_effect_processor::EffectPriority;
 use crate::joker_registry;
 use std::collections::HashMap;
 use std::sync::Arc;
 
 /// Strategy trait for determining joker effect priorities
-pub trait PriorityStrategy: Send + Sync {
+pub trait PriorityStrategy: Send + Sync + std::fmt::Debug {
     /// Get the priority for a given joker ID
     fn get_priority(&self, joker_id: JokerId) -> EffectPriority;
     
@@ -129,7 +130,7 @@ impl Default for CustomPriorityStrategy {
 
 /// Strategy that considers game context when determining priorities
 /// This is a placeholder implementation that can be extended with actual game state
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct ContextAwarePriorityStrategy {
     /// Base strategy to use for default behavior
     base_strategy: Arc<dyn PriorityStrategy>,
@@ -206,6 +207,12 @@ impl PriorityStrategy for ContextAwarePriorityStrategy {
     
     fn description(&self) -> &'static str {
         "Adjusts priorities based on game context and state"
+    }
+}
+
+impl Default for ContextAwarePriorityStrategy {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

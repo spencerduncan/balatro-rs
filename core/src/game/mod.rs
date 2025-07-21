@@ -475,18 +475,22 @@ impl Game {
         // Update available cards
         let available_cards = self.available.cards();
         self.target_context.set_available_cards(available_cards);
-        
+
         // Update available jokers
-        let joker_ids: Vec<JokerId> = self.jokers.iter()
+        let joker_ids: Vec<JokerId> = self
+            .jokers
+            .iter()
             .map(|joker| {
                 // Get the joker's ID
                 joker.id()
             })
             .collect();
         self.target_context.set_available_jokers(joker_ids);
-        
+
         // Update available packs (if any)
-        let pack_ids: Vec<usize> = self.pack_inventory.iter()
+        let pack_ids: Vec<usize> = self
+            .pack_inventory
+            .iter()
             .enumerate()
             .map(|(i, _)| i)
             .collect();
@@ -607,8 +611,12 @@ impl Game {
 
         // Process hand-level effects using the cached processor
         let select_hand = SelectHand::new(hand.hand.cards().to_vec());
-        let hand_result = self.joker_effect_processor.process_hand_effects(&self.jokers, &mut context, &select_hand);
-        
+        let hand_result = self.joker_effect_processor.process_hand_effects(
+            &self.jokers,
+            &mut context,
+            &select_hand,
+        );
+
         let mut total_chips = hand_result.accumulated_effect.chips;
         let mut total_mult = hand_result.accumulated_effect.mult;
         let mut total_money = hand_result.accumulated_effect.money;
@@ -620,18 +628,18 @@ impl Game {
 
         // Generate debug messages for hand effects
         #[cfg(debug_assertions)]
-        if hand_result.jokers_processed > 0 && (total_chips != 0 || total_mult != 0 || total_money != 0) {
+        if hand_result.jokers_processed > 0
+            && (total_chips != 0 || total_mult != 0 || total_money != 0)
+        {
             use std::fmt::Write;
             let mut debug_msg = String::with_capacity(128);
             write!(
                 &mut debug_msg,
                 "Hand effects: +{} chips, +{} mult, +{} money from {} jokers",
-                total_chips,
-                total_mult,
-                total_money,
-                hand_result.jokers_processed
-            ).unwrap();
-            
+                total_chips, total_mult, total_money, hand_result.jokers_processed
+            )
+            .unwrap();
+
             if hand_result.retriggered_count > 0 {
                 write!(&mut debug_msg, " ({} retriggers)", hand_result.retriggered_count).unwrap();
             }
@@ -644,7 +652,7 @@ impl Game {
             match error {
                 crate::joker_effect_processor::EffectProcessingError::TooManyRetriggers(_) => {
                     messages.push("KILLSCREEN: Too many retriggered effects!".to_string());
-                },
+                }
                 _ => {} // Other errors are less critical for gameplay
             }
         }
@@ -657,11 +665,11 @@ impl Game {
             total_chips += card_result.accumulated_effect.chips;
             total_mult += card_result.accumulated_effect.mult;
             total_money += card_result.accumulated_effect.money;
-            
+
             // Handle mult_multiplier: only apply if it's not the default value
             if card_result.accumulated_effect.mult_multiplier != 0.0 {
                 total_mult_multiplier *= card_result.accumulated_effect.mult_multiplier;
-                
+
                 // Killscreen detection
                 if !total_mult_multiplier.is_finite() {
                     messages.push("KILLSCREEN: Score calculation reached infinity!".to_string());
@@ -671,7 +679,11 @@ impl Game {
 
             // Generate debug messages for card effects
             #[cfg(debug_assertions)]
-            if card_result.jokers_processed > 0 && (card_result.accumulated_effect.chips != 0 || card_result.accumulated_effect.mult != 0 || card_result.accumulated_effect.money != 0) {
+            if card_result.jokers_processed > 0
+                && (card_result.accumulated_effect.chips != 0
+                    || card_result.accumulated_effect.mult != 0
+                    || card_result.accumulated_effect.money != 0)
+            {
                 use std::fmt::Write;
                 let mut debug_msg = String::with_capacity(128);
                 write!(
@@ -681,20 +693,26 @@ impl Game {
                     card_result.accumulated_effect.chips,
                     card_result.accumulated_effect.mult,
                     card_result.accumulated_effect.money
-                ).unwrap();
-                
+                )
+                .unwrap();
+
                 if card_result.retriggered_count > 0 {
-                    write!(&mut debug_msg, " ({} retriggers)", card_result.retriggered_count).unwrap();
+                    write!(
+                        &mut debug_msg,
+                        " ({} retriggers)",
+                        card_result.retriggered_count
+                    )
+                    .unwrap();
                 }
                 messages.push(debug_msg);
             }
-            
+
             // Process any error messages from card effects
             for error in &card_result.errors {
                 match error {
                     crate::joker_effect_processor::EffectProcessingError::TooManyRetriggers(_) => {
                         messages.push("KILLSCREEN: Too many retriggered effects!".to_string());
-                    },
+                    }
                     _ => {} // Other errors are less critical for gameplay
                 }
             }
@@ -948,7 +966,10 @@ impl Game {
     }
 
     /// Configure joker effect cache settings
-    pub fn configure_joker_effect_cache(&mut self, config: crate::joker_effect_processor::CacheConfig) {
+    pub fn configure_joker_effect_cache(
+        &mut self,
+        config: crate::joker_effect_processor::CacheConfig,
+    ) {
         self.joker_effect_processor.set_cache_config(config);
     }
 
@@ -994,8 +1015,8 @@ impl Game {
     /// Configure joker effect cache for simulation scenarios
     pub fn configure_joker_cache_for_simulation(&mut self) {
         let config = crate::joker_effect_processor::CacheConfig {
-            max_entries: 1000,  // Moderate cache for simulation
-            ttl_seconds: 300,   // 5 minutes
+            max_entries: 1000, // Moderate cache for simulation
+            ttl_seconds: 300,  // 5 minutes
             enabled: true,
         };
         self.joker_effect_processor.set_cache_config(config);
@@ -1471,7 +1492,7 @@ impl Game {
                 option_index,
             } => self.select_from_pack(pack_id, option_index),
             Action::SkipPack { pack_id } => self.skip_pack(pack_id),
-            
+
             // Multi-select actions - placeholder implementations for now
             Action::SelectCards(_) => {
                 // TODO: Implement multi-card selection
@@ -1696,16 +1717,19 @@ impl fmt::Display for Game {
         writeln!(f, "deck length: {}", self.deck.len())?;
         writeln!(f, "available length: {}", self.available.cards().len())?;
         writeln!(f, "selected length: {}", self.available.selected().len())?;
-        
+
         // Multi-select status
         if self.target_context.is_multi_select_active() {
             let counts = self.target_context.get_selection_counts();
-            writeln!(f, "multi-select: ACTIVE ({} cards, {} jokers, {} total)", 
-                counts.cards, counts.jokers, counts.total)?;
+            writeln!(
+                f,
+                "multi-select: ACTIVE ({} cards, {} jokers, {} total)",
+                counts.cards, counts.jokers, counts.total
+            )?;
         } else {
             writeln!(f, "multi-select: inactive")?;
         }
-        
+
         writeln!(f, "discard length: {}", self.discarded.len())?;
         writeln!(f, "jokers: ")?;
         for j in &self.jokers {
@@ -2403,7 +2427,8 @@ mod tests {
         let (chips_cached, mult_cached, money_cached, _) = game.process_joker_effects(&made_hand);
 
         game.disable_joker_effect_cache();
-        let (chips_uncached, mult_uncached, money_uncached, _) = game.process_joker_effects(&made_hand);
+        let (chips_uncached, mult_uncached, money_uncached, _) =
+            game.process_joker_effects(&made_hand);
 
         assert_eq!(chips_cached, chips_uncached);
         assert_eq!(mult_cached, mult_uncached);
@@ -2873,27 +2898,33 @@ mod tests {
         game.money = 10.0;
 
         // Test valid purchase conditions for all consumable types
-        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Tarot).is_ok());
-        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Planet).is_ok());
-        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Spectral).is_ok());
+        assert!(game
+            .can_purchase_consumable(crate::shop::ConsumableType::Tarot)
+            .is_ok());
+        assert!(game
+            .can_purchase_consumable(crate::shop::ConsumableType::Planet)
+            .is_ok());
+        assert!(game
+            .can_purchase_consumable(crate::shop::ConsumableType::Spectral)
+            .is_ok());
     }
 
     #[test]
     fn test_can_purchase_consumable_insufficient_money() {
         let mut game = Game::default();
         game.stage = Stage::Shop();
-        
+
         // Test insufficient money for Tarot (costs 3)
         game.money = 2.0;
         let result = game.can_purchase_consumable(crate::shop::ConsumableType::Tarot);
         assert!(result.is_err());
         assert!(matches!(result.unwrap_err(), GameError::InvalidBalance));
-        
+
         // Test insufficient money for Planet (costs 3)
         let result = game.can_purchase_consumable(crate::shop::ConsumableType::Planet);
         assert!(result.is_err());
         assert!(matches!(result.unwrap_err(), GameError::InvalidBalance));
-        
+
         // Test insufficient money for Spectral (costs 4)
         game.money = 3.0;
         let result = game.can_purchase_consumable(crate::shop::ConsumableType::Spectral);
@@ -2905,17 +2936,23 @@ mod tests {
     fn test_can_purchase_consumable_edge_case_exact_money() {
         let mut game = Game::default();
         game.stage = Stage::Shop();
-        
+
         // Test edge case: exactly enough money for Tarot
         game.money = 3.0;
-        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Tarot).is_ok());
-        
+        assert!(game
+            .can_purchase_consumable(crate::shop::ConsumableType::Tarot)
+            .is_ok());
+
         // Test edge case: exactly enough money for Planet
-        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Planet).is_ok());
-        
+        assert!(game
+            .can_purchase_consumable(crate::shop::ConsumableType::Planet)
+            .is_ok());
+
         // Test edge case: exactly enough money for Spectral
         game.money = 4.0;
-        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Spectral).is_ok());
+        assert!(game
+            .can_purchase_consumable(crate::shop::ConsumableType::Spectral)
+            .is_ok());
     }
 
     #[test]
@@ -2923,23 +2960,26 @@ mod tests {
         let mut game = Game::default();
         game.stage = Stage::Shop();
         game.money = 10.0;
-        
+
         // Fill consumable hand to capacity (default is 2)
         game.consumables_in_hand = vec![
             crate::consumables::ConsumableId::TheFool,
             crate::consumables::ConsumableId::Mercury,
         ];
-        assert_eq!(game.consumables_in_hand.len(), game.config.consumable_hand_capacity);
-        
+        assert_eq!(
+            game.consumables_in_hand.len(),
+            game.config.consumable_hand_capacity
+        );
+
         // Should not be able to purchase any consumable when hand is full
         let result = game.can_purchase_consumable(crate::shop::ConsumableType::Tarot);
         assert!(result.is_err());
         assert!(matches!(result.unwrap_err(), GameError::NoAvailableSlot));
-        
+
         let result = game.can_purchase_consumable(crate::shop::ConsumableType::Planet);
         assert!(result.is_err());
         assert!(matches!(result.unwrap_err(), GameError::NoAvailableSlot));
-        
+
         let result = game.can_purchase_consumable(crate::shop::ConsumableType::Spectral);
         assert!(result.is_err());
         assert!(matches!(result.unwrap_err(), GameError::NoAvailableSlot));
@@ -2949,23 +2989,23 @@ mod tests {
     fn test_can_purchase_consumable_wrong_stage() {
         let mut game = Game::default();
         game.money = 10.0;
-        
+
         // Test all invalid stages
         game.stage = Stage::PreBlind();
         let result = game.can_purchase_consumable(crate::shop::ConsumableType::Tarot);
         assert!(result.is_err());
         assert!(matches!(result.unwrap_err(), GameError::InvalidStage));
-        
+
         game.stage = Stage::Blind(crate::stage::Blind::Small);
         let result = game.can_purchase_consumable(crate::shop::ConsumableType::Planet);
         assert!(result.is_err());
         assert!(matches!(result.unwrap_err(), GameError::InvalidStage));
-        
+
         game.stage = Stage::PostBlind();
         let result = game.can_purchase_consumable(crate::shop::ConsumableType::Spectral);
         assert!(result.is_err());
         assert!(matches!(result.unwrap_err(), GameError::InvalidStage));
-        
+
         game.stage = Stage::End(crate::stage::End::Win);
         let result = game.can_purchase_consumable(crate::shop::ConsumableType::Tarot);
         assert!(result.is_err());
@@ -2976,24 +3016,36 @@ mod tests {
     fn test_can_purchase_consumable_cost_validation() {
         let mut game = Game::default();
         game.stage = Stage::Shop();
-        
+
         // Test Tarot card cost (3 money)
         game.money = 3.0;
-        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Tarot).is_ok());
+        assert!(game
+            .can_purchase_consumable(crate::shop::ConsumableType::Tarot)
+            .is_ok());
         game.money = 2.9;
-        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Tarot).is_err());
-        
+        assert!(game
+            .can_purchase_consumable(crate::shop::ConsumableType::Tarot)
+            .is_err());
+
         // Test Planet card cost (3 money)
         game.money = 3.0;
-        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Planet).is_ok());
+        assert!(game
+            .can_purchase_consumable(crate::shop::ConsumableType::Planet)
+            .is_ok());
         game.money = 2.9;
-        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Planet).is_err());
-        
+        assert!(game
+            .can_purchase_consumable(crate::shop::ConsumableType::Planet)
+            .is_err());
+
         // Test Spectral card cost (4 money)
         game.money = 4.0;
-        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Spectral).is_ok());
+        assert!(game
+            .can_purchase_consumable(crate::shop::ConsumableType::Spectral)
+            .is_ok());
         game.money = 3.9;
-        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Spectral).is_err());
+        assert!(game
+            .can_purchase_consumable(crate::shop::ConsumableType::Spectral)
+            .is_err());
     }
 
     #[test]
@@ -3001,16 +3053,22 @@ mod tests {
         let mut game = Game::default();
         game.stage = Stage::Shop();
         game.money = 10.0;
-        
+
         // Test with one consumable in hand (capacity is 2)
         game.consumables_in_hand = vec![crate::consumables::ConsumableId::TheFool];
         assert_eq!(game.consumables_in_hand.len(), 1);
         assert!(game.consumables_in_hand.len() < game.config.consumable_hand_capacity);
-        
+
         // Should be able to purchase any consumable
-        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Tarot).is_ok());
-        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Planet).is_ok());
-        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Spectral).is_ok());
+        assert!(game
+            .can_purchase_consumable(crate::shop::ConsumableType::Tarot)
+            .is_ok());
+        assert!(game
+            .can_purchase_consumable(crate::shop::ConsumableType::Planet)
+            .is_ok());
+        assert!(game
+            .can_purchase_consumable(crate::shop::ConsumableType::Spectral)
+            .is_ok());
     }
 
     #[test]
@@ -3018,14 +3076,20 @@ mod tests {
         let mut game = Game::default();
         game.stage = Stage::Shop();
         game.money = 10.0;
-        
+
         // Test with empty consumable hand
         game.consumables_in_hand = vec![];
         assert_eq!(game.consumables_in_hand.len(), 0);
-        
+
         // Should be able to purchase any consumable
-        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Tarot).is_ok());
-        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Planet).is_ok());
-        assert!(game.can_purchase_consumable(crate::shop::ConsumableType::Spectral).is_ok());
+        assert!(game
+            .can_purchase_consumable(crate::shop::ConsumableType::Tarot)
+            .is_ok());
+        assert!(game
+            .can_purchase_consumable(crate::shop::ConsumableType::Planet)
+            .is_ok());
+        assert!(game
+            .can_purchase_consumable(crate::shop::ConsumableType::Spectral)
+            .is_ok());
     }
 }

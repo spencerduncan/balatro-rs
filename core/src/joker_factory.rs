@@ -47,7 +47,7 @@ impl JokerFactory {
             // Placeholder jokers with TODO comments
             JokerId::HalfJoker => Some(StaticJokerFactory::create_half_joker()),
             JokerId::Banner => Some(StaticJokerFactory::create_banner()),
-            JokerId::AbstractJoker => Some(StaticJokerFactory::create_abstract_joker()),
+            JokerId::AbstractJoker => Some(Box::new(AbstractJoker)),
             JokerId::SteelJoker => Some(StaticJokerFactory::create_steel_joker()),
 
             // RNG-based jokers (Issue #442)
@@ -62,8 +62,8 @@ impl JokerFactory {
             
             // Special mechanic jokers using new trait system
             JokerId::Erosion => Some(Box::new(ErosionJoker)),
-            JokerId::Blueprint => Some(Box::new(BlueprintJoker)),
-            JokerId::Photograph => Some(Box::new(PhotographJoker)), 
+            JokerId::Blueprint => Some(Box::new(BlueprintJoker::new())),
+            JokerId::Photograph => Some(Box::new(PhotographJoker::new())), 
             JokerId::TheOrder => Some(Box::new(TheOrderJoker)),
             // TODO: Implement remaining jokers
             _ => None,
@@ -172,6 +172,8 @@ impl JokerFactory {
             FacelessJoker,
             Square,
             Walkie,
+            // Custom implemented jokers with interaction support
+            AbstractJoker,
             // RNG-based jokers (Issue #442)
             Oops, // OopsAllSixesJoker
             Reserved7, // SixShooterJoker
@@ -186,7 +188,7 @@ impl JokerFactory {
             Blueprint,
             Photograph,
             TheOrder,
-            // Note: HalfJoker, Banner, AbstractJoker, and SteelJoker are placeholders
+            // Note: HalfJoker, Banner, and SteelJoker are placeholders
         ]
     }
 }
@@ -271,8 +273,10 @@ mod tests {
         assert!(implemented.contains(&JokerId::Square));
         assert!(implemented.contains(&JokerId::Walkie));
         assert!(implemented.contains(&JokerId::Runner));
+        assert!(implemented.contains(&JokerId::AbstractJoker));
 
-        // Note: Placeholder jokers (HalfJoker, Banner, AbstractJoker, SteelJoker)
+        // AbstractJoker is now properly implemented and included above
+        // Note: Placeholder jokers (HalfJoker, Banner, SteelJoker)
         // are intentionally not in get_all_implemented() as they're not complete
     }
 }

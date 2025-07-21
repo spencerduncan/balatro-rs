@@ -26,18 +26,18 @@ pub mod multi_select;
 pub mod priority_strategy;
 pub mod rank;
 pub mod rng;
+pub mod scaling_joker;
+pub mod scaling_joker_custom;
+pub mod scaling_joker_impl;
 pub mod shop;
 pub mod space;
+pub mod special_jokers;
 pub mod stage;
 pub mod state_version;
 pub mod static_joker;
 pub mod static_joker_factory;
 pub mod target_context;
 pub mod vouchers;
-pub mod scaling_joker;
-pub mod scaling_joker_impl;
-pub mod scaling_joker_custom;
-pub mod special_jokers;
 
 #[cfg(test)]
 mod tests {

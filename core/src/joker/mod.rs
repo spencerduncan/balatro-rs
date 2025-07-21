@@ -1242,8 +1242,8 @@ pub use conditional::{ConditionalJoker, JokerCondition};
 
 // Re-export new trait definitions
 pub use traits::{
-    JokerIdentity, JokerLifecycle, JokerGameplay, JokerModifiers, JokerState as JokerStateTrait,
-    ProcessContext, ProcessResult, Rarity
+    JokerGameplay, JokerIdentity, JokerLifecycle, JokerModifiers, JokerState as JokerStateTrait,
+    ProcessContext, ProcessResult, Rarity,
 };
 
 // Re-export old API types for backwards compatibility

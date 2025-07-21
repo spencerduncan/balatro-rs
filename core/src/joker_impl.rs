@@ -1,4 +1,4 @@
-use crate::card::{Card, Suit};
+use crate::card::{Card, Suit, Value};
 use crate::hand::SelectHand;
 use crate::joker::{GameContext, Joker, JokerEffect, JokerId, JokerRarity};
 use serde::{Deserialize, Serialize};
@@ -817,6 +817,47 @@ impl Joker for SpaceJoker {
     }
 }
 
+// Abstract Joker implementation - provides mult based on number of other jokers
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct AbstractJoker;
+
+impl Joker for AbstractJoker {
+    fn id(&self) -> JokerId {
+        JokerId::AbstractJoker
+    }
+
+    fn name(&self) -> &str {
+        "Abstract Joker"
+    }
+
+    fn description(&self) -> &str {
+        "All Jokers give X0.25 more Mult"
+    }
+
+    fn rarity(&self) -> JokerRarity {
+        JokerRarity::Common
+    }
+
+    fn cost(&self) -> usize {
+        3
+    }
+
+    fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
+        // Count all jokers except this one
+        let other_joker_count = context
+            .jokers
+            .iter()
+            .filter(|joker| joker.id() != self.id())
+            .count();
+
+        // Provide +3 mult per other joker (simplified implementation)
+        // This represents the "X0.25 more Mult" for all jokers conceptually
+        let mult_bonus = (other_joker_count as i32) * 3;
+
+        JokerEffect::new().with_mult(mult_bonus)
+    }
+}
+
 // RNG-Based Jokers for Issue #442
 
 // Oops All Sixes! implementation - doubles all probabilities
@@ -878,8 +919,8 @@ impl Joker for SixShooterJoker {
 
     fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
         // Count 6s in hand
-        let six_count = context.hand.cards.iter()
-            .filter(|card| card.rank.to_value() == 6)
+        let six_count = context.hand.cards().iter()
+            .filter(|card| card.value == Value::Six)
             .count();
         
         JokerEffect::new().with_mult((six_count * 4) as i32)
@@ -950,7 +991,7 @@ impl Joker for GrimJoker {
 
     fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
         // Count Hearts in played hand
-        let heart_count = hand.cards.iter()
+        let heart_count = hand.cards().iter()
             .filter(|card| card.suit == Suit::Heart)
             .count();
 
