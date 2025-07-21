@@ -44,7 +44,7 @@ pub enum Action {
     SkipPack { pack_id: usize },
     NextRound(),
     SelectBlind(Blind),
-    
+
     // Multi-select actions for cards
     SelectCards(Vec<Card>),           // Select multiple cards at once
     DeselectCard(Card),               // Deselect a specific card
