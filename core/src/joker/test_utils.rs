@@ -42,7 +42,7 @@ use crate::joker_state::{JokerState, JokerStateManager};
 use crate::rank::HandRank;
 use crate::rng::GameRng;
 use crate::stage::Stage;
-use serde_json::Value;
+use serde_json::Value as JsonValue;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -528,10 +528,10 @@ impl Joker for MockStateJoker {
         &self,
         _context: &GameContext,
         state: &JokerState,
-    ) -> Result<Value, serde_json::Error> {
+    ) -> Result<JsonValue, serde_json::Error> {
         if self.custom_serialization {
             let mut custom_value = serde_json::to_value(state)?;
-            custom_value["custom_serialization"] = Value::Bool(true);
+            custom_value["custom_serialization"] = JsonValue::Bool(true);
             Ok(custom_value)
         } else {
             serde_json::to_value(state)
@@ -700,7 +700,7 @@ impl TestContextBuilder {
     pub fn build(self) -> GameContext<'static> {
         let jokers: Vec<Box<dyn Joker>> = Vec::new();
         let joker_state_manager = Arc::new(JokerStateManager::new());
-        let rng = GameRng::new();
+        let rng = GameRng::for_testing(42);
 
         // Convert to static references (this is unsafe but okay for tests)
         let stage_ref: &'static Stage = Box::leak(Box::new(self.stage));
@@ -823,13 +823,16 @@ pub fn assert_effect_empty(effect: &JokerEffect) {
     assert_eq!(effect.transform_cards, default_effect.transform_cards);
     assert_eq!(effect.hand_size_mod, default_effect.hand_size_mod);
     assert_eq!(effect.discard_mod, default_effect.discard_mod);
-    assert_eq!(effect.sell_value_increase, default_effect.sell_value_increase);
+    assert_eq!(
+        effect.sell_value_increase,
+        default_effect.sell_value_increase
+    );
     assert_eq!(effect.message, default_effect.message);
 }
 
 /// Create a simple test card for testing purposes.
-pub fn create_test_card(value: Value, suit: Suit) -> Card {
-    Card::new(value, suit)
+pub fn create_test_card(rank: Value, suit: Suit) -> Card {
+    Card::new(rank, suit)
 }
 
 /// Create a simple test hand with specified cards.
@@ -1004,7 +1007,7 @@ mod tests {
             .with_stage(Stage::Shop)
             .with_hands_played(3)
             .with_discards_used(2)
-            .with_hand_type_count(HandValue::Pair, 5)
+            .with_hand_type_count(HandRank::Pair, 5)
             .with_cards_in_deck(40)
             .with_stone_cards_in_deck(2)
             .with_steel_cards_in_deck(3)
@@ -1018,7 +1021,7 @@ mod tests {
         assert_eq!(*context.stage, Stage::Shop);
         assert_eq!(context.hands_played, 3);
         assert_eq!(context.discards_used, 2);
-        assert_eq!(context.get_hand_type_count(HandValue::Pair), 5);
+        assert_eq!(context.get_hand_type_count(HandRank::Pair), 5);
         assert_eq!(context.cards_in_deck, 40);
         assert_eq!(context.stone_cards_in_deck, 2);
         assert_eq!(context.steel_cards_in_deck, 3);
@@ -1087,7 +1090,7 @@ mod tests {
 
         let hand = create_test_hand(cards.clone());
         assert_eq!(hand.cards().len(), 3);
-        
+
         // Verify the cards are in the hand
         let hand_cards = hand.cards();
         assert!(hand_cards.contains(&cards[0]));
@@ -1105,12 +1108,11 @@ mod tests {
             .build();
 
         // Create a joker that provides bonus for specific cards
-        let gameplay_joker = MockGameplayJoker::new()
-            .with_card_effect(JokerEffect::new().with_mult(3));
+        let gameplay_joker =
+            MockGameplayJoker::new().with_card_effect(JokerEffect::new().with_mult(3));
 
         // Create a modifier joker that doubles chips
-        let modifier_joker = MockModifierJoker::new()
-            .with_chips_modifier(|chips| chips * 2);
+        let modifier_joker = MockModifierJoker::new().with_chips_modifier(|chips| chips * 2);
 
         // Test the interaction
         let test_card = create_test_card(Value::Ace, Suit::Spade);
@@ -1127,8 +1129,7 @@ mod tests {
         let mut initial_state = JokerState::new();
         initial_state.accumulated_value = 10.0;
 
-        let state_joker = MockStateJoker::new()
-            .with_initial_state(initial_state.clone());
+        let state_joker = MockStateJoker::new().with_initial_state(initial_state.clone());
 
         let lifecycle_joker = MockLifecycleJoker::new()
             .with_created_effect(JokerEffect::new().with_money(5))

@@ -23,6 +23,7 @@ pub mod joker_state;
 pub mod math_safe;
 pub mod memory_monitor;
 pub mod multi_select;
+pub mod priority_strategy;
 pub mod rank;
 pub mod rng;
 pub mod shop;
@@ -36,6 +37,7 @@ pub mod vouchers;
 pub mod scaling_joker;
 pub mod scaling_joker_impl;
 pub mod scaling_joker_custom;
+pub mod special_jokers;
 
 #[cfg(test)]
 mod tests {

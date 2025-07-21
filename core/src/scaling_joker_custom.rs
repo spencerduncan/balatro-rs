@@ -236,7 +236,7 @@ impl Joker for BannerJoker {
 
     fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
         // Calculate remaining discards (assuming 3 base discards per round)
-        let base_discards = 3; // This should come from game config
+        let base_discards: usize = 3; // This should come from game config
         let remaining_discards = base_discards.saturating_sub(context.discards_used as usize);
         let chips_bonus = remaining_discards * 30;
         

@@ -1,6 +1,7 @@
 use crate::joker::{Joker, JokerId, JokerRarity};
 use crate::joker_impl::*;
 use crate::static_joker_factory::StaticJokerFactory;
+use crate::special_jokers::*;
 
 /// Factory for creating joker instances by ID
 pub struct JokerFactory;
@@ -48,6 +49,13 @@ impl JokerFactory {
             JokerId::Banner => Some(StaticJokerFactory::create_banner()),
             JokerId::AbstractJoker => Some(StaticJokerFactory::create_abstract_joker()),
             JokerId::SteelJoker => Some(StaticJokerFactory::create_steel_joker()),
+            
+            // Special mechanic jokers using new trait system
+            JokerId::Erosion => Some(Box::new(ErosionJoker)),
+            JokerId::Blueprint => Some(Box::new(BlueprintJoker)),
+            JokerId::Photograph => Some(Box::new(PhotographJoker)), 
+            JokerId::TheOrder => Some(Box::new(TheOrderJoker)),
+            
             // TODO: Implement remaining jokers
             _ => None,
         }
@@ -88,15 +96,21 @@ impl JokerFactory {
                 HalfJoker,
                 Banner,
                 AbstractJoker,
+                // Special mechanic jokers
+                Erosion,
+                Photograph,
             ],
             JokerRarity::Uncommon => vec![
                 // Money-based conditional jokers
                 Burglar,    // Hand type conditional jokers
                 SpaceJoker, // New static jokers
                 RedCard, BlueJoker, SteelJoker,
+                // Special mechanic jokers
+                TheOrder,
             ],
             JokerRarity::Rare => vec![
-                // TODO: Add rare jokers
+                // Special mechanic jokers
+                Blueprint,
             ],
             JokerRarity::Legendary => vec![
                 // TODO: Add legendary jokers
@@ -138,6 +152,11 @@ impl JokerFactory {
             FacelessJoker,
             Square,
             Walkie,
+            // Special mechanic jokers using new trait system
+            Erosion,
+            Blueprint,
+            Photograph,
+            TheOrder,
             // Note: HalfJoker, Banner, AbstractJoker, and SteelJoker are placeholders
         ]
     }
