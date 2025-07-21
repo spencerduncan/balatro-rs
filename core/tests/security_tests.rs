@@ -192,7 +192,7 @@ mod tests {
     /// Fuzz-style test for ActionSpace creation with random values
     #[test]
     fn test_action_space_fuzz() {
-        use crate::rng::GameRng;
+        use balatro_rs::rng::GameRng;
         let rng = GameRng::for_testing(42);
 
         // Test 1000 random valid configurations
@@ -222,7 +222,7 @@ mod tests {
     /// Property-based test for arithmetic operations
     #[test]
     fn test_arithmetic_properties() {
-        use crate::rng::GameRng;
+        use balatro_rs::rng::GameRng;
         let rng = GameRng::for_testing(43);
 
         for _ in 0..100 {

@@ -24,7 +24,7 @@ impl Shop {
         }
     }
 
-    pub(crate) fn refresh(&mut self, rng: &crate::rng::GameRng) {
+    pub(crate) fn refresh(&mut self, rng: &balatro_rs::rng::GameRng) {
         let j1 = self.joker_gen.gen_joker(rng);
         let j2 = self.joker_gen.gen_joker(rng);
         self.jokers = vec![j1, j2]
@@ -108,7 +108,7 @@ impl JokerGenerator {
     }
 
     // Generate a random new joker
-    pub(crate) fn gen_joker(&self, rng: &crate::rng::GameRng) -> Jokers {
+    pub(crate) fn gen_joker(&self, rng: &balatro_rs::rng::GameRng) -> Jokers {
         let rarity = self.gen_rarity();
         let choices = Jokers::by_rarity(rarity);
         let i = rng.gen_range(0..choices.len());
@@ -126,7 +126,7 @@ mod tests {
     #[test]
     fn test_shop_refresh() {
         let mut shop = Shop::new();
-        let rng = crate::rng::GameRng::for_testing(42);
+        let rng = balatro_rs::rng::GameRng::for_testing(42);
         assert_eq!(shop.jokers.len(), 0);
         shop.refresh(&rng);
         assert_eq!(shop.jokers.len(), 2);
@@ -135,7 +135,7 @@ mod tests {
     #[test]
     fn test_shop_buy_joker() {
         let mut shop = Shop::new();
-        let rng = crate::rng::GameRng::for_testing(42);
+        let rng = balatro_rs::rng::GameRng::for_testing(42);
         shop.refresh(&rng);
         assert_eq!(shop.jokers.len(), 2);
         let j1 = shop.jokers[0].clone();
@@ -163,7 +163,7 @@ mod tests {
     #[test]
     fn test_shop_refresh_multiple_times() {
         let mut shop = Shop::new();
-        let rng = crate::rng::GameRng::for_testing(42);
+        let rng = balatro_rs::rng::GameRng::for_testing(42);
 
         // First refresh
         shop.refresh(&rng);
@@ -181,7 +181,7 @@ mod tests {
     #[test]
     fn test_shop_joker_from_index_valid() {
         let mut shop = Shop::new();
-        let rng = crate::rng::GameRng::for_testing(42);
+        let rng = balatro_rs::rng::GameRng::for_testing(42);
         shop.refresh(&rng);
 
         // Test valid indices
@@ -200,7 +200,7 @@ mod tests {
     #[should_panic]
     fn test_shop_joker_from_index_invalid() {
         let mut shop = Shop::new();
-        let rng = crate::rng::GameRng::for_testing(42);
+        let rng = balatro_rs::rng::GameRng::for_testing(42);
         shop.refresh(&rng);
 
         // Test invalid index - should panic due to array access
@@ -219,7 +219,7 @@ mod tests {
     #[test]
     fn test_shop_buy_joker_success() {
         let mut shop = Shop::new();
-        let rng = crate::rng::GameRng::for_testing(42);
+        let rng = balatro_rs::rng::GameRng::for_testing(42);
         shop.refresh(&rng);
         let initial_count = shop.jokers.len();
         let joker_to_buy = shop.jokers[0].clone();
@@ -236,7 +236,7 @@ mod tests {
     #[test]
     fn test_shop_buy_joker_not_found() {
         let mut shop = Shop::new();
-        let rng = crate::rng::GameRng::for_testing(42);
+        let rng = balatro_rs::rng::GameRng::for_testing(42);
         shop.refresh(&rng);
         let original_jokers = shop.jokers.clone();
 
@@ -282,7 +282,7 @@ mod tests {
     #[test]
     fn test_shop_buy_multiple_jokers() {
         let mut shop = Shop::new();
-        let rng = crate::rng::GameRng::for_testing(42);
+        let rng = balatro_rs::rng::GameRng::for_testing(42);
         shop.refresh(&rng);
 
         // Buy first joker
@@ -304,7 +304,7 @@ mod tests {
     #[test]
     fn test_shop_buy_same_joker_twice() {
         let mut shop = Shop::new();
-        let rng = crate::rng::GameRng::for_testing(42);
+        let rng = balatro_rs::rng::GameRng::for_testing(42);
         shop.refresh(&rng);
         let joker = shop.jokers[0].clone();
 
@@ -321,7 +321,7 @@ mod tests {
     #[test]
     fn test_shop_has_joker() {
         let mut shop = Shop::new();
-        let rng = crate::rng::GameRng::for_testing(42);
+        let rng = balatro_rs::rng::GameRng::for_testing(42);
         shop.refresh(&rng);
 
         // The has_joker method should find jokers that match the JokerId
@@ -353,7 +353,7 @@ mod tests {
     #[test]
     fn test_shop_gen_moves_buy_joker_insufficient_funds() {
         let mut shop = Shop::new();
-        let rng = crate::rng::GameRng::for_testing(42);
+        let rng = balatro_rs::rng::GameRng::for_testing(42);
         shop.refresh(&rng);
 
         // Test with very low balance
@@ -367,7 +367,7 @@ mod tests {
     #[test]
     fn test_shop_gen_moves_buy_joker_max_slots_reached() {
         let mut shop = Shop::new();
-        let rng = crate::rng::GameRng::for_testing(42);
+        let rng = balatro_rs::rng::GameRng::for_testing(42);
         shop.refresh(&rng);
 
         // Test when current joker count equals max slots
@@ -381,7 +381,7 @@ mod tests {
     #[test]
     fn test_shop_gen_moves_buy_joker_valid() {
         let mut shop = Shop::new();
-        let rng = crate::rng::GameRng::for_testing(42);
+        let rng = balatro_rs::rng::GameRng::for_testing(42);
         shop.refresh(&rng);
 
         let result = shop.gen_moves_buy_joker(100.0, 0, 5);
@@ -408,7 +408,7 @@ mod tests {
     #[test]
     fn test_shop_gen_moves_buy_joker_partial_affordability() {
         let mut shop = Shop::new();
-        let rng = crate::rng::GameRng::for_testing(42);
+        let rng = balatro_rs::rng::GameRng::for_testing(42);
         shop.refresh(&rng);
 
         // Assume jokers cost at least 1, test with limited funds
@@ -434,7 +434,7 @@ mod tests {
     #[test]
     fn test_shop_clone() {
         let mut shop = Shop::new();
-        let rng = crate::rng::GameRng::for_testing(42);
+        let rng = balatro_rs::rng::GameRng::for_testing(42);
         shop.refresh(&rng);
 
         let cloned_shop = shop.clone();
@@ -470,7 +470,7 @@ mod tests {
     #[test]
     fn test_joker_generator_gen_joker() {
         let generator = JokerGenerator {};
-        let rng = crate::rng::GameRng::for_testing(42);
+        let rng = balatro_rs::rng::GameRng::for_testing(42);
 
         // Generate multiple jokers to test consistency
         for _ in 0..10 {
@@ -501,7 +501,7 @@ mod tests {
     #[test]
     fn test_shop_stress_operations() {
         let mut shop = Shop::new();
-        let rng = crate::rng::GameRng::for_testing(42);
+        let rng = balatro_rs::rng::GameRng::for_testing(42);
 
         // Perform many refresh operations
         for _ in 0..100 {
@@ -522,7 +522,7 @@ mod tests {
     #[test]
     fn test_shop_edge_case_index_boundaries() {
         let mut shop = Shop::new();
-        let rng = crate::rng::GameRng::for_testing(42);
+        let rng = balatro_rs::rng::GameRng::for_testing(42);
         shop.refresh(&rng);
 
         // Test boundary indices
