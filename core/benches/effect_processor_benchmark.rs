@@ -206,25 +206,31 @@ fn priority_ordering_benchmarks(c: &mut Criterion) {
     
     let priority_scenarios = [
         ("uniform_normal", vec![EffectPriority::Normal; 10]),
-        ("mixed_priorities", vec![
-            EffectPriority::Low,
-            EffectPriority::Normal,
-            EffectPriority::High,
-            EffectPriority::Critical,
-            EffectPriority::Normal,
-            EffectPriority::Low,
-            EffectPriority::High,
-            EffectPriority::Normal,
-            EffectPriority::Critical,
-            EffectPriority::Normal,
-        ]),
+        (
+            "mixed_priorities",
+            vec![
+                EffectPriority::Low,
+                EffectPriority::Normal,
+                EffectPriority::High,
+                EffectPriority::Critical,
+                EffectPriority::Normal,
+                EffectPriority::Low,
+                EffectPriority::High,
+                EffectPriority::Normal,
+                EffectPriority::Critical,
+                EffectPriority::Normal,
+            ],
+        ),
         ("all_critical", vec![EffectPriority::Critical; 10]),
-        ("reverse_order", vec![
-            EffectPriority::Critical,
-            EffectPriority::High,
-            EffectPriority::Normal,
-            EffectPriority::Low,
-        ]),
+        (
+            "reverse_order",
+            vec![
+                EffectPriority::Critical,
+                EffectPriority::High,
+                EffectPriority::Normal,
+                EffectPriority::Low,
+            ],
+        ),
     ];
     
     for (name, priorities) in priority_scenarios.iter() {
@@ -411,10 +417,7 @@ fn create_retriggering_joker_collection(retrigger_count: usize) -> Vec<Box<dyn J
             .with_chips(5)
             .with_retriggers(std::cmp::min(retrigger_count / (i + 1), 10) as u32);
             
-        jokers.push(Box::new(StaticJoker::new(
-            JokerId::Joker,
-            effect,
-        )));
+        jokers.push(Box::new(StaticJoker::new(JokerId::Joker, effect)));
     }
     
     jokers
