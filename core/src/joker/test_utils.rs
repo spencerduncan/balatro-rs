@@ -337,6 +337,7 @@ impl Joker for MockGameplayJoker {
 ///
 /// This mock allows you to specify custom modifiers for base game values
 /// (chips, mult, hand size, discards).
+#[derive(Clone)]
 pub struct MockModifierJoker {
     pub id: JokerId,
     pub name: String,
@@ -706,7 +707,7 @@ impl TestContextBuilder {
     pub fn build(self) -> GameContext<'static> {
         let jokers: Vec<Box<dyn Joker>> = Vec::new();
         let joker_state_manager = Arc::new(JokerStateManager::new());
-        let rng = GameRng::new(crate::rng::RngMode::Testing(42));
+        let rng = GameRng::for_testing(42);
 
         // Convert to static references (this is unsafe but okay for tests)
         let stage_ref: &'static Stage = Box::leak(Box::new(self.stage));
@@ -838,8 +839,8 @@ pub fn assert_effect_empty(effect: &JokerEffect) {
 }
 
 /// Create a simple test card for testing purposes.
-pub fn create_test_card(value: Value, suit: Suit) -> Card {
-    Card::new(value, suit)
+pub fn create_test_card(rank: Value, suit: Suit) -> Card {
+    Card::new(rank, suit)
 }
 
 /// Create a simple test hand with specified cards.

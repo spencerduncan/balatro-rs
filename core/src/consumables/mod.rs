@@ -49,6 +49,30 @@ pub enum SlotError {
     SlotEmpty { index: usize },
 }
 
+/// Collections where cards can be found for targeting
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum CardCollection {
+    /// Cards currently in the player's hand
+    Hand,
+    /// Cards in the deck (not yet drawn)
+    Deck,
+    /// Cards in the discard pile
+    DiscardPile,
+    /// Cards that have been played this round
+    PlayedCards,
+}
+
+impl fmt::Display for CardCollection {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            CardCollection::Hand => write!(f, "Hand"),
+            CardCollection::Deck => write!(f, "Deck"),
+            CardCollection::DiscardPile => write!(f, "Discard Pile"),
+            CardCollection::PlayedCards => write!(f, "Played Cards"),
+        }
+    }
+}
+
 /// Error types for target validation
 #[derive(Debug, Error, Clone)]
 pub enum TargetValidationError {
@@ -254,8 +278,100 @@ impl Target {
     pub fn cards_in_played(indices: Vec<usize>) -> Self {
         Target::Cards(CardTarget::new(CardCollection::PlayedCards, indices))
     }
+
+    /// Generate all available targets for a given target type
+    pub fn get_available_targets(target_type: TargetType, game: &Game) -> Vec<Target> {
+        match target_type {
+            TargetType::None => vec![Target::None],
+            TargetType::Cards(count) => {
+                if count == 0 || count > 5 {
+                    // Return empty for performance reasons (> 5 cards) or invalid input (0 cards)
+                    return vec![];
+                }
+
+                let hand_size = game.available.cards().len();
+                if count > hand_size {
+                    return vec![];
+                }
+
+                // Generate all combinations of selecting `count` cards from hand
+                generate_card_combinations(hand_size, count)
+            }
+            TargetType::HandType => {
+                // Return all available hand types (for now, all are available)
+                use crate::rank::HandRank;
+                vec![
+                    Target::HandType(HandRank::HighCard),
+                    Target::HandType(HandRank::OnePair),
+                    Target::HandType(HandRank::TwoPair),
+                    Target::HandType(HandRank::ThreeOfAKind),
+                    Target::HandType(HandRank::Straight),
+                    Target::HandType(HandRank::Flush),
+                    Target::HandType(HandRank::FullHouse),
+                    Target::HandType(HandRank::FourOfAKind),
+                    Target::HandType(HandRank::StraightFlush),
+                    Target::HandType(HandRank::RoyalFlush),
+                    Target::HandType(HandRank::FiveOfAKind),
+                    Target::HandType(HandRank::FlushHouse),
+                    Target::HandType(HandRank::FlushFive),
+                ]
+            }
+            TargetType::Joker => {
+                // Return targets for all available joker slots
+                (0..game.jokers.len()).map(Target::Joker).collect()
+            }
+            TargetType::Deck => vec![Target::Deck],
+            TargetType::Shop => {
+                // For now, return targets for shop slots 0-4 (typical shop size)
+                // In future: check actual shop inventory
+                (0..5).map(Target::Shop).collect()
+            }
+        }
+    }
 }
 
+/// Generate all possible combinations of selecting `count` cards from `hand_size` total cards
+fn generate_card_combinations(hand_size: usize, count: usize) -> Vec<Target> {
+    if count == 0 || count > hand_size {
+        return vec![];
+    }
+
+    let mut combinations = Vec::new();
+    let mut current_combination = Vec::new();
+
+    generate_combinations_recursive(
+        0,
+        hand_size,
+        count,
+        &mut current_combination,
+        &mut combinations,
+    );
+
+    combinations
+        .into_iter()
+        .map(Target::cards_in_hand)
+        .collect()
+}
+
+/// Recursive helper function to generate combinations
+fn generate_combinations_recursive(
+    start: usize,
+    total: usize,
+    remaining: usize,
+    current: &mut Vec<usize>,
+    all_combinations: &mut Vec<Vec<usize>>,
+) {
+    if remaining == 0 {
+        all_combinations.push(current.clone());
+        return;
+    }
+
+    for i in start..=(total - remaining) {
+        current.push(i);
+        generate_combinations_recursive(i + 1, total, remaining - 1, current, all_combinations);
+        current.pop();
+    }
+}
 /// Represents targeting specific cards with validation
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CardTarget {
@@ -665,8 +781,7 @@ pub struct ConsumableSlots {
     /// Vector of optional consumable slots
     slots: Vec<Option<Box<dyn Consumable>>>,
     /// Default capacity for new instances (always 2 as per Balatro base game)
-    #[allow(dead_code)]
-    default_capacity: usize,
+    _default_capacity: usize,
 }
 
 impl ConsumableSlots {
@@ -715,7 +830,7 @@ impl ConsumableSlots {
         Self {
             capacity,
             slots,
-            default_capacity: 2,
+            _default_capacity: 2,
         }
     }
 
@@ -933,14 +1048,11 @@ impl ConsumableSlots {
     ///     // Modify consumable if needed
     /// }
     /// ```
-    pub fn get_consumable_mut(&mut self, index: usize) -> Option<&mut dyn Consumable> {
+    pub fn get_consumable_mut(&mut self, index: usize) -> Option<&mut Box<dyn Consumable>> {
         if index >= self.capacity {
             return None;
         }
-        match self.slots.get_mut(index) {
-            Some(Some(boxed)) => Some(boxed.as_mut()),
-            _ => None,
-        }
+        self.slots[index].as_mut()
     }
 
     /// Finds the first empty slot
@@ -1032,4 +1144,9 @@ impl Default for ConsumableSlots {
 // pub mod planet;
 // pub mod spectral;
 
+// Test module
+#[cfg(test)]
+mod tests;
+
 // Re-export commonly used types
+pub use ConsumableId::*;

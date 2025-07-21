@@ -175,7 +175,7 @@ impl Joker for BullJoker {
 
     fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
         // Effect is based on current money, not accumulated
-        let chips_bonus = context.money * 2;
+        let chips_bonus = (context.money as f64 * 2.0) as i32;
         JokerEffect::new().with_chips(chips_bonus)
     }
 
@@ -223,7 +223,7 @@ impl Joker for BootstrapsJoker {
 
     fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
         // Effect is based on current money divided by 5
-        let mult_bonus = (context.money / 5) * 2;
+        let mult_bonus = ((context.money as f64 / 5.0) * 2.0) as i32;
         JokerEffect::new().with_mult(mult_bonus)
     }
 

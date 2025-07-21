@@ -247,8 +247,7 @@ fn default_game_rng() -> crate::rng::GameRng {
 
 /// Format debug message for joker effects with conditional compilation
 #[cfg(debug_assertions)]
-#[allow(dead_code)]
-fn format_joker_effect_debug_message(
+fn _format_joker_effect_debug_message(
     joker_name: &str,
     effect: &crate::joker::JokerEffect,
     total_triggers: u32,
@@ -649,6 +648,7 @@ impl Game {
                 )
                 .unwrap();
             }
+
             messages.push(debug_msg);
         }
 
@@ -658,8 +658,7 @@ impl Game {
                 error
             {
                 messages.push("KILLSCREEN: Too many retriggered effects!".to_string());
-            }
-            // Other errors are less critical for gameplay
+            } // Other errors are less critical for gameplay
         }
 
         // Process card-level effects using the cached processor
@@ -720,8 +719,7 @@ impl Game {
                     error
                 {
                     messages.push("KILLSCREEN: Too many retriggered effects!".to_string());
-                }
-                // Other errors are less critical for gameplay
+                } // Other errors are less critical for gameplay
             }
         }
 

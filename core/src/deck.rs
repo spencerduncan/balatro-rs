@@ -373,7 +373,7 @@ mod tests {
     #[test]
     fn test_deck_multiple_operations() {
         let mut deck = Deck::new();
-        let rng = crate::rng::GameRng::for_testing(42);
+        let rng = GameRng::for_testing(42);
 
         // Add some cards
         deck.extend(vec![
