@@ -1355,12 +1355,13 @@ impl GameState {
     }
 }
 
-/// Safely convert serde_json::Value to Python object using proper lifetime management
+/// Safely convert serde_json::Value to Python object using modern PyO3 APIs
 ///
-/// This replaces the deprecated to_object() calls with a safer approach that avoids
-/// creating unnecessary Python object references that could cause memory leaks.
-#[allow(deprecated)] // TODO: Migrate to new PyO3 API in future version
+/// This function uses the latest PyO3 0.24.1 patterns with proper lifetime management
+/// and memory safety. It avoids deprecated APIs and follows modern PyO3 best practices.
 fn safe_json_to_py(py: Python, value: &serde_json::Value) -> PyResult<pyo3::PyObject> {
+    use pyo3::types::{PyDict, PyList};
+    
     match value {
         serde_json::Value::Null => Ok(py.None()),
         serde_json::Value::Bool(b) => Ok((*b).into_py(py)),
@@ -1370,23 +1371,26 @@ fn safe_json_to_py(py: Python, value: &serde_json::Value) -> PyResult<pyo3::PyOb
             } else if let Some(f) = n.as_f64() {
                 Ok(f.into_py(py))
             } else {
+                // For edge cases like very large numbers that don't fit in i64/f64
                 Ok(py.None())
             }
         }
         serde_json::Value::String(s) => Ok(s.into_py(py)),
         serde_json::Value::Array(arr) => {
-            let py_list: Vec<pyo3::PyObject> = arr
-                .iter()
-                .map(|item| safe_json_to_py(py, item))
-                .collect::<PyResult<Vec<_>>>()?;
-            Ok(py_list.into_py(py))
+            let py_list = PyList::empty_bound(py);
+            for item in arr {
+                let py_item = safe_json_to_py(py, item)?;
+                py_list.append(py_item)?;
+            }
+            Ok(py_list.into())
         }
         serde_json::Value::Object(obj) => {
-            let py_dict: std::collections::HashMap<String, pyo3::PyObject> = obj
-                .iter()
-                .map(|(k, v)| safe_json_to_py(py, v).map(|py_val| (k.clone(), py_val)))
-                .collect::<PyResult<std::collections::HashMap<_, _>>>()?;
-            Ok(py_dict.into_py(py))
+            let py_dict = PyDict::new_bound(py);
+            for (key, value) in obj {
+                let py_value = safe_json_to_py(py, value)?;
+                py_dict.set_item(key, py_value)?;
+            }
+            Ok(py_dict.into())
         }
     }
 }

@@ -285,16 +285,43 @@ pub type ActionSpaceError = DeveloperActionSpaceError;
 #[cfg(feature = "python")]
 impl std::convert::From<DeveloperGameError> for PyErr {
     fn from(err: DeveloperGameError) -> PyErr {
-        // In Python bindings, always use sanitized errors for security
-        let sanitizer = ErrorSanitizer::default();
+        use pyo3::exceptions::{PyException, PyValueError, PyRuntimeError};
+        
+        // Use development mode in debug builds, production mode otherwise
+        let detail_level = if cfg!(debug_assertions) {
+            ErrorDetailLevel::Development
+        } else {
+            ErrorDetailLevel::Production
+        };
+        
+        let sanitizer = ErrorSanitizer::new(detail_level);
         let user_error = sanitizer.sanitize_game_error(&err);
-        PyException::new_err(user_error.to_string())
+        
+        // Map to more specific Python exception types where appropriate
+        match user_error {
+            UserError::InvalidInput => PyValueError::new_err(user_error.to_string()),
+            UserError::InvalidOperation => PyRuntimeError::new_err(user_error.to_string()),
+            UserError::ResourceNotFound => PyRuntimeError::new_err(user_error.to_string()),
+            UserError::OperationFailed => PyRuntimeError::new_err(user_error.to_string()),
+            UserError::ConfigurationError => PyValueError::new_err(user_error.to_string()),
+            UserError::SystemError => PyRuntimeError::new_err(user_error.to_string()),
+        }
     }
 }
 
 #[cfg(feature = "python")]
 impl std::convert::From<UserError> for PyErr {
     fn from(err: UserError) -> PyErr {
-        PyException::new_err(err.to_string())
+        use pyo3::exceptions::{PyValueError, PyRuntimeError};
+        
+        // Map UserError types to appropriate Python exceptions
+        match err {
+            UserError::InvalidInput => PyValueError::new_err(err.to_string()),
+            UserError::InvalidOperation => PyRuntimeError::new_err(err.to_string()),
+            UserError::ResourceNotFound => PyRuntimeError::new_err(err.to_string()),
+            UserError::OperationFailed => PyRuntimeError::new_err(err.to_string()),
+            UserError::ConfigurationError => PyValueError::new_err(err.to_string()),
+            UserError::SystemError => PyRuntimeError::new_err(err.to_string()),
+        }
     }
 }

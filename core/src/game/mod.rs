@@ -22,8 +22,8 @@ use crate::state_version::StateVersion;
 use crate::target_context::TargetContext;
 use crate::vouchers::VoucherCollection;
 
-// Re-export GameState for external use with qualified name to avoid Python bindings conflict
-pub use crate::vouchers::GameState as VoucherGameState;
+// Note: If you need to use vouchers::GameState alongside the main Game struct,
+// import it directly as `use crate::vouchers::GameState` to avoid naming conflicts.
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
