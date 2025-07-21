@@ -116,10 +116,10 @@ fn complex_effect_combination_benchmarks(c: &mut Criterion) {
 /// Benchmark heavy retriggering scenarios
 fn retriggering_scenario_benchmarks(c: &mut Criterion) {
     let mut group = c.benchmark_group("retriggering_scenarios");
-    
+
     for retrigger_count in [1, 3, 5, 10, 20].iter() {
         group.throughput(Throughput::Elements(*retrigger_count as u64));
-        
+
         group.bench_with_input(
             BenchmarkId::new("high_retrigger_processing", retrigger_count),
             retrigger_count,
@@ -129,13 +129,13 @@ fn retriggering_scenario_benchmarks(c: &mut Criterion) {
                     let mut game_context = create_test_game_context();
                     let hand = create_test_hand();
                     let jokers = create_retriggering_joker_collection(retrigger_count);
-                    
+
                     black_box(processor.process_hand_effects(&jokers, &mut game_context, &hand))
                 });
             },
         );
     }
-    
+
     // Performance target: 20 jokers with retriggering should be < 50μs
     group.finish();
 }
@@ -143,10 +143,10 @@ fn retriggering_scenario_benchmarks(c: &mut Criterion) {
 /// Benchmark performance with large joker collections
 fn large_joker_collection_benchmarks(c: &mut Criterion) {
     let mut group = c.benchmark_group("large_joker_collections");
-    
+
     for joker_count in [10, 15, 20, 25, 30].iter() {
         group.throughput(Throughput::Elements(*joker_count as u64));
-        
+
         group.bench_with_input(
             BenchmarkId::new("large_collection_processing", joker_count),
             joker_count,
@@ -156,7 +156,7 @@ fn large_joker_collection_benchmarks(c: &mut Criterion) {
                     let mut game_context = create_test_game_context();
                     let hand = create_test_hand();
                     let jokers = create_large_joker_collection(*joker_count);
-                    
+
                     black_box(processor.process_hand_effects(&jokers, &mut game_context, &hand))
                 });
             },
