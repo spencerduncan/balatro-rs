@@ -3,9 +3,44 @@
 // This file tests 9 jokers: 5 fully implemented + 4 placeholders
 
 use balatro_rs::card::{Card, Suit, Value};
-use balatro_rs::hand::SelectHand;
+use balatro_rs::hand::{Hand, SelectHand};
 use balatro_rs::joker::{GameContext, Joker, JokerId, JokerRarity};
 use balatro_rs::static_joker_factory::StaticJokerFactory;
+use balatro_rs::stage::{Blind, Stage};
+use balatro_rs::joker_state::JokerStateManager;
+use std::sync::Arc;
+use std::collections::HashMap;
+
+// Helper function to create test context
+fn create_test_context() -> GameContext<'static> {
+    // Use Box::leak to create 'static references
+    let state_manager = Box::leak(Box::new(Arc::new(JokerStateManager::new())));
+    let jokers = Box::leak(Box::new(vec![]));
+    let hand = Box::leak(Box::new(Hand::new(vec![])));
+    let discarded = Box::leak(Box::new(vec![]));
+    let hand_type_counts = Box::leak(Box::new(HashMap::new()));
+    let stage = Box::leak(Box::new(Stage::Blind(Blind::Small)));
+    let rng = Box::leak(Box::new(balatro_rs::rng::GameRng::for_testing(42)));
+
+    GameContext {
+        chips: 0,
+        mult: 1,
+        money: 100,
+        ante: 1,
+        round: 1,
+        stage,
+        hands_played: 0,
+        discards_used: 0,
+        jokers,
+        hand,
+        discarded,
+        joker_state_manager: state_manager,
+        hand_type_counts,
+        cards_in_deck: 52,
+        stone_cards_in_deck: 0,
+        rng,
+    }
+}
 
 #[test]
 fn test_red_card_joker() {
@@ -91,7 +126,7 @@ fn test_half_joker() {
 #[test]
 fn test_half_joker_behavior_with_4_cards() {
     let joker = StaticJokerFactory::create_half_joker();
-    let mut context = GameContext::default();
+    let mut context = create_test_context();
 
     // Test with exactly 4 cards (should trigger)
     let four_card_hand = SelectHand::new(vec![
@@ -116,7 +151,7 @@ fn test_half_joker_behavior_with_4_cards() {
 #[test]
 fn test_half_joker_behavior_with_3_cards() {
     let joker = StaticJokerFactory::create_half_joker();
-    let mut context = GameContext::default();
+    let mut context = create_test_context();
 
     // Test with 3 cards (should trigger)
     let three_card_hand = SelectHand::new(vec![
@@ -135,7 +170,7 @@ fn test_half_joker_behavior_with_3_cards() {
 #[test]
 fn test_half_joker_behavior_with_2_cards() {
     let joker = StaticJokerFactory::create_half_joker();
-    let mut context = GameContext::default();
+    let mut context = create_test_context();
 
     // Test with 2 cards (should trigger)
     let two_card_hand = SelectHand::new(vec![
@@ -153,7 +188,7 @@ fn test_half_joker_behavior_with_2_cards() {
 #[test]
 fn test_half_joker_behavior_with_1_card() {
     let joker = StaticJokerFactory::create_half_joker();
-    let mut context = GameContext::default();
+    let mut context = create_test_context();
 
     // Test with 1 card (should trigger)
     let one_card_hand = SelectHand::new(vec![Card::new(Value::King, Suit::Heart)]);
@@ -168,7 +203,7 @@ fn test_half_joker_behavior_with_1_card() {
 #[test]
 fn test_half_joker_behavior_with_5_cards() {
     let joker = StaticJokerFactory::create_half_joker();
-    let mut context = GameContext::default();
+    let mut context = create_test_context();
 
     // Test with 5 cards (should NOT trigger)
     let five_card_hand = SelectHand::new(vec![
@@ -197,7 +232,7 @@ fn test_half_joker_behavior_with_5_cards() {
 #[test]
 fn test_half_joker_behavior_with_6_cards() {
     let joker = StaticJokerFactory::create_half_joker();
-    let mut context = GameContext::default();
+    let mut context = create_test_context();
 
     // Test with 6 cards (should NOT trigger)
     let six_card_hand = SelectHand::new(vec![
@@ -219,7 +254,7 @@ fn test_half_joker_behavior_with_6_cards() {
 #[test]
 fn test_half_joker_behavior_per_hand_not_per_card() {
     let joker = StaticJokerFactory::create_half_joker();
-    let mut context = GameContext::default();
+    let mut context = create_test_context();
 
     // Test that Half Joker is per-hand, not per-card
     let three_card_hand = SelectHand::new(vec![
@@ -247,7 +282,7 @@ fn test_half_joker_behavior_per_hand_not_per_card() {
 #[test]
 fn test_half_joker_behavior_edge_case_empty_hand() {
     let joker = StaticJokerFactory::create_half_joker();
-    let mut context = GameContext::default();
+    let mut context = create_test_context();
 
     // Test with empty hand (should trigger as 0 ≤ 4)
     let empty_hand = SelectHand::new(vec![]);
@@ -305,16 +340,16 @@ fn test_abstract_joker() {
 
     // Create a test game context manually
     let joker_state_manager = Arc::new(JokerStateManager::new());
-    let stage = Stage::Blind;
+    let stage = Stage::Blind(Blind::Small);
     let stage_ref: &'static Stage = Box::leak(Box::new(stage));
-    let hand = Hand::new();
+    let hand = Hand::new(vec![]);
     let hand_ref: &'static Hand = Box::leak(Box::new(hand));
     let discarded: Vec<Card> = Vec::new();
     let discarded_ref: &'static [Card] = Box::leak(discarded.into_boxed_slice());
     let hand_type_counts: HashMap<HandRank, u32> = HashMap::new();
     let hand_type_counts_ref: &'static HashMap<HandRank, u32> =
         Box::leak(Box::new(hand_type_counts));
-    let rng = GameRng::new();
+    let rng = balatro_rs::rng::GameRng::for_testing(42);
     let rng_ref: &'static GameRng = Box::leak(Box::new(rng));
 
     let mut context = GameContext {

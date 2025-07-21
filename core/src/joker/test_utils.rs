@@ -337,7 +337,6 @@ impl Joker for MockGameplayJoker {
 ///
 /// This mock allows you to specify custom modifiers for base game values
 /// (chips, mult, hand size, discards).
-#[derive(Clone)]
 pub struct MockModifierJoker {
     pub id: JokerId,
     pub name: String,

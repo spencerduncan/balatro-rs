@@ -432,7 +432,7 @@ fn test_lucky_card_joker_probability() {
     let hand = Hand::empty();
     let discarded = vec![];
     let hand_type_counts = HashMap::new();
-    let select_hand = SelectHand::from_cards(vec![]);
+    let select_hand = SelectHand::new(vec![]);
 
     for _ in 0..sample_size {
         let mut context = GameContext {
@@ -503,12 +503,12 @@ fn test_rng_jokers_deterministic_behavior() {
         // First run with seeded RNG
         let rng1 = GameRng::for_testing(seed);
         let state_manager1 = Arc::new(JokerStateManager::new());
-        let stage = Stage::PreBlind;
+        let stage = Stage::PreBlind();
         let jokers_vec: Vec<Box<dyn Joker>> = vec![];
-        let hand = Hand::empty();
+        let hand = Hand::new(vec![]);
         let discarded = vec![];
         let hand_type_counts = HashMap::new();
-        let select_hand = SelectHand::from_cards(vec![]);
+        let select_hand = SelectHand::new(vec![]);
 
         for _ in 0..test_iterations {
             let mut context = GameContext {

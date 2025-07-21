@@ -1745,7 +1745,7 @@ mod tests {
         // This test demonstrates cache performance benefits
         // Note: In a real benchmark, you'd use a proper benchmarking framework
 
-        let processor_with_cache = JokerEffectProcessor::new();
+        let mut processor_with_cache = JokerEffectProcessor::new();
         let mut processor_without_cache = JokerEffectProcessor::new();
 
         // Disable cache for one processor
@@ -1754,6 +1754,14 @@ mod tests {
             ..Default::default()
         };
         processor_without_cache.set_cache_config(config);
+        
+        // Create values outside the closure
+        let stage = crate::stage::Stage::PreBlind();
+        let empty_hand = crate::hand::Hand::new(vec![]);
+        let joker_state_manager = std::sync::Arc::new(crate::joker_state::JokerStateManager::new());
+        let hand_type_counts = HashMap::new();
+        let rng = crate::rng::GameRng::secure();
+        
         // Helper function to create fresh GameContext instances
         let create_game_context = || GameContext {
             chips: 100,
@@ -1761,17 +1769,17 @@ mod tests {
             money: 100,
             ante: 1,
             round: 1,
-            stage: &crate::stage::Stage::PreBlind(),
+            stage: &stage,
             hands_played: 0,
             discards_used: 0,
             jokers: &[],
-            hand: &crate::hand::Hand::new(vec![]),
+            hand: &empty_hand,
             discarded: &[],
-            joker_state_manager: &std::sync::Arc::new(crate::joker_state::JokerStateManager::new()),
-            hand_type_counts: &HashMap::new(),
+            joker_state_manager: &joker_state_manager,
+            hand_type_counts: &hand_type_counts,
             cards_in_deck: 52,
             stone_cards_in_deck: 0,
-            rng: &crate::rng::GameRng::secure(),
+            rng: &rng,
         };
 
         let hand = SelectHand::new(vec![
@@ -2186,7 +2194,7 @@ mod tests {
     fn test_priority_strategy_api_from_issue() {
         // Test the exact API proposed in the issue
         let context = ProcessingContext::builder()
-            .priority_strategy(Arc::new(MetadataPriorityStrategy::new()))
+            .priority_strategy(Arc::new(MetadataPriorityStrategy))
             .build();
 
         let processor = JokerEffectProcessor::with_context(context);

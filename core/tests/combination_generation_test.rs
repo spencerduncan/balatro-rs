@@ -104,9 +104,10 @@ fn test_combination_content_correctness() {
     let targets = Target::get_available_targets(TargetType::Cards(2), &game);
 
     for target in targets {
-        if let Target::Cards(indices) = target {
+        if let Target::Cards(card_target) = target {
+            let indices = &card_target.indices;
             // Verify all indices are valid
-            for &index in &indices {
+            for &index in indices {
                 assert!(
                     index < 4,
                     "Card index {} should be less than hand size",

@@ -745,13 +745,13 @@ impl Joker for PhotographJoker {
 mod tests {
     use super::*;
     use crate::card::{Card, Suit, Value};
-    use crate::hand::SelectHand;
+    use crate::hand::{Hand, SelectHand};
     use crate::joker::traits::{
         JokerGameplay, JokerIdentity, JokerLifecycle, JokerModifiers,
         JokerState as JokerStateTrait, Rarity,
     };
     use crate::joker::GameContext;
-    use crate::stage::Stage;
+    use crate::stage::{Blind, Stage};
     use std::collections::HashMap;
     use std::sync::Arc;
 
@@ -765,13 +765,13 @@ mod tests {
         Arc<crate::joker_state::JokerStateManager>,
         HashMap<crate::rank::HandRank, u32>,
         crate::rng::GameRng,
-        SelectHand,
+        Hand,
         Vec<Card>,
     ) {
         let state_manager = Arc::new(crate::joker_state::JokerStateManager::new());
         let hand_counts = HashMap::new();
-        let rng = crate::rng::GameRng::new();
-        let hand = SelectHand::new(vec![]);
+        let rng = crate::rng::GameRng::for_testing(42);
+        let hand = Hand::new(vec![]);
         let discarded = vec![];
 
         (state_manager, hand_counts, rng, hand, discarded)
@@ -781,14 +781,14 @@ mod tests {
     fn test_erosion_joker_identity() {
         let joker = ErosionJoker;
 
-        assert_eq!(joker.joker_type(), "Erosion");
-        assert_eq!(joker.name(), "Erosion");
+        assert_eq!(JokerIdentity::joker_type(&joker), "Erosion");
+        assert_eq!(JokerIdentity::name(&joker), "Erosion");
         assert_eq!(
-            joker.description(),
+            JokerIdentity::description(&joker),
             "+4 Mult for each card below 52 in deck"
         );
-        assert_eq!(joker.rarity(), Rarity::Common);
-        assert_eq!(joker.base_cost(), 6);
+        assert_eq!(JokerIdentity::rarity(&joker), Rarity::Common);
+        assert_eq!(JokerIdentity::base_cost(&joker), 6);
     }
 
     #[test]
@@ -796,13 +796,14 @@ mod tests {
         let joker = ErosionJoker;
         let (state_manager, hand_counts, rng, hand, discarded) = create_basic_test_context();
 
+        let stage = Stage::Blind(Blind::Small);
         let mut context = GameContext {
             chips: 0,
             mult: 0,
             money: 0,
             ante: 1,
             round: 1,
-            stage: &Stage::Blind,
+            stage: &stage,
             hands_played: 0,
             discards_used: 0,
             jokers: &[],
@@ -815,7 +816,8 @@ mod tests {
             rng: &rng,
         };
 
-        let effect = joker.on_hand_played(&mut context, &hand);
+        let select_hand = SelectHand::new(vec![]);
+        let effect = joker.on_hand_played(&mut context, &select_hand);
         assert_eq!(effect.mult, 16); // 4 missing * 4 mult each = 16
     }
 
@@ -823,14 +825,14 @@ mod tests {
     fn test_figure_joker_identity() {
         let joker = FigureJoker;
 
-        assert_eq!(joker.joker_type(), "Figure");
-        assert_eq!(joker.name(), "Figure");
+        assert_eq!(JokerIdentity::joker_type(&joker), "Figure");
+        assert_eq!(JokerIdentity::name(&joker), "Figure");
         assert_eq!(
-            joker.description(),
+            JokerIdentity::description(&joker),
             "$3 when face card played, face cards give +0 Chips"
         );
-        assert_eq!(joker.rarity(), Rarity::Uncommon);
-        assert_eq!(joker.base_cost(), 8);
+        assert_eq!(JokerIdentity::rarity(&joker), Rarity::Uncommon);
+        assert_eq!(JokerIdentity::base_cost(&joker), 8);
     }
 
     #[test]
@@ -838,13 +840,14 @@ mod tests {
         let joker = FigureJoker;
         let (state_manager, hand_counts, rng, hand, discarded) = create_basic_test_context();
 
+        let stage = Stage::Blind(Blind::Small);
         let mut context = GameContext {
             chips: 0,
             mult: 0,
             money: 0,
             ante: 1,
             round: 1,
-            stage: &Stage::Blind,
+            stage: &stage,
             hands_played: 0,
             discards_used: 0,
             jokers: &[],
@@ -874,14 +877,14 @@ mod tests {
     fn test_flower_pot_joker_identity() {
         let joker = FlowerPotJoker;
 
-        assert_eq!(joker.joker_type(), "FlowerPot");
-        assert_eq!(joker.name(), "Flower Pot");
+        assert_eq!(JokerIdentity::joker_type(&joker), "FlowerPot");
+        assert_eq!(JokerIdentity::name(&joker), "Flower Pot");
         assert_eq!(
-            joker.description(),
+            JokerIdentity::description(&joker),
             "+3 Mult if poker hand contains Diamond, Spade, Heart, Club"
         );
-        assert_eq!(joker.rarity(), Rarity::Uncommon);
-        assert_eq!(joker.base_cost(), 7);
+        assert_eq!(JokerIdentity::rarity(&joker), Rarity::Uncommon);
+        assert_eq!(JokerIdentity::base_cost(&joker), 7);
     }
 
     #[test]
@@ -896,15 +899,17 @@ mod tests {
             create_card(Suit::Club, Value::Three),
             create_card(Suit::Spade, Value::Four),
         ];
-        let hand_all_suits = SelectHand::new(cards_all_suits);
+        let hand_all_suits = Hand::new(cards_all_suits.clone());
+        let select_hand_all_suits = SelectHand::new(cards_all_suits);
 
+        let stage = Stage::Blind(Blind::Small);
         let mut context = GameContext {
             chips: 0,
             mult: 0,
             money: 0,
             ante: 1,
             round: 1,
-            stage: &Stage::Blind,
+            stage: &stage,
             hands_played: 0,
             discards_used: 0,
             jokers: &[],
@@ -917,7 +922,7 @@ mod tests {
             rng: &rng,
         };
 
-        let effect = joker.on_hand_played(&mut context, &hand_all_suits);
+        let effect = joker.on_hand_played(&mut context, &select_hand_all_suits);
         assert_eq!(effect.mult, 3);
     }
 

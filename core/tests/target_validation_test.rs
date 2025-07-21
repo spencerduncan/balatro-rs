@@ -8,7 +8,7 @@ fn test_target_validation_empty_hand() {
     let game = Game::new(Config::default());
 
     // No cards available should fail validation
-    let target = Target::Cards(vec![0]);
+    let target = Target::cards_in_hand(vec![0]);
     assert!(!target.is_valid(&game));
 
     match target.validate(&game) {
@@ -26,12 +26,12 @@ fn test_target_validation_card_index_bounds() {
     // In a real scenario, you'd use the game's methods to deal cards
 
     // Test valid card index
-    let _valid_target = Target::Cards(vec![0]);
+    let _valid_target = Target::cards_in_hand(vec![0]);
     // Note: Without actual cards, this will fail with NoCardsAvailable
     // This test demonstrates the structure for when cards are present
 
     // Test invalid card index (out of bounds)
-    let invalid_target = Target::Cards(vec![5]);
+    let invalid_target = Target::cards_in_hand(vec![5]);
     assert!(!invalid_target.is_valid(&game));
 
     match invalid_target.validate(&game) {
@@ -45,7 +45,7 @@ fn test_target_validation_card_index_bounds() {
 fn test_target_validation_empty_card_list() {
     let game = Game::new(Config::default());
 
-    let target = Target::Cards(vec![]);
+    let target = Target::cards_in_hand(vec![]);
     assert!(!target.is_valid(&game));
 
     match target.validate(&game) {
@@ -230,7 +230,7 @@ fn test_target_validation_performance() {
     let game = Game::new(Config::default());
     let targets = vec![
         Target::None,
-        Target::Cards(vec![0, 1, 2]),
+        Target::cards_in_hand(vec![0, 1, 2]),
         Target::HandType(HandRank::FullHouse),
         Target::Joker(0),
         Target::Deck,

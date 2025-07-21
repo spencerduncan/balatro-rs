@@ -144,19 +144,6 @@ pub enum TargetType {
     Shop,
 }
 
-/// Represents which collection of cards to target
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum CardCollection {
-    /// Cards in the player's hand
-    Hand,
-    /// Cards in the deck
-    Deck,
-    /// Cards in the discard pile
-    DiscardPile,
-    /// Cards that have been played
-    PlayedCards,
-}
-
 /// Specific target for consumable application
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Target {
