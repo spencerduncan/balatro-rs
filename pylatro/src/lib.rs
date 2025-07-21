@@ -274,7 +274,7 @@ impl GameStateSnapshot {
     }
 }
 
-#[pyclass]
+#[pyclass(module = "pylatro")]
 struct GameEngine {
     game: Game,
 }
@@ -1086,7 +1086,7 @@ impl GameEngine {
     }
 }
 
-#[pyclass]
+#[pyclass(module = "pylatro")]
 struct GameState {
     snapshot: GameStateSnapshot,
 }
@@ -1228,24 +1228,21 @@ impl GameState {
 
     /// DEPRECATED: Use GameEngine.gen_actions() instead
     /// This method is provided for backwards compatibility only.
-    fn gen_actions(&self) -> PyResult<Vec<Action>> {
-        // Issue deprecation warning
-        Python::with_gil(|py| -> PyResult<()> {
-            let warnings = py.import("warnings")?;
-            warnings.call_method1(
-                "warn",
-                (
-                    "GameState.gen_actions() is deprecated. Use GameEngine.gen_actions() \
-                     instead. GameState should only be used for reading game state, \
-                     not performing actions.",
-                ),
-            )?;
-            warnings.call_method1(
-                "warn",
-                ("This method will be removed in version 2.0. Migration guide: https://github.com/spencerduncan/balatro-rs/wiki/Python-API-Migration",),
-            )?;
-            Ok(())
-        })?;
+    fn gen_actions(&self, py: Python<'_>) -> PyResult<Vec<Action>> {
+        // Issue deprecation warning using modern PyO3 pattern
+        let warnings = py.import("warnings")?;
+        warnings.call_method1(
+            "warn",
+            (
+                "GameState.gen_actions() is deprecated. Use GameEngine.gen_actions() \
+                 instead. GameState should only be used for reading game state, \
+                 not performing actions.",
+            ),
+        )?;
+        warnings.call_method1(
+            "warn",
+            ("This method will be removed in version 2.0. Migration guide: https://github.com/spencerduncan/balatro-rs/wiki/Python-API-Migration",),
+        )?;
 
         // This method cannot work without access to the actual Game instance
         Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(
@@ -1255,16 +1252,13 @@ impl GameState {
 
     /// DEPRECATED: Use GameEngine.gen_action_space() instead
     /// This method is provided for backwards compatibility only.
-    fn gen_action_space(&self) -> PyResult<Vec<usize>> {
-        // Issue deprecation warning
-        Python::with_gil(|py| -> PyResult<()> {
-            let warnings = py.import("warnings")?;
-            warnings.call_method1(
-                "warn",
-                ("GameState.gen_action_space() is deprecated. Use GameEngine.gen_action_space() instead. GameState should only be used for reading game state, not performing actions.",),
-            )?;
-            Ok(())
-        })?;
+    fn gen_action_space(&self, py: Python<'_>) -> PyResult<Vec<usize>> {
+        // Issue deprecation warning using modern PyO3 pattern
+        let warnings = py.import("warnings")?;
+        warnings.call_method1(
+            "warn",
+            ("GameState.gen_action_space() is deprecated. Use GameEngine.gen_action_space() instead. GameState should only be used for reading game state, not performing actions.",),
+        )?;
 
         // This method cannot work without access to the actual Game instance
         Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(
@@ -1274,16 +1268,13 @@ impl GameState {
 
     /// DEPRECATED: Use GameEngine.get_action_name() instead
     /// This method is provided for backwards compatibility only.
-    fn get_action_name(&self, _index: usize) -> PyResult<String> {
-        // Issue deprecation warning
-        Python::with_gil(|py| -> PyResult<()> {
-            let warnings = py.import("warnings")?;
-            warnings.call_method1(
-                "warn",
-                ("GameState.get_action_name() is deprecated. Use GameEngine.get_action_name() instead. GameState should only be used for reading game state, not performing actions.",),
-            )?;
-            Ok(())
-        })?;
+    fn get_action_name(&self, _index: usize, py: Python<'_>) -> PyResult<String> {
+        // Issue deprecation warning using modern PyO3 pattern
+        let warnings = py.import("warnings")?;
+        warnings.call_method1(
+            "warn",
+            ("GameState.get_action_name() is deprecated. Use GameEngine.get_action_name() instead. GameState should only be used for reading game state, not performing actions.",),
+        )?;
 
         // This method cannot work without access to the actual Game instance
         Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(
@@ -1293,16 +1284,13 @@ impl GameState {
 
     /// DEPRECATED: This method cannot work on read-only GameState
     /// Use GameEngine.handle_action() instead on a mutable GameEngine instance.
-    fn handle_action(&self, _action: Action) -> PyResult<()> {
-        // Issue deprecation warning and error
-        Python::with_gil(|py| -> PyResult<()> {
-            let warnings = py.import("warnings")?;
-            warnings.call_method1(
-                "warn",
-                ("GameState.handle_action() is deprecated and cannot modify game state. Use GameEngine.handle_action() instead on a mutable GameEngine instance.",),
-            )?;
-            Ok(())
-        })?;
+    fn handle_action(&self, _action: Action, py: Python<'_>) -> PyResult<()> {
+        // Issue deprecation warning and error using modern PyO3 pattern
+        let warnings = py.import("warnings")?;
+        warnings.call_method1(
+            "warn",
+            ("GameState.handle_action() is deprecated and cannot modify game state. Use GameEngine.handle_action() instead on a mutable GameEngine instance.",),
+        )?;
 
         Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(
             "GameState.handle_action() is deprecated and non-functional. GameState is read-only. Use GameEngine.handle_action() instead on a mutable GameEngine instance."
@@ -1311,16 +1299,13 @@ impl GameState {
 
     /// DEPRECATED: This method cannot work on read-only GameState
     /// Use GameEngine.handle_action_index() instead on a mutable GameEngine instance.
-    fn handle_action_index(&self, _index: usize) -> PyResult<()> {
-        // Issue deprecation warning and error
-        Python::with_gil(|py| -> PyResult<()> {
-            let warnings = py.import("warnings")?;
-            warnings.call_method1(
-                "warn",
-                ("GameState.handle_action_index() is deprecated and cannot modify game state. Use GameEngine.handle_action_index() instead on a mutable GameEngine instance.",),
-            )?;
-            Ok(())
-        })?;
+    fn handle_action_index(&self, _index: usize, py: Python<'_>) -> PyResult<()> {
+        // Issue deprecation warning and error using modern PyO3 pattern
+        let warnings = py.import("warnings")?;
+        warnings.call_method1(
+            "warn",
+            ("GameState.handle_action_index() is deprecated and cannot modify game state. Use GameEngine.handle_action_index() instead on a mutable GameEngine instance.",),
+        )?;
 
         Err(PyErr::new::<pyo3::exceptions::PyRuntimeError, _>(
             "GameState.handle_action_index() is deprecated and non-functional. GameState is read-only. Use GameEngine.handle_action_index() instead on a mutable GameEngine instance."

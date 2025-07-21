@@ -26,7 +26,7 @@ const DEFAULT_DISCARDED_MAX: usize = 100;
 const DEFAULT_SELECTED_MAX: usize = 5;
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "python", pyclass)]
+#[cfg_attr(feature = "python", pyclass(module = "pylatro"))]
 #[derive(Debug, Clone)]
 pub struct Config {
     pub round_start: usize,

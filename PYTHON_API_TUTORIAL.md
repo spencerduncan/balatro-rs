@@ -529,4 +529,12 @@ For detailed migration guidance, see [DUAL_FRAMEWORK_ELIMINATION_MIGRATION_GUIDE
 - Check the [Architecture Guide](ARCHITECTURE.md) for implementation details
 - See the [Performance Guide](JOKER_PERFORMANCE_GUIDE.md) for optimization techniques
 
+## For Developers
+
+If you're contributing to the Python bindings or working with the Rust/Python interface layer:
+
+- See [PyO3 Binding Patterns](PYO3_BINDING_PATTERNS.md) for modern PyO3 development practices
+- Review the [Migration Guide](DUAL_FRAMEWORK_ELIMINATION_MIGRATION_GUIDE.md) for API evolution patterns
+- Check the [Contributing Guide](CONTRIBUTING.md) for development workflows
+
 This tutorial covers the essential patterns for using the Balatro-RS Python API effectively. The unified design makes it easier to write correct, performant code for both research and production applications.

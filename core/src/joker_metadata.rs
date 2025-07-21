@@ -8,7 +8,7 @@ use std::collections::HashMap;
 
 /// Comprehensive metadata for a joker including all properties and state information
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "python", pyclass)]
+#[cfg_attr(feature = "python", pyclass(module = "pylatro"))]
 pub struct JokerMetadata {
     /// Core joker properties
     pub id: JokerId,

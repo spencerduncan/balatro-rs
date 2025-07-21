@@ -8,7 +8,7 @@ use crate::shop::{ConsumableType, ShopItem};
 /// Types of booster packs available in the shop
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "python", pyo3::pyclass(eq))]
+#[cfg_attr(feature = "python", pyo3::pyclass(eq, module = "pylatro"))]
 pub enum PackType {
     /// Standard pack with 3 playing cards (choose 1)
     Standard,

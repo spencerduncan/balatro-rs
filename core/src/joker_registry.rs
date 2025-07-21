@@ -17,7 +17,7 @@ pub fn calculate_joker_cost(rarity: JokerRarity) -> i32 {
 
 /// Definition of a joker's metadata and properties
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "python", pyclass)]
+#[cfg_attr(feature = "python", pyclass(module = "pylatro"))]
 pub struct JokerDefinition {
     pub id: JokerId,
     pub name: String,
@@ -28,7 +28,7 @@ pub struct JokerDefinition {
 
 /// Represents conditions that must be met to unlock a joker
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(feature = "python", pyclass(eq))]
+#[cfg_attr(feature = "python", pyclass(eq, module = "pylatro"))]
 pub enum UnlockCondition {
     /// Reach a certain ante level
     ReachAnte(u32),

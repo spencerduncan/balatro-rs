@@ -4,7 +4,7 @@ use std::fmt;
 
 /// Types of blinds
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "python", pyclass(eq))]
+#[cfg_attr(feature = "python", pyclass(eq, module = "pylatro"))]
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, Copy)]
 pub enum Blind {
     Small,
@@ -43,7 +43,7 @@ impl fmt::Display for Blind {
 
 /// Game ending
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "python", pyclass(eq))]
+#[cfg_attr(feature = "python", pyclass(eq, module = "pylatro"))]
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, Copy)]
 pub enum End {
     Win,
@@ -54,7 +54,7 @@ pub enum End {
 // Playing through an ante looks like:
 // Pre -> Small -> Post -> Shop -> Pre -> Big -> Post -> Shop -> Boss -> Post -> Shop
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "python", pyclass)]
+#[cfg_attr(feature = "python", pyclass(module = "pylatro"))]
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, Copy)]
 pub enum Stage {
     // See blind conditions, choose blind (or skip blind)

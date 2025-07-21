@@ -13,7 +13,7 @@ use std::sync::Arc;
 
 /// Enum representing all 150 joker identifiers
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[cfg_attr(feature = "python", pyclass(eq))]
+#[cfg_attr(feature = "python", pyclass(eq, module = "pylatro"))]
 pub enum JokerId {
     // Basic scoring jokers (Common)
     Joker,
@@ -193,7 +193,7 @@ pub enum JokerId {
 
 /// Joker rarity levels
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[cfg_attr(feature = "python", pyclass(eq))]
+#[cfg_attr(feature = "python", pyclass(eq, module = "pylatro"))]
 pub enum JokerRarity {
     Common,
     Uncommon,
@@ -276,7 +276,7 @@ impl fmt::Display for JokerRarity {
 /// pattern methods consume and return `self` to enable efficient method chaining
 /// without additional allocations.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[cfg_attr(feature = "python", pyclass)]
+#[cfg_attr(feature = "python", pyclass(module = "pylatro"))]
 pub struct JokerEffect {
     /// Additional chips to add to the hand's base chips.
     ///

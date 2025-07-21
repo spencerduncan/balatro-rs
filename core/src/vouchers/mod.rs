@@ -47,7 +47,7 @@ pub enum VoucherError {
 
 /// Errors that can occur during game state operations
 #[derive(Error, Debug, Clone)]
-pub enum GameStateError {
+pub enum VoucherGameStateError {
     #[error("Voucher validation failed")]
     VoucherValidation(#[from] VoucherError),
     #[error("Invalid game state: {reason}")]
@@ -268,7 +268,7 @@ impl StackingRule {
 /// Simplified game state interface for voucher operations
 /// This provides the minimal interface vouchers need without full Game dependency
 #[derive(Debug, Clone)]
-pub struct GameState {
+pub struct VoucherGameState {
     money: usize,
     ante: usize,
     hand_size: usize,
@@ -276,13 +276,13 @@ pub struct GameState {
     vouchers_owned: std::collections::HashSet<VoucherId>,
 }
 
-impl Default for GameState {
+impl Default for VoucherGameState {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl GameState {
+impl VoucherGameState {
     /// Create a minimal game state for testing
     pub fn new() -> Self {
         Self {
@@ -330,7 +330,7 @@ impl GameState {
     }
 
     /// Apply a voucher effect to the game state with validation and safety checks
-    pub fn apply_voucher_effect(&mut self, effect: &VoucherEffect) -> Result<(), GameStateError> {
+    pub fn apply_voucher_effect(&mut self, effect: &VoucherEffect) -> Result<(), VoucherGameStateError> {
         // First validate the effect
         effect.validate()?;
 
@@ -385,9 +385,9 @@ impl GameState {
     }
 
     /// Spend money if sufficient funds available
-    pub fn spend_money(&mut self, amount: usize) -> Result<(), GameStateError> {
+    pub fn spend_money(&mut self, amount: usize) -> Result<(), VoucherGameStateError> {
         if self.money < amount {
-            return Err(GameStateError::InvalidState {
+            return Err(VoucherGameStateError::InvalidState {
                 reason: format!("Insufficient funds: have {}, need {}", self.money, amount),
             });
         }
@@ -396,24 +396,24 @@ impl GameState {
     }
 
     /// Validate that the game state is consistent and within reasonable bounds
-    pub fn validate_state(&self) -> Result<(), GameStateError> {
+    pub fn validate_state(&self) -> Result<(), VoucherGameStateError> {
         if self.hand_size > 50 {
-            return Err(GameStateError::InvalidState {
+            return Err(VoucherGameStateError::InvalidState {
                 reason: format!("Hand size too large: {}", self.hand_size),
             });
         }
         if self.joker_slots > 20 {
-            return Err(GameStateError::InvalidState {
+            return Err(VoucherGameStateError::InvalidState {
                 reason: format!("Too many joker slots: {}", self.joker_slots),
             });
         }
         if self.ante > 8 {
-            return Err(GameStateError::InvalidState {
+            return Err(VoucherGameStateError::InvalidState {
                 reason: format!("Ante too high: {}", self.ante),
             });
         }
         if self.vouchers_owned.len() > 100 {
-            return Err(GameStateError::InvalidState {
+            return Err(VoucherGameStateError::InvalidState {
                 reason: format!("Too many vouchers owned: {}", self.vouchers_owned.len()),
             });
         }
@@ -421,7 +421,7 @@ impl GameState {
     }
 }
 
-impl From<&crate::game::Game> for GameState {
+impl From<&crate::game::Game> for VoucherGameState {
     fn from(game: &crate::game::Game) -> Self {
         // Convert Ante enum to usize
         let ante_value = match game.ante_current {
@@ -460,10 +460,10 @@ pub trait Voucher: Send + Sync + std::fmt::Debug {
     fn prerequisite(&self) -> Option<VoucherId>;
 
     /// Check if this voucher can be purchased given the current game state
-    fn can_purchase(&self, game_state: &GameState) -> bool;
+    fn can_purchase(&self, game_state: &VoucherGameState) -> bool;
 
     /// Apply the effect of this voucher to the game state
-    fn apply_effect(&self, game_state: &mut GameState);
+    fn apply_effect(&self, game_state: &mut VoucherGameState);
 
     /// Get all effects this voucher provides
     fn get_effects(&self) -> Vec<VoucherEffect>;

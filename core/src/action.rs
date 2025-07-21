@@ -7,7 +7,7 @@ use pyo3::pyclass;
 use std::fmt;
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "python", pyclass(eq))]
+#[cfg_attr(feature = "python", pyclass(eq, module = "pylatro"))]
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum MoveDirection {
     Left,
@@ -28,7 +28,7 @@ impl fmt::Display for MoveDirection {
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "python", pyclass(eq))]
+#[cfg_attr(feature = "python", pyclass(eq, module = "pylatro"))]
 #[derive(Debug, PartialEq, Clone)]
 pub enum Action {
     // Single-target actions (existing)
