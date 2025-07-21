@@ -4,21 +4,11 @@ use crate::multi_select::{MultiSelectContext, MultiSelectError, SelectionLimits}
 
 /// Represents a collection of targets for batch operations
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct TargetCollection {
     pub cards: Vec<Card>,
     pub jokers: Vec<JokerId>,
     pub pack_ids: Vec<usize>,
-}
-
-impl Default for TargetCollection {
-    fn default() -> Self {
-        Self {
-            cards: Vec::new(),
-            jokers: Vec::new(),
-            pack_ids: Vec::new(),
-        }
-    }
 }
 
 impl TargetCollection {
@@ -390,12 +380,12 @@ impl std::fmt::Display for TargetContextError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::CardNotAvailable(card) => {
-                write!(f, "Card {} is not available for targeting", card)
+                write!(f, "Card {card} is not available for targeting")
             }
             Self::JokerNotAvailable(joker_id) => {
-                write!(f, "Joker {:?} is not available for targeting", joker_id)
+                write!(f, "Joker {joker_id:?} is not available for targeting")
             }
-            Self::MultiSelectError(e) => write!(f, "Multi-select error: {}", e),
+            Self::MultiSelectError(e) => write!(f, "Multi-select error: {e}"),
             Self::InvalidRangeStart => write!(f, "Invalid range selection start"),
         }
     }

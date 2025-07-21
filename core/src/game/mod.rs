@@ -654,7 +654,9 @@ impl Game {
 
         // Process any error messages from hand effects
         for error in &hand_result.errors {
-            if let crate::joker_effect_processor::EffectProcessingError::TooManyRetriggers(_) = error {
+            if let crate::joker_effect_processor::EffectProcessingError::TooManyRetriggers(_) =
+                error
+            {
                 messages.push("KILLSCREEN: Too many retriggered effects!".to_string());
             }
             // Other errors are less critical for gameplay
@@ -714,7 +716,9 @@ impl Game {
 
             // Process any error messages from card effects
             for error in &card_result.errors {
-                if let crate::joker_effect_processor::EffectProcessingError::TooManyRetriggers(_) = error {
+                if let crate::joker_effect_processor::EffectProcessingError::TooManyRetriggers(_) =
+                    error
+                {
                     messages.push("KILLSCREEN: Too many retriggered effects!".to_string());
                 }
                 // Other errors are less critical for gameplay
