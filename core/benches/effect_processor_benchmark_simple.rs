@@ -2,7 +2,10 @@ use balatro_rs::{
     card::{Card, Suit, Value},
     hand::SelectHand,
     joker::{GameContext, JokerEffect},
-    joker_effect_processor::{ConflictResolutionStrategy, JokerEffectProcessor, ProcessingContext, WeightedEffect, EffectPriority},
+    joker_effect_processor::{
+        ConflictResolutionStrategy, EffectPriority, JokerEffectProcessor, ProcessingContext,
+        WeightedEffect,
+    },
 };
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 
@@ -17,27 +20,27 @@ pub fn effect_processor_benchmarks(c: &mut Criterion) {
 /// Test basic effect processing performance
 fn basic_processing_benchmarks(c: &mut Criterion) {
     let mut group = c.benchmark_group("basic_processing");
-    
+
     // Test weighted effects processing with single effect
     group.bench_function("single_effect_processing", |b| {
         b.iter(|| {
             let mut processor = JokerEffectProcessor::new();
             let weighted_effects = vec![create_test_weighted_effect(5, 2, EffectPriority::Normal)];
-            
+
             black_box(processor.process_weighted_effects(weighted_effects, 0))
         });
     });
-    
+
     // Test with multiple effects
     group.bench_function("multiple_effects_processing", |b| {
         b.iter(|| {
             let mut processor = JokerEffectProcessor::new();
             let weighted_effects = create_multiple_weighted_effects(5);
-            
+
             black_box(processor.process_weighted_effects(weighted_effects, 0))
         });
     });
-    
+
     // Performance target: Single effect processing should be < 1μs
     group.sample_size(10000);
     group.finish();
@@ -46,7 +49,7 @@ fn basic_processing_benchmarks(c: &mut Criterion) {
 /// Benchmark different conflict resolution strategies
 fn conflict_resolution_benchmarks(c: &mut Criterion) {
     let mut group = c.benchmark_group("conflict_resolution");
-    
+
     let strategies = [
         ("sum", ConflictResolutionStrategy::Sum),
         ("maximum", ConflictResolutionStrategy::Maximum),
@@ -54,7 +57,7 @@ fn conflict_resolution_benchmarks(c: &mut Criterion) {
         ("first_wins", ConflictResolutionStrategy::FirstWins),
         ("last_wins", ConflictResolutionStrategy::LastWins),
     ];
-    
+
     for (name, strategy) in strategies.iter() {
         group.bench_with_input(
             BenchmarkId::new("conflict_resolution", name),
@@ -64,10 +67,10 @@ fn conflict_resolution_benchmarks(c: &mut Criterion) {
                     let mut context = ProcessingContext::default();
                     context.conflict_resolution = strategy.clone();
                     let mut processor = JokerEffectProcessor::with_context(context);
-                    
+
                     // Create conflicting effects (same type, different values)
                     let weighted_effects = create_conflicting_weighted_effects();
-                    
+
                     black_box(processor.process_weighted_effects(weighted_effects, 0))
                 });
             },

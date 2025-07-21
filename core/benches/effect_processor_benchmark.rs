@@ -257,7 +257,6 @@ fn priority_ordering_benchmarks(c: &mut Criterion) {
 fn cache_performance_benchmarks(c: &mut Criterion) {
     let mut group = c.benchmark_group("cache_performance");
 
-    
     // Cache hit scenario
     group.bench_function("cache_hit_performance", |b| {
         let mut processor = JokerEffectProcessor::new();
@@ -474,7 +473,6 @@ fn create_priority_joker_collection(priorities: Vec<EffectPriority>) -> Vec<Box<
         let effect = JokerEffect::new().with_chips(5 + i as i32);
         let mut joker = StaticJoker::new(JokerId::Joker, effect);
 
-        
         // Note: This is a simplified example. In practice, you'd need to implement
         // priority assignment in your joker system
         jokers.push(Box::new(joker));
@@ -483,8 +481,5 @@ fn create_priority_joker_collection(priorities: Vec<EffectPriority>) -> Vec<Box<
     jokers
 }
 
-criterion_group!(
-    effect_processor_benches,
-    effect_processor_benchmarks
-);
+criterion_group!(effect_processor_benches, effect_processor_benchmarks);
 criterion_main!(effect_processor_benches);
