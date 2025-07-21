@@ -25,6 +25,9 @@ pub mod memory_monitor;
 pub mod multi_select;
 pub mod rank;
 pub mod rng;
+pub mod scaling_joker;
+pub mod scaling_joker_custom;
+pub mod scaling_joker_impl;
 pub mod shop;
 pub mod space;
 pub mod stage;
@@ -33,9 +36,6 @@ pub mod static_joker;
 pub mod static_joker_factory;
 pub mod target_context;
 pub mod vouchers;
-pub mod scaling_joker;
-pub mod scaling_joker_impl;
-pub mod scaling_joker_custom;
 
 #[cfg(test)]
 mod tests {

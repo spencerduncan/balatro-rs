@@ -104,7 +104,10 @@ fn test_target_json_format_stability() {
     // Test that serialized format is stable for save/load compatibility
     let test_cases = vec![
         (Target::None, r#""None""#),
-        (Target::cards_in_hand(vec![0, 1]), r#"{"Cards":{"indices":[0,1],"collection":"Hand","min_cards":2,"max_cards":2}}"#),
+        (
+            Target::cards_in_hand(vec![0, 1]),
+            r#"{"Cards":{"indices":[0,1],"collection":"Hand","min_cards":2,"max_cards":2}}"#,
+        ),
         (
             Target::HandType(HandRank::OnePair),
             r#"{"HandType":"OnePair"}"#,
@@ -156,7 +159,10 @@ fn test_backwards_compatibility_deserialization() {
     // This ensures save/load compatibility when the enum is extended in the future
     let legacy_json_examples = vec![
         (r#""None""#, Target::None),
-        (r#"{"Cards":{"indices":[0],"collection":"Hand","min_cards":1,"max_cards":1}}"#, Target::cards_in_hand(vec![0])),
+        (
+            r#"{"Cards":{"indices":[0],"collection":"Hand","min_cards":1,"max_cards":1}}"#,
+            Target::cards_in_hand(vec![0]),
+        ),
         (
             r#"{"HandType":"FullHouse"}"#,
             Target::HandType(HandRank::FullHouse),
