@@ -1,4 +1,4 @@
-use crate::card::{Suit, Value};
+use crate::card::{Enhancement, Suit, Value};
 use crate::joker::{Joker, JokerId, JokerRarity};
 use crate::rank::HandRank;
 use crate::static_joker::{StaticCondition, StaticJoker};
@@ -521,11 +521,7 @@ impl StaticJokerFactory {
     }
 
     /// Create Steel Joker (This Joker gains X0.25 Mult for each Steel Card in your full deck)
-    /// TODO: Requires deck composition access
-    /// WARNING: This is a PLACEHOLDER implementation that gives X1.0 Mult ALWAYS
-    /// The actual joker should scale based on Steel Card count: X(1.0 + 0.25 * steel_cards)
     pub fn create_steel_joker() -> Box<dyn Joker> {
-        // PLACEHOLDER: Currently provides no mult multiplier - DO NOT USE IN PRODUCTION
         Box::new(
             StaticJoker::builder(
                 JokerId::SteelJoker,
@@ -534,8 +530,8 @@ impl StaticJokerFactory {
             )
             .rarity(JokerRarity::Uncommon)
             .cost(6)
-            .mult_multiplier(1.0) // TODO: Should be 1.0 + (0.25 * steel_card_count)
-            .condition(StaticCondition::Always)
+            .mult_multiplier(1.0) // Base multiplier for deck composition calculation
+            .condition(StaticCondition::DeckComposition(Enhancement::Steel))
             .per_hand()
             .build()
             .expect("Valid joker configuration"),

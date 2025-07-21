@@ -110,9 +110,13 @@ fn test_abstract_joker() {
 }
 
 #[test]
-#[ignore] // Ignore until framework supports deck composition
 fn test_steel_joker() {
+    use crate::joker::test_utils::TestContextBuilder;
+    use crate::hand::SelectHand;
+
     let joker = StaticJokerFactory::create_steel_joker();
+    
+    // Test basic properties
     assert_eq!(joker.id(), JokerId::SteelJoker);
     assert_eq!(joker.name(), "Steel Joker");
     assert_eq!(
@@ -121,4 +125,29 @@ fn test_steel_joker() {
     );
     assert_eq!(joker.rarity(), JokerRarity::Uncommon);
     assert_eq!(joker.cost(), 6);
+
+    // Test deck composition behavior with 0 Steel cards
+    let mut context = TestContextBuilder::new()
+        .with_steel_cards_in_deck(0)
+        .build();
+    let hand = SelectHand::new(vec![]);
+    let effect = joker.on_hand_played(&mut context, &hand);
+    // With 0 Steel cards: X(1.0 + 0.25 * 0) = X1.0
+    assert_eq!(effect.mult_multiplier, 1.0);
+
+    // Test deck composition behavior with 4 Steel cards
+    let mut context = TestContextBuilder::new()
+        .with_steel_cards_in_deck(4)
+        .build();
+    let effect = joker.on_hand_played(&mut context, &hand);
+    // With 4 Steel cards: X(1.0 + 0.25 * 4) = X2.0
+    assert_eq!(effect.mult_multiplier, 2.0);
+
+    // Test deck composition behavior with 8 Steel cards
+    let mut context = TestContextBuilder::new()
+        .with_steel_cards_in_deck(8)
+        .build();
+    let effect = joker.on_hand_played(&mut context, &hand);
+    // With 8 Steel cards: X(1.0 + 0.25 * 8) = X3.0
+    assert_eq!(effect.mult_multiplier, 3.0);
 }

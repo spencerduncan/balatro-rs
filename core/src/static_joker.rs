@@ -1,4 +1,4 @@
-use crate::card::{Card, Suit, Value};
+use crate::card::{Card, Enhancement, Suit, Value};
 use crate::hand::SelectHand;
 use crate::joker::{GameContext, Joker, JokerEffect, JokerId, JokerRarity};
 use crate::rank::HandRank;
@@ -20,6 +20,8 @@ pub enum StaticCondition {
     AnySuitScored(Vec<Suit>),
     /// Apply when multiple ranks are scored
     AnyRankScored(Vec<Value>),
+    /// Apply based on deck composition (count of enhanced cards)
+    DeckComposition(Enhancement),
 }
 
 /// A static joker that provides consistent bonuses based on conditions
@@ -95,11 +97,11 @@ impl Joker for StaticJoker {
         })
     }
 
-    fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
+    fn on_hand_played(&self, context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
         if !self.per_card {
             // Apply effect once per hand if condition is met
-            if self.check_hand_condition(hand) {
-                self.create_effect()
+            if self.check_hand_condition(context, hand) {
+                self.create_effect_with_context(context)
             } else {
                 JokerEffect::new()
             }
@@ -108,11 +110,11 @@ impl Joker for StaticJoker {
         }
     }
 
-    fn on_card_scored(&self, _context: &mut GameContext, card: &Card) -> JokerEffect {
+    fn on_card_scored(&self, context: &mut GameContext, card: &Card) -> JokerEffect {
         if self.per_card {
             // Apply effect per card if condition is met
-            if self.check_card_condition(card) {
-                self.create_effect()
+            if self.check_card_condition(context, card) {
+                self.create_effect_with_context(context)
             } else {
                 JokerEffect::new()
             }
@@ -124,9 +126,13 @@ impl Joker for StaticJoker {
 
 impl StaticJoker {
     /// Check if the condition is met for a hand
-    fn check_hand_condition(&self, hand: &SelectHand) -> bool {
+    fn check_hand_condition(&self, context: &GameContext, hand: &SelectHand) -> bool {
         match &self.condition {
             StaticCondition::Always => true,
+            StaticCondition::DeckComposition(_) => {
+                // Deck composition conditions always apply since they're not hand-dependent
+                true
+            }
             StaticCondition::HandType(required_rank) => {
                 // Check if the hand contains the required type
                 match required_rank {
@@ -149,13 +155,13 @@ impl StaticJoker {
                 // For suit/rank conditions on hands, check if any card matches
                 hand.cards()
                     .iter()
-                    .any(|card| self.check_card_condition(card))
+                    .any(|card| self.check_card_condition(context, card))
             }
         }
     }
 
     /// Check if the condition is met for a card
-    fn check_card_condition(&self, card: &Card) -> bool {
+    fn check_card_condition(&self, _context: &GameContext, card: &Card) -> bool {
         match &self.condition {
             StaticCondition::Always => true,
             StaticCondition::SuitScored(suit) => card.suit == *suit,
@@ -166,10 +172,61 @@ impl StaticJoker {
                 // Hand type conditions don't apply to individual cards
                 false
             }
+            StaticCondition::DeckComposition(_) => {
+                // Deck composition conditions don't apply to individual cards
+                false
+            }
         }
     }
 
-    /// Create the effect based on configured bonuses
+    /// Create the effect based on configured bonuses and game context
+    fn create_effect_with_context(&self, context: &GameContext) -> JokerEffect {
+        let mut effect = JokerEffect::new();
+
+        if let Some(chips) = self.chips_bonus {
+            effect = effect.with_chips(chips);
+        }
+
+        if let Some(mult) = self.mult_bonus {
+            effect = effect.with_mult(mult);
+        }
+
+        if let Some(multiplier) = self.get_mult_multiplier(context) {
+            effect = effect.with_mult_multiplier(multiplier);
+        }
+
+        effect
+    }
+
+    /// Get the multiplier value, potentially based on deck composition
+    fn get_mult_multiplier(&self, context: &GameContext) -> Option<f64> {
+        match &self.condition {
+            StaticCondition::DeckComposition(enhancement) => {
+                // Calculate multiplier based on deck composition
+                let base_multiplier = self.mult_multiplier.unwrap_or(1.0);
+                let enhancement_count = self.get_enhancement_count(context, enhancement);
+                
+                // For Steel Joker: 1.0 + (0.25 * steel_card_count)
+                // The base multiplier represents the bonus per enhancement
+                // For other enhancements, we can use the same pattern
+                let bonus_per_card = if base_multiplier == 1.0 { 0.25 } else { base_multiplier - 1.0 };
+                Some(1.0 + (bonus_per_card * enhancement_count as f64))
+            }
+            _ => self.mult_multiplier,
+        }
+    }
+
+    /// Get the count of cards with a specific enhancement in the deck
+    fn get_enhancement_count(&self, context: &GameContext, enhancement: &Enhancement) -> usize {
+        match enhancement {
+            Enhancement::Stone => context.stone_cards_in_deck,
+            Enhancement::Steel => context.steel_cards_in_deck,
+            // Add other enhancements as needed
+            _ => 0,
+        }
+    }
+
+    /// Create the effect based on configured bonuses (for compatibility)
     fn create_effect(&self) -> JokerEffect {
         let mut effect = JokerEffect::new();
 
@@ -265,6 +322,9 @@ impl StaticJokerBuilder {
                 return Err(
                     "AnyRankScored conditions should be per_card, not per_hand".to_string(),
                 );
+            }
+            (StaticCondition::DeckComposition(_), true) => {
+                return Err("DeckComposition conditions should be per_hand, not per_card".to_string());
             }
             _ => {} // Valid combinations
         }

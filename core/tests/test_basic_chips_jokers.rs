@@ -21,7 +21,7 @@ fn create_test_context_with_deck(
     discards_used: u32,
     cards_in_deck: usize,
 ) -> GameContext<'static> {
-    create_test_context_with_deck_and_stones(money, discards_used, cards_in_deck, 0)
+    create_test_context_with_deck_and_stones(money, discards_used, cards_in_deck, 0, 0)
 }
 
 /// Test helper to create a GameContext with specific deck size and stone cards
@@ -30,6 +30,7 @@ fn create_test_context_with_deck_and_stones(
     discards_used: u32,
     cards_in_deck: usize,
     stone_cards_in_deck: usize,
+    steel_cards_in_deck: usize,
 ) -> GameContext<'static> {
     static STAGE: Stage = Stage::Blind(Blind::Small);
     static HAND: OnceLock<Hand> = OnceLock::new();
@@ -62,6 +63,7 @@ fn create_test_context_with_deck_and_stones(
         joker_state_manager,
         cards_in_deck,
         stone_cards_in_deck,
+        steel_cards_in_deck,
         rng,
     }
 }
@@ -201,7 +203,7 @@ mod stone_joker_tests {
     fn test_stone_joker_three_stone_cards() {
         // ARRANGE: 3 Stone cards in deck
         let joker = create_stone_joker();
-        let mut context = create_test_context_with_deck_and_stones(10, 2, 52, 3);
+        let mut context = create_test_context_with_deck_and_stones(10, 2, 52, 3, 0);
         let hand = SelectHand::new(vec![]);
 
         // ACT: Trigger joker effect

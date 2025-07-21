@@ -1479,6 +1479,7 @@ mod tests {
             hand_type_counts: &HashMap::new(),
             cards_in_deck: 52,
             stone_cards_in_deck: 0,
+            steel_cards_in_deck: 0,
             rng: &crate::rng::GameRng::secure(),
         };
         
@@ -1727,6 +1728,7 @@ mod tests {
             hand_type_counts: &HashMap::new(),
             cards_in_deck: 52,
             stone_cards_in_deck: 0,
+            steel_cards_in_deck: 0,
             rng: &crate::rng::GameRng::secure(),
         };
         
@@ -1803,6 +1805,7 @@ mod tests {
             hand_type_counts: &HashMap::new(),
             cards_in_deck: 52,
             stone_cards_in_deck: 0,
+            steel_cards_in_deck: 0,
             rng: &crate::rng::GameRng::secure(),
         };
         
