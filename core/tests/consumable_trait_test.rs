@@ -167,7 +167,8 @@ fn test_enhanced_consumable_trait_methods() {
             match target {
                 Target::None => true,
                 Target::Cards(cards) => {
-                    !cards.indices.is_empty() && cards.indices.len() <= game_state.available.cards().len()
+                    !cards.indices.is_empty()
+                        && cards.indices.len() <= game_state.available.cards().len()
                 }
                 Target::HandType(_) => true,
                 Target::Joker(_) => game_state.jokers.len() > 0,
@@ -224,7 +225,10 @@ fn test_target_type_method() {
         Target::cards_in_hand(vec![0, 1, 2]).target_type(),
         TargetType::Cards(3)
     );
-    assert_eq!(Target::cards_in_hand(vec![]).target_type(), TargetType::Cards(0));
+    assert_eq!(
+        Target::cards_in_hand(vec![]).target_type(),
+        TargetType::Cards(0)
+    );
     assert_eq!(
         Target::HandType(balatro_rs::rank::HandRank::OnePair).target_type(),
         TargetType::HandType

@@ -19,7 +19,6 @@
 
 use crate::card::Card;
 use crate::game::Game;
-use crate::joker::{Joker, JokerId};
 use crate::rank::HandRank;
 use serde::{Deserialize, Serialize};
 use std::fmt;
@@ -68,7 +67,11 @@ pub enum TargetValidationError {
     #[error("Shop slot {slot} is invalid or empty")]
     ShopSlotInvalid { slot: usize },
     #[error("Invalid number of cards selected: expected between {min} and {max}, got {actual}")]
-    InvalidCardCount { min: usize, max: usize, actual: usize },
+    InvalidCardCount {
+        min: usize,
+        max: usize,
+        actual: usize,
+    },
     #[error("Card at index {index} is already targeted")]
     CardAlreadyTargeted { index: usize },
 }
@@ -252,7 +255,6 @@ impl Target {
         Target::Cards(CardTarget::new(CardCollection::PlayedCards, indices))
     }
 }
-
 
 /// Represents targeting specific cards with validation
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -469,6 +471,7 @@ pub trait Consumable: Send + Sync + fmt::Debug {
 }
 
 /// Categories of consumable cards
+#[cfg_attr(feature = "python", pyo3::pyclass(eq, eq_int))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, EnumIter)]
 pub enum ConsumableType {
     /// Tarot cards that modify deck composition or provide benefits
@@ -930,7 +933,7 @@ impl ConsumableSlots {
     ///     // Modify consumable if needed
     /// }
     /// ```
-    pub fn get_consumable_mut(&mut self, index: usize) -> Option<&mut (dyn Consumable + '_)> {
+    pub fn get_consumable_mut(&mut self, index: usize) -> Option<&mut dyn Consumable> {
         if index >= self.capacity {
             return None;
         }
@@ -1030,4 +1033,3 @@ impl Default for ConsumableSlots {
 // pub mod spectral;
 
 // Re-export commonly used types
-pub use ConsumableId::*;

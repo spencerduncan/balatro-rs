@@ -1,14 +1,14 @@
-use balatro_rs::scaling_joker::*;
-use balatro_rs::scaling_joker_impl::*;
-use balatro_rs::scaling_joker_custom::*;
-use balatro_rs::joker::{Joker, JokerId, JokerRarity, JokerEffect, GameContext};
+use balatro_rs::card::{Card, Suit, Value};
+use balatro_rs::hand::SelectHand;
+use balatro_rs::joker::{GameContext, Joker, JokerEffect, JokerId, JokerRarity};
 use balatro_rs::joker_state::{JokerState, JokerStateManager};
 use balatro_rs::rank::HandRank;
-use balatro_rs::hand::SelectHand;
-use balatro_rs::card::{Card, Suit, Value};
+use balatro_rs::scaling_joker::*;
+use balatro_rs::scaling_joker_custom::*;
+use balatro_rs::scaling_joker_impl::*;
 use balatro_rs::stage::Stage;
-use std::sync::Arc;
 use std::collections::HashMap;
+use std::sync::Arc;
 
 /// Helper function to create a basic test context
 fn create_test_context(money: i32, ante: u8, round: u32) -> GameContext<'static> {
@@ -103,10 +103,7 @@ fn test_scaling_triggers() {
         format!("{}", ScalingTrigger::CardDiscarded),
         "card discarded"
     );
-    assert_eq!(
-        format!("{}", ScalingTrigger::MoneyGained),
-        "money gained"
-    );
+    assert_eq!(format!("{}", ScalingTrigger::MoneyGained), "money gained");
 }
 
 #[test]
@@ -115,13 +112,10 @@ fn test_reset_conditions() {
         format!("{}", ResetCondition::RoundEnd),
         "reset at round end"
     );
-    assert_eq!(
-        format!("{}", ResetCondition::Never),
-        "never resets"
-    );
+    assert_eq!(format!("{}", ResetCondition::Never), "never resets");
 }
 
-#[test] 
+#[test]
 fn test_spare_trousers() {
     let joker = create_spare_trousers();
     assert_eq!(joker.id, JokerId::Trousers);
@@ -143,17 +137,29 @@ fn test_ceremonial_dagger() {
 fn test_all_15_scaling_jokers() {
     let jokers = create_all_scaling_jokers();
     assert_eq!(jokers.len(), 15, "Should create exactly 15 scaling jokers");
-    
+
     // Test that all jokers have unique IDs
     let mut ids = std::collections::HashSet::new();
     for joker in &jokers {
-        assert!(ids.insert(joker.id), "Duplicate joker ID found: {:?}", joker.id);
+        assert!(
+            ids.insert(joker.id),
+            "Duplicate joker ID found: {:?}",
+            joker.id
+        );
     }
-    
+
     // Test that all jokers have non-empty names and descriptions
     for joker in &jokers {
-        assert!(!joker.name.is_empty(), "Joker {:?} has empty name", joker.id);
-        assert!(!joker.description.is_empty(), "Joker {:?} has empty description", joker.id);
+        assert!(
+            !joker.name.is_empty(),
+            "Joker {:?} has empty name",
+            joker.id
+        );
+        assert!(
+            !joker.description.is_empty(),
+            "Joker {:?} has empty description",
+            joker.id
+        );
     }
 }
 
@@ -196,7 +202,10 @@ fn test_scaling_effect_types() {
     // Note: These would require proper context setup to test fully
     assert_eq!(chips_joker.effect_type, ScalingEffectType::Chips);
     assert_eq!(mult_joker.effect_type, ScalingEffectType::Mult);
-    assert_eq!(multiplier_joker.effect_type, ScalingEffectType::MultMultiplier);
+    assert_eq!(
+        multiplier_joker.effect_type,
+        ScalingEffectType::MultMultiplier
+    );
 }
 
 #[test]
@@ -227,12 +236,20 @@ fn test_green_joker_creation() {
 #[test]
 fn test_custom_scaling_jokers() {
     let jokers = create_all_custom_scaling_jokers();
-    assert_eq!(jokers.len(), 7, "Should create exactly 7 custom scaling jokers");
-    
+    assert_eq!(
+        jokers.len(),
+        7,
+        "Should create exactly 7 custom scaling jokers"
+    );
+
     // Test that all jokers have unique IDs
     let mut ids = std::collections::HashSet::new();
     for joker in &jokers {
-        assert!(ids.insert(joker.id()), "Duplicate joker ID found: {:?}", joker.id());
+        assert!(
+            ids.insert(joker.id()),
+            "Duplicate joker ID found: {:?}",
+            joker.id()
+        );
     }
 }
 
@@ -241,12 +258,15 @@ fn test_scaling_event_matching() {
     let hand_played_event = ScalingEvent::HandPlayed(HandRank::OnePair);
     let card_discarded_event = ScalingEvent::CardDiscarded;
     let money_gained_event = ScalingEvent::MoneyGained;
-    
+
     // Test event types can be created and compared
-    assert_eq!(hand_played_event, ScalingEvent::HandPlayed(HandRank::OnePair));
+    assert_eq!(
+        hand_played_event,
+        ScalingEvent::HandPlayed(HandRank::OnePair)
+    );
     assert_eq!(card_discarded_event, ScalingEvent::CardDiscarded);
     assert_eq!(money_gained_event, ScalingEvent::MoneyGained);
-    
+
     // Test events are not equal to different events
     assert_ne!(hand_played_event, card_discarded_event);
     assert_ne!(card_discarded_event, money_gained_event);
@@ -259,10 +279,10 @@ fn test_joker_factory_functions() {
     assert!(get_scaling_joker_by_id(JokerId::GreenJoker).is_some());
     assert!(get_scaling_joker_by_id(JokerId::Banner).is_some());
     assert!(get_scaling_joker_by_id(JokerId::Ceremonial).is_some());
-    
+
     // Test that non-scaling jokers return None
     assert!(get_scaling_joker_by_id(JokerId::Joker).is_none());
-    
+
     // Test custom scaling jokers
     assert!(get_custom_scaling_joker_by_id(JokerId::GreenJoker).is_some());
     assert!(get_custom_scaling_joker_by_id(JokerId::Square).is_some());
@@ -273,40 +293,46 @@ fn test_joker_factory_functions() {
 fn test_rarity_distribution() {
     let jokers = create_all_scaling_jokers();
     let mut rarity_counts = HashMap::new();
-    
+
     for joker in jokers {
         *rarity_counts.entry(joker.rarity).or_insert(0) += 1;
     }
-    
+
     // Ensure we have jokers of different rarities
     assert!(rarity_counts.contains_key(&JokerRarity::Common));
     assert!(rarity_counts.contains_key(&JokerRarity::Uncommon));
-    
+
     // Most jokers should be common or uncommon
-    let common_and_uncommon = rarity_counts.get(&JokerRarity::Common).unwrap_or(&0) +
-                              rarity_counts.get(&JokerRarity::Uncommon).unwrap_or(&0);
-    assert!(common_and_uncommon >= 10, "Most scaling jokers should be common or uncommon");
+    let common_and_uncommon = rarity_counts.get(&JokerRarity::Common).unwrap_or(&0)
+        + rarity_counts.get(&JokerRarity::Uncommon).unwrap_or(&0);
+    assert!(
+        common_and_uncommon >= 10,
+        "Most scaling jokers should be common or uncommon"
+    );
 }
 
-#[test] 
+#[test]
 fn test_joker_descriptions_are_descriptive() {
     let jokers = create_all_scaling_jokers();
-    
+
     for joker in jokers {
         let description = &joker.description;
-        
+
         // Check that descriptions contain key information
-        let has_trigger_info = description.contains("per") || 
-                              description.contains("when") ||
-                              description.contains("each");
-        let has_effect_info = description.contains("Mult") || 
-                             description.contains("Chips") ||
-                             description.contains("X") ||
-                             description.contains("$");
-        
-        assert!(has_trigger_info || has_effect_info, 
-               "Joker {:?} description '{}' should contain trigger or effect information", 
-               joker.id, description);
+        let has_trigger_info = description.contains("per")
+            || description.contains("when")
+            || description.contains("each");
+        let has_effect_info = description.contains("Mult")
+            || description.contains("Chips")
+            || description.contains("X")
+            || description.contains("$");
+
+        assert!(
+            has_trigger_info || has_effect_info,
+            "Joker {:?} description '{}' should contain trigger or effect information",
+            joker.id,
+            description
+        );
     }
 }
 
@@ -322,7 +348,7 @@ fn test_scaling_joker_state_persistence() {
 }
 
 #[test]
-#[ignore] // Ignore until we have proper test harness  
+#[ignore] // Ignore until we have proper test harness
 fn test_scaling_joker_triggers_in_game() {
     // This test would verify that jokers properly trigger and accumulate
     // value during actual gameplay

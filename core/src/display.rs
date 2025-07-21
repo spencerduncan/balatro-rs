@@ -395,7 +395,7 @@ mod tests {
 
     #[test]
     fn test_precision_preservation() {
-        let precise_value = 123.456789123456789;
+        let precise_value = 123.456_789_123_456_79;
         // Internal precision should be preserved even if display is rounded
         let display = DisplayF64::new(precise_value);
         assert_eq!(display.value(), precise_value);

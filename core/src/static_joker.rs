@@ -257,22 +257,16 @@ impl StaticJokerBuilder {
                 return Err("RankScored conditions should be per_card, not per_hand".to_string());
             }
             (StaticCondition::AnySuitScored(_), false) => {
-                return Err(
-                    "AnySuitScored conditions should be per_card, not per_hand".to_string(),
-                );
+                return Err("AnySuitScored conditions should be per_card, not per_hand".to_string());
             }
             (StaticCondition::AnyRankScored(_), false) => {
-                return Err(
-                    "AnyRankScored conditions should be per_card, not per_hand".to_string(),
-                );
+                return Err("AnyRankScored conditions should be per_card, not per_hand".to_string());
             }
             _ => {} // Valid combinations
         }
 
         // Validate that at least one bonus is specified
-        if self.chips_bonus.is_none()
-            && self.mult_bonus.is_none()
-            && self.mult_multiplier.is_none()
+        if self.chips_bonus.is_none() && self.mult_bonus.is_none() && self.mult_multiplier.is_none()
         {
             return Err(
                 "At least one bonus (chips, mult, or mult_multiplier) must be specified"
@@ -385,8 +379,7 @@ mod tests {
 
     #[test]
     fn test_suit_jokers_greedy() {
-        let joker =
-            crate::static_joker_factory::StaticJokerFactory::create_greedy_joker_concrete();
+        let joker = crate::static_joker_factory::StaticJokerFactory::create_greedy_joker_concrete();
 
         // Test properties
         assert_eq!(joker.id(), JokerId::GreedyJoker);
