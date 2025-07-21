@@ -7,12 +7,12 @@ Game engine and move generator for a simplified version of [balatro](https://www
 
 ## ⚠️ Breaking Changes in v1.x
 
-**f64 Migration**: All numeric game values have been migrated to f64 for Lua compatibility. This affects core game state fields and the JokerEffect system.
+**f64 Migration (In Progress)**: Core game state fields have been migrated to f64 for Lua compatibility. JokerEffect system migration is still in progress.
 
-- `Game.{chips, mult, score, money, round}`: `usize` → `f64`
-- `JokerEffect` numeric fields: `i32/f32` → `f64`
-- Save files are automatically migrated
-- **See [F64_MIGRATION_GUIDE.md](F64_MIGRATION_GUIDE.md) for detailed migration instructions**
+- `Game.{chips, mult, score, money, round}`: `usize` → `f64` ✅ COMPLETE
+- `JokerEffect` numeric fields: `i32/f32` → `f64` ❌ IN PROGRESS
+- Save files are automatically migrated ✅
+- **See [F64_MIGRATION_GUIDE.md](F64_MIGRATION_GUIDE.md) for current status and migration instructions**
 
 ## Overview
 

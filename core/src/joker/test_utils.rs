@@ -40,7 +40,7 @@ use crate::hand::{Hand, SelectHand};
 use crate::joker::{GameContext, Joker, JokerEffect, JokerId, JokerRarity};
 use crate::joker_state::{JokerState, JokerStateManager};
 use crate::rank::HandRank;
-use crate::rng::GameRng;
+use balatro_rs::rng::GameRng;
 use crate::stage::Stage;
 use serde_json::Value as JsonValue;
 use std::collections::HashMap;

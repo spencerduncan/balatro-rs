@@ -402,3 +402,171 @@ fn test_thread_safety() {
         );
     }
 }
+
+// Tests for RNG-based jokers (Issue #442)
+
+/// Test LuckyCardJoker probability distribution
+/// Should trigger approximately 20% of the time (1 in 5 chance)
+#[test]
+#[cfg(feature = "statistical_tests")]
+fn test_lucky_card_joker_probability() {
+    use balatro_rs::joker::{Joker, GameContext};
+    use balatro_rs::joker_impl::LuckyCardJoker;
+    use balatro_rs::hand::SelectHand;
+    use balatro_rs::stage::Stage;
+    use balatro_rs::joker_state::JokerStateManager;
+    use balatro_rs::hand::Hand;
+    use balatro_rs::card::Card;
+    use std::sync::Arc;
+    use std::collections::HashMap;
+
+    let rng = GameRng::for_testing(12345); // Deterministic for reproducible testing
+    let lucky_card = LuckyCardJoker;
+    let sample_size = 10_000;
+    let mut activation_count = 0;
+
+    // Mock context and hand for testing
+    let state_manager = Arc::new(JokerStateManager::new());
+    let stage = Stage::PreBlind;
+    let jokers: Vec<Box<dyn Joker>> = vec![];
+    let hand = Hand::empty();
+    let discarded = vec![];
+    let hand_type_counts = HashMap::new();
+    let select_hand = SelectHand::from_cards(vec![]);
+
+    for _ in 0..sample_size {
+        let mut context = GameContext {
+            chips: 0,
+            mult: 0,
+            money: 10,
+            ante: 1,
+            round: 1,
+            stage: &stage,
+            hands_played: 0,
+            discards_used: 0,
+            jokers: &jokers,
+            hand: &hand,
+            discarded: &discarded,
+            joker_state_manager: &state_manager,
+            hand_type_counts: &hand_type_counts,
+            cards_in_deck: 52,
+            stone_cards_in_deck: 0,
+            rng: &rng,
+        };
+
+        let effect = lucky_card.on_hand_played(&mut context, &select_hand);
+        if effect.mult > 0 {
+            activation_count += 1;
+        }
+    }
+
+    let activation_rate = activation_count as f64 / sample_size as f64;
+    let expected_rate = 0.2; // 20%
+    let tolerance = 0.05; // ±5% tolerance for statistical testing
+
+    assert!(
+        (activation_rate - expected_rate).abs() < tolerance,
+        "Lucky Card activation rate {:.3} is outside expected range [{:.3}, {:.3}]",
+        activation_rate,
+        expected_rate - tolerance,
+        expected_rate + tolerance
+    );
+}
+
+/// Test deterministic behavior with seeded RNG
+/// RNG jokers should produce identical results with the same seed
+#[test]
+fn test_rng_jokers_deterministic_behavior() {
+    use balatro_rs::joker::{Joker, GameContext};
+    use balatro_rs::joker_impl::{LuckyCardJoker, MysteryJoker, ChaoticJoker};
+    use balatro_rs::hand::SelectHand;
+    use balatro_rs::stage::Stage;
+    use balatro_rs::joker_state::JokerStateManager;
+    use balatro_rs::hand::Hand;
+    use std::sync::Arc;
+    use std::collections::HashMap;
+
+    let seed = 42;
+    let test_iterations = 100;
+
+    // Test each RNG joker with the same seed
+    let jokers: Vec<Box<dyn Joker>> = vec![
+        Box::new(LuckyCardJoker),
+        Box::new(MysteryJoker),
+        Box::new(ChaoticJoker),
+    ];
+
+    for joker in jokers {
+        let mut first_run_results = Vec::new();
+        let mut second_run_results = Vec::new();
+
+        // First run with seeded RNG
+        let rng1 = GameRng::for_testing(seed);
+        let state_manager1 = Arc::new(JokerStateManager::new());
+        let stage = Stage::PreBlind;
+        let jokers_vec: Vec<Box<dyn Joker>> = vec![];
+        let hand = Hand::empty();
+        let discarded = vec![];
+        let hand_type_counts = HashMap::new();
+        let select_hand = SelectHand::from_cards(vec![]);
+
+        for _ in 0..test_iterations {
+            let mut context = GameContext {
+                chips: 0,
+                mult: 0,
+                money: 10,
+                ante: 1,
+                round: 1,
+                stage: &stage,
+                hands_played: 0,
+                discards_used: 0,
+                jokers: &jokers_vec,
+                hand: &hand,
+                discarded: &discarded,
+                joker_state_manager: &state_manager1,
+                hand_type_counts: &hand_type_counts,
+                cards_in_deck: 52,
+                stone_cards_in_deck: 0,
+                rng: &rng1,
+            };
+
+            let effect = joker.on_hand_played(&mut context, &select_hand);
+            first_run_results.push((effect.chips, effect.mult, effect.money, effect.mult_multiplier, effect.retrigger));
+        }
+
+        // Second run with same seeded RNG
+        let rng2 = GameRng::for_testing(seed);
+        let state_manager2 = Arc::new(JokerStateManager::new());
+
+        for _ in 0..test_iterations {
+            let mut context = GameContext {
+                chips: 0,
+                mult: 0,
+                money: 10,
+                ante: 1,
+                round: 1,
+                stage: &stage,
+                hands_played: 0,
+                discards_used: 0,
+                jokers: &jokers_vec,
+                hand: &hand,
+                discarded: &discarded,
+                joker_state_manager: &state_manager2,
+                hand_type_counts: &hand_type_counts,
+                cards_in_deck: 52,
+                stone_cards_in_deck: 0,
+                rng: &rng2,
+            };
+
+            let effect = joker.on_hand_played(&mut context, &select_hand);
+            second_run_results.push((effect.chips, effect.mult, effect.money, effect.mult_multiplier, effect.retrigger));
+        }
+
+        // Results should be identical
+        assert_eq!(
+            first_run_results, second_run_results,
+            "Joker {} should produce identical results with same seed",
+            joker.name()
+        );
+    }
+}

@@ -634,10 +634,7 @@ impl GameEngine {
 
                 // Get actual state from the joker state manager
                 if let Some(joker_state) = self.game.joker_state_manager.get_state(joker_id) {
-                    let _ = state_dict.set_item(
-                        "accumulated_value",
-                        joker_state.accumulated_value,
-                    );
+                    let _ = state_dict.set_item("accumulated_value", joker_state.accumulated_value);
                     let _ =
                         state_dict.set_item("triggers_remaining", joker_state.triggers_remaining);
 
@@ -1003,10 +1000,7 @@ impl GameEngine {
 
                 // Get actual state from the joker state manager
                 if let Some(joker_state) = self.game.joker_state_manager.get_state(joker_id) {
-                    let _ = state_dict.set_item(
-                        "accumulated_value",
-                        joker_state.accumulated_value,
-                    );
+                    let _ = state_dict.set_item("accumulated_value", joker_state.accumulated_value);
                     let _ =
                         state_dict.set_item("triggers_remaining", joker_state.triggers_remaining);
 
@@ -1150,7 +1144,7 @@ impl GameState {
                      The jokers property will be removed in a future version. \
                      See migration guide for details.",
                     py.get_type::<pyo3::exceptions::PyDeprecationWarning>(),
-                    2  // stacklevel - show warning at caller's location
+                    2, // stacklevel - show warning at caller's location
                 ),
             )?;
             Ok::<(), PyErr>(())

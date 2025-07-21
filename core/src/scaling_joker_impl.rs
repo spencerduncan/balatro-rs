@@ -1,6 +1,6 @@
-use crate::scaling_joker::{ScalingJoker, ScalingTrigger, ScalingEffectType, ResetCondition};
 use crate::joker::{JokerId, JokerRarity};
 use crate::rank::HandRank;
+use crate::scaling_joker::{ResetCondition, ScalingEffectType, ScalingJoker, ScalingTrigger};
 
 /// Factory functions for creating the 15 scaling jokers specified in the requirements
 
@@ -82,8 +82,8 @@ pub fn create_ceremonial_dagger() -> ScalingJoker {
         "Ceremonial Dagger".to_string(),
         "Mult doubles when Blind starts, resets when completed".to_string(),
         JokerRarity::Uncommon,
-        1.0, // Start at 1x
-        1.0, // Double each time
+        1.0,                            // Start at 1x
+        1.0,                            // Double each time
         ScalingTrigger::BlindCompleted, // Will need custom logic for blind start
         ScalingEffectType::MultMultiplier,
     )
@@ -274,11 +274,15 @@ mod tests {
     fn test_all_scaling_jokers_created() {
         let jokers = create_all_scaling_jokers();
         assert_eq!(jokers.len(), 15, "Should create exactly 15 scaling jokers");
-        
+
         // Test that all jokers have unique IDs
         let mut ids = std::collections::HashSet::new();
         for joker in &jokers {
-            assert!(ids.insert(joker.id), "Duplicate joker ID found: {:?}", joker.id);
+            assert!(
+                ids.insert(joker.id),
+                "Duplicate joker ID found: {:?}",
+                joker.id
+            );
         }
     }
 
@@ -320,7 +324,10 @@ mod tests {
         let jokers = create_all_scaling_jokers();
         for joker in jokers {
             assert!(!joker.name.is_empty(), "Joker name should not be empty");
-            assert!(!joker.description.is_empty(), "Joker description should not be empty");
+            assert!(
+                !joker.description.is_empty(),
+                "Joker description should not be empty"
+            );
         }
     }
 }

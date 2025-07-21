@@ -515,7 +515,7 @@ pub struct GameContext<'a> {
     /// Number of Steel cards in deck
     pub steel_cards_in_deck: usize,
     /// Random number generator for secure randomness
-    pub rng: &'a crate::rng::GameRng,
+    pub rng: &'a balatro_rs::rng::GameRng,
 }
 
 impl<'a> GameContext<'a> {
@@ -1244,8 +1244,8 @@ pub use conditional::{ConditionalJoker, JokerCondition};
 
 // Re-export new trait definitions
 pub use traits::{
-    JokerIdentity, JokerLifecycle, JokerGameplay, JokerModifiers, JokerState as JokerStateTrait,
-    ProcessContext, ProcessResult, Rarity
+    JokerGameplay, JokerIdentity, JokerLifecycle, JokerModifiers, JokerState as JokerStateTrait,
+    ProcessContext, ProcessResult, Rarity,
 };
 
 // Re-export old API types for backwards compatibility

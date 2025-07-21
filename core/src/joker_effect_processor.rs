@@ -529,11 +529,12 @@ impl JokerEffectProcessor {
         }
 
         // Process the collected effects
-        let result = self.process_weighted_effects(weighted_effects, start_time.elapsed().as_micros() as u64);
-        
+        let result = self
+            .process_weighted_effects(weighted_effects, start_time.elapsed().as_micros() as u64);
+
         // Store result in cache
         self.store_in_cache(cache_key, result.clone());
-        
+
         result
     }
 
@@ -568,11 +569,12 @@ impl JokerEffectProcessor {
         }
 
         // Process the collected effects
-        let result = self.process_weighted_effects(weighted_effects, start_time.elapsed().as_micros() as u64);
-        
+        let result = self
+            .process_weighted_effects(weighted_effects, start_time.elapsed().as_micros() as u64);
+
         // Store result in cache
         self.store_in_cache(cache_key, result.clone());
-        
+
         result
     }
 
@@ -798,14 +800,14 @@ impl JokerEffectProcessor {
         hand: &SelectHand,
     ) -> String {
         let mut hasher = std::collections::hash_map::DefaultHasher::new();
-        
+
         // Hash joker states
         for joker in jokers {
             joker.id().hash(&mut hasher);
             // Hash joker-specific state (you might need to add a method to get hashable state)
             // For now, we'll use the joker ID as a proxy
         }
-        
+
         // Hash relevant game context
         game_context.money.hash(&mut hasher);
         game_context.mult.hash(&mut hasher);
@@ -814,20 +816,20 @@ impl JokerEffectProcessor {
         game_context.discards_used.hash(&mut hasher);
         game_context.ante.hash(&mut hasher);
         game_context.round.hash(&mut hasher);
-        
+
         // Hash hand composition
         for card in hand.cards() {
             card.value.hash(&mut hasher);
             card.suit.hash(&mut hasher);
         }
-        
+
         // Hash processing context settings that affect results
         self.context.resolution_strategy.hash(&mut hasher);
         self.context.max_retriggered_effects.hash(&mut hasher);
-        
+
         format!("hand_{:x}", hasher.finish())
     }
-    
+
     /// Generate a deterministic cache key for card effect processing
     fn generate_card_cache_key(
         &self,
@@ -836,42 +838,42 @@ impl JokerEffectProcessor {
         card: &Card,
     ) -> String {
         let mut hasher = std::collections::hash_map::DefaultHasher::new();
-        
+
         // Hash joker states
         for joker in jokers {
             joker.id().hash(&mut hasher);
         }
-        
+
         // Hash relevant game context
         game_context.money.hash(&mut hasher);
         game_context.mult.hash(&mut hasher);
         game_context.chips.hash(&mut hasher);
         game_context.ante.hash(&mut hasher);
         game_context.round.hash(&mut hasher);
-        
+
         // Hash card
         card.value.hash(&mut hasher);
         card.suit.hash(&mut hasher);
-        
+
         // Hash processing context settings
         self.context.resolution_strategy.hash(&mut hasher);
         self.context.max_retriggered_effects.hash(&mut hasher);
-        
+
         format!("card_{:x}", hasher.finish())
     }
-    
+
     /// Check cache for existing result and update metrics
     fn check_cache(&mut self, cache_key: &str) -> Option<ProcessingResult> {
         if !self.context.cache_config.enabled {
             return None;
         }
-        
+
         self.cache_metrics.total_lookups += 1;
-        
+
         // Check if entry exists and is not expired
         if let Some(entry) = self.effect_cache.get_mut(cache_key) {
             let ttl = Duration::from_secs(self.context.cache_config.ttl_seconds);
-            
+
             if entry.is_expired(ttl) {
                 // Remove expired entry
                 self.effect_cache.remove(cache_key);
@@ -891,52 +893,52 @@ impl JokerEffectProcessor {
             None
         }
     }
-    
+
     /// Store result in cache with eviction if necessary
     fn store_in_cache(&mut self, cache_key: String, result: ProcessingResult) {
         if !self.context.cache_config.enabled {
             return;
         }
-        
+
         // Check if we need to evict entries to stay within size limits
         while self.effect_cache.len() >= self.context.cache_config.max_entries {
             self.evict_oldest_entry();
         }
-        
+
         // Store the new entry
         let entry = CacheEntry::new(result);
         self.effect_cache.insert(cache_key, entry);
     }
-    
+
     /// Evict the oldest (least recently accessed) cache entry
     fn evict_oldest_entry(&mut self) {
         let mut oldest_key = None;
         let mut oldest_time = Instant::now();
-        
+
         for (key, entry) in &self.effect_cache {
             if entry.last_accessed < oldest_time {
                 oldest_time = entry.last_accessed;
                 oldest_key = Some(key.clone());
             }
         }
-        
+
         if let Some(key) = oldest_key {
             self.effect_cache.remove(&key);
             self.cache_metrics.evictions += 1;
         }
     }
-    
+
     /// Clean up expired cache entries
     fn cleanup_expired_entries(&mut self) {
         let ttl = Duration::from_secs(self.context.cache_config.ttl_seconds);
         let mut expired_keys = Vec::new();
-        
+
         for (key, entry) in &self.effect_cache {
             if entry.is_expired(ttl) {
                 expired_keys.push(key.clone());
             }
         }
-        
+
         for key in expired_keys {
             self.effect_cache.remove(&key);
             self.cache_metrics.expiries += 1;
@@ -1494,12 +1496,12 @@ mod tests {
     #[test]
     fn test_cache_key_generation() {
         use crate::card::{Value, Suit};
-        use crate::joker::{GameContext, JokerId};
         use crate::hand::SelectHand;
+        use crate::joker::{GameContext, JokerId};
         use std::collections::HashMap;
 
         let processor = JokerEffectProcessor::new();
-        
+
         // Create test data
         let mut game_context = GameContext {
             chips: 100,
@@ -1520,7 +1522,7 @@ mod tests {
             steel_cards_in_deck: 0,
             rng: &crate::rng::GameRng::secure(),
         };
-        
+
         let hand = SelectHand {
             cards: vec![
                 Card { rank: Value::Ace, suit: Suit::Hearts },
@@ -1531,16 +1533,16 @@ mod tests {
         let card = Card { rank: Value::Queen, suit: Suit::Spades };
         
         let jokers: Vec<Box<dyn crate::joker::Joker>> = vec![];
-        
+
         // Test that cache keys are deterministic
         let key1 = processor.generate_hand_cache_key(&jokers, &game_context, &hand);
         let key2 = processor.generate_hand_cache_key(&jokers, &game_context, &hand);
         assert_eq!(key1, key2);
-        
+
         let card_key1 = processor.generate_card_cache_key(&jokers, &game_context, &card);
         let card_key2 = processor.generate_card_cache_key(&jokers, &game_context, &card);
         assert_eq!(card_key1, card_key2);
-        
+
         // Test that different inputs produce different keys
         game_context.money = 200;
         let key3 = processor.generate_hand_cache_key(&jokers, &game_context, &hand);
@@ -1550,7 +1552,7 @@ mod tests {
     #[test]
     fn test_cache_hit_miss_metrics() {
         let mut processor = JokerEffectProcessor::new();
-        
+
         // Create a dummy cache entry
         let cache_key = "test_key".to_string();
         let test_result = ProcessingResult {
@@ -1560,11 +1562,11 @@ mod tests {
             errors: vec![],
             processing_time_micros: 100,
         };
-        
+
         // Store in cache
         processor.store_in_cache(cache_key.clone(), test_result.clone());
         assert_eq!(processor.cache_size(), 1);
-        
+
         // Test cache hit
         let cached = processor.check_cache(&cache_key);
         assert!(cached.is_some());
@@ -1572,14 +1574,14 @@ mod tests {
         assert_eq!(processor.cache_metrics().misses, 0);
         assert_eq!(processor.cache_metrics().total_lookups, 1);
         assert_eq!(processor.cache_metrics().time_saved_micros, 100);
-        
+
         // Test cache miss
         let missed = processor.check_cache("nonexistent_key");
         assert!(missed.is_none());
         assert_eq!(processor.cache_metrics().hits, 1);
         assert_eq!(processor.cache_metrics().misses, 1);
         assert_eq!(processor.cache_metrics().total_lookups, 2);
-        
+
         // Test hit ratio calculation
         assert!((processor.cache_metrics().hit_ratio() - 0.5).abs() < 0.001);
     }
@@ -1587,12 +1589,12 @@ mod tests {
     #[test]
     fn test_cache_expiration() {
         let mut processor = JokerEffectProcessor::new();
-        
+
         // Set very short TTL for testing
         let mut config = CacheConfig::default();
         config.ttl_seconds = 0; // Immediate expiration
         processor.set_cache_config(config);
-        
+
         let cache_key = "test_key".to_string();
         let test_result = ProcessingResult {
             accumulated_effect: JokerEffect::new(),
@@ -1601,14 +1603,14 @@ mod tests {
             errors: vec![],
             processing_time_micros: 100,
         };
-        
+
         // Store in cache
         processor.store_in_cache(cache_key.clone(), test_result);
         assert_eq!(processor.cache_size(), 1);
-        
+
         // Sleep a tiny bit to ensure expiration
         std::thread::sleep(std::time::Duration::from_millis(1));
-        
+
         // Should be expired now
         let cached = processor.check_cache(&cache_key);
         assert!(cached.is_none());
@@ -1619,12 +1621,12 @@ mod tests {
     #[test]
     fn test_cache_size_limits() {
         let mut processor = JokerEffectProcessor::new();
-        
+
         // Set very small cache size for testing
         let mut config = CacheConfig::default();
         config.max_entries = 2;
         processor.set_cache_config(config);
-        
+
         let test_result = ProcessingResult {
             accumulated_effect: JokerEffect::new(),
             jokers_processed: 1,
@@ -1632,12 +1634,12 @@ mod tests {
             errors: vec![],
             processing_time_micros: 100,
         };
-        
+
         // Fill cache to limit
         processor.store_in_cache("key1".to_string(), test_result.clone());
         processor.store_in_cache("key2".to_string(), test_result.clone());
         assert_eq!(processor.cache_size(), 2);
-        
+
         // Adding one more should trigger eviction
         processor.store_in_cache("key3".to_string(), test_result);
         assert_eq!(processor.cache_size(), 2);
@@ -1647,12 +1649,12 @@ mod tests {
     #[test]
     fn test_cache_disabled() {
         let mut processor = JokerEffectProcessor::new();
-        
+
         // Disable caching
         let mut config = CacheConfig::default();
         config.enabled = false;
         processor.set_cache_config(config);
-        
+
         let cache_key = "test_key".to_string();
         let test_result = ProcessingResult {
             accumulated_effect: JokerEffect::new(),
@@ -1661,11 +1663,11 @@ mod tests {
             errors: vec![],
             processing_time_micros: 100,
         };
-        
+
         // Attempt to store in cache - should be ignored
         processor.store_in_cache(cache_key.clone(), test_result);
         assert_eq!(processor.cache_size(), 0);
-        
+
         // Cache lookup should return None
         let cached = processor.check_cache(&cache_key);
         assert!(cached.is_none());
@@ -1675,7 +1677,7 @@ mod tests {
     #[test]
     fn test_cache_metrics_calculation() {
         let mut processor = JokerEffectProcessor::new();
-        
+
         let test_result = ProcessingResult {
             accumulated_effect: JokerEffect::new(),
             jokers_processed: 1,
@@ -1683,31 +1685,31 @@ mod tests {
             errors: vec![],
             processing_time_micros: 150,
         };
-        
+
         // Store and retrieve multiple times
         processor.store_in_cache("key1".to_string(), test_result.clone());
         processor.check_cache("key1"); // Hit
         processor.check_cache("key1"); // Hit
         processor.check_cache("key2"); // Miss
-        
+
         let metrics = processor.cache_metrics();
         assert_eq!(metrics.hits, 2);
         assert_eq!(metrics.misses, 1);
         assert_eq!(metrics.total_lookups, 3);
         assert_eq!(metrics.time_saved_micros, 300); // 150 * 2 hits
-        assert!((metrics.hit_ratio() - 2.0/3.0).abs() < 0.001);
+        assert!((metrics.hit_ratio() - 2.0 / 3.0).abs() < 0.001);
         assert!((metrics.avg_time_saved_per_hit() - 150.0).abs() < 0.001);
     }
 
     #[test]
     fn test_cache_maintenance() {
         let mut processor = JokerEffectProcessor::new();
-        
+
         // Set short TTL
         let mut config = CacheConfig::default();
         config.ttl_seconds = 0;
         processor.set_cache_config(config);
-        
+
         let test_result = ProcessingResult {
             accumulated_effect: JokerEffect::new(),
             jokers_processed: 1,
@@ -1715,15 +1717,15 @@ mod tests {
             errors: vec![],
             processing_time_micros: 100,
         };
-        
+
         // Store some entries
         processor.store_in_cache("key1".to_string(), test_result.clone());
         processor.store_in_cache("key2".to_string(), test_result);
         assert_eq!(processor.cache_size(), 2);
-        
+
         // Wait for expiration
         std::thread::sleep(std::time::Duration::from_millis(1));
-        
+
         // Maintenance should clean up expired entries
         processor.maintain_cache();
         assert_eq!(processor.cache_size(), 0);
@@ -1735,6 +1737,7 @@ mod tests {
         use crate::card::{Value, Suit};
         use crate::joker::{GameContext, JokerId};
         use crate::hand::SelectHand;
+        use crate::joker::{GameContext, JokerId};
         use std::collections::HashMap;
         use std::time::Instant;
 
@@ -1743,7 +1746,7 @@ mod tests {
 
         let mut processor_with_cache = JokerEffectProcessor::new();
         let mut processor_without_cache = JokerEffectProcessor::new();
-        
+
         // Disable cache for one processor
         let mut config = CacheConfig::default();
         config.enabled = false;
@@ -1770,23 +1773,24 @@ mod tests {
                 steel_cards_in_deck: 0,
                 rng: &crate::rng::GameRng::secure(),
             }
+        }
         };
-        
+
         let hand = SelectHand {
             cards: vec![
-                Card { rank: Value::Ace, suit: Suit::Hearts },
-                Card { rank: Value::King, suit: Suit::Hearts },
-                Card { rank: Value::Queen, suit: Suit::Hearts },
-                Card { rank: Value::Jack, suit: Suit::Hearts },
-                Card { rank: Value::Ten, suit: Suit::Hearts },
+                Card { value: Value::Ace, suit: Suit::Hearts, id: 1, edition: crate::card::Edition::Base, enhancement: None, seal: None },
+                Card { value: Value::King, suit: Suit::Hearts, id: 2, edition: crate::card::Edition::Base, enhancement: None, seal: None },
+                Card { value: Value::Queen, suit: Suit::Hearts, id: 3, edition: crate::card::Edition::Base, enhancement: None, seal: None },
+                Card { value: Value::Jack, suit: Suit::Hearts, id: 4, edition: crate::card::Edition::Base, enhancement: None, seal: None },
+                Card { value: Value::Ten, suit: Suit::Hearts, id: 5, edition: crate::card::Edition::Base, enhancement: None, seal: None },
             ],
         };
-        
+
         let jokers: Vec<Box<dyn crate::joker::Joker>> = vec![];
-        
+
         // Simulate repeated effect processing (would be common in RL training)
         let iterations = 100;
-        
+
         // Test with cache
         let start_cached = Instant::now();
         for _ in 0..iterations {
@@ -1794,7 +1798,7 @@ mod tests {
             processor_with_cache.process_hand_effects(&jokers, &mut game_context, &hand);
         }
         let cached_duration = start_cached.elapsed();
-        
+
         // Test without cache
         let start_uncached = Instant::now();
         for _ in 0..iterations {
@@ -1802,12 +1806,12 @@ mod tests {
             processor_without_cache.process_hand_effects(&jokers, &mut game_context, &hand);
         }
         let uncached_duration = start_uncached.elapsed();
-        
+
         // Verify cache was effective
         let metrics = processor_with_cache.cache_metrics();
         assert!(metrics.hits > 0, "Cache should have recorded hits");
         assert!(metrics.hit_ratio() > 0.5, "Hit ratio should be significant");
-        
+
         // Performance improvement should be measurable
         // Note: This is a simple demonstration - in practice, you'd need
         // more complex joker processing to see significant differences
@@ -1815,7 +1819,7 @@ mod tests {
         println!("Uncached processing: {:?}", uncached_duration);
         println!("Cache hit ratio: {:.2}%", metrics.hit_ratio() * 100.0);
         println!("Total time saved: {}μs", metrics.time_saved_micros);
-        
+
         // The test passes if caching infrastructure works correctly
         assert!(metrics.total_lookups > 0);
     }
@@ -1823,12 +1827,12 @@ mod tests {
     #[test]
     fn test_cache_integration_with_processing() {
         use crate::card::{Value, Suit};
-        use crate::joker::{GameContext, JokerId};
         use crate::hand::SelectHand;
+        use crate::joker::{GameContext, JokerId};
         use std::collections::HashMap;
 
         let mut processor = JokerEffectProcessor::new();
-        
+
         let mut game_context = GameContext {
             chips: 100,
             mult: 4,
@@ -1848,7 +1852,7 @@ mod tests {
             steel_cards_in_deck: 0,
             rng: &crate::rng::GameRng::secure(),
         };
-        
+
         let hand = SelectHand {
             cards: vec![
                 Card { rank: Value::Ace, suit: Suit::Hearts },
@@ -1858,30 +1862,30 @@ mod tests {
         
         let card = Card { rank: Value::Queen, suit: Suit::Spades };
         let jokers: Vec<Box<dyn crate::joker::Joker>> = vec![];
-        
+
         // First call should miss cache and store result
         let result1 = processor.process_hand_effects(&jokers, &mut game_context, &hand);
         assert_eq!(processor.cache_metrics().misses, 1);
         assert_eq!(processor.cache_metrics().hits, 0);
         assert_eq!(processor.cache_size(), 1);
-        
+
         // Second call with same input should hit cache
         let result2 = processor.process_hand_effects(&jokers, &mut game_context, &hand);
         assert_eq!(processor.cache_metrics().misses, 1);
         assert_eq!(processor.cache_metrics().hits, 1);
-        
+
         // Results should be identical
         assert_eq!(result1.jokers_processed, result2.jokers_processed);
         assert_eq!(result1.retriggered_count, result2.retriggered_count);
-        
+
         // Test card effects caching
         let card_result1 = processor.process_card_effects(&jokers, &mut game_context, &card);
         assert_eq!(processor.cache_metrics().misses, 2); // New cache miss for card effects
         assert_eq!(processor.cache_size(), 2); // Now have both hand and card cache entries
-        
+
         let card_result2 = processor.process_card_effects(&jokers, &mut game_context, &card);
         assert_eq!(processor.cache_metrics().hits, 2); // Cache hit for card effects
-        
+
         // Card results should be identical
         assert_eq!(card_result1.jokers_processed, card_result2.jokers_processed);
     }

@@ -25,6 +25,7 @@ use std::fmt;
 use strum::{EnumIter, IntoEnumIterator};
 use thiserror::Error;
 
+
 /// Error types for consumable operations
 #[derive(Error, Debug, Clone)]
 pub enum ConsumableError {
@@ -359,7 +360,6 @@ fn generate_combinations_recursive(
         current.pop();
     }
 }
-
 /// Represents targeting specific cards with validation
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CardTarget {
@@ -1035,15 +1035,11 @@ impl ConsumableSlots {
     ///     // Modify consumable if needed
     /// }
     /// ```
-    pub fn get_consumable_mut(&mut self, index: usize) -> Option<&mut (dyn Consumable + '_)> {
+    pub fn get_consumable_mut(&mut self, index: usize) -> Option<&mut Box<dyn Consumable>> {
         if index >= self.capacity {
             return None;
         }
-        if let Some(ref mut slot) = self.slots[index] {
-            Some(slot.as_mut())
-        } else {
-            None
-        }
+        self.slots[index].as_mut()
     }
 
     /// Finds the first empty slot

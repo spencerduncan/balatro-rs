@@ -70,10 +70,7 @@ impl JokerMetadata {
         let persistent_data = check_persistent_data(&definition.id);
 
         // Create effect description
-        let effect_description = create_effect_description(
-            &definition.id,
-            &definition.description,
-        );
+        let effect_description = create_effect_description(&definition.id, &definition.description);
 
         Self {
             id: definition.id,

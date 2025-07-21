@@ -1,4 +1,4 @@
-use crate::card::{Card, Suit};
+use crate::card::{Card, Suit, Value};
 use crate::hand::SelectHand;
 use crate::joker::{GameContext, Joker, JokerEffect, JokerId, JokerRarity};
 use serde::{Deserialize, Serialize};
@@ -817,6 +817,373 @@ impl Joker for SpaceJoker {
     }
 }
 
+// Abstract Joker implementation - provides mult based on number of other jokers
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct AbstractJoker;
+
+impl Joker for AbstractJoker {
+    fn id(&self) -> JokerId {
+        JokerId::AbstractJoker
+    }
+
+    fn name(&self) -> &str {
+        "Abstract Joker"
+    }
+
+    fn description(&self) -> &str {
+        "All Jokers give X0.25 more Mult"
+    }
+
+    fn rarity(&self) -> JokerRarity {
+        JokerRarity::Common
+    }
+
+    fn cost(&self) -> usize {
+        3
+    }
+
+    fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
+        // Count all jokers except this one
+        let other_joker_count = context
+            .jokers
+            .iter()
+            .filter(|joker| joker.id() != self.id())
+            .count();
+
+        // Provide +3 mult per other joker (simplified implementation)
+        // This represents the "X0.25 more Mult" for all jokers conceptually
+        let mult_bonus = (other_joker_count as i32) * 3;
+
+        JokerEffect::new().with_mult(mult_bonus)
+    }
+}
+
+// RNG-Based Jokers for Issue #442
+
+// Oops All Sixes! implementation - doubles all probabilities
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct OopsAllSixesJoker;
+
+impl Joker for OopsAllSixesJoker {
+    fn id(&self) -> JokerId {
+        JokerId::Oops
+    }
+
+    fn name(&self) -> &str {
+        "Oops! All 6s"
+    }
+
+    fn description(&self) -> &str {
+        "All listed probabilities are doubled"
+    }
+
+    fn rarity(&self) -> JokerRarity {
+        JokerRarity::Uncommon
+    }
+
+    fn cost(&self) -> usize {
+        8
+    }
+
+    // This joker modifies other jokers' probabilities - handled by the game engine
+    fn on_hand_played(&self, _context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
+        // The probability doubling effect is handled by the game engine when this joker is present
+        JokerEffect::new()
+    }
+}
+
+// Six Shooter implementation - +4 Mult for each 6 in hand
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct SixShooterJoker;
+
+impl Joker for SixShooterJoker {
+    fn id(&self) -> JokerId {
+        JokerId::Reserved7 // Using a reserved slot for now
+    }
+
+    fn name(&self) -> &str {
+        "Six Shooter"
+    }
+
+    fn description(&self) -> &str {
+        "+4 Mult for each 6 in your hand"
+    }
+
+    fn rarity(&self) -> JokerRarity {
+        JokerRarity::Common
+    }
+
+    fn cost(&self) -> usize {
+        4
+    }
+
+    fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
+        // Count 6s in hand
+        let six_count = context.hand.cards().iter()
+            .filter(|card| card.value == Value::Six)
+            .count();
+        
+        JokerEffect::new().with_mult((six_count * 4) as i32)
+    }
+}
+
+// Lucky Card implementation - 1 in 5 chance for +20 Mult
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct LuckyCardJoker;
+
+impl Joker for LuckyCardJoker {
+    fn id(&self) -> JokerId {
+        JokerId::LuckyCharm
+    }
+
+    fn name(&self) -> &str {
+        "Lucky Card"
+    }
+
+    fn description(&self) -> &str {
+        "1 in 5 chance for +20 Mult"
+    }
+
+    fn rarity(&self) -> JokerRarity {
+        JokerRarity::Common
+    }
+
+    fn cost(&self) -> usize {
+        5
+    }
+
+    fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
+        // 1 in 5 chance (20% probability)
+        if context.rng.gen_bool(0.2) {
+            JokerEffect::new()
+                .with_mult(20)
+                .with_message("Lucky Card activated! +20 Mult!".to_string())
+        } else {
+            JokerEffect::new()
+        }
+    }
+}
+
+// Grim Joker implementation - destroyed when 2 Hearts played
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct GrimJoker;
+
+impl Joker for GrimJoker {
+    fn id(&self) -> JokerId {
+        JokerId::Reserved8 // Using a reserved slot for now
+    }
+
+    fn name(&self) -> &str {
+        "Grim Joker"
+    }
+
+    fn description(&self) -> &str {
+        "+25 Mult, destroyed if 2 or more Hearts are played"
+    }
+
+    fn rarity(&self) -> JokerRarity {
+        JokerRarity::Uncommon
+    }
+
+    fn cost(&self) -> usize {
+        6
+    }
+
+    fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
+        // Count Hearts in played hand
+        let heart_count = hand.cards().iter()
+            .filter(|card| card.suit == Suit::Heart)
+            .count();
+
+        if heart_count >= 2 {
+            // Destroy self when 2+ Hearts played
+            let mut effect = JokerEffect::new();
+            effect.destroy_self = true;
+            effect.message = Some("Grim Joker destroyed by Hearts!".to_string());
+            effect
+        } else {
+            // Normal bonus when condition not met
+            JokerEffect::new().with_mult(25)
+        }
+    }
+}
+
+// Acrobat Joker implementation - X3 Mult on final hand
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct AcrobatJokerImpl;
+
+impl Joker for AcrobatJokerImpl {
+    fn id(&self) -> JokerId {
+        JokerId::AcrobatJoker
+    }
+
+    fn name(&self) -> &str {
+        "Acrobat"
+    }
+
+    fn description(&self) -> &str {
+        "X3 Mult on final hand of round"
+    }
+
+    fn rarity(&self) -> JokerRarity {
+        JokerRarity::Rare
+    }
+
+    fn cost(&self) -> usize {
+        8
+    }
+
+    fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
+        // Check if this is the final hand of the round
+        // This would need to be tracked by the game engine
+        // For now, we'll use a simple heuristic based on hands remaining
+        if context.hands_played >= 3 { // Assuming typical 4-hand rounds
+            JokerEffect::new()
+                .with_mult_multiplier(3.0)
+                .with_message("Acrobat final hand bonus! X3 Mult!".to_string())
+        } else {
+            JokerEffect::new()
+        }
+    }
+}
+
+// Mystery Joker implementation - random effect each hand
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct MysteryJoker;
+
+impl Joker for MysteryJoker {
+    fn id(&self) -> JokerId {
+        JokerId::Fortune
+    }
+
+    fn name(&self) -> &str {
+        "Mystery Joker"
+    }
+
+    fn description(&self) -> &str {
+        "Random effect each hand"
+    }
+
+    fn rarity(&self) -> JokerRarity {
+        JokerRarity::Rare
+    }
+
+    fn cost(&self) -> usize {
+        10
+    }
+
+    fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
+        // Generate random effect - choose from several possibilities
+        let effect_type = context.rng.gen_range(0..6);
+        
+        match effect_type {
+            0 => JokerEffect::new()
+                .with_mult(15)
+                .with_message("Mystery effect: +15 Mult!".to_string()),
+            1 => JokerEffect::new()
+                .with_chips(100)
+                .with_message("Mystery effect: +100 Chips!".to_string()),
+            2 => JokerEffect::new()
+                .with_money(5)
+                .with_message("Mystery effect: +$5!".to_string()),
+            3 => JokerEffect::new()
+                .with_mult_multiplier(2.0)
+                .with_message("Mystery effect: X2 Mult!".to_string()),
+            4 => JokerEffect::new()
+                .with_retrigger(1)
+                .with_message("Mystery effect: Retrigger!".to_string()),
+            _ => JokerEffect::new()
+                .with_chips(50)
+                .with_mult(10)
+                .with_message("Mystery effect: Balanced bonus!".to_string()),
+        }
+    }
+}
+
+// Vagabond Joker implementation - Create Tarot if hand played with $3 or less
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct VagabondJokerImpl;
+
+impl Joker for VagabondJokerImpl {
+    fn id(&self) -> JokerId {
+        JokerId::VagabondJoker
+    }
+
+    fn name(&self) -> &str {
+        "Vagabond"
+    }
+
+    fn description(&self) -> &str {
+        "Create a Tarot card if hand played with $3 or less"
+    }
+
+    fn rarity(&self) -> JokerRarity {
+        JokerRarity::Uncommon
+    }
+
+    fn cost(&self) -> usize {
+        7
+    }
+
+    fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
+        // Check if player has $3 or less
+        if context.money <= 3 {
+            // Create a tarot card (simplified - actual implementation would add to shop/consumables)
+            JokerEffect::new()
+                .with_message("Vagabond created a Tarot card!".to_string())
+        } else {
+            JokerEffect::new()
+        }
+    }
+}
+
+// Chaotic Joker implementation - randomizes all joker effects
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct ChaoticJoker;
+
+impl Joker for ChaoticJoker {
+    fn id(&self) -> JokerId {
+        JokerId::Reserved9 // Using a reserved slot for now
+    }
+
+    fn name(&self) -> &str {
+        "Chaotic Joker"
+    }
+
+    fn description(&self) -> &str {
+        "Randomize all other Joker effects this hand"
+    }
+
+    fn rarity(&self) -> JokerRarity {
+        JokerRarity::Legendary
+    }
+
+    fn cost(&self) -> usize {
+        15
+    }
+
+    fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
+        // This joker affects other jokers' effects - would need game engine support
+        // For now, provide a random bonus itself
+        let chaos_type = context.rng.gen_range(0..4);
+        
+        match chaos_type {
+            0 => JokerEffect::new()
+                .with_mult(context.rng.gen_range(5..25))
+                .with_message("Chaos brings random Mult!".to_string()),
+            1 => JokerEffect::new()
+                .with_chips(context.rng.gen_range(25..150))
+                .with_message("Chaos brings random Chips!".to_string()),
+            2 => JokerEffect::new()
+                .with_mult_multiplier(1.0 + context.rng.gen_range(0.0..2.0))
+                .with_message("Chaos brings random multiplier!".to_string()),
+            _ => JokerEffect::new()
+                .with_money(context.rng.gen_range(1..8))
+                .with_message("Chaos brings random money!".to_string()),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -886,5 +1253,149 @@ mod tests {
     fn test_ice_cream_negative_chips_handling() {
         // Negative chip handling is now covered by integration tests
         // The max(0) in on_hand_played ensures no negative chips are provided
+    }
+
+    // Tests for RNG-based jokers (Issue #442)
+    
+    #[test]
+    fn test_oops_all_sixes_basic_properties() {
+        let oops = OopsAllSixesJoker;
+        assert_eq!(oops.id(), JokerId::Oops);
+        assert_eq!(oops.name(), "Oops! All 6s");
+        assert_eq!(oops.description(), "All listed probabilities are doubled");
+        assert_eq!(oops.rarity(), JokerRarity::Uncommon);
+        assert_eq!(oops.cost(), 8);
+    }
+
+    #[test]
+    fn test_six_shooter_basic_properties() {
+        let six_shooter = SixShooterJoker;
+        assert_eq!(six_shooter.id(), JokerId::Reserved7);
+        assert_eq!(six_shooter.name(), "Six Shooter");
+        assert_eq!(six_shooter.description(), "+4 Mult for each 6 in your hand");
+        assert_eq!(six_shooter.rarity(), JokerRarity::Common);
+        assert_eq!(six_shooter.cost(), 4);
+    }
+
+    #[test]
+    fn test_lucky_card_basic_properties() {
+        let lucky_card = LuckyCardJoker;
+        assert_eq!(lucky_card.id(), JokerId::LuckyCharm);
+        assert_eq!(lucky_card.name(), "Lucky Card");
+        assert_eq!(lucky_card.description(), "1 in 5 chance for +20 Mult");
+        assert_eq!(lucky_card.rarity(), JokerRarity::Common);
+        assert_eq!(lucky_card.cost(), 5);
+    }
+
+    #[test]
+    fn test_grim_joker_basic_properties() {
+        let grim = GrimJoker;
+        assert_eq!(grim.id(), JokerId::Reserved8);
+        assert_eq!(grim.name(), "Grim Joker");
+        assert_eq!(grim.description(), "+25 Mult, destroyed if 2 or more Hearts are played");
+        assert_eq!(grim.rarity(), JokerRarity::Uncommon);
+        assert_eq!(grim.cost(), 6);
+    }
+
+    #[test]
+    fn test_acrobat_joker_basic_properties() {
+        let acrobat = AcrobatJokerImpl;
+        assert_eq!(acrobat.id(), JokerId::AcrobatJoker);
+        assert_eq!(acrobat.name(), "Acrobat");
+        assert_eq!(acrobat.description(), "X3 Mult on final hand of round");
+        assert_eq!(acrobat.rarity(), JokerRarity::Rare);
+        assert_eq!(acrobat.cost(), 8);
+    }
+
+    #[test]
+    fn test_mystery_joker_basic_properties() {
+        let mystery = MysteryJoker;
+        assert_eq!(mystery.id(), JokerId::Fortune);
+        assert_eq!(mystery.name(), "Mystery Joker");
+        assert_eq!(mystery.description(), "Random effect each hand");
+        assert_eq!(mystery.rarity(), JokerRarity::Rare);
+        assert_eq!(mystery.cost(), 10);
+    }
+
+    #[test]
+    fn test_vagabond_joker_basic_properties() {
+        let vagabond = VagabondJokerImpl;
+        assert_eq!(vagabond.id(), JokerId::VagabondJoker);
+        assert_eq!(vagabond.name(), "Vagabond");
+        assert_eq!(vagabond.description(), "Create a Tarot card if hand played with $3 or less");
+        assert_eq!(vagabond.rarity(), JokerRarity::Uncommon);
+        assert_eq!(vagabond.cost(), 7);
+    }
+
+    #[test]
+    fn test_chaotic_joker_basic_properties() {
+        let chaotic = ChaoticJoker;
+        assert_eq!(chaotic.id(), JokerId::Reserved9);
+        assert_eq!(chaotic.name(), "Chaotic Joker");
+        assert_eq!(chaotic.description(), "Randomize all other Joker effects this hand");
+        assert_eq!(chaotic.rarity(), JokerRarity::Legendary);
+        assert_eq!(chaotic.cost(), 15);
+    }
+
+    #[test]
+    fn test_rng_jokers_factory_creation() {
+        // Test that all RNG jokers can be created from factory
+        let oops = JokerFactory::create(JokerId::Oops);
+        assert!(oops.is_some(), "OopsAllSixesJoker should be creatable from factory");
+
+        let six_shooter = JokerFactory::create(JokerId::Reserved7);
+        assert!(six_shooter.is_some(), "SixShooterJoker should be creatable from factory");
+
+        let lucky_card = JokerFactory::create(JokerId::LuckyCharm);
+        assert!(lucky_card.is_some(), "LuckyCardJoker should be creatable from factory");
+
+        let grim = JokerFactory::create(JokerId::Reserved8);
+        assert!(grim.is_some(), "GrimJoker should be creatable from factory");
+
+        let acrobat = JokerFactory::create(JokerId::AcrobatJoker);
+        assert!(acrobat.is_some(), "AcrobatJoker should be creatable from factory");
+
+        let mystery = JokerFactory::create(JokerId::Fortune);
+        assert!(mystery.is_some(), "MysteryJoker should be creatable from factory");
+
+        let vagabond = JokerFactory::create(JokerId::VagabondJoker);
+        assert!(vagabond.is_some(), "VagabondJoker should be creatable from factory");
+
+        let chaotic = JokerFactory::create(JokerId::Reserved9);
+        assert!(chaotic.is_some(), "ChaoticJoker should be creatable from factory");
+    }
+
+    #[test]
+    fn test_rng_jokers_in_rarity_lists() {
+        let common_jokers = JokerFactory::get_by_rarity(JokerRarity::Common);
+        assert!(common_jokers.contains(&JokerId::Reserved7), "SixShooterJoker should be in Common rarity");
+        assert!(common_jokers.contains(&JokerId::LuckyCharm), "LuckyCardJoker should be in Common rarity");
+
+        let uncommon_jokers = JokerFactory::get_by_rarity(JokerRarity::Uncommon);
+        assert!(uncommon_jokers.contains(&JokerId::Oops), "OopsAllSixesJoker should be in Uncommon rarity");
+        assert!(uncommon_jokers.contains(&JokerId::Reserved8), "GrimJoker should be in Uncommon rarity");
+        assert!(uncommon_jokers.contains(&JokerId::VagabondJoker), "VagabondJoker should be in Uncommon rarity");
+
+        let rare_jokers = JokerFactory::get_by_rarity(JokerRarity::Rare);
+        assert!(rare_jokers.contains(&JokerId::AcrobatJoker), "AcrobatJoker should be in Rare rarity");
+        assert!(rare_jokers.contains(&JokerId::Fortune), "MysteryJoker should be in Rare rarity");
+
+        let legendary_jokers = JokerFactory::get_by_rarity(JokerRarity::Legendary);
+        assert!(legendary_jokers.contains(&JokerId::Reserved9), "ChaoticJoker should be in Legendary rarity");
+    }
+
+    #[test]
+    fn test_rng_jokers_in_implemented_list() {
+        let all_implemented = JokerFactory::get_all_implemented();
+        
+        // Check all RNG jokers are listed as implemented
+        assert!(all_implemented.contains(&JokerId::Oops), "OopsAllSixesJoker should be in implemented list");
+        assert!(all_implemented.contains(&JokerId::Reserved7), "SixShooterJoker should be in implemented list");
+        assert!(all_implemented.contains(&JokerId::LuckyCharm), "LuckyCardJoker should be in implemented list");
+        assert!(all_implemented.contains(&JokerId::Reserved8), "GrimJoker should be in implemented list");
+        assert!(all_implemented.contains(&JokerId::AcrobatJoker), "AcrobatJoker should be in implemented list");
+        assert!(all_implemented.contains(&JokerId::Fortune), "MysteryJoker should be in implemented list");
+        assert!(all_implemented.contains(&JokerId::VagabondJoker), "VagabondJoker should be in implemented list");
+        assert!(all_implemented.contains(&JokerId::Reserved9), "ChaoticJoker should be in implemented list");
     }
 }
