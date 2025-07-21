@@ -246,7 +246,7 @@ fn default_game_rng() -> crate::rng::GameRng {
 }
 
 /// Format debug message for joker effects with conditional compilation
-#[cfg(debug_assertions)]
+#[cfg(any(debug_assertions, test))]
 fn _format_joker_effect_debug_message(
     joker_name: &str,
     effect: &crate::joker::JokerEffect,
@@ -627,7 +627,7 @@ impl Game {
         };
 
         // Generate debug messages for hand effects
-        #[cfg(debug_assertions)]
+        #[cfg(any(debug_assertions, test))]
         if hand_result.jokers_processed > 0
             && (total_chips != 0 || total_mult != 0 || total_money != 0)
         {
@@ -684,7 +684,7 @@ impl Game {
             }
 
             // Generate debug messages for card effects
-            #[cfg(debug_assertions)]
+            #[cfg(any(debug_assertions, test))]
             if card_result.jokers_processed > 0
                 && (card_result.accumulated_effect.chips != 0
                     || card_result.accumulated_effect.mult != 0
@@ -830,7 +830,7 @@ impl Game {
         let final_score = self.chips * self.mult;
 
         // Log final breakdown if debug enabled (optimized)
-        #[cfg(debug_assertions)]
+        #[cfg(any(debug_assertions, test))]
         {
             use std::fmt::Write;
             let mut msg = String::with_capacity(64);
@@ -868,8 +868,8 @@ impl Game {
     }
 
     /// Add a debug message with automatic memory management
-    /// Only compiles in debug builds to eliminate overhead in release
-    #[cfg(debug_assertions)]
+    /// Compiles in debug builds and during tests to eliminate overhead in release
+    #[cfg(any(debug_assertions, test))]
     fn add_debug_message(&mut self, message: String) {
         if self.debug_logging_enabled {
             self.debug_messages.push(message);
@@ -882,8 +882,8 @@ impl Game {
         }
     }
 
-    /// No-op version for release builds
-    #[cfg(not(debug_assertions))]
+    /// No-op version for release builds (when not testing)
+    #[cfg(all(not(debug_assertions), not(test)))]
     #[inline]
     fn add_debug_message(&mut self, _message: String) {
         // No-op in release builds
