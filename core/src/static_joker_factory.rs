@@ -520,13 +520,13 @@ impl StaticJokerFactory {
         )
     }
 
-    /// Create Steel Joker (This Joker gains X0.25 Mult for each Steel Card in your full deck)
+    /// Create Steel Joker (Each Steel Card in deck multiplies this Joker by X1.25)
     pub fn create_steel_joker() -> Box<dyn Joker> {
         Box::new(
             StaticJoker::builder(
                 JokerId::SteelJoker,
                 "Steel Joker",
-                "This Joker gains X0.25 Mult for each Steel Card in your full deck",
+                "Each Steel Card in your full deck multiplies this Joker by X1.25",
             )
             .rarity(JokerRarity::Uncommon)
             .cost(6)

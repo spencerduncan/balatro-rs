@@ -121,7 +121,7 @@ fn test_steel_joker() {
     assert_eq!(joker.name(), "Steel Joker");
     assert_eq!(
         joker.description(),
-        "This Joker gains X0.25 Mult for each Steel Card in your full deck"
+        "Each Steel Card in your full deck multiplies this Joker by X1.25"
     );
     assert_eq!(joker.rarity(), JokerRarity::Uncommon);
     assert_eq!(joker.cost(), 6);
@@ -132,22 +132,30 @@ fn test_steel_joker() {
         .build();
     let hand = SelectHand::new(vec![]);
     let effect = joker.on_hand_played(&mut context, &hand);
-    // With 0 Steel cards: X(1.0 + 0.25 * 0) = X1.0
+    // With 0 Steel cards: 1.25^0 = X1.0
     assert_eq!(effect.mult_multiplier, 1.0);
+
+    // Test deck composition behavior with 1 Steel card
+    let mut context = TestContextBuilder::new()
+        .with_steel_cards_in_deck(1)
+        .build();
+    let effect = joker.on_hand_played(&mut context, &hand);
+    // With 1 Steel card: 1.25^1 = X1.25
+    assert_eq!(effect.mult_multiplier, 1.25);
 
     // Test deck composition behavior with 4 Steel cards
     let mut context = TestContextBuilder::new()
         .with_steel_cards_in_deck(4)
         .build();
     let effect = joker.on_hand_played(&mut context, &hand);
-    // With 4 Steel cards: X(1.0 + 0.25 * 4) = X2.0
-    assert_eq!(effect.mult_multiplier, 2.0);
+    // With 4 Steel cards: 1.25^4 = X2.44140625
+    assert!((effect.mult_multiplier - 2.44140625).abs() < 0.0001);
 
     // Test deck composition behavior with 8 Steel cards
     let mut context = TestContextBuilder::new()
         .with_steel_cards_in_deck(8)
         .build();
     let effect = joker.on_hand_played(&mut context, &hand);
-    // With 8 Steel cards: X(1.0 + 0.25 * 8) = X3.0
-    assert_eq!(effect.mult_multiplier, 3.0);
+    // With 8 Steel cards: 1.25^8 = X5.9604644775390625
+    assert!((effect.mult_multiplier - 5.9604644775390625).abs() < 0.0001);
 }

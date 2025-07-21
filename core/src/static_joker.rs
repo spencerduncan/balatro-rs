@@ -206,11 +206,10 @@ impl StaticJoker {
                 let base_multiplier = self.mult_multiplier.unwrap_or(1.0);
                 let enhancement_count = self.get_enhancement_count(context, enhancement);
                 
-                // For Steel Joker: 1.0 + (0.25 * steel_card_count)
-                // The base multiplier represents the bonus per enhancement
-                // For other enhancements, we can use the same pattern
-                let bonus_per_card = if base_multiplier == 1.0 { 0.25 } else { base_multiplier - 1.0 };
-                Some(1.0 + (bonus_per_card * enhancement_count as f64))
+                // For Steel Joker: each Steel card multiplies by 1.25 (multiplicative stacking)
+                // Formula: 1.25^steel_card_count
+                let multiplier_per_card = if base_multiplier == 1.0 { 1.25 } else { base_multiplier };
+                Some(multiplier_per_card.powi(enhancement_count as i32))
             }
             _ => self.mult_multiplier,
         }
