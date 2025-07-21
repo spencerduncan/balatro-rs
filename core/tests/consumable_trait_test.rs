@@ -1,5 +1,5 @@
 use balatro_rs::consumables::{
-    Consumable, ConsumableEffect, ConsumableError, ConsumableSlots, ConsumableType, Target,
+    Consumable, ConsumableEffect, ConsumableError, ConsumableId, ConsumableSlots, ConsumableType, Target,
     TargetType,
 };
 use balatro_rs::game::Game;
@@ -850,8 +850,6 @@ impl Consumable for MockConsumableForSlots {
 // Integration tests with actual consumable implementations
 #[test]
 fn test_integration_consumable_slots_with_real_consumables() {
-    use balatro_rs::consumables::ConsumableId;
-
     let mut slots = ConsumableSlots::new();
 
     // Create instances of different consumable types
