@@ -132,14 +132,16 @@ fn test_debug_logging_for_joker_contributions() {
 
     // Check that debug messages were logged
     let debug_messages = game.get_debug_messages();
-    
+
     // Debug: print all messages
     println!("Debug messages: {:?}", debug_messages);
     println!("Number of debug messages: {}", debug_messages.len());
-    
+
     assert!(!debug_messages.is_empty(), "Should have debug messages");
     assert!(
-        debug_messages.iter().any(|msg| msg.contains("joker") || msg.contains("Joker") || msg.contains("effects")),
+        debug_messages
+            .iter()
+            .any(|msg| msg.contains("joker") || msg.contains("Joker") || msg.contains("effects")),
         "Should log joker effects"
     );
 }
@@ -195,7 +197,10 @@ fn test_killscreen_behavior() {
 
     // Debug: print the score and debug messages to understand what's happening
     println!("Score: {}, is_finite: {}", score, score.is_finite());
-    println!("Base chips: {}, Base mult: {}", game.config.base_chips, game.config.base_mult);
+    println!(
+        "Base chips: {}, Base mult: {}",
+        game.config.base_chips, game.config.base_mult
+    );
     println!("Number of jokers: {}", game.jokers.len());
     let debug_messages = game.get_debug_messages();
     println!("Number of debug messages: {}", debug_messages.len());
