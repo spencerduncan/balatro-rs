@@ -4,12 +4,12 @@ use balatro_rs::{
     game::Game,
     hand::SelectHand,
     joker::{GameContext, JokerId},
-    joker_effect_processor::{JokerEffectProcessor, CacheConfig, ProcessingContext},
+    joker_effect_processor::{CacheConfig, JokerEffectProcessor, ProcessingContext},
     joker_state::JokerStateManager,
     rng::GameRng,
     stage::Stage,
 };
-use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use std::collections::HashMap;
 
 pub fn criterion_benchmark(c: &mut Criterion) {
@@ -20,7 +20,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("hand evaluation batch", |b| {
         b.iter(|| black_box(benchmark_hand_evaluation_batch()))
     });
-    
+
     // JokerEffectProcessor cache benchmarks
     c.bench_function("joker effect processing with cache", |b| {
         b.iter(|| black_box(benchmark_joker_effects_with_cache()))
@@ -28,14 +28,20 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("joker effect processing without cache", |b| {
         b.iter(|| black_box(benchmark_joker_effects_without_cache()))
     });
-    
+
     // Cache performance comparison with different scenarios
     let mut group = c.benchmark_group("cache_comparison");
     for iterations in [10, 50, 100, 500].iter() {
-        group.bench_with_input(BenchmarkId::new("with_cache", iterations), iterations, 
-            |b, &iterations| b.iter(|| benchmark_cache_scenario(iterations, true)));
-        group.bench_with_input(BenchmarkId::new("without_cache", iterations), iterations,
-            |b, &iterations| b.iter(|| benchmark_cache_scenario(iterations, false)));
+        group.bench_with_input(
+            BenchmarkId::new("with_cache", iterations),
+            iterations,
+            |b, &iterations| b.iter(|| benchmark_cache_scenario(iterations, true)),
+        );
+        group.bench_with_input(
+            BenchmarkId::new("without_cache", iterations),
+            iterations,
+            |b, &iterations| b.iter(|| benchmark_cache_scenario(iterations, false)),
+        );
     }
     group.finish();
 }
@@ -198,33 +204,33 @@ fn create_test_hands() -> Vec<Vec<Card>> {
 /// Benchmark JokerEffectProcessor with cache enabled
 fn benchmark_joker_effects_with_cache() -> u64 {
     let mut processor = JokerEffectProcessor::new();
-    
+
     // Enable aggressive caching for benchmark
     let mut cache_config = CacheConfig::default();
     cache_config.max_entries = 10000;
     cache_config.ttl_seconds = 3600; // 1 hour
     cache_config.enabled = true;
     processor.set_cache_config(cache_config);
-    
+
     benchmark_joker_processing(&mut processor, 100)
 }
 
 /// Benchmark JokerEffectProcessor with cache disabled
 fn benchmark_joker_effects_without_cache() -> u64 {
     let mut processor = JokerEffectProcessor::new();
-    
+
     // Disable caching
     let mut cache_config = CacheConfig::default();
     cache_config.enabled = false;
     processor.set_cache_config(cache_config);
-    
+
     benchmark_joker_processing(&mut processor, 100)
 }
 
 /// Benchmark cache performance with different iteration counts
 fn benchmark_cache_scenario(iterations: u32, cache_enabled: bool) -> u64 {
     let mut processor = JokerEffectProcessor::new();
-    
+
     let mut cache_config = CacheConfig::default();
     cache_config.enabled = cache_enabled;
     if cache_enabled {
@@ -232,21 +238,21 @@ fn benchmark_cache_scenario(iterations: u32, cache_enabled: bool) -> u64 {
         cache_config.ttl_seconds = 3600;
     }
     processor.set_cache_config(cache_config);
-    
+
     benchmark_joker_processing(&mut processor, iterations)
 }
 
 /// Core benchmark logic for joker effect processing
 fn benchmark_joker_processing(processor: &mut JokerEffectProcessor, iterations: u32) -> u64 {
     let mut operations = 0u64;
-    
+
     // Create realistic game context
     let joker_state_manager = std::sync::Arc::new(JokerStateManager::new());
     let stage = Stage::PreBlind();
     let hand = balatro_rs::hand::Hand::new(vec![]);
     let hand_type_counts = HashMap::new();
     let rng = GameRng::for_testing(42);
-    
+
     let mut game_context = GameContext {
         chips: 100,
         mult: 4,
@@ -265,12 +271,12 @@ fn benchmark_joker_processing(processor: &mut JokerEffectProcessor, iterations: 
         stone_cards_in_deck: 0,
         rng: &rng,
     };
-    
+
     // Create test hands and cards
     let test_hands = create_benchmark_hands();
     let test_cards = create_benchmark_cards();
     let jokers: Vec<Box<dyn balatro_rs::joker::Joker>> = vec![];
-    
+
     // Simulate realistic RL training scenario with repeated processing
     for _ in 0..iterations {
         // Process each hand multiple times (simulating repeated game states)
@@ -279,18 +285,18 @@ fn benchmark_joker_processing(processor: &mut JokerEffectProcessor, iterations: 
             let _result = processor.process_hand_effects(&jokers, &mut game_context, &select_hand);
             operations += 1;
         }
-        
+
         // Process each card multiple times
         for card in &test_cards {
             let _result = processor.process_card_effects(&jokers, &mut game_context, card);
             operations += 1;
         }
-        
+
         // Slightly modify context to create variety while maintaining cache hits
         game_context.hands_played = (game_context.hands_played + 1) % 5;
         game_context.money = 100 + (operations % 50) as i32;
     }
-    
+
     operations
 }
 

@@ -3,7 +3,9 @@ use balatro_rs::{
     game::Game,
     hand::SelectHand,
     joker::{GameContext, Joker, JokerEffect, JokerId},
-    joker_effect_processor::{ConflictResolutionStrategy, EffectPriority, JokerEffectProcessor, ProcessingContext},
+    joker_effect_processor::{
+        ConflictResolutionStrategy, EffectPriority, JokerEffectProcessor, ProcessingContext,
+    },
     rng::GameRng,
     static_joker::StaticJoker,
 };
@@ -14,25 +16,25 @@ use std::collections::HashMap;
 pub fn effect_processor_benchmarks(c: &mut Criterion) {
     // Basic effect processing benchmarks
     basic_effect_processing_benchmarks(c);
-    
+
     // Complex effect combination benchmarks
     complex_effect_combination_benchmarks(c);
-    
+
     // Retriggering scenario benchmarks
     retriggering_scenario_benchmarks(c);
-    
+
     // Large joker collection benchmarks
     large_joker_collection_benchmarks(c);
-    
+
     // Conflict resolution strategy benchmarks
     conflict_resolution_benchmarks(c);
-    
+
     // Priority ordering benchmarks
     priority_ordering_benchmarks(c);
-    
+
     // Cache performance benchmarks
     cache_performance_benchmarks(c);
-    
+
     // Memory allocation benchmarks
     memory_allocation_benchmarks(c);
 }
@@ -40,7 +42,7 @@ pub fn effect_processor_benchmarks(c: &mut Criterion) {
 /// Benchmark basic effect processing with minimal complexity
 fn basic_effect_processing_benchmarks(c: &mut Criterion) {
     let mut group = c.benchmark_group("basic_effect_processing");
-    
+
     // Single joker effect processing
     group.bench_function("single_joker_hand_effect", |b| {
         b.iter(|| {
@@ -48,22 +50,22 @@ fn basic_effect_processing_benchmarks(c: &mut Criterion) {
             let mut game_context = create_test_game_context();
             let hand = create_test_hand();
             let jokers = create_single_joker_collection();
-            
+
             black_box(processor.process_hand_effects(&jokers, &mut game_context, &hand))
         });
     });
-    
+
     group.bench_function("single_joker_card_effect", |b| {
         b.iter(|| {
             let mut processor = JokerEffectProcessor::new();
             let mut game_context = create_test_game_context();
             let card = Card::new(Value::Ace, Suit::Spade);
             let jokers = create_single_joker_collection();
-            
+
             black_box(processor.process_card_effects(&jokers, &mut game_context, &card))
         });
     });
-    
+
     // Performance targets: Single joker effect processing should be < 1μs
     group.sample_size(10000);
     group.finish();
@@ -72,10 +74,10 @@ fn basic_effect_processing_benchmarks(c: &mut Criterion) {
 /// Benchmark complex effect combinations with multiple jokers
 fn complex_effect_combination_benchmarks(c: &mut Criterion) {
     let mut group = c.benchmark_group("complex_effect_combinations");
-    
+
     for joker_count in [3, 5, 7, 10].iter() {
         group.throughput(Throughput::Elements(*joker_count as u64));
-        
+
         group.bench_with_input(
             BenchmarkId::new("multi_joker_hand_effects", joker_count),
             joker_count,
@@ -85,12 +87,12 @@ fn complex_effect_combination_benchmarks(c: &mut Criterion) {
                     let mut game_context = create_test_game_context();
                     let hand = create_test_hand();
                     let jokers = create_complex_joker_collection(joker_count);
-                    
+
                     black_box(processor.process_hand_effects(&jokers, &mut game_context, &hand))
                 });
             },
         );
-        
+
         group.bench_with_input(
             BenchmarkId::new("multi_joker_card_effects", joker_count),
             joker_count,
@@ -100,13 +102,13 @@ fn complex_effect_combination_benchmarks(c: &mut Criterion) {
                     let mut game_context = create_test_game_context();
                     let card = Card::new(Value::King, Suit::Heart);
                     let jokers = create_complex_joker_collection(joker_count);
-                    
+
                     black_box(processor.process_card_effects(&jokers, &mut game_context, &card))
                 });
             },
         );
     }
-    
+
     // Performance target: 10 jokers with complex effects should be < 10μs
     group.finish();
 }
