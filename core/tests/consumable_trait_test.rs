@@ -762,7 +762,10 @@ fn test_consumable_slots_iterator() {
 
     // Iterator should skip empty slots
     let count: usize = slots.iter().count();
-    assert_eq!(count, 2, "Iterator should skip empty slots and return 2 items");
+    assert_eq!(
+        count, 2,
+        "Iterator should skip empty slots and return 2 items"
+    );
 }
 
 #[test]

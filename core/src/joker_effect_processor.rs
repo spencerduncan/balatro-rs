@@ -1754,14 +1754,14 @@ mod tests {
             ..Default::default()
         };
         processor_without_cache.set_cache_config(config);
-        
+
         // Create values outside the closure
         let stage = crate::stage::Stage::PreBlind();
         let empty_hand = crate::hand::Hand::new(vec![]);
         let joker_state_manager = std::sync::Arc::new(crate::joker_state::JokerStateManager::new());
         let hand_type_counts = HashMap::new();
         let rng = crate::rng::GameRng::secure();
-        
+
         // Helper function to create fresh GameContext instances
         let create_game_context = || GameContext {
             chips: 100,

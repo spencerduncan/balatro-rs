@@ -5,11 +5,11 @@
 use balatro_rs::card::{Card, Suit, Value};
 use balatro_rs::hand::{Hand, SelectHand};
 use balatro_rs::joker::{GameContext, Joker, JokerId, JokerRarity};
-use balatro_rs::static_joker_factory::StaticJokerFactory;
-use balatro_rs::stage::{Blind, Stage};
 use balatro_rs::joker_state::JokerStateManager;
-use std::sync::Arc;
+use balatro_rs::stage::{Blind, Stage};
+use balatro_rs::static_joker_factory::StaticJokerFactory;
 use std::collections::HashMap;
+use std::sync::Arc;
 
 // Helper function to create test context
 fn create_test_context() -> GameContext<'static> {
