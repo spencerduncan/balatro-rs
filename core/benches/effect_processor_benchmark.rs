@@ -162,14 +162,14 @@ fn large_joker_collection_benchmarks(c: &mut Criterion) {
             },
         );
     }
-    
+
     group.finish();
 }
 
 /// Benchmark different conflict resolution strategies
 fn conflict_resolution_benchmarks(c: &mut Criterion) {
     let mut group = c.benchmark_group("conflict_resolution_strategies");
-    
+
     let strategies = [
         ("sum", ConflictResolutionStrategy::Sum),
         ("maximum", ConflictResolutionStrategy::Maximum),
@@ -177,7 +177,7 @@ fn conflict_resolution_benchmarks(c: &mut Criterion) {
         ("first_wins", ConflictResolutionStrategy::FirstWins),
         ("last_wins", ConflictResolutionStrategy::LastWins),
     ];
-    
+
     for (name, strategy) in strategies.iter() {
         group.bench_with_input(
             BenchmarkId::new("conflict_resolution", name),
