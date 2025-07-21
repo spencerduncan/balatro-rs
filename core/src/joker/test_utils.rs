@@ -41,7 +41,7 @@ use crate::joker::{GameContext, Joker, JokerEffect, JokerId, JokerRarity};
 use crate::joker_state::{JokerState, JokerStateManager};
 use crate::rank::HandRank;
 use crate::rng::GameRng;
-use crate::stage::Stage;
+use crate::stage::{Blind, Stage};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -595,7 +595,7 @@ impl TestContextBuilder {
             money: 5,
             ante: 1,
             round: 1,
-            stage: Stage::Blind,
+            stage: Stage::Blind(Blind::Small),
             hands_played: 0,
             discards_used: 0,
             hand: Hand::new(),
@@ -839,7 +839,7 @@ mod tests {
     use crate::hand::SelectHand;
     use crate::joker_state::JokerState;
     use crate::rank::HandRank;
-    use crate::stage::Stage;
+    use crate::stage::{Blind, Stage};
 
     #[test]
     fn test_mock_identity_joker() {

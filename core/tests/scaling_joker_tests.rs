@@ -6,7 +6,7 @@ use balatro_rs::joker_state::{JokerState, JokerStateManager};
 use balatro_rs::rank::HandRank;
 use balatro_rs::hand::SelectHand;
 use balatro_rs::card::{Card, Suit, Value};
-use balatro_rs::stage::Stage;
+use balatro_rs::stage::{Blind, Stage};
 use std::sync::Arc;
 use std::collections::HashMap;
 
@@ -17,7 +17,7 @@ fn create_test_context(money: i32, ante: u8, round: u32) -> GameContext<'static>
     let hand = SelectHand::default();
     let discarded: Vec<Card> = vec![];
     let hand_type_counts = HashMap::new();
-    let stage = Stage::Blind; // Default stage
+    let stage = Stage::Blind(Blind::Small); // Default stage
     let rng = &balatro_rs::rng::GameRng::new();
 
     GameContext {
