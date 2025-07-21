@@ -630,7 +630,7 @@ impl Game {
             if hand_result.retriggered_count > 0 {
                 write!(&mut debug_msg, " ({} retriggers)", hand_result.retriggered_count).unwrap();
             }
-            }
+            
             messages.push(debug_msg);
         }
 

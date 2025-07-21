@@ -44,3 +44,15 @@ harness = false
 [[bench]]
 name = "actionspace_benchmark"
 harness = false
+
+[[bench]]
+name = "effect_processor_benchmark"
+harness = false
+
+[[bench]]
+name = "effect_processor_benchmark_simple"
+harness = false
+
+[[bench]]
+name = "effect_processor_benchmark_minimal"
+harness = false
