@@ -190,20 +190,20 @@ fn conflict_resolution_benchmarks(c: &mut Criterion) {
                     let mut game_context = create_test_game_context();
                     let hand = create_test_hand();
                     let jokers = create_conflicting_joker_collection();
-                    
+
                     black_box(processor.process_hand_effects(&jokers, &mut game_context, &hand))
                 });
             },
         );
     }
-    
+
     group.finish();
 }
 
 /// Benchmark priority ordering with different priority distributions
 fn priority_ordering_benchmarks(c: &mut Criterion) {
     let mut group = c.benchmark_group("priority_ordering");
-    
+
     let priority_scenarios = [
         ("uniform_normal", vec![EffectPriority::Normal; 10]),
         (
@@ -232,7 +232,7 @@ fn priority_ordering_benchmarks(c: &mut Criterion) {
             ],
         ),
     ];
-    
+
     for (name, priorities) in priority_scenarios.iter() {
         group.bench_with_input(
             BenchmarkId::new("priority_ordering", name),
@@ -243,19 +243,20 @@ fn priority_ordering_benchmarks(c: &mut Criterion) {
                     let mut game_context = create_test_game_context();
                     let hand = create_test_hand();
                     let jokers = create_priority_joker_collection(priorities.clone());
-                    
+
                     black_box(processor.process_hand_effects(&jokers, &mut game_context, &hand))
                 });
             },
         );
     }
-    
+
     group.finish();
 }
 
 /// Benchmark cache performance scenarios
 fn cache_performance_benchmarks(c: &mut Criterion) {
     let mut group = c.benchmark_group("cache_performance");
+
     
     // Cache hit scenario
     group.bench_function("cache_hit_performance", |b| {
@@ -263,16 +264,16 @@ fn cache_performance_benchmarks(c: &mut Criterion) {
         let mut game_context = create_test_game_context();
         let hand = create_test_hand();
         let jokers = create_single_joker_collection();
-        
+
         // Prime the cache
         processor.process_hand_effects(&jokers, &mut game_context, &hand);
-        
+
         b.iter(|| {
             // This should hit the cache
             black_box(processor.process_hand_effects(&jokers, &mut game_context, &hand))
         });
     });
-    
+
     // Cache miss scenario
     group.bench_function("cache_miss_performance", |b| {
         b.iter(|| {
@@ -280,12 +281,12 @@ fn cache_performance_benchmarks(c: &mut Criterion) {
             let mut game_context = create_test_game_context();
             let hand = create_varied_test_hand();
             let jokers = create_single_joker_collection();
-            
+
             // This should always miss the cache due to varied hands
             black_box(processor.process_hand_effects(&jokers, &mut game_context, &hand))
         });
     });
-    
+
     // Performance target: Cache hit performance should be < 100ns
     group.finish();
 }
@@ -293,7 +294,7 @@ fn cache_performance_benchmarks(c: &mut Criterion) {
 /// Memory allocation profiling benchmarks
 fn memory_allocation_benchmarks(c: &mut Criterion) {
     let mut group = c.benchmark_group("memory_allocation");
-    
+
     // Single joker memory allocation
     group.bench_function("single_joker_allocation", |b| {
         b.iter(|| {
@@ -301,16 +302,16 @@ fn memory_allocation_benchmarks(c: &mut Criterion) {
             let mut game_context = create_test_game_context();
             let hand = create_test_hand();
             let jokers = create_single_joker_collection();
-            
+
             // Track memory allocation patterns
             let result = processor.process_hand_effects(&jokers, &mut game_context, &hand);
             black_box(result);
-            
+
             // Processor should be dropped here, releasing memory
             drop(processor);
         });
     });
-    
+
     // Multiple jokers memory allocation
     group.bench_function("multi_joker_allocation", |b| {
         b.iter(|| {
@@ -318,14 +319,14 @@ fn memory_allocation_benchmarks(c: &mut Criterion) {
             let mut game_context = create_test_game_context();
             let hand = create_test_hand();
             let jokers = create_complex_joker_collection(10);
-            
+
             let result = processor.process_hand_effects(&jokers, &mut game_context, &hand);
             black_box(result);
-            
+
             drop(processor);
         });
     });
-    
+
     // Performance target: Memory allocations should be < 1KB per processing operation
     group.finish();
 }
@@ -349,7 +350,7 @@ fn create_test_hand() -> SelectHand {
 fn create_varied_test_hand() -> SelectHand {
     use std::sync::atomic::{AtomicU8, Ordering};
     static COUNTER: AtomicU8 = AtomicU8::new(0);
-    
+
     let counter = COUNTER.fetch_add(1, Ordering::Relaxed);
     let value = match counter % 13 {
         0 => Value::Ace,
@@ -366,7 +367,7 @@ fn create_varied_test_hand() -> SelectHand {
         11 => Value::Queen,
         _ => Value::King,
     };
-    
+
     SelectHand::new(vec![
         Card::new(value, Suit::Spade),
         Card::new(Value::Two, Suit::Heart),
@@ -385,7 +386,7 @@ fn create_single_joker_collection() -> Vec<Box<dyn Joker>> {
 
 fn create_complex_joker_collection(count: usize) -> Vec<Box<dyn Joker>> {
     let mut jokers = Vec::new();
-    
+
     for i in 0..count {
         let effect = match i % 4 {
             0 => JokerEffect::new().with_chips(5 + i as i32),
@@ -393,7 +394,7 @@ fn create_complex_joker_collection(count: usize) -> Vec<Box<dyn Joker>> {
             2 => JokerEffect::new().with_chips(3).with_mult(2),
             _ => JokerEffect::new().with_x_mult(1.5 + (i as f64 * 0.1)),
         };
-        
+
         jokers.push(Box::new(StaticJoker::new(
             match i % 4 {
                 0 => JokerId::Joker,
@@ -404,28 +405,28 @@ fn create_complex_joker_collection(count: usize) -> Vec<Box<dyn Joker>> {
             effect,
         )));
     }
-    
+
     jokers
 }
 
 fn create_retriggering_joker_collection(retrigger_count: usize) -> Vec<Box<dyn Joker>> {
     let mut jokers = Vec::new();
-    
+
     // Create jokers that will trigger retrigger scenarios
     for i in 0..std::cmp::min(retrigger_count, 5) {
         let effect = JokerEffect::new()
             .with_chips(5)
             .with_retriggers(std::cmp::min(retrigger_count / (i + 1), 10) as u32);
-            
+
         jokers.push(Box::new(StaticJoker::new(JokerId::Joker, effect)));
     }
-    
+
     jokers
 }
 
 fn create_large_joker_collection(count: usize) -> Vec<Box<dyn Joker>> {
     let mut jokers = Vec::new();
-    
+
     for i in 0..count {
         let joker_id = match i % 10 {
             0 => JokerId::Joker,
@@ -439,12 +440,12 @@ fn create_large_joker_collection(count: usize) -> Vec<Box<dyn Joker>> {
             8 => JokerId::CrazyJoker,
             _ => JokerId::DrollJoker,
         };
-        
+
         let effect = JokerEffect::new().with_chips(1 + (i % 10) as i32);
-        
+
         jokers.push(Box::new(StaticJoker::new(joker_id, effect)));
     }
-    
+
     jokers
 }
 
@@ -467,17 +468,18 @@ fn create_conflicting_joker_collection() -> Vec<Box<dyn Joker>> {
 
 fn create_priority_joker_collection(priorities: Vec<EffectPriority>) -> Vec<Box<dyn Joker>> {
     let mut jokers = Vec::new();
-    
+
     for (i, &priority) in priorities.iter().enumerate() {
         // Create a joker with specific priority
         let effect = JokerEffect::new().with_chips(5 + i as i32);
         let mut joker = StaticJoker::new(JokerId::Joker, effect);
+
         
         // Note: This is a simplified example. In practice, you'd need to implement
         // priority assignment in your joker system
         jokers.push(Box::new(joker));
     }
-    
+
     jokers
 }
 
