@@ -1772,7 +1772,7 @@ mod tests {
                 rng: &balatro_rs::rng::GameRng::secure(),
             }
         }
-        };
+        ;
 
         let hand = SelectHand {
             cards: vec![
