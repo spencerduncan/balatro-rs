@@ -1105,7 +1105,11 @@ fn test_performance_with_many_scaling_jokers() {
     // Test 4: Verify scaling doesn't break with many jokers
     let final_values: Vec<f64> = jokers
         .iter()
-        .map(|joker| state_manager.get_accumulated_value(joker.id()).unwrap_or(0.0))
+        .map(|joker| {
+            state_manager
+                .get_accumulated_value(joker.id())
+                .unwrap_or(0.0)
+        })
         .collect();
 
     // All jokers should have accumulated some value

@@ -173,10 +173,16 @@ mod tests {
         assert!(result.is_err());
 
         match result.unwrap_err() {
-            TargetValidationError::CardIndexOutOfBounds { index: 0, hand_size: 0 } => {
+            TargetValidationError::CardIndexOutOfBounds {
+                index: 0,
+                hand_size: 0,
+            } => {
                 // Expected - index 0 is out of bounds for empty hand
             }
-            error => panic!("Expected CardIndexOutOfBounds error for index 0 in empty hand, got: {:?}", error),
+            error => panic!(
+                "Expected CardIndexOutOfBounds error for index 0 in empty hand, got: {:?}",
+                error
+            ),
         }
     }
 

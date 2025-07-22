@@ -422,7 +422,6 @@ fn test_thread_safety() {
 #[ignore = "EMERGENCY DISABLE: Hand empty method issues - tracked for post-emergency fix"]
 #[cfg(feature = "statistical_tests")]
 fn test_lucky_card_joker_probability() {
-    use balatro_rs::card::Card;
     use balatro_rs::hand::Hand;
     use balatro_rs::hand::SelectHand;
     use balatro_rs::joker::{GameContext, Joker};
@@ -439,12 +438,12 @@ fn test_lucky_card_joker_probability() {
 
     // Mock context and hand for testing
     let state_manager = Arc::new(JokerStateManager::new());
-    let stage = Stage::PreBlind;
+    let stage = Stage::PreBlind();
     let jokers: Vec<Box<dyn Joker>> = vec![];
-    let hand = Hand::empty();
+    let hand = Hand::new(vec![]);
     let discarded = vec![];
     let hand_type_counts = HashMap::new();
-    let select_hand = SelectHand::from_cards(vec![]);
+    let select_hand = SelectHand::new(vec![]);
 
     for _ in 0..sample_size {
         let mut context = GameContext {

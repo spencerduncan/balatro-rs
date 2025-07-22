@@ -673,7 +673,7 @@ mod tests {
         assert!(!common_jokers.is_empty());
         assert!(!uncommon_jokers.is_empty());
 
-        // Update test expectations based on current implementation  
+        // Update test expectations based on current implementation
         // Both rare and legendary jokers have been implemented since this test was written
         // No longer asserting these are empty as jokers now exist for these rarities
 

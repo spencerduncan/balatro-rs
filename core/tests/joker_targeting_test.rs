@@ -2,7 +2,7 @@
 // EMERGENCY DISABLE: This entire test file is temporarily disabled due to missing API types
 // All tests in this file were already marked as ignored and will be re-enabled post-emergency
 
-use balatro_rs::consumables::{Target};
+use balatro_rs::consumables::Target;
 use balatro_rs::game::Game;
 use balatro_rs::joker::{Joker, JokerId, JokerRarity};
 
