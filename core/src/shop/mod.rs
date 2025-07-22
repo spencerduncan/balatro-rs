@@ -38,7 +38,7 @@ pub mod generation;
 /// # Implementation Example
 ///
 /// ```rust,ignore
-/// use balatro_rs::shop::{ShopGenerator, EnhancedShop, ItemWeights};
+/// use crate::shop::{ShopGenerator, EnhancedShop, ItemWeights};
 ///
 /// struct StandardShopGenerator;
 ///

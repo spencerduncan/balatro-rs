@@ -138,8 +138,8 @@ impl JokerStateManager {
     /// # Examples
     ///
     /// ```
-    /// # use balatro_rs::joker_state::{JokerStateManager, JokerState};
-    /// # use balatro_rs::joker::JokerId;
+    /// # use crate::joker_state::{JokerStateManager, JokerState};
+    /// # use crate::joker::JokerId;
     /// let manager = JokerStateManager::new();
     ///
     /// // Get or create state with initial triggers
@@ -185,8 +185,8 @@ impl JokerStateManager {
     /// # Examples
     ///
     /// ```
-    /// # use balatro_rs::joker_state::JokerStateManager;
-    /// # use balatro_rs::joker::JokerId;
+    /// # use crate::joker_state::JokerStateManager;
+    /// # use crate::joker::JokerId;
     /// let manager = JokerStateManager::new();
     ///
     /// // Add to accumulated value
@@ -277,8 +277,8 @@ impl JokerStateManager {
     /// # Examples
     ///
     /// ```
-    /// # use balatro_rs::joker_state::{JokerStateManager, JokerState};
-    /// # use balatro_rs::joker::JokerId;
+    /// # use crate::joker_state::{JokerStateManager, JokerState};
+    /// # use crate::joker::JokerId;
     /// let manager = JokerStateManager::new();
     /// let joker_id = JokerId::Joker;
     ///
@@ -313,8 +313,8 @@ impl JokerStateManager {
     /// # Examples
     ///
     /// ```
-    /// # use balatro_rs::joker_state::{JokerStateManager, JokerState};
-    /// # use balatro_rs::joker::JokerId;
+    /// # use crate::joker_state::{JokerStateManager, JokerState};
+    /// # use crate::joker::JokerId;
     /// let manager = JokerStateManager::new();
     /// let joker_id = JokerId::Joker;
     ///
@@ -337,8 +337,8 @@ impl JokerStateManager {
     /// # Examples
     ///
     /// ```
-    /// # use balatro_rs::joker_state::JokerStateManager;
-    /// # use balatro_rs::joker::JokerId;
+    /// # use crate::joker_state::JokerStateManager;
+    /// # use crate::joker::JokerId;
     /// let manager = JokerStateManager::new();
     ///
     /// // Store a simple value
@@ -374,8 +374,8 @@ impl JokerStateManager {
     /// # Examples
     ///
     /// ```
-    /// # use balatro_rs::joker_state::{JokerStateManager, JokerState};
-    /// # use balatro_rs::joker::JokerId;
+    /// # use crate::joker_state::{JokerStateManager, JokerState};
+    /// # use crate::joker::JokerId;
     /// # use std::collections::HashMap;
     /// let manager = JokerStateManager::new();
     /// let joker_id = JokerId::Joker;

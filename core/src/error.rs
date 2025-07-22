@@ -20,7 +20,7 @@
 //!
 //! ### For Library Developers
 //! ```rust
-//! use balatro_rs::error::{DeveloperGameError, UserError, ErrorSanitizer, ErrorDetailLevel};
+//! use crate::error::{DeveloperGameError, UserError, ErrorSanitizer, ErrorDetailLevel};
 //!
 //! // Use DeveloperError types for internal error handling
 //! fn risky_operation() -> Result<(), DeveloperGameError> {
@@ -40,7 +40,7 @@
 //!
 //! ### For Application Developers
 //! ```rust
-//! use balatro_rs::error::{UserError, ErrorDetailLevel, ErrorSanitizer};
+//! use crate::error::{UserError, ErrorDetailLevel, ErrorSanitizer};
 //!
 //! // Configure error detail level based on environment
 //! let detail_level = if cfg!(debug_assertions) {
@@ -73,7 +73,7 @@
 //!
 //! Type aliases maintain compatibility with existing code:
 //! ```rust
-//! use balatro_rs::error::{DeveloperGameError, DeveloperPlayHandError, DeveloperActionSpaceError};
+//! use crate::error::{DeveloperGameError, DeveloperPlayHandError, DeveloperActionSpaceError};
 //!
 //! // These still work but are deprecated
 //! type GameError = DeveloperGameError;

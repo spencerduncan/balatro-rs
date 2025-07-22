@@ -410,15 +410,15 @@ fn test_thread_safety() {
 #[test]
 #[cfg(feature = "statistical_tests")]
 fn test_lucky_card_joker_probability() {
-    use balatro_rs::joker::{Joker, GameContext};
-    use balatro_rs::joker_impl::LuckyCardJoker;
-    use balatro_rs::hand::SelectHand;
-    use balatro_rs::stage::Stage;
-    use balatro_rs::joker_state::JokerStateManager;
-    use balatro_rs::hand::Hand;
     use balatro_rs::card::Card;
-    use std::sync::Arc;
+    use balatro_rs::hand::Hand;
+    use balatro_rs::hand::SelectHand;
+    use balatro_rs::joker::{GameContext, Joker};
+    use balatro_rs::joker_impl::LuckyCardJoker;
+    use balatro_rs::joker_state::JokerStateManager;
+    use balatro_rs::stage::Stage;
     use std::collections::HashMap;
+    use std::sync::Arc;
 
     let rng = GameRng::for_testing(12345); // Deterministic for reproducible testing
     let lucky_card = LuckyCardJoker;
@@ -477,14 +477,14 @@ fn test_lucky_card_joker_probability() {
 /// RNG jokers should produce identical results with the same seed
 #[test]
 fn test_rng_jokers_deterministic_behavior() {
-    use balatro_rs::joker::{Joker, GameContext};
-    use balatro_rs::joker_impl::{LuckyCardJoker, MysteryJoker, ChaoticJoker};
-    use balatro_rs::hand::SelectHand;
-    use balatro_rs::stage::Stage;
-    use balatro_rs::joker_state::JokerStateManager;
     use balatro_rs::hand::Hand;
-    use std::sync::Arc;
+    use balatro_rs::hand::SelectHand;
+    use balatro_rs::joker::{GameContext, Joker};
+    use balatro_rs::joker_impl::{ChaoticJoker, LuckyCardJoker, MysteryJoker};
+    use balatro_rs::joker_state::JokerStateManager;
+    use balatro_rs::stage::Stage;
     use std::collections::HashMap;
+    use std::sync::Arc;
 
     let seed = 42;
     let test_iterations = 100;
@@ -531,7 +531,13 @@ fn test_rng_jokers_deterministic_behavior() {
             };
 
             let effect = joker.on_hand_played(&mut context, &select_hand);
-            first_run_results.push((effect.chips, effect.mult, effect.money, effect.mult_multiplier, effect.retrigger));
+            first_run_results.push((
+                effect.chips,
+                effect.mult,
+                effect.money,
+                effect.mult_multiplier,
+                effect.retrigger,
+            ));
         }
 
         // Second run with same seeded RNG
@@ -559,12 +565,19 @@ fn test_rng_jokers_deterministic_behavior() {
             };
 
             let effect = joker.on_hand_played(&mut context, &select_hand);
-            second_run_results.push((effect.chips, effect.mult, effect.money, effect.mult_multiplier, effect.retrigger));
+            second_run_results.push((
+                effect.chips,
+                effect.mult,
+                effect.money,
+                effect.mult_multiplier,
+                effect.retrigger,
+            ));
         }
 
         // Results should be identical
         assert_eq!(
-            first_run_results, second_run_results,
+            first_run_results,
+            second_run_results,
             "Joker {} should produce identical results with same seed",
             joker.name()
         );

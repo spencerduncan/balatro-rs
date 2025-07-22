@@ -228,7 +228,7 @@ pub struct Game {
 
     /// Random number generator for secure game randomness
     #[cfg_attr(feature = "serde", serde(skip, default = "default_game_rng"))]
-    pub rng: balatro_rs::rng::GameRng,
+    pub rng: crate::rng::GameRng,
 
     /// Memory monitor for tracking and controlling memory usage
     #[cfg_attr(feature = "serde", serde(skip))]
@@ -241,8 +241,8 @@ fn default_joker_state_manager() -> Arc<JokerStateManager> {
 }
 
 #[cfg(feature = "serde")]
-fn default_game_rng() -> balatro_rs::rng::GameRng {
-    balatro_rs::rng::GameRng::secure()
+fn default_game_rng() -> crate::rng::GameRng {
+    crate::rng::GameRng::secure()
 }
 
 /// Format debug message for joker effects with conditional compilation
@@ -337,7 +337,7 @@ impl Game {
             target_context: TargetContext::new(),
 
             // Initialize secure RNG
-            rng: balatro_rs::rng::GameRng::secure(),
+            rng: crate::rng::GameRng::secure(),
 
             // Initialize memory monitor with default configuration
             memory_monitor: MemoryMonitor::default(),
@@ -641,7 +641,12 @@ impl Game {
             .unwrap();
 
             if hand_result.retriggered_count > 0 {
-                write!(&mut debug_msg, " ({} retriggers)", hand_result.retriggered_count).unwrap();
+                write!(
+                    &mut debug_msg,
+                    " ({} retriggers)",
+                    hand_result.retriggered_count
+                )
+                .unwrap();
             }
             messages.push(debug_msg);
         }
@@ -658,8 +663,10 @@ impl Game {
 
         // Process card-level effects using the cached processor
         for card in hand.hand.cards() {
-            let card_result = self.joker_effect_processor.process_card_effects(&self.jokers, &mut context, &card);
-            
+            let card_result =
+                self.joker_effect_processor
+                    .process_card_effects(&self.jokers, &mut context, &card);
+
             // Accumulate card effects
             total_chips += card_result.accumulated_effect.chips;
             total_mult += card_result.accumulated_effect.mult;
@@ -1182,9 +1189,9 @@ impl Game {
     ///
     /// # Example
     /// ```rust,ignore
-    /// use balatro_rs::game::Game;
-    /// use balatro_rs::shop::ConsumableType;
-    /// use balatro_rs::stage::Stage;
+    /// use crate::game::Game;
+    /// use crate::shop::ConsumableType;
+    /// use crate::stage::Stage;
     ///
     /// let mut game = Game::default();
     /// game.stage = Stage::Shop();
@@ -1921,7 +1928,7 @@ impl Game {
             // Initialize target context (not serialized)
             target_context: TargetContext::new(),
             // Initialize secure RNG (not serialized)
-            rng: balatro_rs::rng::GameRng::secure(),
+            rng: crate::rng::GameRng::secure(),
             // Initialize memory monitor (not serialized)
             memory_monitor: MemoryMonitor::default(),
         };

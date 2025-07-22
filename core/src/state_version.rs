@@ -22,7 +22,7 @@ use serde::{Deserialize, Serialize};
 /// # Examples
 ///
 /// ```rust
-/// use balatro_rs::state_version::StateVersion;
+/// use crate::state_version::StateVersion;
 ///
 /// // Get current version for new saves
 /// let current = StateVersion::current();

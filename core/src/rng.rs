@@ -27,7 +27,7 @@
 //! ## Usage Examples
 //!
 //! ```rust
-//! use balatro_rs::rng::{GameRng, RngMode};
+//! use crate::rng::{GameRng, RngMode};
 //!
 //! // For production use - cryptographically secure
 //! let secure_rng = GameRng::secure();

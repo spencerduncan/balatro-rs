@@ -269,7 +269,7 @@ impl ConditionalJoker {
     ///
     /// # Examples
     /// ```
-    /// use balatro_rs::joker::{ConditionalJoker, JokerCondition, JokerId, JokerRarity, JokerEffect};
+    /// use crate::joker::{ConditionalJoker, JokerCondition, JokerId, JokerRarity, JokerEffect};
     ///
     /// let joker = ConditionalJoker::new(
     ///     JokerId::Banner,
@@ -317,7 +317,7 @@ impl ConditionalJoker {
     ///
     /// # Examples
     /// ```
-    /// use balatro_rs::joker::{ConditionalJoker, JokerCondition, JokerId, JokerRarity, JokerEffect};
+    /// use crate::joker::{ConditionalJoker, JokerCondition, JokerId, JokerRarity, JokerEffect};
     ///
     /// let expensive_joker = ConditionalJoker::new(
     ///     JokerId::Banner,
@@ -344,8 +344,8 @@ impl ConditionalJoker {
     ///
     /// # Examples
     /// ```
-    /// use balatro_rs::joker::{ConditionalJoker, JokerCondition, JokerId, JokerRarity, JokerEffect};
-    /// use balatro_rs::card::Suit;
+    /// use crate::joker::{ConditionalJoker, JokerCondition, JokerId, JokerRarity, JokerEffect};
+    /// use crate::card::Suit;
     ///
     /// let heart_joker = ConditionalJoker::new(
     ///     JokerId::Banner,

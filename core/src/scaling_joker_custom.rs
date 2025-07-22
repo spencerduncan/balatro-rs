@@ -3,7 +3,7 @@ use crate::hand::SelectHand;
 use crate::joker::{GameContext, Joker, JokerEffect, JokerId, JokerRarity};
 use crate::joker_state::JokerState;
 use crate::rank::HandRank;
-use crate::scaling_joker::{ScalingEffectType, ScalingEvent, ScalingJoker};
+use crate::scaling_joker::ScalingJoker;
 
 /// Custom implementations for scaling jokers that require special logic
 /// beyond the basic ScalingJoker framework
@@ -245,7 +245,7 @@ impl Joker for BannerJoker {
         let base_discards: usize = 3; // This should come from game config
         let remaining_discards = base_discards.saturating_sub(context.discards_used as usize);
         let chips_bonus = (remaining_discards * 30) as i32;
-        
+
         JokerEffect::new().with_chips(chips_bonus)
     }
 

@@ -2,7 +2,7 @@ use crate::card::Card;
 use crate::game::Game;
 use crate::joker::{JokerId, JokerRarity};
 use crate::joker_factory::JokerFactory;
-use balatro_rs::rng::GameRng;
+use crate::rng::GameRng;
 use crate::shop::{
     EnhancedShop, ItemWeights, Pack, PackType, ShopGenerator, ShopItem, ShopSlot, VoucherId,
 };

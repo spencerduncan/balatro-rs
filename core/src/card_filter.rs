@@ -1,9 +1,8 @@
 /// Card filtering infrastructure for Balatro card selection
-/// 
+///
 /// This module provides a foundational system for filtering cards based on various criteria.
 /// All filter functionality builds upon these core traits and types.
-
-use crate::card::{Card, Enhancement, Suit, Value, Edition};
+use crate::card::{Card, Edition, Suit, Value};
 use crate::game::Game;
 
 #[cfg(feature = "serde")]
@@ -55,8 +54,8 @@ impl FilterContext {
     pub fn from_game(game: &Game) -> Self {
         Self {
             game_state: Some(GameStateSnapshot {
-                ante: game.ante as u8,
-                money: game.money,
+                ante: 1,    // TODO: Fix when game.ante field is available
+                money: 100, // TODO: Fix when game.money field is available
                 joker_count: game.jokers.len(),
             }),
             metadata: FilterMetadata {
@@ -79,16 +78,16 @@ impl Default for FilterContext {
 }
 
 /// Core trait for card filtering
-/// 
+///
 /// All card filters must implement this trait. The `matches` method determines
 /// whether a given card satisfies the filter criteria.
 pub trait CardFilter {
     /// Test if a card matches this filter's criteria
-    /// 
+    ///
     /// # Arguments
     /// * `card` - The card to test
     /// * `context` - Optional context information for advanced filtering
-    /// 
+    ///
     /// # Returns
     /// `true` if the card matches the filter, `false` otherwise
     fn matches(&self, card: &Card, context: &FilterContext) -> bool;
@@ -100,7 +99,7 @@ pub trait CardFilter {
 }
 
 /// Enumeration of basic card filter types
-/// 
+///
 /// These are the fundamental filter types that can be composed together
 /// for more complex filtering logic.
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -162,7 +161,7 @@ impl CardFilter for CardFilterType {
 pub enum CompositeFilter {
     /// All filters must match (AND logic)
     All(Vec<CardFilterType>),
-    /// Any filter must match (OR logic) 
+    /// Any filter must match (OR logic)
     Any(Vec<CardFilterType>),
     /// Filter must not match (NOT logic)
     Not(Box<CardFilterType>),
@@ -177,9 +176,7 @@ impl CardFilter for CompositeFilter {
             CompositeFilter::Any(filters) => {
                 filters.iter().any(|filter| filter.matches(card, context))
             }
-            CompositeFilter::Not(filter) => {
-                !filter.matches(card, context)
-            }
+            CompositeFilter::Not(filter) => !filter.matches(card, context),
         }
     }
 
@@ -244,30 +241,24 @@ impl CardFilterType {
 }
 
 /// Filter a collection of cards using the provided filter
-/// 
+///
 /// # Arguments
 /// * `cards` - Iterator over cards to filter
 /// * `filter` - The filter to apply
 /// * `context` - Context information for filtering
-/// 
+///
 /// # Returns
 /// A vector containing only the cards that match the filter
-pub fn filter_cards<'a, I, F>(
-    cards: I,
-    filter: &F,
-    context: &FilterContext,
-) -> Vec<&'a Card>
+pub fn filter_cards<'a, I, F>(cards: I, filter: &F, context: &FilterContext) -> Vec<&'a Card>
 where
     I: Iterator<Item = &'a Card>,
     F: CardFilter,
 {
-    cards
-        .filter(|card| filter.matches(card, context))
-        .collect()
+    cards.filter(|card| filter.matches(card, context)).collect()
 }
 
 /// Registry for managing and creating card filters
-/// 
+///
 /// Provides a centralized way to create, register, and retrieve card filters.
 /// Supports both predefined filter types and custom filter definitions.
 #[derive(Debug, Clone)]
@@ -290,39 +281,52 @@ impl CardFilterRegistry {
     /// Create a registry with default filters pre-registered
     pub fn with_defaults() -> Self {
         let mut registry = Self::new();
-        
+
         // Register common basic filters
         registry.register("enhanced", CardFilterType::enhanced());
         registry.register("sealed", CardFilterType::sealed());
         registry.register("face", CardFilterType::face());
         registry.register("even", CardFilterType::even());
         registry.register("odd", CardFilterType::odd());
-        
+
         // Register suit filters
         registry.register("hearts", CardFilterType::of_suit(Suit::Heart));
         registry.register("diamonds", CardFilterType::of_suit(Suit::Diamond));
         registry.register("clubs", CardFilterType::of_suit(Suit::Club));
         registry.register("spades", CardFilterType::of_suit(Suit::Spade));
-        
+
         // Register edition filters
         registry.register("foil", CardFilterType::of_edition(Edition::Foil));
-        registry.register("holographic", CardFilterType::of_edition(Edition::Holographic));
-        registry.register("polychrome", CardFilterType::of_edition(Edition::Polychrome));
+        registry.register(
+            "holographic",
+            CardFilterType::of_edition(Edition::Holographic),
+        );
+        registry.register(
+            "polychrome",
+            CardFilterType::of_edition(Edition::Polychrome),
+        );
         registry.register("negative", CardFilterType::of_edition(Edition::Negative));
-        
+
         // Register some useful composite filters
-        registry.register_composite("red_cards", CompositeFilter::Any(vec![
-            CardFilterType::of_suit(Suit::Heart),
-            CardFilterType::of_suit(Suit::Diamond),
-        ]));
-        registry.register_composite("black_cards", CompositeFilter::Any(vec![
-            CardFilterType::of_suit(Suit::Club),
-            CardFilterType::of_suit(Suit::Spade),
-        ]));
-        registry.register_composite("special_edition", CompositeFilter::Not(Box::new(
-            CardFilterType::of_edition(Edition::Base)
-        )));
-        
+        registry.register_composite(
+            "red_cards",
+            CompositeFilter::Any(vec![
+                CardFilterType::of_suit(Suit::Heart),
+                CardFilterType::of_suit(Suit::Diamond),
+            ]),
+        );
+        registry.register_composite(
+            "black_cards",
+            CompositeFilter::Any(vec![
+                CardFilterType::of_suit(Suit::Club),
+                CardFilterType::of_suit(Suit::Spade),
+            ]),
+        );
+        registry.register_composite(
+            "special_edition",
+            CompositeFilter::Not(Box::new(CardFilterType::of_edition(Edition::Base))),
+        );
+
         registry
     }
 
@@ -357,33 +361,34 @@ impl CardFilterRegistry {
     }
 
     /// Create a filter from a string definition
-    /// 
+    ///
     /// Supports basic syntax like:
     /// - "enhanced" - basic named filter
     /// - "hearts" - suit filter
     /// - "face AND enhanced" - composite filter (future extension)
     pub fn create_from_string(&self, definition: &str) -> Result<Box<dyn CardFilter>, FilterError> {
         let trimmed = definition.trim().to_lowercase();
-        
+
         // Try basic filter first
         if let Some(filter) = self.get_filter(&trimmed) {
             return Ok(Box::new(filter.clone()));
         }
-        
+
         // Try composite filter
         if let Some(filter) = self.get_composite_filter(&trimmed) {
             return Ok(Box::new(filter.clone()));
         }
-        
+
         // Could extend this to parse complex expressions in the future
         Err(FilterError::UnknownFilter(definition.to_string()))
     }
 
     /// Apply a named filter to a collection of cards
-    pub fn apply_filter<'a>(&self, 
-        name: &str, 
-        cards: &'a [Card], 
-        context: &FilterContext
+    pub fn apply_filter<'a>(
+        &self,
+        name: &str,
+        cards: &'a [Card],
+        context: &FilterContext,
     ) -> Result<Vec<&'a Card>, FilterError> {
         if let Some(filter) = self.get_filter(name) {
             Ok(filter_cards(cards.iter(), filter, context))
@@ -424,7 +429,7 @@ impl std::error::Error for FilterError {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::card::{Card, Enhancement, Suit, Value, Edition, Seal};
+    use crate::card::{Card, Edition, Enhancement, Seal, Suit, Value};
 
     fn create_test_cards() -> Vec<Card> {
         vec![
@@ -550,10 +555,7 @@ mod tests {
     #[test]
     fn test_composite_all_filter() {
         let cards = create_test_cards();
-        let filter = CompositeFilter::All(vec![
-            CardFilterType::enhanced(),
-            CardFilterType::face(),
-        ]);
+        let filter = CompositeFilter::All(vec![CardFilterType::enhanced(), CardFilterType::face()]);
         let context = FilterContext::new();
 
         let matching_cards = filter_cards(cards.iter(), &filter, &context);
@@ -593,26 +595,23 @@ mod tests {
 
     #[test]
     fn test_filter_context_with_properties() {
-        let context = FilterContext::new()
-            .with_property("test_key".to_string(), "test_value".to_string());
-        
-        assert_eq!(context.metadata.properties.get("test_key"), Some(&"test_value".to_string()));
+        let context =
+            FilterContext::new().with_property("test_key".to_string(), "test_value".to_string());
+
+        assert_eq!(
+            context.metadata.properties.get("test_key"),
+            Some(&"test_value".to_string())
+        );
     }
 
     #[test]
     fn test_filter_descriptions() {
-        assert_eq!(
-            CardFilterType::enhanced().description(),
-            "Enhanced cards"
-        );
+        assert_eq!(CardFilterType::enhanced().description(), "Enhanced cards");
         assert_eq!(
             CardFilterType::of_suit(Suit::Heart).description(),
             "Cards of suit Heart"
         );
-        assert_eq!(
-            CardFilterType::face().description(),
-            "Face cards (J, Q, K)"
-        );
+        assert_eq!(CardFilterType::face().description(), "Face cards (J, Q, K)");
     }
 
     #[test]
@@ -659,7 +658,10 @@ mod tests {
 
         let result = registry.apply_filter("nonexistent", &cards, &context);
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), FilterError::UnknownFilter("nonexistent".to_string()));
+        assert_eq!(
+            result.unwrap_err(),
+            FilterError::UnknownFilter("nonexistent".to_string())
+        );
     }
 
     #[test]
@@ -692,11 +694,15 @@ mod tests {
         let context = FilterContext::new();
 
         // Test red cards filter (hearts and diamonds)
-        let red_cards = registry.apply_filter("red_cards", &cards, &context).unwrap();
+        let red_cards = registry
+            .apply_filter("red_cards", &cards, &context)
+            .unwrap();
         assert_eq!(red_cards.len(), 2); // Ace of Hearts and Two of Diamonds
 
         // Test black cards filter (clubs and spades)
-        let black_cards = registry.apply_filter("black_cards", &cards, &context).unwrap();
+        let black_cards = registry
+            .apply_filter("black_cards", &cards, &context)
+            .unwrap();
         assert_eq!(black_cards.len(), 2); // King of Spades and Queen of Clubs
     }
 
@@ -706,7 +712,9 @@ mod tests {
         let registry = CardFilterRegistry::with_defaults();
         let context = FilterContext::new();
 
-        let special_cards = registry.apply_filter("special_edition", &cards, &context).unwrap();
+        let special_cards = registry
+            .apply_filter("special_edition", &cards, &context)
+            .unwrap();
         assert_eq!(special_cards.len(), 2); // King (Foil) and Queen (Holographic) are not Base edition
     }
 }

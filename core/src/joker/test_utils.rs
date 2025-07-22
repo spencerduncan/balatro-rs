@@ -15,8 +15,8 @@
 //! # Usage Example
 //!
 //! ```rust
-//! use balatro_rs::joker::test_utils::*;
-//! use balatro_rs::joker::{Joker, JokerEffect, JokerId, JokerRarity};
+//! use crate::joker::test_utils::*;
+//! use crate::joker::{Joker, JokerEffect, JokerId, JokerRarity};
 //!
 //! // Create a test context
 //! let context = TestContextBuilder::new()
@@ -35,12 +35,12 @@
 //! assert_effect_mult(&effect, 10);
 //! ```
 
-use crate::card::{Card, Value, Suit};
+use crate::card::{Card, Suit, Value};
 use crate::hand::{Hand, SelectHand};
 use crate::joker::{GameContext, Joker, JokerEffect, JokerId, JokerRarity};
 use crate::joker_state::{JokerState, JokerStateManager};
 use crate::rank::HandRank;
-use balatro_rs::rng::GameRng;
+use crate::rng::GameRng;
 use crate::stage::Stage;
 use serde_json::Value as JsonValue;
 use std::collections::HashMap;
@@ -838,7 +838,7 @@ pub fn create_test_hand(cards: Vec<Card>) -> Hand {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::card::{Value, Suit};
+    use crate::card::{Suit, Value};
     use crate::hand::SelectHand;
     use crate::joker_state::JokerState;
     use crate::rank::HandRank;

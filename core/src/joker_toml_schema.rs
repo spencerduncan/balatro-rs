@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 /// TOML schema for defining jokers declaratively
-/// 
+///
 /// This module provides a comprehensive schema for defining jokers in TOML format,
 /// enabling data-driven joker creation without code compilation.
 ///
@@ -22,7 +22,7 @@ use std::collections::HashMap;
 pub struct JokerConfig {
     /// Schema version for backwards compatibility
     pub schema_version: String,
-    
+
     /// List of joker definitions
     pub jokers: Vec<TomlJokerDefinition>,
 }
@@ -32,25 +32,25 @@ pub struct JokerConfig {
 pub struct TomlJokerDefinition {
     /// Unique joker identifier (maps to JokerId enum)
     pub id: String,
-    
+
     /// Display name
     pub name: String,
-    
+
     /// Effect description
     pub description: String,
-    
+
     /// Rarity level
     pub rarity: TomlJokerRarity,
-    
+
     /// Shop cost (optional, defaults to rarity-based pricing)
     pub cost: Option<usize>,
-    
+
     /// Effect configuration
     pub effect: TomlJokerEffect,
-    
+
     /// Optional state configuration for stateful jokers
     pub state: Option<TomlJokerState>,
-    
+
     /// Optional behavior configuration for lifecycle hooks
     pub behavior: Option<TomlJokerBehavior>,
 }
@@ -85,51 +85,51 @@ pub enum TomlJokerEffect {
         /// Chips bonus per trigger
         #[serde(default)]
         chips: i32,
-        
+
         /// Mult bonus per trigger
         #[serde(default)]
         mult: i32,
-        
+
         /// Money bonus per trigger
         #[serde(default)]
         money: i32,
-        
+
         /// Mult multiplier (1.0 = no change, 2.0 = double)
         #[serde(default = "default_mult_multiplier")]
         mult_multiplier: f64,
-        
+
         /// Whether this joker provides per-card or per-hand effects
         #[serde(default)]
         per_card: bool,
     },
-    
+
     /// Conditional effect based on game state or hand
     Conditional {
         /// Condition that must be met
         condition: TomlJokerCondition,
-        
+
         /// Action to take when condition is met
         action: TomlJokerAction,
-        
+
         /// Whether to check condition per card or per hand
         #[serde(default)]
         per_card: bool,
     },
-    
+
     /// Dynamic effect that changes based on joker state
     Dynamic {
         /// Base effect values
         base_effect: TomlJokerAction,
-        
+
         /// Modifications based on state
         state_modifiers: Vec<TomlStateModifier>,
     },
-    
+
     /// Special complex effect with custom behavior
     Special {
         /// Special effect type identifier
         special_type: String,
-        
+
         /// Custom parameters for the special effect
         parameters: HashMap<String, TomlValue>,
     },
@@ -146,41 +146,69 @@ fn default_mult_multiplier() -> f64 {
 pub enum TomlJokerCondition {
     /// Always true (unconditional)
     Always,
-    
+
     /// Money conditions
-    MoneyLessThan { amount: i32 },
-    MoneyGreaterThan { amount: i32 },
-    MoneyEqual { amount: i32 },
-    
+    MoneyLessThan {
+        amount: i32,
+    },
+    MoneyGreaterThan {
+        amount: i32,
+    },
+    MoneyEqual {
+        amount: i32,
+    },
+
     /// Card property conditions
-    SuitScored { suit: TomlSuit },
-    RankScored { rank: TomlRank },
+    SuitScored {
+        suit: TomlSuit,
+    },
+    RankScored {
+        rank: TomlRank,
+    },
     FaceCardScored,
     NumberCardScored,
-    
+
     /// Hand composition conditions
-    HandType { hand_type: TomlHandRank },
-    HandSize { size: usize },
+    HandType {
+        hand_type: TomlHandRank,
+    },
+    HandSize {
+        size: usize,
+    },
     NoFaceCards,
     AllSameSuit,
     AllSameRank,
-    
+
     /// Game state conditions
-    Round { round: u32 },
-    Ante { ante: u8 },
-    HandsPlayed { count: u32 },
-    DiscardsUsed { count: u32 },
-    
+    Round {
+        round: u32,
+    },
+    Ante {
+        ante: u8,
+    },
+    HandsPlayed {
+        count: u32,
+    },
+    DiscardsUsed {
+        count: u32,
+    },
+
     /// Composite conditions
-    All { conditions: Vec<TomlJokerCondition> },
-    Any { conditions: Vec<TomlJokerCondition> },
-    Not { condition: Box<TomlJokerCondition> },
-    
+    All {
+        conditions: Vec<TomlJokerCondition>,
+    },
+    Any {
+        conditions: Vec<TomlJokerCondition>,
+    },
+    Not {
+        condition: Box<TomlJokerCondition>,
+    },
+
     /// State-based conditions
-    StateValue { 
-        field: String, 
+    StateValue {
+        field: String,
         operator: TomlComparisonOperator,
-        value: TomlValue 
+        value: TomlValue,
     },
 }
 
@@ -199,34 +227,28 @@ pub enum TomlJokerAction {
         #[serde(default = "default_mult_multiplier")]
         mult_multiplier: f64,
     },
-    
+
     /// Modify state values
     ModifyState {
         field: String,
         operation: TomlStateOperation,
         value: TomlValue,
     },
-    
+
     /// Calculate value based on formula
     Calculate {
         formula: String,
         result_type: TomlResultType,
     },
-    
+
     /// Trigger retrigger effects
-    Retrigger {
-        count: u32,
-    },
-    
+    Retrigger { count: u32 },
+
     /// Destroy jokers
-    Destroy {
-        target: TomlDestroyTarget,
-    },
-    
+    Destroy { target: TomlDestroyTarget },
+
     /// Multiple actions in sequence
-    Sequence {
-        actions: Vec<TomlJokerAction>,
-    },
+    Sequence { actions: Vec<TomlJokerAction> },
 }
 
 /// State operation types
@@ -278,7 +300,7 @@ pub enum TomlDestroyTarget {
 pub struct TomlStateModifier {
     /// State field to check
     pub state_field: String,
-    
+
     /// Multiplier to apply to base effect based on state value
     pub multiplier: f64,
 }
@@ -288,7 +310,7 @@ pub struct TomlStateModifier {
 pub struct TomlJokerState {
     /// Field definitions with default values
     pub fields: HashMap<String, TomlValue>,
-    
+
     /// Whether state persists across rounds/antes
     #[serde(default = "default_true")]
     pub persistent: bool,
@@ -304,31 +326,31 @@ fn default_true() -> bool {
 pub struct TomlJokerBehavior {
     /// Action when hand is played
     pub on_hand_played: Option<TomlJokerAction>,
-    
+
     /// Action when card is scored
     pub on_card_scored: Option<TomlJokerAction>,
-    
+
     /// Action when blind starts
     pub on_blind_start: Option<TomlJokerAction>,
-    
+
     /// Action when shop opens
     pub on_shop_open: Option<TomlJokerAction>,
-    
+
     /// Action when cards are discarded
     pub on_discard: Option<TomlJokerAction>,
-    
+
     /// Action when round ends
     pub on_round_end: Option<TomlJokerAction>,
-    
+
     /// Action when joker is created
     pub on_created: Option<TomlJokerAction>,
-    
+
     /// Action when joker is activated
     pub on_activated: Option<TomlJokerAction>,
-    
+
     /// Action when joker is deactivated
     pub on_deactivated: Option<TomlJokerAction>,
-    
+
     /// Action when joker is cleaned up
     pub on_cleanup: Option<TomlJokerAction>,
 }
@@ -458,12 +480,12 @@ mod tests {
             type = "scoring"
             mult = 4
         "#;
-        
+
         let config: JokerConfig = toml::from_str(toml_str).expect("Failed to parse TOML");
         assert_eq!(config.jokers.len(), 1);
         assert_eq!(config.jokers[0].name, "Joker");
     }
-    
+
     #[test]
     fn test_conditional_joker_schema() {
         let toml_str = r#"
@@ -488,12 +510,12 @@ mod tests {
             type = "add_score"
             mult = 3
         "#;
-        
+
         let config: JokerConfig = toml::from_str(toml_str).expect("Failed to parse TOML");
         assert_eq!(config.jokers.len(), 1);
         assert_eq!(config.jokers[0].name, "Greedy Joker");
     }
-    
+
     #[test]
     fn test_dynamic_joker_schema() {
         let toml_str = r#"
@@ -530,7 +552,7 @@ mod tests {
             operation = "increment"
             value = 1
         "#;
-        
+
         let config: JokerConfig = toml::from_str(toml_str).expect("Failed to parse TOML");
         assert_eq!(config.jokers.len(), 1);
         assert_eq!(config.jokers[0].name, "Ice Cream");

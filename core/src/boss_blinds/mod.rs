@@ -236,7 +236,7 @@ impl BossBlindState {
 /// # Examples
 ///
 /// ```rust
-/// use balatro_rs::boss_blinds::CounterType;
+/// use crate::boss_blinds::CounterType;
 ///
 /// let counters = vec![CounterType::HandsPlayed, CounterType::CardsScored];
 /// // Boss blind might disable jokers after 3 hands played
@@ -279,7 +279,7 @@ pub enum CounterType {
 /// # Examples
 ///
 /// ```rust
-/// use balatro_rs::boss_blinds::BlindEffect;
+/// use crate::boss_blinds::BlindEffect;
 ///
 /// let effects = vec![
 ///     BlindEffect::DebuffCards("face_cards".to_string()),
@@ -337,8 +337,8 @@ pub enum BlindEffect {
 /// # Examples
 ///
 /// ```rust
-/// use balatro_rs::boss_blinds::{BossBlind, BlindEffect, CounterType};
-/// use balatro_rs::game::Game;
+/// use crate::boss_blinds::{BossBlind, BlindEffect, CounterType};
+/// use crate::game::Game;
 ///
 /// #[derive(Debug)]
 /// struct ExampleBoss;

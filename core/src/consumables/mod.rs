@@ -25,7 +25,6 @@ use std::fmt;
 use strum::{EnumIter, IntoEnumIterator};
 use thiserror::Error;
 
-
 /// Error types for consumable operations
 #[derive(Error, Debug, Clone)]
 pub enum ConsumableError {
@@ -750,7 +749,7 @@ impl ConsumableId {
 /// # Examples
 ///
 /// ```rust
-/// use balatro_rs::consumables::ConsumableSlots;
+/// use crate::consumables::ConsumableSlots;
 ///
 /// // Create slots with default capacity
 /// let slots = ConsumableSlots::new();
@@ -780,7 +779,7 @@ impl ConsumableSlots {
     /// # Examples
     ///
     /// ```rust
-    /// use balatro_rs::consumables::ConsumableSlots;
+    /// use crate::consumables::ConsumableSlots;
     ///
     /// let slots = ConsumableSlots::new();
     /// assert_eq!(slots.capacity(), 2);
@@ -803,7 +802,7 @@ impl ConsumableSlots {
     /// # Examples
     ///
     /// ```rust
-    /// use balatro_rs::consumables::ConsumableSlots;
+    /// use crate::consumables::ConsumableSlots;
     ///
     /// let slots = ConsumableSlots::with_capacity(5);
     /// assert_eq!(slots.capacity(), 5);
@@ -826,7 +825,7 @@ impl ConsumableSlots {
     /// # Examples
     ///
     /// ```rust
-    /// use balatro_rs::consumables::ConsumableSlots;
+    /// use crate::consumables::ConsumableSlots;
     ///
     /// let slots = ConsumableSlots::new();
     /// assert_eq!(slots.capacity(), 2);
@@ -846,7 +845,7 @@ impl ConsumableSlots {
     /// # Examples
     ///
     /// ```rust
-    /// use balatro_rs::consumables::ConsumableSlots;
+    /// use crate::consumables::ConsumableSlots;
     ///
     /// let slots = ConsumableSlots::new();
     /// assert_eq!(slots.len(), 0); // No consumables yet
@@ -860,7 +859,7 @@ impl ConsumableSlots {
     /// # Examples
     ///
     /// ```rust
-    /// use balatro_rs::consumables::ConsumableSlots;
+    /// use crate::consumables::ConsumableSlots;
     ///
     /// let slots = ConsumableSlots::new();
     /// assert!(slots.is_empty());
@@ -874,7 +873,7 @@ impl ConsumableSlots {
     /// # Examples
     ///
     /// ```rust
-    /// use balatro_rs::consumables::ConsumableSlots;
+    /// use crate::consumables::ConsumableSlots;
     ///
     /// let slots = ConsumableSlots::new();
     /// assert!(!slots.is_full()); // Empty slots are not full
@@ -890,7 +889,7 @@ impl ConsumableSlots {
     /// # Examples
     ///
     /// ```rust
-    /// use balatro_rs::consumables::ConsumableSlots;
+    /// use crate::consumables::ConsumableSlots;
     ///
     /// let slots = ConsumableSlots::new();
     /// assert_eq!(slots.available_slots(), 2); // All slots available
@@ -917,7 +916,7 @@ impl ConsumableSlots {
     /// # Examples
     ///
     /// ```rust
-    /// use balatro_rs::consumables::{ConsumableSlots, SlotError};
+    /// use crate::consumables::{ConsumableSlots, SlotError};
     ///
     /// let mut slots = ConsumableSlots::new();
     /// let consumable = create_consumable(); // Some consumable
@@ -957,7 +956,7 @@ impl ConsumableSlots {
     /// # Examples
     ///
     /// ```rust
-    /// use balatro_rs::consumables::{ConsumableSlots, SlotError};
+    /// use crate::consumables::{ConsumableSlots, SlotError};
     ///
     /// let mut slots = ConsumableSlots::new();
     /// // Add a consumable first
@@ -999,7 +998,7 @@ impl ConsumableSlots {
     /// # Examples
     ///
     /// ```rust
-    /// use balatro_rs::consumables::ConsumableSlots;
+    /// use crate::consumables::ConsumableSlots;
     ///
     /// let mut slots = ConsumableSlots::new();
     /// let index = slots.add_consumable(create_consumable()).unwrap();
@@ -1026,7 +1025,7 @@ impl ConsumableSlots {
     /// # Examples
     ///
     /// ```rust
-    /// use balatro_rs::consumables::ConsumableSlots;
+    /// use crate::consumables::ConsumableSlots;
     ///
     /// let mut slots = ConsumableSlots::new();
     /// let index = slots.add_consumable(create_consumable()).unwrap();
@@ -1049,7 +1048,7 @@ impl ConsumableSlots {
     /// # Examples
     ///
     /// ```rust
-    /// use balatro_rs::consumables::ConsumableSlots;
+    /// use crate::consumables::ConsumableSlots;
     ///
     /// let mut slots = ConsumableSlots::new();
     /// assert_eq!(slots.find_empty_slot(), Some(0)); // First slot is empty
@@ -1075,7 +1074,7 @@ impl ConsumableSlots {
     /// # Examples
     ///
     /// ```rust
-    /// use balatro_rs::consumables::{ConsumableSlots, SlotError};
+    /// use crate::consumables::{ConsumableSlots, SlotError};
     ///
     /// let mut slots = ConsumableSlots::new();
     /// slots.add_consumable(create_consumable()).unwrap();
@@ -1102,7 +1101,7 @@ impl ConsumableSlots {
     /// # Examples
     ///
     /// ```rust
-    /// use balatro_rs::consumables::ConsumableSlots;
+    /// use crate::consumables::ConsumableSlots;
     ///
     /// let mut slots = ConsumableSlots::new();
     /// slots.add_consumable(create_consumable()).unwrap();

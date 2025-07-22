@@ -1,6 +1,6 @@
 use balatro_rs::consumables::{
-    Consumable, ConsumableEffect, ConsumableError, ConsumableId, ConsumableSlots, ConsumableType, Target,
-    TargetType,
+    Consumable, ConsumableEffect, ConsumableError, ConsumableId, ConsumableSlots, ConsumableType,
+    Target, TargetType,
 };
 use balatro_rs::game::Game;
 

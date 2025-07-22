@@ -250,7 +250,7 @@ impl fmt::Display for JokerRarity {
 /// # Examples
 ///
 /// ```rust,ignore
-/// use balatro_rs::joker::JokerEffect;
+/// use crate::joker::JokerEffect;
 ///
 /// // Simple scoring bonus
 /// let effect = JokerEffect::new().with_mult(5);
@@ -513,7 +513,7 @@ pub struct GameContext<'a> {
     /// Number of Stone cards in deck
     pub stone_cards_in_deck: usize,
     /// Random number generator for secure randomness
-    pub rng: &'a balatro_rs::rng::GameRng,
+    pub rng: &'a crate::rng::GameRng,
 }
 
 impl<'a> GameContext<'a> {
@@ -542,9 +542,9 @@ impl<'a> GameContext<'a> {
 /// ## 1. Direct Implementation
 /// For complex jokers requiring custom logic:
 /// ```rust,ignore
-/// use balatro_rs::joker::{Joker, JokerId, JokerRarity, JokerEffect, GameContext};
-/// use balatro_rs::card::Card;
-/// use balatro_rs::hand::SelectHand;
+/// use crate::joker::{Joker, JokerId, JokerRarity, JokerEffect, GameContext};
+/// use crate::card::Card;
+/// use crate::hand::SelectHand;
 ///
 /// #[derive(Debug)]
 /// struct CustomJoker;
@@ -569,8 +569,8 @@ impl<'a> GameContext<'a> {
 /// ## 2. Static Joker Framework
 /// For simple conditional jokers:
 /// ```rust,ignore
-/// use balatro_rs::static_joker::{StaticJoker, StaticCondition};
-/// use balatro_rs::card::Suit;
+/// use crate::static_joker::{StaticJoker, StaticCondition};
+/// use crate::card::Suit;
 ///
 /// let greedy_joker = StaticJoker::builder(
 ///     JokerId::GreedyJoker,
