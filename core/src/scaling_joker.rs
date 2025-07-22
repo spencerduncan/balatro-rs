@@ -28,7 +28,7 @@ pub enum ScalingTrigger {
 impl fmt::Display for ScalingTrigger {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ScalingTrigger::HandPlayed(hand_rank) => write!(f, "{hand_rank:?} played"),
+            ScalingTrigger::HandPlayed(hand_rank) => write!(f, "{hand_rank} played"),
             ScalingTrigger::CardDiscarded => write!(f, "card discarded"),
             ScalingTrigger::MoneyGained => write!(f, "money gained"),
             ScalingTrigger::BlindCompleted => write!(f, "blind completed"),
