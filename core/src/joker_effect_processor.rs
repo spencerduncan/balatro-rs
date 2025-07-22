@@ -1761,23 +1761,25 @@ mod tests {
         config.enabled = false;
         processor_without_cache.set_cache_config(config);
         // Helper function to create fresh GameContext instances
-        let create_game_context = || GameContext {
-            chips: 100,
-            mult: 4,
-            money: 100,
-            ante: 1,
-            round: 1,
-            stage: &crate::stage::Stage::PreBlind(),
-            hands_played: 0,
-            discards_used: 0,
-            jokers: &[],
-            hand: &crate::hand::Hand::new(vec![]),
-            discarded: &[],
-            joker_state_manager: &std::sync::Arc::new(crate::joker_state::JokerStateManager::new()),
-            hand_type_counts: &HashMap::new(),
-            cards_in_deck: 52,
-            stone_cards_in_deck: 0,
-            rng: &crate::rng::GameRng::secure(),
+        let create_game_context = || -> GameContext {
+            GameContext {
+                chips: 100,
+                mult: 4,
+                money: 100,
+                ante: 1,
+                round: 1,
+                stage: &crate::stage::Stage::PreBlind(),
+                hands_played: 0,
+                discards_used: 0,
+                jokers: &[],
+                hand: &crate::hand::Hand::new(vec![]),
+                discarded: &[],
+                joker_state_manager: &std::sync::Arc::new(crate::joker_state::JokerStateManager::new()),
+                hand_type_counts: &HashMap::new(),
+                cards_in_deck: 52,
+                stone_cards_in_deck: 0,
+                rng: &crate::rng::GameRng::secure(),
+            }
         };
 
         let hand = SelectHand {
