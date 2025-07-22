@@ -559,11 +559,11 @@ impl Game {
         if !self.jokers.is_empty() {
             let (joker_chips, joker_mult, joker_money, joker_mult_multiplier, messages) =
                 self.process_joker_effects(&hand);
-            
+
             self.chips += joker_chips as f64;
             self.mult += joker_mult as f64;
             self.money += joker_money as f64;
-            
+
             // Apply mult_multiplier to the total mult (base + joker bonuses)
             if joker_mult_multiplier != 1.0 {
                 self.mult *= joker_mult_multiplier;
@@ -730,7 +730,13 @@ impl Game {
         }
 
         // Return mult_multiplier separately to be applied to final total mult
-        (total_chips, total_mult, total_money, total_mult_multiplier, messages)
+        (
+            total_chips,
+            total_mult,
+            total_money,
+            total_mult_multiplier,
+            messages,
+        )
     }
 
     /// Calculate score with detailed breakdown for debugging and analysis
@@ -2340,7 +2346,8 @@ mod tests {
 
         // First call should miss cache
         let initial_metrics = game.get_joker_cache_metrics().clone();
-        let (chips1, mult1, money1, _mult_multiplier1, messages1) = game.process_joker_effects(&made_hand);
+        let (chips1, mult1, money1, _mult_multiplier1, messages1) =
+            game.process_joker_effects(&made_hand);
 
         // Verify cache metrics show a miss
         let metrics_after_first = game.get_joker_cache_metrics();
@@ -2349,7 +2356,8 @@ mod tests {
         // Second call with same input should potentially hit cache
         // Note: Since we create a new GameContext each time with current game state,
         // cache hits depend on the game state being identical
-        let (chips2, mult2, money2, _mult_multiplier2, messages2) = game.process_joker_effects(&made_hand);
+        let (chips2, mult2, money2, _mult_multiplier2, messages2) =
+            game.process_joker_effects(&made_hand);
 
         // Results should be identical regardless of cache
         assert_eq!(chips1, chips2);
@@ -2435,7 +2443,8 @@ mod tests {
 
         // Verify that both approaches produce the same results
         game.enable_joker_effect_cache();
-        let (chips_cached, mult_cached, money_cached, _, _) = game.process_joker_effects(&made_hand);
+        let (chips_cached, mult_cached, money_cached, _, _) =
+            game.process_joker_effects(&made_hand);
 
         game.disable_joker_effect_cache();
         let (chips_uncached, mult_uncached, money_uncached, _, _) =
