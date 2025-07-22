@@ -122,11 +122,11 @@ fn test_joker_effect_modifiers() {
 
     // A♥ and K♠ form a High Card hand
     // Base high card (level 1): chips=5, mult=1
-    // Cards: A(11) + K(10) = 21 chips
+    // Cards: Only highest card (A=11) scores in High Card, not both cards
     // TestMultiplierJoker: +10 mult, then *2.0 multiplier
-    // Total: (5 + 21) * ((1 + 10) * 2.0) = 26 * 22 = 572
-    // Actual calculated total: 336 (need to verify mult multiplier logic)
-    assert_eq!(score, 336.0);
+    // Total: (5 + 11) * ((1 + 10) * 2.0) = 16 * 22 = 352
+    // Expected: mult_multiplier should be applied to total mult (base + bonuses)
+    assert_eq!(score, 352.0);
 }
 
 /// Test that the old Effects enum system is completely removed
