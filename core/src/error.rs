@@ -82,7 +82,7 @@
 //! ```
 
 #[cfg(feature = "python")]
-use pyo3::exceptions::PyException;
+// Removed unused import: PyException
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 use thiserror::Error;
@@ -122,6 +122,10 @@ pub enum UserError {
     InvalidState,
     #[error("System error occurred")]
     SystemError,
+    #[error("Resource not found")]
+    ResourceNotFound,
+    #[error("Configuration error")]
+    ConfigurationError,
 }
 
 /// Developer-facing errors with detailed information for debugging (preserved from original)
@@ -285,24 +289,26 @@ pub type ActionSpaceError = DeveloperActionSpaceError;
 #[cfg(feature = "python")]
 impl std::convert::From<DeveloperGameError> for PyErr {
     fn from(err: DeveloperGameError) -> PyErr {
-        use pyo3::exceptions::{PyException, PyValueError, PyRuntimeError};
-        
+        use pyo3::exceptions::{PyRuntimeError, PyValueError};
+
         // Use development mode in debug builds, production mode otherwise
         let detail_level = if cfg!(debug_assertions) {
             ErrorDetailLevel::Development
         } else {
             ErrorDetailLevel::Production
         };
-        
+
         let sanitizer = ErrorSanitizer::new(detail_level);
         let user_error = sanitizer.sanitize_game_error(&err);
-        
+
         // Map to more specific Python exception types where appropriate
         match user_error {
             UserError::InvalidInput => PyValueError::new_err(user_error.to_string()),
             UserError::InvalidOperation => PyRuntimeError::new_err(user_error.to_string()),
+            UserError::NotFound => PyRuntimeError::new_err(user_error.to_string()),
             UserError::ResourceNotFound => PyRuntimeError::new_err(user_error.to_string()),
             UserError::OperationFailed => PyRuntimeError::new_err(user_error.to_string()),
+            UserError::InvalidState => PyRuntimeError::new_err(user_error.to_string()),
             UserError::ConfigurationError => PyValueError::new_err(user_error.to_string()),
             UserError::SystemError => PyRuntimeError::new_err(user_error.to_string()),
         }
@@ -312,14 +318,16 @@ impl std::convert::From<DeveloperGameError> for PyErr {
 #[cfg(feature = "python")]
 impl std::convert::From<UserError> for PyErr {
     fn from(err: UserError) -> PyErr {
-        use pyo3::exceptions::{PyValueError, PyRuntimeError};
-        
+        use pyo3::exceptions::{PyRuntimeError, PyValueError};
+
         // Map UserError types to appropriate Python exceptions
         match err {
             UserError::InvalidInput => PyValueError::new_err(err.to_string()),
             UserError::InvalidOperation => PyRuntimeError::new_err(err.to_string()),
+            UserError::NotFound => PyRuntimeError::new_err(err.to_string()),
             UserError::ResourceNotFound => PyRuntimeError::new_err(err.to_string()),
             UserError::OperationFailed => PyRuntimeError::new_err(err.to_string()),
+            UserError::InvalidState => PyRuntimeError::new_err(err.to_string()),
             UserError::ConfigurationError => PyValueError::new_err(err.to_string()),
             UserError::SystemError => PyRuntimeError::new_err(err.to_string()),
         }

@@ -247,7 +247,7 @@ fn default_game_rng() -> crate::rng::GameRng {
 
 /// Format debug message for joker effects with conditional compilation
 #[cfg(debug_assertions)]
-fn _format_joker_effect_debug_message(
+fn format_joker_effect_debug_message(
     joker_name: &str,
     effect: &crate::joker::JokerEffect,
     total_triggers: u32,
@@ -557,16 +557,11 @@ impl Game {
 
         // Apply JokerEffect from structured joker system
         if !self.jokers.is_empty() {
-            let (joker_chips, joker_mult, joker_money, mult_multiplier, messages) =
+            let (joker_chips, joker_mult, joker_money, messages) =
                 self.process_joker_effects(&hand);
             self.chips += joker_chips as f64;
             self.mult += joker_mult as f64;
             self.money += joker_money as f64;
-
-            // Apply mult multiplier to the final mult value
-            if mult_multiplier != 1.0 {
-                self.mult *= mult_multiplier;
-            }
 
             // Log debug messages if enabled
             for message in messages {
@@ -589,7 +584,7 @@ impl Game {
     }
 
     /// Process JokerEffect from all jokers and return accumulated effects
-    fn process_joker_effects(&mut self, hand: &MadeHand) -> (i32, i32, i32, f64, Vec<String>) {
+    fn process_joker_effects(&mut self, hand: &MadeHand) -> (i32, i32, i32, Vec<String>) {
         use crate::hand::Hand;
 
         let mut messages = Vec::new();
@@ -653,16 +648,18 @@ impl Game {
                 )
                 .unwrap();
             }
+
             messages.push(debug_msg);
         }
 
         // Process any error messages from hand effects
         for error in &hand_result.errors {
-            if let crate::joker_effect_processor::EffectProcessingError::TooManyRetriggers(_) =
-                error
-            {
-                messages.push("KILLSCREEN: Too many retriggered effects!".to_string());
-            } // Other errors are less critical for gameplay
+            match error {
+                crate::joker_effect_processor::EffectProcessingError::TooManyRetriggers(_) => {
+                    messages.push("KILLSCREEN: Too many retriggered effects!".to_string());
+                }
+                _ => {} // Other errors are less critical for gameplay
+            }
         }
 
         // Process card-level effects using the cached processor
@@ -719,26 +716,21 @@ impl Game {
 
             // Process any error messages from card effects
             for error in &card_result.errors {
-                if let crate::joker_effect_processor::EffectProcessingError::TooManyRetriggers(_) =
-                    error
-                {
-                    messages.push("KILLSCREEN: Too many retriggered effects!".to_string());
-                } // Other errors are less critical for gameplay
+                match error {
+                    crate::joker_effect_processor::EffectProcessingError::TooManyRetriggers(_) => {
+                        messages.push("KILLSCREEN: Too many retriggered effects!".to_string());
+                    }
+                    _ => {} // Other errors are less critical for gameplay
+                }
             }
         }
 
-        // Don't apply mult multiplier here - let calc_score handle it
-        // if total_mult_multiplier != 1.0 {
-        //     total_mult = (total_mult as f64 * total_mult_multiplier) as i32;
-        // }
+        // Apply mult multiplier to the total mult bonus (not base mult)
+        if total_mult_multiplier != 1.0 {
+            total_mult = (total_mult as f64 * total_mult_multiplier) as i32;
+        }
 
-        (
-            total_chips,
-            total_mult,
-            total_money,
-            total_mult_multiplier,
-            messages,
-        )
+        (total_chips, total_mult, total_money, messages)
     }
 
     /// Calculate score with detailed breakdown for debugging and analysis
@@ -878,8 +870,8 @@ impl Game {
     }
 
     /// Add a debug message with automatic memory management
-    /// Only compiles in debug builds and tests to eliminate overhead in release
-    #[cfg(any(debug_assertions, test))]
+    /// Only compiles in debug builds to eliminate overhead in release
+    #[cfg(debug_assertions)]
     fn add_debug_message(&mut self, message: String) {
         if self.debug_logging_enabled {
             self.debug_messages.push(message);
@@ -892,8 +884,8 @@ impl Game {
         }
     }
 
-    /// No-op version for release builds (but not tests)
-    #[cfg(not(any(debug_assertions, test)))]
+    /// No-op version for release builds
+    #[cfg(not(debug_assertions))]
     #[inline]
     fn add_debug_message(&mut self, _message: String) {
         // No-op in release builds
@@ -990,19 +982,15 @@ impl Game {
 
     /// Enable joker effect caching with default settings
     pub fn enable_joker_effect_cache(&mut self) {
-        let config = crate::joker_effect_processor::CacheConfig {
-            enabled: true,
-            ..Default::default()
-        };
+        let mut config = crate::joker_effect_processor::CacheConfig::default();
+        config.enabled = true;
         self.joker_effect_processor.set_cache_config(config);
     }
 
     /// Disable joker effect caching
     pub fn disable_joker_effect_cache(&mut self) {
-        let config = crate::joker_effect_processor::CacheConfig {
-            enabled: false,
-            ..Default::default()
-        };
+        let mut config = crate::joker_effect_processor::CacheConfig::default();
+        config.enabled = false;
         self.joker_effect_processor.set_cache_config(config);
     }
 
@@ -2348,8 +2336,7 @@ mod tests {
 
         // First call should miss cache
         let initial_metrics = game.get_joker_cache_metrics().clone();
-        let (chips1, mult1, money1, _mult_multiplier1, messages1) =
-            game.process_joker_effects(&made_hand);
+        let (chips1, mult1, money1, messages1) = game.process_joker_effects(&made_hand);
 
         // Verify cache metrics show a miss
         let metrics_after_first = game.get_joker_cache_metrics();
@@ -2358,8 +2345,7 @@ mod tests {
         // Second call with same input should potentially hit cache
         // Note: Since we create a new GameContext each time with current game state,
         // cache hits depend on the game state being identical
-        let (chips2, mult2, money2, _mult_multiplier2, messages2) =
-            game.process_joker_effects(&made_hand);
+        let (chips2, mult2, money2, messages2) = game.process_joker_effects(&made_hand);
 
         // Results should be identical regardless of cache
         assert_eq!(chips1, chips2);
@@ -2445,11 +2431,10 @@ mod tests {
 
         // Verify that both approaches produce the same results
         game.enable_joker_effect_cache();
-        let (chips_cached, mult_cached, money_cached, _, _) =
-            game.process_joker_effects(&made_hand);
+        let (chips_cached, mult_cached, money_cached, _) = game.process_joker_effects(&made_hand);
 
         game.disable_joker_effect_cache();
-        let (chips_uncached, mult_uncached, money_uncached, _, _) =
+        let (chips_uncached, mult_uncached, money_uncached, _) =
             game.process_joker_effects(&made_hand);
 
         assert_eq!(chips_cached, chips_uncached);

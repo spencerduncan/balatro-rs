@@ -330,7 +330,10 @@ impl VoucherGameState {
     }
 
     /// Apply a voucher effect to the game state with validation and safety checks
-    pub fn apply_voucher_effect(&mut self, effect: &VoucherEffect) -> Result<(), VoucherGameStateError> {
+    pub fn apply_voucher_effect(
+        &mut self,
+        effect: &VoucherEffect,
+    ) -> Result<(), VoucherGameStateError> {
         // First validate the effect
         effect.validate()?;
 

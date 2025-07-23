@@ -2,6 +2,7 @@ use crate::card::Card;
 use crate::error::GameError;
 use crate::game::Game;
 use crate::joker::JokerId;
+// Removed unused import - pyclass is used via attribute
 
 // Re-export legacy shop for backward compatibility
 pub use legacy::*;
@@ -215,8 +216,8 @@ impl ShopItem {
 
 /// Types of consumable cards available in the shop
 #[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "python", pyo3::pyclass(eq, eq_int, module = "pylatro"))]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "python", pyo3::pyclass(eq, eq_int))]
 pub enum ConsumableType {
     Tarot,
     Planet,

@@ -7,6 +7,7 @@ use crate::scaling_joker::ScalingJoker;
 
 /// Custom implementations for scaling jokers that require special logic
 /// beyond the basic ScalingJoker framework
+
 /// Green Joker: +1 mult per hand, -1 per discard
 #[derive(Debug, Clone)]
 pub struct GreenJoker {

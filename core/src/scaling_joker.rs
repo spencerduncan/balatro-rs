@@ -28,7 +28,7 @@ pub enum ScalingTrigger {
 impl fmt::Display for ScalingTrigger {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ScalingTrigger::HandPlayed(hand_rank) => write!(f, "{hand_rank} played"),
+            ScalingTrigger::HandPlayed(hand_rank) => write!(f, "{:?} played", hand_rank),
             ScalingTrigger::CardDiscarded => write!(f, "card discarded"),
             ScalingTrigger::MoneyGained => write!(f, "money gained"),
             ScalingTrigger::BlindCompleted => write!(f, "blind completed"),
@@ -62,7 +62,7 @@ pub enum ResetCondition {
 impl fmt::Display for ResetCondition {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ResetCondition::HandPlayed(hand_rank) => write!(f, "reset on {hand_rank:?} played"),
+            ResetCondition::HandPlayed(hand_rank) => write!(f, "reset on {:?} played", hand_rank),
             ResetCondition::RoundEnd => write!(f, "reset at round end"),
             ResetCondition::AnteEnd => write!(f, "reset at ante end"),
             ResetCondition::MoneySpent => write!(f, "reset when money spent"),
@@ -115,7 +115,6 @@ pub enum ScalingEffectType {
 
 impl ScalingJoker {
     /// Create a new scaling joker
-    #[allow(clippy::too_many_arguments)]
     pub fn new(
         id: JokerId,
         name: String,
@@ -252,9 +251,9 @@ impl ScalingJoker {
         let effect_desc = match self.effect_type {
             ScalingEffectType::Chips => format!("Currently: +{} Chips", current_value as i32),
             ScalingEffectType::Mult => format!("Currently: +{} Mult", current_value as i32),
-            ScalingEffectType::MultMultiplier => format!("Currently: X{current_value:.1} Mult"),
+            ScalingEffectType::MultMultiplier => format!("Currently: X{:.1} Mult", current_value),
             ScalingEffectType::Money => format!("Currently: +${}", current_value as i32),
-            ScalingEffectType::Custom => format!("Current value: {current_value:.1}"),
+            ScalingEffectType::Custom => format!("Current value: {:.1}", current_value),
         };
 
         format!("{}\n{}", self.description, effect_desc)
@@ -344,6 +343,8 @@ impl Joker for ScalingJoker {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::joker_state::JokerStateManager;
+    use std::sync::Arc;
 
     fn create_test_context() -> GameContext<'static> {
         // This is a simplified test context - in real tests we'd need proper initialization
@@ -393,7 +394,7 @@ mod tests {
     #[test]
     fn test_scaling_trigger_display() {
         assert_eq!(
-            format!("{}", ScalingTrigger::HandPlayed(HandRank::OnePair)),
+            format!("{}", ScalingTrigger::HandPlayed(HandRank::Pair)),
             "Pair played"
         );
         assert_eq!(

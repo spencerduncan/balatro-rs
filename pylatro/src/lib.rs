@@ -1340,7 +1340,7 @@ impl GameState {
 /// and memory safety. It avoids deprecated APIs and follows modern PyO3 best practices.
 fn safe_json_to_py(py: Python, value: &serde_json::Value) -> PyResult<pyo3::PyObject> {
     use pyo3::types::{PyDict, PyList};
-    
+
     match value {
         serde_json::Value::Null => Ok(py.None()),
         serde_json::Value::Bool(b) => Ok((*b).into_py(py)),
