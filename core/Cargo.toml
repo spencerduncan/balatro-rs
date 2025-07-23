@@ -14,9 +14,11 @@ indexmap = "2.6.0"
 itertools = "0.13.0"
 pyo3 = {version = "0.24.1", optional = true, features = ["auto-initialize"]}
 rand = "~0.8.5"
+regex = { version = "~1.10.2", optional = true }
 rand_chacha = "~0.3.1"
 serde = { version = "~1.0.215", optional = true, features = ["derive"] }
 serde_json = { version = "~1.0.118", optional = true }
+toml = { version = "~0.8.12", optional = true }
 strum = { version = "0.26", features = ["derive"] }
 thiserror = "~1.0.61"
 tracing = { version = "~0.1.40", optional = true}
@@ -30,7 +32,7 @@ default = ["serde", "python"]
 python = ["dep:pyo3"]
 statistical_tests = []  # Enable slow/flaky statistical tests (disabled in CI)
 integration_tests = []  # Enable slow integration tests (disabled in CI)
-serde = ["dep:serde", "dep:serde_json", "uuid?/serde"]
+serde = ["dep:serde", "dep:serde_json", "dep:toml", "dep:regex", "uuid?/serde"]
 colored = ["dep:colored"]
 
 [[bench]]
@@ -43,4 +45,8 @@ harness = false
 
 [[bench]]
 name = "actionspace_benchmark"
+harness = false
+
+[[bench]]
+name = "trait_benchmark"
 harness = false

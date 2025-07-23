@@ -4,23 +4,47 @@ This guide documents the migration from mixed numeric types to f64 for all game 
 
 ## Overview
 
-Balatro-rs has migrated all numeric game values from mixed types (usize, i32, f32) to f64 to match Lua's single Number type semantics. This architectural change ensures accurate emulation of Balatro's original behavior, including edge cases with NaN, Infinity, and very large numbers.
+Balatro-rs is in the process of migrating all numeric game values from mixed types (usize, i32, f32) to f64 to match Lua's single Number type semantics. This architectural change ensures accurate emulation of Balatro's original behavior, including edge cases with NaN, Infinity, and very large numbers.
+
+**⚠️ MIGRATION STATUS: PARTIALLY COMPLETE**
+- Core Game state fields have been migrated to f64
+- JokerEffect system migration is still in progress
+- Full migration blocked by completion of issues #239-244
+
+## Current Migration Status
+
+### What Works Now
+✅ **Game State Access**: Core game fields (chips, mult, score, money) are f64
+✅ **Python Bindings**: Seamless f64 integration for main game state
+✅ **Save/Load**: Automatic migration from old usize values to f64
+✅ **Hand Scoring**: Final scoring calculations use f64 precision
+
+### What's Still in Progress
+❌ **Joker Effects**: JokerEffect struct still uses i32 types
+❌ **Joker Context**: GameContext still uses i32 for calculations
+❌ **Effect Accumulation**: AccumulatedEffects still uses i32
+
+### Impact for Users
+- **Library Users**: Can use f64 for main game state, but joker implementations still need i32
+- **Python Users**: Mostly seamless, but joker-related calculations may show integer truncation
+- **Save Files**: Work correctly, but joker effects may lose precision during calculations
 
 ## Breaking Changes Summary
 
-### Core Game State Values
-- `Game.chips`: `usize` → `f64`
-- `Game.mult`: `usize` → `f64` 
-- `Game.score`: `usize` → `f64`
-- `Game.money`: `usize` → `f64`
-- `Game.round`: `usize` → `f64`
+### ✅ COMPLETED: Core Game State Values
+- `Game.chips`: `usize` → `f64` ✅
+- `Game.mult`: `usize` → `f64` ✅
+- `Game.score`: `usize` → `f64` ✅
+- `Game.money`: `usize` → `f64` ✅
+- `Game.round`: `usize` → `f64` ✅
 
-### JokerEffect System
-- `JokerEffect.chips`: `i32` → `f64`
-- `JokerEffect.mult`: `i32` → `f64`
-- `JokerEffect.money`: `i32` → `f64`
-- `JokerEffect.mult_multiplier`: `f32` → `f64`
-- All other numeric effect values now use `f64`
+### ❌ IN PROGRESS: JokerEffect System
+- `JokerEffect.chips`: `i32` → `f64` ❌ (still i32)
+- `JokerEffect.mult`: `i32` → `f64` ❌ (still i32)
+- `JokerEffect.money`: `i32` → `f64` ❌ (still i32)
+- `JokerEffect.mult_multiplier`: `f32` → `f64` ❌ (still f32)
+- `GameContext` fields: still using `i32` ❌
+- `AccumulatedEffects` fields: still using `i32` ❌
 
 ### Hand Evaluation
 - Card chip values now return `f64`
@@ -31,19 +55,28 @@ Balatro-rs has migrated all numeric game values from mixed types (usize, i32, f3
 
 ### For Library Users
 
-#### 1. Update Type Expectations
-If your code directly accesses game state fields, update type expectations:
+#### 1. Update Type Expectations for Game State
+Core game state fields are now f64:
 
 ```rust
-// Before
-let chips: usize = game.chips;
-let mult: usize = game.mult;
-let score: usize = game.score;
+// ✅ MIGRATED: Core game state fields
+let chips: f64 = game.chips;    // ✅ Already f64
+let mult: f64 = game.mult;      // ✅ Already f64
+let score: f64 = game.score;    // ✅ Already f64
+let money: f64 = game.money;    // ✅ Already f64
 
-// After
-let chips: f64 = game.chips;
-let mult: f64 = game.mult;
-let score: f64 = game.score;
+// ❌ NOT YET MIGRATED: Joker-related types still use i32
+// When implementing custom jokers, still use i32:
+impl Joker for MyJoker {
+    fn effect(&self, context: &GameContext) -> JokerEffect {
+        JokerEffect {
+            chips: 50,    // ❌ Still i32, not f64
+            mult: 2,      // ❌ Still i32, not f64
+            money: 5,     // ❌ Still i32, not f64
+            ..Default::default()
+        }
+    }
+}
 ```
 
 #### 2. Update Arithmetic Operations
@@ -203,17 +236,21 @@ let mult_str = format_mult(5.25);         // "x5.25"
 
 ### Updated Trait Implementations
 ```rust
-// JokerEffect implementations now handle f64
+// ❌ JokerEffect implementations still use i32 (migration in progress)
 impl Joker for MyCustomJoker {
     fn effect(&self, context: &GameContext) -> JokerEffect {
         JokerEffect {
-            chips: 50.0,           // Now f64
-            mult: 2.5,             // Fractional mult supported
-            mult_multiplier: 1.25, // Precise multipliers
+            chips: 50,             // ❌ Still i32, not f64
+            mult: 2,               // ❌ Still i32, fractional not supported yet
+            mult_multiplier: 1.25, // ❌ Still f32, not f64
             ..Default::default()
         }
     }
 }
+
+// ✅ Game state access already uses f64
+let current_chips: f64 = game.chips;
+let current_score: f64 = game.score;
 ```
 
 ### Python Binding Updates
@@ -388,14 +425,49 @@ let chips = game.chips; // Avoid repeated field access
 - **Version 2.x**: May remove legacy migration code
 - **Long-term**: Stable f64 API going forward
 
+## Remaining Work
+
+### Blocked Issues
+The complete f64 migration is blocked by the following open issues:
+- **Issue #240**: Migrate JokerEffect system to f64
+- **Issue #243**: Update serialization format for f64 values  
+- **Issue #244**: Update Python bindings for f64 values
+
+### When Complete
+Once all blocking issues are resolved, the full f64 migration will provide:
+- JokerEffect with f64 precision for fractional chip/mult bonuses
+- GameContext with f64 for consistent type handling
+- Full precision preservation throughout the joker effect pipeline
+- Complete Lua number semantics compatibility
+
+### Workarounds for Current State
+Until the migration is complete:
+
+```rust
+// ✅ Use f64 for game state access
+let score: f64 = game.score;
+let chips: f64 = game.chips;
+
+// ❌ Must still use i32 for joker effects
+let joker_effect = JokerEffect {
+    chips: 50,  // i32, will be converted to f64 during application
+    mult: 2,    // i32, will be converted to f64 during application
+    ..Default::default()
+};
+
+// ⚠️ Type conversion happens automatically but may lose precision
+// Large i32 values work fine, but fractional joker effects not yet supported
+```
+
 ## Summary
 
-The f64 migration provides:
-- ✅ **Lua Compatibility**: Matches original Balatro number semantics
-- ✅ **Fractional Precision**: Supports non-integer values
+**Current f64 migration status (PARTIAL)**:
+- ✅ **Core Game State**: f64 migration complete
+- ✅ **Lua Compatibility**: Core state matches Balatro semantics  
 - ✅ **Large Numbers**: Handles scores beyond integer limits
-- ✅ **Edge Cases**: Proper NaN/infinity handling
 - ✅ **Backward Compatibility**: Automatic save file migration
 - ✅ **Performance**: <5% impact in typical usage
+- ❌ **JokerEffect System**: Still uses i32, migration in progress
+- ❌ **Complete Type Consistency**: Mixed i32/f64 types still exist
 
-This migration positions balatro-rs for accurate Balatro emulation while maintaining excellent performance and developer experience.
+This partial migration provides most benefits for game state handling while joker effect system migration continues. The foundation is solid and the remaining work is focused on the joker subsystem.

@@ -51,7 +51,8 @@ impl JokerMetadata {
         let effect_type = determine_effect_type(&definition.id, &definition.description);
 
         // Determine effect priority based on type and joker characteristics
-        let effect_priority = determine_effect_priority(&definition.id, &effect_type, &definition.description);
+        let effect_priority =
+            determine_effect_priority(&definition.id, &effect_type, &definition.description);
 
         // Extract trigger information
         let triggers_on = extract_triggers(&definition.id, &definition.description);
@@ -69,10 +70,7 @@ impl JokerMetadata {
         let persistent_data = check_persistent_data(&definition.id);
 
         // Create effect description
-        let effect_description = create_effect_description(
-            &definition.id,
-            &definition.description,
-        );
+        let effect_description = create_effect_description(&definition.id, &definition.description);
 
         Self {
             id: definition.id,
@@ -123,22 +121,35 @@ fn determine_effect_type(id: &JokerId, description: &str) -> String {
 }
 
 /// Determine the effect priority of a joker based on its characteristics
-pub fn determine_effect_priority(id: &JokerId, effect_type: &str, description: &str) -> EffectPriority {
+pub fn determine_effect_priority(
+    id: &JokerId,
+    effect_type: &str,
+    description: &str,
+) -> EffectPriority {
     // High priority for multiplicative effects (should be processed after additive effects)
-    if effect_type == "multiplicative_mult" || description.contains("×") || description.contains("X") {
+    if effect_type == "multiplicative_mult"
+        || description.contains("×")
+        || description.contains("X")
+    {
         return EffectPriority::Critical;
     }
-    
+
     // Critical priority for special destructive or transformative effects
-    if description.contains("destroy") || description.contains("transform") || description.contains("convert") {
+    if description.contains("destroy")
+        || description.contains("transform")
+        || description.contains("convert")
+    {
         return EffectPriority::Critical;
     }
-    
+
     // High priority for economy and special state-changing effects
-    if effect_type == "economy" || effect_type == "hand_modification" || effect_type == "discard_modification" {
+    if effect_type == "economy"
+        || effect_type == "hand_modification"
+        || effect_type == "discard_modification"
+    {
         return EffectPriority::High;
     }
-    
+
     // Special handling for specific jokers that need particular ordering
     match id {
         // Ice Cream has conditional effects that should be processed early
@@ -437,49 +448,57 @@ mod tests {
             determine_effect_priority(&JokerId::Joker, "multiplicative_mult", "X2 Mult"),
             EffectPriority::Critical
         );
-        
+
         // Test destructive effects get Critical priority
         assert_eq!(
             determine_effect_priority(&JokerId::Joker, "special", "destroy cards"),
             EffectPriority::Critical
         );
-        
+
         // Test economy effects get High priority
         assert_eq!(
             determine_effect_priority(&JokerId::Joker, "economy", "Earn $5"),
             EffectPriority::High
         );
-        
+
         // Test hand modification effects get High priority
         assert_eq!(
             determine_effect_priority(&JokerId::Joker, "hand_modification", "+1 hand size"),
             EffectPriority::High
         );
-        
+
         // Test specific joker priorities
         assert_eq!(
-            determine_effect_priority(&JokerId::IceCream, "conditional_chips", "conditional effect"),
+            determine_effect_priority(
+                &JokerId::IceCream,
+                "conditional_chips",
+                "conditional effect"
+            ),
             EffectPriority::Low
         );
-        
+
         assert_eq!(
             determine_effect_priority(&JokerId::EggJoker, "special", "affects sell values"),
             EffectPriority::High
         );
-        
+
         assert_eq!(
             determine_effect_priority(&JokerId::SpaceJoker, "special", "multiplicative potential"),
             EffectPriority::High
         );
-        
+
         // Test standard jokers get Normal priority
         assert_eq!(
             determine_effect_priority(&JokerId::Joker, "additive_mult", "+4 Mult"),
             EffectPriority::Normal
         );
-        
+
         assert_eq!(
-            determine_effect_priority(&JokerId::GreedyJoker, "additive_mult", "+3 Mult for Diamonds"),
+            determine_effect_priority(
+                &JokerId::GreedyJoker,
+                "additive_mult",
+                "+3 Mult for Diamonds"
+            ),
             EffectPriority::Normal
         );
     }

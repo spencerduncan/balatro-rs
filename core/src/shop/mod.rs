@@ -216,6 +216,7 @@ impl ShopItem {
 /// Types of consumable cards available in the shop
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "python", pyo3::pyclass(eq, eq_int))]
 pub enum ConsumableType {
     Tarot,
     Planet,

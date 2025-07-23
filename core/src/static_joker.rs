@@ -20,6 +20,8 @@ pub enum StaticCondition {
     AnySuitScored(Vec<Suit>),
     /// Apply when multiple ranks are scored
     AnyRankScored(Vec<Value>),
+    /// Apply when the hand has at most the specified number of cards
+    HandSizeAtMost(usize),
 }
 
 /// A static joker that provides consistent bonuses based on conditions
@@ -145,6 +147,10 @@ impl StaticJoker {
                     HandRank::HighCard => hand.is_highcard().is_some(),
                 }
             }
+            StaticCondition::HandSizeAtMost(max_size) => {
+                // Check if the hand has at most the specified number of cards
+                hand.cards().len() <= *max_size
+            }
             _ => {
                 // For suit/rank conditions on hands, check if any card matches
                 hand.cards()
@@ -164,6 +170,10 @@ impl StaticJoker {
             StaticCondition::AnyRankScored(values) => values.contains(&card.value),
             StaticCondition::HandType(_) => {
                 // Hand type conditions don't apply to individual cards
+                false
+            }
+            StaticCondition::HandSizeAtMost(_) => {
+                // Hand size conditions don't apply to individual cards
                 false
             }
         }
@@ -250,6 +260,11 @@ impl StaticJokerBuilder {
             (StaticCondition::HandType(_), true) => {
                 return Err("HandType conditions should be per_hand, not per_card".to_string());
             }
+            (StaticCondition::HandSizeAtMost(_), true) => {
+                return Err(
+                    "HandSizeAtMost conditions should be per_hand, not per_card".to_string()
+                );
+            }
             (StaticCondition::SuitScored(_), false) => {
                 return Err("SuitScored conditions should be per_card, not per_hand".to_string());
             }
@@ -257,22 +272,16 @@ impl StaticJokerBuilder {
                 return Err("RankScored conditions should be per_card, not per_hand".to_string());
             }
             (StaticCondition::AnySuitScored(_), false) => {
-                return Err(
-                    "AnySuitScored conditions should be per_card, not per_hand".to_string(),
-                );
+                return Err("AnySuitScored conditions should be per_card, not per_hand".to_string());
             }
             (StaticCondition::AnyRankScored(_), false) => {
-                return Err(
-                    "AnyRankScored conditions should be per_card, not per_hand".to_string(),
-                );
+                return Err("AnyRankScored conditions should be per_card, not per_hand".to_string());
             }
             _ => {} // Valid combinations
         }
 
         // Validate that at least one bonus is specified
-        if self.chips_bonus.is_none()
-            && self.mult_bonus.is_none()
-            && self.mult_multiplier.is_none()
+        if self.chips_bonus.is_none() && self.mult_bonus.is_none() && self.mult_multiplier.is_none()
         {
             return Err(
                 "At least one bonus (chips, mult, or mult_multiplier) must be specified"
@@ -385,8 +394,7 @@ mod tests {
 
     #[test]
     fn test_suit_jokers_greedy() {
-        let joker =
-            crate::static_joker_factory::StaticJokerFactory::create_greedy_joker_concrete();
+        let joker = crate::static_joker_factory::StaticJokerFactory::create_greedy_joker_concrete();
 
         // Test properties
         assert_eq!(joker.id(), JokerId::GreedyJoker);
@@ -1238,6 +1246,194 @@ mod tests {
             .condition(StaticCondition::Always)
             .per_hand()
             .build();
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_hand_size_at_most_condition() {
+        let joker = StaticJoker::builder(
+            JokerId::HalfJoker,
+            "Half Joker",
+            "+20 Mult if played hand has 4 or fewer cards",
+        )
+        .mult(20)
+        .condition(StaticCondition::HandSizeAtMost(4))
+        .per_hand()
+        .build()
+        .expect("Valid joker configuration");
+
+        // Test with 4 cards (should trigger)
+        let four_card_hand = SelectHand::new(vec![
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::Queen, Suit::Diamond),
+            Card::new(Value::Jack, Suit::Club),
+            Card::new(Value::Ten, Suit::Spade),
+        ]);
+
+        // Test with 3 cards (should trigger)
+        let three_card_hand = SelectHand::new(vec![
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::Queen, Suit::Diamond),
+            Card::new(Value::Jack, Suit::Club),
+        ]);
+
+        // Test with 2 cards (should trigger)
+        let two_card_hand = SelectHand::new(vec![
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::Queen, Suit::Diamond),
+        ]);
+
+        // Test with 1 card (should trigger)
+        let one_card_hand = SelectHand::new(vec![Card::new(Value::King, Suit::Heart)]);
+
+        // Test with 5 cards (should NOT trigger)
+        let five_card_hand = SelectHand::new(vec![
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::Queen, Suit::Diamond),
+            Card::new(Value::Jack, Suit::Club),
+            Card::new(Value::Ten, Suit::Spade),
+            Card::new(Value::Nine, Suit::Heart),
+        ]);
+
+        // Test with 6 cards (should NOT trigger)
+        let six_card_hand = SelectHand::new(vec![
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::Queen, Suit::Diamond),
+            Card::new(Value::Jack, Suit::Club),
+            Card::new(Value::Ten, Suit::Spade),
+            Card::new(Value::Nine, Suit::Heart),
+            Card::new(Value::Eight, Suit::Diamond),
+        ]);
+
+        // Verify conditions
+        assert!(
+            joker.check_hand_condition(&four_card_hand),
+            "4 cards should trigger Half Joker"
+        );
+        assert!(
+            joker.check_hand_condition(&three_card_hand),
+            "3 cards should trigger Half Joker"
+        );
+        assert!(
+            joker.check_hand_condition(&two_card_hand),
+            "2 cards should trigger Half Joker"
+        );
+        assert!(
+            joker.check_hand_condition(&one_card_hand),
+            "1 card should trigger Half Joker"
+        );
+        assert!(
+            !joker.check_hand_condition(&five_card_hand),
+            "5 cards should NOT trigger Half Joker"
+        );
+        assert!(
+            !joker.check_hand_condition(&six_card_hand),
+            "6 cards should NOT trigger Half Joker"
+        );
+    }
+
+    #[test]
+    fn test_hand_size_at_most_edge_cases() {
+        // Test with 0 max size (should only trigger on empty hands)
+        let zero_joker = StaticJoker::builder(
+            JokerId::Joker,
+            "Empty Hand Joker",
+            "+10 Mult if hand is empty",
+        )
+        .mult(10)
+        .condition(StaticCondition::HandSizeAtMost(0))
+        .per_hand()
+        .build()
+        .expect("Valid joker configuration");
+
+        // Test with empty hand
+        let empty_hand = SelectHand::new(vec![]);
+
+        // Test with one card
+        let one_card_hand = SelectHand::new(vec![Card::new(Value::King, Suit::Heart)]);
+
+        assert!(
+            zero_joker.check_hand_condition(&empty_hand),
+            "Empty hand should trigger with max size 0"
+        );
+        assert!(
+            !zero_joker.check_hand_condition(&one_card_hand),
+            "1 card should NOT trigger with max size 0"
+        );
+
+        // Test with very large max size
+        let large_joker = StaticJoker::builder(
+            JokerId::Joker,
+            "Large Hand Joker",
+            "+5 Mult if hand has at most 100 cards",
+        )
+        .mult(5)
+        .condition(StaticCondition::HandSizeAtMost(100))
+        .per_hand()
+        .build()
+        .expect("Valid joker configuration");
+
+        let normal_hand = SelectHand::new(vec![
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::Queen, Suit::Diamond),
+            Card::new(Value::Jack, Suit::Club),
+            Card::new(Value::Ten, Suit::Spade),
+            Card::new(Value::Nine, Suit::Heart),
+        ]);
+
+        assert!(
+            large_joker.check_hand_condition(&normal_hand),
+            "5 cards should trigger with max size 100"
+        );
+    }
+
+    #[test]
+    fn test_hand_size_at_most_with_card_condition() {
+        let joker = StaticJoker::builder(
+            JokerId::HalfJoker,
+            "Half Joker",
+            "+20 Mult if played hand has 4 or fewer cards",
+        )
+        .mult(20)
+        .condition(StaticCondition::HandSizeAtMost(4))
+        .per_hand()
+        .build()
+        .expect("Valid joker configuration");
+
+        // Hand size conditions should not apply to individual cards
+        let card = Card::new(Value::King, Suit::Heart);
+        assert!(
+            !joker.check_card_condition(&card),
+            "Hand size conditions should not apply to individual cards"
+        );
+    }
+
+    #[test]
+    fn test_hand_size_at_most_builder_validation() {
+        // Test that HandSizeAtMost condition with per_card fails validation
+        let result = StaticJoker::builder(
+            JokerId::HalfJoker,
+            "Invalid Half Joker",
+            "This should fail validation",
+        )
+        .mult(20)
+        .condition(StaticCondition::HandSizeAtMost(4))
+        .per_card() // This should be invalid with HandSizeAtMost
+        .build();
+
+        assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .contains("HandSizeAtMost conditions should be per_hand"));
+
+        // Test that HandSizeAtMost condition with per_hand is valid
+        let result =
+            StaticJoker::builder(JokerId::HalfJoker, "Valid Half Joker", "This should work")
+                .mult(20)
+                .condition(StaticCondition::HandSizeAtMost(4))
+                .per_hand()
+                .build();
 
         assert!(result.is_ok());
     }

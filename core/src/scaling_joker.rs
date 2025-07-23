@@ -1,4 +1,4 @@
-use crate::joker::{Joker, JokerId, JokerRarity, JokerEffect, GameContext};
+use crate::joker::{GameContext, Joker, JokerEffect, JokerId, JokerRarity};
 use crate::joker_state::JokerState;
 use crate::rank::HandRank;
 use serde::{Deserialize, Serialize};
@@ -28,7 +28,7 @@ pub enum ScalingTrigger {
 impl fmt::Display for ScalingTrigger {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ScalingTrigger::HandPlayed(hand_rank) => write!(f, "{} played", hand_rank),
+            ScalingTrigger::HandPlayed(hand_rank) => write!(f, "{hand_rank} played"),
             ScalingTrigger::CardDiscarded => write!(f, "card discarded"),
             ScalingTrigger::MoneyGained => write!(f, "money gained"),
             ScalingTrigger::BlindCompleted => write!(f, "blind completed"),
@@ -62,7 +62,7 @@ pub enum ResetCondition {
 impl fmt::Display for ResetCondition {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ResetCondition::HandPlayed(hand_rank) => write!(f, "reset on {} played", hand_rank),
+            ResetCondition::HandPlayed(hand_rank) => write!(f, "reset on {hand_rank:?} played"),
             ResetCondition::RoundEnd => write!(f, "reset at round end"),
             ResetCondition::AnteEnd => write!(f, "reset at ante end"),
             ResetCondition::MoneySpent => write!(f, "reset when money spent"),
@@ -115,6 +115,7 @@ pub enum ScalingEffectType {
 
 impl ScalingJoker {
     /// Create a new scaling joker
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         id: JokerId,
         name: String,
@@ -163,26 +164,22 @@ impl ScalingJoker {
     fn increment_value(&self, context: &mut GameContext) {
         let current_value = self.get_accumulated_value(context);
         let new_value = current_value + self.increment;
-        
+
         let final_value = match self.max_value {
             Some(max) => new_value.min(max),
             None => new_value,
         };
 
-        context
-            .joker_state_manager
-            .update_state(self.id, |state| {
-                state.accumulated_value = final_value;
-            });
+        context.joker_state_manager.update_state(self.id, |state| {
+            state.accumulated_value = final_value;
+        });
     }
 
     /// Reset the accumulated value to base value
     fn reset_value(&self, context: &mut GameContext) {
-        context
-            .joker_state_manager
-            .update_state(self.id, |state| {
-                state.accumulated_value = self.base_value;
-            });
+        context.joker_state_manager.update_state(self.id, |state| {
+            state.accumulated_value = self.base_value;
+        });
     }
 
     /// Check if a reset condition is met and reset if necessary
@@ -231,7 +228,7 @@ impl ScalingJoker {
     pub fn process_event(&self, context: &mut GameContext, event: &ScalingEvent) {
         // Check reset first (so we don't trigger and then immediately reset)
         self.check_and_apply_reset(context, event);
-        
+
         // Then check trigger
         self.check_and_apply_trigger(context, event);
     }
@@ -239,7 +236,7 @@ impl ScalingJoker {
     /// Calculate the effect based on current accumulated value
     pub fn calculate_effect(&self, context: &GameContext) -> JokerEffect {
         let value = self.get_accumulated_value(context);
-        
+
         match self.effect_type {
             ScalingEffectType::Chips => JokerEffect::new().with_chips(value as i32),
             ScalingEffectType::Mult => JokerEffect::new().with_mult(value as i32),
@@ -255,9 +252,9 @@ impl ScalingJoker {
         let effect_desc = match self.effect_type {
             ScalingEffectType::Chips => format!("Currently: +{} Chips", current_value as i32),
             ScalingEffectType::Mult => format!("Currently: +{} Mult", current_value as i32),
-            ScalingEffectType::MultMultiplier => format!("Currently: X{:.1} Mult", current_value),
+            ScalingEffectType::MultMultiplier => format!("Currently: X{current_value:.1} Mult"),
             ScalingEffectType::Money => format!("Currently: +${}", current_value as i32),
-            ScalingEffectType::Custom => format!("Current value: {:.1}", current_value),
+            ScalingEffectType::Custom => format!("Current value: {current_value:.1}"),
         };
 
         format!("{}\n{}", self.description, effect_desc)
@@ -299,14 +296,18 @@ impl Joker for ScalingJoker {
         self.rarity
     }
 
-    fn on_hand_played(&self, context: &mut GameContext, hand: &crate::hand::SelectHand) -> JokerEffect {
+    fn on_hand_played(
+        &self,
+        context: &mut GameContext,
+        hand: &crate::hand::SelectHand,
+    ) -> JokerEffect {
         // Process scaling event
         let hand_rank = match hand.best_hand() {
             Ok(made_hand) => made_hand.rank,
             Err(_) => HandRank::HighCard, // Fallback to high card if evaluation fails
         };
         self.process_event(context, &ScalingEvent::HandPlayed(hand_rank));
-        
+
         // Return current effect
         self.calculate_effect(context)
     }
@@ -314,7 +315,7 @@ impl Joker for ScalingJoker {
     fn on_discard(&self, context: &mut GameContext, _cards: &[crate::card::Card]) -> JokerEffect {
         // Process scaling event for each discarded card
         self.process_event(context, &ScalingEvent::CardDiscarded);
-        
+
         // Return current effect (if applicable to discard phase)
         JokerEffect::new()
     }
@@ -322,7 +323,7 @@ impl Joker for ScalingJoker {
     fn on_shop_open(&self, context: &mut GameContext) -> JokerEffect {
         // Process scaling event
         self.process_event(context, &ScalingEvent::ShopEntered);
-        
+
         // Return current effect (if applicable to shop phase)
         JokerEffect::new()
     }
@@ -330,7 +331,7 @@ impl Joker for ScalingJoker {
     fn on_round_end(&self, context: &mut GameContext) -> JokerEffect {
         // Process scaling event
         self.process_event(context, &ScalingEvent::RoundEnd);
-        
+
         // Return current effect (if applicable to round end)
         JokerEffect::new()
     }
@@ -343,8 +344,6 @@ impl Joker for ScalingJoker {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::joker_state::JokerStateManager;
-    use std::sync::Arc;
 
     fn create_test_context() -> GameContext<'static> {
         // This is a simplified test context - in real tests we'd need proper initialization
@@ -394,10 +393,13 @@ mod tests {
     #[test]
     fn test_scaling_trigger_display() {
         assert_eq!(
-            format!("{}", ScalingTrigger::HandPlayed(HandRank::Pair)),
+            format!("{}", ScalingTrigger::HandPlayed(HandRank::OnePair)),
             "Pair played"
         );
-        assert_eq!(format!("{}", ScalingTrigger::CardDiscarded), "card discarded");
+        assert_eq!(
+            format!("{}", ScalingTrigger::CardDiscarded),
+            "card discarded"
+        );
         assert_eq!(format!("{}", ScalingTrigger::MoneyGained), "money gained");
     }
 
@@ -407,7 +409,10 @@ mod tests {
             format!("{}", ResetCondition::HandPlayed(HandRank::Flush)),
             "reset on Flush played"
         );
-        assert_eq!(format!("{}", ResetCondition::RoundEnd), "reset at round end");
+        assert_eq!(
+            format!("{}", ResetCondition::RoundEnd),
+            "reset at round end"
+        );
         assert_eq!(format!("{}", ResetCondition::Never), "never resets");
     }
 }

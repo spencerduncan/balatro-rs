@@ -44,33 +44,33 @@ pub enum Action {
     SkipPack { pack_id: usize },
     NextRound(),
     SelectBlind(Blind),
-    
+
     // Multi-select actions for cards
-    SelectCards(Vec<Card>),           // Select multiple cards at once
-    DeselectCard(Card),               // Deselect a specific card
-    DeselectCards(Vec<Card>),         // Deselect multiple cards
-    ToggleCardSelection(Card),        // Toggle selection state of a card
-    SelectAllCards(),                 // Select all available cards
-    DeselectAllCards(),               // Clear all card selections
+    SelectCards(Vec<Card>),    // Select multiple cards at once
+    DeselectCard(Card),        // Deselect a specific card
+    DeselectCards(Vec<Card>),  // Deselect multiple cards
+    ToggleCardSelection(Card), // Toggle selection state of a card
+    SelectAllCards(),          // Select all available cards
+    DeselectAllCards(),        // Clear all card selections
     RangeSelectCards { start: Card, end: Card }, // Select range of cards
-    
-    // Multi-select actions for jokers  
-    SelectJoker(JokerId),             // Select a joker
-    DeselectJoker(JokerId),           // Deselect a joker
-    ToggleJokerSelection(JokerId),    // Toggle joker selection
-    SelectAllJokers(),                // Select all available jokers
-    DeselectAllJokers(),              // Clear all joker selections
-    
+
+    // Multi-select actions for jokers
+    SelectJoker(JokerId),          // Select a joker
+    DeselectJoker(JokerId),        // Deselect a joker
+    ToggleJokerSelection(JokerId), // Toggle joker selection
+    SelectAllJokers(),             // Select all available jokers
+    DeselectAllJokers(),           // Clear all joker selections
+
     // Batch operations
     BuyJokers(Vec<(JokerId, usize)>), // Buy multiple jokers
     SellJokers(Vec<JokerId>),         // Sell multiple jokers
     BuyPacks(Vec<PackType>),          // Buy multiple packs
-    
+
     // Multi-select control
-    ActivateMultiSelect(),            // Enter multi-select mode
-    DeactivateMultiSelect(),          // Exit multi-select mode and clear selections
-    
-    // SkipBlind(Blind),
+    ActivateMultiSelect(), // Enter multi-select mode
+    DeactivateMultiSelect(), // Exit multi-select mode and clear selections
+
+                           // SkipBlind(Blind),
 }
 
 impl fmt::Display for Action {
@@ -116,7 +116,7 @@ impl fmt::Display for Action {
             Self::SelectBlind(blind) => {
                 write!(f, "SelectBlind: {blind}")
             }
-            
+
             // Multi-select actions for cards
             Self::SelectCards(cards) => {
                 write!(f, "SelectCards: {} cards", cards.len())
@@ -139,7 +139,7 @@ impl fmt::Display for Action {
             Self::RangeSelectCards { start, end } => {
                 write!(f, "RangeSelectCards: {start} to {end}")
             }
-            
+
             // Multi-select actions for jokers
             Self::SelectJoker(joker_id) => {
                 write!(f, "SelectJoker: {joker_id:?}")
@@ -156,7 +156,7 @@ impl fmt::Display for Action {
             Self::DeselectAllJokers() => {
                 write!(f, "DeselectAllJokers")
             }
-            
+
             // Batch operations
             Self::BuyJokers(jokers) => {
                 write!(f, "BuyJokers: {} jokers", jokers.len())
@@ -167,7 +167,7 @@ impl fmt::Display for Action {
             Self::BuyPacks(packs) => {
                 write!(f, "BuyPacks: {} packs", packs.len())
             }
-            
+
             // Multi-select control
             Self::ActivateMultiSelect() => {
                 write!(f, "ActivateMultiSelect")

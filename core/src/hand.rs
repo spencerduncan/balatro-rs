@@ -26,6 +26,11 @@ impl Hand {
     pub fn new(cards: Vec<Card>) -> Self {
         Self(cards)
     }
+
+    /// Get a reference to the cards in this hand
+    pub fn cards(&self) -> &[Card] {
+        &self.0
+    }
 }
 
 // MadeHand represents actual poker hand level and associated cards from a selected hand.

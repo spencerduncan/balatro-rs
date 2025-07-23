@@ -1,13 +1,12 @@
-use crate::scaling_joker::{ScalingJoker, ScalingEvent, ScalingEffectType};
-use crate::joker::{Joker, JokerId, JokerRarity, JokerEffect, GameContext};
-use crate::joker_state::JokerState;
-use crate::hand::SelectHand;
 use crate::card::Card;
+use crate::hand::SelectHand;
+use crate::joker::{GameContext, Joker, JokerEffect, JokerId, JokerRarity};
+use crate::joker_state::JokerState;
 use crate::rank::HandRank;
+use crate::scaling_joker::ScalingJoker;
 
 /// Custom implementations for scaling jokers that require special logic
 /// beyond the basic ScalingJoker framework
-
 /// Green Joker: +1 mult per hand, -1 per discard
 #[derive(Debug, Clone)]
 pub struct GreenJoker {
@@ -19,6 +18,12 @@ impl GreenJoker {
         Self {
             base: crate::scaling_joker_impl::create_green_joker(),
         }
+    }
+}
+
+impl Default for GreenJoker {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -39,11 +44,13 @@ impl Joker for GreenJoker {
         self.base.rarity()
     }
 
-    fn on_hand_played(&self, context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
+    fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
         // Increment value for any hand played
-        context.joker_state_manager.update_state(self.id(), |state| {
-            state.accumulated_value += 1.0;
-        });
+        context
+            .joker_state_manager
+            .update_state(self.id(), |state| {
+                state.accumulated_value += 1.0;
+            });
 
         // Return current effect
         let current_value = context
@@ -53,11 +60,13 @@ impl Joker for GreenJoker {
         JokerEffect::new().with_mult(current_value as i32)
     }
 
-    fn on_discard(&self, context: &mut GameContext, cards: &[Card]) -> JokerEffect {
+    fn on_discard(&self, context: &mut GameContext, _cards: &[Card]) -> JokerEffect {
         // Decrease value for each discard action (not per card)
-        context.joker_state_manager.update_state(self.id(), |state| {
-            state.accumulated_value = (state.accumulated_value - 1.0).max(0.0);
-        });
+        context
+            .joker_state_manager
+            .update_state(self.id(), |state| {
+                state.accumulated_value = (state.accumulated_value - 1.0).max(0.0);
+            });
 
         JokerEffect::new()
     }
@@ -81,6 +90,12 @@ impl SquareJoker {
     }
 }
 
+impl Default for SquareJoker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Joker for SquareJoker {
     fn id(&self) -> JokerId {
         self.base.id()
@@ -101,9 +116,11 @@ impl Joker for SquareJoker {
     fn on_hand_played(&self, context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
         // Check if hand has exactly 4 cards
         if hand.len() == 4 {
-            context.joker_state_manager.update_state(self.id(), |state| {
-                state.accumulated_value += 4.0;
-            });
+            context
+                .joker_state_manager
+                .update_state(self.id(), |state| {
+                    state.accumulated_value += 4.0;
+                });
         }
 
         // Return current effect
@@ -133,6 +150,12 @@ impl BullJoker {
     }
 }
 
+impl Default for BullJoker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Joker for BullJoker {
     fn id(&self) -> JokerId {
         self.base.id()
@@ -152,7 +175,7 @@ impl Joker for BullJoker {
 
     fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
         // Effect is based on current money, not accumulated
-        let chips_bonus = context.money * 2;
+        let chips_bonus = (context.money as f64 * 2.0) as i32;
         JokerEffect::new().with_chips(chips_bonus)
     }
 
@@ -175,6 +198,12 @@ impl BootstrapsJoker {
     }
 }
 
+impl Default for BootstrapsJoker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Joker for BootstrapsJoker {
     fn id(&self) -> JokerId {
         self.base.id()
@@ -194,7 +223,7 @@ impl Joker for BootstrapsJoker {
 
     fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
         // Effect is based on current money divided by 5
-        let mult_bonus = (context.money / 5) * 2;
+        let mult_bonus = ((context.money as f64 / 5.0) * 2.0) as i32;
         JokerEffect::new().with_mult(mult_bonus)
     }
 
@@ -217,6 +246,12 @@ impl BannerJoker {
     }
 }
 
+impl Default for BannerJoker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Joker for BannerJoker {
     fn id(&self) -> JokerId {
         self.base.id()
@@ -236,10 +271,10 @@ impl Joker for BannerJoker {
 
     fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
         // Calculate remaining discards (assuming 3 base discards per round)
-        let base_discards = 3; // This should come from game config
+        let base_discards: usize = 3; // This should come from game config
         let remaining_discards = base_discards.saturating_sub(context.discards_used as usize);
         let chips_bonus = remaining_discards * 30;
-        
+
         JokerEffect::new().with_chips(chips_bonus as i32)
     }
 
@@ -262,6 +297,12 @@ impl CeremonialDagger {
     }
 }
 
+impl Default for CeremonialDagger {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Joker for CeremonialDagger {
     fn id(&self) -> JokerId {
         self.base.id()
@@ -281,12 +322,14 @@ impl Joker for CeremonialDagger {
 
     fn on_blind_start(&self, context: &mut GameContext) -> JokerEffect {
         // Double the mult multiplier when blind starts
-        context.joker_state_manager.update_state(self.id(), |state| {
-            state.accumulated_value *= 2.0;
-            if state.accumulated_value == 0.0 {
-                state.accumulated_value = 2.0; // Start at 2x if was 0
-            }
-        });
+        context
+            .joker_state_manager
+            .update_state(self.id(), |state| {
+                state.accumulated_value *= 2.0;
+                if state.accumulated_value == 0.0 {
+                    state.accumulated_value = 2.0; // Start at 2x if was 0
+                }
+            });
 
         JokerEffect::new()
     }
@@ -302,9 +345,11 @@ impl Joker for CeremonialDagger {
 
     fn on_round_end(&self, context: &mut GameContext) -> JokerEffect {
         // Reset to base value at round end
-        context.joker_state_manager.update_state(self.id(), |state| {
-            state.accumulated_value = 1.0;
-        });
+        context
+            .joker_state_manager
+            .update_state(self.id(), |state| {
+                state.accumulated_value = 1.0;
+            });
 
         JokerEffect::new()
     }
@@ -325,6 +370,12 @@ impl MysticSummit {
         Self {
             base: crate::scaling_joker_impl::create_mystic_summit(),
         }
+    }
+}
+
+impl Default for MysticSummit {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -351,15 +402,18 @@ impl Joker for MysticSummit {
             Ok(made_hand) => made_hand.rank,
             Err(_) => HandRank::HighCard, // Fallback to high card if evaluation fails
         };
-        
+
         // Check if this hand type was played before
         let played_count = context.get_hand_type_count(hand_rank);
-        
+
         // If this is the first time playing this hand type, increment
-        if played_count == 1 { // Count includes current hand, so 1 means first time
-            context.joker_state_manager.update_state(self.id(), |state| {
-                state.accumulated_value += 15.0;
-            });
+        if played_count == 1 {
+            // Count includes current hand, so 1 means first time
+            context
+                .joker_state_manager
+                .update_state(self.id(), |state| {
+                    state.accumulated_value += 15.0;
+                });
         }
 
         // Return current effect
@@ -405,9 +459,6 @@ pub fn get_custom_scaling_joker_by_id(id: JokerId) -> Option<Box<dyn Joker>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::joker_state::JokerStateManager;
-    use std::sync::Arc;
-    use std::collections::HashMap;
 
     fn create_test_context() -> GameContext<'static> {
         // Placeholder - in real tests we'd need proper context setup
@@ -421,15 +472,23 @@ mod tests {
         assert_eq!(joker.name(), "Green Joker");
     }
 
-    #[test] 
+    #[test]
     fn test_all_custom_jokers_created() {
         let jokers = create_all_custom_scaling_jokers();
-        assert_eq!(jokers.len(), 7, "Should create exactly 7 custom scaling jokers");
-        
+        assert_eq!(
+            jokers.len(),
+            7,
+            "Should create exactly 7 custom scaling jokers"
+        );
+
         // Test that all jokers have unique IDs
         let mut ids = std::collections::HashSet::new();
         for joker in &jokers {
-            assert!(ids.insert(joker.id()), "Duplicate joker ID found: {:?}", joker.id());
+            assert!(
+                ids.insert(joker.id()),
+                "Duplicate joker ID found: {:?}",
+                joker.id()
+            );
         }
     }
 
