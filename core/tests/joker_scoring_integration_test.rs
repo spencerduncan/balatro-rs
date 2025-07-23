@@ -134,7 +134,7 @@ fn test_debug_logging_for_joker_contributions() {
     let debug_messages = game.get_debug_messages();
     assert!(!debug_messages.is_empty(), "Should have debug messages");
     assert!(
-        debug_messages.iter().any(|msg| msg.contains("Joker")),
+        debug_messages.iter().any(|msg| msg.contains("joker")),
         "Should log joker effects"
     );
 }
@@ -193,12 +193,8 @@ fn test_killscreen_behavior() {
 
     let score = game.calc_score(hand);
 
-    // Debug: print the score and debug messages to understand what's happening
-    println!("Score: {}, is_finite: {}", score, score.is_finite());
+    // Check debug messages
     let debug_messages = game.get_debug_messages();
-    for msg in debug_messages {
-        println!("Debug: {}", msg);
-    }
 
     // Score should be infinite (killscreen reached) OR we should have killscreen message
     let has_killscreen_msg = debug_messages.iter().any(|msg| msg.contains("KILLSCREEN"));
