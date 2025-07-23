@@ -1,0 +1,496 @@
+# TOML Joker Definitions Example
+# This file demonstrates the comprehensive TOML schema for defining jokers
+# Schema Version: 1.0.0
+
+schema_version = "1.0.0"
+
+# ================================
+# BASIC SCORING JOKERS (Common)
+# ================================
+
+# Simple mult bonus joker
+[[jokers]]
+id = "joker"
+name = "Joker"
+description = "+4 Mult"
+rarity = "common"
+cost = 2
+
+[jokers.effect]
+type = "scoring"
+mult = 4
+
+# Simple chips bonus joker
+[[jokers]]
+id = "jolly_joker"
+name = "Jolly Joker"
+description = "+8 Mult if played hand contains a Pair"
+rarity = "common"
+cost = 3
+
+[jokers.effect]
+type = "conditional"
+per_card = false
+
+[jokers.effect.condition]
+type = "hand_type"
+hand_type = "pair"
+
+[jokers.effect.action]
+type = "add_score"
+mult = 8
+
+# ================================
+# SUIT-BASED CONDITIONAL JOKERS
+# ================================
+
+# Diamond suit joker
+[[jokers]]
+id = "greedy_joker"
+name = "Greedy Joker"
+description = "Played cards with Diamond suit give +3 Mult when scored"
+rarity = "common"
+cost = 5
+
+[jokers.effect]
+type = "conditional"
+per_card = true
+
+[jokers.effect.condition]
+type = "suit_scored"
+suit = "diamonds"
+
+[jokers.effect.action]
+type = "add_score"
+mult = 3
+
+# Heart suit joker
+[[jokers]]
+id = "lusty_joker"
+name = "Lusty Joker"
+description = "Played cards with Heart suit give +3 Mult when scored"
+rarity = "common"
+cost = 5
+
+[jokers.effect]
+type = "conditional"
+per_card = true
+
+[jokers.effect.condition]
+type = "suit_scored"
+suit = "hearts"
+
+[jokers.effect.action]
+type = "add_score"
+mult = 3
+
+# Spade suit joker
+[[jokers]]
+id = "wrathful_joker"
+name = "Wrathful Joker"
+description = "Played cards with Spade suit give +3 Mult when scored"
+rarity = "common"
+cost = 5
+
+[jokers.effect]
+type = "conditional"
+per_card = true
+
+[jokers.effect.condition]
+type = "suit_scored"
+suit = "spades"
+
+[jokers.effect.action]
+type = "add_score"
+mult = 3
+
+# Club suit joker
+[[jokers]]
+id = "gluttonous_joker"
+name = "Gluttonous Joker"
+description = "Played cards with Club suit give +3 Mult when scored"
+rarity = "common"
+cost = 5
+
+[jokers.effect]
+type = "conditional"
+per_card = true
+
+[jokers.effect.condition]
+type = "suit_scored"
+suit = "clubs"
+
+[jokers.effect.action]
+type = "add_score"
+mult = 3
+
+# ================================
+# DYNAMIC STATEFUL JOKERS
+# ================================
+
+# Ice Cream joker - diminishing returns
+[[jokers]]
+id = "ice_cream"
+name = "Ice Cream"
+description = "+100 Chips, -5 Chips per hand played"
+rarity = "common"
+cost = 3
+
+[jokers.effect]
+type = "dynamic"
+
+[jokers.effect.base_effect]
+type = "add_score"
+chips = 100
+
+[[jokers.effect.state_modifiers]]
+state_field = "hands_played"
+multiplier = -5.0
+
+[jokers.state]
+persistent = true
+
+[jokers.state.fields]
+hands_played = 0
+
+[jokers.behavior]
+
+[jokers.behavior.on_hand_played]
+type = "modify_state"
+field = "hands_played"
+operation = "increment"
+value = 1
+
+# Ride the Bus - scaling joker with condition
+[[jokers]]
+id = "ride_the_bus"
+name = "Ride the Bus"
+description = "+1 Mult per hand played this round. (No face cards)"
+rarity = "common"
+cost = 3
+
+[jokers.effect]
+type = "conditional"
+per_card = false
+
+[jokers.effect.condition]
+type = "no_face_cards"
+
+[jokers.effect.action]
+type = "calculate"
+formula = "hands_played"
+result_type = "mult"
+
+[jokers.state]
+persistent = false
+
+[jokers.state.fields]
+hands_played = 0
+
+[jokers.behavior]
+
+[jokers.behavior.on_hand_played]
+type = "modify_state"
+field = "hands_played"
+operation = "increment"
+value = 1
+
+[jokers.behavior.on_round_end]
+type = "modify_state"
+field = "hands_played"
+operation = "set"
+value = 0
+
+# ================================
+# MONEY-BASED CONDITIONAL JOKERS
+# ================================
+
+# Banner joker - money condition
+[[jokers]]
+id = "banner"
+name = "Banner"
+description = "+40 Chips for each remaining discard"
+rarity = "common"
+cost = 5
+
+[jokers.effect]
+type = "calculate"
+formula = "discards_remaining * 40"
+result_type = "chips"
+
+# DelayedGratification - money joker
+[[jokers]]
+id = "delayed_gratification"
+name = "Delayed Gratification"
+description = "Earn $2 per discard if no discards are used by end of round"
+rarity = "common"
+cost = 3
+
+[jokers.effect]
+type = "conditional"
+per_card = false
+
+[jokers.effect.condition]
+type = "state_value"
+field = "discards_used_this_round"
+operator = "equal"
+value = 0
+
+[jokers.effect.action]
+type = "calculate"
+formula = "discards_available * 2"
+result_type = "money"
+
+[jokers.state]
+persistent = false
+
+[jokers.state.fields]
+discards_used_this_round = 0
+
+[jokers.behavior]
+
+[jokers.behavior.on_discard]
+type = "modify_state"
+field = "discards_used_this_round"
+operation = "increment"
+value = 1
+
+[jokers.behavior.on_round_end]
+type = "sequence"
+actions = [
+    { type = "modify_state", field = "discards_used_this_round", operation = "set", value = 0 }
+]
+
+# ================================
+# MULTIPLICATIVE JOKERS
+# ================================
+
+# Half Joker - mult multiplier
+[[jokers]]
+id = "half_joker"
+name = "Half Joker"
+description = "+20 Mult if played hand contains 1/2 of your hand size or fewer cards"
+rarity = "uncommon"
+cost = 6
+
+[jokers.effect]
+type = "conditional"
+per_card = false
+
+[jokers.effect.condition]
+type = "hand_size"
+size = 4  # This would need to be calculated dynamically
+
+[jokers.effect.action]
+type = "add_score"
+mult = 20
+
+# Misprint joker - random multiplier
+[[jokers]]
+id = "misprint"
+name = "Misprint"
+description = "+? Mult (1-23)"
+rarity = "uncommon"
+cost = 8
+
+[jokers.effect]
+type = "special"
+special_type = "random_mult"
+
+[jokers.effect.parameters]
+min_mult = 1
+max_mult = 23
+
+# ================================
+# RETRIGGER JOKERS
+# ================================
+
+# Sock and Buskin joker
+[[jokers]]
+id = "sock_and_buskin"
+name = "Sock and Buskin"
+description = "Retrigger all played face cards"
+rarity = "uncommon"
+cost = 6
+
+[jokers.effect]
+type = "conditional"
+per_card = true
+
+[jokers.effect.condition]
+type = "face_card_scored"
+
+[jokers.effect.action]
+type = "retrigger"
+count = 1
+
+# ================================
+# COMPLEX EFFECT JOKERS
+# ================================
+
+# Four Fingers - special hand type modifier
+[[jokers]]
+id = "four_fingers"
+name = "Four Fingers"
+description = "All Flushes and Straights can be made with 4 cards"
+rarity = "uncommon"
+cost = 7
+
+[jokers.effect]
+type = "special"
+special_type = "hand_type_modifier"
+
+[jokers.effect.parameters]
+flush_requirement = 4
+straight_requirement = 4
+
+# Shortcut - straight modifier
+[[jokers]]
+id = "shortcut"
+name = "Shortcut"
+description = "Allows Straights to be made with gaps of 1 rank"
+rarity = "uncommon"
+cost = 7
+
+[jokers.effect]
+type = "special"
+special_type = "straight_gap_modifier"
+
+[jokers.effect.parameters]
+max_gap = 1
+
+# ================================
+# DESTRUCTION JOKERS
+# ================================
+
+# Glass Joker - self-destruction with big payout
+[[jokers]]
+id = "glass_joker"
+name = "Glass Joker"
+description = "X2 Mult, destroyed when hand scores"
+rarity = "uncommon"
+cost = 5
+
+[jokers.effect]
+type = "scoring"
+mult_multiplier = 2.0
+
+[jokers.behavior]
+
+[jokers.behavior.on_hand_played]
+type = "destroy"
+target = "self_"
+
+# ================================
+# LEGENDARY JOKERS
+# ================================
+
+# Perkeo - duplication joker
+[[jokers]]
+id = "perkeo"
+name = "Perkeo"
+description = "Creates a negative copy of a random consumable card in your possession at the end of shop"
+rarity = "legendary"
+cost = 20
+
+[jokers.effect]
+type = "special"
+special_type = "consumable_duplication"
+
+[jokers.behavior]
+
+[jokers.behavior.on_shop_open]
+type = "special"
+special_type = "duplicate_consumable"
+
+# Caino - joker destruction and growth
+[[jokers]]
+id = "caino"
+name = "Caino"
+description = "X1.5 Mult when a face card is destroyed"
+rarity = "legendary"
+cost = 20
+
+[jokers.effect]
+type = "conditional"
+per_card = false
+
+[jokers.effect.condition]
+type = "state_value"
+field = "face_cards_destroyed_this_round"
+operator = "greater_than"
+value = 0
+
+[jokers.effect.action]
+type = "add_score"
+mult_multiplier = 1.5
+
+[jokers.state]
+persistent = false
+
+[jokers.state.fields]
+face_cards_destroyed_this_round = 0
+
+[jokers.behavior]
+
+[jokers.behavior.on_round_end]
+type = "modify_state"
+field = "face_cards_destroyed_this_round"
+operation = "set"
+value = 0
+
+# ================================
+# COMPOSITE CONDITION JOKERS
+# ================================
+
+# Even Steven - composite rank condition
+[[jokers]]
+id = "even_steven"
+name = "Even Steven"
+description = "Played cards with even rank give +4 Mult when scored (10, 8, 6, 4, 2)"
+rarity = "common"
+cost = 3
+
+[jokers.effect]
+type = "conditional"
+per_card = true
+
+[jokers.effect.condition]
+type = "any"
+conditions = [
+    { type = "rank_scored", rank = "two" },
+    { type = "rank_scored", rank = "four" },
+    { type = "rank_scored", rank = "six" },
+    { type = "rank_scored", rank = "eight" },
+    { type = "rank_scored", rank = "ten" }
+]
+
+[jokers.effect.action]
+type = "add_score"
+mult = 4
+
+# Odd Todd - composite rank condition
+[[jokers]]
+id = "odd_todd"
+name = "Odd Todd"
+description = "Played cards with odd rank give +31 Chips when scored (A, 9, 7, 5, 3)"
+rarity = "common"
+cost = 3
+
+[jokers.effect]
+type = "conditional"
+per_card = true
+
+[jokers.effect.condition]
+type = "any"
+conditions = [
+    { type = "rank_scored", rank = "ace" },
+    { type = "rank_scored", rank = "three" },
+    { type = "rank_scored", rank = "five" },
+    { type = "rank_scored", rank = "seven" },
+    { type = "rank_scored", rank = "nine" }
+]
+
+[jokers.effect.action]
+type = "add_score"
+chips = 31

@@ -35,12 +35,12 @@
 //! assert_effect_mult(&effect, 10);
 //! ```
 
-use crate::card::{Card, Value, Suit};
+use crate::card::{Card, Suit, Value};
 use crate::hand::{Hand, SelectHand};
 use crate::joker::{GameContext, Joker, JokerEffect, JokerId, JokerRarity};
 use crate::joker_state::{JokerState, JokerStateManager};
 use crate::rank::HandRank;
-use balatro_rs::rng::GameRng;
+use crate::rng::GameRng;
 use crate::stage::Stage;
 use serde_json::Value as JsonValue;
 use std::collections::HashMap;
@@ -337,7 +337,6 @@ impl Joker for MockGameplayJoker {
 ///
 /// This mock allows you to specify custom modifiers for base game values
 /// (chips, mult, hand size, discards).
-#[derive(Debug, Clone)]
 pub struct MockModifierJoker {
     pub id: JokerId,
     pub name: String,
@@ -347,6 +346,21 @@ pub struct MockModifierJoker {
     pub mult_modifier: Option<Box<dyn Fn(i32) -> i32 + Send + Sync>>,
     pub hand_size_modifier: Option<Box<dyn Fn(usize) -> usize + Send + Sync>>,
     pub discards_modifier: Option<Box<dyn Fn(usize) -> usize + Send + Sync>>,
+}
+
+impl std::fmt::Debug for MockModifierJoker {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("MockModifierJoker")
+            .field("id", &self.id)
+            .field("name", &self.name)
+            .field("description", &self.description)
+            .field("rarity", &self.rarity)
+            .field("chips_modifier", &self.chips_modifier.is_some())
+            .field("mult_modifier", &self.mult_modifier.is_some())
+            .field("hand_size_modifier", &self.hand_size_modifier.is_some())
+            .field("discards_modifier", &self.discards_modifier.is_some())
+            .finish()
+    }
 }
 
 impl MockModifierJoker {
@@ -541,7 +555,7 @@ impl Joker for MockStateJoker {
     fn deserialize_state(
         &self,
         _context: &GameContext,
-        data: &Value,
+        data: &JsonValue,
     ) -> Result<JokerState, serde_json::Error> {
         if self.custom_deserialization {
             let mut state: JokerState = serde_json::from_value(data.clone())?;
@@ -596,10 +610,10 @@ impl TestContextBuilder {
             money: 5,
             ante: 1,
             round: 1,
-            stage: Stage::Blind,
+            stage: Stage::Blind(crate::stage::Blind::Small),
             hands_played: 0,
             discards_used: 0,
-            hand: Hand::new(),
+            hand: Hand::new(vec![]),
             discarded: Vec::new(),
             hand_type_counts: HashMap::new(),
             cards_in_deck: 52,
@@ -723,7 +737,7 @@ impl TestContextBuilder {
             jokers: jokers_ref,
             hand: hand_ref,
             discarded: discarded_ref,
-            joker_state_manager: &joker_state_manager,
+            joker_state_manager: Box::leak(Box::new(joker_state_manager)),
             hand_type_counts: hand_type_counts_ref,
             cards_in_deck: self.cards_in_deck,
             stone_cards_in_deck: self.stone_cards_in_deck,
@@ -837,17 +851,13 @@ pub fn create_test_card(rank: Value, suit: Suit) -> Card {
 
 /// Create a simple test hand with specified cards.
 pub fn create_test_hand(cards: Vec<Card>) -> Hand {
-    let mut hand = Hand::new();
-    for card in cards {
-        hand.add(card);
-    }
-    hand
+    Hand::new(cards)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::card::{Value, Suit};
+    use crate::card::{Suit, Value};
     use crate::hand::SelectHand;
     use crate::joker_state::JokerState;
     use crate::rank::HandRank;
@@ -951,7 +961,7 @@ mod tests {
         let state = JokerState::new();
 
         let serialized = joker.serialize_state(&context, &state).unwrap();
-        assert_eq!(serialized["custom_serialization"], Value::Bool(true));
+        assert_eq!(serialized["custom_serialization"], JsonValue::Bool(true));
     }
 
     #[test]
@@ -1004,10 +1014,10 @@ mod tests {
             .with_money(100)
             .with_ante(5)
             .with_round(12)
-            .with_stage(Stage::Shop)
+            .with_stage(Stage::Shop())
             .with_hands_played(3)
             .with_discards_used(2)
-            .with_hand_type_count(HandRank::Pair, 5)
+            .with_hand_type_count(HandRank::OnePair, 5)
             .with_cards_in_deck(40)
             .with_stone_cards_in_deck(2)
             .with_steel_cards_in_deck(3)
@@ -1018,10 +1028,10 @@ mod tests {
         assert_eq!(context.money, 100);
         assert_eq!(context.ante, 5);
         assert_eq!(context.round, 12);
-        assert_eq!(*context.stage, Stage::Shop);
+        assert_eq!(*context.stage, Stage::Shop());
         assert_eq!(context.hands_played, 3);
         assert_eq!(context.discards_used, 2);
-        assert_eq!(context.get_hand_type_count(HandRank::Pair), 5);
+        assert_eq!(context.get_hand_type_count(HandRank::OnePair), 5);
         assert_eq!(context.cards_in_deck, 40);
         assert_eq!(context.stone_cards_in_deck, 2);
         assert_eq!(context.steel_cards_in_deck, 3);
@@ -1076,7 +1086,7 @@ mod tests {
     #[test]
     fn test_create_test_card() {
         let card = create_test_card(Value::King, Suit::Heart);
-        assert_eq!(card.rank, Value::King);
+        assert_eq!(card.value, Value::King);
         assert_eq!(card.suit, Suit::Heart);
     }
 

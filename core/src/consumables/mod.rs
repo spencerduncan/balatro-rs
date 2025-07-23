@@ -25,7 +25,6 @@ use std::fmt;
 use strum::{EnumIter, IntoEnumIterator};
 use thiserror::Error;
 
-
 /// Error types for consumable operations
 #[derive(Error, Debug, Clone)]
 pub enum ConsumableError {
@@ -360,6 +359,7 @@ fn generate_combinations_recursive(
         current.pop();
     }
 }
+
 /// Represents targeting specific cards with validation
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CardTarget {
@@ -768,7 +768,7 @@ pub struct ConsumableSlots {
     /// Vector of optional consumable slots
     slots: Vec<Option<Box<dyn Consumable>>>,
     /// Default capacity for new instances (always 2 as per Balatro base game)
-    default_capacity: usize,
+    _default_capacity: usize,
 }
 
 impl ConsumableSlots {
@@ -817,7 +817,7 @@ impl ConsumableSlots {
         Self {
             capacity,
             slots,
-            default_capacity: 2,
+            _default_capacity: 2,
         }
     }
 
@@ -918,6 +918,24 @@ impl ConsumableSlots {
     ///
     /// ```rust
     /// use balatro_rs::consumables::{ConsumableSlots, SlotError};
+    /// # use balatro_rs::consumables::{Consumable, ConsumableType, ConsumableEffect, TargetType, Target, ConsumableError};
+    /// # use balatro_rs::game::Game;
+    /// #
+    /// # #[derive(Debug)]
+    /// # struct MockConsumable;
+    /// #
+    /// # impl Consumable for MockConsumable {
+    /// #     fn consumable_type(&self) -> ConsumableType { ConsumableType::Tarot }
+    /// #     fn can_use(&self, _game_state: &Game, _target: &Target) -> bool { true }
+    /// #     fn use_effect(&self, _game_state: &mut Game, _target: Target) -> Result<(), ConsumableError> { Ok(()) }
+    /// #     fn get_description(&self) -> String { "Mock consumable".to_string() }
+    /// #     fn get_target_type(&self) -> TargetType { TargetType::None }
+    /// #     fn get_effect_category(&self) -> ConsumableEffect { ConsumableEffect::Utility }
+    /// # }
+    /// #
+    /// # fn create_consumable() -> Box<dyn Consumable> {
+    /// #     Box::new(MockConsumable)
+    /// # }
     ///
     /// let mut slots = ConsumableSlots::new();
     /// let consumable = create_consumable(); // Some consumable
@@ -958,6 +976,24 @@ impl ConsumableSlots {
     ///
     /// ```rust
     /// use balatro_rs::consumables::{ConsumableSlots, SlotError};
+    /// # use balatro_rs::consumables::{Consumable, ConsumableType, ConsumableEffect, TargetType, Target, ConsumableError};
+    /// # use balatro_rs::game::Game;
+    /// #
+    /// # #[derive(Debug)]
+    /// # struct MockConsumable;
+    /// #
+    /// # impl Consumable for MockConsumable {
+    /// #     fn consumable_type(&self) -> ConsumableType { ConsumableType::Tarot }
+    /// #     fn can_use(&self, _game_state: &Game, _target: &Target) -> bool { true }
+    /// #     fn use_effect(&self, _game_state: &mut Game, _target: Target) -> Result<(), ConsumableError> { Ok(()) }
+    /// #     fn get_description(&self) -> String { "Mock consumable".to_string() }
+    /// #     fn get_target_type(&self) -> TargetType { TargetType::None }
+    /// #     fn get_effect_category(&self) -> ConsumableEffect { ConsumableEffect::Utility }
+    /// # }
+    /// #
+    /// # fn create_consumable() -> Box<dyn Consumable> {
+    /// #     Box::new(MockConsumable)
+    /// # }
     ///
     /// let mut slots = ConsumableSlots::new();
     /// // Add a consumable first
@@ -1000,6 +1036,24 @@ impl ConsumableSlots {
     ///
     /// ```rust
     /// use balatro_rs::consumables::ConsumableSlots;
+    /// # use balatro_rs::consumables::{Consumable, ConsumableType, ConsumableEffect, TargetType, Target, ConsumableError};
+    /// # use balatro_rs::game::Game;
+    /// #
+    /// # #[derive(Debug)]
+    /// # struct MockConsumable;
+    /// #
+    /// # impl Consumable for MockConsumable {
+    /// #     fn consumable_type(&self) -> ConsumableType { ConsumableType::Tarot }
+    /// #     fn can_use(&self, _game_state: &Game, _target: &Target) -> bool { true }
+    /// #     fn use_effect(&self, _game_state: &mut Game, _target: Target) -> Result<(), ConsumableError> { Ok(()) }
+    /// #     fn get_description(&self) -> String { "Mock consumable".to_string() }
+    /// #     fn get_target_type(&self) -> TargetType { TargetType::None }
+    /// #     fn get_effect_category(&self) -> ConsumableEffect { ConsumableEffect::Utility }
+    /// # }
+    /// #
+    /// # fn create_consumable() -> Box<dyn Consumable> {
+    /// #     Box::new(MockConsumable)
+    /// # }
     ///
     /// let mut slots = ConsumableSlots::new();
     /// let index = slots.add_consumable(create_consumable()).unwrap();
@@ -1027,6 +1081,24 @@ impl ConsumableSlots {
     ///
     /// ```rust
     /// use balatro_rs::consumables::ConsumableSlots;
+    /// # use balatro_rs::consumables::{Consumable, ConsumableType, ConsumableEffect, TargetType, Target, ConsumableError};
+    /// # use balatro_rs::game::Game;
+    /// #
+    /// # #[derive(Debug)]
+    /// # struct MockConsumable;
+    /// #
+    /// # impl Consumable for MockConsumable {
+    /// #     fn consumable_type(&self) -> ConsumableType { ConsumableType::Tarot }
+    /// #     fn can_use(&self, _game_state: &Game, _target: &Target) -> bool { true }
+    /// #     fn use_effect(&self, _game_state: &mut Game, _target: Target) -> Result<(), ConsumableError> { Ok(()) }
+    /// #     fn get_description(&self) -> String { "Mock consumable".to_string() }
+    /// #     fn get_target_type(&self) -> TargetType { TargetType::None }
+    /// #     fn get_effect_category(&self) -> ConsumableEffect { ConsumableEffect::Utility }
+    /// # }
+    /// #
+    /// # fn create_consumable() -> Box<dyn Consumable> {
+    /// #     Box::new(MockConsumable)
+    /// # }
     ///
     /// let mut slots = ConsumableSlots::new();
     /// let index = slots.add_consumable(create_consumable()).unwrap();
@@ -1050,6 +1122,24 @@ impl ConsumableSlots {
     ///
     /// ```rust
     /// use balatro_rs::consumables::ConsumableSlots;
+    /// # use balatro_rs::consumables::{Consumable, ConsumableType, ConsumableEffect, TargetType, Target, ConsumableError};
+    /// # use balatro_rs::game::Game;
+    /// #
+    /// # #[derive(Debug)]
+    /// # struct MockConsumable;
+    /// #
+    /// # impl Consumable for MockConsumable {
+    /// #     fn consumable_type(&self) -> ConsumableType { ConsumableType::Tarot }
+    /// #     fn can_use(&self, _game_state: &Game, _target: &Target) -> bool { true }
+    /// #     fn use_effect(&self, _game_state: &mut Game, _target: Target) -> Result<(), ConsumableError> { Ok(()) }
+    /// #     fn get_description(&self) -> String { "Mock consumable".to_string() }
+    /// #     fn get_target_type(&self) -> TargetType { TargetType::None }
+    /// #     fn get_effect_category(&self) -> ConsumableEffect { ConsumableEffect::Utility }
+    /// # }
+    /// #
+    /// # fn create_consumable() -> Box<dyn Consumable> {
+    /// #     Box::new(MockConsumable)
+    /// # }
     ///
     /// let mut slots = ConsumableSlots::new();
     /// assert_eq!(slots.find_empty_slot(), Some(0)); // First slot is empty
@@ -1076,6 +1166,24 @@ impl ConsumableSlots {
     ///
     /// ```rust
     /// use balatro_rs::consumables::{ConsumableSlots, SlotError};
+    /// # use balatro_rs::consumables::{Consumable, ConsumableType, ConsumableEffect, TargetType, Target, ConsumableError};
+    /// # use balatro_rs::game::Game;
+    /// #
+    /// # #[derive(Debug)]
+    /// # struct MockConsumable;
+    /// #
+    /// # impl Consumable for MockConsumable {
+    /// #     fn consumable_type(&self) -> ConsumableType { ConsumableType::Tarot }
+    /// #     fn can_use(&self, _game_state: &Game, _target: &Target) -> bool { true }
+    /// #     fn use_effect(&self, _game_state: &mut Game, _target: Target) -> Result<(), ConsumableError> { Ok(()) }
+    /// #     fn get_description(&self) -> String { "Mock consumable".to_string() }
+    /// #     fn get_target_type(&self) -> TargetType { TargetType::None }
+    /// #     fn get_effect_category(&self) -> ConsumableEffect { ConsumableEffect::Utility }
+    /// # }
+    /// #
+    /// # fn create_consumable() -> Box<dyn Consumable> {
+    /// #     Box::new(MockConsumable)
+    /// # }
     ///
     /// let mut slots = ConsumableSlots::new();
     /// slots.add_consumable(create_consumable()).unwrap();
@@ -1103,6 +1211,24 @@ impl ConsumableSlots {
     ///
     /// ```rust
     /// use balatro_rs::consumables::ConsumableSlots;
+    /// # use balatro_rs::consumables::{Consumable, ConsumableType, ConsumableEffect, TargetType, Target, ConsumableError};
+    /// # use balatro_rs::game::Game;
+    /// #
+    /// # #[derive(Debug)]
+    /// # struct MockConsumable;
+    /// #
+    /// # impl Consumable for MockConsumable {
+    /// #     fn consumable_type(&self) -> ConsumableType { ConsumableType::Tarot }
+    /// #     fn can_use(&self, _game_state: &Game, _target: &Target) -> bool { true }
+    /// #     fn use_effect(&self, _game_state: &mut Game, _target: Target) -> Result<(), ConsumableError> { Ok(()) }
+    /// #     fn get_description(&self) -> String { "Mock consumable".to_string() }
+    /// #     fn get_target_type(&self) -> TargetType { TargetType::None }
+    /// #     fn get_effect_category(&self) -> ConsumableEffect { ConsumableEffect::Utility }
+    /// # }
+    /// #
+    /// # fn create_consumable() -> Box<dyn Consumable> {
+    /// #     Box::new(MockConsumable)
+    /// # }
     ///
     /// let mut slots = ConsumableSlots::new();
     /// slots.add_consumable(create_consumable()).unwrap();
