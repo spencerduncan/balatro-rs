@@ -1,7 +1,7 @@
 use crate::joker::{Joker, JokerId, JokerRarity};
 use crate::joker_impl::*;
-use crate::static_joker_factory::StaticJokerFactory;
 use crate::special_jokers::*;
+use crate::static_joker_factory::StaticJokerFactory;
 
 /// Factory for creating joker instances by ID
 pub struct JokerFactory;
@@ -59,11 +59,11 @@ impl JokerFactory {
             JokerId::Fortune => Some(Box::new(MysteryJoker)),
             JokerId::VagabondJoker => Some(Box::new(VagabondJokerImpl)),
             JokerId::Reserved9 => Some(Box::new(ChaoticJoker)),
-            
+
             // Special mechanic jokers using new trait system
             JokerId::Erosion => Some(Box::new(ErosionJoker)),
             JokerId::Blueprint => Some(Box::new(BlueprintJoker::new())),
-            JokerId::Photograph => Some(Box::new(PhotographJoker::new())), 
+            JokerId::Photograph => Some(Box::new(PhotographJoker::new())),
             JokerId::TheOrder => Some(Box::new(TheOrderJoker)),
             // TODO: Implement remaining jokers
             _ => None,
@@ -106,7 +106,7 @@ impl JokerFactory {
                 Banner,
                 AbstractJoker,
                 // RNG-based jokers (Issue #442)
-                Reserved7, // SixShooterJoker
+                Reserved7,  // SixShooterJoker
                 LuckyCharm, // LuckyCardJoker
                 // Special mechanic jokers
                 Erosion,
@@ -116,9 +116,11 @@ impl JokerFactory {
                 // Money-based conditional jokers
                 Burglar,    // Hand type conditional jokers
                 SpaceJoker, // New static jokers
-                RedCard, BlueJoker, SteelJoker,
+                RedCard,
+                BlueJoker,
+                SteelJoker,
                 // RNG-based jokers (Issue #442)
-                Oops, // OopsAllSixesJoker
+                Oops,      // OopsAllSixesJoker
                 Reserved8, // GrimJoker
                 VagabondJoker,
                 // Special mechanic jokers
@@ -175,10 +177,10 @@ impl JokerFactory {
             // Custom implemented jokers with interaction support
             AbstractJoker,
             // RNG-based jokers (Issue #442)
-            Oops, // OopsAllSixesJoker
-            Reserved7, // SixShooterJoker
+            Oops,       // OopsAllSixesJoker
+            Reserved7,  // SixShooterJoker
             LuckyCharm, // LuckyCardJoker
-            Reserved8, // GrimJoker
+            Reserved8,  // GrimJoker
             AcrobatJoker,
             Fortune, // MysteryJoker
             VagabondJoker,

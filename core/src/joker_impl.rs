@@ -919,10 +919,13 @@ impl Joker for SixShooterJoker {
 
     fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
         // Count 6s in hand
-        let six_count = context.hand.cards().iter()
+        let six_count = context
+            .hand
+            .cards()
+            .iter()
             .filter(|card| card.value == Value::Six)
             .count();
-        
+
         JokerEffect::new().with_mult((six_count * 4) as i32)
     }
 }
@@ -991,7 +994,9 @@ impl Joker for GrimJoker {
 
     fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
         // Count Hearts in played hand
-        let heart_count = hand.cards().iter()
+        let heart_count = hand
+            .cards()
+            .iter()
             .filter(|card| card.suit == Suit::Heart)
             .count();
 
@@ -1037,7 +1042,8 @@ impl Joker for AcrobatJokerImpl {
         // Check if this is the final hand of the round
         // This would need to be tracked by the game engine
         // For now, we'll use a simple heuristic based on hands remaining
-        if context.hands_played >= 3 { // Assuming typical 4-hand rounds
+        if context.hands_played >= 3 {
+            // Assuming typical 4-hand rounds
             JokerEffect::new()
                 .with_mult_multiplier(3.0)
                 .with_message("Acrobat final hand bonus! X3 Mult!".to_string())
@@ -1075,7 +1081,7 @@ impl Joker for MysteryJoker {
     fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
         // Generate random effect - choose from several possibilities
         let effect_type = context.rng.gen_range(0..6);
-        
+
         match effect_type {
             0 => JokerEffect::new()
                 .with_mult(15)
@@ -1129,8 +1135,7 @@ impl Joker for VagabondJokerImpl {
         // Check if player has $3 or less
         if context.money <= 3 {
             // Create a tarot card (simplified - actual implementation would add to shop/consumables)
-            JokerEffect::new()
-                .with_message("Vagabond created a Tarot card!".to_string())
+            JokerEffect::new().with_message("Vagabond created a Tarot card!".to_string())
         } else {
             JokerEffect::new()
         }
@@ -1166,7 +1171,7 @@ impl Joker for ChaoticJoker {
         // This joker affects other jokers' effects - would need game engine support
         // For now, provide a random bonus itself
         let chaos_type = context.rng.gen_range(0..4);
-        
+
         match chaos_type {
             0 => JokerEffect::new()
                 .with_mult(context.rng.gen_range(5..25))
@@ -1256,7 +1261,7 @@ mod tests {
     }
 
     // Tests for RNG-based jokers (Issue #442)
-    
+
     #[test]
     fn test_oops_all_sixes_basic_properties() {
         let oops = OopsAllSixesJoker;
@@ -1292,7 +1297,10 @@ mod tests {
         let grim = GrimJoker;
         assert_eq!(grim.id(), JokerId::Reserved8);
         assert_eq!(grim.name(), "Grim Joker");
-        assert_eq!(grim.description(), "+25 Mult, destroyed if 2 or more Hearts are played");
+        assert_eq!(
+            grim.description(),
+            "+25 Mult, destroyed if 2 or more Hearts are played"
+        );
         assert_eq!(grim.rarity(), JokerRarity::Uncommon);
         assert_eq!(grim.cost(), 6);
     }
@@ -1322,7 +1330,10 @@ mod tests {
         let vagabond = VagabondJokerImpl;
         assert_eq!(vagabond.id(), JokerId::VagabondJoker);
         assert_eq!(vagabond.name(), "Vagabond");
-        assert_eq!(vagabond.description(), "Create a Tarot card if hand played with $3 or less");
+        assert_eq!(
+            vagabond.description(),
+            "Create a Tarot card if hand played with $3 or less"
+        );
         assert_eq!(vagabond.rarity(), JokerRarity::Uncommon);
         assert_eq!(vagabond.cost(), 7);
     }
@@ -1332,7 +1343,10 @@ mod tests {
         let chaotic = ChaoticJoker;
         assert_eq!(chaotic.id(), JokerId::Reserved9);
         assert_eq!(chaotic.name(), "Chaotic Joker");
-        assert_eq!(chaotic.description(), "Randomize all other Joker effects this hand");
+        assert_eq!(
+            chaotic.description(),
+            "Randomize all other Joker effects this hand"
+        );
         assert_eq!(chaotic.rarity(), JokerRarity::Legendary);
         assert_eq!(chaotic.cost(), 15);
     }
@@ -1341,61 +1355,130 @@ mod tests {
     fn test_rng_jokers_factory_creation() {
         // Test that all RNG jokers can be created from factory
         let oops = JokerFactory::create(JokerId::Oops);
-        assert!(oops.is_some(), "OopsAllSixesJoker should be creatable from factory");
+        assert!(
+            oops.is_some(),
+            "OopsAllSixesJoker should be creatable from factory"
+        );
 
         let six_shooter = JokerFactory::create(JokerId::Reserved7);
-        assert!(six_shooter.is_some(), "SixShooterJoker should be creatable from factory");
+        assert!(
+            six_shooter.is_some(),
+            "SixShooterJoker should be creatable from factory"
+        );
 
         let lucky_card = JokerFactory::create(JokerId::LuckyCharm);
-        assert!(lucky_card.is_some(), "LuckyCardJoker should be creatable from factory");
+        assert!(
+            lucky_card.is_some(),
+            "LuckyCardJoker should be creatable from factory"
+        );
 
         let grim = JokerFactory::create(JokerId::Reserved8);
         assert!(grim.is_some(), "GrimJoker should be creatable from factory");
 
         let acrobat = JokerFactory::create(JokerId::AcrobatJoker);
-        assert!(acrobat.is_some(), "AcrobatJoker should be creatable from factory");
+        assert!(
+            acrobat.is_some(),
+            "AcrobatJoker should be creatable from factory"
+        );
 
         let mystery = JokerFactory::create(JokerId::Fortune);
-        assert!(mystery.is_some(), "MysteryJoker should be creatable from factory");
+        assert!(
+            mystery.is_some(),
+            "MysteryJoker should be creatable from factory"
+        );
 
         let vagabond = JokerFactory::create(JokerId::VagabondJoker);
-        assert!(vagabond.is_some(), "VagabondJoker should be creatable from factory");
+        assert!(
+            vagabond.is_some(),
+            "VagabondJoker should be creatable from factory"
+        );
 
         let chaotic = JokerFactory::create(JokerId::Reserved9);
-        assert!(chaotic.is_some(), "ChaoticJoker should be creatable from factory");
+        assert!(
+            chaotic.is_some(),
+            "ChaoticJoker should be creatable from factory"
+        );
     }
 
     #[test]
     fn test_rng_jokers_in_rarity_lists() {
         let common_jokers = JokerFactory::get_by_rarity(JokerRarity::Common);
-        assert!(common_jokers.contains(&JokerId::Reserved7), "SixShooterJoker should be in Common rarity");
-        assert!(common_jokers.contains(&JokerId::LuckyCharm), "LuckyCardJoker should be in Common rarity");
+        assert!(
+            common_jokers.contains(&JokerId::Reserved7),
+            "SixShooterJoker should be in Common rarity"
+        );
+        assert!(
+            common_jokers.contains(&JokerId::LuckyCharm),
+            "LuckyCardJoker should be in Common rarity"
+        );
 
         let uncommon_jokers = JokerFactory::get_by_rarity(JokerRarity::Uncommon);
-        assert!(uncommon_jokers.contains(&JokerId::Oops), "OopsAllSixesJoker should be in Uncommon rarity");
-        assert!(uncommon_jokers.contains(&JokerId::Reserved8), "GrimJoker should be in Uncommon rarity");
-        assert!(uncommon_jokers.contains(&JokerId::VagabondJoker), "VagabondJoker should be in Uncommon rarity");
+        assert!(
+            uncommon_jokers.contains(&JokerId::Oops),
+            "OopsAllSixesJoker should be in Uncommon rarity"
+        );
+        assert!(
+            uncommon_jokers.contains(&JokerId::Reserved8),
+            "GrimJoker should be in Uncommon rarity"
+        );
+        assert!(
+            uncommon_jokers.contains(&JokerId::VagabondJoker),
+            "VagabondJoker should be in Uncommon rarity"
+        );
 
         let rare_jokers = JokerFactory::get_by_rarity(JokerRarity::Rare);
-        assert!(rare_jokers.contains(&JokerId::AcrobatJoker), "AcrobatJoker should be in Rare rarity");
-        assert!(rare_jokers.contains(&JokerId::Fortune), "MysteryJoker should be in Rare rarity");
+        assert!(
+            rare_jokers.contains(&JokerId::AcrobatJoker),
+            "AcrobatJoker should be in Rare rarity"
+        );
+        assert!(
+            rare_jokers.contains(&JokerId::Fortune),
+            "MysteryJoker should be in Rare rarity"
+        );
 
         let legendary_jokers = JokerFactory::get_by_rarity(JokerRarity::Legendary);
-        assert!(legendary_jokers.contains(&JokerId::Reserved9), "ChaoticJoker should be in Legendary rarity");
+        assert!(
+            legendary_jokers.contains(&JokerId::Reserved9),
+            "ChaoticJoker should be in Legendary rarity"
+        );
     }
 
     #[test]
     fn test_rng_jokers_in_implemented_list() {
         let all_implemented = JokerFactory::get_all_implemented();
-        
+
         // Check all RNG jokers are listed as implemented
-        assert!(all_implemented.contains(&JokerId::Oops), "OopsAllSixesJoker should be in implemented list");
-        assert!(all_implemented.contains(&JokerId::Reserved7), "SixShooterJoker should be in implemented list");
-        assert!(all_implemented.contains(&JokerId::LuckyCharm), "LuckyCardJoker should be in implemented list");
-        assert!(all_implemented.contains(&JokerId::Reserved8), "GrimJoker should be in implemented list");
-        assert!(all_implemented.contains(&JokerId::AcrobatJoker), "AcrobatJoker should be in implemented list");
-        assert!(all_implemented.contains(&JokerId::Fortune), "MysteryJoker should be in implemented list");
-        assert!(all_implemented.contains(&JokerId::VagabondJoker), "VagabondJoker should be in implemented list");
-        assert!(all_implemented.contains(&JokerId::Reserved9), "ChaoticJoker should be in implemented list");
+        assert!(
+            all_implemented.contains(&JokerId::Oops),
+            "OopsAllSixesJoker should be in implemented list"
+        );
+        assert!(
+            all_implemented.contains(&JokerId::Reserved7),
+            "SixShooterJoker should be in implemented list"
+        );
+        assert!(
+            all_implemented.contains(&JokerId::LuckyCharm),
+            "LuckyCardJoker should be in implemented list"
+        );
+        assert!(
+            all_implemented.contains(&JokerId::Reserved8),
+            "GrimJoker should be in implemented list"
+        );
+        assert!(
+            all_implemented.contains(&JokerId::AcrobatJoker),
+            "AcrobatJoker should be in implemented list"
+        );
+        assert!(
+            all_implemented.contains(&JokerId::Fortune),
+            "MysteryJoker should be in implemented list"
+        );
+        assert!(
+            all_implemented.contains(&JokerId::VagabondJoker),
+            "VagabondJoker should be in implemented list"
+        );
+        assert!(
+            all_implemented.contains(&JokerId::Reserved9),
+            "ChaoticJoker should be in implemented list"
+        );
     }
 }

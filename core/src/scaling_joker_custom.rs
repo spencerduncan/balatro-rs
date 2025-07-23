@@ -3,11 +3,10 @@ use crate::hand::SelectHand;
 use crate::joker::{GameContext, Joker, JokerEffect, JokerId, JokerRarity};
 use crate::joker_state::JokerState;
 use crate::rank::HandRank;
-use crate::scaling_joker::{ScalingEffectType, ScalingEvent, ScalingJoker};
+use crate::scaling_joker::ScalingJoker;
 
 /// Custom implementations for scaling jokers that require special logic
 /// beyond the basic ScalingJoker framework
-
 /// Green Joker: +1 mult per hand, -1 per discard
 #[derive(Debug, Clone)]
 pub struct GreenJoker {
@@ -19,6 +18,12 @@ impl GreenJoker {
         Self {
             base: crate::scaling_joker_impl::create_green_joker(),
         }
+    }
+}
+
+impl Default for GreenJoker {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -39,7 +44,7 @@ impl Joker for GreenJoker {
         self.base.rarity()
     }
 
-    fn on_hand_played(&self, context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
+    fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
         // Increment value for any hand played
         context
             .joker_state_manager
@@ -55,7 +60,7 @@ impl Joker for GreenJoker {
         JokerEffect::new().with_mult(current_value as i32)
     }
 
-    fn on_discard(&self, context: &mut GameContext, cards: &[Card]) -> JokerEffect {
+    fn on_discard(&self, context: &mut GameContext, _cards: &[Card]) -> JokerEffect {
         // Decrease value for each discard action (not per card)
         context
             .joker_state_manager
@@ -82,6 +87,12 @@ impl SquareJoker {
         Self {
             base: crate::scaling_joker_impl::create_square_joker(),
         }
+    }
+}
+
+impl Default for SquareJoker {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -139,6 +150,12 @@ impl BullJoker {
     }
 }
 
+impl Default for BullJoker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Joker for BullJoker {
     fn id(&self) -> JokerId {
         self.base.id()
@@ -178,6 +195,12 @@ impl BootstrapsJoker {
         Self {
             base: crate::scaling_joker_impl::create_bootstraps(),
         }
+    }
+}
+
+impl Default for BootstrapsJoker {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -223,6 +246,12 @@ impl BannerJoker {
     }
 }
 
+impl Default for BannerJoker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Joker for BannerJoker {
     fn id(&self) -> JokerId {
         self.base.id()
@@ -244,9 +273,9 @@ impl Joker for BannerJoker {
         // Calculate remaining discards (assuming 3 base discards per round)
         let base_discards: usize = 3; // This should come from game config
         let remaining_discards = base_discards.saturating_sub(context.discards_used as usize);
-        let chips_bonus = (remaining_discards * 30) as i32;
-        
-        JokerEffect::new().with_chips(chips_bonus)
+        let chips_bonus = remaining_discards * 30;
+
+        JokerEffect::new().with_chips(chips_bonus as i32)
     }
 
     fn initialize_state(&self, _context: &GameContext) -> JokerState {
@@ -265,6 +294,12 @@ impl CeremonialDagger {
         Self {
             base: crate::scaling_joker_impl::create_ceremonial_dagger(),
         }
+    }
+}
+
+impl Default for CeremonialDagger {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -335,6 +370,12 @@ impl MysticSummit {
         Self {
             base: crate::scaling_joker_impl::create_mystic_summit(),
         }
+    }
+}
+
+impl Default for MysticSummit {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -418,9 +459,6 @@ pub fn get_custom_scaling_joker_by_id(id: JokerId) -> Option<Box<dyn Joker>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::joker_state::JokerStateManager;
-    use std::collections::HashMap;
-    use std::sync::Arc;
 
     fn create_test_context() -> GameContext<'static> {
         // Placeholder - in real tests we'd need proper context setup

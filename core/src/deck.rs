@@ -1,5 +1,5 @@
 use crate::card::{Card, Suit, Value};
-use balatro_rs::rng::GameRng;
+use crate::rng::GameRng;
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone)]
@@ -219,7 +219,7 @@ mod tests {
 
     #[test]
     fn test_deck_shuffle() {
-        use balatro_rs::rng::GameRng;
+        use crate::rng::GameRng;
         let mut deck = Deck::default();
         let original_cards = deck.cards();
         let rng = GameRng::for_testing(42);
@@ -241,7 +241,7 @@ mod tests {
 
     #[test]
     fn test_deck_shuffle_empty() {
-        use balatro_rs::rng::GameRng;
+        use crate::rng::GameRng;
         let mut deck = Deck::new();
         let rng = GameRng::for_testing(42);
 
@@ -252,7 +252,7 @@ mod tests {
 
     #[test]
     fn test_deck_shuffle_single_card() {
-        use balatro_rs::rng::GameRng;
+        use crate::rng::GameRng;
         let mut deck = Deck::new();
         let card = Card::new(Value::Ace, Suit::Heart);
         deck.extend(vec![card]);
@@ -373,7 +373,7 @@ mod tests {
     #[test]
     fn test_deck_multiple_operations() {
         let mut deck = Deck::new();
-        let rng = balatro_rs::rng::GameRng::for_testing(42);
+        let rng = GameRng::for_testing(42);
 
         // Add some cards
         deck.extend(vec![
@@ -422,7 +422,7 @@ mod tests {
 
     #[test]
     fn test_deck_stress_operations() {
-        use balatro_rs::rng::GameRng;
+        use crate::rng::GameRng;
         let mut deck = Deck::default();
         let rng = GameRng::for_testing(42);
 

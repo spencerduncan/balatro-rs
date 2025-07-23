@@ -3,7 +3,6 @@ use crate::rank::HandRank;
 use crate::scaling_joker::{ResetCondition, ScalingEffectType, ScalingJoker, ScalingTrigger};
 
 /// Factory functions for creating the 15 scaling jokers specified in the requirements
-
 /// Spare Trousers: +2 mult per hand with Two Pair
 pub fn create_spare_trousers() -> ScalingJoker {
     ScalingJoker::new(
@@ -149,7 +148,6 @@ pub fn create_red_card() -> ScalingJoker {
 }
 
 /// Additional scaling jokers to reach 15 total:
-
 /// Steel Joker: +0.2x mult per card destroyed
 pub fn create_steel_joker_scaling() -> ScalingJoker {
     ScalingJoker::new(

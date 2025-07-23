@@ -513,7 +513,7 @@ pub struct GameContext<'a> {
     /// Number of Stone cards in deck
     pub stone_cards_in_deck: usize,
     /// Random number generator for secure randomness
-    pub rng: &'a balatro_rs::rng::GameRng,
+    pub rng: &'a crate::rng::GameRng,
 }
 
 impl<'a> GameContext<'a> {
