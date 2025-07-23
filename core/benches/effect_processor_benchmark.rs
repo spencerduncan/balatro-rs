@@ -338,7 +338,9 @@ fn create_test_game_context() -> GameContext<'static> {
     let hand = Box::leak(Box::new(balatro_rs::hand::Hand::new(vec![])));
     let jokers: &'static [Box<dyn balatro_rs::joker::Joker>] = Box::leak(Box::new([]));
     let discarded: &'static [balatro_rs::card::Card] = Box::leak(Box::new([]));
-    let joker_state_manager = Box::leak(Box::new(std::sync::Arc::new(balatro_rs::joker_state::JokerStateManager::new())));
+    let joker_state_manager = Box::leak(Box::new(std::sync::Arc::new(
+        balatro_rs::joker_state::JokerStateManager::new(),
+    )));
     let hand_type_counts = Box::leak(Box::new(std::collections::HashMap::new()));
     let rng = Box::leak(Box::new(balatro_rs::rng::GameRng::for_testing(12345)));
 
@@ -419,7 +421,9 @@ fn create_complex_joker_collection(count: usize) -> Vec<Box<dyn Joker>> {
 
         if let Some(joker) = balatro_rs::joker_factory::JokerFactory::create(joker_id) {
             jokers.push(joker);
-        } else if let Some(fallback) = balatro_rs::joker_factory::JokerFactory::create(JokerId::Joker) {
+        } else if let Some(fallback) =
+            balatro_rs::joker_factory::JokerFactory::create(JokerId::Joker)
+        {
             // Fallback to basic joker if the specific one doesn't exist
             jokers.push(fallback);
         }
@@ -460,7 +464,9 @@ fn create_large_joker_collection(count: usize) -> Vec<Box<dyn Joker>> {
 
         if let Some(joker) = balatro_rs::joker_factory::JokerFactory::create(joker_id) {
             jokers.push(joker);
-        } else if let Some(fallback) = balatro_rs::joker_factory::JokerFactory::create(JokerId::Joker) {
+        } else if let Some(fallback) =
+            balatro_rs::joker_factory::JokerFactory::create(JokerId::Joker)
+        {
             // Fallback to basic joker if the specific one doesn't exist
             jokers.push(fallback);
         }
@@ -472,10 +478,12 @@ fn create_large_joker_collection(count: usize) -> Vec<Box<dyn Joker>> {
 fn create_conflicting_joker_collection() -> Vec<Box<dyn Joker>> {
     vec![
         balatro_rs::joker_factory::JokerFactory::create(JokerId::Joker).unwrap(),
-        balatro_rs::joker_factory::JokerFactory::create(JokerId::GreedyJoker).unwrap_or_else(|| {
-            // Fallback if GreedyJoker doesn't exist
-            balatro_rs::joker_factory::JokerFactory::create(JokerId::Joker).unwrap()
-        }),
+        balatro_rs::joker_factory::JokerFactory::create(JokerId::GreedyJoker).unwrap_or_else(
+            || {
+                // Fallback if GreedyJoker doesn't exist
+                balatro_rs::joker_factory::JokerFactory::create(JokerId::Joker).unwrap()
+            },
+        ),
         balatro_rs::joker_factory::JokerFactory::create(JokerId::LustyJoker).unwrap_or_else(|| {
             // Fallback if LustyJoker doesn't exist
             balatro_rs::joker_factory::JokerFactory::create(JokerId::Joker).unwrap()
