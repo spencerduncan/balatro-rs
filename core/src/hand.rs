@@ -27,7 +27,7 @@ impl Hand {
         Self(cards)
     }
 
-    /// Get reference to the cards in this hand
+    /// Get a reference to the cards in this hand
     pub fn cards(&self) -> &[Card] {
         &self.0
     }

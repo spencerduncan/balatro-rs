@@ -612,7 +612,7 @@ impl TestContextBuilder {
             stage: Stage::Blind(crate::stage::Blind::Small),
             hands_played: 0,
             discards_used: 0,
-            hand: Hand::new(Vec::new()),
+            hand: Hand::new(vec![]),
             discarded: Vec::new(),
             hand_type_counts: HashMap::new(),
             cards_in_deck: 52,
@@ -716,8 +716,6 @@ impl TestContextBuilder {
         let hand_type_counts_ref: &'static HashMap<HandRank, u32> =
             Box::leak(Box::new(self.hand_type_counts));
         let rng_ref: &'static GameRng = Box::leak(Box::new(rng));
-        let joker_state_manager_ref: &'static Arc<JokerStateManager> =
-            Box::leak(Box::new(joker_state_manager));
 
         GameContext {
             chips: self.chips,
@@ -731,7 +729,7 @@ impl TestContextBuilder {
             jokers: jokers_ref,
             hand: hand_ref,
             discarded: discarded_ref,
-            joker_state_manager: joker_state_manager_ref,
+            joker_state_manager: Box::leak(Box::new(joker_state_manager)),
             hand_type_counts: hand_type_counts_ref,
             cards_in_deck: self.cards_in_deck,
             stone_cards_in_deck: self.stone_cards_in_deck,
@@ -962,7 +960,7 @@ mod tests {
         let joker = MockStateJoker::new().with_custom_deserialization();
         let context = TestContextBuilder::new().build();
 
-        let state_data = serde_json::to_value(JokerState::new()).unwrap();
+        let mut state_data = serde_json::to_value(JokerState::new()).unwrap();
         let original_value = state_data["accumulated_value"].as_f64().unwrap_or(0.0);
 
         let deserialized = joker.deserialize_state(&context, &state_data).unwrap();

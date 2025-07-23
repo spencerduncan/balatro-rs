@@ -167,27 +167,28 @@ mod tests {
     fn test_card_target_get_cards_hand_not_implemented() {
         let game = create_test_game();
 
-        // Test that hand card access returns an error (not yet implemented)
+        // Test that hand card access returns NoCardsAvailable (not yet implemented)
         let target = CardTarget::new(CardCollection::Hand, vec![0]);
         let result = target.get_cards(&game);
         assert!(result.is_err());
 
-        // The error will be CardIndexOutOfBounds if hand is empty,
-        // or NoCardsAvailable if validation passes but get_cards isn't implemented
         match result.unwrap_err() {
-            TargetValidationError::CardIndexOutOfBounds { .. } => {
-                // Expected - hand is empty so index 0 is out of bounds
+            TargetValidationError::CardIndexOutOfBounds {
+                index: 0,
+                hand_size: 0,
+            } => {
+                // Expected - index 0 is out of bounds for empty hand
             }
-            TargetValidationError::NoCardsAvailable => {
-                // Also acceptable - functionality isn't fully implemented yet
-            }
-            err => panic!("Unexpected error: {:?}", err),
+            error => panic!(
+                "Expected CardIndexOutOfBounds error for index 0 in empty hand, got: {:?}",
+                error
+            ),
         }
     }
 
     #[test]
     fn test_consumable_slots_basic_operations() {
-        let slots = ConsumableSlots::new();
+        let mut slots = ConsumableSlots::new();
 
         // Test initial state
         assert_eq!(slots.capacity(), 2);
