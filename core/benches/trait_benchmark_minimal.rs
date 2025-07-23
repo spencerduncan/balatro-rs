@@ -1,10 +1,10 @@
 //! Minimal performance benchmarks for trait refactoring
-//! 
+//!
 //! This benchmark suite measures the performance impact of the new trait system.
 
 use balatro_rs::{
     card::{Card, Suit, Value},
-    joker::{JokerId},
+    joker::JokerId,
     joker_registry,
 };
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
@@ -14,11 +14,10 @@ pub fn minimal_trait_benchmark(c: &mut Criterion) {
     c.bench_function("trait_method_dispatch", |b| {
         // Test basic trait method calls
         let test_card = Card::new(Value::Ace, Suit::Spade);
-        
+
         b.iter(|| {
             // Test joker registry access
-            if let Ok(Some(definition)) = joker_registry::registry::get_definition(&JokerId::Joker) {
-                let joker = definition.create();
+            if let Ok(joker) = joker_registry::registry::create_joker(&JokerId::Joker) {
                 black_box(joker.id());
             }
             black_box(&test_card);
