@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["ConsumableEffect","ConsumableError","ConsumableId","ConsumableType","Target","TargetType","TargetValidationError"],"struct":["ConsumableEffectIter","ConsumableIdIter","ConsumableSlots","ConsumableTypeIter"],"trait":["Consumable"]};
+window.SIDEBAR_ITEMS = {"enum":["CardCollection","ConsumableEffect","ConsumableError","ConsumableId","ConsumableType","SlotError","Target","TargetType","TargetValidationError"],"struct":["CardTarget","ConsumableEffectIter","ConsumableIdIter","ConsumableSlots","ConsumableTypeIter"],"trait":["Consumable"]};

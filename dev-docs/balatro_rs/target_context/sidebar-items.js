@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["TargetContextError","TargetingResult"],"struct":["ModifierState","SelectionCounts","TargetCollection","TargetContext"]};

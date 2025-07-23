@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["MultiSelectError","SelectableItem"],"struct":["MultiSelectContext","SelectionLimits"]};

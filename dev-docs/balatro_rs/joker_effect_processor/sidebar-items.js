@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["ConflictResolutionStrategy","EffectPriority","EffectProcessingError","ProcessingMode"],"struct":["JokerEffectProcessor","ProcessingContext","ProcessingResult","WeightedEffect"]};
+window.SIDEBAR_ITEMS = {"enum":["ConflictResolutionStrategy","EffectPriority","EffectProcessingError","JokerTraitProfile","ProcessingMode"],"struct":["CacheConfig","CacheMetrics","JokerEffectProcessor","ProcessingContext","ProcessingContextBuilder","ProcessingResult","TraitOptimizationMetrics","TraitOptimizedJoker","WeightedEffect"]};

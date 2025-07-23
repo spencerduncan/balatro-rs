@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Categories","JokerId","JokerRarity"],"mod":["compat","conditional","hand_composition_jokers"],"struct":["GameContext","JokerEffect"],"trait":["Joker"]};
+window.SIDEBAR_ITEMS = {"enum":["Categories","JokerId","JokerRarity"],"mod":["compat","conditional","hand_composition_jokers","traits"],"struct":["GameContext","JokerEffect"],"trait":["Joker"]};

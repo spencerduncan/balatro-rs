@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["JokerMetadata"]};
+window.SIDEBAR_ITEMS = {"fn":["determine_effect_priority"],"struct":["JokerMetadata"]};

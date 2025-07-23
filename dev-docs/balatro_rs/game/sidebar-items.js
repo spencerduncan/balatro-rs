@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["SaveLoadError"],"struct":["Game","JokerContribution","ScoreBreakdown"]};
+window.SIDEBAR_ITEMS = {"enum":["SaveLoadError"],"struct":["AccumulatedEffects","Game","JokerContribution","ScoreBreakdown"]};

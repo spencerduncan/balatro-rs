@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["CardFilterType","CompositeFilter","FilterError"],"fn":["filter_cards"],"struct":["CardFilterRegistry","FilterContext","FilterMetadata","GameStateSnapshot"],"trait":["CardFilter"]};

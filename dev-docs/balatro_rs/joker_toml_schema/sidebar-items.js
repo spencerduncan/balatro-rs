@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["TomlComparisonOperator","TomlDestroyTarget","TomlHandRank","TomlJokerAction","TomlJokerCondition","TomlJokerEffect","TomlJokerRarity","TomlRank","TomlResultType","TomlStateOperation","TomlSuit","TomlValue"],"struct":["JokerConfig","TomlJokerBehavior","TomlJokerDefinition","TomlJokerState","TomlStateModifier"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["create_all_custom_scaling_jokers","get_custom_scaling_joker_by_id"],"struct":["BannerJoker","BootstrapsJoker","BullJoker","CeremonialDagger","GreenJoker","MysticSummit","SquareJoker"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ResetCondition","ScalingEffectType","ScalingEvent","ScalingTrigger"],"struct":["ScalingJoker"]};
