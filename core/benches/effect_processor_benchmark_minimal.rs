@@ -21,7 +21,7 @@ fn hand_effects_benchmarks(c: &mut Criterion) {
     group.bench_function("empty_joker_collection", |b| {
         b.iter(|| {
             let mut processor = JokerEffectProcessor::new();
-            let mut game_context = GameContext::new();
+            let mut game_context = create_test_game_context();
             let hand = create_test_hand();
             let jokers: Vec<Box<dyn Joker>> = Vec::new();
 
@@ -32,7 +32,7 @@ fn hand_effects_benchmarks(c: &mut Criterion) {
     group.bench_function("single_test_joker", |b| {
         b.iter(|| {
             let mut processor = JokerEffectProcessor::new();
-            let mut game_context = GameContext::new();
+            let mut game_context = create_test_game_context();
             let hand = create_test_hand();
             let jokers: Vec<Box<dyn Joker>> = vec![Box::new(create_test_joker())];
 
@@ -52,7 +52,7 @@ fn card_effects_benchmarks(c: &mut Criterion) {
     group.bench_function("single_card_empty_jokers", |b| {
         b.iter(|| {
             let mut processor = JokerEffectProcessor::new();
-            let mut game_context = GameContext::new();
+            let mut game_context = create_test_game_context();
             let card = Card::new(Value::Ace, Suit::Spade);
             let jokers: Vec<Box<dyn Joker>> = Vec::new();
 
@@ -63,7 +63,7 @@ fn card_effects_benchmarks(c: &mut Criterion) {
     group.bench_function("single_card_single_joker", |b| {
         b.iter(|| {
             let mut processor = JokerEffectProcessor::new();
-            let mut game_context = GameContext::new();
+            let mut game_context = create_test_game_context();
             let card = Card::new(Value::King, Suit::Heart);
             let jokers: Vec<Box<dyn Joker>> = vec![Box::new(create_test_joker())];
 
@@ -93,9 +93,9 @@ fn conflict_resolution_benchmarks(c: &mut Criterion) {
             |b, strategy| {
                 b.iter(|| {
                     let mut context = ProcessingContext::default();
-                    context.conflict_resolution = strategy.clone();
+                    context.resolution_strategy = strategy.clone();
                     let mut processor = JokerEffectProcessor::with_context(context);
-                    let mut game_context = GameContext::new();
+                    let mut game_context = create_test_game_context();
                     let hand = create_test_hand();
 
                     // Create multiple test jokers that would create conflicts
@@ -127,7 +127,7 @@ fn scaling_benchmarks(c: &mut Criterion) {
             |b, &joker_count| {
                 b.iter(|| {
                     let mut processor = JokerEffectProcessor::new();
-                    let mut game_context = GameContext::new();
+                    let mut game_context = create_test_game_context();
                     let hand = create_test_hand();
                     let jokers = create_test_joker_collection(joker_count);
 
@@ -177,7 +177,8 @@ fn create_test_joker_collection(count: usize) -> Vec<Box<dyn Joker>> {
     for i in 0..count {
         let chips = (i % 10) as i32 + 1;
         let mult = i as i32;
-        jokers.push(Box::new(create_test_joker_with_effect(chips, mult)));
+        let joker: Box<dyn Joker> = Box::new(create_test_joker_with_effect(chips, mult));
+        jokers.push(joker);
     }
 
     jokers
@@ -222,6 +223,42 @@ impl Joker for TestJoker {
         JokerEffect::new()
             .with_chips(self.chips / 2)
             .with_mult(self.mult / 2)
+    }
+}
+
+// Helper functions for creating test data
+
+fn create_test_game_context() -> GameContext<'static> {
+    use std::collections::HashMap;
+
+    // Create static references for the benchmark
+    let stage = Box::leak(Box::new(balatro_rs::stage::Stage::PreBlind()));
+    let hand = Box::leak(Box::new(balatro_rs::hand::Hand::new(vec![])));
+    let jokers: &'static [Box<dyn balatro_rs::joker::Joker>] = Box::leak(Box::new([]));
+    let discarded: &'static [balatro_rs::card::Card] = Box::leak(Box::new([]));
+    let joker_state_manager = Box::leak(Box::new(std::sync::Arc::new(
+        balatro_rs::joker_state::JokerStateManager::new(),
+    )));
+    let hand_type_counts = Box::leak(Box::new(HashMap::new()));
+    let rng = Box::leak(Box::new(balatro_rs::rng::GameRng::for_testing(12345)));
+
+    GameContext {
+        chips: 100,
+        mult: 4,
+        money: 100,
+        ante: 1,
+        round: 1,
+        stage,
+        hands_played: 0,
+        discards_used: 0,
+        jokers,
+        hand,
+        discarded,
+        joker_state_manager,
+        hand_type_counts,
+        cards_in_deck: 52,
+        stone_cards_in_deck: 0,
+        rng,
     }
 }
 

@@ -155,7 +155,7 @@ fn large_joker_collection_benchmarks(c: &mut Criterion) {
                     let mut processor = JokerEffectProcessor::new();
                     let mut game_context = create_test_game_context();
                     let hand = create_test_hand();
-                    let jokers = create_large_joker_collection(*joker_count);
+                    let jokers = create_large_joker_collection(joker_count);
 
                     black_box(processor.process_hand_effects(&jokers, &mut game_context, &hand))
                 });
@@ -185,7 +185,7 @@ fn conflict_resolution_benchmarks(c: &mut Criterion) {
             |b, strategy| {
                 b.iter(|| {
                     let mut context = ProcessingContext::default();
-                    context.conflict_resolution = strategy.clone();
+                    context.resolution_strategy = strategy.clone();
                     let mut processor = JokerEffectProcessor::with_context(context);
                     let mut game_context = create_test_game_context();
                     let hand = create_test_hand();
@@ -332,8 +332,34 @@ fn memory_allocation_benchmarks(c: &mut Criterion) {
 
 // Helper functions for creating test data
 
-fn create_test_game_context() -> GameContext {
-    GameContext::new()
+fn create_test_game_context() -> GameContext<'static> {
+    // Create static references for the benchmark
+    let stage = Box::leak(Box::new(balatro_rs::stage::Stage::PreBlind()));
+    let hand = Box::leak(Box::new(balatro_rs::hand::Hand::new(vec![])));
+    let jokers: &'static [Box<dyn balatro_rs::joker::Joker>] = Box::leak(Box::new([]));
+    let discarded: &'static [balatro_rs::card::Card] = Box::leak(Box::new([]));
+    let joker_state_manager = Box::leak(Box::new(std::sync::Arc::new(balatro_rs::joker_state::JokerStateManager::new())));
+    let hand_type_counts = Box::leak(Box::new(std::collections::HashMap::new()));
+    let rng = Box::leak(Box::new(balatro_rs::rng::GameRng::for_testing(12345)));
+
+    GameContext {
+        chips: 100,
+        mult: 4,
+        money: 100,
+        ante: 1,
+        round: 1,
+        stage,
+        hands_played: 0,
+        discards_used: 0,
+        jokers,
+        hand,
+        discarded,
+        joker_state_manager,
+        hand_type_counts,
+        cards_in_deck: 52,
+        stone_cards_in_deck: 0,
+        rng,
+    }
 }
 
 fn create_test_hand() -> SelectHand {
@@ -377,32 +403,26 @@ fn create_varied_test_hand() -> SelectHand {
 }
 
 fn create_single_joker_collection() -> Vec<Box<dyn Joker>> {
-    vec![Box::new(StaticJoker::new(
-        JokerId::Joker,
-        JokerEffect::new().with_chips(4),
-    ))]
+    vec![balatro_rs::joker_factory::JokerFactory::create(JokerId::Joker).unwrap()]
 }
 
 fn create_complex_joker_collection(count: usize) -> Vec<Box<dyn Joker>> {
     let mut jokers = Vec::new();
 
     for i in 0..count {
-        let effect = match i % 4 {
-            0 => JokerEffect::new().with_chips(5 + i as i32),
-            1 => JokerEffect::new().with_mult(2 + i as i32),
-            2 => JokerEffect::new().with_chips(3).with_mult(2),
-            _ => JokerEffect::new().with_x_mult(1.5 + (i as f64 * 0.1)),
+        let joker_id = match i % 4 {
+            0 => JokerId::Joker,
+            1 => JokerId::GreedyJoker,
+            2 => JokerId::LustyJoker,
+            _ => JokerId::WrathfulJoker,
         };
 
-        jokers.push(Box::new(StaticJoker::new(
-            match i % 4 {
-                0 => JokerId::Joker,
-                1 => JokerId::GreedyJoker,
-                2 => JokerId::LustyJoker,
-                _ => JokerId::WrathfulJoker,
-            },
-            effect,
-        )));
+        if let Some(joker) = balatro_rs::joker_factory::JokerFactory::create(joker_id) {
+            jokers.push(joker);
+        } else if let Some(fallback) = balatro_rs::joker_factory::JokerFactory::create(JokerId::Joker) {
+            // Fallback to basic joker if the specific one doesn't exist
+            jokers.push(fallback);
+        }
     }
 
     jokers
@@ -411,13 +431,11 @@ fn create_complex_joker_collection(count: usize) -> Vec<Box<dyn Joker>> {
 fn create_retriggering_joker_collection(retrigger_count: usize) -> Vec<Box<dyn Joker>> {
     let mut jokers = Vec::new();
 
-    // Create jokers that will trigger retrigger scenarios
-    for i in 0..std::cmp::min(retrigger_count, 5) {
-        let effect = JokerEffect::new()
-            .with_chips(5)
-            .with_retriggers(std::cmp::min(retrigger_count / (i + 1), 10) as u32);
-
-        jokers.push(Box::new(StaticJoker::new(JokerId::Joker, effect)));
+    // Create jokers for retrigger benchmarking
+    for _i in 0..std::cmp::min(retrigger_count, 5) {
+        if let Some(joker) = balatro_rs::joker_factory::JokerFactory::create(JokerId::Joker) {
+            jokers.push(joker);
+        }
     }
 
     jokers
@@ -440,9 +458,12 @@ fn create_large_joker_collection(count: usize) -> Vec<Box<dyn Joker>> {
             _ => JokerId::DrollJoker,
         };
 
-        let effect = JokerEffect::new().with_chips(1 + (i % 10) as i32);
-
-        jokers.push(Box::new(StaticJoker::new(joker_id, effect)));
+        if let Some(joker) = balatro_rs::joker_factory::JokerFactory::create(joker_id) {
+            jokers.push(joker);
+        } else if let Some(fallback) = balatro_rs::joker_factory::JokerFactory::create(JokerId::Joker) {
+            // Fallback to basic joker if the specific one doesn't exist
+            jokers.push(fallback);
+        }
     }
 
     jokers
@@ -450,32 +471,27 @@ fn create_large_joker_collection(count: usize) -> Vec<Box<dyn Joker>> {
 
 fn create_conflicting_joker_collection() -> Vec<Box<dyn Joker>> {
     vec![
-        Box::new(StaticJoker::new(
-            JokerId::Joker,
-            JokerEffect::new().with_chips(10).with_mult(2),
-        )),
-        Box::new(StaticJoker::new(
-            JokerId::GreedyJoker,
-            JokerEffect::new().with_chips(15).with_mult(3),
-        )),
-        Box::new(StaticJoker::new(
-            JokerId::LustyJoker,
-            JokerEffect::new().with_chips(8).with_mult(4),
-        )),
+        balatro_rs::joker_factory::JokerFactory::create(JokerId::Joker).unwrap(),
+        balatro_rs::joker_factory::JokerFactory::create(JokerId::GreedyJoker).unwrap_or_else(|| {
+            // Fallback if GreedyJoker doesn't exist
+            balatro_rs::joker_factory::JokerFactory::create(JokerId::Joker).unwrap()
+        }),
+        balatro_rs::joker_factory::JokerFactory::create(JokerId::LustyJoker).unwrap_or_else(|| {
+            // Fallback if LustyJoker doesn't exist
+            balatro_rs::joker_factory::JokerFactory::create(JokerId::Joker).unwrap()
+        }),
     ]
 }
 
 fn create_priority_joker_collection(priorities: Vec<EffectPriority>) -> Vec<Box<dyn Joker>> {
     let mut jokers = Vec::new();
 
-    for (i, &priority) in priorities.iter().enumerate() {
-        // Create a joker with specific priority
-        let effect = JokerEffect::new().with_chips(5 + i as i32);
-        let mut joker = StaticJoker::new(JokerId::Joker, effect);
-
-        // Note: This is a simplified example. In practice, you'd need to implement
-        // priority assignment in your joker system
-        jokers.push(Box::new(joker));
+    for (i, &_priority) in priorities.iter().enumerate() {
+        // Create a joker for benchmarking purposes
+        // Note: Actual priority handling is implemented in the processor
+        if let Some(joker) = balatro_rs::joker_factory::JokerFactory::create(JokerId::Joker) {
+            jokers.push(joker);
+        }
     }
 
     jokers
