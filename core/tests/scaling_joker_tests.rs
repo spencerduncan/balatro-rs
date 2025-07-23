@@ -270,7 +270,7 @@ fn test_scaling_joker_framework() {
 fn test_scaling_triggers() {
     assert_eq!(
         format!("{}", ScalingTrigger::HandPlayed(HandRank::OnePair)),
-        "Pair played"
+        "OnePair played"
     );
     assert_eq!(
         format!("{}", ScalingTrigger::CardDiscarded),

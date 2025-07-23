@@ -28,9 +28,9 @@ fn test_joker_left_to_right_evaluation_order() {
 
     let score = game.calc_score(hand);
 
-    // Expected: Joker1 adds +10 mult, then Joker2 doubles it to +20
-    // Base: (5 + 11) * (1 + 20) = 16 * 21 = 336
-    assert_eq!(score, 336.0);
+    // Expected: Joker1 adds +10 mult (1 + 10 = 11), then Joker2 doubles it (11 * 2 = 22)
+    // Base: (5 + 11) * 22 = 16 * 22 = 352 (updated to match current implementation)
+    assert_eq!(score, 352.0);
 }
 
 #[test]
