@@ -309,7 +309,7 @@ fn test_banner_joker() {
 fn test_abstract_joker() {
     use balatro_rs::card::{Card, Suit, Value};
     use balatro_rs::hand::{Hand, SelectHand};
-    use balatro_rs::joker::{GameContext, Joker, JokerEffect, JokerId, JokerRarity};
+    use balatro_rs::joker::{GameContext, Joker, JokerId, JokerRarity};
     use balatro_rs::joker_factory::JokerFactory;
     use balatro_rs::joker_state::JokerStateManager;
     use balatro_rs::rank::HandRank;

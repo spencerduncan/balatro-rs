@@ -594,14 +594,14 @@ fn test_remove_consumable_valid_index() {
     // Remove first consumable
     let result = slots.remove_consumable(0);
     assert!(result.is_ok());
-    let removed = result.unwrap();
+    let _removed = result.unwrap();
     // Can't access get_mock_id() through trait object
     assert_eq!(slots.len(), 1);
 
     // Remove second consumable
     let result2 = slots.remove_consumable(1);
     assert!(result2.is_ok());
-    let removed2 = result2.unwrap();
+    let _removed2 = result2.unwrap();
     // Can't access get_mock_id() through trait object
     assert_eq!(slots.len(), 0);
     assert!(slots.is_empty());

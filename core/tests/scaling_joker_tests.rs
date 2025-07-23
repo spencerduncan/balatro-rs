@@ -742,7 +742,7 @@ fn test_scaling_joker_reset_conditions() {
     // Test that reset conditions work properly for scaling jokers
 
     // Create a ceremonial dagger with round end reset condition
-    let mut joker = create_ceremonial_dagger();
+    let joker = create_ceremonial_dagger();
     let context = create_test_context(100, 1, 1);
 
     // Initialize joker state
@@ -799,7 +799,7 @@ fn test_multiple_reset_conditions() {
     // Test different types of reset conditions work correctly
 
     // Test 1: Round End reset condition (Ceremonial Dagger)
-    let mut ceremonial = create_ceremonial_dagger();
+    let ceremonial = create_ceremonial_dagger();
     let mut context = create_test_context(100, 1, 1);
     let initial_state = ceremonial.initialize_state(&context);
     context
@@ -825,7 +825,7 @@ fn test_multiple_reset_conditions() {
     assert_eq!(after_reset, 1.0); // Back to base
 
     // Test 2: Never reset condition
-    let mut never_reset_joker = ScalingJoker::new(
+    let never_reset_joker = ScalingJoker::new(
         JokerId::Reserved,
         "Never Reset Test".to_string(),
         "Never resets".to_string(),
@@ -868,7 +868,7 @@ fn test_multiple_reset_conditions() {
 fn test_reset_before_trigger_order() {
     // Test that reset happens before trigger (as per the implementation)
 
-    let mut joker = ScalingJoker::new(
+    let joker = ScalingJoker::new(
         JokerId::Reserved2,
         "Test Order".to_string(),
         "Tests reset/trigger order".to_string(),
@@ -917,7 +917,7 @@ fn test_reset_conditions_with_different_events() {
     let mut context = create_test_context(100, 1, 1);
 
     // Test ante end reset
-    let mut ante_reset_joker = ScalingJoker::new(
+    let ante_reset_joker = ScalingJoker::new(
         JokerId::Reserved3,
         "Ante Reset Test".to_string(),
         "Resets at ante end".to_string(),
@@ -1005,7 +1005,7 @@ fn test_performance_with_many_scaling_jokers() {
     let stage = Stage::Blind(Blind::Small);
     let rng = &balatro_rs::rng::GameRng::for_testing(42);
 
-    let context = GameContext {
+    let _context = GameContext {
         chips: 0,
         mult: 1,
         money: 100, // Some starting money for money-triggered jokers
@@ -1029,7 +1029,7 @@ fn test_performance_with_many_scaling_jokers() {
 
     for _ in 0..NUM_ITERATIONS {
         // Simulate processing effects for all jokers
-        for joker in &jokers {
+        for _joker in &jokers {
             // Note: get_effect() method doesn't exist on Joker trait
             // This test needs to be updated to use the actual Joker methods
             let _effect = JokerEffect::default();
