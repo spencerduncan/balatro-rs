@@ -17,8 +17,7 @@ pub fn minimal_trait_benchmark(c: &mut Criterion) {
 
         b.iter(|| {
             // Test joker registry access
-            if let Some(joker) = balatro_rs::joker_factory::JokerFactory::create(JokerId::Joker)
-            {
+            if let Ok(joker) = joker_registry::registry::create_joker(&JokerId::Joker) {
                 black_box(joker.id());
             }
             black_box(&test_card);

@@ -62,3 +62,7 @@ harness = false
 [[bench]]
 name = "trait_benchmark"
 harness = false
+
+[[bench]]
+name = "trait_performance"
+harness = false
