@@ -28,6 +28,8 @@ pub enum JokerCondition {
     AllSameRank,
     /// All held cards have the same suit OR all have the same rank
     AllSameSuitOrRank,
+    /// All held cards must be one of the specified suits
+    AllCardsInSuits(Vec<Suit>),
     /// Composite condition - all must be true
     All(Vec<JokerCondition>),
     /// Composite condition - at least one must be true
@@ -53,6 +55,7 @@ impl Debug for JokerCondition {
             Self::AllSameSuit => write!(f, "AllSameSuit"),
             Self::AllSameRank => write!(f, "AllSameRank"),
             Self::AllSameSuitOrRank => write!(f, "AllSameSuitOrRank"),
+            Self::AllCardsInSuits(suits) => write!(f, "AllCardsInSuits({suits:?})"),
             Self::All(conditions) => write!(f, "All({conditions:?})"),
             Self::Any(conditions) => write!(f, "Any({conditions:?})"),
             Self::Not(condition) => write!(f, "Not({condition:?})"),
@@ -121,6 +124,11 @@ impl JokerCondition {
                 // Return false when hand context is not available
                 false
             }
+            Self::AllCardsInSuits(_suits) => {
+                // This condition requires hand context to evaluate properly
+                // Return false when hand context is not available
+                false
+            }
             Self::All(conditions) => conditions.iter().all(|cond| cond.evaluate(context)),
             Self::Any(conditions) => conditions.iter().any(|cond| cond.evaluate(context)),
             Self::Not(condition) => !condition.evaluate(context),
@@ -185,6 +193,15 @@ impl JokerCondition {
                     all_same_suit || all_same_rank
                 }
             }
+            Self::AllCardsInSuits(suits) => {
+                let cards = hand.cards();
+                if cards.is_empty() {
+                    false // Empty hand doesn't satisfy the condition
+                } else {
+                    // Check that all cards have a suit that's in the allowed list
+                    cards.iter().all(|card| suits.contains(&card.suit))
+                }
+            }
             Self::All(conditions) => conditions
                 .iter()
                 .all(|cond| cond.evaluate_with_hand(context, hand)),
@@ -224,9 +241,10 @@ impl JokerCondition {
             Self::Not(condition) => !condition.evaluate_for_card(context, card),
             // For conditions that can't be meaningfully evaluated for a single card,
             // delegate to the general evaluate method
-            Self::AllSameSuit | Self::AllSameRank | Self::AllSameSuitOrRank => {
-                self.evaluate(context)
-            }
+            Self::AllSameSuit
+            | Self::AllSameRank
+            | Self::AllSameSuitOrRank
+            | Self::AllCardsInSuits(_) => self.evaluate(context),
             _ => self.evaluate(context),
         }
     }
