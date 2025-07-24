@@ -1,6 +1,7 @@
 use balatro_rs::card::{Suit, Value};
 use balatro_rs::joker::JokerId;
 use balatro_rs::joker_state::JokerStateManager;
+use balatro_rs::stage::Stage;
 use std::sync::{Arc, Mutex};
 
 /// A simple counter joker that needs mutable state
