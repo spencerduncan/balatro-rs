@@ -438,8 +438,9 @@ mod tests {
         let diamond_card = Card::new(Value::King, Suit::Diamond);
         let heart_card = Card::new(Value::King, Suit::Heart);
 
-        assert!(joker.check_card_condition(&diamond_card));
-        assert!(!joker.check_card_condition(&heart_card));
+        let context = create_default_test_context();
+        assert!(joker.check_card_condition(&context, &diamond_card));
+        assert!(!joker.check_card_condition(&context, &heart_card));
     }
 
     #[test]
@@ -455,8 +456,9 @@ mod tests {
         let ace_card = Card::new(Value::Ace, Suit::Spade);
         let king_card = Card::new(Value::King, Suit::Spade);
 
-        assert!(joker.check_card_condition(&ace_card));
-        assert!(!joker.check_card_condition(&king_card));
+        let context = create_default_test_context();
+        assert!(joker.check_card_condition(&context, &ace_card));
+        assert!(!joker.check_card_condition(&context, &king_card));
     }
 
     #[test]
@@ -475,9 +477,10 @@ mod tests {
         let diamond_card = Card::new(Value::Ten, Suit::Diamond);
         let spade_card = Card::new(Value::Ten, Suit::Spade);
 
-        assert!(joker.check_card_condition(&heart_card));
-        assert!(joker.check_card_condition(&diamond_card));
-        assert!(!joker.check_card_condition(&spade_card));
+        let context = create_default_test_context();
+        assert!(joker.check_card_condition(&context, &heart_card));
+        assert!(joker.check_card_condition(&context, &diamond_card));
+        assert!(!joker.check_card_condition(&context, &spade_card));
     }
 
     #[test]
@@ -494,8 +497,9 @@ mod tests {
         let diamond_card = Card::new(Value::Ace, Suit::Diamond);
         let heart_card = Card::new(Value::King, Suit::Heart);
 
-        assert!(joker.check_card_condition(&diamond_card));
-        assert!(!joker.check_card_condition(&heart_card));
+        let context = create_default_test_context();
+        assert!(joker.check_card_condition(&context, &diamond_card));
+        assert!(!joker.check_card_condition(&context, &heart_card));
 
         // Test effect
         let context = create_default_test_context();
@@ -517,8 +521,9 @@ mod tests {
         let heart_card = Card::new(Value::Ace, Suit::Heart);
         let spade_card = Card::new(Value::King, Suit::Spade);
 
-        assert!(joker.check_card_condition(&heart_card));
-        assert!(!joker.check_card_condition(&spade_card));
+        let context = create_default_test_context();
+        assert!(joker.check_card_condition(&context, &heart_card));
+        assert!(!joker.check_card_condition(&context, &spade_card));
 
         // Test effect
         let context = create_default_test_context();
@@ -541,8 +546,9 @@ mod tests {
         let spade_card = Card::new(Value::Ace, Suit::Spade);
         let club_card = Card::new(Value::King, Suit::Club);
 
-        assert!(joker.check_card_condition(&spade_card));
-        assert!(!joker.check_card_condition(&club_card));
+        let context = create_default_test_context();
+        assert!(joker.check_card_condition(&context, &spade_card));
+        assert!(!joker.check_card_condition(&context, &club_card));
 
         // Test effect
         let context = create_default_test_context();
@@ -565,8 +571,9 @@ mod tests {
         let club_card = Card::new(Value::Ace, Suit::Club);
         let diamond_card = Card::new(Value::King, Suit::Diamond);
 
-        assert!(joker.check_card_condition(&club_card));
-        assert!(!joker.check_card_condition(&diamond_card));
+        let context = create_default_test_context();
+        assert!(joker.check_card_condition(&context, &club_card));
+        assert!(!joker.check_card_condition(&context, &diamond_card));
 
         // Test effect
         let context = create_default_test_context();
@@ -591,26 +598,27 @@ mod tests {
         let spade_card = Card::new(Value::Queen, Suit::Spade);
         let club_card = Card::new(Value::Jack, Suit::Club);
 
+        let context = create_default_test_context();
         // Each joker should only match its own suit
-        assert!(greedy.check_card_condition(&diamond_card));
-        assert!(!greedy.check_card_condition(&heart_card));
-        assert!(!greedy.check_card_condition(&spade_card));
-        assert!(!greedy.check_card_condition(&club_card));
+        assert!(greedy.check_card_condition(&context, &diamond_card));
+        assert!(!greedy.check_card_condition(&context, &heart_card));
+        assert!(!greedy.check_card_condition(&context, &spade_card));
+        assert!(!greedy.check_card_condition(&context, &club_card));
 
-        assert!(!lusty.check_card_condition(&diamond_card));
-        assert!(lusty.check_card_condition(&heart_card));
-        assert!(!lusty.check_card_condition(&spade_card));
-        assert!(!lusty.check_card_condition(&club_card));
+        assert!(!lusty.check_card_condition(&context, &diamond_card));
+        assert!(lusty.check_card_condition(&context, &heart_card));
+        assert!(!lusty.check_card_condition(&context, &spade_card));
+        assert!(!lusty.check_card_condition(&context, &club_card));
 
-        assert!(!wrathful.check_card_condition(&diamond_card));
-        assert!(!wrathful.check_card_condition(&heart_card));
-        assert!(wrathful.check_card_condition(&spade_card));
-        assert!(!wrathful.check_card_condition(&club_card));
+        assert!(!wrathful.check_card_condition(&context, &diamond_card));
+        assert!(!wrathful.check_card_condition(&context, &heart_card));
+        assert!(wrathful.check_card_condition(&context, &spade_card));
+        assert!(!wrathful.check_card_condition(&context, &club_card));
 
-        assert!(!gluttonous.check_card_condition(&diamond_card));
-        assert!(!gluttonous.check_card_condition(&heart_card));
-        assert!(!gluttonous.check_card_condition(&spade_card));
-        assert!(gluttonous.check_card_condition(&club_card));
+        assert!(!gluttonous.check_card_condition(&context, &diamond_card));
+        assert!(!gluttonous.check_card_condition(&context, &heart_card));
+        assert!(!gluttonous.check_card_condition(&context, &spade_card));
+        assert!(gluttonous.check_card_condition(&context, &club_card));
 
         // All should give the same +3 mult effect
         let context = create_default_test_context();
@@ -639,8 +647,9 @@ mod tests {
         let even_card = Card::new(Value::Eight, Suit::Club);
         let odd_card = Card::new(Value::Seven, Suit::Club);
 
-        assert!(joker.check_card_condition(&even_card));
-        assert!(!joker.check_card_condition(&odd_card));
+        let context = create_default_test_context();
+        assert!(joker.check_card_condition(&context, &even_card));
+        assert!(!joker.check_card_condition(&context, &odd_card));
     }
 
     #[test]
@@ -750,10 +759,11 @@ mod tests {
             Card::new(Value::Jack, Suit::Club),
         ]);
 
-        assert!(joker.check_hand_condition(&pair_hand));
-        assert!(joker.check_hand_condition(&two_pair_hand)); // Contains pairs
-        assert!(joker.check_hand_condition(&full_house_hand)); // Contains a pair
-        assert!(!joker.check_hand_condition(&high_card_hand)); // No pair
+        let context = create_default_test_context();
+        assert!(joker.check_hand_condition(&context, &pair_hand));
+        assert!(joker.check_hand_condition(&context, &two_pair_hand)); // Contains pairs
+        assert!(joker.check_hand_condition(&context, &full_house_hand)); // Contains a pair
+        assert!(!joker.check_hand_condition(&context, &high_card_hand)); // No pair
     }
 
     #[test]
@@ -796,10 +806,11 @@ mod tests {
             Card::new(Value::Nine, Suit::Heart),
         ]);
 
-        assert!(flush_joker.check_hand_condition(&flush_hand));
+        let context = create_default_test_context();
+        assert!(flush_joker.check_hand_condition(&context, &flush_hand));
         // Straight flush contains a flush
-        assert!(flush_joker.check_hand_condition(&straight_flush_hand));
-        assert!(!flush_joker.check_hand_condition(&mixed_hand)); // Not a flush
+        assert!(flush_joker.check_hand_condition(&context, &straight_flush_hand));
+        assert!(!flush_joker.check_hand_condition(&context, &mixed_hand)); // Not a flush
     }
 
     #[test]
@@ -842,9 +853,10 @@ mod tests {
             Card::new(Value::Ten, Suit::Club),
         ]);
 
-        assert!(joker.check_hand_condition(&two_pair_hand));
-        assert!(joker.check_hand_condition(&full_house_hand)); // Full house contains two pairs
-        assert!(!joker.check_hand_condition(&one_pair_hand));
+        let context = create_default_test_context();
+        assert!(joker.check_hand_condition(&context, &two_pair_hand));
+        assert!(joker.check_hand_condition(&context, &full_house_hand)); // Full house contains two pairs
+        assert!(!joker.check_hand_condition(&context, &one_pair_hand));
     }
 
     #[test]
@@ -896,10 +908,11 @@ mod tests {
             Card::new(Value::Jack, Suit::Club),
         ]);
 
-        assert!(joker.check_hand_condition(&three_kind_hand));
-        assert!(joker.check_hand_condition(&full_house_hand));
-        assert!(joker.check_hand_condition(&four_kind_hand));
-        assert!(!joker.check_hand_condition(&two_pair_hand));
+        let context = create_default_test_context();
+        assert!(joker.check_hand_condition(&context, &three_kind_hand));
+        assert!(joker.check_hand_condition(&context, &full_house_hand));
+        assert!(joker.check_hand_condition(&context, &four_kind_hand));
+        assert!(!joker.check_hand_condition(&context, &two_pair_hand));
     }
 
     #[test]
@@ -942,9 +955,10 @@ mod tests {
             Card::new(Value::Eight, Suit::Heart),
         ]);
 
-        assert!(joker.check_hand_condition(&straight_hand));
-        assert!(joker.check_hand_condition(&straight_flush_hand));
-        assert!(!joker.check_hand_condition(&non_straight_hand));
+        let context = create_default_test_context();
+        assert!(joker.check_hand_condition(&context, &straight_hand));
+        assert!(joker.check_hand_condition(&context, &straight_flush_hand));
+        assert!(!joker.check_hand_condition(&context, &non_straight_hand));
     }
 
     #[test]
@@ -987,9 +1001,10 @@ mod tests {
             Card::new(Value::Jack, Suit::Club),
         ]);
 
-        assert!(joker.check_hand_condition(&full_house_hand));
-        assert!(!joker.check_hand_condition(&three_kind_hand));
-        assert!(!joker.check_hand_condition(&two_pair_hand));
+        let context = create_default_test_context();
+        assert!(joker.check_hand_condition(&context, &full_house_hand));
+        assert!(!joker.check_hand_condition(&context, &three_kind_hand));
+        assert!(!joker.check_hand_condition(&context, &two_pair_hand));
     }
 
     #[test]
@@ -1032,9 +1047,10 @@ mod tests {
             Card::new(Value::Jack, Suit::Diamond),
         ]);
 
-        assert!(joker.check_hand_condition(&four_kind_hand));
-        assert!(joker.check_hand_condition(&five_kind_hand));
-        assert!(!joker.check_hand_condition(&three_kind_hand));
+        let context = create_default_test_context();
+        assert!(joker.check_hand_condition(&context, &four_kind_hand));
+        assert!(joker.check_hand_condition(&context, &five_kind_hand));
+        assert!(!joker.check_hand_condition(&context, &three_kind_hand));
     }
 
     #[test]
@@ -1086,10 +1102,11 @@ mod tests {
             Card::new(Value::Six, Suit::Heart),
         ]);
 
-        assert!(joker.check_hand_condition(&straight_flush_hand));
-        assert!(joker.check_hand_condition(&royal_flush_hand));
-        assert!(!joker.check_hand_condition(&flush_hand));
-        assert!(!joker.check_hand_condition(&straight_hand));
+        let context = create_default_test_context();
+        assert!(joker.check_hand_condition(&context, &straight_flush_hand));
+        assert!(joker.check_hand_condition(&context, &royal_flush_hand));
+        assert!(!joker.check_hand_condition(&context, &flush_hand));
+        assert!(!joker.check_hand_condition(&context, &straight_hand));
     }
 
     #[test]
@@ -1123,8 +1140,9 @@ mod tests {
             Card::new(Value::Nine, Suit::Heart),
         ]);
 
-        assert!(joker.check_hand_condition(&high_card_hand));
-        assert!(!joker.check_hand_condition(&pair_hand));
+        let context = create_default_test_context();
+        assert!(joker.check_hand_condition(&context, &high_card_hand));
+        assert!(!joker.check_hand_condition(&context, &pair_hand));
     }
 
     #[test]
@@ -1158,8 +1176,9 @@ mod tests {
             Card::new(Value::Five, Suit::Heart),
         ]);
 
-        assert!(joker.check_hand_condition(&royal_flush_hand));
-        assert!(!joker.check_hand_condition(&straight_flush_hand));
+        let context = create_default_test_context();
+        assert!(joker.check_hand_condition(&context, &royal_flush_hand));
+        assert!(!joker.check_hand_condition(&context, &straight_flush_hand));
     }
 
     #[test]
@@ -1193,8 +1212,9 @@ mod tests {
             Card::new(Value::Queen, Suit::Heart),
         ]);
 
-        assert!(joker.check_hand_condition(&five_kind_hand));
-        assert!(!joker.check_hand_condition(&four_kind_hand));
+        let context = create_default_test_context();
+        assert!(joker.check_hand_condition(&context, &five_kind_hand));
+        assert!(!joker.check_hand_condition(&context, &four_kind_hand));
     }
 
     #[test]
@@ -1237,9 +1257,10 @@ mod tests {
             Card::new(Value::Nine, Suit::Heart),
         ]);
 
-        assert!(joker.check_hand_condition(&flush_house_hand));
-        assert!(!joker.check_hand_condition(&full_house_hand));
-        assert!(!joker.check_hand_condition(&flush_hand));
+        let context = create_default_test_context();
+        assert!(joker.check_hand_condition(&context, &flush_house_hand));
+        assert!(!joker.check_hand_condition(&context, &full_house_hand));
+        assert!(!joker.check_hand_condition(&context, &flush_hand));
     }
 
     #[test]
@@ -1282,9 +1303,10 @@ mod tests {
             Card::new(Value::Nine, Suit::Heart),
         ]);
 
-        assert!(joker.check_hand_condition(&flush_five_hand));
-        assert!(!joker.check_hand_condition(&five_kind_hand));
-        assert!(!joker.check_hand_condition(&flush_hand));
+        let context = create_default_test_context();
+        assert!(joker.check_hand_condition(&context, &flush_five_hand));
+        assert!(!joker.check_hand_condition(&context, &five_kind_hand));
+        assert!(!joker.check_hand_condition(&context, &flush_hand));
     }
 
     #[test]
@@ -1401,28 +1423,29 @@ mod tests {
         ]);
 
         // Verify conditions
+        let context = create_default_test_context();
         assert!(
-            joker.check_hand_condition(&four_card_hand),
+            joker.check_hand_condition(&context, &four_card_hand),
             "4 cards should trigger Half Joker"
         );
         assert!(
-            joker.check_hand_condition(&three_card_hand),
+            joker.check_hand_condition(&context, &three_card_hand),
             "3 cards should trigger Half Joker"
         );
         assert!(
-            joker.check_hand_condition(&two_card_hand),
+            joker.check_hand_condition(&context, &two_card_hand),
             "2 cards should trigger Half Joker"
         );
         assert!(
-            joker.check_hand_condition(&one_card_hand),
+            joker.check_hand_condition(&context, &one_card_hand),
             "1 card should trigger Half Joker"
         );
         assert!(
-            !joker.check_hand_condition(&five_card_hand),
+            !joker.check_hand_condition(&context, &five_card_hand),
             "5 cards should NOT trigger Half Joker"
         );
         assert!(
-            !joker.check_hand_condition(&six_card_hand),
+            !joker.check_hand_condition(&context, &six_card_hand),
             "6 cards should NOT trigger Half Joker"
         );
     }
@@ -1447,12 +1470,13 @@ mod tests {
         // Test with one card
         let one_card_hand = SelectHand::new(vec![Card::new(Value::King, Suit::Heart)]);
 
+        let context = create_default_test_context();
         assert!(
-            zero_joker.check_hand_condition(&empty_hand),
+            zero_joker.check_hand_condition(&context, &empty_hand),
             "Empty hand should trigger with max size 0"
         );
         assert!(
-            !zero_joker.check_hand_condition(&one_card_hand),
+            !zero_joker.check_hand_condition(&context, &one_card_hand),
             "1 card should NOT trigger with max size 0"
         );
 
@@ -1476,8 +1500,9 @@ mod tests {
             Card::new(Value::Nine, Suit::Heart),
         ]);
 
+        let context = create_default_test_context();
         assert!(
-            large_joker.check_hand_condition(&normal_hand),
+            large_joker.check_hand_condition(&context, &normal_hand),
             "5 cards should trigger with max size 100"
         );
     }
@@ -1497,8 +1522,9 @@ mod tests {
 
         // Hand size conditions should not apply to individual cards
         let card = Card::new(Value::King, Suit::Heart);
+        let context = create_default_test_context();
         assert!(
-            !joker.check_card_condition(&card),
+            !joker.check_card_condition(&context, &card),
             "Hand size conditions should not apply to individual cards"
         );
     }
