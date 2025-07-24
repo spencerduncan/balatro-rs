@@ -726,11 +726,20 @@ impl JokerEffectProcessor {
         let start_time = Instant::now();
 
         let effect = match optimized_joker.trait_profile {
-            JokerTraitProfile::GameplayOptimized => {
+            JokerTraitProfile::GameplayOptimized
+            | JokerTraitProfile::HybridOptimized
+            | JokerTraitProfile::FullTraitOptimized => {
+                // Use optimized gameplay trait path
                 // NOTE: Currently disabled due to JokerGameplay requiring &mut self
                 // gameplay_trait is always None in current implementation
-                // Fallback to legacy path until optimization layer is refactored
-                self.trait_metrics.legacy_path_count += 1;
+                // if let Some(gameplay_trait) = optimized_joker.gameplay_trait {
+                //     self.process_gameplay_trait(gameplay_trait, game_context, stage, hand, card)
+                // } else {
+                //     // Fallback to legacy path
+                //     self.process_legacy_joker(optimized_joker.joker, game_context, hand, card)
+                // }
+
+                // Always use legacy path until optimization layer is refactored
                 self.process_legacy_joker(optimized_joker.joker, game_context, hand, card)
             }
             JokerTraitProfile::ModifierOptimized => {

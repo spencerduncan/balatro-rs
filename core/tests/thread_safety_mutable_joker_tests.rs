@@ -1,6 +1,7 @@
 use balatro_rs::card::{Suit, Value};
-use balatro_rs::joker::{JokerGameplay, JokerId, ProcessResult};
+use balatro_rs::joker::{JokerGameplay, JokerId, ProcessContext, ProcessResult};
 use balatro_rs::joker_state::JokerStateManager;
+use balatro_rs::stage::Stage;
 use std::sync::{
     atomic::{AtomicU32, Ordering},
     Arc, Mutex, RwLock,
@@ -82,7 +83,6 @@ fn test_complex_state_thread_safety() {
         Ready,
         Cooldown(u32),
     }
-
     impl ComplexThreadSafeJoker {
         fn new() -> Self {
             Self {

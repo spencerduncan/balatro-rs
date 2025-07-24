@@ -664,9 +664,6 @@ impl JokerLifecycle for PhotographJoker {
     fn on_round_start(&mut self) {
         // Reset internal state for the new round
         self.face_card_triggered = false;
-        // NOTE: In actual game flow, the Game engine should also reset the
-        // "face_card_triggered" state in JokerStateManager by calling:
-        // joker_state_manager.set_custom_data(JokerId::Photograph, "face_card_triggered", json!(false))
     }
 }
 
