@@ -494,6 +494,8 @@ pub struct TraitOptimizedJoker<'a> {
     /// Detected trait profile for optimization routing
     pub trait_profile: JokerTraitProfile,
     /// Cached gameplay trait reference if available
+    /// NOTE: Currently always None due to JokerGameplay requiring &mut self
+    /// TODO: Refactor optimization layer to support mutable trait references
     pub gameplay_trait: Option<&'a dyn JokerGameplay>,
     /// Cached modifiers trait reference if available
     pub modifiers_trait: Option<&'a dyn JokerModifiers>,
@@ -659,7 +661,7 @@ impl JokerEffectProcessor {
         &mut self,
         optimized_joker: &TraitOptimizedJoker,
         game_context: &mut GameContext,
-        stage: &Stage,
+        _stage: &Stage,
         hand: Option<&SelectHand>,
         card: Option<&Card>,
     ) -> WeightedEffect {
@@ -670,12 +672,17 @@ impl JokerEffectProcessor {
             | JokerTraitProfile::HybridOptimized
             | JokerTraitProfile::FullTraitOptimized => {
                 // Use optimized gameplay trait path
-                if let Some(gameplay_trait) = optimized_joker.gameplay_trait {
-                    self.process_gameplay_trait(gameplay_trait, game_context, stage, hand, card)
-                } else {
-                    // Fallback to legacy path
-                    self.process_legacy_joker(optimized_joker.joker, game_context, hand, card)
-                }
+                // NOTE: Currently disabled due to JokerGameplay requiring &mut self
+                // gameplay_trait is always None in current implementation
+                // if let Some(gameplay_trait) = optimized_joker.gameplay_trait {
+                //     self.process_gameplay_trait(gameplay_trait, game_context, stage, hand, card)
+                // } else {
+                //     // Fallback to legacy path
+                //     self.process_legacy_joker(optimized_joker.joker, game_context, hand, card)
+                // }
+
+                // Always use legacy path until optimization layer is refactored
+                self.process_legacy_joker(optimized_joker.joker, game_context, hand, card)
             }
             JokerTraitProfile::ModifierOptimized => {
                 // Use static modifier path (faster for modifier-only jokers)
@@ -719,9 +726,13 @@ impl JokerEffectProcessor {
     /// This method provides specialized processing for jokers that implement the
     /// JokerGameplay trait, allowing for more efficient execution and better
     /// type safety than the legacy super trait approach.
+    ///
+    /// NOTE: Currently unused due to JokerGameplay requiring &mut self.
+    /// TODO: Refactor optimization layer to support mutable trait references
+    #[allow(dead_code)]
     fn process_gameplay_trait(
         &self,
-        gameplay_trait: &dyn JokerGameplay,
+        gameplay_trait: &mut dyn JokerGameplay,
         game_context: &mut GameContext,
         stage: &Stage,
         hand: Option<&SelectHand>,
