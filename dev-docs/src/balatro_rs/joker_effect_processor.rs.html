@@ -2689,7 +2689,7 @@
 <a href=#2689 id=2689 data-nosnippet>2689</a>    </span><span class="kw">fn </span>test_enhanced_processing_with_stage() {
 <a href=#2690 id=2690 data-nosnippet>2690</a>        <span class="kw">use </span><span class="kw">crate</span>::card::{Suit, Value};
 <a href=#2691 id=2691 data-nosnippet>2691</a>        <span class="kw">use </span><span class="kw">crate</span>::hand::SelectHand;
-<a href=#2692 id=2692 data-nosnippet>2692</a>        <span class="kw">use </span><span class="kw">crate</span>::joker::{GameContext, JokerId};
+<a href=#2692 id=2692 data-nosnippet>2692</a>        <span class="kw">use </span><span class="kw">crate</span>::joker::GameContext;
 <a href=#2693 id=2693 data-nosnippet>2693</a>        <span class="kw">use </span><span class="kw">crate</span>::stage::Stage;
 <a href=#2694 id=2694 data-nosnippet>2694</a>        <span class="kw">use </span>std::collections::HashMap;
 <a href=#2695 id=2695 data-nosnippet>2695</a>
@@ -2735,7 +2735,7 @@
 <a href=#2735 id=2735 data-nosnippet>2735</a>    </span><span class="kw">fn </span>test_legacy_compatibility_maintained() {
 <a href=#2736 id=2736 data-nosnippet>2736</a>        <span class="kw">use </span><span class="kw">crate</span>::card::{Suit, Value};
 <a href=#2737 id=2737 data-nosnippet>2737</a>        <span class="kw">use </span><span class="kw">crate</span>::hand::SelectHand;
-<a href=#2738 id=2738 data-nosnippet>2738</a>        <span class="kw">use </span><span class="kw">crate</span>::joker::{GameContext, JokerId};
+<a href=#2738 id=2738 data-nosnippet>2738</a>        <span class="kw">use </span><span class="kw">crate</span>::joker::GameContext;
 <a href=#2739 id=2739 data-nosnippet>2739</a>        <span class="kw">use </span>std::collections::HashMap;
 <a href=#2740 id=2740 data-nosnippet>2740</a>
 <a href=#2741 id=2741 data-nosnippet>2741</a>        <span class="kw">let </span><span class="kw-2">mut </span>processor = JokerEffectProcessor::new();
