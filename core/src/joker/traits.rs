@@ -5,7 +5,6 @@
 //! joker behavior, making the system more modular and maintainable.
 
 use crate::card::Card;
-use crate::hand::SelectHand;
 use crate::joker_state::JokerStateManager;
 use crate::stage::Stage;
 use serde::{Deserialize, Serialize};
@@ -243,7 +242,6 @@ pub struct ProcessContext<'a> {
     pub played_cards: &'a [Card],
     pub held_cards: &'a [Card],
     pub events: &'a mut Vec<GameEvent>,
-    pub hand: &'a SelectHand,
     pub joker_state_manager: &'a JokerStateManager,
 }
 
