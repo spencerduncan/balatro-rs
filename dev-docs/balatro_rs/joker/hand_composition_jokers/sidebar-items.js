@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["create_blackboard","create_dna","create_ride_the_bus"],"struct":["DnaJoker"]};
+window.SIDEBAR_ITEMS = {"fn":["create_blackboard","create_dna","create_ride_the_bus","create_ride_the_bus_stateful"],"struct":["DnaJoker","RideTheBusStateful"]};
