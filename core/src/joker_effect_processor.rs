@@ -738,6 +738,7 @@ impl JokerEffectProcessor {
             played_cards: played_cards_vec.as_slice(),
             held_cards: game_context.hand.cards(),
             events: &mut Vec::new(),
+            joker_state_manager: game_context.joker_state_manager,
         };
 
         if !gameplay_trait.can_trigger(stage, &process_context) {
