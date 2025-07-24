@@ -62,7 +62,6 @@ pub enum SlotError {
     SlotEmpty { index: usize },
 }
 
-
 impl fmt::Display for CardCollection {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {

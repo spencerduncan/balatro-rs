@@ -3,8 +3,6 @@ use crate::error::GameError;
 use crate::game::Game;
 use crate::joker::JokerId;
 
-#[cfg(feature = "python")]
-use pyo3::pyclass;
 
 // Re-export legacy shop for backward compatibility
 pub use legacy::*;
