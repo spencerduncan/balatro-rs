@@ -1,39 +1,17 @@
-<<<<<<< HEAD
-use balatro_rs::card::{Card, Suit, Value};
-use balatro_rs::hand::SelectHand;
-=======
-#![cfg(feature = "disabled-for-emergency")]
-// EMERGENCY DISABLE: This entire test file is temporarily disabled due to complex lifetime issues
-// These tests will be re-enabled once the API lifecycle issues are resolved
-
 use balatro_rs::card::{Card, Suit, Value};
 use balatro_rs::hand::{Hand, SelectHand};
->>>>>>> origin/main
 use balatro_rs::joker::{GameContext, Joker, JokerEffect, JokerId, JokerRarity};
 use balatro_rs::joker_state::{JokerState, JokerStateManager};
 use balatro_rs::rank::HandRank;
 use balatro_rs::scaling_joker::*;
 use balatro_rs::scaling_joker_custom::*;
 use balatro_rs::scaling_joker_impl::*;
-<<<<<<< HEAD
 use balatro_rs::stage::{Blind, Stage};
-=======
-use balatro_rs::stage::Stage;
->>>>>>> origin/main
 use std::collections::HashMap;
 use std::sync::Arc;
 
 /// Helper function to create a basic test context
 fn create_test_context(money: i32, ante: u8, round: u32) -> GameContext<'static> {
-<<<<<<< HEAD
-    let state_manager = Arc::new(JokerStateManager::new());
-    let jokers: Vec<Box<dyn Joker>> = vec![];
-    let hand = SelectHand::default();
-    let discarded: Vec<Card> = vec![];
-    let hand_type_counts = HashMap::new();
-    let stage = Stage::Blind(Blind::Small); // Default stage
-    let rng = &balatro_rs::rng::GameRng::new();
-=======
     let state_manager = Box::leak(Box::new(Arc::new(JokerStateManager::new())));
     let jokers: &'static [Box<dyn Joker>] = Box::leak(Box::new([]));
     let hand = Box::leak(Box::new(Hand::new(vec![])));
@@ -41,7 +19,6 @@ fn create_test_context(money: i32, ante: u8, round: u32) -> GameContext<'static>
     let hand_type_counts = Box::leak(Box::new(HashMap::new()));
     let stage = Box::leak(Box::new(Stage::Blind(Blind::Small))); // Default stage
     let rng = Box::leak(Box::new(balatro_rs::rng::GameRng::for_testing(42)));
->>>>>>> origin/main
 
     GameContext {
         chips: 0,
@@ -527,7 +504,6 @@ fn test_joker_descriptions_are_descriptive() {
 
 #[test]
 #[ignore] // Ignore until we have proper test harness
-<<<<<<< HEAD
 fn test_scaling_joker_state_persistence() {
     // This test would verify that joker state is properly saved and restored
     // across game sessions using the JokerStateManager
@@ -536,8 +512,6 @@ fn test_scaling_joker_state_persistence() {
 
 #[test]
 #[ignore] // Ignore until we have proper test harness
-=======
->>>>>>> origin/main
 fn test_scaling_joker_triggers_in_game() {
     let mut harness = ScalingJokerTestHarness::new();
 
@@ -987,11 +961,6 @@ fn test_reset_conditions_with_different_events() {
 
 #[test]
 fn test_performance_with_many_scaling_jokers() {
-<<<<<<< HEAD
-    // This test would verify that having multiple scaling jokers
-    // doesn't significantly impact game performance
-    todo!("Implement performance test for multiple scaling jokers");
-=======
     use std::time::Instant;
 
     // Performance baseline: operations should complete within reasonable time
@@ -1164,5 +1133,4 @@ fn get_memory_usage() -> usize {
     // On systems where /proc/self/status is available, we could read actual memory
     // For now, use a simple heuristic based on allocations
     std::mem::size_of::<JokerStateManager>() * 1000 // Rough approximation
->>>>>>> origin/main
 }
