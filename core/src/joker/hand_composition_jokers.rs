@@ -142,20 +142,21 @@ impl RideTheBusStateful {
         Self {
             id: JokerId::Ride,
             name: "Ride the Bus".to_string(),
-            description: "+1 mult per hand without face card (resets when face card scored)".to_string(),
+            description: "+1 mult per hand without face card (resets when face card scored)"
+                .to_string(),
             rarity: JokerRarity::Common,
             cost: 3,
         }
     }
-    
+
     /// Check if a card is a face card (Jack, Queen, or King)
     fn is_face_card(card: &Card) -> bool {
         matches!(card.value, Value::Jack | Value::Queen | Value::King)
     }
-    
+
     /// Check if a hand contains any face cards
     fn hand_has_face_cards(hand: &SelectHand) -> bool {
-        hand.cards().iter().any(|card| Self::is_face_card(card))
+        hand.cards().iter().any(Self::is_face_card)
     }
 }
 
@@ -195,7 +196,7 @@ impl Joker for RideTheBusStateful {
             .joker_state_manager
             .get_accumulated_value(self.id())
             .unwrap_or(0.0) as i32;
-        
+
         JokerEffect::new().with_mult(current_mult)
     }
 
