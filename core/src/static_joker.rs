@@ -254,10 +254,14 @@ impl StaticJoker {
                 // Calculate multiplier based on deck composition
                 let base_multiplier = self.mult_multiplier.unwrap_or(1.0);
                 let enhancement_count = self.get_enhancement_count(context, enhancement);
-                
+
                 // For Steel Joker: each Steel card multiplies by 1.25 (multiplicative stacking)
                 // Formula: 1.25^steel_card_count
-                let multiplier_per_card = if base_multiplier == 1.0 { 1.25 } else { base_multiplier };
+                let multiplier_per_card = if base_multiplier == 1.0 {
+                    1.25
+                } else {
+                    base_multiplier
+                };
                 Some(multiplier_per_card.powi(enhancement_count as i32))
             }
             _ => self.mult_multiplier,
@@ -357,7 +361,9 @@ impl StaticJokerBuilder {
                 return Err("AnyRankScored conditions should be per_card, not per_hand".to_string());
             }
             (StaticCondition::DeckComposition(_), true) => {
-                return Err("DeckComposition conditions should be per_hand, not per_card".to_string());
+                return Err(
+                    "DeckComposition conditions should be per_hand, not per_card".to_string(),
+                );
             }
             _ => {} // Valid combinations
         }

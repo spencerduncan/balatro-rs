@@ -513,11 +513,11 @@ fn test_abstract_joker() {
 
 #[test]
 fn test_steel_joker() {
-    use crate::joker::test_utils::TestContextBuilder;
     use crate::hand::SelectHand;
+    use crate::joker::test_utils::TestContextBuilder;
 
     let joker = StaticJokerFactory::create_steel_joker();
-    
+
     // Test basic properties
     assert_eq!(joker.id(), JokerId::SteelJoker);
     assert_eq!(joker.name(), "Steel Joker");

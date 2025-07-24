@@ -3,7 +3,8 @@ use balatro_rs::joker_factory::JokerFactory;
 
 #[test]
 fn test_steel_joker_basic() {
-    let joker = JokerFactory::create(JokerId::SteelJoker).expect("Steel Joker should be implemented");
+    let joker =
+        JokerFactory::create(JokerId::SteelJoker).expect("Steel Joker should be implemented");
 
     // Verify basic properties
     assert_eq!(joker.id(), JokerId::SteelJoker);
