@@ -2,6 +2,7 @@ use crate::joker::{Joker, JokerId, JokerRarity};
 use crate::joker_impl::*;
 use crate::special_jokers::*;
 use crate::static_joker_factory::StaticJokerFactory;
+use crate::scaling_joker_impl::{create_fortune_teller, create_red_card, create_steel_joker_scaling};
 
 /// Factory for creating joker instances by ID
 pub struct JokerFactory;
@@ -38,7 +39,7 @@ impl JokerFactory {
             JokerId::Runner => Some(Box::new(RunnerJoker)),
 
             // Static jokers from StaticJokerFactory
-            JokerId::RedCard => Some(StaticJokerFactory::create_red_card()),
+            JokerId::RedCard => Some(Box::new(create_red_card())),
             JokerId::BlueJoker => Some(StaticJokerFactory::create_blue_joker()),
             JokerId::FacelessJoker => Some(StaticJokerFactory::create_faceless_joker()),
             JokerId::Square => Some(StaticJokerFactory::create_square()),
@@ -48,7 +49,7 @@ impl JokerFactory {
             JokerId::HalfJoker => Some(StaticJokerFactory::create_half_joker()),
             JokerId::Banner => Some(StaticJokerFactory::create_banner()),
             JokerId::AbstractJoker => Some(Box::new(AbstractJoker)),
-            JokerId::SteelJoker => Some(StaticJokerFactory::create_steel_joker()),
+            JokerId::SteelJoker => Some(Box::new(create_steel_joker_scaling())),
 
             // RNG-based jokers (Issue #442)
             JokerId::Oops => Some(Box::new(OopsAllSixesJoker)),
@@ -56,7 +57,7 @@ impl JokerFactory {
             JokerId::LuckyCharm => Some(Box::new(LuckyCardJoker)),
             JokerId::Reserved8 => Some(Box::new(GrimJoker)),
             JokerId::AcrobatJoker => Some(Box::new(AcrobatJokerImpl)),
-            JokerId::Fortune => Some(Box::new(MysteryJoker)),
+            JokerId::Fortune => Some(Box::new(create_fortune_teller())),
             JokerId::VagabondJoker => Some(Box::new(VagabondJokerImpl)),
             JokerId::Reserved9 => Some(Box::new(ChaoticJoker)),
 
@@ -190,7 +191,8 @@ impl JokerFactory {
             Blueprint,
             Photograph,
             TheOrder,
-            // Note: HalfJoker, Banner, and SteelJoker are placeholders
+            SteelJoker, // Now properly implemented as scaling joker
+            // Note: HalfJoker and Banner are still placeholders
         ]
     }
 }
