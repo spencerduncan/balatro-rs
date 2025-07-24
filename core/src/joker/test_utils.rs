@@ -35,7 +35,7 @@
 //! assert_effect_mult(&effect, 10);
 //! ```
 
-use crate::card::{Card, Value, Suit};
+use crate::card::{Card, Suit, Value};
 use crate::hand::{Hand, SelectHand};
 use crate::joker::{GameContext, Joker, JokerEffect, JokerId, JokerRarity};
 use crate::joker_state::{JokerState, JokerStateManager};
@@ -355,27 +355,11 @@ impl std::fmt::Debug for MockModifierJoker {
             .field("name", &self.name)
             .field("description", &self.description)
             .field("rarity", &self.rarity)
-            .field("chips_modifier", &self.chips_modifier.as_ref().map(|_| "Some(Fn)"))
-            .field("mult_modifier", &self.mult_modifier.as_ref().map(|_| "Some(Fn)"))
-            .field("hand_size_modifier", &self.hand_size_modifier.as_ref().map(|_| "Some(Fn)"))
-            .field("discards_modifier", &self.discards_modifier.as_ref().map(|_| "Some(Fn)"))
+            .field("chips_modifier", &self.chips_modifier.is_some())
+            .field("mult_modifier", &self.mult_modifier.is_some())
+            .field("hand_size_modifier", &self.hand_size_modifier.is_some())
+            .field("discards_modifier", &self.discards_modifier.is_some())
             .finish()
-    }
-}
-
-impl Clone for MockModifierJoker {
-    fn clone(&self) -> Self {
-        Self {
-            id: self.id,
-            name: self.name.clone(),
-            description: self.description.clone(),
-            rarity: self.rarity,
-            // Function pointers can't be cloned, so we set them to None in clones
-            chips_modifier: None,
-            mult_modifier: None,
-            hand_size_modifier: None,
-            discards_modifier: None,
-        }
     }
 }
 
@@ -558,7 +542,7 @@ impl Joker for MockStateJoker {
         &self,
         _context: &GameContext,
         state: &JokerState,
-    ) -> Result<serde_json::Value, serde_json::Error> {
+    ) -> Result<JsonValue, serde_json::Error> {
         if self.custom_serialization {
             let mut custom_value = serde_json::to_value(state)?;
             custom_value["custom_serialization"] = JsonValue::Bool(true);
@@ -571,7 +555,7 @@ impl Joker for MockStateJoker {
     fn deserialize_state(
         &self,
         _context: &GameContext,
-        data: &serde_json::Value,
+        data: &JsonValue,
     ) -> Result<JokerState, serde_json::Error> {
         if self.custom_deserialization {
             let mut state: JokerState = serde_json::from_value(data.clone())?;
@@ -628,7 +612,7 @@ impl TestContextBuilder {
             stage: Stage::Blind(Blind::Small),
             hands_played: 0,
             discards_used: 0,
-            hand: Hand::new(),
+            hand: Hand::new(vec![]),
             discarded: Vec::new(),
             hand_type_counts: HashMap::new(),
             cards_in_deck: 52,
@@ -722,7 +706,7 @@ impl TestContextBuilder {
     pub fn build(self) -> GameContext<'static> {
         let jokers: Vec<Box<dyn Joker>> = Vec::new();
         let joker_state_manager = Arc::new(JokerStateManager::new());
-        let rng = GameRng::new();
+        let rng = GameRng::for_testing(42);
 
         // Convert to static references (this is unsafe but okay for tests)
         let stage_ref: &'static Stage = Box::leak(Box::new(self.stage));
@@ -745,7 +729,7 @@ impl TestContextBuilder {
             jokers: jokers_ref,
             hand: hand_ref,
             discarded: discarded_ref,
-            joker_state_manager: &joker_state_manager,
+            joker_state_manager: Box::leak(Box::new(joker_state_manager)),
             hand_type_counts: hand_type_counts_ref,
             cards_in_deck: self.cards_in_deck,
             stone_cards_in_deck: self.stone_cards_in_deck,
@@ -852,23 +836,19 @@ pub fn assert_effect_empty(effect: &JokerEffect) {
 }
 
 /// Create a simple test card for testing purposes.
-pub fn create_test_card(value: Value, suit: Suit) -> Card {
-    Card::new(value, suit)
+pub fn create_test_card(rank: Value, suit: Suit) -> Card {
+    Card::new(rank, suit)
 }
 
 /// Create a simple test hand with specified cards.
 pub fn create_test_hand(cards: Vec<Card>) -> Hand {
-    let mut hand = Hand::new();
-    for card in cards {
-        hand.add(card);
-    }
-    hand
+    Hand::new(cards)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::card::{Value, Suit};
+    use crate::card::{Suit, Value};
     use crate::hand::SelectHand;
     use crate::joker_state::JokerState;
     use crate::rank::HandRank;
@@ -1025,10 +1005,10 @@ mod tests {
             .with_money(100)
             .with_ante(5)
             .with_round(12)
-            .with_stage(Stage::Shop)
+            .with_stage(Stage::Shop())
             .with_hands_played(3)
             .with_discards_used(2)
-            .with_hand_type_count(HandValue::Pair, 5)
+            .with_hand_type_count(HandRank::OnePair, 5)
             .with_cards_in_deck(40)
             .with_stone_cards_in_deck(2)
             .build();
@@ -1038,10 +1018,10 @@ mod tests {
         assert_eq!(context.money, 100);
         assert_eq!(context.ante, 5);
         assert_eq!(context.round, 12);
-        assert_eq!(*context.stage, Stage::Shop);
+        assert_eq!(*context.stage, Stage::Shop());
         assert_eq!(context.hands_played, 3);
         assert_eq!(context.discards_used, 2);
-        assert_eq!(context.get_hand_type_count(HandValue::Pair), 5);
+        assert_eq!(context.get_hand_type_count(HandRank::OnePair), 5);
         assert_eq!(context.cards_in_deck, 40);
         assert_eq!(context.stone_cards_in_deck, 2);
     }

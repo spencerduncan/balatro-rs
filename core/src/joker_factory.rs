@@ -1,5 +1,6 @@
 use crate::joker::{Joker, JokerId, JokerRarity};
 use crate::joker_impl::*;
+use crate::special_jokers::*;
 use crate::static_joker_factory::StaticJokerFactory;
 
 /// Factory for creating joker instances by ID
@@ -46,8 +47,24 @@ impl JokerFactory {
             // Placeholder jokers with TODO comments
             JokerId::HalfJoker => Some(StaticJokerFactory::create_half_joker()),
             JokerId::Banner => Some(StaticJokerFactory::create_banner()),
-            JokerId::AbstractJoker => Some(StaticJokerFactory::create_abstract_joker()),
+            JokerId::AbstractJoker => Some(Box::new(AbstractJoker)),
             JokerId::SteelJoker => Some(StaticJokerFactory::create_steel_joker()),
+
+            // RNG-based jokers (Issue #442)
+            JokerId::Oops => Some(Box::new(OopsAllSixesJoker)),
+            JokerId::Reserved7 => Some(Box::new(SixShooterJoker)),
+            JokerId::LuckyCharm => Some(Box::new(LuckyCardJoker)),
+            JokerId::Reserved8 => Some(Box::new(GrimJoker)),
+            JokerId::AcrobatJoker => Some(Box::new(AcrobatJokerImpl)),
+            JokerId::Fortune => Some(Box::new(MysteryJoker)),
+            JokerId::VagabondJoker => Some(Box::new(VagabondJokerImpl)),
+            JokerId::Reserved9 => Some(Box::new(ChaoticJoker)),
+
+            // Special mechanic jokers using new trait system
+            JokerId::Erosion => Some(Box::new(ErosionJoker)),
+            JokerId::Blueprint => Some(Box::new(BlueprintJoker::new())),
+            JokerId::Photograph => Some(Box::new(PhotographJoker::new())),
+            JokerId::TheOrder => Some(Box::new(TheOrderJoker)),
             // TODO: Implement remaining jokers
             _ => None,
         }
@@ -88,18 +105,37 @@ impl JokerFactory {
                 HalfJoker,
                 Banner,
                 AbstractJoker,
+                // RNG-based jokers (Issue #442)
+                Reserved7,  // SixShooterJoker
+                LuckyCharm, // LuckyCardJoker
+                // Special mechanic jokers
+                Erosion,
+                Photograph,
             ],
             JokerRarity::Uncommon => vec![
                 // Money-based conditional jokers
                 Burglar,    // Hand type conditional jokers
                 SpaceJoker, // New static jokers
-                RedCard, BlueJoker, SteelJoker,
+                RedCard,
+                BlueJoker,
+                SteelJoker,
+                // RNG-based jokers (Issue #442)
+                Oops,      // OopsAllSixesJoker
+                Reserved8, // GrimJoker
+                VagabondJoker,
+                // Special mechanic jokers
+                TheOrder,
             ],
             JokerRarity::Rare => vec![
-                // TODO: Add rare jokers
+                // RNG-based jokers (Issue #442)
+                AcrobatJoker,
+                Fortune, // MysteryJoker
+                // Special mechanic jokers
+                Blueprint,
             ],
             JokerRarity::Legendary => vec![
-                // TODO: Add legendary jokers
+                // RNG-based jokers (Issue #442)
+                Reserved9, // ChaoticJoker
             ],
         }
     }
@@ -138,7 +174,23 @@ impl JokerFactory {
             FacelessJoker,
             Square,
             Walkie,
-            // Note: HalfJoker, Banner, AbstractJoker, and SteelJoker are placeholders
+            // Custom implemented jokers with interaction support
+            AbstractJoker,
+            // RNG-based jokers (Issue #442)
+            Oops,       // OopsAllSixesJoker
+            Reserved7,  // SixShooterJoker
+            LuckyCharm, // LuckyCardJoker
+            Reserved8,  // GrimJoker
+            AcrobatJoker,
+            Fortune, // MysteryJoker
+            VagabondJoker,
+            Reserved9, // ChaoticJoker
+            // Special mechanic jokers using new trait system
+            Erosion,
+            Blueprint,
+            Photograph,
+            TheOrder,
+            // Note: HalfJoker, Banner, and SteelJoker are placeholders
         ]
     }
 }
@@ -223,8 +275,10 @@ mod tests {
         assert!(implemented.contains(&JokerId::Square));
         assert!(implemented.contains(&JokerId::Walkie));
         assert!(implemented.contains(&JokerId::Runner));
+        assert!(implemented.contains(&JokerId::AbstractJoker));
 
-        // Note: Placeholder jokers (HalfJoker, Banner, AbstractJoker, SteelJoker)
+        // AbstractJoker is now properly implemented and included above
+        // Note: Placeholder jokers (HalfJoker, Banner, SteelJoker)
         // are intentionally not in get_all_implemented() as they're not complete
     }
 }

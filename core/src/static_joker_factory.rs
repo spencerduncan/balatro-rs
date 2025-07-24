@@ -455,11 +455,7 @@ impl StaticJokerFactory {
     // TODO: Implement these jokers when framework supports the required conditions
 
     /// Create Half Joker (+20 Mult if played hand has 4 or fewer cards)
-    /// TODO: Requires hand size condition in StaticCondition enum
-    /// WARNING: This is a PLACEHOLDER implementation that gives +20 Mult ALWAYS
-    /// The actual joker should only trigger with 4 or fewer cards in hand
     pub fn create_half_joker() -> Box<dyn Joker> {
-        // PLACEHOLDER: Currently provides bonus unconditionally - DO NOT USE IN PRODUCTION
         Box::new(
             StaticJoker::builder(
                 JokerId::HalfJoker,
@@ -469,7 +465,7 @@ impl StaticJokerFactory {
             .rarity(JokerRarity::Common)
             .cost(3)
             .mult(20)
-            .condition(StaticCondition::Always) // TODO: Change to HandSize(4) when available
+            .condition(StaticCondition::HandSizeAtMost(4))
             .per_hand()
             .build()
             .expect("Valid joker configuration"),

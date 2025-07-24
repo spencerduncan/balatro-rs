@@ -673,9 +673,9 @@ mod tests {
         assert!(!common_jokers.is_empty());
         assert!(!uncommon_jokers.is_empty());
 
-        // Rare and Legendary are currently empty (TODO in JokerFactory)
-        assert!(rare_jokers.is_empty());
-        assert!(legendary_jokers.is_empty());
+        // Update test expectations based on current implementation
+        // Both rare and legendary jokers have been implemented since this test was written
+        // No longer asserting these are empty as jokers now exist for these rarities
 
         // Common should have more jokers than uncommon
         assert!(common_jokers.len() > uncommon_jokers.len());
