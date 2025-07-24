@@ -81,9 +81,9 @@
 <a href=#81 id=81 data-nosnippet>81</a>        <span class="self">self</span>.cost
 <a href=#82 id=82 data-nosnippet>82</a>    }
 <a href=#83 id=83 data-nosnippet>83</a>
-<a href=#84 id=84 data-nosnippet>84</a>    <span class="kw">fn </span>on_hand_played(<span class="kw-2">&amp;</span><span class="self">self</span>, _context: <span class="kw-2">&amp;mut </span>GameContext, hand: <span class="kw-2">&amp;</span>SelectHand) -&gt; JokerEffect {
-<a href=#85 id=85 data-nosnippet>85</a>        <span class="comment">// Check if hand has exactly 1 card
-<a href=#86 id=86 data-nosnippet>86</a>        </span><span class="kw">if </span>hand.len() == <span class="number">1 </span>{
+<a href=#84 id=84 data-nosnippet>84</a>    <span class="kw">fn </span>on_hand_played(<span class="kw-2">&amp;</span><span class="self">self</span>, context: <span class="kw-2">&amp;mut </span>GameContext, hand: <span class="kw-2">&amp;</span>SelectHand) -&gt; JokerEffect {
+<a href=#85 id=85 data-nosnippet>85</a>        <span class="comment">// Check if this is the first hand of the round AND hand has exactly 1 card
+<a href=#86 id=86 data-nosnippet>86</a>        </span><span class="kw">if </span>context.hands_played == <span class="number">0 </span>&amp;&amp; hand.len() == <span class="number">1 </span>{
 <a href=#87 id=87 data-nosnippet>87</a>            <span class="kw">let </span>cards = hand.cards();
 <a href=#88 id=88 data-nosnippet>88</a>            <span class="kw">let </span>first_card = cards[<span class="number">0</span>];
 <a href=#89 id=89 data-nosnippet>89</a>
