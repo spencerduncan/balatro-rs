@@ -1107,11 +1107,14 @@ impl ConsumableSlots {
     ///     // Modify consumable if needed
     /// }
     /// ```
-    pub fn get_consumable_mut(&mut self, index: usize) -> Option<&mut Box<dyn Consumable>> {
+    pub fn get_consumable_mut(&mut self, index: usize) -> Option<&mut dyn Consumable> {
         if index >= self.capacity {
             return None;
         }
-        self.slots[index].as_mut()
+        match self.slots[index].as_mut() {
+            Some(boxed) => Some(boxed.as_mut()),
+            None => None,
+        }
     }
 
     /// Finds the first empty slot

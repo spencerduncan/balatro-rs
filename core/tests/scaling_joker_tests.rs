@@ -1,6 +1,5 @@
-#![cfg(feature = "disabled-for-emergency")]
-// EMERGENCY DISABLE: This entire test file is temporarily disabled due to complex lifetime issues
-// These tests will be re-enabled once the API lifecycle issues are resolved
+// Re-enabled scaling joker tests with proper lifetime management
+// Fixed: No longer using Box::leak() for memory safety
 
 use balatro_rs::card::{Card, Suit, Value};
 use balatro_rs::hand::{Hand, SelectHand};
@@ -14,117 +13,88 @@ use balatro_rs::stage::Stage;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-/// Helper function to create a basic test context
-fn create_test_context(money: i32, ante: u8, round: u32) -> GameContext<'static> {
-    let state_manager = Box::leak(Box::new(Arc::new(JokerStateManager::new())));
-    let jokers: &'static [Box<dyn Joker>] = Box::leak(Box::new([]));
-    let hand = Box::leak(Box::new(Hand::new(vec![])));
-    let discarded: &'static [Card] = Box::leak(Box::new([]));
-    let hand_type_counts = Box::leak(Box::new(HashMap::new()));
-    let stage = Box::leak(Box::new(Stage::Blind(balatro_rs::stage::Blind::Small))); // Default stage
-    let rng = Box::leak(Box::new(balatro_rs::rng::GameRng::for_testing(42)));
+/// Test data holder for proper lifetime management
+struct TestData {
+    state_manager: Arc<JokerStateManager>,
+    jokers: Vec<Box<dyn Joker>>,
+    hand: Hand,
+    discarded: Vec<Card>,
+    hand_type_counts: HashMap<HandRank, u32>,
+    stage: Stage,
+    rng: balatro_rs::rng::GameRng,
+}
 
-    GameContext {
-        chips: 0,
-        mult: 1,
-        money,
-        ante,
-        round,
-        stage,
-        hands_played: 0,
-        discards_used: 0,
-        jokers,
-        hand,
-        discarded,
-        joker_state_manager: state_manager,
-        hand_type_counts,
-        cards_in_deck: 52,
-        stone_cards_in_deck: 0,
-        rng,
+impl TestData {
+    fn new() -> Self {
+        Self {
+            state_manager: Arc::new(JokerStateManager::new()),
+            jokers: vec![],
+            hand: Hand::new(vec![]),
+            discarded: vec![],
+            hand_type_counts: HashMap::new(),
+            stage: Stage::Blind(balatro_rs::stage::Blind::Small),
+            rng: balatro_rs::rng::GameRng::for_testing(42),
+        }
+    }
+
+    fn create_context(&self, money: i32, ante: u8, round: u32) -> GameContext<'_> {
+        GameContext {
+            chips: 0,
+            mult: 1,
+            money,
+            ante,
+            round,
+            stage: &self.stage,
+            hands_played: 0,
+            discards_used: 0,
+            jokers: &self.jokers,
+            hand: &self.hand,
+            discarded: &self.discarded,
+            joker_state_manager: &self.state_manager,
+            hand_type_counts: &self.hand_type_counts,
+            cards_in_deck: 52,
+            stone_cards_in_deck: 0,
+            rng: &self.rng,
+        }
     }
 }
 
 /// Enhanced test harness for scaling joker integration tests
 struct ScalingJokerTestHarness {
-    state_manager: Arc<JokerStateManager>,
+    test_data: TestData,
     jokers: Vec<ScalingJoker>,
-    stage: Stage,
-    rng: balatro_rs::rng::GameRng,
 }
 
 impl ScalingJokerTestHarness {
     fn new() -> Self {
         Self {
-            state_manager: Arc::new(JokerStateManager::new()),
+            test_data: TestData::new(),
             jokers: vec![],
-            stage: Stage::Blind(balatro_rs::stage::Blind::Small),
-            rng: balatro_rs::rng::GameRng::new(balatro_rs::rng::RngMode::Testing(42)),
         }
     }
 
     fn add_joker(&mut self, joker: ScalingJoker) {
         // Initialize joker state
-        let initial_state = joker.initialize_state(&self.create_context());
-        self.state_manager.update_state(joker.id(), |state| {
-            *state = initial_state;
-        });
+        let context = self.test_data.create_context(100, 1, 1);
+        let initial_state = joker.initialize_state(&context);
+        self.test_data
+            .state_manager
+            .update_state(joker.id(), |state| {
+                *state = initial_state;
+            });
         self.jokers.push(joker);
     }
 
-    fn create_context(&self) -> GameContext<'static> {
-        let jokers: &'static [Box<dyn Joker>] = Box::leak(Box::new([]));
-        let hand = Box::leak(Box::new(Hand::new(vec![])));
-        let discarded: &'static [Card] = Box::leak(Box::new([]));
-        let hand_type_counts = Box::leak(Box::new(HashMap::new()));
-
-        GameContext {
-            chips: 0,
-            mult: 1,
-            money: 100,
-            ante: 1,
-            round: 1,
-            stage: &self.stage,
-            hands_played: 0,
-            discards_used: 0,
-            jokers,
-            hand,
-            discarded,
-            joker_state_manager: &self.state_manager,
-            hand_type_counts,
-            cards_in_deck: 52,
-            stone_cards_in_deck: 0,
-            rng: &self.rng,
-        }
+    fn create_context(&self) -> GameContext<'_> {
+        self.test_data.create_context(100, 1, 1)
     }
 
-    fn create_mutable_context(&mut self) -> GameContext<'_> {
-        let jokers: Vec<Box<dyn Joker>> = vec![];
-        let hand = Hand::new(vec![]);
-        let discarded: Vec<Card> = vec![];
-        let hand_type_counts = HashMap::new();
-
-        GameContext {
-            chips: 0,
-            mult: 1,
-            money: 100,
-            ante: 1,
-            round: 1,
-            stage: &self.stage,
-            hands_played: 0,
-            discards_used: 0,
-            jokers: &jokers,
-            hand: &hand,
-            discarded: &discarded,
-            joker_state_manager: &self.state_manager,
-            hand_type_counts: &hand_type_counts,
-            cards_in_deck: 52,
-            stone_cards_in_deck: 0,
-            rng: &self.rng,
-        }
+    fn create_mutable_context(&self) -> GameContext<'_> {
+        self.test_data.create_context(100, 1, 1)
     }
 
     /// Simulate playing a hand with specific rank
-    fn simulate_hand_played(&mut self, hand_rank: HandRank) -> Vec<JokerEffect> {
+    fn simulate_hand_played(&self, hand_rank: HandRank) -> Vec<JokerEffect> {
         let mut context = self.create_mutable_context();
         let hand = create_test_hand(hand_rank);
         let mut effects = vec![];
@@ -138,7 +108,7 @@ impl ScalingJokerTestHarness {
     }
 
     /// Simulate discarding cards
-    fn simulate_cards_discarded(&mut self, count: usize) -> Vec<JokerEffect> {
+    fn simulate_cards_discarded(&self, count: usize) -> Vec<JokerEffect> {
         let mut context = self.create_mutable_context();
         let cards = vec![Card::new(Value::Two, Suit::Heart); count];
         let mut effects = vec![];
@@ -154,7 +124,7 @@ impl ScalingJokerTestHarness {
     }
 
     /// Simulate round end
-    fn simulate_round_end(&mut self) -> Vec<JokerEffect> {
+    fn simulate_round_end(&self) -> Vec<JokerEffect> {
         let mut context = self.create_mutable_context();
         let mut effects = vec![];
 
@@ -167,7 +137,7 @@ impl ScalingJokerTestHarness {
     }
 
     /// Simulate shop opening
-    fn simulate_shop_open(&mut self) -> Vec<JokerEffect> {
+    fn simulate_shop_open(&self) -> Vec<JokerEffect> {
         let mut context = self.create_mutable_context();
         let mut effects = vec![];
 
@@ -180,7 +150,7 @@ impl ScalingJokerTestHarness {
     }
 
     /// Process a scaling event directly
-    fn process_scaling_event(&mut self, event: ScalingEvent) {
+    fn process_scaling_event(&self, event: ScalingEvent) {
         let mut context = self.create_mutable_context();
 
         for joker in &self.jokers {
@@ -190,7 +160,8 @@ impl ScalingJokerTestHarness {
 
     /// Get current accumulated value for a joker
     fn get_accumulated_value(&self, joker_id: JokerId) -> f64 {
-        self.state_manager
+        self.test_data
+            .state_manager
             .get_accumulated_value(joker_id)
             .unwrap_or(0.0)
     }
@@ -205,6 +176,11 @@ impl ScalingJokerTestHarness {
             JokerEffect::new()
         }
     }
+}
+
+/// Create a test harness for scaling joker tests  
+fn create_test_harness() -> ScalingJokerTestHarness {
+    ScalingJokerTestHarness::new()
 }
 
 /// Create a test hand with specific hand rank
@@ -734,92 +710,61 @@ fn test_scaling_joker_triggers_in_game() {
 #[test]
 fn test_scaling_joker_reset_conditions() {
     // Test that reset conditions work properly for scaling jokers
+    let mut harness = create_test_harness();
 
     // Create a ceremonial dagger with round end reset condition
-    let mut joker = create_ceremonial_dagger();
-    let context = create_test_context(100, 1, 1);
-
-    // Initialize joker state
-    let initial_state = joker.initialize_state(&context);
-    assert_eq!(initial_state.accumulated_value, 1.0); // Base value
-
-    // Create a mutable context for testing
-    let mut test_context = create_test_context(100, 1, 1);
-
-    // Set up initial state in the state manager
-    test_context
-        .joker_state_manager
-        .set_state(joker.id, initial_state);
+    let ceremonial_dagger = create_ceremonial_dagger();
+    harness.add_joker(ceremonial_dagger);
 
     // Trigger the joker to accumulate value (blind completed)
-    joker.process_event(&mut test_context, &ScalingEvent::BlindCompleted);
+    harness.process_scaling_event(ScalingEvent::BlindCompleted);
 
     // Verify value has increased
-    let current_value = test_context
-        .joker_state_manager
-        .get_accumulated_value(joker.id)
-        .unwrap_or(joker.base_value);
+    let current_value = harness.get_accumulated_value(JokerId::Ceremonial);
     assert_eq!(current_value, 2.0); // Should be base + increment (1.0 + 1.0)
 
     // Trigger again to accumulate more
-    joker.process_event(&mut test_context, &ScalingEvent::BlindCompleted);
-    let value_after_second_trigger = test_context
-        .joker_state_manager
-        .get_accumulated_value(joker.id)
-        .unwrap_or(joker.base_value);
+    harness.process_scaling_event(ScalingEvent::BlindCompleted);
+    let value_after_second_trigger = harness.get_accumulated_value(JokerId::Ceremonial);
     assert_eq!(value_after_second_trigger, 3.0); // Should be 2.0 + 1.0
 
     // Now trigger the reset condition (round end)
-    joker.process_event(&mut test_context, &ScalingEvent::RoundEnd);
+    harness.process_scaling_event(ScalingEvent::RoundEnd);
 
     // Verify value has reset to base value
-    let value_after_reset = test_context
-        .joker_state_manager
-        .get_accumulated_value(joker.id)
-        .unwrap_or(joker.base_value);
+    let value_after_reset = harness.get_accumulated_value(JokerId::Ceremonial);
     assert_eq!(value_after_reset, 1.0); // Should be back to base value
 
     // Test that triggering after reset starts accumulating again from base
-    joker.process_event(&mut test_context, &ScalingEvent::BlindCompleted);
-    let value_after_post_reset_trigger = test_context
-        .joker_state_manager
-        .get_accumulated_value(joker.id)
-        .unwrap_or(joker.base_value);
+    harness.process_scaling_event(ScalingEvent::BlindCompleted);
+    let value_after_post_reset_trigger = harness.get_accumulated_value(JokerId::Ceremonial);
     assert_eq!(value_after_post_reset_trigger, 2.0); // Should be base + increment again
 }
 
 #[test]
 fn test_multiple_reset_conditions() {
     // Test different types of reset conditions work correctly
+    let mut harness = create_test_harness();
 
     // Test 1: Round End reset condition (Ceremonial Dagger)
-    let mut ceremonial = create_ceremonial_dagger();
-    let mut context = create_test_context(100, 1, 1);
-    let initial_state = ceremonial.initialize_state(&context);
-    context
-        .joker_state_manager
-        .set_state(ceremonial.id, initial_state);
+    let ceremonial = create_ceremonial_dagger();
+    harness.add_joker(ceremonial);
 
     // Accumulate value
-    ceremonial.process_event(&mut context, &ScalingEvent::BlindCompleted);
-    ceremonial.process_event(&mut context, &ScalingEvent::BlindCompleted);
+    harness.process_scaling_event(ScalingEvent::BlindCompleted);
+    harness.process_scaling_event(ScalingEvent::BlindCompleted);
 
-    let accumulated = context
-        .joker_state_manager
-        .get_accumulated_value(ceremonial.id)
-        .unwrap_or(ceremonial.base_value);
+    let accumulated = harness.get_accumulated_value(JokerId::Ceremonial);
     assert_eq!(accumulated, 3.0); // 1.0 + 1.0 + 1.0
 
     // Test round end reset
-    ceremonial.process_event(&mut context, &ScalingEvent::RoundEnd);
-    let after_reset = context
-        .joker_state_manager
-        .get_accumulated_value(ceremonial.id)
-        .unwrap_or(ceremonial.base_value);
+    harness.process_scaling_event(ScalingEvent::RoundEnd);
+    let after_reset = harness.get_accumulated_value(JokerId::Ceremonial);
     assert_eq!(after_reset, 1.0); // Back to base
 
     // Test 2: Never reset condition
-    let mut never_reset_joker = ScalingJoker::new(
+    let mut harness2 = create_test_harness();
+    let never_reset_joker = ScalingJoker::new(
         JokerId::Reserved,
         "Never Reset Test".to_string(),
         "Never resets".to_string(),
@@ -831,38 +776,30 @@ fn test_multiple_reset_conditions() {
     )
     .with_reset_condition(ResetCondition::Never);
 
-    let initial_state = never_reset_joker.initialize_state(&context);
-    context
-        .joker_state_manager
-        .set_state(never_reset_joker.id, initial_state);
+    harness2.add_joker(never_reset_joker);
 
     // Accumulate value
-    never_reset_joker.process_event(&mut context, &ScalingEvent::CardDiscarded);
-    never_reset_joker.process_event(&mut context, &ScalingEvent::CardDiscarded);
+    harness2.process_scaling_event(ScalingEvent::CardDiscarded);
+    harness2.process_scaling_event(ScalingEvent::CardDiscarded);
 
-    let accumulated = context
-        .joker_state_manager
-        .get_accumulated_value(never_reset_joker.id)
-        .unwrap_or(never_reset_joker.base_value);
+    let accumulated = harness2.get_accumulated_value(JokerId::Reserved);
     assert_eq!(accumulated, 10.0); // 0.0 + 5.0 + 5.0
 
     // Try various reset events - none should reset
-    never_reset_joker.process_event(&mut context, &ScalingEvent::RoundEnd);
-    never_reset_joker.process_event(&mut context, &ScalingEvent::AnteEnd);
-    never_reset_joker.process_event(&mut context, &ScalingEvent::ShopEntered);
+    harness2.process_scaling_event(ScalingEvent::RoundEnd);
+    harness2.process_scaling_event(ScalingEvent::AnteEnd);
+    harness2.process_scaling_event(ScalingEvent::ShopEntered);
 
-    let still_accumulated = context
-        .joker_state_manager
-        .get_accumulated_value(never_reset_joker.id)
-        .unwrap_or(never_reset_joker.base_value);
+    let still_accumulated = harness2.get_accumulated_value(JokerId::Reserved);
     assert_eq!(still_accumulated, 10.0); // Should remain unchanged
 }
 
 #[test]
 fn test_reset_before_trigger_order() {
     // Test that reset happens before trigger (as per the implementation)
+    let mut harness = create_test_harness();
 
-    let mut joker = ScalingJoker::new(
+    let joker = ScalingJoker::new(
         JokerId::Reserved2,
         "Test Order".to_string(),
         "Tests reset/trigger order".to_string(),
@@ -874,44 +811,36 @@ fn test_reset_before_trigger_order() {
     )
     .with_reset_condition(ResetCondition::HandPlayed(HandRank::OnePair));
 
-    let mut context = create_test_context(100, 1, 1);
-    let initial_state = joker.initialize_state(&context);
-    context
-        .joker_state_manager
-        .set_state(joker.id, initial_state);
+    harness.add_joker(joker);
 
     // First accumulate some value with a different trigger
-    joker.process_event(&mut context, &ScalingEvent::BlindCompleted); // This won't trigger
-    let after_non_trigger = context
-        .joker_state_manager
-        .get_accumulated_value(joker.id)
-        .unwrap_or(joker.base_value);
+    harness.process_scaling_event(ScalingEvent::BlindCompleted); // This won't trigger
+    let after_non_trigger = harness.get_accumulated_value(JokerId::Reserved2);
     assert_eq!(after_non_trigger, 10.0); // Should remain at base (no trigger)
 
-    // Manually increment to test reset order
-    context.joker_state_manager.update_state(joker.id, |state| {
-        state.accumulated_value = 25.0; // Set to accumulated value
-    });
+    // Manually set accumulated value to test reset order
+    let context = harness.create_context();
+    context
+        .joker_state_manager
+        .update_state(JokerId::Reserved2, |state| {
+            state.accumulated_value = 25.0; // Set to accumulated value
+        });
 
     // Now trigger an event that both resets AND triggers
-    joker.process_event(&mut context, &ScalingEvent::HandPlayed(HandRank::OnePair));
+    harness.process_scaling_event(ScalingEvent::HandPlayed(HandRank::OnePair));
 
     // This should reset FIRST (to base value 10.0) then trigger (add 5.0) = 15.0
-    let final_value = context
-        .joker_state_manager
-        .get_accumulated_value(joker.id)
-        .unwrap_or(joker.base_value);
+    let final_value = harness.get_accumulated_value(JokerId::Reserved2);
     assert_eq!(final_value, 15.0); // 10.0 (reset to base) + 5.0 (trigger increment)
 }
 
 #[test]
 fn test_reset_conditions_with_different_events() {
     // Test various reset conditions with their corresponding events
-
-    let mut context = create_test_context(100, 1, 1);
+    let mut harness = create_test_harness();
 
     // Test ante end reset
-    let mut ante_reset_joker = ScalingJoker::new(
+    let ante_reset_joker = ScalingJoker::new(
         JokerId::Reserved3,
         "Ante Reset Test".to_string(),
         "Resets at ante end".to_string(),
@@ -923,35 +852,23 @@ fn test_reset_conditions_with_different_events() {
     )
     .with_reset_condition(ResetCondition::AnteEnd);
 
-    let initial_state = ante_reset_joker.initialize_state(&context);
-    context
-        .joker_state_manager
-        .set_state(ante_reset_joker.id, initial_state);
+    harness.add_joker(ante_reset_joker);
 
     // Accumulate value
-    ante_reset_joker.process_event(&mut context, &ScalingEvent::MoneyGained);
-    ante_reset_joker.process_event(&mut context, &ScalingEvent::MoneyGained);
+    harness.process_scaling_event(ScalingEvent::MoneyGained);
+    harness.process_scaling_event(ScalingEvent::MoneyGained);
 
-    let accumulated = context
-        .joker_state_manager
-        .get_accumulated_value(ante_reset_joker.id)
-        .unwrap_or(ante_reset_joker.base_value);
+    let accumulated = harness.get_accumulated_value(JokerId::Reserved3);
     assert_eq!(accumulated, 11.0); // 5.0 + 3.0 + 3.0
 
     // Round end should not reset this joker
-    ante_reset_joker.process_event(&mut context, &ScalingEvent::RoundEnd);
-    let after_round_end = context
-        .joker_state_manager
-        .get_accumulated_value(ante_reset_joker.id)
-        .unwrap_or(ante_reset_joker.base_value);
+    harness.process_scaling_event(ScalingEvent::RoundEnd);
+    let after_round_end = harness.get_accumulated_value(JokerId::Reserved3);
     assert_eq!(after_round_end, 11.0); // Should remain unchanged
 
     // Ante end should reset this joker
-    ante_reset_joker.process_event(&mut context, &ScalingEvent::AnteEnd);
-    let after_ante_end = context
-        .joker_state_manager
-        .get_accumulated_value(ante_reset_joker.id)
-        .unwrap_or(ante_reset_joker.base_value);
+    harness.process_scaling_event(ScalingEvent::AnteEnd);
+    let after_ante_end = harness.get_accumulated_value(JokerId::Reserved3);
     assert_eq!(after_ante_end, 5.0); // Back to base value
 }
 

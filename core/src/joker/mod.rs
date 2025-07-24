@@ -1204,6 +1204,25 @@ pub trait Joker: Send + Sync + std::fmt::Debug {
     ) -> Result<JokerState, String> {
         serde_json::from_value(old_state.clone()).map_err(|e| format!("Migration failed: {e}"))
     }
+
+    /// Process a scaling event for jokers that support it.
+    ///
+    /// This method allows jokers to respond to scaling events in the game.
+    /// Most jokers will not need to override this method.
+    ///
+    /// # Arguments
+    /// * `context` - Mutable reference to the current game context
+    /// * `event` - The scaling event to process
+    ///
+    /// # Returns
+    /// True if the event was processed (for scaling jokers), false otherwise
+    fn process_scaling_event(
+        &self,
+        _context: &mut GameContext,
+        _event: &crate::scaling_joker::ScalingEvent,
+    ) -> bool {
+        false // Default implementation: non-scaling jokers ignore events
+    }
 }
 
 // Re-export the old Categories enum for compatibility

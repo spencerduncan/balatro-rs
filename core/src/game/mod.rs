@@ -15,6 +15,7 @@ use crate::joker_factory::JokerFactory;
 use crate::joker_state::{JokerState, JokerStateManager};
 use crate::memory_monitor::MemoryMonitor;
 use crate::rank::HandRank;
+use crate::scaling_joker::ScalingEvent;
 use crate::shop::packs::{OpenPackState, Pack};
 use crate::shop::Shop;
 use crate::stage::{Blind, End, Stage};
@@ -540,7 +541,14 @@ impl Game {
             return Err(GameError::NoRemainingDiscards);
         }
         self.discards -= 1.0;
-        self.discarded.extend(self.available.selected());
+        let selected_cards = self.available.selected();
+        self.discarded.extend(selected_cards.iter().cloned());
+
+        // Trigger scaling events for each discarded card
+        for _ in selected_cards {
+            self.process_scaling_event(ScalingEvent::CardDiscarded);
+        }
+
         let removed = self.available.remove_selected();
         self.draw(removed);
         Ok(())
@@ -562,6 +570,13 @@ impl Game {
             self.chips += joker_chips as f64;
             self.mult += joker_mult as f64;
             self.money += joker_money as f64;
+
+            // Trigger scaling events for money gained
+            if joker_money > 0 {
+                for _ in 0..joker_money {
+                    self.process_scaling_event(ScalingEvent::MoneyGained);
+                }
+            }
 
             // Apply mult multiplier to the final mult value
             if mult_multiplier != 1.0 {
@@ -671,7 +686,6 @@ impl Game {
             let card_result =
                 self.joker_effect_processor
                     .process_card_effects(&self.jokers, &mut context, &card);
-
             // Accumulate card effects
             total_chips += card_result.accumulated_effect.chips;
             total_mult += card_result.accumulated_effect.mult;
@@ -835,6 +849,10 @@ impl Game {
                     }
                 }
             }
+
+            // Trigger scaling events for hand played
+            let hand_rank = hand.rank;
+            self.process_scaling_event(ScalingEvent::HandPlayed(hand_rank));
         }
 
         // Calculate final score
@@ -1952,6 +1970,38 @@ impl Game {
             .restore_from_snapshot(saveable_state.joker_states);
 
         Ok(game)
+    }
+
+    /// Process a scaling event for all scaling jokers in the game
+    pub fn process_scaling_event(&mut self, event: ScalingEvent) {
+        if self.jokers.is_empty() {
+            return;
+        }
+
+        // Create game context for jokers
+        let mut context = GameContext {
+            chips: self.chips as i32,
+            mult: self.mult as i32,
+            money: self.money as i32,
+            ante: self.ante_current as u8,
+            round: self.round as u32,
+            stage: &self.stage,
+            hands_played: 0,  // TODO: track this properly
+            discards_used: 0, // TODO: track this properly
+            jokers: &self.jokers,
+            hand: &crate::hand::Hand::new(vec![]),
+            discarded: &self.discarded,
+            joker_state_manager: &self.joker_state_manager,
+            hand_type_counts: &self.hand_type_counts,
+            cards_in_deck: self.deck.len(),
+            stone_cards_in_deck: 0, // TODO: Track stone cards when implemented
+            rng: &self.rng,
+        };
+
+        // Process scaling events for any scaling jokers
+        for joker in &self.jokers {
+            joker.process_scaling_event(&mut context, &event);
+        }
     }
 }
 
