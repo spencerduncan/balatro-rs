@@ -81,7 +81,7 @@ pub trait JokerLifecycle: Send + Sync {
 /// including scoring and card interactions.
 pub trait JokerGameplay: Send + Sync {
     /// Processes the joker's effect during the specified stage.
-    fn process(&mut self, stage: &Stage, context: &mut ProcessContext) -> ProcessResult;
+    fn process(&self, stage: &Stage, context: &mut ProcessContext) -> ProcessResult;
 
     /// Checks if this joker can trigger based on the current game state.
     fn can_trigger(&self, stage: &Stage, context: &ProcessContext) -> bool;

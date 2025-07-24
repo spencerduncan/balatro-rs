@@ -11,7 +11,7 @@ env:
   CARGO_TERM_COLOR: always
 
 permissions:
-  contents: read
+  contents: write  # Changed from read to write for gh-pages deployment
   pages: write
   id-token: write
 
@@ -20,7 +20,7 @@ jobs:
     name: Generate Documentation
     runs-on: ubuntu-latest
     container:
-      image: rust:slim
+      image: rust:latest
     steps:
       - uses: actions/checkout@v4
       

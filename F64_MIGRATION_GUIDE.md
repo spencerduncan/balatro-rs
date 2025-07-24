@@ -236,17 +236,21 @@ let mult_str = format_mult(5.25);         // "x5.25"
 
 ### Updated Trait Implementations
 ```rust
-// JokerEffect implementations now handle f64
+// ❌ JokerEffect implementations still use i32 (migration in progress)
 impl Joker for MyCustomJoker {
     fn effect(&self, context: &GameContext) -> JokerEffect {
         JokerEffect {
-            chips: 50.0,           // Now f64
-            mult: 2.5,             // Fractional mult supported
-            mult_multiplier: 1.25, // Precise multipliers
+            chips: 50,             // ❌ Still i32, not f64
+            mult: 2,               // ❌ Still i32, fractional not supported yet
+            mult_multiplier: 1.25, // ❌ Still f32, not f64
             ..Default::default()
         }
     }
 }
+
+// ✅ Game state access already uses f64
+let current_chips: f64 = game.chips;
+let current_score: f64 = game.score;
 ```
 
 ### Python Binding Updates
