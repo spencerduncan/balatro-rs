@@ -1,6 +1,6 @@
 use crate::card::Card;
 use crate::hand::SelectHand;
-use crate::joker::traits::{JokerGameplay, JokerModifiers, ProcessContext};
+use crate::joker::traits::{JokerGameplay, JokerModifiers};
 use crate::joker::{GameContext, Joker, JokerEffect, JokerId};
 pub use crate::priority_strategy::{
     ContextAwarePriorityStrategy, CustomPriorityStrategy, DefaultPriorityStrategy,
@@ -623,10 +623,11 @@ impl JokerEffectProcessor {
         // Create a test game context for behavior analysis
         let test_stage = Stage::Blind(crate::stage::Blind::Small);
         let test_hand = crate::hand::Hand::new(vec![]);
-        let test_joker_state_manager = std::sync::Arc::new(crate::joker_state::JokerStateManager::new());
+        let test_joker_state_manager =
+            std::sync::Arc::new(crate::joker_state::JokerStateManager::new());
         let test_hand_type_counts = std::collections::HashMap::new();
         let test_rng = crate::rng::GameRng::for_testing(12345);
-        
+
         let mut test_context = GameContext {
             chips: 0,
             mult: 0,
@@ -649,20 +650,22 @@ impl JokerEffectProcessor {
         // Test card scoring
         let test_card = Card::new(crate::card::Value::Ace, crate::card::Suit::Spade);
         let card_effect = joker.on_card_scored(&mut test_context, &test_card);
-        
+
         // Test hand playing
         let test_select_hand = SelectHand::new(vec![test_card]);
         let hand_effect = joker.on_hand_played(&mut test_context, &test_select_hand);
-        
+
         // Check if joker has complex scoring logic (indicates JokerGameplay)
-        let has_gameplay = !self.is_empty_effect(&card_effect) || !self.is_empty_effect(&hand_effect);
+        let has_gameplay =
+            !self.is_empty_effect(&card_effect) || !self.is_empty_effect(&hand_effect);
 
         // Check if joker modifies game state (indicates JokerModifiers)
         let base_hand_size = 8;
         let base_discards = 3;
         let modified_hand_size = joker.modify_hand_size(&test_context, base_hand_size);
         let modified_discards = joker.modify_discards(&test_context, base_discards);
-        let has_modifiers = modified_hand_size != base_hand_size || modified_discards != base_discards;
+        let has_modifiers =
+            modified_hand_size != base_hand_size || modified_discards != base_discards;
 
         // Determine profile based on detected capabilities
         match (has_gameplay, has_modifiers) {
@@ -752,7 +755,8 @@ impl JokerEffectProcessor {
             }
             JokerTraitProfile::ModifierOptimized => {
                 // Estimate 40% time saved for modifier-only path
-                self.trait_metrics.trait_optimization_time_saved_micros += (processing_time * 2) / 5;
+                self.trait_metrics.trait_optimization_time_saved_micros +=
+                    (processing_time * 2) / 5;
             }
             JokerTraitProfile::HybridOptimized | JokerTraitProfile::FullTraitOptimized => {
                 // Estimate 25% time saved for hybrid path
@@ -762,99 +766,6 @@ impl JokerEffectProcessor {
         }
 
         effect
-    }
-
-    /// Process a joker using the JokerGameplay trait (optimized path)
-    ///
-    /// This method provides specialized processing for jokers that implement the
-    /// JokerGameplay trait, allowing for more efficient execution and better
-    /// type safety than the legacy super trait approach.
-    fn process_gameplay_trait(
-        &self,
-        gameplay_trait: &dyn JokerGameplay,
-        game_context: &mut GameContext,
-        stage: &Stage,
-        hand: Option<&SelectHand>,
-        _card: Option<&Card>,
-    ) -> WeightedEffect {
-        // Check if the joker can trigger in the current context
-        let empty_vec = vec![];
-        let played_cards_vec = hand.map(|h| h.cards()).unwrap_or(empty_vec);
-        let mut process_context = ProcessContext {
-            hand_score: &mut crate::joker::traits::HandScore {
-                chips: 0,
-                mult: 0.0,
-            },
-            played_cards: played_cards_vec.as_slice(),
-            held_cards: game_context.hand.cards(),
-            events: &mut Vec::new(),
-        };
-
-        if !gameplay_trait.can_trigger(stage, &process_context) {
-            return WeightedEffect {
-                effect: JokerEffect::new(),
-                priority: EffectPriority::Normal,
-                source_joker_id: JokerId::Joker, // We'd need to get this from the trait
-                is_retriggered: false,
-            };
-        }
-
-        // Process using the new trait interface
-        let result = gameplay_trait.process(stage, &mut process_context);
-
-        // Convert ProcessResult to JokerEffect
-        let mut effect = JokerEffect::new();
-        effect.chips = result.chips_added as i32;
-        effect.mult += result.mult_added as i32;
-        if result.retriggered {
-            effect.retrigger = 1;
-        }
-
-        WeightedEffect {
-            effect,
-            priority: EffectPriority::Normal, // Could get from gameplay_trait.get_priority()
-            source_joker_id: JokerId::Joker,  // We'd need to get this from the trait somehow
-            is_retriggered: false,
-        }
-    }
-
-    /// Process a joker using the JokerModifiers trait (static path)
-    ///
-    /// This method provides optimized processing for jokers that only implement
-    /// modifier traits, bypassing more complex processing logic for simple
-    /// multiplicative or additive effects.
-    fn process_modifiers_trait(
-        &self,
-        modifiers_trait: &dyn JokerModifiers,
-        _game_context: &mut GameContext,
-    ) -> WeightedEffect {
-        let mut effect = JokerEffect::new();
-
-        // Apply static modifiers
-        let chip_mult = modifiers_trait.get_chip_mult();
-        let score_mult = modifiers_trait.get_score_mult();
-
-        if chip_mult != 1.0 {
-            effect.mult_multiplier = chip_mult;
-        }
-        if score_mult != 1.0 {
-            effect.mult_multiplier = if effect.mult_multiplier == 0.0 {
-                score_mult
-            } else {
-                effect.mult_multiplier * score_mult
-            };
-        }
-
-        // Apply modifiers
-        effect.hand_size_mod = modifiers_trait.get_hand_size_modifier();
-        effect.discard_mod = modifiers_trait.get_discard_modifier();
-
-        WeightedEffect {
-            effect,
-            priority: EffectPriority::Normal,
-            source_joker_id: JokerId::Joker, // We'd need to get this somehow
-            is_retriggered: false,
-        }
     }
 
     /// Process a joker using the legacy Joker super trait (compatibility path)
@@ -935,10 +846,10 @@ impl JokerEffectProcessor {
         // These jokers only affect hand size and discards through modify_* methods
         let base_hand_size = 8;
         let base_discards = 3;
-        
+
         let modified_hand_size = joker.modify_hand_size(game_context, base_hand_size);
         let modified_discards = joker.modify_discards(game_context, base_discards);
-        
+
         // Build effect from the modifications
         let effect = JokerEffect {
             hand_size_mod: (modified_hand_size as i32) - (base_hand_size as i32),
@@ -970,7 +881,7 @@ impl JokerEffectProcessor {
         let base_discards = 3;
         let modified_hand_size = joker.modify_hand_size(game_context, base_hand_size);
         let modified_discards = joker.modify_discards(game_context, base_discards);
-        
+
         // Initialize effect with modifiers
         let mut effect = JokerEffect {
             hand_size_mod: (modified_hand_size as i32) - (base_hand_size as i32),
@@ -997,7 +908,7 @@ impl JokerEffectProcessor {
             effect.destroy_self = gameplay_effect.destroy_self;
             effect.destroy_others = gameplay_effect.destroy_others;
             effect.transform_cards = gameplay_effect.transform_cards;
-            
+
             // Combine hand size and discard modifiers
             effect.hand_size_mod += gameplay_effect.hand_size_mod;
             effect.discard_mod += gameplay_effect.discard_mod;
