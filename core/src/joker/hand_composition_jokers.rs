@@ -1,5 +1,5 @@
 use crate::{
-    card::Card,
+    card::{Card, Suit},
     hand::SelectHand,
     joker::{
         ConditionalJoker, GameContext, Joker, JokerCondition, JokerEffect, JokerId, JokerRarity,
@@ -20,14 +20,14 @@ pub fn create_ride_the_bus() -> ConditionalJoker {
 }
 
 /// Factory function for Blackboard joker
-/// "X3 mult if all held cards same suit/rank"
+/// "X3 mult if all held cards are Spades or Clubs"
 pub fn create_blackboard() -> ConditionalJoker {
     ConditionalJoker::new(
         JokerId::Blackboard,
         "Blackboard",
-        "X3 mult if all held cards same suit/rank",
+        "X3 mult if all held cards are Spades or Clubs",
         JokerRarity::Uncommon,
-        JokerCondition::AllSameSuitOrRank,
+        JokerCondition::AllCardsInSuits(vec![Suit::Spade, Suit::Club]),
         JokerEffect::new().with_mult_multiplier(3.0),
     )
 }
