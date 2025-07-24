@@ -395,6 +395,8 @@ jobs:
   # Run performance benchmarks and validate against baselines
   performance-test:
     name: Performance Testing
+    # Only run performance tests on pushes to main/master, not on PRs
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     runs-on: ubuntu-latest
     container:
       image: rust:latest
