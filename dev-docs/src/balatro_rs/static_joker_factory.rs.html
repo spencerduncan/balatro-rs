@@ -473,414 +473,410 @@
 <a href=#473 id=473 data-nosnippet>473</a>    }
 <a href=#474 id=474 data-nosnippet>474</a>
 <a href=#475 id=475 data-nosnippet>475</a>    <span class="doccomment">/// Create Banner (+30 Chips for each remaining discard)
-<a href=#476 id=476 data-nosnippet>476</a>    /// TODO: Requires discard count access in GameContext
-<a href=#477 id=477 data-nosnippet>477</a>    /// WARNING: This is a PLACEHOLDER implementation that gives +30 Chips ALWAYS
-<a href=#478 id=478 data-nosnippet>478</a>    /// The actual joker should give +30 Chips * remaining_discards
-<a href=#479 id=479 data-nosnippet>479</a>    </span><span class="kw">pub fn </span>create_banner() -&gt; Box&lt;<span class="kw">dyn </span>Joker&gt; {
-<a href=#480 id=480 data-nosnippet>480</a>        <span class="comment">// PLACEHOLDER: Currently provides fixed +30 Chips - DO NOT USE IN PRODUCTION
-<a href=#481 id=481 data-nosnippet>481</a>        </span>Box::new(
-<a href=#482 id=482 data-nosnippet>482</a>            StaticJoker::builder(
-<a href=#483 id=483 data-nosnippet>483</a>                JokerId::Banner,
-<a href=#484 id=484 data-nosnippet>484</a>                <span class="string">"Banner"</span>,
-<a href=#485 id=485 data-nosnippet>485</a>                <span class="string">"+30 Chips for each remaining discard"</span>,
-<a href=#486 id=486 data-nosnippet>486</a>            )
-<a href=#487 id=487 data-nosnippet>487</a>            .rarity(JokerRarity::Common)
-<a href=#488 id=488 data-nosnippet>488</a>            .cost(<span class="number">3</span>)
-<a href=#489 id=489 data-nosnippet>489</a>            .chips(<span class="number">30</span>) <span class="comment">// TODO: Should be 30 * discard_count
-<a href=#490 id=490 data-nosnippet>490</a>            </span>.condition(StaticCondition::Always)
-<a href=#491 id=491 data-nosnippet>491</a>            .per_hand()
-<a href=#492 id=492 data-nosnippet>492</a>            .build()
-<a href=#493 id=493 data-nosnippet>493</a>            .expect(<span class="string">"Valid joker configuration"</span>),
-<a href=#494 id=494 data-nosnippet>494</a>        )
-<a href=#495 id=495 data-nosnippet>495</a>    }
-<a href=#496 id=496 data-nosnippet>496</a>
-<a href=#497 id=497 data-nosnippet>497</a>    <span class="doccomment">/// Create Abstract Joker (All Jokers give X0.25 more Mult)
-<a href=#498 id=498 data-nosnippet>498</a>    /// TODO: Requires joker interaction system
-<a href=#499 id=499 data-nosnippet>499</a>    /// WARNING: This is a PLACEHOLDER implementation that gives X1.25 Mult to self only
-<a href=#500 id=500 data-nosnippet>500</a>    /// The actual joker should affect ALL other jokers, not provide direct mult
-<a href=#501 id=501 data-nosnippet>501</a>    </span><span class="kw">pub fn </span>create_abstract_joker() -&gt; Box&lt;<span class="kw">dyn </span>Joker&gt; {
-<a href=#502 id=502 data-nosnippet>502</a>        <span class="comment">// PLACEHOLDER: Currently provides self mult multiplier - DO NOT USE IN PRODUCTION
-<a href=#503 id=503 data-nosnippet>503</a>        </span>Box::new(
-<a href=#504 id=504 data-nosnippet>504</a>            StaticJoker::builder(
-<a href=#505 id=505 data-nosnippet>505</a>                JokerId::AbstractJoker,
-<a href=#506 id=506 data-nosnippet>506</a>                <span class="string">"Abstract Joker"</span>,
-<a href=#507 id=507 data-nosnippet>507</a>                <span class="string">"All Jokers give X0.25 more Mult"</span>,
-<a href=#508 id=508 data-nosnippet>508</a>            )
-<a href=#509 id=509 data-nosnippet>509</a>            .rarity(JokerRarity::Common)
-<a href=#510 id=510 data-nosnippet>510</a>            .cost(<span class="number">3</span>)
-<a href=#511 id=511 data-nosnippet>511</a>            .mult_multiplier(<span class="number">1.25</span>) <span class="comment">// TODO: Should affect other jokers
-<a href=#512 id=512 data-nosnippet>512</a>            </span>.condition(StaticCondition::Always)
-<a href=#513 id=513 data-nosnippet>513</a>            .per_hand()
-<a href=#514 id=514 data-nosnippet>514</a>            .build()
-<a href=#515 id=515 data-nosnippet>515</a>            .expect(<span class="string">"Valid joker configuration"</span>),
-<a href=#516 id=516 data-nosnippet>516</a>        )
-<a href=#517 id=517 data-nosnippet>517</a>    }
-<a href=#518 id=518 data-nosnippet>518</a>
-<a href=#519 id=519 data-nosnippet>519</a>    <span class="doccomment">/// Create Steel Joker (This Joker gains X0.25 Mult for each Steel Card in your full deck)
-<a href=#520 id=520 data-nosnippet>520</a>    /// TODO: Requires deck composition access
-<a href=#521 id=521 data-nosnippet>521</a>    /// WARNING: This is a PLACEHOLDER implementation that gives X1.0 Mult ALWAYS
-<a href=#522 id=522 data-nosnippet>522</a>    /// The actual joker should scale based on Steel Card count: X(1.0 + 0.25 * steel_cards)
-<a href=#523 id=523 data-nosnippet>523</a>    </span><span class="kw">pub fn </span>create_steel_joker() -&gt; Box&lt;<span class="kw">dyn </span>Joker&gt; {
-<a href=#524 id=524 data-nosnippet>524</a>        <span class="comment">// PLACEHOLDER: Currently provides no mult multiplier - DO NOT USE IN PRODUCTION
-<a href=#525 id=525 data-nosnippet>525</a>        </span>Box::new(
-<a href=#526 id=526 data-nosnippet>526</a>            StaticJoker::builder(
-<a href=#527 id=527 data-nosnippet>527</a>                JokerId::SteelJoker,
-<a href=#528 id=528 data-nosnippet>528</a>                <span class="string">"Steel Joker"</span>,
-<a href=#529 id=529 data-nosnippet>529</a>                <span class="string">"This Joker gains X0.25 Mult for each Steel Card in your full deck"</span>,
-<a href=#530 id=530 data-nosnippet>530</a>            )
-<a href=#531 id=531 data-nosnippet>531</a>            .rarity(JokerRarity::Uncommon)
-<a href=#532 id=532 data-nosnippet>532</a>            .cost(<span class="number">6</span>)
-<a href=#533 id=533 data-nosnippet>533</a>            .mult_multiplier(<span class="number">1.0</span>) <span class="comment">// TODO: Should be 1.0 + (0.25 * steel_card_count)
-<a href=#534 id=534 data-nosnippet>534</a>            </span>.condition(StaticCondition::Always)
-<a href=#535 id=535 data-nosnippet>535</a>            .per_hand()
-<a href=#536 id=536 data-nosnippet>536</a>            .build()
-<a href=#537 id=537 data-nosnippet>537</a>            .expect(<span class="string">"Valid joker configuration"</span>),
-<a href=#538 id=538 data-nosnippet>538</a>        )
-<a href=#539 id=539 data-nosnippet>539</a>    }
-<a href=#540 id=540 data-nosnippet>540</a>
-<a href=#541 id=541 data-nosnippet>541</a>    <span class="doccomment">/// Test-only methods that return concrete types for internal testing
-<a href=#542 id=542 data-nosnippet>542</a>    </span><span class="attr">#[cfg(test)]
-<a href=#543 id=543 data-nosnippet>543</a>    </span><span class="kw">pub fn </span>create_greedy_joker_concrete() -&gt; StaticJoker {
-<a href=#544 id=544 data-nosnippet>544</a>        StaticJoker::builder(
-<a href=#545 id=545 data-nosnippet>545</a>            JokerId::GreedyJoker,
-<a href=#546 id=546 data-nosnippet>546</a>            <span class="string">"Greedy Joker"</span>,
-<a href=#547 id=547 data-nosnippet>547</a>            <span class="string">"Played cards with Diamond suit give +3 Mult when scored"</span>,
-<a href=#548 id=548 data-nosnippet>548</a>        )
-<a href=#549 id=549 data-nosnippet>549</a>        .rarity(JokerRarity::Common)
-<a href=#550 id=550 data-nosnippet>550</a>        .cost(<span class="number">5</span>)
-<a href=#551 id=551 data-nosnippet>551</a>        .mult(<span class="number">3</span>)
-<a href=#552 id=552 data-nosnippet>552</a>        .condition(StaticCondition::SuitScored(Suit::Diamond))
-<a href=#553 id=553 data-nosnippet>553</a>        .per_card()
-<a href=#554 id=554 data-nosnippet>554</a>        .build()
-<a href=#555 id=555 data-nosnippet>555</a>        .expect(<span class="string">"Valid joker configuration"</span>)
-<a href=#556 id=556 data-nosnippet>556</a>    }
-<a href=#557 id=557 data-nosnippet>557</a>
-<a href=#558 id=558 data-nosnippet>558</a>    <span class="doccomment">/// Test-only methods that return concrete types for internal testing
-<a href=#559 id=559 data-nosnippet>559</a>    </span><span class="attr">#[cfg(test)]
-<a href=#560 id=560 data-nosnippet>560</a>    </span><span class="kw">pub fn </span>create_lusty_joker_concrete() -&gt; StaticJoker {
-<a href=#561 id=561 data-nosnippet>561</a>        StaticJoker::builder(
-<a href=#562 id=562 data-nosnippet>562</a>            JokerId::LustyJoker,
-<a href=#563 id=563 data-nosnippet>563</a>            <span class="string">"Lusty Joker"</span>,
-<a href=#564 id=564 data-nosnippet>564</a>            <span class="string">"Played cards with Heart suit give +3 Mult when scored"</span>,
-<a href=#565 id=565 data-nosnippet>565</a>        )
-<a href=#566 id=566 data-nosnippet>566</a>        .rarity(JokerRarity::Common)
-<a href=#567 id=567 data-nosnippet>567</a>        .cost(<span class="number">5</span>)
-<a href=#568 id=568 data-nosnippet>568</a>        .mult(<span class="number">3</span>)
-<a href=#569 id=569 data-nosnippet>569</a>        .condition(StaticCondition::SuitScored(Suit::Heart))
-<a href=#570 id=570 data-nosnippet>570</a>        .per_card()
-<a href=#571 id=571 data-nosnippet>571</a>        .build()
-<a href=#572 id=572 data-nosnippet>572</a>        .expect(<span class="string">"Valid joker configuration"</span>)
-<a href=#573 id=573 data-nosnippet>573</a>    }
-<a href=#574 id=574 data-nosnippet>574</a>
-<a href=#575 id=575 data-nosnippet>575</a>    <span class="doccomment">/// Test-only methods that return concrete types for internal testing
-<a href=#576 id=576 data-nosnippet>576</a>    </span><span class="attr">#[cfg(test)]
-<a href=#577 id=577 data-nosnippet>577</a>    </span><span class="kw">pub fn </span>create_wrathful_joker_concrete() -&gt; StaticJoker {
-<a href=#578 id=578 data-nosnippet>578</a>        StaticJoker::builder(
-<a href=#579 id=579 data-nosnippet>579</a>            JokerId::WrathfulJoker,
-<a href=#580 id=580 data-nosnippet>580</a>            <span class="string">"Wrathful Joker"</span>,
-<a href=#581 id=581 data-nosnippet>581</a>            <span class="string">"Played cards with Spade suit give +3 Mult when scored"</span>,
-<a href=#582 id=582 data-nosnippet>582</a>        )
-<a href=#583 id=583 data-nosnippet>583</a>        .rarity(JokerRarity::Common)
-<a href=#584 id=584 data-nosnippet>584</a>        .cost(<span class="number">5</span>)
-<a href=#585 id=585 data-nosnippet>585</a>        .mult(<span class="number">3</span>)
-<a href=#586 id=586 data-nosnippet>586</a>        .condition(StaticCondition::SuitScored(Suit::Spade))
-<a href=#587 id=587 data-nosnippet>587</a>        .per_card()
-<a href=#588 id=588 data-nosnippet>588</a>        .build()
-<a href=#589 id=589 data-nosnippet>589</a>        .expect(<span class="string">"Valid joker configuration"</span>)
-<a href=#590 id=590 data-nosnippet>590</a>    }
-<a href=#591 id=591 data-nosnippet>591</a>
-<a href=#592 id=592 data-nosnippet>592</a>    <span class="doccomment">/// Test-only methods that return concrete types for internal testing
-<a href=#593 id=593 data-nosnippet>593</a>    </span><span class="attr">#[cfg(test)]
-<a href=#594 id=594 data-nosnippet>594</a>    </span><span class="kw">pub fn </span>create_gluttonous_joker_concrete() -&gt; StaticJoker {
-<a href=#595 id=595 data-nosnippet>595</a>        StaticJoker::builder(
-<a href=#596 id=596 data-nosnippet>596</a>            JokerId::GluttonousJoker,
-<a href=#597 id=597 data-nosnippet>597</a>            <span class="string">"Gluttonous Joker"</span>,
-<a href=#598 id=598 data-nosnippet>598</a>            <span class="string">"Played cards with Club suit give +3 Mult when scored"</span>,
-<a href=#599 id=599 data-nosnippet>599</a>        )
-<a href=#600 id=600 data-nosnippet>600</a>        .rarity(JokerRarity::Common)
-<a href=#601 id=601 data-nosnippet>601</a>        .cost(<span class="number">5</span>)
-<a href=#602 id=602 data-nosnippet>602</a>        .mult(<span class="number">3</span>)
-<a href=#603 id=603 data-nosnippet>603</a>        .condition(StaticCondition::SuitScored(Suit::Club))
-<a href=#604 id=604 data-nosnippet>604</a>        .per_card()
-<a href=#605 id=605 data-nosnippet>605</a>        .build()
-<a href=#606 id=606 data-nosnippet>606</a>        .expect(<span class="string">"Valid joker configuration"</span>)
-<a href=#607 id=607 data-nosnippet>607</a>    }
-<a href=#608 id=608 data-nosnippet>608</a>}
+<a href=#476 id=476 data-nosnippet>476</a>    </span><span class="kw">pub fn </span>create_banner() -&gt; Box&lt;<span class="kw">dyn </span>Joker&gt; {
+<a href=#477 id=477 data-nosnippet>477</a>        Box::new(
+<a href=#478 id=478 data-nosnippet>478</a>            StaticJoker::builder(
+<a href=#479 id=479 data-nosnippet>479</a>                JokerId::Banner,
+<a href=#480 id=480 data-nosnippet>480</a>                <span class="string">"Banner"</span>,
+<a href=#481 id=481 data-nosnippet>481</a>                <span class="string">"+30 Chips for each remaining discard"</span>,
+<a href=#482 id=482 data-nosnippet>482</a>            )
+<a href=#483 id=483 data-nosnippet>483</a>            .rarity(JokerRarity::Common)
+<a href=#484 id=484 data-nosnippet>484</a>            .cost(<span class="number">3</span>)
+<a href=#485 id=485 data-nosnippet>485</a>            .chips(<span class="number">30</span>) <span class="comment">// Base amount per remaining discard
+<a href=#486 id=486 data-nosnippet>486</a>            </span>.condition(StaticCondition::DiscardCount)
+<a href=#487 id=487 data-nosnippet>487</a>            .per_hand()
+<a href=#488 id=488 data-nosnippet>488</a>            .build()
+<a href=#489 id=489 data-nosnippet>489</a>            .expect(<span class="string">"Valid joker configuration"</span>),
+<a href=#490 id=490 data-nosnippet>490</a>        )
+<a href=#491 id=491 data-nosnippet>491</a>    }
+<a href=#492 id=492 data-nosnippet>492</a>
+<a href=#493 id=493 data-nosnippet>493</a>    <span class="doccomment">/// Create Abstract Joker (All Jokers give X0.25 more Mult)
+<a href=#494 id=494 data-nosnippet>494</a>    /// TODO: Requires joker interaction system
+<a href=#495 id=495 data-nosnippet>495</a>    /// WARNING: This is a PLACEHOLDER implementation that gives X1.25 Mult to self only
+<a href=#496 id=496 data-nosnippet>496</a>    /// The actual joker should affect ALL other jokers, not provide direct mult
+<a href=#497 id=497 data-nosnippet>497</a>    </span><span class="kw">pub fn </span>create_abstract_joker() -&gt; Box&lt;<span class="kw">dyn </span>Joker&gt; {
+<a href=#498 id=498 data-nosnippet>498</a>        <span class="comment">// PLACEHOLDER: Currently provides self mult multiplier - DO NOT USE IN PRODUCTION
+<a href=#499 id=499 data-nosnippet>499</a>        </span>Box::new(
+<a href=#500 id=500 data-nosnippet>500</a>            StaticJoker::builder(
+<a href=#501 id=501 data-nosnippet>501</a>                JokerId::AbstractJoker,
+<a href=#502 id=502 data-nosnippet>502</a>                <span class="string">"Abstract Joker"</span>,
+<a href=#503 id=503 data-nosnippet>503</a>                <span class="string">"All Jokers give X0.25 more Mult"</span>,
+<a href=#504 id=504 data-nosnippet>504</a>            )
+<a href=#505 id=505 data-nosnippet>505</a>            .rarity(JokerRarity::Common)
+<a href=#506 id=506 data-nosnippet>506</a>            .cost(<span class="number">3</span>)
+<a href=#507 id=507 data-nosnippet>507</a>            .mult_multiplier(<span class="number">1.25</span>) <span class="comment">// TODO: Should affect other jokers
+<a href=#508 id=508 data-nosnippet>508</a>            </span>.condition(StaticCondition::Always)
+<a href=#509 id=509 data-nosnippet>509</a>            .per_hand()
+<a href=#510 id=510 data-nosnippet>510</a>            .build()
+<a href=#511 id=511 data-nosnippet>511</a>            .expect(<span class="string">"Valid joker configuration"</span>),
+<a href=#512 id=512 data-nosnippet>512</a>        )
+<a href=#513 id=513 data-nosnippet>513</a>    }
+<a href=#514 id=514 data-nosnippet>514</a>
+<a href=#515 id=515 data-nosnippet>515</a>    <span class="doccomment">/// Create Steel Joker (This Joker gains X0.25 Mult for each Steel Card in your full deck)
+<a href=#516 id=516 data-nosnippet>516</a>    /// TODO: Requires deck composition access
+<a href=#517 id=517 data-nosnippet>517</a>    /// WARNING: This is a PLACEHOLDER implementation that gives X1.0 Mult ALWAYS
+<a href=#518 id=518 data-nosnippet>518</a>    /// The actual joker should scale based on Steel Card count: X(1.0 + 0.25 * steel_cards)
+<a href=#519 id=519 data-nosnippet>519</a>    </span><span class="kw">pub fn </span>create_steel_joker() -&gt; Box&lt;<span class="kw">dyn </span>Joker&gt; {
+<a href=#520 id=520 data-nosnippet>520</a>        <span class="comment">// PLACEHOLDER: Currently provides no mult multiplier - DO NOT USE IN PRODUCTION
+<a href=#521 id=521 data-nosnippet>521</a>        </span>Box::new(
+<a href=#522 id=522 data-nosnippet>522</a>            StaticJoker::builder(
+<a href=#523 id=523 data-nosnippet>523</a>                JokerId::SteelJoker,
+<a href=#524 id=524 data-nosnippet>524</a>                <span class="string">"Steel Joker"</span>,
+<a href=#525 id=525 data-nosnippet>525</a>                <span class="string">"This Joker gains X0.25 Mult for each Steel Card in your full deck"</span>,
+<a href=#526 id=526 data-nosnippet>526</a>            )
+<a href=#527 id=527 data-nosnippet>527</a>            .rarity(JokerRarity::Uncommon)
+<a href=#528 id=528 data-nosnippet>528</a>            .cost(<span class="number">6</span>)
+<a href=#529 id=529 data-nosnippet>529</a>            .mult_multiplier(<span class="number">1.0</span>) <span class="comment">// TODO: Should be 1.0 + (0.25 * steel_card_count)
+<a href=#530 id=530 data-nosnippet>530</a>            </span>.condition(StaticCondition::Always)
+<a href=#531 id=531 data-nosnippet>531</a>            .per_hand()
+<a href=#532 id=532 data-nosnippet>532</a>            .build()
+<a href=#533 id=533 data-nosnippet>533</a>            .expect(<span class="string">"Valid joker configuration"</span>),
+<a href=#534 id=534 data-nosnippet>534</a>        )
+<a href=#535 id=535 data-nosnippet>535</a>    }
+<a href=#536 id=536 data-nosnippet>536</a>
+<a href=#537 id=537 data-nosnippet>537</a>    <span class="doccomment">/// Test-only methods that return concrete types for internal testing
+<a href=#538 id=538 data-nosnippet>538</a>    </span><span class="attr">#[cfg(test)]
+<a href=#539 id=539 data-nosnippet>539</a>    </span><span class="kw">pub fn </span>create_greedy_joker_concrete() -&gt; StaticJoker {
+<a href=#540 id=540 data-nosnippet>540</a>        StaticJoker::builder(
+<a href=#541 id=541 data-nosnippet>541</a>            JokerId::GreedyJoker,
+<a href=#542 id=542 data-nosnippet>542</a>            <span class="string">"Greedy Joker"</span>,
+<a href=#543 id=543 data-nosnippet>543</a>            <span class="string">"Played cards with Diamond suit give +3 Mult when scored"</span>,
+<a href=#544 id=544 data-nosnippet>544</a>        )
+<a href=#545 id=545 data-nosnippet>545</a>        .rarity(JokerRarity::Common)
+<a href=#546 id=546 data-nosnippet>546</a>        .cost(<span class="number">5</span>)
+<a href=#547 id=547 data-nosnippet>547</a>        .mult(<span class="number">3</span>)
+<a href=#548 id=548 data-nosnippet>548</a>        .condition(StaticCondition::SuitScored(Suit::Diamond))
+<a href=#549 id=549 data-nosnippet>549</a>        .per_card()
+<a href=#550 id=550 data-nosnippet>550</a>        .build()
+<a href=#551 id=551 data-nosnippet>551</a>        .expect(<span class="string">"Valid joker configuration"</span>)
+<a href=#552 id=552 data-nosnippet>552</a>    }
+<a href=#553 id=553 data-nosnippet>553</a>
+<a href=#554 id=554 data-nosnippet>554</a>    <span class="doccomment">/// Test-only methods that return concrete types for internal testing
+<a href=#555 id=555 data-nosnippet>555</a>    </span><span class="attr">#[cfg(test)]
+<a href=#556 id=556 data-nosnippet>556</a>    </span><span class="kw">pub fn </span>create_lusty_joker_concrete() -&gt; StaticJoker {
+<a href=#557 id=557 data-nosnippet>557</a>        StaticJoker::builder(
+<a href=#558 id=558 data-nosnippet>558</a>            JokerId::LustyJoker,
+<a href=#559 id=559 data-nosnippet>559</a>            <span class="string">"Lusty Joker"</span>,
+<a href=#560 id=560 data-nosnippet>560</a>            <span class="string">"Played cards with Heart suit give +3 Mult when scored"</span>,
+<a href=#561 id=561 data-nosnippet>561</a>        )
+<a href=#562 id=562 data-nosnippet>562</a>        .rarity(JokerRarity::Common)
+<a href=#563 id=563 data-nosnippet>563</a>        .cost(<span class="number">5</span>)
+<a href=#564 id=564 data-nosnippet>564</a>        .mult(<span class="number">3</span>)
+<a href=#565 id=565 data-nosnippet>565</a>        .condition(StaticCondition::SuitScored(Suit::Heart))
+<a href=#566 id=566 data-nosnippet>566</a>        .per_card()
+<a href=#567 id=567 data-nosnippet>567</a>        .build()
+<a href=#568 id=568 data-nosnippet>568</a>        .expect(<span class="string">"Valid joker configuration"</span>)
+<a href=#569 id=569 data-nosnippet>569</a>    }
+<a href=#570 id=570 data-nosnippet>570</a>
+<a href=#571 id=571 data-nosnippet>571</a>    <span class="doccomment">/// Test-only methods that return concrete types for internal testing
+<a href=#572 id=572 data-nosnippet>572</a>    </span><span class="attr">#[cfg(test)]
+<a href=#573 id=573 data-nosnippet>573</a>    </span><span class="kw">pub fn </span>create_wrathful_joker_concrete() -&gt; StaticJoker {
+<a href=#574 id=574 data-nosnippet>574</a>        StaticJoker::builder(
+<a href=#575 id=575 data-nosnippet>575</a>            JokerId::WrathfulJoker,
+<a href=#576 id=576 data-nosnippet>576</a>            <span class="string">"Wrathful Joker"</span>,
+<a href=#577 id=577 data-nosnippet>577</a>            <span class="string">"Played cards with Spade suit give +3 Mult when scored"</span>,
+<a href=#578 id=578 data-nosnippet>578</a>        )
+<a href=#579 id=579 data-nosnippet>579</a>        .rarity(JokerRarity::Common)
+<a href=#580 id=580 data-nosnippet>580</a>        .cost(<span class="number">5</span>)
+<a href=#581 id=581 data-nosnippet>581</a>        .mult(<span class="number">3</span>)
+<a href=#582 id=582 data-nosnippet>582</a>        .condition(StaticCondition::SuitScored(Suit::Spade))
+<a href=#583 id=583 data-nosnippet>583</a>        .per_card()
+<a href=#584 id=584 data-nosnippet>584</a>        .build()
+<a href=#585 id=585 data-nosnippet>585</a>        .expect(<span class="string">"Valid joker configuration"</span>)
+<a href=#586 id=586 data-nosnippet>586</a>    }
+<a href=#587 id=587 data-nosnippet>587</a>
+<a href=#588 id=588 data-nosnippet>588</a>    <span class="doccomment">/// Test-only methods that return concrete types for internal testing
+<a href=#589 id=589 data-nosnippet>589</a>    </span><span class="attr">#[cfg(test)]
+<a href=#590 id=590 data-nosnippet>590</a>    </span><span class="kw">pub fn </span>create_gluttonous_joker_concrete() -&gt; StaticJoker {
+<a href=#591 id=591 data-nosnippet>591</a>        StaticJoker::builder(
+<a href=#592 id=592 data-nosnippet>592</a>            JokerId::GluttonousJoker,
+<a href=#593 id=593 data-nosnippet>593</a>            <span class="string">"Gluttonous Joker"</span>,
+<a href=#594 id=594 data-nosnippet>594</a>            <span class="string">"Played cards with Club suit give +3 Mult when scored"</span>,
+<a href=#595 id=595 data-nosnippet>595</a>        )
+<a href=#596 id=596 data-nosnippet>596</a>        .rarity(JokerRarity::Common)
+<a href=#597 id=597 data-nosnippet>597</a>        .cost(<span class="number">5</span>)
+<a href=#598 id=598 data-nosnippet>598</a>        .mult(<span class="number">3</span>)
+<a href=#599 id=599 data-nosnippet>599</a>        .condition(StaticCondition::SuitScored(Suit::Club))
+<a href=#600 id=600 data-nosnippet>600</a>        .per_card()
+<a href=#601 id=601 data-nosnippet>601</a>        .build()
+<a href=#602 id=602 data-nosnippet>602</a>        .expect(<span class="string">"Valid joker configuration"</span>)
+<a href=#603 id=603 data-nosnippet>603</a>    }
+<a href=#604 id=604 data-nosnippet>604</a>}
+<a href=#605 id=605 data-nosnippet>605</a>
+<a href=#606 id=606 data-nosnippet>606</a><span class="attr">#[cfg(test)]
+<a href=#607 id=607 data-nosnippet>607</a></span><span class="kw">mod </span>tests {
+<a href=#608 id=608 data-nosnippet>608</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
 <a href=#609 id=609 data-nosnippet>609</a>
-<a href=#610 id=610 data-nosnippet>610</a><span class="attr">#[cfg(test)]
-<a href=#611 id=611 data-nosnippet>611</a></span><span class="kw">mod </span>tests {
-<a href=#612 id=612 data-nosnippet>612</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#613 id=613 data-nosnippet>613</a>
-<a href=#614 id=614 data-nosnippet>614</a>    <span class="attr">#[test]
-<a href=#615 id=615 data-nosnippet>615</a>    </span><span class="kw">fn </span>test_basic_joker_creation() {
-<a href=#616 id=616 data-nosnippet>616</a>        <span class="kw">let </span>joker = StaticJokerFactory::create_joker();
-<a href=#617 id=617 data-nosnippet>617</a>        <span class="macro">assert_eq!</span>(joker.id(), JokerId::Joker);
-<a href=#618 id=618 data-nosnippet>618</a>        <span class="macro">assert_eq!</span>(joker.name(), <span class="string">"Joker"</span>);
-<a href=#619 id=619 data-nosnippet>619</a>        <span class="macro">assert_eq!</span>(joker.cost(), <span class="number">2</span>);
-<a href=#620 id=620 data-nosnippet>620</a>        <span class="macro">assert_eq!</span>(joker.description(), <span class="string">"+4 Mult"</span>);
-<a href=#621 id=621 data-nosnippet>621</a>        <span class="macro">assert_eq!</span>(joker.rarity(), JokerRarity::Common);
-<a href=#622 id=622 data-nosnippet>622</a>    }
-<a href=#623 id=623 data-nosnippet>623</a>
-<a href=#624 id=624 data-nosnippet>624</a>    <span class="attr">#[test]
-<a href=#625 id=625 data-nosnippet>625</a>    </span><span class="kw">fn </span>test_all_suit_jokers() {
-<a href=#626 id=626 data-nosnippet>626</a>        <span class="comment">// Test Greedy Joker (Diamond)
-<a href=#627 id=627 data-nosnippet>627</a>        </span><span class="kw">let </span>greedy = StaticJokerFactory::create_greedy_joker();
-<a href=#628 id=628 data-nosnippet>628</a>        <span class="macro">assert_eq!</span>(greedy.id(), JokerId::GreedyJoker);
-<a href=#629 id=629 data-nosnippet>629</a>        <span class="macro">assert_eq!</span>(greedy.name(), <span class="string">"Greedy Joker"</span>);
-<a href=#630 id=630 data-nosnippet>630</a>        <span class="macro">assert_eq!</span>(
-<a href=#631 id=631 data-nosnippet>631</a>            greedy.description(),
-<a href=#632 id=632 data-nosnippet>632</a>            <span class="string">"Played cards with Diamond suit give +3 Mult when scored"
-<a href=#633 id=633 data-nosnippet>633</a>        </span>);
-<a href=#634 id=634 data-nosnippet>634</a>        <span class="macro">assert_eq!</span>(greedy.rarity(), JokerRarity::Common);
-<a href=#635 id=635 data-nosnippet>635</a>        <span class="macro">assert_eq!</span>(greedy.cost(), <span class="number">5</span>);
-<a href=#636 id=636 data-nosnippet>636</a>
-<a href=#637 id=637 data-nosnippet>637</a>        <span class="comment">// Test Lusty Joker (Heart)
-<a href=#638 id=638 data-nosnippet>638</a>        </span><span class="kw">let </span>lusty = StaticJokerFactory::create_lusty_joker();
-<a href=#639 id=639 data-nosnippet>639</a>        <span class="macro">assert_eq!</span>(lusty.id(), JokerId::LustyJoker);
-<a href=#640 id=640 data-nosnippet>640</a>        <span class="macro">assert_eq!</span>(lusty.name(), <span class="string">"Lusty Joker"</span>);
-<a href=#641 id=641 data-nosnippet>641</a>        <span class="macro">assert_eq!</span>(
-<a href=#642 id=642 data-nosnippet>642</a>            lusty.description(),
-<a href=#643 id=643 data-nosnippet>643</a>            <span class="string">"Played cards with Heart suit give +3 Mult when scored"
-<a href=#644 id=644 data-nosnippet>644</a>        </span>);
-<a href=#645 id=645 data-nosnippet>645</a>        <span class="macro">assert_eq!</span>(lusty.rarity(), JokerRarity::Common);
-<a href=#646 id=646 data-nosnippet>646</a>
-<a href=#647 id=647 data-nosnippet>647</a>        <span class="comment">// Test Wrathful Joker (Spade)
-<a href=#648 id=648 data-nosnippet>648</a>        </span><span class="kw">let </span>wrathful = StaticJokerFactory::create_wrathful_joker();
-<a href=#649 id=649 data-nosnippet>649</a>        <span class="macro">assert_eq!</span>(wrathful.id(), JokerId::WrathfulJoker);
-<a href=#650 id=650 data-nosnippet>650</a>        <span class="macro">assert_eq!</span>(wrathful.name(), <span class="string">"Wrathful Joker"</span>);
-<a href=#651 id=651 data-nosnippet>651</a>        <span class="macro">assert_eq!</span>(
-<a href=#652 id=652 data-nosnippet>652</a>            wrathful.description(),
-<a href=#653 id=653 data-nosnippet>653</a>            <span class="string">"Played cards with Spade suit give +3 Mult when scored"
-<a href=#654 id=654 data-nosnippet>654</a>        </span>);
-<a href=#655 id=655 data-nosnippet>655</a>
-<a href=#656 id=656 data-nosnippet>656</a>        <span class="comment">// Test Gluttonous Joker (Club)
-<a href=#657 id=657 data-nosnippet>657</a>        </span><span class="kw">let </span>gluttonous = StaticJokerFactory::create_gluttonous_joker();
-<a href=#658 id=658 data-nosnippet>658</a>        <span class="macro">assert_eq!</span>(gluttonous.id(), JokerId::GluttonousJoker);
-<a href=#659 id=659 data-nosnippet>659</a>        <span class="macro">assert_eq!</span>(gluttonous.name(), <span class="string">"Gluttonous Joker"</span>);
-<a href=#660 id=660 data-nosnippet>660</a>        <span class="macro">assert_eq!</span>(
-<a href=#661 id=661 data-nosnippet>661</a>            gluttonous.description(),
-<a href=#662 id=662 data-nosnippet>662</a>            <span class="string">"Played cards with Club suit give +3 Mult when scored"
-<a href=#663 id=663 data-nosnippet>663</a>        </span>);
-<a href=#664 id=664 data-nosnippet>664</a>    }
-<a href=#665 id=665 data-nosnippet>665</a>
-<a href=#666 id=666 data-nosnippet>666</a>    <span class="attr">#[test]
-<a href=#667 id=667 data-nosnippet>667</a>    </span><span class="kw">fn </span>test_all_hand_type_mult_jokers() {
-<a href=#668 id=668 data-nosnippet>668</a>        <span class="comment">// Test Jolly Joker (Pair)
-<a href=#669 id=669 data-nosnippet>669</a>        </span><span class="kw">let </span>jolly = StaticJokerFactory::create_jolly_joker();
-<a href=#670 id=670 data-nosnippet>670</a>        <span class="macro">assert_eq!</span>(jolly.id(), JokerId::JollyJoker);
-<a href=#671 id=671 data-nosnippet>671</a>        <span class="macro">assert_eq!</span>(jolly.name(), <span class="string">"Jolly Joker"</span>);
-<a href=#672 id=672 data-nosnippet>672</a>        <span class="macro">assert_eq!</span>(jolly.description(), <span class="string">"+8 Mult if played hand contains Pair"</span>);
-<a href=#673 id=673 data-nosnippet>673</a>        <span class="macro">assert_eq!</span>(jolly.cost(), <span class="number">3</span>);
-<a href=#674 id=674 data-nosnippet>674</a>
-<a href=#675 id=675 data-nosnippet>675</a>        <span class="comment">// Test Zany Joker (Three of a Kind)
-<a href=#676 id=676 data-nosnippet>676</a>        </span><span class="kw">let </span>zany = StaticJokerFactory::create_zany_joker();
-<a href=#677 id=677 data-nosnippet>677</a>        <span class="macro">assert_eq!</span>(zany.id(), JokerId::ZanyJoker);
-<a href=#678 id=678 data-nosnippet>678</a>        <span class="macro">assert_eq!</span>(zany.name(), <span class="string">"Zany Joker"</span>);
-<a href=#679 id=679 data-nosnippet>679</a>        <span class="macro">assert_eq!</span>(
-<a href=#680 id=680 data-nosnippet>680</a>            zany.description(),
-<a href=#681 id=681 data-nosnippet>681</a>            <span class="string">"+12 Mult if played hand contains Three of a Kind"
-<a href=#682 id=682 data-nosnippet>682</a>        </span>);
-<a href=#683 id=683 data-nosnippet>683</a>        <span class="macro">assert_eq!</span>(zany.cost(), <span class="number">4</span>);
-<a href=#684 id=684 data-nosnippet>684</a>
-<a href=#685 id=685 data-nosnippet>685</a>        <span class="comment">// Test Mad Joker (Two Pair)
-<a href=#686 id=686 data-nosnippet>686</a>        </span><span class="kw">let </span>mad = StaticJokerFactory::create_mad_joker();
-<a href=#687 id=687 data-nosnippet>687</a>        <span class="macro">assert_eq!</span>(mad.id(), JokerId::MadJoker);
-<a href=#688 id=688 data-nosnippet>688</a>        <span class="macro">assert_eq!</span>(mad.name(), <span class="string">"Mad Joker"</span>);
-<a href=#689 id=689 data-nosnippet>689</a>        <span class="macro">assert_eq!</span>(
-<a href=#690 id=690 data-nosnippet>690</a>            mad.description(),
-<a href=#691 id=691 data-nosnippet>691</a>            <span class="string">"+10 Mult if played hand contains Two Pair"
-<a href=#692 id=692 data-nosnippet>692</a>        </span>);
-<a href=#693 id=693 data-nosnippet>693</a>
-<a href=#694 id=694 data-nosnippet>694</a>        <span class="comment">// Test Crazy Joker (Straight)
-<a href=#695 id=695 data-nosnippet>695</a>        </span><span class="kw">let </span>crazy = StaticJokerFactory::create_crazy_joker();
-<a href=#696 id=696 data-nosnippet>696</a>        <span class="macro">assert_eq!</span>(crazy.id(), JokerId::CrazyJoker);
-<a href=#697 id=697 data-nosnippet>697</a>        <span class="macro">assert_eq!</span>(crazy.name(), <span class="string">"Crazy Joker"</span>);
-<a href=#698 id=698 data-nosnippet>698</a>        <span class="macro">assert_eq!</span>(
-<a href=#699 id=699 data-nosnippet>699</a>            crazy.description(),
-<a href=#700 id=700 data-nosnippet>700</a>            <span class="string">"+12 Mult if played hand contains Straight"
-<a href=#701 id=701 data-nosnippet>701</a>        </span>);
-<a href=#702 id=702 data-nosnippet>702</a>
-<a href=#703 id=703 data-nosnippet>703</a>        <span class="comment">// Test Droll Joker (Flush)
-<a href=#704 id=704 data-nosnippet>704</a>        </span><span class="kw">let </span>droll = StaticJokerFactory::create_droll_joker();
-<a href=#705 id=705 data-nosnippet>705</a>        <span class="macro">assert_eq!</span>(droll.id(), JokerId::DrollJoker);
-<a href=#706 id=706 data-nosnippet>706</a>        <span class="macro">assert_eq!</span>(droll.name(), <span class="string">"Droll Joker"</span>);
-<a href=#707 id=707 data-nosnippet>707</a>        <span class="macro">assert_eq!</span>(
-<a href=#708 id=708 data-nosnippet>708</a>            droll.description(),
-<a href=#709 id=709 data-nosnippet>709</a>            <span class="string">"+10 Mult if played hand contains Flush"
-<a href=#710 id=710 data-nosnippet>710</a>        </span>);
-<a href=#711 id=711 data-nosnippet>711</a>    }
-<a href=#712 id=712 data-nosnippet>712</a>
-<a href=#713 id=713 data-nosnippet>713</a>    <span class="attr">#[test]
-<a href=#714 id=714 data-nosnippet>714</a>    </span><span class="kw">fn </span>test_all_hand_type_chip_jokers() {
-<a href=#715 id=715 data-nosnippet>715</a>        <span class="comment">// Test Sly Joker (Pair)
-<a href=#716 id=716 data-nosnippet>716</a>        </span><span class="kw">let </span>sly = StaticJokerFactory::create_sly_joker();
-<a href=#717 id=717 data-nosnippet>717</a>        <span class="macro">assert_eq!</span>(sly.id(), JokerId::SlyJoker);
-<a href=#718 id=718 data-nosnippet>718</a>        <span class="macro">assert_eq!</span>(sly.name(), <span class="string">"Sly Joker"</span>);
-<a href=#719 id=719 data-nosnippet>719</a>        <span class="macro">assert_eq!</span>(sly.description(), <span class="string">"+50 Chips if played hand contains Pair"</span>);
-<a href=#720 id=720 data-nosnippet>720</a>
-<a href=#721 id=721 data-nosnippet>721</a>        <span class="comment">// Test Wily Joker (Three of a Kind)
-<a href=#722 id=722 data-nosnippet>722</a>        </span><span class="kw">let </span>wily = StaticJokerFactory::create_wily_joker();
-<a href=#723 id=723 data-nosnippet>723</a>        <span class="macro">assert_eq!</span>(wily.id(), JokerId::WilyJoker);
-<a href=#724 id=724 data-nosnippet>724</a>        <span class="macro">assert_eq!</span>(wily.name(), <span class="string">"Wily Joker"</span>);
-<a href=#725 id=725 data-nosnippet>725</a>        <span class="macro">assert_eq!</span>(
-<a href=#726 id=726 data-nosnippet>726</a>            wily.description(),
-<a href=#727 id=727 data-nosnippet>727</a>            <span class="string">"+100 Chips if played hand contains Three of a Kind"
-<a href=#728 id=728 data-nosnippet>728</a>        </span>);
-<a href=#729 id=729 data-nosnippet>729</a>
-<a href=#730 id=730 data-nosnippet>730</a>        <span class="comment">// Test Clever Joker (Two Pair)
-<a href=#731 id=731 data-nosnippet>731</a>        </span><span class="kw">let </span>clever = StaticJokerFactory::create_clever_joker();
-<a href=#732 id=732 data-nosnippet>732</a>        <span class="macro">assert_eq!</span>(clever.id(), JokerId::CleverJoker);
-<a href=#733 id=733 data-nosnippet>733</a>        <span class="macro">assert_eq!</span>(clever.name(), <span class="string">"Clever Joker"</span>);
-<a href=#734 id=734 data-nosnippet>734</a>        <span class="macro">assert_eq!</span>(
-<a href=#735 id=735 data-nosnippet>735</a>            clever.description(),
-<a href=#736 id=736 data-nosnippet>736</a>            <span class="string">"+80 Chips if played hand contains Two Pair"
-<a href=#737 id=737 data-nosnippet>737</a>        </span>);
-<a href=#738 id=738 data-nosnippet>738</a>
-<a href=#739 id=739 data-nosnippet>739</a>        <span class="comment">// Test Devious Joker (Straight)
-<a href=#740 id=740 data-nosnippet>740</a>        </span><span class="kw">let </span>devious = StaticJokerFactory::create_devious_joker();
-<a href=#741 id=741 data-nosnippet>741</a>        <span class="macro">assert_eq!</span>(devious.id(), JokerId::DeviousJoker);
-<a href=#742 id=742 data-nosnippet>742</a>        <span class="macro">assert_eq!</span>(devious.name(), <span class="string">"Devious Joker"</span>);
-<a href=#743 id=743 data-nosnippet>743</a>        <span class="macro">assert_eq!</span>(
-<a href=#744 id=744 data-nosnippet>744</a>            devious.description(),
-<a href=#745 id=745 data-nosnippet>745</a>            <span class="string">"+100 Chips if played hand contains Straight"
-<a href=#746 id=746 data-nosnippet>746</a>        </span>);
-<a href=#747 id=747 data-nosnippet>747</a>
-<a href=#748 id=748 data-nosnippet>748</a>        <span class="comment">// Test Crafty Joker (Flush)
-<a href=#749 id=749 data-nosnippet>749</a>        </span><span class="kw">let </span>crafty = StaticJokerFactory::create_crafty_joker();
-<a href=#750 id=750 data-nosnippet>750</a>        <span class="macro">assert_eq!</span>(crafty.id(), JokerId::CraftyJoker);
-<a href=#751 id=751 data-nosnippet>751</a>        <span class="macro">assert_eq!</span>(crafty.name(), <span class="string">"Crafty Joker"</span>);
-<a href=#752 id=752 data-nosnippet>752</a>        <span class="macro">assert_eq!</span>(
-<a href=#753 id=753 data-nosnippet>753</a>            crafty.description(),
-<a href=#754 id=754 data-nosnippet>754</a>            <span class="string">"+80 Chips if played hand contains Flush"
-<a href=#755 id=755 data-nosnippet>755</a>        </span>);
-<a href=#756 id=756 data-nosnippet>756</a>    }
-<a href=#757 id=757 data-nosnippet>757</a>
-<a href=#758 id=758 data-nosnippet>758</a>    <span class="attr">#[test]
-<a href=#759 id=759 data-nosnippet>759</a>    </span><span class="kw">fn </span>test_rank_based_jokers() {
-<a href=#760 id=760 data-nosnippet>760</a>        <span class="comment">// Test Even Steven
-<a href=#761 id=761 data-nosnippet>761</a>        </span><span class="kw">let </span>even_steven = StaticJokerFactory::create_even_steven();
-<a href=#762 id=762 data-nosnippet>762</a>        <span class="macro">assert_eq!</span>(even_steven.id(), JokerId::EvenSteven);
-<a href=#763 id=763 data-nosnippet>763</a>        <span class="macro">assert_eq!</span>(even_steven.name(), <span class="string">"Even Steven"</span>);
-<a href=#764 id=764 data-nosnippet>764</a>        <span class="macro">assert_eq!</span>(
-<a href=#765 id=765 data-nosnippet>765</a>            even_steven.description(),
-<a href=#766 id=766 data-nosnippet>766</a>            <span class="string">"Played cards with even rank (2, 4, 6, 8, 10) give +4 Mult when scored"
-<a href=#767 id=767 data-nosnippet>767</a>        </span>);
-<a href=#768 id=768 data-nosnippet>768</a>
-<a href=#769 id=769 data-nosnippet>769</a>        <span class="comment">// Test Odd Todd
-<a href=#770 id=770 data-nosnippet>770</a>        </span><span class="kw">let </span>odd_todd = StaticJokerFactory::create_odd_todd();
-<a href=#771 id=771 data-nosnippet>771</a>        <span class="macro">assert_eq!</span>(odd_todd.id(), JokerId::OddTodd);
-<a href=#772 id=772 data-nosnippet>772</a>        <span class="macro">assert_eq!</span>(odd_todd.name(), <span class="string">"Odd Todd"</span>);
-<a href=#773 id=773 data-nosnippet>773</a>        <span class="macro">assert_eq!</span>(
-<a href=#774 id=774 data-nosnippet>774</a>            odd_todd.description(),
-<a href=#775 id=775 data-nosnippet>775</a>            <span class="string">"Played cards with odd rank (3, 5, 7, 9, A) give +31 Chips when scored"
-<a href=#776 id=776 data-nosnippet>776</a>        </span>);
-<a href=#777 id=777 data-nosnippet>777</a>
-<a href=#778 id=778 data-nosnippet>778</a>        <span class="comment">// Test Scholar
-<a href=#779 id=779 data-nosnippet>779</a>        </span><span class="kw">let </span>scholar = StaticJokerFactory::create_scholar();
-<a href=#780 id=780 data-nosnippet>780</a>        <span class="macro">assert_eq!</span>(scholar.id(), JokerId::Scholar);
-<a href=#781 id=781 data-nosnippet>781</a>        <span class="macro">assert_eq!</span>(scholar.name(), <span class="string">"Scholar"</span>);
-<a href=#782 id=782 data-nosnippet>782</a>        <span class="macro">assert_eq!</span>(
-<a href=#783 id=783 data-nosnippet>783</a>            scholar.description(),
-<a href=#784 id=784 data-nosnippet>784</a>            <span class="string">"Played Aces give +20 Chips and +4 Mult when scored"
-<a href=#785 id=785 data-nosnippet>785</a>        </span>);
-<a href=#786 id=786 data-nosnippet>786</a>    }
-<a href=#787 id=787 data-nosnippet>787</a>
-<a href=#788 id=788 data-nosnippet>788</a>    <span class="attr">#[test]
-<a href=#789 id=789 data-nosnippet>789</a>    </span><span class="kw">fn </span>test_joker_cost_distribution() {
-<a href=#790 id=790 data-nosnippet>790</a>        <span class="comment">// Test that jokers have appropriate costs based on rarity/power
-<a href=#791 id=791 data-nosnippet>791</a>        </span><span class="kw">let </span>basic_jokers = <span class="macro">vec!</span>[
-<a href=#792 id=792 data-nosnippet>792</a>            StaticJokerFactory::create_joker(), <span class="comment">// 2
-<a href=#793 id=793 data-nosnippet>793</a>        </span>];
-<a href=#794 id=794 data-nosnippet>794</a>
-<a href=#795 id=795 data-nosnippet>795</a>        <span class="kw">let </span>suit_jokers = <span class="macro">vec!</span>[
-<a href=#796 id=796 data-nosnippet>796</a>            StaticJokerFactory::create_greedy_joker(),     <span class="comment">// 5
-<a href=#797 id=797 data-nosnippet>797</a>            </span>StaticJokerFactory::create_lusty_joker(),      <span class="comment">// 5
-<a href=#798 id=798 data-nosnippet>798</a>            </span>StaticJokerFactory::create_wrathful_joker(),   <span class="comment">// 5
-<a href=#799 id=799 data-nosnippet>799</a>            </span>StaticJokerFactory::create_gluttonous_joker(), <span class="comment">// 5
-<a href=#800 id=800 data-nosnippet>800</a>        </span>];
-<a href=#801 id=801 data-nosnippet>801</a>
-<a href=#802 id=802 data-nosnippet>802</a>        <span class="kw">let </span>mid_tier_jokers = <span class="macro">vec!</span>[
-<a href=#803 id=803 data-nosnippet>803</a>            StaticJokerFactory::create_jolly_joker(), <span class="comment">// 3
-<a href=#804 id=804 data-nosnippet>804</a>            </span>StaticJokerFactory::create_sly_joker(),   <span class="comment">// 3
-<a href=#805 id=805 data-nosnippet>805</a>        </span>];
-<a href=#806 id=806 data-nosnippet>806</a>
-<a href=#807 id=807 data-nosnippet>807</a>        <span class="kw">let </span>higher_tier_jokers = <span class="macro">vec!</span>[
-<a href=#808 id=808 data-nosnippet>808</a>            StaticJokerFactory::create_zany_joker(), <span class="comment">// 4
-<a href=#809 id=809 data-nosnippet>809</a>            </span>StaticJokerFactory::create_wily_joker(), <span class="comment">// 4
-<a href=#810 id=810 data-nosnippet>810</a>        </span>];
-<a href=#811 id=811 data-nosnippet>811</a>
-<a href=#812 id=812 data-nosnippet>812</a>        <span class="comment">// Verify cost progression
-<a href=#813 id=813 data-nosnippet>813</a>        </span><span class="kw">for </span>joker <span class="kw">in </span>basic_jokers {
-<a href=#814 id=814 data-nosnippet>814</a>            <span class="macro">assert_eq!</span>(joker.cost(), <span class="number">2</span>);
+<a href=#610 id=610 data-nosnippet>610</a>    <span class="attr">#[test]
+<a href=#611 id=611 data-nosnippet>611</a>    </span><span class="kw">fn </span>test_basic_joker_creation() {
+<a href=#612 id=612 data-nosnippet>612</a>        <span class="kw">let </span>joker = StaticJokerFactory::create_joker();
+<a href=#613 id=613 data-nosnippet>613</a>        <span class="macro">assert_eq!</span>(joker.id(), JokerId::Joker);
+<a href=#614 id=614 data-nosnippet>614</a>        <span class="macro">assert_eq!</span>(joker.name(), <span class="string">"Joker"</span>);
+<a href=#615 id=615 data-nosnippet>615</a>        <span class="macro">assert_eq!</span>(joker.cost(), <span class="number">2</span>);
+<a href=#616 id=616 data-nosnippet>616</a>        <span class="macro">assert_eq!</span>(joker.description(), <span class="string">"+4 Mult"</span>);
+<a href=#617 id=617 data-nosnippet>617</a>        <span class="macro">assert_eq!</span>(joker.rarity(), JokerRarity::Common);
+<a href=#618 id=618 data-nosnippet>618</a>    }
+<a href=#619 id=619 data-nosnippet>619</a>
+<a href=#620 id=620 data-nosnippet>620</a>    <span class="attr">#[test]
+<a href=#621 id=621 data-nosnippet>621</a>    </span><span class="kw">fn </span>test_all_suit_jokers() {
+<a href=#622 id=622 data-nosnippet>622</a>        <span class="comment">// Test Greedy Joker (Diamond)
+<a href=#623 id=623 data-nosnippet>623</a>        </span><span class="kw">let </span>greedy = StaticJokerFactory::create_greedy_joker();
+<a href=#624 id=624 data-nosnippet>624</a>        <span class="macro">assert_eq!</span>(greedy.id(), JokerId::GreedyJoker);
+<a href=#625 id=625 data-nosnippet>625</a>        <span class="macro">assert_eq!</span>(greedy.name(), <span class="string">"Greedy Joker"</span>);
+<a href=#626 id=626 data-nosnippet>626</a>        <span class="macro">assert_eq!</span>(
+<a href=#627 id=627 data-nosnippet>627</a>            greedy.description(),
+<a href=#628 id=628 data-nosnippet>628</a>            <span class="string">"Played cards with Diamond suit give +3 Mult when scored"
+<a href=#629 id=629 data-nosnippet>629</a>        </span>);
+<a href=#630 id=630 data-nosnippet>630</a>        <span class="macro">assert_eq!</span>(greedy.rarity(), JokerRarity::Common);
+<a href=#631 id=631 data-nosnippet>631</a>        <span class="macro">assert_eq!</span>(greedy.cost(), <span class="number">5</span>);
+<a href=#632 id=632 data-nosnippet>632</a>
+<a href=#633 id=633 data-nosnippet>633</a>        <span class="comment">// Test Lusty Joker (Heart)
+<a href=#634 id=634 data-nosnippet>634</a>        </span><span class="kw">let </span>lusty = StaticJokerFactory::create_lusty_joker();
+<a href=#635 id=635 data-nosnippet>635</a>        <span class="macro">assert_eq!</span>(lusty.id(), JokerId::LustyJoker);
+<a href=#636 id=636 data-nosnippet>636</a>        <span class="macro">assert_eq!</span>(lusty.name(), <span class="string">"Lusty Joker"</span>);
+<a href=#637 id=637 data-nosnippet>637</a>        <span class="macro">assert_eq!</span>(
+<a href=#638 id=638 data-nosnippet>638</a>            lusty.description(),
+<a href=#639 id=639 data-nosnippet>639</a>            <span class="string">"Played cards with Heart suit give +3 Mult when scored"
+<a href=#640 id=640 data-nosnippet>640</a>        </span>);
+<a href=#641 id=641 data-nosnippet>641</a>        <span class="macro">assert_eq!</span>(lusty.rarity(), JokerRarity::Common);
+<a href=#642 id=642 data-nosnippet>642</a>
+<a href=#643 id=643 data-nosnippet>643</a>        <span class="comment">// Test Wrathful Joker (Spade)
+<a href=#644 id=644 data-nosnippet>644</a>        </span><span class="kw">let </span>wrathful = StaticJokerFactory::create_wrathful_joker();
+<a href=#645 id=645 data-nosnippet>645</a>        <span class="macro">assert_eq!</span>(wrathful.id(), JokerId::WrathfulJoker);
+<a href=#646 id=646 data-nosnippet>646</a>        <span class="macro">assert_eq!</span>(wrathful.name(), <span class="string">"Wrathful Joker"</span>);
+<a href=#647 id=647 data-nosnippet>647</a>        <span class="macro">assert_eq!</span>(
+<a href=#648 id=648 data-nosnippet>648</a>            wrathful.description(),
+<a href=#649 id=649 data-nosnippet>649</a>            <span class="string">"Played cards with Spade suit give +3 Mult when scored"
+<a href=#650 id=650 data-nosnippet>650</a>        </span>);
+<a href=#651 id=651 data-nosnippet>651</a>
+<a href=#652 id=652 data-nosnippet>652</a>        <span class="comment">// Test Gluttonous Joker (Club)
+<a href=#653 id=653 data-nosnippet>653</a>        </span><span class="kw">let </span>gluttonous = StaticJokerFactory::create_gluttonous_joker();
+<a href=#654 id=654 data-nosnippet>654</a>        <span class="macro">assert_eq!</span>(gluttonous.id(), JokerId::GluttonousJoker);
+<a href=#655 id=655 data-nosnippet>655</a>        <span class="macro">assert_eq!</span>(gluttonous.name(), <span class="string">"Gluttonous Joker"</span>);
+<a href=#656 id=656 data-nosnippet>656</a>        <span class="macro">assert_eq!</span>(
+<a href=#657 id=657 data-nosnippet>657</a>            gluttonous.description(),
+<a href=#658 id=658 data-nosnippet>658</a>            <span class="string">"Played cards with Club suit give +3 Mult when scored"
+<a href=#659 id=659 data-nosnippet>659</a>        </span>);
+<a href=#660 id=660 data-nosnippet>660</a>    }
+<a href=#661 id=661 data-nosnippet>661</a>
+<a href=#662 id=662 data-nosnippet>662</a>    <span class="attr">#[test]
+<a href=#663 id=663 data-nosnippet>663</a>    </span><span class="kw">fn </span>test_all_hand_type_mult_jokers() {
+<a href=#664 id=664 data-nosnippet>664</a>        <span class="comment">// Test Jolly Joker (Pair)
+<a href=#665 id=665 data-nosnippet>665</a>        </span><span class="kw">let </span>jolly = StaticJokerFactory::create_jolly_joker();
+<a href=#666 id=666 data-nosnippet>666</a>        <span class="macro">assert_eq!</span>(jolly.id(), JokerId::JollyJoker);
+<a href=#667 id=667 data-nosnippet>667</a>        <span class="macro">assert_eq!</span>(jolly.name(), <span class="string">"Jolly Joker"</span>);
+<a href=#668 id=668 data-nosnippet>668</a>        <span class="macro">assert_eq!</span>(jolly.description(), <span class="string">"+8 Mult if played hand contains Pair"</span>);
+<a href=#669 id=669 data-nosnippet>669</a>        <span class="macro">assert_eq!</span>(jolly.cost(), <span class="number">3</span>);
+<a href=#670 id=670 data-nosnippet>670</a>
+<a href=#671 id=671 data-nosnippet>671</a>        <span class="comment">// Test Zany Joker (Three of a Kind)
+<a href=#672 id=672 data-nosnippet>672</a>        </span><span class="kw">let </span>zany = StaticJokerFactory::create_zany_joker();
+<a href=#673 id=673 data-nosnippet>673</a>        <span class="macro">assert_eq!</span>(zany.id(), JokerId::ZanyJoker);
+<a href=#674 id=674 data-nosnippet>674</a>        <span class="macro">assert_eq!</span>(zany.name(), <span class="string">"Zany Joker"</span>);
+<a href=#675 id=675 data-nosnippet>675</a>        <span class="macro">assert_eq!</span>(
+<a href=#676 id=676 data-nosnippet>676</a>            zany.description(),
+<a href=#677 id=677 data-nosnippet>677</a>            <span class="string">"+12 Mult if played hand contains Three of a Kind"
+<a href=#678 id=678 data-nosnippet>678</a>        </span>);
+<a href=#679 id=679 data-nosnippet>679</a>        <span class="macro">assert_eq!</span>(zany.cost(), <span class="number">4</span>);
+<a href=#680 id=680 data-nosnippet>680</a>
+<a href=#681 id=681 data-nosnippet>681</a>        <span class="comment">// Test Mad Joker (Two Pair)
+<a href=#682 id=682 data-nosnippet>682</a>        </span><span class="kw">let </span>mad = StaticJokerFactory::create_mad_joker();
+<a href=#683 id=683 data-nosnippet>683</a>        <span class="macro">assert_eq!</span>(mad.id(), JokerId::MadJoker);
+<a href=#684 id=684 data-nosnippet>684</a>        <span class="macro">assert_eq!</span>(mad.name(), <span class="string">"Mad Joker"</span>);
+<a href=#685 id=685 data-nosnippet>685</a>        <span class="macro">assert_eq!</span>(
+<a href=#686 id=686 data-nosnippet>686</a>            mad.description(),
+<a href=#687 id=687 data-nosnippet>687</a>            <span class="string">"+10 Mult if played hand contains Two Pair"
+<a href=#688 id=688 data-nosnippet>688</a>        </span>);
+<a href=#689 id=689 data-nosnippet>689</a>
+<a href=#690 id=690 data-nosnippet>690</a>        <span class="comment">// Test Crazy Joker (Straight)
+<a href=#691 id=691 data-nosnippet>691</a>        </span><span class="kw">let </span>crazy = StaticJokerFactory::create_crazy_joker();
+<a href=#692 id=692 data-nosnippet>692</a>        <span class="macro">assert_eq!</span>(crazy.id(), JokerId::CrazyJoker);
+<a href=#693 id=693 data-nosnippet>693</a>        <span class="macro">assert_eq!</span>(crazy.name(), <span class="string">"Crazy Joker"</span>);
+<a href=#694 id=694 data-nosnippet>694</a>        <span class="macro">assert_eq!</span>(
+<a href=#695 id=695 data-nosnippet>695</a>            crazy.description(),
+<a href=#696 id=696 data-nosnippet>696</a>            <span class="string">"+12 Mult if played hand contains Straight"
+<a href=#697 id=697 data-nosnippet>697</a>        </span>);
+<a href=#698 id=698 data-nosnippet>698</a>
+<a href=#699 id=699 data-nosnippet>699</a>        <span class="comment">// Test Droll Joker (Flush)
+<a href=#700 id=700 data-nosnippet>700</a>        </span><span class="kw">let </span>droll = StaticJokerFactory::create_droll_joker();
+<a href=#701 id=701 data-nosnippet>701</a>        <span class="macro">assert_eq!</span>(droll.id(), JokerId::DrollJoker);
+<a href=#702 id=702 data-nosnippet>702</a>        <span class="macro">assert_eq!</span>(droll.name(), <span class="string">"Droll Joker"</span>);
+<a href=#703 id=703 data-nosnippet>703</a>        <span class="macro">assert_eq!</span>(
+<a href=#704 id=704 data-nosnippet>704</a>            droll.description(),
+<a href=#705 id=705 data-nosnippet>705</a>            <span class="string">"+10 Mult if played hand contains Flush"
+<a href=#706 id=706 data-nosnippet>706</a>        </span>);
+<a href=#707 id=707 data-nosnippet>707</a>    }
+<a href=#708 id=708 data-nosnippet>708</a>
+<a href=#709 id=709 data-nosnippet>709</a>    <span class="attr">#[test]
+<a href=#710 id=710 data-nosnippet>710</a>    </span><span class="kw">fn </span>test_all_hand_type_chip_jokers() {
+<a href=#711 id=711 data-nosnippet>711</a>        <span class="comment">// Test Sly Joker (Pair)
+<a href=#712 id=712 data-nosnippet>712</a>        </span><span class="kw">let </span>sly = StaticJokerFactory::create_sly_joker();
+<a href=#713 id=713 data-nosnippet>713</a>        <span class="macro">assert_eq!</span>(sly.id(), JokerId::SlyJoker);
+<a href=#714 id=714 data-nosnippet>714</a>        <span class="macro">assert_eq!</span>(sly.name(), <span class="string">"Sly Joker"</span>);
+<a href=#715 id=715 data-nosnippet>715</a>        <span class="macro">assert_eq!</span>(sly.description(), <span class="string">"+50 Chips if played hand contains Pair"</span>);
+<a href=#716 id=716 data-nosnippet>716</a>
+<a href=#717 id=717 data-nosnippet>717</a>        <span class="comment">// Test Wily Joker (Three of a Kind)
+<a href=#718 id=718 data-nosnippet>718</a>        </span><span class="kw">let </span>wily = StaticJokerFactory::create_wily_joker();
+<a href=#719 id=719 data-nosnippet>719</a>        <span class="macro">assert_eq!</span>(wily.id(), JokerId::WilyJoker);
+<a href=#720 id=720 data-nosnippet>720</a>        <span class="macro">assert_eq!</span>(wily.name(), <span class="string">"Wily Joker"</span>);
+<a href=#721 id=721 data-nosnippet>721</a>        <span class="macro">assert_eq!</span>(
+<a href=#722 id=722 data-nosnippet>722</a>            wily.description(),
+<a href=#723 id=723 data-nosnippet>723</a>            <span class="string">"+100 Chips if played hand contains Three of a Kind"
+<a href=#724 id=724 data-nosnippet>724</a>        </span>);
+<a href=#725 id=725 data-nosnippet>725</a>
+<a href=#726 id=726 data-nosnippet>726</a>        <span class="comment">// Test Clever Joker (Two Pair)
+<a href=#727 id=727 data-nosnippet>727</a>        </span><span class="kw">let </span>clever = StaticJokerFactory::create_clever_joker();
+<a href=#728 id=728 data-nosnippet>728</a>        <span class="macro">assert_eq!</span>(clever.id(), JokerId::CleverJoker);
+<a href=#729 id=729 data-nosnippet>729</a>        <span class="macro">assert_eq!</span>(clever.name(), <span class="string">"Clever Joker"</span>);
+<a href=#730 id=730 data-nosnippet>730</a>        <span class="macro">assert_eq!</span>(
+<a href=#731 id=731 data-nosnippet>731</a>            clever.description(),
+<a href=#732 id=732 data-nosnippet>732</a>            <span class="string">"+80 Chips if played hand contains Two Pair"
+<a href=#733 id=733 data-nosnippet>733</a>        </span>);
+<a href=#734 id=734 data-nosnippet>734</a>
+<a href=#735 id=735 data-nosnippet>735</a>        <span class="comment">// Test Devious Joker (Straight)
+<a href=#736 id=736 data-nosnippet>736</a>        </span><span class="kw">let </span>devious = StaticJokerFactory::create_devious_joker();
+<a href=#737 id=737 data-nosnippet>737</a>        <span class="macro">assert_eq!</span>(devious.id(), JokerId::DeviousJoker);
+<a href=#738 id=738 data-nosnippet>738</a>        <span class="macro">assert_eq!</span>(devious.name(), <span class="string">"Devious Joker"</span>);
+<a href=#739 id=739 data-nosnippet>739</a>        <span class="macro">assert_eq!</span>(
+<a href=#740 id=740 data-nosnippet>740</a>            devious.description(),
+<a href=#741 id=741 data-nosnippet>741</a>            <span class="string">"+100 Chips if played hand contains Straight"
+<a href=#742 id=742 data-nosnippet>742</a>        </span>);
+<a href=#743 id=743 data-nosnippet>743</a>
+<a href=#744 id=744 data-nosnippet>744</a>        <span class="comment">// Test Crafty Joker (Flush)
+<a href=#745 id=745 data-nosnippet>745</a>        </span><span class="kw">let </span>crafty = StaticJokerFactory::create_crafty_joker();
+<a href=#746 id=746 data-nosnippet>746</a>        <span class="macro">assert_eq!</span>(crafty.id(), JokerId::CraftyJoker);
+<a href=#747 id=747 data-nosnippet>747</a>        <span class="macro">assert_eq!</span>(crafty.name(), <span class="string">"Crafty Joker"</span>);
+<a href=#748 id=748 data-nosnippet>748</a>        <span class="macro">assert_eq!</span>(
+<a href=#749 id=749 data-nosnippet>749</a>            crafty.description(),
+<a href=#750 id=750 data-nosnippet>750</a>            <span class="string">"+80 Chips if played hand contains Flush"
+<a href=#751 id=751 data-nosnippet>751</a>        </span>);
+<a href=#752 id=752 data-nosnippet>752</a>    }
+<a href=#753 id=753 data-nosnippet>753</a>
+<a href=#754 id=754 data-nosnippet>754</a>    <span class="attr">#[test]
+<a href=#755 id=755 data-nosnippet>755</a>    </span><span class="kw">fn </span>test_rank_based_jokers() {
+<a href=#756 id=756 data-nosnippet>756</a>        <span class="comment">// Test Even Steven
+<a href=#757 id=757 data-nosnippet>757</a>        </span><span class="kw">let </span>even_steven = StaticJokerFactory::create_even_steven();
+<a href=#758 id=758 data-nosnippet>758</a>        <span class="macro">assert_eq!</span>(even_steven.id(), JokerId::EvenSteven);
+<a href=#759 id=759 data-nosnippet>759</a>        <span class="macro">assert_eq!</span>(even_steven.name(), <span class="string">"Even Steven"</span>);
+<a href=#760 id=760 data-nosnippet>760</a>        <span class="macro">assert_eq!</span>(
+<a href=#761 id=761 data-nosnippet>761</a>            even_steven.description(),
+<a href=#762 id=762 data-nosnippet>762</a>            <span class="string">"Played cards with even rank (2, 4, 6, 8, 10) give +4 Mult when scored"
+<a href=#763 id=763 data-nosnippet>763</a>        </span>);
+<a href=#764 id=764 data-nosnippet>764</a>
+<a href=#765 id=765 data-nosnippet>765</a>        <span class="comment">// Test Odd Todd
+<a href=#766 id=766 data-nosnippet>766</a>        </span><span class="kw">let </span>odd_todd = StaticJokerFactory::create_odd_todd();
+<a href=#767 id=767 data-nosnippet>767</a>        <span class="macro">assert_eq!</span>(odd_todd.id(), JokerId::OddTodd);
+<a href=#768 id=768 data-nosnippet>768</a>        <span class="macro">assert_eq!</span>(odd_todd.name(), <span class="string">"Odd Todd"</span>);
+<a href=#769 id=769 data-nosnippet>769</a>        <span class="macro">assert_eq!</span>(
+<a href=#770 id=770 data-nosnippet>770</a>            odd_todd.description(),
+<a href=#771 id=771 data-nosnippet>771</a>            <span class="string">"Played cards with odd rank (3, 5, 7, 9, A) give +31 Chips when scored"
+<a href=#772 id=772 data-nosnippet>772</a>        </span>);
+<a href=#773 id=773 data-nosnippet>773</a>
+<a href=#774 id=774 data-nosnippet>774</a>        <span class="comment">// Test Scholar
+<a href=#775 id=775 data-nosnippet>775</a>        </span><span class="kw">let </span>scholar = StaticJokerFactory::create_scholar();
+<a href=#776 id=776 data-nosnippet>776</a>        <span class="macro">assert_eq!</span>(scholar.id(), JokerId::Scholar);
+<a href=#777 id=777 data-nosnippet>777</a>        <span class="macro">assert_eq!</span>(scholar.name(), <span class="string">"Scholar"</span>);
+<a href=#778 id=778 data-nosnippet>778</a>        <span class="macro">assert_eq!</span>(
+<a href=#779 id=779 data-nosnippet>779</a>            scholar.description(),
+<a href=#780 id=780 data-nosnippet>780</a>            <span class="string">"Played Aces give +20 Chips and +4 Mult when scored"
+<a href=#781 id=781 data-nosnippet>781</a>        </span>);
+<a href=#782 id=782 data-nosnippet>782</a>    }
+<a href=#783 id=783 data-nosnippet>783</a>
+<a href=#784 id=784 data-nosnippet>784</a>    <span class="attr">#[test]
+<a href=#785 id=785 data-nosnippet>785</a>    </span><span class="kw">fn </span>test_joker_cost_distribution() {
+<a href=#786 id=786 data-nosnippet>786</a>        <span class="comment">// Test that jokers have appropriate costs based on rarity/power
+<a href=#787 id=787 data-nosnippet>787</a>        </span><span class="kw">let </span>basic_jokers = <span class="macro">vec!</span>[
+<a href=#788 id=788 data-nosnippet>788</a>            StaticJokerFactory::create_joker(), <span class="comment">// 2
+<a href=#789 id=789 data-nosnippet>789</a>        </span>];
+<a href=#790 id=790 data-nosnippet>790</a>
+<a href=#791 id=791 data-nosnippet>791</a>        <span class="kw">let </span>suit_jokers = <span class="macro">vec!</span>[
+<a href=#792 id=792 data-nosnippet>792</a>            StaticJokerFactory::create_greedy_joker(),     <span class="comment">// 5
+<a href=#793 id=793 data-nosnippet>793</a>            </span>StaticJokerFactory::create_lusty_joker(),      <span class="comment">// 5
+<a href=#794 id=794 data-nosnippet>794</a>            </span>StaticJokerFactory::create_wrathful_joker(),   <span class="comment">// 5
+<a href=#795 id=795 data-nosnippet>795</a>            </span>StaticJokerFactory::create_gluttonous_joker(), <span class="comment">// 5
+<a href=#796 id=796 data-nosnippet>796</a>        </span>];
+<a href=#797 id=797 data-nosnippet>797</a>
+<a href=#798 id=798 data-nosnippet>798</a>        <span class="kw">let </span>mid_tier_jokers = <span class="macro">vec!</span>[
+<a href=#799 id=799 data-nosnippet>799</a>            StaticJokerFactory::create_jolly_joker(), <span class="comment">// 3
+<a href=#800 id=800 data-nosnippet>800</a>            </span>StaticJokerFactory::create_sly_joker(),   <span class="comment">// 3
+<a href=#801 id=801 data-nosnippet>801</a>        </span>];
+<a href=#802 id=802 data-nosnippet>802</a>
+<a href=#803 id=803 data-nosnippet>803</a>        <span class="kw">let </span>higher_tier_jokers = <span class="macro">vec!</span>[
+<a href=#804 id=804 data-nosnippet>804</a>            StaticJokerFactory::create_zany_joker(), <span class="comment">// 4
+<a href=#805 id=805 data-nosnippet>805</a>            </span>StaticJokerFactory::create_wily_joker(), <span class="comment">// 4
+<a href=#806 id=806 data-nosnippet>806</a>        </span>];
+<a href=#807 id=807 data-nosnippet>807</a>
+<a href=#808 id=808 data-nosnippet>808</a>        <span class="comment">// Verify cost progression
+<a href=#809 id=809 data-nosnippet>809</a>        </span><span class="kw">for </span>joker <span class="kw">in </span>basic_jokers {
+<a href=#810 id=810 data-nosnippet>810</a>            <span class="macro">assert_eq!</span>(joker.cost(), <span class="number">2</span>);
+<a href=#811 id=811 data-nosnippet>811</a>        }
+<a href=#812 id=812 data-nosnippet>812</a>
+<a href=#813 id=813 data-nosnippet>813</a>        <span class="kw">for </span>joker <span class="kw">in </span>suit_jokers {
+<a href=#814 id=814 data-nosnippet>814</a>            <span class="macro">assert_eq!</span>(joker.cost(), <span class="number">5</span>);
 <a href=#815 id=815 data-nosnippet>815</a>        }
 <a href=#816 id=816 data-nosnippet>816</a>
-<a href=#817 id=817 data-nosnippet>817</a>        <span class="kw">for </span>joker <span class="kw">in </span>suit_jokers {
-<a href=#818 id=818 data-nosnippet>818</a>            <span class="macro">assert_eq!</span>(joker.cost(), <span class="number">5</span>);
+<a href=#817 id=817 data-nosnippet>817</a>        <span class="kw">for </span>joker <span class="kw">in </span>mid_tier_jokers {
+<a href=#818 id=818 data-nosnippet>818</a>            <span class="macro">assert_eq!</span>(joker.cost(), <span class="number">3</span>);
 <a href=#819 id=819 data-nosnippet>819</a>        }
 <a href=#820 id=820 data-nosnippet>820</a>
-<a href=#821 id=821 data-nosnippet>821</a>        <span class="kw">for </span>joker <span class="kw">in </span>mid_tier_jokers {
-<a href=#822 id=822 data-nosnippet>822</a>            <span class="macro">assert_eq!</span>(joker.cost(), <span class="number">3</span>);
+<a href=#821 id=821 data-nosnippet>821</a>        <span class="kw">for </span>joker <span class="kw">in </span>higher_tier_jokers {
+<a href=#822 id=822 data-nosnippet>822</a>            <span class="macro">assert_eq!</span>(joker.cost(), <span class="number">4</span>);
 <a href=#823 id=823 data-nosnippet>823</a>        }
-<a href=#824 id=824 data-nosnippet>824</a>
-<a href=#825 id=825 data-nosnippet>825</a>        <span class="kw">for </span>joker <span class="kw">in </span>higher_tier_jokers {
-<a href=#826 id=826 data-nosnippet>826</a>            <span class="macro">assert_eq!</span>(joker.cost(), <span class="number">4</span>);
-<a href=#827 id=827 data-nosnippet>827</a>        }
-<a href=#828 id=828 data-nosnippet>828</a>    }
-<a href=#829 id=829 data-nosnippet>829</a>
-<a href=#830 id=830 data-nosnippet>830</a>    <span class="attr">#[test]
-<a href=#831 id=831 data-nosnippet>831</a>    </span><span class="kw">fn </span>test_all_factory_jokers_can_be_created() {
-<a href=#832 id=832 data-nosnippet>832</a>        <span class="comment">// Test that all 18 jokers can be created without panicking
-<a href=#833 id=833 data-nosnippet>833</a>        </span><span class="kw">let </span>jokers = <span class="macro">vec!</span>[
-<a href=#834 id=834 data-nosnippet>834</a>            StaticJokerFactory::create_joker(),
-<a href=#835 id=835 data-nosnippet>835</a>            StaticJokerFactory::create_greedy_joker(),
-<a href=#836 id=836 data-nosnippet>836</a>            StaticJokerFactory::create_lusty_joker(),
-<a href=#837 id=837 data-nosnippet>837</a>            StaticJokerFactory::create_wrathful_joker(),
-<a href=#838 id=838 data-nosnippet>838</a>            StaticJokerFactory::create_gluttonous_joker(),
-<a href=#839 id=839 data-nosnippet>839</a>            StaticJokerFactory::create_jolly_joker(),
-<a href=#840 id=840 data-nosnippet>840</a>            StaticJokerFactory::create_zany_joker(),
-<a href=#841 id=841 data-nosnippet>841</a>            StaticJokerFactory::create_mad_joker(),
-<a href=#842 id=842 data-nosnippet>842</a>            StaticJokerFactory::create_crazy_joker(),
-<a href=#843 id=843 data-nosnippet>843</a>            StaticJokerFactory::create_droll_joker(),
-<a href=#844 id=844 data-nosnippet>844</a>            StaticJokerFactory::create_sly_joker(),
-<a href=#845 id=845 data-nosnippet>845</a>            StaticJokerFactory::create_wily_joker(),
-<a href=#846 id=846 data-nosnippet>846</a>            StaticJokerFactory::create_clever_joker(),
-<a href=#847 id=847 data-nosnippet>847</a>            StaticJokerFactory::create_devious_joker(),
-<a href=#848 id=848 data-nosnippet>848</a>            StaticJokerFactory::create_crafty_joker(),
-<a href=#849 id=849 data-nosnippet>849</a>            StaticJokerFactory::create_even_steven(),
-<a href=#850 id=850 data-nosnippet>850</a>            StaticJokerFactory::create_odd_todd(),
-<a href=#851 id=851 data-nosnippet>851</a>            StaticJokerFactory::create_scholar(),
-<a href=#852 id=852 data-nosnippet>852</a>        ];
-<a href=#853 id=853 data-nosnippet>853</a>
-<a href=#854 id=854 data-nosnippet>854</a>        <span class="macro">assert_eq!</span>(jokers.len(), <span class="number">18</span>);
-<a href=#855 id=855 data-nosnippet>855</a>
-<a href=#856 id=856 data-nosnippet>856</a>        <span class="comment">// Ensure all have valid IDs and names
-<a href=#857 id=857 data-nosnippet>857</a>        </span><span class="kw">for </span>joker <span class="kw">in </span><span class="kw-2">&amp;</span>jokers {
-<a href=#858 id=858 data-nosnippet>858</a>            <span class="macro">assert!</span>(!joker.name().is_empty());
-<a href=#859 id=859 data-nosnippet>859</a>            <span class="macro">assert!</span>(!joker.description().is_empty());
-<a href=#860 id=860 data-nosnippet>860</a>            <span class="macro">assert!</span>(joker.cost() &gt; <span class="number">0</span>);
-<a href=#861 id=861 data-nosnippet>861</a>        }
-<a href=#862 id=862 data-nosnippet>862</a>    }
-<a href=#863 id=863 data-nosnippet>863</a>
-<a href=#864 id=864 data-nosnippet>864</a>    <span class="attr">#[test]
-<a href=#865 id=865 data-nosnippet>865</a>    </span><span class="kw">fn </span>test_joker_rarity_distribution() {
-<a href=#866 id=866 data-nosnippet>866</a>        <span class="comment">// Test that jokers have appropriate rarities
-<a href=#867 id=867 data-nosnippet>867</a>        </span><span class="kw">let </span>common_jokers = <span class="macro">vec!</span>[
-<a href=#868 id=868 data-nosnippet>868</a>            StaticJokerFactory::create_joker(),
-<a href=#869 id=869 data-nosnippet>869</a>            StaticJokerFactory::create_greedy_joker(),
-<a href=#870 id=870 data-nosnippet>870</a>            StaticJokerFactory::create_lusty_joker(),
-<a href=#871 id=871 data-nosnippet>871</a>            StaticJokerFactory::create_wrathful_joker(),
-<a href=#872 id=872 data-nosnippet>872</a>            StaticJokerFactory::create_gluttonous_joker(),
-<a href=#873 id=873 data-nosnippet>873</a>        ];
+<a href=#824 id=824 data-nosnippet>824</a>    }
+<a href=#825 id=825 data-nosnippet>825</a>
+<a href=#826 id=826 data-nosnippet>826</a>    <span class="attr">#[test]
+<a href=#827 id=827 data-nosnippet>827</a>    </span><span class="kw">fn </span>test_all_factory_jokers_can_be_created() {
+<a href=#828 id=828 data-nosnippet>828</a>        <span class="comment">// Test that all 18 jokers can be created without panicking
+<a href=#829 id=829 data-nosnippet>829</a>        </span><span class="kw">let </span>jokers = <span class="macro">vec!</span>[
+<a href=#830 id=830 data-nosnippet>830</a>            StaticJokerFactory::create_joker(),
+<a href=#831 id=831 data-nosnippet>831</a>            StaticJokerFactory::create_greedy_joker(),
+<a href=#832 id=832 data-nosnippet>832</a>            StaticJokerFactory::create_lusty_joker(),
+<a href=#833 id=833 data-nosnippet>833</a>            StaticJokerFactory::create_wrathful_joker(),
+<a href=#834 id=834 data-nosnippet>834</a>            StaticJokerFactory::create_gluttonous_joker(),
+<a href=#835 id=835 data-nosnippet>835</a>            StaticJokerFactory::create_jolly_joker(),
+<a href=#836 id=836 data-nosnippet>836</a>            StaticJokerFactory::create_zany_joker(),
+<a href=#837 id=837 data-nosnippet>837</a>            StaticJokerFactory::create_mad_joker(),
+<a href=#838 id=838 data-nosnippet>838</a>            StaticJokerFactory::create_crazy_joker(),
+<a href=#839 id=839 data-nosnippet>839</a>            StaticJokerFactory::create_droll_joker(),
+<a href=#840 id=840 data-nosnippet>840</a>            StaticJokerFactory::create_sly_joker(),
+<a href=#841 id=841 data-nosnippet>841</a>            StaticJokerFactory::create_wily_joker(),
+<a href=#842 id=842 data-nosnippet>842</a>            StaticJokerFactory::create_clever_joker(),
+<a href=#843 id=843 data-nosnippet>843</a>            StaticJokerFactory::create_devious_joker(),
+<a href=#844 id=844 data-nosnippet>844</a>            StaticJokerFactory::create_crafty_joker(),
+<a href=#845 id=845 data-nosnippet>845</a>            StaticJokerFactory::create_even_steven(),
+<a href=#846 id=846 data-nosnippet>846</a>            StaticJokerFactory::create_odd_todd(),
+<a href=#847 id=847 data-nosnippet>847</a>            StaticJokerFactory::create_scholar(),
+<a href=#848 id=848 data-nosnippet>848</a>        ];
+<a href=#849 id=849 data-nosnippet>849</a>
+<a href=#850 id=850 data-nosnippet>850</a>        <span class="macro">assert_eq!</span>(jokers.len(), <span class="number">18</span>);
+<a href=#851 id=851 data-nosnippet>851</a>
+<a href=#852 id=852 data-nosnippet>852</a>        <span class="comment">// Ensure all have valid IDs and names
+<a href=#853 id=853 data-nosnippet>853</a>        </span><span class="kw">for </span>joker <span class="kw">in </span><span class="kw-2">&amp;</span>jokers {
+<a href=#854 id=854 data-nosnippet>854</a>            <span class="macro">assert!</span>(!joker.name().is_empty());
+<a href=#855 id=855 data-nosnippet>855</a>            <span class="macro">assert!</span>(!joker.description().is_empty());
+<a href=#856 id=856 data-nosnippet>856</a>            <span class="macro">assert!</span>(joker.cost() &gt; <span class="number">0</span>);
+<a href=#857 id=857 data-nosnippet>857</a>        }
+<a href=#858 id=858 data-nosnippet>858</a>    }
+<a href=#859 id=859 data-nosnippet>859</a>
+<a href=#860 id=860 data-nosnippet>860</a>    <span class="attr">#[test]
+<a href=#861 id=861 data-nosnippet>861</a>    </span><span class="kw">fn </span>test_joker_rarity_distribution() {
+<a href=#862 id=862 data-nosnippet>862</a>        <span class="comment">// Test that jokers have appropriate rarities
+<a href=#863 id=863 data-nosnippet>863</a>        </span><span class="kw">let </span>common_jokers = <span class="macro">vec!</span>[
+<a href=#864 id=864 data-nosnippet>864</a>            StaticJokerFactory::create_joker(),
+<a href=#865 id=865 data-nosnippet>865</a>            StaticJokerFactory::create_greedy_joker(),
+<a href=#866 id=866 data-nosnippet>866</a>            StaticJokerFactory::create_lusty_joker(),
+<a href=#867 id=867 data-nosnippet>867</a>            StaticJokerFactory::create_wrathful_joker(),
+<a href=#868 id=868 data-nosnippet>868</a>            StaticJokerFactory::create_gluttonous_joker(),
+<a href=#869 id=869 data-nosnippet>869</a>        ];
+<a href=#870 id=870 data-nosnippet>870</a>
+<a href=#871 id=871 data-nosnippet>871</a>        <span class="kw">for </span>joker <span class="kw">in </span>common_jokers {
+<a href=#872 id=872 data-nosnippet>872</a>            <span class="macro">assert_eq!</span>(joker.rarity(), JokerRarity::Common);
+<a href=#873 id=873 data-nosnippet>873</a>        }
 <a href=#874 id=874 data-nosnippet>874</a>
-<a href=#875 id=875 data-nosnippet>875</a>        <span class="kw">for </span>joker <span class="kw">in </span>common_jokers {
-<a href=#876 id=876 data-nosnippet>876</a>            <span class="macro">assert_eq!</span>(joker.rarity(), JokerRarity::Common);
-<a href=#877 id=877 data-nosnippet>877</a>        }
+<a href=#875 id=875 data-nosnippet>875</a>        <span class="comment">// Verify specific jokers have expected rarities
+<a href=#876 id=876 data-nosnippet>876</a>        </span><span class="kw">let </span>jolly = StaticJokerFactory::create_jolly_joker();
+<a href=#877 id=877 data-nosnippet>877</a>        <span class="macro">assert_eq!</span>(jolly.rarity(), JokerRarity::Common);
 <a href=#878 id=878 data-nosnippet>878</a>
-<a href=#879 id=879 data-nosnippet>879</a>        <span class="comment">// Verify specific jokers have expected rarities
-<a href=#880 id=880 data-nosnippet>880</a>        </span><span class="kw">let </span>jolly = StaticJokerFactory::create_jolly_joker();
-<a href=#881 id=881 data-nosnippet>881</a>        <span class="macro">assert_eq!</span>(jolly.rarity(), JokerRarity::Common);
-<a href=#882 id=882 data-nosnippet>882</a>
-<a href=#883 id=883 data-nosnippet>883</a>        <span class="kw">let </span>scholar = StaticJokerFactory::create_scholar();
-<a href=#884 id=884 data-nosnippet>884</a>        <span class="macro">assert_eq!</span>(scholar.rarity(), JokerRarity::Common);
-<a href=#885 id=885 data-nosnippet>885</a>    }
-<a href=#886 id=886 data-nosnippet>886</a>}</code></pre></div></section></main></body></html>
+<a href=#879 id=879 data-nosnippet>879</a>        <span class="kw">let </span>scholar = StaticJokerFactory::create_scholar();
+<a href=#880 id=880 data-nosnippet>880</a>        <span class="macro">assert_eq!</span>(scholar.rarity(), JokerRarity::Common);
+<a href=#881 id=881 data-nosnippet>881</a>    }
+<a href=#882 id=882 data-nosnippet>882</a>}</code></pre></div></section></main></body></html>
