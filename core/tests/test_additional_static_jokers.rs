@@ -279,15 +279,102 @@ fn test_half_joker_behavior_edge_case_empty_hand() {
 }
 
 #[test]
-#[ignore = "EMERGENCY DISABLE: GameContext default issues - tracked for post-emergency fix"]
-#[ignore] // Ignore until framework supports discard count
 fn test_banner_joker() {
+    use balatro_rs::card::Card;
+    use balatro_rs::hand::{Hand, SelectHand};
+    use balatro_rs::joker::GameContext;
+    use balatro_rs::joker_state::JokerStateManager;
+    use balatro_rs::rank::HandRank;
+    use balatro_rs::stage::Stage;
+    use std::collections::HashMap;
+    use std::sync::Arc;
+
     let joker = StaticJokerFactory::create_banner();
+
+    // Test basic properties
     assert_eq!(joker.id(), JokerId::Banner);
     assert_eq!(joker.name(), "Banner");
     assert_eq!(joker.description(), "+30 Chips for each remaining discard");
     assert_eq!(joker.rarity(), JokerRarity::Common);
     assert_eq!(joker.cost(), 3);
+
+    // Test functionality with different discard counts
+    let stage = Stage::Blind;
+    let hand = Hand::new();
+    let empty_cards = vec![];
+    let joker_state_manager = Arc::new(JokerStateManager::new());
+    let hand_type_counts = HashMap::new();
+    let rng = crate::rng::GameRng::new();
+
+    // Test with 0 discards used (5 remaining) - should give 5 * 30 = 150 chips
+    let mut context_5_remaining = GameContext {
+        chips: 0,
+        mult: 0,
+        money: 0,
+        ante: 1,
+        round: 1,
+        stage: &stage,
+        hands_played: 0,
+        discards_used: 0, // 5 discards remaining
+        jokers: &[],
+        hand: &hand,
+        discarded: &empty_cards,
+        joker_state_manager: &joker_state_manager,
+        hand_type_counts: &hand_type_counts,
+        cards_in_deck: 52,
+        stone_cards_in_deck: 0,
+        rng: &rng,
+    };
+
+    let test_hand = SelectHand::new(vec![]);
+    let effect = joker.on_hand_played(&mut context_5_remaining, &test_hand);
+    assert_eq!(effect.chips, 150); // 5 remaining * 30 chips per
+
+    // Test with 2 discards used (3 remaining) - should give 3 * 30 = 90 chips
+    let mut context_3_remaining = GameContext {
+        chips: 0,
+        mult: 0,
+        money: 0,
+        ante: 1,
+        round: 1,
+        stage: &stage,
+        hands_played: 0,
+        discards_used: 2, // 3 discards remaining
+        jokers: &[],
+        hand: &hand,
+        discarded: &empty_cards,
+        joker_state_manager: &joker_state_manager,
+        hand_type_counts: &hand_type_counts,
+        cards_in_deck: 52,
+        stone_cards_in_deck: 0,
+        rng: &rng,
+    };
+
+    let effect = joker.on_hand_played(&mut context_3_remaining, &test_hand);
+    assert_eq!(effect.chips, 90); // 3 remaining * 30 chips per
+
+    // Test with 5 discards used (0 remaining) - should give 0 * 30 = 0 chips
+    let mut context_0_remaining = GameContext {
+        chips: 0,
+        mult: 0,
+        money: 0,
+        ante: 1,
+        round: 1,
+        stage: &stage,
+        hands_played: 0,
+        discards_used: 5, // 0 discards remaining
+        jokers: &[],
+        hand: &hand,
+        discarded: &empty_cards,
+        joker_state_manager: &joker_state_manager,
+        hand_type_counts: &hand_type_counts,
+        cards_in_deck: 52,
+        stone_cards_in_deck: 0,
+        rng: &rng,
+    };
+
+    let effect = joker.on_hand_played(&mut context_0_remaining, &test_hand);
+    assert_eq!(effect.chips, 0); // 0 remaining * 30 chips per
 }
 
 #[test]

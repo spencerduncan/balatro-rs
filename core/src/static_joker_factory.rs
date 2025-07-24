@@ -473,11 +473,7 @@ impl StaticJokerFactory {
     }
 
     /// Create Banner (+30 Chips for each remaining discard)
-    /// TODO: Requires discard count access in GameContext
-    /// WARNING: This is a PLACEHOLDER implementation that gives +30 Chips ALWAYS
-    /// The actual joker should give +30 Chips * remaining_discards
     pub fn create_banner() -> Box<dyn Joker> {
-        // PLACEHOLDER: Currently provides fixed +30 Chips - DO NOT USE IN PRODUCTION
         Box::new(
             StaticJoker::builder(
                 JokerId::Banner,
@@ -486,8 +482,8 @@ impl StaticJokerFactory {
             )
             .rarity(JokerRarity::Common)
             .cost(3)
-            .chips(30) // TODO: Should be 30 * discard_count
-            .condition(StaticCondition::Always)
+            .chips(30) // Base amount per remaining discard
+            .condition(StaticCondition::DiscardCount)
             .per_hand()
             .build()
             .expect("Valid joker configuration"),

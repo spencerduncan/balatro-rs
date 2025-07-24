@@ -22,6 +22,8 @@ pub enum StaticCondition {
     AnyRankScored(Vec<Value>),
     /// Apply when the hand has at most the specified number of cards
     HandSizeAtMost(usize),
+    /// Apply based on remaining discards (multiplies bonus by remaining discard count)
+    DiscardCount,
 }
 
 /// A static joker that provides consistent bonuses based on conditions
@@ -97,11 +99,11 @@ impl Joker for StaticJoker {
         })
     }
 
-    fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
+    fn on_hand_played(&self, context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
         if !self.per_card {
             // Apply effect once per hand if condition is met
             if self.check_hand_condition(hand) {
-                self.create_effect()
+                self.create_effect_with_context(context)
             } else {
                 JokerEffect::new()
             }
@@ -110,11 +112,11 @@ impl Joker for StaticJoker {
         }
     }
 
-    fn on_card_scored(&self, _context: &mut GameContext, card: &Card) -> JokerEffect {
+    fn on_card_scored(&self, context: &mut GameContext, card: &Card) -> JokerEffect {
         if self.per_card {
             // Apply effect per card if condition is met
             if self.check_card_condition(card) {
-                self.create_effect()
+                self.create_effect_with_context(context)
             } else {
                 JokerEffect::new()
             }
@@ -129,6 +131,7 @@ impl StaticJoker {
     fn check_hand_condition(&self, hand: &SelectHand) -> bool {
         match &self.condition {
             StaticCondition::Always => true,
+            StaticCondition::DiscardCount => true, // Always applies, but effect is calculated dynamically
             StaticCondition::HandType(required_rank) => {
                 // Check if the hand contains the required type
                 match required_rank {
@@ -164,6 +167,7 @@ impl StaticJoker {
     fn check_card_condition(&self, card: &Card) -> bool {
         match &self.condition {
             StaticCondition::Always => true,
+            StaticCondition::DiscardCount => true, // Always applies, but effect is calculated dynamically
             StaticCondition::SuitScored(suit) => card.suit == *suit,
             StaticCondition::RankScored(value) => card.value == *value,
             StaticCondition::AnySuitScored(suits) => suits.contains(&card.suit),
@@ -179,16 +183,36 @@ impl StaticJoker {
         }
     }
 
-    /// Create the effect based on configured bonuses
-    fn create_effect(&self) -> JokerEffect {
+    /// Create the effect based on configured bonuses with access to game context for dynamic calculations
+    fn create_effect_with_context(&self, context: &GameContext) -> JokerEffect {
         let mut effect = JokerEffect::new();
 
-        if let Some(chips) = self.chips_bonus {
-            effect = effect.with_chips(chips);
-        }
+        match &self.condition {
+            StaticCondition::DiscardCount => {
+                // Calculate bonus based on remaining discards
+                const MAX_DISCARDS: u32 = 5; // Standard discards per round
+                let discards_remaining = MAX_DISCARDS.saturating_sub(context.discards_used);
 
-        if let Some(mult) = self.mult_bonus {
-            effect = effect.with_mult(mult);
+                if let Some(chips_base) = self.chips_bonus {
+                    let chips_bonus = chips_base * discards_remaining as i32;
+                    effect = effect.with_chips(chips_bonus);
+                }
+
+                if let Some(mult_base) = self.mult_bonus {
+                    let mult_bonus = mult_base * discards_remaining as i32;
+                    effect = effect.with_mult(mult_bonus);
+                }
+            }
+            _ => {
+                // Use standard fixed bonuses for other conditions
+                if let Some(chips) = self.chips_bonus {
+                    effect = effect.with_chips(chips);
+                }
+
+                if let Some(mult) = self.mult_bonus {
+                    effect = effect.with_mult(mult);
+                }
+            }
         }
 
         if let Some(multiplier) = self.mult_multiplier {
@@ -265,6 +289,9 @@ impl StaticJokerBuilder {
                     "HandSizeAtMost conditions should be per_hand, not per_card".to_string()
                 );
             }
+            (StaticCondition::DiscardCount, true) => {
+                return Err("DiscardCount conditions should be per_hand, not per_card".to_string());
+            }
             (StaticCondition::SuitScored(_), false) => {
                 return Err("SuitScored conditions should be per_card, not per_hand".to_string());
             }
@@ -307,6 +334,11 @@ impl StaticJokerBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::joker::test_utils::TestContextBuilder;
+
+    fn create_default_test_context() -> GameContext<'static> {
+        TestContextBuilder::new().build()
+    }
 
     #[test]
     fn test_static_joker_builder() {
@@ -333,7 +365,8 @@ mod tests {
             .build()
             .expect("Valid joker configuration");
 
-        let effect = joker.create_effect();
+        let context = create_default_test_context();
+        let effect = joker.create_effect_with_context(&context);
         assert_eq!(effect.mult, 5);
     }
 
@@ -410,7 +443,8 @@ mod tests {
         assert!(!joker.check_card_condition(&heart_card));
 
         // Test effect
-        let effect = joker.create_effect();
+        let context = create_default_test_context();
+        let effect = joker.create_effect_with_context(&context);
         assert_eq!(effect.mult, 3);
     }
 
@@ -432,7 +466,8 @@ mod tests {
         assert!(!joker.check_card_condition(&spade_card));
 
         // Test effect
-        let effect = joker.create_effect();
+        let context = create_default_test_context();
+        let effect = joker.create_effect_with_context(&context);
         assert_eq!(effect.mult, 3);
     }
 
@@ -455,7 +490,8 @@ mod tests {
         assert!(!joker.check_card_condition(&club_card));
 
         // Test effect
-        let effect = joker.create_effect();
+        let context = create_default_test_context();
+        let effect = joker.create_effect_with_context(&context);
         assert_eq!(effect.mult, 3);
     }
 
@@ -478,7 +514,8 @@ mod tests {
         assert!(!joker.check_card_condition(&diamond_card));
 
         // Test effect
-        let effect = joker.create_effect();
+        let context = create_default_test_context();
+        let effect = joker.create_effect_with_context(&context);
         assert_eq!(effect.mult, 3);
     }
 
@@ -521,10 +558,11 @@ mod tests {
         assert!(gluttonous.check_card_condition(&club_card));
 
         // All should give the same +3 mult effect
-        assert_eq!(greedy.create_effect().mult, 3);
-        assert_eq!(lusty.create_effect().mult, 3);
-        assert_eq!(wrathful.create_effect().mult, 3);
-        assert_eq!(gluttonous.create_effect().mult, 3);
+        let context = create_default_test_context();
+        assert_eq!(greedy.create_effect_with_context(&context).mult, 3);
+        assert_eq!(lusty.create_effect_with_context(&context).mult, 3);
+        assert_eq!(wrathful.create_effect_with_context(&context).mult, 3);
+        assert_eq!(gluttonous.create_effect_with_context(&context).mult, 3);
     }
 
     #[test]
@@ -560,7 +598,8 @@ mod tests {
             .build()
             .expect("Valid joker configuration");
 
-        let effect = joker.create_effect();
+        let context = create_default_test_context();
+        let effect = joker.create_effect_with_context(&context);
         assert_eq!(effect.chips, 50);
         assert_eq!(effect.mult, 10);
         assert_eq!(effect.mult_multiplier, 1.2);
