@@ -837,6 +837,7 @@ impl JokerEffectProcessor {
     /// This method provides optimized processing for jokers that only implement
     /// modifier traits, bypassing more complex processing logic for simple
     /// multiplicative or additive effects.
+    #[allow(dead_code)]
     fn process_modifiers_trait(
         &self,
         modifiers_trait: &dyn JokerModifiers,
@@ -902,6 +903,7 @@ impl JokerEffectProcessor {
     ///
     /// This path skips modifier checks and focuses on gameplay logic,
     /// providing 15-25% performance improvement for complex scoring jokers.
+    #[allow(dead_code)]
     fn process_gameplay_optimized(
         &self,
         joker: &dyn Joker,
@@ -972,6 +974,7 @@ impl JokerEffectProcessor {
     ///
     /// This path efficiently combines gameplay and modifier processing,
     /// providing balanced optimization for jokers with both capabilities.
+    #[allow(dead_code)]
     fn process_hybrid_optimized(
         &self,
         joker: &dyn Joker,
