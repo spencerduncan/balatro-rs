@@ -452,8 +452,6 @@ impl StaticJokerFactory {
 
     // Note: Runner is implemented as RunnerJoker in joker_impl.rs, not as a static joker
 
-    // TODO: Implement these jokers when framework supports the required conditions
-
     /// Create Half Joker (+20 Mult if played hand has 4 or fewer cards)
     pub fn create_half_joker() -> Box<dyn Joker> {
         Box::new(
