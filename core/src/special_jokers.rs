@@ -782,7 +782,7 @@ mod tests {
     fn create_card(suit: CardSuit, value: Value) -> Card {
         Card::new(value, suit)
     }
-    
+
     /// Helper function to create a test blind stage
     fn create_blind_stage() -> Stage {
         Stage::Blind(Blind::Small)
@@ -815,6 +815,7 @@ mod tests {
         // First face card should trigger
         let blind_stage = create_blind_stage();
         let result = joker.process(&blind_stage, &mut context);
+<<<<<<< HEAD
         assert_eq!(result.mult_multiplier, 2.0); // Should double the current mult (X2)
 
         // Verify state was updated internally
