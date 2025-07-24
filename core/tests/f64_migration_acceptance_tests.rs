@@ -47,7 +47,7 @@ mod f64_migration_acceptance_tests {
         let config = Config::default();
 
         // Verify config values use correct types (Config fields are mostly usize)
-        let mut custom_config = Config {
+        let custom_config = Config {
             money_start: 100,
             money_max: 10000,
             reward_base: 50,

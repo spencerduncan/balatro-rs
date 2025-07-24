@@ -3,7 +3,6 @@ use crate::error::GameError;
 use crate::game::Game;
 use crate::joker::JokerId;
 
-
 // Re-export legacy shop for backward compatibility
 pub use legacy::*;
 

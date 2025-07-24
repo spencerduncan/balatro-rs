@@ -2689,7 +2689,7 @@ mod tests {
     fn test_enhanced_processing_with_stage() {
         use crate::card::{Suit, Value};
         use crate::hand::SelectHand;
-        use crate::joker::{GameContext, JokerId};
+        use crate::joker::GameContext;
         use crate::stage::Stage;
         use std::collections::HashMap;
 
@@ -2735,7 +2735,7 @@ mod tests {
     fn test_legacy_compatibility_maintained() {
         use crate::card::{Suit, Value};
         use crate::hand::SelectHand;
-        use crate::joker::{GameContext, JokerId};
+        use crate::joker::GameContext;
         use std::collections::HashMap;
 
         let mut processor = JokerEffectProcessor::new();

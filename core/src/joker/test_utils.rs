@@ -852,7 +852,7 @@ mod tests {
     use crate::hand::SelectHand;
     use crate::joker_state::JokerState;
     use crate::rank::HandRank;
-    use crate::stage::{Blind, Stage};
+    use crate::stage::Stage;
 
     #[test]
     fn test_mock_identity_joker() {
@@ -960,7 +960,7 @@ mod tests {
         let joker = MockStateJoker::new().with_custom_deserialization();
         let context = TestContextBuilder::new().build();
 
-        let mut state_data = serde_json::to_value(JokerState::new()).unwrap();
+        let state_data = serde_json::to_value(JokerState::new()).unwrap();
         let original_value = state_data["accumulated_value"].as_f64().unwrap_or(0.0);
 
         let deserialized = joker.deserialize_state(&context, &state_data).unwrap();

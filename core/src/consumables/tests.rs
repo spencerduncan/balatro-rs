@@ -188,7 +188,7 @@ mod tests {
 
     #[test]
     fn test_consumable_slots_basic_operations() {
-        let mut slots = ConsumableSlots::new();
+        let slots = ConsumableSlots::new();
 
         // Test initial state
         assert_eq!(slots.capacity(), 2);
