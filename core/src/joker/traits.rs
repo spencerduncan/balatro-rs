@@ -5,6 +5,7 @@
 //! joker behavior, making the system more modular and maintainable.
 
 use crate::card::Card;
+use crate::joker_state::JokerStateManager;
 use crate::stage::Stage;
 use serde::{Deserialize, Serialize};
 
@@ -79,6 +80,50 @@ pub trait JokerLifecycle: Send + Sync {
 ///
 /// This trait handles the core gameplay functionality of jokers,
 /// including scoring and card interactions.
+///
+/// # State Management for Mutable Jokers
+///
+/// Since `process()` takes an immutable `&self` reference, jokers that need to
+/// maintain mutable state must use the `JokerStateManager` provided in the
+/// `ProcessContext`. This ensures thread safety and proper state persistence.
+///
+/// ## Common Patterns
+///
+/// ### Per-Round State
+/// ```rust,ignore
+/// impl JokerGameplay for MyJoker {
+///     fn process(&self, stage: &Stage, context: &mut ProcessContext) -> ProcessResult {
+///         // Check if already triggered this round
+///         let triggered = context.joker_state_manager
+///             .get_custom_data::<bool>(self.id(), "triggered_this_round")
+///             .ok().flatten().unwrap_or(false);
+///
+///         if !triggered && self.should_trigger(context) {
+///             // Mark as triggered
+///             let _ = context.joker_state_manager.set_custom_data(
+///                 self.id(), "triggered_this_round", json!(true)
+///             );
+///             // Return effect
+///         }
+///         ProcessResult::default()
+///     }
+/// }
+/// ```
+///
+/// ### Accumulating State
+/// ```rust,ignore
+/// // Use the built-in accumulated_value field
+/// let current = context.joker_state_manager
+///     .get_accumulated_value(self.id()).unwrap_or(0.0);
+/// context.joker_state_manager
+///     .update_accumulated_value(self.id(), current + 1.0);
+/// ```
+///
+/// ## Lifecycle Integration
+///
+/// Remember that lifecycle methods like `on_round_start()` should coordinate
+/// with the state manager. The game engine is responsible for resetting
+/// per-round state in the JokerStateManager when lifecycle events occur.
 pub trait JokerGameplay: Send + Sync {
     /// Processes the joker's effect during the specified stage.
     fn process(&self, stage: &Stage, context: &mut ProcessContext) -> ProcessResult;
@@ -157,11 +202,41 @@ pub enum Rarity {
 }
 
 /// Context provided to jokers during processing.
+///
+/// This struct provides access to all game state that jokers may need during their
+/// processing phase, including mutable state management through JokerStateManager.
+///
+/// # State Management
+///
+/// Since the `process()` method takes `&self` (immutable reference), jokers that need
+/// to maintain mutable state across calls must use the `joker_state_manager` field.
+///
+/// ## Example: Tracking state between calls
+/// ```rust,ignore
+/// fn process(&self, stage: &Stage, context: &mut ProcessContext) -> ProcessResult {
+///     // Read state
+///     let counter: u32 = context.joker_state_manager
+///         .get_custom_data(self.id(), "counter")
+///         .ok()
+///         .flatten()
+///         .unwrap_or(0);
+///
+///     // Update state
+///     let _ = context.joker_state_manager.set_custom_data(
+///         self.id(),
+///         "counter",
+///         serde_json::json!(counter + 1),
+///     );
+///
+///     ProcessResult::default()
+/// }
+/// ```
 pub struct ProcessContext<'a> {
     pub hand_score: &'a mut HandScore,
     pub played_cards: &'a [Card],
     pub held_cards: &'a [Card],
     pub events: &'a mut Vec<GameEvent>,
+    pub joker_state_manager: &'a JokerStateManager,
 }
 
 /// Result returned from joker processing.

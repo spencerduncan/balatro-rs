@@ -1,5 +1,5 @@
 use crate::{
-    card::Card,
+    card::{Card, Suit},
     hand::SelectHand,
     joker::{
         ConditionalJoker, GameContext, Joker, JokerCondition, JokerEffect, JokerId, JokerRarity,
@@ -20,14 +20,14 @@ pub fn create_ride_the_bus() -> ConditionalJoker {
 }
 
 /// Factory function for Blackboard joker
-/// "X3 mult if all held cards same suit/rank"
+/// "X3 mult if all held cards are Spades or Clubs"
 pub fn create_blackboard() -> ConditionalJoker {
     ConditionalJoker::new(
         JokerId::Blackboard,
         "Blackboard",
-        "X3 mult if all held cards same suit/rank",
+        "X3 mult if all held cards are Spades or Clubs",
         JokerRarity::Uncommon,
-        JokerCondition::AllSameSuitOrRank,
+        JokerCondition::AllCardsInSuits(vec![Suit::Spade, Suit::Club]),
         JokerEffect::new().with_mult_multiplier(3.0),
     )
 }
@@ -81,9 +81,9 @@ impl Joker for DnaJoker {
         self.cost
     }
 
-    fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
-        // Check if hand has exactly 1 card
-        if hand.len() == 1 {
+    fn on_hand_played(&self, context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
+        // Check if this is the first hand of the round AND hand has exactly 1 card
+        if context.hands_played == 0 && hand.len() == 1 {
             let cards = hand.cards();
             let first_card = cards[0];
 
