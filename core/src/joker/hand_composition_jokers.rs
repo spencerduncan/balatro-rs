@@ -81,9 +81,9 @@ impl Joker for DnaJoker {
         self.cost
     }
 
-    fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
-        // Check if hand has exactly 1 card
-        if hand.len() == 1 {
+    fn on_hand_played(&self, context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
+        // Check if this is the first hand of the round AND hand has exactly 1 card
+        if context.hands_played == 0 && hand.len() == 1 {
             let cards = hand.cards();
             let first_card = cards[0];
 
