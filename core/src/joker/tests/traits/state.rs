@@ -242,7 +242,7 @@ mod basic_functionality_tests {
     fn test_deserialize_state_success() {
         let mut joker = SimpleMockJoker::new();
         let state = json!({"level": 5});
-        
+
         assert!(joker.deserialize_state(state.clone()).is_ok());
         assert!(joker.has_state());
         assert_eq!(joker.serialize_state(), Some(state));
@@ -261,11 +261,11 @@ mod basic_functionality_tests {
     fn test_reset_state() {
         let mut joker = SimpleMockJoker::with_state(json!({"data": "exists"}));
         assert!(joker.has_state());
-        
+
         joker.reset_state();
         assert!(!joker.has_state());
         assert_eq!(joker.reset_count, 1);
-        
+
         joker.reset_state();
         assert_eq!(joker.reset_count, 2);
     }
@@ -278,19 +278,23 @@ mod state_transition_tests {
     #[test]
     fn test_state_lifecycle() {
         let mut joker = SimpleMockJoker::new();
-        
+
         // Initial state
         assert!(!joker.has_state());
-        
+
         // Add state
-        joker.deserialize_state(json!({"phase": "initialized"})).unwrap();
+        joker
+            .deserialize_state(json!({"phase": "initialized"}))
+            .unwrap();
         assert!(joker.has_state());
-        
+
         // Update state
-        joker.deserialize_state(json!({"phase": "active", "count": 1})).unwrap();
+        joker
+            .deserialize_state(json!({"phase": "active", "count": 1}))
+            .unwrap();
         let state = joker.serialize_state().unwrap();
         assert_eq!(state["phase"], "active");
-        
+
         // Reset state
         joker.reset_state();
         assert!(!joker.has_state());
@@ -299,32 +303,36 @@ mod state_transition_tests {
     #[test]
     fn test_multiple_state_updates() {
         let mut joker = ComplexMockJoker::with_initial_state();
-        
+
         // Initial state check
         let initial = joker.serialize_state().unwrap();
         assert_eq!(initial["counter"], 0);
         assert_eq!(initial["multiplier"], 1.0);
-        
+
         // First update
-        joker.deserialize_state(json!({
-            "counter": 5,
-            "multiplier": 1.5,
-            "tags": ["active"],
-            "metadata": {"round": 1}
-        })).unwrap();
-        
+        joker
+            .deserialize_state(json!({
+                "counter": 5,
+                "multiplier": 1.5,
+                "tags": ["active"],
+                "metadata": {"round": 1}
+            }))
+            .unwrap();
+
         let state1 = joker.serialize_state().unwrap();
         assert_eq!(state1["counter"], 5);
         assert_eq!(state1["multiplier"], 1.5);
-        
+
         // Second update
-        joker.deserialize_state(json!({
-            "counter": 10,
-            "multiplier": 2.0,
-            "tags": ["active", "boosted"],
-            "metadata": {"round": 2, "score": 100}
-        })).unwrap();
-        
+        joker
+            .deserialize_state(json!({
+                "counter": 10,
+                "multiplier": 2.0,
+                "tags": ["active", "boosted"],
+                "metadata": {"round": 2, "score": 100}
+            }))
+            .unwrap();
+
         let state2 = joker.serialize_state().unwrap();
         assert_eq!(state2["counter"], 10);
         assert_eq!(state2["tags"].as_array().unwrap().len(), 2);
@@ -333,7 +341,7 @@ mod state_transition_tests {
     #[test]
     fn test_state_invariants() {
         let mut joker = ComplexMockJoker::with_initial_state();
-        
+
         // Deserialize preserves structure
         let original_state = json!({
             "counter": 42,
@@ -341,10 +349,10 @@ mod state_transition_tests {
             "tags": ["test", "invariant"],
             "metadata": {"key": "value"}
         });
-        
+
         joker.deserialize_state(original_state.clone()).unwrap();
         let retrieved_state = joker.serialize_state().unwrap();
-        
+
         assert_eq!(retrieved_state, original_state);
     }
 }
@@ -356,7 +364,7 @@ mod serialization_tests {
     #[test]
     fn test_complex_serialization_roundtrip() {
         let mut joker = ComplexMockJoker::new();
-        
+
         let complex_state = json!({
             "counter": 999,
             "multiplier": 123.456,
@@ -370,16 +378,16 @@ mod serialization_tests {
                 "null_value": null
             }
         });
-        
+
         // Deserialize
         joker.deserialize_state(complex_state.clone()).unwrap();
-        
+
         // Serialize and compare
         let serialized = joker.serialize_state().unwrap();
         assert_eq!(serialized["counter"], 999);
         assert_eq!(serialized["multiplier"], 123.456);
         assert_eq!(serialized["metadata"]["nested"]["value"], 42);
-        
+
         // Full equality check
         assert_eq!(serialized, complex_state);
     }
@@ -387,17 +395,17 @@ mod serialization_tests {
     #[test]
     fn test_unicode_in_state() {
         let mut joker = SimpleMockJoker::new();
-        
+
         let unicode_state = json!({
             "name": "🃏 Joker 🎭",
             "description": "Uses 🎲 dice and ♠️♥️♣️♦️ suits",
             "symbols": ["♠️", "♥️", "♣️", "♦️"],
             "emoji": "🤡"
         });
-        
+
         joker.deserialize_state(unicode_state.clone()).unwrap();
         let retrieved = joker.serialize_state().unwrap();
-        
+
         assert_eq!(retrieved["name"], "🃏 Joker 🎭");
         assert_eq!(retrieved["symbols"][0], "♠️");
     }
@@ -405,15 +413,15 @@ mod serialization_tests {
     #[test]
     fn test_empty_state_variations() {
         let mut joker = SimpleMockJoker::new();
-        
+
         // Empty object
         joker.deserialize_state(json!({})).unwrap();
         assert_eq!(joker.serialize_state(), Some(json!({})));
-        
+
         // Empty array
         joker.deserialize_state(json!([])).unwrap();
         assert_eq!(joker.serialize_state(), Some(json!([])));
-        
+
         // Null value
         joker.deserialize_state(json!(null)).unwrap();
         assert_eq!(joker.serialize_state(), Some(json!(null)));
@@ -422,17 +430,17 @@ mod serialization_tests {
     #[test]
     fn test_large_state_handling() {
         let mut joker = SimpleMockJoker::new();
-        
+
         // Create a large state object
         let mut large_object = serde_json::Map::new();
         for i in 0..1000 {
             large_object.insert(format!("key_{}", i), json!(i));
         }
         let large_state = Value::Object(large_object);
-        
+
         joker.deserialize_state(large_state.clone()).unwrap();
         let retrieved = joker.serialize_state().unwrap();
-        
+
         assert_eq!(retrieved.as_object().unwrap().len(), 1000);
     }
 }
@@ -444,14 +452,14 @@ mod validation_tests {
     #[test]
     fn test_validation_missing_fields() {
         let mut joker = ComplexMockJoker::new();
-        
+
         // Missing counter field
         let invalid1 = json!({
             "multiplier": 1.0,
             "tags": [],
             "metadata": {}
         });
-        
+
         let result1 = joker.deserialize_state(invalid1);
         assert!(result1.is_err());
         assert!(result1.unwrap_err().contains("Missing required fields"));
@@ -460,7 +468,7 @@ mod validation_tests {
     #[test]
     fn test_validation_wrong_types() {
         let mut joker = ComplexMockJoker::new();
-        
+
         // Wrong type for counter (string instead of number)
         let invalid2 = json!({
             "counter": "not a number",
@@ -468,11 +476,13 @@ mod validation_tests {
             "tags": [],
             "metadata": {}
         });
-        
+
         let result2 = joker.deserialize_state(invalid2);
         assert!(result2.is_err());
-        assert!(result2.unwrap_err().contains("Counter must be unsigned integer"));
-        
+        assert!(result2
+            .unwrap_err()
+            .contains("Counter must be unsigned integer"));
+
         // Wrong type for multiplier (integer instead of float)
         let invalid3 = json!({
             "counter": 5,
@@ -480,7 +490,7 @@ mod validation_tests {
             "tags": [],
             "metadata": {}
         });
-        
+
         let result3 = joker.deserialize_state(invalid3);
         assert!(result3.is_err());
         assert!(result3.unwrap_err().contains("Multiplier must be float"));
@@ -490,7 +500,7 @@ mod validation_tests {
     fn test_validation_can_be_disabled() {
         let mut joker = ComplexMockJoker::new();
         joker.validation_enabled = false;
-        
+
         // This would normally fail validation
         let invalid = json!({
             "counter": "not a number",
@@ -498,7 +508,7 @@ mod validation_tests {
             "tags": "not an array",
             "metadata": "not an object"
         });
-        
+
         // But should fail at deserialization instead
         let result = joker.deserialize_state(invalid);
         assert!(result.is_err());
@@ -513,7 +523,7 @@ mod error_handling_tests {
     #[test]
     fn test_deserialize_failure() {
         let mut joker = FailingMockJoker::new_fail_deserialize();
-        
+
         let result = joker.deserialize_state(json!({"valid": "data"}));
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), "Intentional deserialization failure");
@@ -522,7 +532,7 @@ mod error_handling_tests {
     #[test]
     fn test_serialize_failure() {
         let joker = FailingMockJoker::new_fail_serialize();
-        
+
         assert!(joker.has_state()); // Claims to have state
         assert_eq!(joker.serialize_state(), None); // But fails to serialize
     }
@@ -530,15 +540,15 @@ mod error_handling_tests {
     #[test]
     fn test_error_recovery() {
         let mut joker = ComplexMockJoker::with_initial_state();
-        
+
         // Store good state
         let good_state = joker.serialize_state().unwrap();
-        
+
         // Try to load bad state
         let bad_state = json!({"invalid": "structure"});
         let result = joker.deserialize_state(bad_state);
         assert!(result.is_err());
-        
+
         // Verify state unchanged after error
         assert_eq!(joker.serialize_state().unwrap(), good_state);
     }
@@ -564,15 +574,15 @@ mod property_based_tests {
 
         for value in test_values {
             let mut joker = SimpleMockJoker::new();
-            
+
             // First round
             joker.deserialize_state(value.clone()).unwrap();
             let serialized1 = joker.serialize_state().unwrap();
-            
+
             // Second round
             joker.deserialize_state(serialized1.clone()).unwrap();
             let serialized2 = joker.serialize_state().unwrap();
-            
+
             // Should be identical
             assert_eq!(serialized1, serialized2);
             assert_eq!(serialized2, value);
@@ -581,19 +591,15 @@ mod property_based_tests {
 
     #[test]
     fn test_reset_state_consistency() {
-        let states = vec![
-            json!({"data": 1}),
-            json!({"data": 2}),
-            json!({"data": 3}),
-        ];
+        let states = vec![json!({"data": 1}), json!({"data": 2}), json!({"data": 3})];
 
         for state in states {
             let mut joker = SimpleMockJoker::new();
-            
+
             // Set state
             joker.deserialize_state(state).unwrap();
             assert!(joker.has_state());
-            
+
             // Reset should always clear state
             joker.reset_state();
             assert!(!joker.has_state());
@@ -605,12 +611,12 @@ mod property_based_tests {
     fn test_state_independence() {
         let mut joker1 = SimpleMockJoker::new();
         let mut joker2 = SimpleMockJoker::new();
-        
+
         joker1.deserialize_state(json!({"id": 1})).unwrap();
         joker2.deserialize_state(json!({"id": 2})).unwrap();
-        
+
         assert_ne!(joker1.serialize_state(), joker2.serialize_state());
-        
+
         joker1.reset_state();
         assert!(!joker1.has_state());
         assert!(joker2.has_state());
@@ -624,7 +630,7 @@ mod edge_case_tests {
     #[test]
     fn test_extreme_numeric_values() {
         let mut joker = SimpleMockJoker::new();
-        
+
         // Test normal extreme values first
         let extreme_values = json!({
             "max_i64": i64::MAX,
@@ -633,16 +639,16 @@ mod edge_case_tests {
             "tiny_float": 1e-300,
             "huge_float": 1e300,
         });
-        
+
         joker.deserialize_state(extreme_values.clone()).unwrap();
         let retrieved = joker.serialize_state().unwrap();
-        
+
         assert_eq!(retrieved["max_i64"], i64::MAX);
         assert_eq!(retrieved["min_i64"], i64::MIN);
         assert_eq!(retrieved["max_u64"], u64::MAX);
         assert_eq!(retrieved["tiny_float"], 1e-300);
         assert_eq!(retrieved["huge_float"], 1e300);
-        
+
         // Test special float values separately (JSON doesn't support Infinity/NaN)
         // These should be handled by the application logic if needed
         let special_floats = json!({
@@ -651,10 +657,10 @@ mod edge_case_tests {
             "very_large": f64::MAX,
             "very_small": f64::MIN_POSITIVE,
         });
-        
+
         joker.deserialize_state(special_floats.clone()).unwrap();
         let retrieved_special = joker.serialize_state().unwrap();
-        
+
         assert_eq!(retrieved_special["positive_zero"], 0.0);
         assert_eq!(retrieved_special["negative_zero"], -0.0);
         assert_eq!(retrieved_special["very_large"], f64::MAX);
@@ -664,16 +670,16 @@ mod edge_case_tests {
     #[test]
     fn test_deeply_nested_structure() {
         let mut joker = SimpleMockJoker::new();
-        
+
         // Create deeply nested structure
         let mut nested = json!({"value": 0});
         for i in 1..20 {
             nested = json!({"level": i, "child": nested});
         }
-        
+
         joker.deserialize_state(nested.clone()).unwrap();
         let retrieved = joker.serialize_state().unwrap();
-        
+
         // Verify deep nesting preserved
         let mut current = &retrieved;
         for i in (1..20).rev() {
@@ -686,7 +692,7 @@ mod edge_case_tests {
     #[test]
     fn test_special_json_characters() {
         let mut joker = SimpleMockJoker::new();
-        
+
         let special_chars = json!({
             "quotes": "Contains \"quotes\"",
             "backslash": "Has \\ backslash",
@@ -695,10 +701,10 @@ mod edge_case_tests {
             "unicode": "\u{1F3B0}",
             "control": "\u{0001}",
         });
-        
+
         joker.deserialize_state(special_chars.clone()).unwrap();
         let retrieved = joker.serialize_state().unwrap();
-        
+
         assert_eq!(retrieved["quotes"], "Contains \"quotes\"");
         assert_eq!(retrieved["backslash"], "Has \\ backslash");
         assert!(retrieved["newline"].as_str().unwrap().contains('\n'));
@@ -712,7 +718,7 @@ mod concurrent_access_tests {
     #[test]
     fn test_send_sync_bounds() {
         fn assert_send_sync<T: Send + Sync>() {}
-        
+
         assert_send_sync::<SimpleMockJoker>();
         assert_send_sync::<ComplexMockJoker>();
         assert_send_sync::<FailingMockJoker>();
@@ -745,15 +751,17 @@ mod integration_tests {
     #[test]
     fn test_game_round_simulation() {
         let mut joker = ComplexMockJoker::new();
-        
+
         // Initialize for new round
-        joker.deserialize_state(json!({
-            "counter": 0,
-            "multiplier": 1.0,
-            "tags": ["round_start"],
-            "metadata": {"round": 1}
-        })).unwrap();
-        
+        joker
+            .deserialize_state(json!({
+                "counter": 0,
+                "multiplier": 1.0,
+                "tags": ["round_start"],
+                "metadata": {"round": 1}
+            }))
+            .unwrap();
+
         // Simulate triggers during round
         for i in 1..=5 {
             let current = joker.state.as_ref().unwrap();
@@ -768,12 +776,12 @@ mod integration_tests {
             });
             joker.deserialize_state(new_state).unwrap();
         }
-        
+
         // Verify final state
         let final_state = joker.serialize_state().unwrap();
         assert_eq!(final_state["counter"], 5);
         assert!(final_state["multiplier"].as_f64().unwrap() > 1.5);
-        
+
         // End round - reset
         joker.reset_state();
         assert!(!joker.has_state());
@@ -784,25 +792,27 @@ mod integration_tests {
     fn test_save_load_cycle() {
         // Create joker with game state
         let mut original = ComplexMockJoker::new();
-        original.deserialize_state(json!({
-            "counter": 42,
-            "multiplier": 2.5,
-            "tags": ["saved", "loaded"],
-            "metadata": {
-                "save_version": 1,
-                "timestamp": 1234567890
-            }
-        })).unwrap();
-        
+        original
+            .deserialize_state(json!({
+                "counter": 42,
+                "multiplier": 2.5,
+                "tags": ["saved", "loaded"],
+                "metadata": {
+                    "save_version": 1,
+                    "timestamp": 1234567890
+                }
+            }))
+            .unwrap();
+
         // Simulate save
         let saved_state = original.serialize_state().unwrap();
         let saved_json = serde_json::to_string(&saved_state).unwrap();
-        
+
         // Simulate load into new joker
         let mut loaded = ComplexMockJoker::new();
         let loaded_state: Value = serde_json::from_str(&saved_json).unwrap();
         loaded.deserialize_state(loaded_state).unwrap();
-        
+
         // Verify states match
         assert_eq!(original.serialize_state(), loaded.serialize_state());
         assert_eq!(original.debug_state(), loaded.debug_state());
@@ -816,17 +826,17 @@ mod performance_tests {
     #[test]
     fn test_large_batch_operations() {
         let mut joker = SimpleMockJoker::new();
-        
+
         // Perform many state updates
         for i in 0..100 {
             let state = json!({
                 "iteration": i,
                 "data": format!("test_{}", i)
             });
-            
+
             joker.deserialize_state(state).unwrap();
             assert!(joker.has_state());
-            
+
             if i % 10 == 0 {
                 joker.reset_state();
                 assert!(!joker.has_state());
@@ -837,7 +847,7 @@ mod performance_tests {
     #[test]
     fn test_rapid_state_transitions() {
         let mut joker = ComplexMockJoker::with_initial_state();
-        
+
         let states = vec![
             json!({
                 "counter": 1,
@@ -858,14 +868,14 @@ mod performance_tests {
                 "metadata": {"nested": {"deep": true}}
             }),
         ];
-        
+
         // Rapid transitions
         for _ in 0..10 {
             for state in &states {
                 joker.deserialize_state(state.clone()).unwrap();
             }
         }
-        
+
         // Final state should be the last one
         let final_state = joker.serialize_state().unwrap();
         assert_eq!(final_state["counter"], 3);
@@ -881,31 +891,33 @@ mod coverage_completion_tests {
         // SimpleMockJoker - no state
         let joker1 = SimpleMockJoker::new();
         assert_eq!(joker1.debug_state(), "No state");
-        
+
         // SimpleMockJoker - with state
         let joker2 = SimpleMockJoker::with_state(json!({"debug": "test"}));
         let debug2 = joker2.debug_state();
         assert!(debug2.contains("State:"));
         assert!(debug2.contains("debug"));
-        
+
         // ComplexMockJoker - no state
         let joker3 = ComplexMockJoker::new();
         assert_eq!(joker3.debug_state(), "No state");
-        
+
         // ComplexMockJoker - with state
         let mut joker4 = ComplexMockJoker::new();
-        joker4.deserialize_state(json!({
-            "counter": 99,
-            "multiplier": 9.9,
-            "tags": ["x", "y", "z"],
-            "metadata": {"a": 1, "b": 2}
-        })).unwrap();
+        joker4
+            .deserialize_state(json!({
+                "counter": 99,
+                "multiplier": 9.9,
+                "tags": ["x", "y", "z"],
+                "metadata": {"a": 1, "b": 2}
+            }))
+            .unwrap();
         let debug4 = joker4.debug_state();
         assert!(debug4.contains("counter: 99"));
         assert!(debug4.contains("multiplier: 9.9"));
         assert!(debug4.contains("[\"x\", \"y\", \"z\"]"));
         assert!(debug4.contains("metadata_keys: 2"));
-        
+
         // FailingMockJoker
         let joker5 = FailingMockJoker::new_fail_deserialize();
         let debug5 = joker5.debug_state();
@@ -920,7 +932,7 @@ mod coverage_completion_tests {
         let result = joker.deserialize_state(json!("not an object"));
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), "Expected object value");
-        
+
         // Test missing multiplier field
         let result2 = joker.deserialize_state(json!({
             "counter": 1,
@@ -929,7 +941,7 @@ mod coverage_completion_tests {
         }));
         assert!(result2.is_err());
         assert!(result2.unwrap_err().contains("Missing required fields"));
-        
+
         // Test serialize failure returns None
         let failing = FailingMockJoker::new_fail_serialize();
         assert_eq!(failing.serialize_state(), None);
