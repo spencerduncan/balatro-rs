@@ -730,6 +730,8 @@ impl JokerEffectProcessor {
         // Check if the joker can trigger in the current context
         let empty_vec = vec![];
         let played_cards_vec = hand.map(|h| h.cards()).unwrap_or(empty_vec);
+        let default_hand = SelectHand::new(vec![]);
+        let hand_ref = hand.unwrap_or(&default_hand);
         let mut process_context = ProcessContext {
             hand_score: &mut crate::joker::traits::HandScore {
                 chips: 0,
@@ -738,6 +740,7 @@ impl JokerEffectProcessor {
             played_cards: played_cards_vec.as_slice(),
             held_cards: game_context.hand.cards(),
             events: &mut Vec::new(),
+            hand: hand_ref,
         };
 
         if !gameplay_trait.can_trigger(stage, &process_context) {

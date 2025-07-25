@@ -52,7 +52,9 @@ impl JokerGameplay for ErosionJoker {
         ProcessResult {
             chips_added: 0,
             mult_added: mult_bonus,
+            mult_multiplier: 1.0,
             retriggered: false,
+            message: None,
         }
     }
 
@@ -139,7 +141,9 @@ impl JokerGameplay for FigureJoker {
         ProcessResult {
             chips_added: 0,
             mult_added: 0.0,
+            mult_multiplier: 1.0,
             retriggered: false,
+            message: None,
         }
     }
 
@@ -232,7 +236,9 @@ impl JokerGameplay for FlowerPotJoker {
             ProcessResult {
                 chips_added: 0,
                 mult_added: 3.0,
+                mult_multiplier: 1.0,
                 retriggered: false,
+                message: None,
             }
         } else {
             ProcessResult::default()
@@ -671,7 +677,9 @@ impl JokerGameplay for PhotographJoker {
                     return ProcessResult {
                         chips_added: 0,
                         mult_added: 0.0,
+                        mult_multiplier: 1.0,
                         retriggered: false,
+                        message: None,
                     };
                 }
             }

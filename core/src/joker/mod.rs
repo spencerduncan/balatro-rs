@@ -81,6 +81,7 @@ pub enum JokerId {
     Matador,
     HitTheRoad,
     TheDuo,
+    TheTrio,
     TheTrip,
     TheFamily,
     TheOrder,
@@ -1247,6 +1248,9 @@ pub mod conditional;
 
 // Include hand composition jokers (Ride the Bus, Blackboard, DNA)
 pub mod hand_composition_jokers;
+
+// Include multiplicative jokers (Baron, Steel, Ancient, etc.)
+pub mod multiplicative_jokers;
 
 // Include tests for hand composition jokers (Ride the Bus, Blackboard, DNA)
 #[cfg(test)]
