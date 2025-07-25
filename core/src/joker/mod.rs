@@ -1262,6 +1262,9 @@ pub mod multiplicative_jokers;
 // Include basic economy jokers
 pub mod basic_economy_jokers;
 
+// Include basic xmult jokers (Photograph, Polished, Rough Gem, Bloodstone, Misprint)
+pub mod basic_xmult_jokers;
+
 // Include tests for hand composition jokers (Ride the Bus, Blackboard, DNA)
 #[cfg(test)]
 mod hand_composition_tests;
