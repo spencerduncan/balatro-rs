@@ -1255,6 +1255,10 @@ pub mod four_fingers;
 #[cfg(test)]
 mod hand_composition_tests;
 
+// Include tests for JokerIdentity trait
+#[cfg(test)]
+mod identity_tests;
+
 // Include testing utilities for the Joker trait system
 #[cfg(test)]
 pub mod test_utils;
