@@ -1247,6 +1247,8 @@ pub mod conditional;
 
 // Include hand composition jokers (Ride the Bus, Blackboard, DNA)
 pub mod hand_composition_jokers;
+// Include resource-based chips jokers (Banner, Bull, Stone, Scary Face, Blue)
+pub mod resource_chips_jokers;
 
 // Include tests for hand composition jokers (Ride the Bus, Blackboard, DNA)
 #[cfg(test)]
