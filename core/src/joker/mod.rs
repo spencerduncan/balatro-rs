@@ -1252,6 +1252,9 @@ pub mod hand_composition_jokers;
 #[cfg(test)]
 mod hand_composition_tests;
 
+// Include scaling xmult jokers (Throwback, Steel Joker Scaling, Ceremonial Dagger)
+pub mod scaling_xmult_jokers;
+
 // Include testing utilities for the Joker trait system
 #[cfg(test)]
 pub mod test_utils;
