@@ -513,6 +513,8 @@ pub struct GameContext<'a> {
     pub cards_in_deck: usize,
     /// Number of Stone cards in deck
     pub stone_cards_in_deck: usize,
+    /// Number of Steel cards in deck
+    pub steel_cards_in_deck: usize,
     /// Random number generator for secure randomness
     pub rng: &'a crate::rng::GameRng,
 }

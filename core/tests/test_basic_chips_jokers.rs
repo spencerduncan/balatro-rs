@@ -62,6 +62,7 @@ fn create_test_context_with_deck_and_stones(
         joker_state_manager,
         cards_in_deck,
         stone_cards_in_deck,
+        steel_cards_in_deck: 0,
         rng,
     }
 }

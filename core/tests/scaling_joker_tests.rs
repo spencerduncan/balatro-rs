@@ -54,6 +54,7 @@ impl TestData {
             hand_type_counts: &self.hand_type_counts,
             cards_in_deck: 52,
             stone_cards_in_deck: 0,
+            steel_cards_in_deck: 0,
             rng: &self.rng,
         }
     }
@@ -1149,6 +1150,7 @@ fn test_performance_with_many_scaling_jokers() {
         hand_type_counts: &hand_type_counts,
         cards_in_deck: 52,
         stone_cards_in_deck: 0,
+        steel_cards_in_deck: 0,
         rng,
     };
 

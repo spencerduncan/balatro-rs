@@ -380,6 +380,7 @@ impl Game {
                 hand_type_counts: &self.hand_type_counts,
                 cards_in_deck: self.deck.len(),
                 stone_cards_in_deck: 0, // TODO: Track stone cards when implemented
+                steel_cards_in_deck: 0, // TODO: Track steel cards when implemented
                 rng: &self.rng,
             };
 
@@ -626,6 +627,7 @@ impl Game {
             hand_type_counts: &self.hand_type_counts,
             cards_in_deck: self.deck.len(),
             stone_cards_in_deck: 0, // TODO: Track stone cards when implemented
+            steel_cards_in_deck: 0, // TODO: Track steel cards when implemented
             rng: &self.rng,
         };
 
@@ -795,6 +797,7 @@ impl Game {
                 hand_type_counts: &self.hand_type_counts,
                 cards_in_deck: self.deck.len(),
                 stone_cards_in_deck: 0, // TODO: Track stone cards when implemented
+                steel_cards_in_deck: 0, // TODO: Track steel cards when implemented
                 rng: &self.rng,
             };
 
@@ -1995,6 +1998,7 @@ impl Game {
             hand_type_counts: &self.hand_type_counts,
             cards_in_deck: self.deck.len(),
             stone_cards_in_deck: 0, // TODO: Track stone cards when implemented
+            steel_cards_in_deck: 0, // TODO: Track steel cards when implemented
             rng: &self.rng,
         };
 
