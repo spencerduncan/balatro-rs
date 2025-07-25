@@ -98,6 +98,117 @@ mod tests {
         assert_eq!(JokerIdentity::rarity(&joker), Rarity::Uncommon);
         assert_eq!(joker.get_hand_size_modifier(), 0);
     }
+
+    #[test]
+    fn test_four_fingers_does_absolutely_nothing_useful() {
+        // This test proves that FourFingers is a lie
+        let mut joker = FourFingersJoker::new();
+        
+        // Mock up a context
+        let state_manager = crate::joker_state::JokerStateManager::new();
+        let mut hand_score = crate::joker::traits::HandScore {
+            chips: 100,
+            mult: 5.0,
+        };
+        let played_cards = vec![];
+        let held_cards = vec![];
+        let mut events = vec![];
+
+        let mut context = ProcessContext {
+            hand_score: &mut hand_score,
+            played_cards: &played_cards,
+            held_cards: &held_cards,
+            events: &mut events,
+            joker_state_manager: &state_manager,
+        };
+
+        // Initial state
+        assert!(!joker.hand_modified_this_round);
+
+        // Process during PreBlind (when it should "work")
+        let result = joker.process(&Stage::PreBlind(), &mut context);
+        
+        // Verify it does NOTHING except set a boolean
+        assert_eq!(result.chips_added, 0, "No chips added");
+        assert_eq!(result.mult_added, 0.0, "No mult added");
+        assert!(joker.hand_modified_this_round, "The ONLY thing it does is set this flag");
+        
+        // Process again - it won't even trigger
+        let result2 = joker.process(&Stage::PreBlind(), &mut context);
+        assert_eq!(result2.chips_added, 0);
+        assert_eq!(result2.mult_added, 0.0);
+        
+        // The joker claims to modify hand requirements but:
+        // 1. It doesn't modify HandEvaluator
+        // 2. It doesn't change any game state
+        // 3. It doesn't communicate with any hand evaluation system
+        // 4. It literally just sets hand_modified_this_round = true
+        
+        // This is the coding equivalent of:
+        // function makeCarGoFaster() {
+        //     car.isFast = true;  // Car is now fast!
+        // }
+    }
+
+    #[test]
+    fn test_four_fingers_trigger_conditions_for_nothing() {
+        let joker = FourFingersJoker::new();
+        let state_manager = crate::joker_state::JokerStateManager::new();
+        let mut hand_score = crate::joker::traits::HandScore {
+            chips: 100,
+            mult: 5.0,
+        };
+        let played_cards = vec![];
+        let held_cards = vec![];
+        let mut events = vec![];
+
+        let context = ProcessContext {
+            hand_score: &mut hand_score,
+            played_cards: &played_cards,
+            held_cards: &held_cards,
+            events: &mut events,
+            joker_state_manager: &state_manager,
+        };
+
+        // It only "triggers" in PreBlind
+        assert!(joker.can_trigger(&Stage::PreBlind(), &context));
+        assert!(!joker.can_trigger(&Stage::Blind(crate::stage::Blind::Small), &context));
+        assert!(!joker.can_trigger(&Stage::Shop(), &context));
+        
+        // But triggering does nothing anyway, so who cares?
+    }
+
+    #[test]
+    fn test_four_fingers_comment_driven_development() {
+        // The actual implementation is 13 lines of comments explaining
+        // what SHOULD happen, and 1 line setting a boolean
+        
+        // Let's count:
+        // - Lines of comments about functionality: 6
+        // - Lines of actual functionality: 0
+        // - Lines setting a boolean: 1
+        // - Effectiveness: 0%
+        
+        let mut joker = FourFingersJoker::new();
+        
+        // The joker's process method contains this gem:
+        // "NOTE: The actual hand evaluation modification would need to be
+        //  implemented in the hand evaluation system."
+        
+        // Translation: "TODO: Make this actually work"
+        
+        // Current implementation summary:
+        // if (should_do_something && !already_did_nothing) {
+        //     already_did_nothing = true;
+        //     // TODO: Actually do something
+        // }
+        
+        assert_eq!(joker.hand_modified_this_round, false);
+        joker.hand_modified_this_round = true;
+        assert_eq!(joker.hand_modified_this_round, true);
+        
+        // Congratulations, you've implemented a boolean
+    }
 }
 
 impl JokerStateTrait for FourFingersJoker {
