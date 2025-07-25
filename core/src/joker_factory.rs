@@ -1,8 +1,10 @@
 use crate::joker::{Joker, JokerId, JokerRarity};
 use crate::joker_impl::*;
+use crate::scaling_joker_impl::{
+    create_fortune_teller, create_red_card, create_steel_joker_scaling,
+};
 use crate::special_jokers::*;
 use crate::static_joker_factory::StaticJokerFactory;
-use crate::scaling_joker_impl::{create_fortune_teller, create_red_card, create_steel_joker_scaling};
 
 /// Factory for creating joker instances by ID
 pub struct JokerFactory;
@@ -192,7 +194,7 @@ impl JokerFactory {
             Photograph,
             TheOrder,
             SteelJoker, // Now properly implemented as scaling joker
-            // Note: HalfJoker and Banner are still placeholders
+                        // Note: HalfJoker and Banner are still placeholders
         ]
     }
 }
