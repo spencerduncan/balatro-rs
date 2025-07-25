@@ -61,8 +61,12 @@ impl JokerGameplay for FourFingersJoker {
         if matches!(stage, Stage::PreBlind()) && !self.hand_modified_this_round {
             self.hand_modified_this_round = true;
 
-            // The actual hand modification happens through JokerModifiers trait
-            // This method just tracks that we've applied the modification
+            // NOTE: The actual hand evaluation modification would need to be
+            // implemented in the hand evaluation system. FourFingers allows:
+            // - Flushes with only 4 cards of the same suit (instead of 5)
+            // - Straights with only 4 consecutive ranks (instead of 5)
+            // - Straight flushes if the hand contains both a 4-card flush AND a 4-card straight
+            // This requires changes to the core hand evaluation logic.
         }
 
         ProcessResult::default()
@@ -76,9 +80,9 @@ impl JokerGameplay for FourFingersJoker {
 
 impl JokerModifiers for FourFingersJoker {
     fn get_hand_size_modifier(&self) -> i32 {
-        // Effectively allows 4-card hands for Flushes/Straights
-        // This is interpreted by the hand evaluation system
-        -1
+        // FourFingers doesn't change hand size - you can still play 5 cards
+        // It changes the requirements for flushes/straights to only need 4 cards
+        0
     }
 }
 
@@ -105,7 +109,8 @@ mod tests {
     #[test]
     fn test_four_fingers_hand_size_modifier() {
         let joker = FourFingersJoker::new();
-        assert_eq!(joker.get_hand_size_modifier(), -1);
+        // FourFingers doesn't change hand size - you can still play 5 cards
+        assert_eq!(joker.get_hand_size_modifier(), 0);
     }
 
     #[test]
