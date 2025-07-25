@@ -526,7 +526,7 @@ impl SelectHand {
 
             // Special case for low ace straight (A, 2, 3, 4) in FourFingers mode
             if config.min_straight_cards == 4 && values.contains(&Value::Ace) {
-                let low_values = vec![Value::Two, Value::Three, Value::Four];
+                let low_values = [Value::Two, Value::Three, Value::Four];
                 if low_values.iter().all(|v| values.contains(v)) {
                     let straight_cards: Vec<Card> = self
                         .0
