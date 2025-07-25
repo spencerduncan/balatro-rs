@@ -1257,6 +1257,9 @@ pub mod four_fingers;
 // Include multiplicative jokers (Baron, Steel, Ancient, etc.)
 pub mod multiplicative_jokers;
 
+// Include scaling chips jokers (Square, Marble, Castle)
+pub mod scaling_chips_jokers;
+
 // Include tests for hand composition jokers (Ride the Bus, Blackboard, DNA)
 #[cfg(test)]
 mod hand_composition_tests;
