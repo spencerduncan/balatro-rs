@@ -51,6 +51,9 @@ impl JokerLifecycle for FourFingersJoker {
     fn on_round_start(&mut self) {
         // Reset state for new round
         self.hand_modified_this_round = false;
+
+        // Reset hand evaluation config to default
+        crate::hand::set_hand_eval_config(crate::hand::HandEvalConfig::default());
     }
 }
 
@@ -61,12 +64,11 @@ impl JokerGameplay for FourFingersJoker {
         if matches!(stage, Stage::PreBlind()) && !self.hand_modified_this_round {
             self.hand_modified_this_round = true;
 
-            // NOTE: The actual hand evaluation modification would need to be
-            // implemented in the hand evaluation system. FourFingers allows:
-            // - Flushes with only 4 cards of the same suit (instead of 5)
-            // - Straights with only 4 consecutive ranks (instead of 5)
-            // - Straight flushes if the hand contains both a 4-card flush AND a 4-card straight
-            // This requires changes to the core hand evaluation logic.
+            // Set the hand evaluation config to allow 4-card flushes and straights
+            crate::hand::set_hand_eval_config(crate::hand::HandEvalConfig {
+                min_flush_cards: 4,
+                min_straight_cards: 4,
+            });
         }
 
         ProcessResult::default()
@@ -89,6 +91,9 @@ impl JokerModifiers for FourFingersJoker {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::card::{Card, Suit, Value};
+    use crate::hand::SelectHand;
+    use crate::rank::HandRank;
 
     #[test]
     fn test_four_fingers_basic_properties() {
@@ -100,11 +105,31 @@ mod tests {
     }
 
     #[test]
-    fn test_four_fingers_does_absolutely_nothing_useful() {
-        // This test proves that FourFingers is a lie
+    fn test_four_fingers_flush_only() {
+        // Reset to default config first
+        crate::hand::set_hand_eval_config(crate::hand::HandEvalConfig::default());
+
+        // Create a hand with 4 hearts that don't form a straight
+        let cards = vec![
+            Card::new(Value::Ace, Suit::Heart),
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::Three, Suit::Heart), // Not consecutive
+            Card::new(Value::Two, Suit::Heart),   // Not consecutive
+            Card::new(Value::Jack, Suit::Diamond), // Not a heart
+        ];
+
+        let hand = SelectHand::new(cards.clone());
+
+        // Without FourFingers: NOT a flush (only 4 hearts)
+        let result_before = hand.best_hand().unwrap();
+        assert_ne!(
+            result_before.rank,
+            HandRank::Flush,
+            "Should NOT be a flush with normal rules"
+        );
+
+        // Activate FourFingers
         let mut joker = FourFingersJoker::new();
-        
-        // Mock up a context
         let state_manager = crate::joker_state::JokerStateManager::new();
         let mut hand_score = crate::joker::traits::HandScore {
             chips: 100,
@@ -113,7 +138,6 @@ mod tests {
         let played_cards = vec![];
         let held_cards = vec![];
         let mut events = vec![];
-
         let mut context = ProcessContext {
             hand_score: &mut hand_score,
             played_cards: &played_cards,
@@ -122,92 +146,133 @@ mod tests {
             joker_state_manager: &state_manager,
         };
 
-        // Initial state
+        // Process FourFingers in PreBlind stage
+        joker.process(&Stage::PreBlind(), &mut context);
+
+        // Now check again - it SHOULD be a flush!
+        let hand2 = SelectHand::new(cards);
+        let result_after = hand2.best_hand().unwrap();
+        assert_eq!(
+            result_after.rank,
+            HandRank::Flush,
+            "SHOULD be a flush with FourFingers active!"
+        );
+    }
+
+    #[test]
+    fn test_four_fingers_allows_four_card_straight() {
+        // Reset to default config first
+        crate::hand::set_hand_eval_config(crate::hand::HandEvalConfig::default());
+
+        // Create a hand with 4 consecutive cards and 1 random card
+        let cards = vec![
+            Card::new(Value::Five, Suit::Heart),
+            Card::new(Value::Six, Suit::Diamond),
+            Card::new(Value::Seven, Suit::Club),
+            Card::new(Value::Eight, Suit::Spade),
+            Card::new(Value::King, Suit::Heart), // Not consecutive
+        ];
+
+        let hand = SelectHand::new(cards.clone());
+
+        // Without FourFingers: NOT a straight
+        let result_before = hand.best_hand().unwrap();
+        assert_ne!(
+            result_before.rank,
+            HandRank::Straight,
+            "Should NOT be a straight with normal rules"
+        );
+
+        // Activate FourFingers
+        crate::hand::set_hand_eval_config(crate::hand::HandEvalConfig {
+            min_flush_cards: 4,
+            min_straight_cards: 4,
+        });
+
+        // Now it IS a straight!
+        let hand2 = SelectHand::new(cards);
+        let result_after = hand2.best_hand().unwrap();
+        assert_eq!(
+            result_after.rank,
+            HandRank::Straight,
+            "SHOULD be a straight with FourFingers!"
+        );
+    }
+
+    #[test]
+    fn test_four_fingers_low_ace_straight() {
+        // Test A-2-3-4 straight with FourFingers
+        crate::hand::set_hand_eval_config(crate::hand::HandEvalConfig {
+            min_flush_cards: 4,
+            min_straight_cards: 4,
+        });
+
+        let cards = vec![
+            Card::new(Value::Ace, Suit::Heart),
+            Card::new(Value::Two, Suit::Diamond),
+            Card::new(Value::Three, Suit::Club),
+            Card::new(Value::Four, Suit::Spade),
+            Card::new(Value::Jack, Suit::Heart), // Random high card
+        ];
+
+        let hand = SelectHand::new(cards);
+        let result = hand.best_hand().unwrap();
+        assert_eq!(
+            result.rank,
+            HandRank::Straight,
+            "A-2-3-4 should be a straight with FourFingers!"
+        );
+    }
+
+    #[test]
+    fn test_four_fingers_straight_flush() {
+        // Test that we can get a straight flush with 4 suited consecutive cards
+        crate::hand::set_hand_eval_config(crate::hand::HandEvalConfig {
+            min_flush_cards: 4,
+            min_straight_cards: 4,
+        });
+
+        let cards = vec![
+            Card::new(Value::Five, Suit::Heart),
+            Card::new(Value::Six, Suit::Heart),
+            Card::new(Value::Seven, Suit::Heart),
+            Card::new(Value::Eight, Suit::Heart),
+            Card::new(Value::King, Suit::Diamond), // Different suit
+        ];
+
+        let hand = SelectHand::new(cards);
+        let result = hand.best_hand().unwrap();
+
+        // With FourFingers, this should be a straight flush!
+        // (4 hearts in sequence)
+        assert_eq!(
+            result.rank,
+            HandRank::StraightFlush,
+            "4 suited consecutive cards should be a straight flush!"
+        );
+    }
+
+    #[test]
+    fn test_four_fingers_resets_on_round_start() {
+        let mut joker = FourFingersJoker::new();
+
+        // Set config to FourFingers mode
+        crate::hand::set_hand_eval_config(crate::hand::HandEvalConfig {
+            min_flush_cards: 4,
+            min_straight_cards: 4,
+        });
+
+        // Simulate joker was triggered
+        joker.hand_modified_this_round = true;
+
+        // Round start should reset both the flag AND the config
+        joker.on_round_start();
         assert!(!joker.hand_modified_this_round);
 
-        // Process during PreBlind (when it should "work")
-        let result = joker.process(&Stage::PreBlind(), &mut context);
-        
-        // Verify it does NOTHING except set a boolean
-        assert_eq!(result.chips_added, 0, "No chips added");
-        assert_eq!(result.mult_added, 0.0, "No mult added");
-        assert!(joker.hand_modified_this_round, "The ONLY thing it does is set this flag");
-        
-        // Process again - it won't even trigger
-        let result2 = joker.process(&Stage::PreBlind(), &mut context);
-        assert_eq!(result2.chips_added, 0);
-        assert_eq!(result2.mult_added, 0.0);
-        
-        // The joker claims to modify hand requirements but:
-        // 1. It doesn't modify HandEvaluator
-        // 2. It doesn't change any game state
-        // 3. It doesn't communicate with any hand evaluation system
-        // 4. It literally just sets hand_modified_this_round = true
-        
-        // This is the coding equivalent of:
-        // function makeCarGoFaster() {
-        //     car.isFast = true;  // Car is now fast!
-        // }
-    }
-
-    #[test]
-    fn test_four_fingers_trigger_conditions_for_nothing() {
-        let joker = FourFingersJoker::new();
-        let state_manager = crate::joker_state::JokerStateManager::new();
-        let mut hand_score = crate::joker::traits::HandScore {
-            chips: 100,
-            mult: 5.0,
-        };
-        let played_cards = vec![];
-        let held_cards = vec![];
-        let mut events = vec![];
-
-        let context = ProcessContext {
-            hand_score: &mut hand_score,
-            played_cards: &played_cards,
-            held_cards: &held_cards,
-            events: &mut events,
-            joker_state_manager: &state_manager,
-        };
-
-        // It only "triggers" in PreBlind
-        assert!(joker.can_trigger(&Stage::PreBlind(), &context));
-        assert!(!joker.can_trigger(&Stage::Blind(crate::stage::Blind::Small), &context));
-        assert!(!joker.can_trigger(&Stage::Shop(), &context));
-        
-        // But triggering does nothing anyway, so who cares?
-    }
-
-    #[test]
-    fn test_four_fingers_comment_driven_development() {
-        // The actual implementation is 13 lines of comments explaining
-        // what SHOULD happen, and 1 line setting a boolean
-        
-        // Let's count:
-        // - Lines of comments about functionality: 6
-        // - Lines of actual functionality: 0
-        // - Lines setting a boolean: 1
-        // - Effectiveness: 0%
-        
-        let mut joker = FourFingersJoker::new();
-        
-        // The joker's process method contains this gem:
-        // "NOTE: The actual hand evaluation modification would need to be
-        //  implemented in the hand evaluation system."
-        
-        // Translation: "TODO: Make this actually work"
-        
-        // Current implementation summary:
-        // if (should_do_something && !already_did_nothing) {
-        //     already_did_nothing = true;
-        //     // TODO: Actually do something
-        // }
-        
-        assert_eq!(joker.hand_modified_this_round, false);
-        joker.hand_modified_this_round = true;
-        assert_eq!(joker.hand_modified_this_round, true);
-        
-        // Congratulations, you've implemented a boolean
+        // Verify config was reset to default
+        let config = crate::hand::get_hand_eval_config();
+        assert_eq!(config.min_flush_cards, 5);
+        assert_eq!(config.min_straight_cards, 5);
     }
 }
 
