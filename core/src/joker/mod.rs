@@ -1247,6 +1247,8 @@ pub mod conditional;
 
 // Include hand composition jokers (Ride the Bus, Blackboard, DNA)
 pub mod hand_composition_jokers;
+// Include resource-based chips jokers (Banner, Bull, Stone, Scary Face, Blue)
+pub mod resource_chips_jokers;
 
 // Include basic xmult jokers (Photograph, Polished, Rough Gem, Bloodstone, Misprint)
 pub mod basic_xmult_jokers;
