@@ -1260,6 +1260,7 @@ mod identity_tests;
 #[cfg(test)]
 pub mod test_utils;
 
+
 // Re-export important types
 pub use conditional::{ConditionalJoker, JokerCondition};
 
@@ -1272,8 +1273,13 @@ pub use traits::{
 // Re-export old API types for backwards compatibility
 pub use compat::{Joker as OldJoker, Jokers};
 
+// Include tests module with trait tests
 #[cfg(test)]
-mod tests {
+pub mod tests;
+
+// Module-level trait tests
+#[cfg(test)]
+mod trait_tests {
     use super::*;
 
     #[test]
