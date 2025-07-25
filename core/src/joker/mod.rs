@@ -1248,6 +1248,9 @@ pub mod conditional;
 // Include hand composition jokers (Ride the Bus, Blackboard, DNA)
 pub mod hand_composition_jokers;
 
+// Include basic xmult jokers (Photograph, Polished, Rough Gem, Bloodstone, Misprint)
+pub mod basic_xmult_jokers;
+
 // Include tests for hand composition jokers (Ride the Bus, Blackboard, DNA)
 #[cfg(test)]
 mod hand_composition_tests;
