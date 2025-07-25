@@ -52,19 +52,7 @@ fn test_faceless_joker() {
     assert_eq!(joker.cost(), 3);
 }
 
-#[test]
-#[ignore = "EMERGENCY DISABLE: GameContext default issues - tracked for post-emergency fix"]
-fn test_square_joker() {
-    let joker = StaticJokerFactory::create_square();
-    assert_eq!(joker.id(), JokerId::Square);
-    assert_eq!(joker.name(), "Square");
-    assert_eq!(
-        joker.description(),
-        "Number cards (2, 3, 4, 5, 6, 7, 8, 9, 10) give +4 Chips when scored"
-    );
-    assert_eq!(joker.rarity(), JokerRarity::Common);
-    assert_eq!(joker.cost(), 3);
-}
+// Square Joker removed - now implemented as scaling joker in scaling_joker_impl.rs
 
 #[test]
 #[ignore = "EMERGENCY DISABLE: GameContext default issues - tracked for post-emergency fix"]

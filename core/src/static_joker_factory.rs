@@ -403,33 +403,7 @@ impl StaticJokerFactory {
         )
     }
 
-    /// Create Square (Number cards give +4 Chips when scored)
-    pub fn create_square() -> Box<dyn Joker> {
-        Box::new(
-            StaticJoker::builder(
-                JokerId::Square,
-                "Square",
-                "Number cards (2, 3, 4, 5, 6, 7, 8, 9, 10) give +4 Chips when scored",
-            )
-            .rarity(JokerRarity::Common)
-            .cost(3)
-            .chips(4)
-            .condition(StaticCondition::AnyRankScored(vec![
-                Value::Two,
-                Value::Three,
-                Value::Four,
-                Value::Five,
-                Value::Six,
-                Value::Seven,
-                Value::Eight,
-                Value::Nine,
-                Value::Ten,
-            ]))
-            .per_card()
-            .build()
-            .expect("Valid joker configuration"),
-        )
-    }
+    // Square Joker removed - now implemented as scaling joker in scaling_joker_impl.rs
 
     /// Create Walkie (+10 Chips and +4 Mult if hand contains Straight)
     pub fn create_walkie() -> Box<dyn Joker> {

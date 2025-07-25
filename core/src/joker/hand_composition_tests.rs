@@ -11,6 +11,261 @@ use crate::{
 #[cfg(test)]
 mod ride_the_bus_tests {
     use super::*;
+    use crate::joker::hand_composition_jokers::{
+        create_ride_the_bus, create_ride_the_bus_stateful,
+    };
+    use crate::joker::{GameContext, Joker};
+    use crate::joker_state::JokerStateManager;
+
+    #[test]
+    fn test_ride_the_bus_accumulates_mult_without_face_cards() {
+        // Create stateful Ride the Bus joker
+        let joker = create_ride_the_bus_stateful();
+        let mut context = create_test_context();
+
+        // Initialize joker state
+        context
+            .joker_state_manager
+            .set_state(joker.id(), joker.initialize_state(&context));
+
+        // First hand without face cards - should give +1 mult
+        let hand1 = SelectHand::new(vec![
+            Card::new(Rank::Ace, Suit::Heart),
+            Card::new(Rank::Two, Suit::Spade),
+            Card::new(Rank::Ten, Suit::Diamond),
+        ]);
+        let effect1 = joker.on_hand_played(&mut context, &hand1);
+        assert_eq!(effect1.mult, 1);
+
+        // Second hand without face cards - should accumulate to +2 mult
+        let hand2 = SelectHand::new(vec![
+            Card::new(Rank::Three, Suit::Heart),
+            Card::new(Rank::Four, Suit::Spade),
+            Card::new(Rank::Five, Suit::Diamond),
+        ]);
+        let effect2 = joker.on_hand_played(&mut context, &hand2);
+        assert_eq!(effect2.mult, 2);
+
+        // Third hand without face cards - should accumulate to +3 mult
+        let hand3 = SelectHand::new(vec![
+            Card::new(Rank::Six, Suit::Heart),
+            Card::new(Rank::Seven, Suit::Spade),
+            Card::new(Rank::Eight, Suit::Diamond),
+        ]);
+        let effect3 = joker.on_hand_played(&mut context, &hand3);
+        assert_eq!(effect3.mult, 3);
+    }
+
+    #[test]
+    fn test_ride_the_bus_resets_when_face_card_scored() {
+        // Create stateful Ride the Bus joker
+        let joker = create_ride_the_bus_stateful();
+        let mut context = create_test_context();
+
+        // Initialize joker state
+        context
+            .joker_state_manager
+            .set_state(joker.id(), joker.initialize_state(&context));
+
+        // Play two hands without face cards to accumulate mult
+        let hand1 = SelectHand::new(vec![
+            Card::new(Rank::Ace, Suit::Heart),
+            Card::new(Rank::Two, Suit::Spade),
+        ]);
+        joker.on_hand_played(&mut context, &hand1);
+
+        let hand2 = SelectHand::new(vec![
+            Card::new(Rank::Three, Suit::Heart),
+            Card::new(Rank::Four, Suit::Spade),
+        ]);
+        let effect2 = joker.on_hand_played(&mut context, &hand2);
+        assert_eq!(effect2.mult, 2); // Should have accumulated to 2
+
+        // Score a face card - should reset accumulated mult
+        let face_card = Card::new(Rank::King, Suit::Heart);
+        joker.on_card_scored(&mut context, &face_card);
+
+        // Next hand without face cards should start from 1 again
+        let hand3 = SelectHand::new(vec![
+            Card::new(Rank::Five, Suit::Heart),
+            Card::new(Rank::Six, Suit::Spade),
+        ]);
+        let effect3 = joker.on_hand_played(&mut context, &hand3);
+        assert_eq!(effect3.mult, 1); // Reset to 1
+    }
+
+    #[test]
+    fn test_ride_the_bus_does_not_increment_with_face_cards_in_hand() {
+        // Create stateful Ride the Bus joker
+        let joker = create_ride_the_bus_stateful();
+        let mut context = create_test_context();
+
+        // Initialize joker state
+        context
+            .joker_state_manager
+            .set_state(joker.id(), joker.initialize_state(&context));
+
+        // First hand without face cards
+        let hand1 = SelectHand::new(vec![
+            Card::new(Rank::Ace, Suit::Heart),
+            Card::new(Rank::Two, Suit::Spade),
+        ]);
+        let effect1 = joker.on_hand_played(&mut context, &hand1);
+        assert_eq!(effect1.mult, 1);
+
+        // Hand with face card - should not increment but keep current value
+        let hand_with_face = SelectHand::new(vec![
+            Card::new(Rank::Jack, Suit::Heart),
+            Card::new(Rank::Two, Suit::Spade),
+        ]);
+        let effect_face = joker.on_hand_played(&mut context, &hand_with_face);
+        assert_eq!(effect_face.mult, 1); // Should stay at 1, not increment
+
+        // Another hand without face cards - should increment from 1 to 2
+        let hand3 = SelectHand::new(vec![
+            Card::new(Rank::Three, Suit::Heart),
+            Card::new(Rank::Four, Suit::Spade),
+        ]);
+        let effect3 = joker.on_hand_played(&mut context, &hand3);
+        assert_eq!(effect3.mult, 2);
+    }
+
+    #[test]
+    fn test_ride_the_bus_resets_on_any_face_card_scored() {
+        // Create stateful Ride the Bus joker
+        let joker = create_ride_the_bus_stateful();
+        let mut context = create_test_context();
+
+        // Initialize joker state
+        context
+            .joker_state_manager
+            .set_state(joker.id(), joker.initialize_state(&context));
+
+        // Build up some accumulated mult
+        for _ in 0..3 {
+            let hand = SelectHand::new(vec![
+                Card::new(Rank::Ace, Suit::Heart),
+                Card::new(Rank::Two, Suit::Spade),
+            ]);
+            joker.on_hand_played(&mut context, &hand);
+        }
+
+        // Test Jack resets
+        let jack = Card::new(Rank::Jack, Suit::Heart);
+        joker.on_card_scored(&mut context, &jack);
+        let hand = SelectHand::new(vec![Card::new(Rank::Two, Suit::Heart)]);
+        let effect = joker.on_hand_played(&mut context, &hand);
+        assert_eq!(effect.mult, 1);
+
+        // Build up again and test Queen resets
+        joker.on_hand_played(&mut context, &hand);
+        let queen = Card::new(Rank::Queen, Suit::Spade);
+        joker.on_card_scored(&mut context, &queen);
+        let effect2 = joker.on_hand_played(&mut context, &hand);
+        assert_eq!(effect2.mult, 1);
+
+        // Build up again and test King resets
+        joker.on_hand_played(&mut context, &hand);
+        let king = Card::new(Rank::King, Suit::Diamond);
+        joker.on_card_scored(&mut context, &king);
+        let effect3 = joker.on_hand_played(&mut context, &hand);
+        assert_eq!(effect3.mult, 1);
+    }
+
+    #[test]
+    fn test_ride_the_bus_scoring_non_face_card_does_not_reset() {
+        // Create stateful Ride the Bus joker
+        let joker = create_ride_the_bus_stateful();
+        let mut context = create_test_context();
+
+        // Initialize joker state
+        context
+            .joker_state_manager
+            .set_state(joker.id(), joker.initialize_state(&context));
+
+        // Build up accumulated mult
+        for _ in 0..3 {
+            let hand = SelectHand::new(vec![
+                Card::new(Rank::Two, Suit::Heart),
+                Card::new(Rank::Three, Suit::Spade),
+            ]);
+            joker.on_hand_played(&mut context, &hand);
+        }
+
+        // Score non-face cards - should not reset
+        let ace = Card::new(Rank::Ace, Suit::Heart);
+        joker.on_card_scored(&mut context, &ace);
+
+        let ten = Card::new(Rank::Ten, Suit::Spade);
+        joker.on_card_scored(&mut context, &ten);
+
+        // Next hand should continue accumulating
+        let hand = SelectHand::new(vec![Card::new(Rank::Two, Suit::Heart)]);
+        let effect = joker.on_hand_played(&mut context, &hand);
+        assert_eq!(effect.mult, 4); // Should be 4, not reset
+    }
+
+    #[test]
+    fn test_ride_the_bus_empty_hand_behavior() {
+        // Create stateful Ride the Bus joker
+        let joker = create_ride_the_bus_stateful();
+        let mut context = create_test_context();
+
+        // Initialize joker state
+        context
+            .joker_state_manager
+            .set_state(joker.id(), joker.initialize_state(&context));
+
+        // Empty hand has no face cards, so should increment
+        let empty_hand = SelectHand::new(vec![]);
+        let effect = joker.on_hand_played(&mut context, &empty_hand);
+        assert_eq!(effect.mult, 1);
+
+        // Another empty hand
+        let effect2 = joker.on_hand_played(&mut context, &empty_hand);
+        assert_eq!(effect2.mult, 2);
+    }
+
+    // Helper function to create test context
+    fn create_test_context() -> GameContext<'static> {
+        use crate::hand::Hand;
+        use crate::rank::HandRank;
+        use crate::stage::{Blind, Stage};
+        use std::collections::HashMap;
+        use std::sync::{Arc, OnceLock};
+
+        static STAGE: Stage = Stage::Blind(Blind::Small);
+        static HAND: OnceLock<Hand> = OnceLock::new();
+        let hand = HAND.get_or_init(|| Hand::new(Vec::new()));
+
+        static HAND_TYPE_COUNTS: OnceLock<HashMap<HandRank, u32>> = OnceLock::new();
+        let hand_type_counts = HAND_TYPE_COUNTS.get_or_init(|| HashMap::new());
+
+        // Create a new state manager for each test to avoid cross-test contamination
+        let joker_state_manager = Box::leak(Box::new(Arc::new(JokerStateManager::new())));
+
+        static TEST_RNG: OnceLock<crate::rng::GameRng> = OnceLock::new();
+        let rng = TEST_RNG.get_or_init(|| crate::rng::GameRng::for_testing(42));
+
+        GameContext {
+            chips: 0,
+            mult: 1,
+            money: 0,
+            ante: 1,
+            round: 1,
+            stage: &STAGE,
+            hands_played: 0,
+            discards_used: 0,
+            jokers: &[],
+            hand,
+            discarded: &[],
+            joker_state_manager,
+            hand_type_counts,
+            cards_in_deck: 52,
+            stone_cards_in_deck: 0,
+            rng,
+        }
+    }
 
     #[test]
     fn test_ride_the_bus_condition_no_face_cards() {
@@ -32,6 +287,66 @@ mod ride_the_bus_tests {
             .any(|card| matches!(card.value, Rank::Jack | Rank::Queen | Rank::King));
 
         assert!(!has_face_cards); // Should have no face cards
+    }
+
+    #[test]
+    fn test_ride_the_bus_factory_compatibility() {
+        // Test that the old factory function returns a stateful joker
+        let joker = create_ride_the_bus();
+        let mut context = create_test_context();
+
+        // Initialize joker state
+        context
+            .joker_state_manager
+            .set_state(joker.id(), joker.initialize_state(&context));
+
+        // Should work the same as stateful version
+        let hand = SelectHand::new(vec![Card::new(Rank::Two, Suit::Heart)]);
+        let effect = joker.on_hand_played(&mut context, &hand);
+        assert_eq!(effect.mult, 1);
+
+        // Score a face card and verify reset
+        let king = Card::new(Rank::King, Suit::Spade);
+        joker.on_card_scored(&mut context, &king);
+
+        let effect2 = joker.on_hand_played(&mut context, &hand);
+        assert_eq!(effect2.mult, 1); // Should have reset
+    }
+
+    #[test]
+    fn test_ride_the_bus_state_persistence() {
+        // Test that state persists correctly
+        let joker = create_ride_the_bus_stateful();
+        let mut context = create_test_context();
+
+        // Initialize and get initial state
+        let initial_state = joker.initialize_state(&context);
+        context
+            .joker_state_manager
+            .set_state(joker.id(), initial_state.clone());
+
+        // Play some hands to accumulate state
+        let hand = SelectHand::new(vec![Card::new(Rank::Two, Suit::Heart)]);
+        for _ in 0..3 {
+            joker.on_hand_played(&mut context, &hand);
+        }
+
+        // Get current state
+        let current_state = context.joker_state_manager.get_state(joker.id()).unwrap();
+        assert_eq!(current_state.accumulated_value, 3.0);
+
+        // Simulate saving and loading state
+        let saved_state = current_state.clone();
+
+        // Create new context and restore state
+        let mut new_context = create_test_context();
+        new_context
+            .joker_state_manager
+            .set_state(joker.id(), saved_state);
+
+        // Should continue from saved state
+        let effect = joker.on_hand_played(&mut new_context, &hand);
+        assert_eq!(effect.mult, 4); // 3 + 1
     }
 
     #[test]
