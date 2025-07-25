@@ -267,3 +267,343 @@ impl Default for ProcessResult {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::card::{Card, Value, Suit};
+    use crate::joker_state::JokerStateManager;
+    use crate::stage::{Stage, Blind};
+    use serde_json::json;
+
+    /// Zero-allocation mock implementation for testing JokerGameplay
+    #[derive(Debug, Clone, Copy)]
+    struct StaticGameplayJoker {
+        joker_type: &'static str,
+        base_chips: u64,
+        base_mult: f64,
+        trigger_condition: TriggerCondition,
+        priority: i32,
+        requires_state: bool,
+    }
+
+    /// Compile-time trigger conditions for testing
+    #[derive(Debug, Clone, Copy, PartialEq)]
+    enum TriggerCondition {
+        Always,
+        Never,
+        OnBlindStage,
+        OnShopStage,
+        RequiresAce,
+        RequiresPair,
+        RequiresFlush,
+        MinCards(usize),
+        CustomLogic,
+    }
+
+    impl StaticGameplayJoker {
+        const fn new(joker_type: &'static str) -> Self {
+            Self {
+                joker_type,
+                base_chips: 10,
+                base_mult: 1.5,
+                trigger_condition: TriggerCondition::Always,
+                priority: 0,
+                requires_state: false,
+            }
+        }
+
+        const fn with_params(
+            joker_type: &'static str,
+            chips: u64,
+            mult: f64,
+            condition: TriggerCondition,
+            priority: i32,
+            requires_state: bool,
+        ) -> Self {
+            Self {
+                joker_type,
+                base_chips: chips,
+                base_mult: mult,
+                trigger_condition: condition,
+                priority,
+                requires_state,
+            }
+        }
+    }
+
+    impl JokerGameplay for StaticGameplayJoker {
+        fn process(&self, stage: &Stage, context: &mut ProcessContext) -> ProcessResult {
+            if !self.can_trigger(stage, context) {
+                return ProcessResult::default();
+            }
+
+            if self.requires_state {
+                let trigger_count: u32 = context
+                    .joker_state_manager
+                    .get_custom_data(self.joker_type, "trigger_count")
+                    .ok()
+                    .flatten()
+                    .unwrap_or(0);
+
+                let _ = context.joker_state_manager.set_custom_data(
+                    self.joker_type,
+                    "trigger_count",
+                    json!(trigger_count + 1),
+                );
+
+                ProcessResult {
+                    chips_added: self.base_chips * (trigger_count + 1) as u64,
+                    mult_added: self.base_mult * (trigger_count + 1) as f64,
+                    retriggered: trigger_count > 0,
+                }
+            } else {
+                ProcessResult {
+                    chips_added: self.base_chips,
+                    mult_added: self.base_mult,
+                    retriggered: false,
+                }
+            }
+        }
+
+        fn can_trigger(&self, stage: &Stage, context: &ProcessContext) -> bool {
+            match self.trigger_condition {
+                TriggerCondition::Always => true,
+                TriggerCondition::Never => false,
+                TriggerCondition::OnBlindStage => matches!(stage, Stage::Blind(_)),
+                TriggerCondition::OnShopStage => matches!(stage, Stage::Shop()),
+                TriggerCondition::RequiresAce => context
+                    .played_cards
+                    .iter()
+                    .any(|card| card.value == Value::Ace),
+                TriggerCondition::RequiresPair => {
+                    let mut rank_counts = [0u8; 13];
+                    for card in context.played_cards {
+                        rank_counts[card.value as usize] += 1;
+                    }
+                    rank_counts.iter().any(|&count| count >= 2)
+                }
+                TriggerCondition::RequiresFlush => {
+                    if context.played_cards.is_empty() {
+                        return false;
+                    }
+                    let first_suit = context.played_cards[0].suit;
+                    context.played_cards.iter().all(|card| card.suit == first_suit)
+                }
+                TriggerCondition::MinCards(min) => context.played_cards.len() >= min,
+                TriggerCondition::CustomLogic => {
+                    context.hand_score.chips > 100 && context.held_cards.len() >= 2
+                }
+            }
+        }
+
+        fn get_priority(&self, _stage: &Stage) -> i32 {
+            self.priority
+        }
+    }
+
+    // Compile-time test data
+    const TEST_JOKERS: &[StaticGameplayJoker] = &[
+        StaticGameplayJoker::new("basic"),
+        StaticGameplayJoker::with_params("ace_hunter", 50, 2.0, TriggerCondition::RequiresAce, 10, false),
+        StaticGameplayJoker::with_params("shop_bonus", 0, 1.0, TriggerCondition::OnShopStage, 5, false),
+        StaticGameplayJoker::with_params("state_scaler", 5, 0.5, TriggerCondition::Always, 0, true),
+        StaticGameplayJoker::with_params("never_trigger", 100, 10.0, TriggerCondition::Never, -10, false),
+        StaticGameplayJoker::with_params("flush_master", 30, 3.0, TriggerCondition::RequiresFlush, 15, false),
+        StaticGameplayJoker::with_params("pair_finder", 20, 1.5, TriggerCondition::RequiresPair, 8, false),
+        StaticGameplayJoker::with_params("big_hand", 15, 2.5, TriggerCondition::MinCards(4), 3, false),
+    ];
+
+    // Test card data - using lazy_static approach for compile-time cards
+    fn test_cards() -> Vec<Card> {
+        vec![
+            Card::new(Value::Ace, Suit::Spades),
+            Card::new(Value::King, Suit::Hearts),
+            Card::new(Value::Queen, Suit::Diamonds),
+            Card::new(Value::Jack, Suit::Clubs),
+            Card::new(Value::Ten, Suit::Spades),
+        ]
+    }
+
+    fn flush_cards() -> Vec<Card> {
+        vec![
+            Card::new(Value::Ace, Suit::Hearts),
+            Card::new(Value::King, Suit::Hearts),
+            Card::new(Value::Queen, Suit::Hearts),
+            Card::new(Value::Jack, Suit::Hearts),
+            Card::new(Value::Ten, Suit::Hearts),
+        ]
+    }
+
+    fn pair_cards() -> Vec<Card> {
+        vec![
+            Card::new(Value::Ace, Suit::Hearts),
+            Card::new(Value::Ace, Suit::Spades),
+            Card::new(Value::King, Suit::Diamonds),
+        ]
+    }
+
+    #[test]
+    fn test_basic_process() {
+        let joker = &TEST_JOKERS[0];
+        let mut hand_score = HandScore { chips: 50, mult: 2.0 };
+        let mut events = Vec::new();
+        let state_manager = JokerStateManager::new();
+        let cards = test_cards();
+        
+        let mut context = ProcessContext {
+            hand_score: &mut hand_score,
+            played_cards: &cards[..3],
+            held_cards: &[],
+            events: &mut events,
+            joker_state_manager: &state_manager,
+        };
+
+        let result = joker.process(&Stage::Blind(Blind::Small), &mut context);
+        assert_eq!(result.chips_added, 10);
+        assert_eq!(result.mult_added, 1.5);
+        assert!(!result.retriggered);
+    }
+
+    #[test]
+    fn test_trigger_conditions() {
+        let ace_joker = &TEST_JOKERS[1];
+        let shop_joker = &TEST_JOKERS[2];
+        let never_joker = &TEST_JOKERS[4];
+        
+        let hand_score = HandScore { chips: 50, mult: 2.0 };
+        let events = Vec::new();
+        let state_manager = JokerStateManager::new();
+        
+        // Test ace trigger
+        let cards = test_cards();
+        let context_with_ace = ProcessContext {
+            hand_score: &hand_score,
+            played_cards: &cards[..1], // Has ace
+            held_cards: &[],
+            events: &events,
+            joker_state_manager: &state_manager,
+        };
+        assert!(ace_joker.can_trigger(&Stage::Blind(Blind::Small), &context_with_ace));
+
+        // Test shop stage trigger
+        assert!(shop_joker.can_trigger(&Stage::Shop(), &context_with_ace));
+        assert!(!shop_joker.can_trigger(&Stage::Blind(Blind::Small), &context_with_ace));
+
+        // Test never trigger
+        assert!(!never_joker.can_trigger(&Stage::Blind(Blind::Small), &context_with_ace));
+    }
+
+    #[test]
+    fn test_state_scaling() {
+        let joker = &TEST_JOKERS[3]; // state_scaler
+        let mut hand_score = HandScore { chips: 50, mult: 2.0 };
+        let mut events = Vec::new();
+        let state_manager = JokerStateManager::new();
+        
+        let mut context = ProcessContext {
+            hand_score: &mut hand_score,
+            played_cards: &[],
+            held_cards: &[],
+            events: &mut events,
+            joker_state_manager: &state_manager,
+        };
+
+        // Test scaling over multiple triggers
+        let expected = [(5, 0.5), (10, 1.0), (15, 1.5)];
+        for (i, (chips, mult)) in expected.iter().enumerate() {
+            let result = joker.process(&Stage::Blind(Blind::Small), &mut context);
+            assert_eq!(result.chips_added, *chips);
+            assert_eq!(result.mult_added, *mult);
+            assert_eq!(result.retriggered, i > 0);
+        }
+    }
+
+    #[test]
+    fn test_priority_ordering() {
+        let priorities: Vec<i32> = TEST_JOKERS
+            .iter()
+            .map(|j| j.get_priority(&Stage::Blind(Blind::Small)))
+            .collect();
+
+        assert_eq!(priorities[0], 0);   // basic
+        assert_eq!(priorities[1], 10);  // ace_hunter
+        assert_eq!(priorities[4], -10); // never_trigger
+        assert_eq!(priorities[5], 15);  // flush_master
+    }
+
+    #[test]
+    fn test_card_conditions() {
+        let flush_joker = &TEST_JOKERS[5];
+        let pair_joker = &TEST_JOKERS[6];
+        let big_hand_joker = &TEST_JOKERS[7];
+        
+        let hand_score = HandScore { chips: 50, mult: 2.0 };
+        let events = Vec::new();
+        let state_manager = JokerStateManager::new();
+
+        // Test flush
+        let context_flush = ProcessContext {
+            hand_score: &hand_score,
+            played_cards: &flush_cards(),
+            held_cards: &[],
+            events: &events,
+            joker_state_manager: &state_manager,
+        };
+        assert!(flush_joker.can_trigger(&Stage::Blind(Blind::Small), &context_flush));
+
+        // Test pair
+        let context_pair = ProcessContext {
+            hand_score: &hand_score,
+            played_cards: &pair_cards(),
+            held_cards: &[],
+            events: &events,
+            joker_state_manager: &state_manager,
+        };
+        assert!(pair_joker.can_trigger(&Stage::Blind(Blind::Small), &context_pair));
+
+        // Test min cards
+        let cards_for_big = test_cards();
+        let context_big = ProcessContext {
+            hand_score: &hand_score,
+            played_cards: &cards_for_big[..4],
+            held_cards: &[],
+            events: &events,
+            joker_state_manager: &state_manager,
+        };
+        assert!(big_hand_joker.can_trigger(&Stage::Blind(Blind::Small), &context_big));
+    }
+
+    #[test]
+    fn test_scoring_invariants() {
+        // Property: Processing should never produce negative scores
+        for joker in TEST_JOKERS {
+            let mut hand_score = HandScore { chips: 100, mult: 2.0 };
+            let mut events = Vec::new();
+            let state_manager = JokerStateManager::new();
+            let cards = test_cards();
+            
+            let mut context = ProcessContext {
+                hand_score: &mut hand_score,
+                played_cards: &cards,
+                held_cards: &[],
+                events: &mut events,
+                joker_state_manager: &state_manager,
+            };
+
+            let result = joker.process(&Stage::Blind(Blind::Small), &mut context);
+            
+            assert!(result.chips_added >= 0);
+            assert!(result.mult_added >= 0.0);
+            assert_eq!(hand_score.chips, 100); // Hand score unchanged
+            assert_eq!(hand_score.mult, 2.0);
+        }
+    }
+
+    #[test]
+    fn test_thread_safety() {
+        fn assert_send_sync<T: Send + Sync>() {}
+        assert_send_sync::<StaticGameplayJoker>();
+    }
+}
+
