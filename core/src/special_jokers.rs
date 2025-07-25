@@ -43,7 +43,7 @@ impl JokerIdentity for ErosionJoker {
 impl JokerLifecycle for ErosionJoker {}
 
 impl JokerGameplay for ErosionJoker {
-    fn process(&self, _stage: &Stage, _context: &mut ProcessContext) -> ProcessResult {
+    fn process(&mut self, _stage: &Stage, _context: &mut ProcessContext) -> ProcessResult {
         // Calculate cards missing from full deck (52)
         // Note: This would need access to deck size information
         // For now, use a placeholder calculation
@@ -128,7 +128,7 @@ impl JokerIdentity for FigureJoker {
 impl JokerLifecycle for FigureJoker {}
 
 impl JokerGameplay for FigureJoker {
-    fn process(&self, _stage: &Stage, context: &mut ProcessContext) -> ProcessResult {
+    fn process(&mut self, _stage: &Stage, context: &mut ProcessContext) -> ProcessResult {
         let mut _money_earned = 0;
 
         // Award $3 for each face card played
@@ -225,7 +225,7 @@ impl JokerIdentity for FlowerPotJoker {
 impl JokerLifecycle for FlowerPotJoker {}
 
 impl JokerGameplay for FlowerPotJoker {
-    fn process(&self, _stage: &Stage, _context: &mut ProcessContext) -> ProcessResult {
+    fn process(&mut self, _stage: &Stage, _context: &mut ProcessContext) -> ProcessResult {
         // Check if all 4 suits are present
         let mut suits = HashSet::new();
         for card in _context.played_cards {
@@ -330,7 +330,7 @@ impl JokerIdentity for BlueprintJoker {
 impl JokerLifecycle for BlueprintJoker {}
 
 impl JokerGameplay for BlueprintJoker {
-    fn process(&self, _stage: &Stage, _context: &mut ProcessContext) -> ProcessResult {
+    fn process(&mut self, _stage: &Stage, _context: &mut ProcessContext) -> ProcessResult {
         // This would need complex logic to find the joker to the right
         // and copy its effects. For now, return default.
         ProcessResult::default()
@@ -422,7 +422,7 @@ impl JokerIdentity for BraidedDeckJoker {
 impl JokerLifecycle for BraidedDeckJoker {}
 
 impl JokerGameplay for BraidedDeckJoker {
-    fn process(&self, _stage: &Stage, _context: &mut ProcessContext) -> ProcessResult {
+    fn process(&mut self, _stage: &Stage, _context: &mut ProcessContext) -> ProcessResult {
         // This joker doesn't add effects itself, it prevents others from triggering
         ProcessResult::default()
     }
@@ -492,7 +492,7 @@ impl JokerIdentity for FourofaKindJoker {
 impl JokerLifecycle for FourofaKindJoker {}
 
 impl JokerGameplay for FourofaKindJoker {
-    fn process(&self, _stage: &Stage, _context: &mut ProcessContext) -> ProcessResult {
+    fn process(&mut self, _stage: &Stage, _context: &mut ProcessContext) -> ProcessResult {
         // This would need access to the joker collection to count jokers
         // For now, return default
         ProcessResult::default()
@@ -577,7 +577,7 @@ impl JokerIdentity for TheOrderJoker {
 impl JokerLifecycle for TheOrderJoker {}
 
 impl JokerGameplay for TheOrderJoker {
-    fn process(&self, _stage: &Stage, _context: &mut ProcessContext) -> ProcessResult {
+    fn process(&mut self, _stage: &Stage, _context: &mut ProcessContext) -> ProcessResult {
         // Check hand rank in played cards
         // This would need access to hand evaluation logic
         ProcessResult::default()
@@ -662,22 +662,27 @@ impl JokerIdentity for PhotographJoker {
 
 impl JokerLifecycle for PhotographJoker {
     fn on_round_start(&mut self) {
+        // Reset internal state for the new round
         self.face_card_triggered = false;
     }
 }
 
 impl JokerGameplay for PhotographJoker {
-    fn process(&self, _stage: &Stage, context: &mut ProcessContext) -> ProcessResult {
+    fn process(&mut self, _stage: &Stage, context: &mut ProcessContext) -> ProcessResult {
+        // Use internal state directly - much cleaner!
         if !self.face_card_triggered {
             // Check if any played cards are face cards
             for card in context.played_cards {
                 if matches!(card.value, Value::Jack | Value::Queen | Value::King) {
-                    // TODO: Fix state mutation - temporarily disabled for CI fix
-                    // self.face_card_triggered = true;
+                    // Mark as triggered for this round
+                    self.face_card_triggered = true;
+
+                    // First face card gives X2 Mult
+                    // Using mult_multiplier for true multiplicative effect
                     return ProcessResult {
                         chips_added: 0,
                         mult_added: 0.0,
-                        mult_multiplier: 1.0,
+                        mult_multiplier: 2.0,  // X2 Mult for the first face card
                         retriggered: false,
                         message: None,
                     };
@@ -688,6 +693,7 @@ impl JokerGameplay for PhotographJoker {
     }
 
     fn can_trigger(&self, _stage: &Stage, context: &ProcessContext) -> bool {
+        // Use internal state directly - much cleaner!
         !self.face_card_triggered
             && context
                 .played_cards
@@ -753,20 +759,169 @@ impl Joker for PhotographJoker {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::card::{Card, Suit, Value};
+    use crate::card::{Card, Suit as CardSuit, Value};
     use crate::hand::SelectHand;
     use crate::joker::traits::{
         JokerGameplay, JokerIdentity, JokerLifecycle, JokerModifiers,
         JokerState as JokerStateTrait, Rarity,
     };
-    use crate::joker::GameContext;
-    use crate::stage::Stage;
+    use crate::joker::{GameContext, JokerId};
+    use crate::joker_state::JokerStateManager;
+    use crate::stage::{Blind, Stage};
     use std::collections::HashMap;
     use std::sync::Arc;
 
     /// Helper function to create a test card
-    fn create_card(suit: Suit, value: Value) -> Card {
+    fn create_card(suit: CardSuit, value: Value) -> Card {
         Card::new(value, suit)
+    }
+
+    /// Helper function to create a test blind stage
+    fn create_blind_stage() -> Stage {
+        Stage::Blind(Blind::Small)
+    }
+
+    #[test]
+    fn test_photograph_triggers_on_first_face_card() {
+        let mut joker = PhotographJoker::new();
+        let state_manager = Arc::new(JokerStateManager::new());
+
+        let mut hand_score = crate::joker::traits::HandScore {
+            chips: 100,
+            mult: 5.0,
+        };
+        let played_cards = vec![
+            create_card(CardSuit::Heart, Value::Jack),
+            create_card(CardSuit::Spade, Value::Ten),
+        ];
+        let held_cards = vec![];
+        let mut events = vec![];
+
+        let mut context = crate::joker::traits::ProcessContext {
+            hand_score: &mut hand_score,
+            played_cards: &played_cards,
+            held_cards: &held_cards,
+            events: &mut events,
+            joker_state_manager: &state_manager,
+        };
+
+        // First face card should trigger
+        let blind_stage = create_blind_stage();
+        let result = joker.process(&blind_stage, &mut context);
+        assert_eq!(result.mult_added, 5.0); // Should double the current mult
+
+        // Verify state was updated internally
+        assert!(joker.face_card_triggered);
+    }
+
+    #[test]
+    fn test_photograph_does_not_trigger_twice() {
+        let mut joker = PhotographJoker::new();
+        // Pre-set the triggered state using internal state
+        joker.face_card_triggered = true;
+
+        let state_manager = Arc::new(JokerStateManager::new());
+
+        let mut hand_score = crate::joker::traits::HandScore {
+            chips: 100,
+            mult: 5.0,
+        };
+        let played_cards = vec![create_card(CardSuit::Heart, Value::King)];
+        let held_cards = vec![];
+        let mut events = vec![];
+
+        let mut context = crate::joker::traits::ProcessContext {
+            hand_score: &mut hand_score,
+            played_cards: &played_cards,
+            held_cards: &held_cards,
+            events: &mut events,
+            joker_state_manager: &state_manager,
+        };
+
+        // Should not trigger again
+        let blind_stage = create_blind_stage();
+        let result = joker.process(&blind_stage, &mut context);
+        assert_eq!(result.mult_added, 0.0);
+    }
+
+    #[test]
+    fn test_photograph_can_trigger_checks_state() {
+        let mut joker = PhotographJoker::new();
+        let state_manager = Arc::new(JokerStateManager::new());
+
+        let mut hand_score = crate::joker::traits::HandScore {
+            chips: 100,
+            mult: 5.0,
+        };
+        let played_cards = vec![create_card(CardSuit::Heart, Value::Queen)];
+        let held_cards = vec![];
+        let mut events = vec![];
+
+        let context = crate::joker::traits::ProcessContext {
+            hand_score: &mut hand_score,
+            played_cards: &played_cards,
+            held_cards: &held_cards,
+            events: &mut events,
+            joker_state_manager: &state_manager,
+        };
+
+        // Should be able to trigger initially
+        let blind_stage = create_blind_stage();
+        assert!(joker.can_trigger(&blind_stage, &context));
+
+        // Set triggered state using internal state
+        joker.face_card_triggered = true;
+
+        // Should not be able to trigger after state is set
+        assert!(!joker.can_trigger(&blind_stage, &context));
+    }
+
+    #[test]
+    fn test_photograph_no_face_cards() {
+        let mut joker = PhotographJoker::new();
+        let state_manager = Arc::new(JokerStateManager::new());
+
+        let mut hand_score = crate::joker::traits::HandScore {
+            chips: 100,
+            mult: 5.0,
+        };
+        let played_cards = vec![
+            create_card(CardSuit::Heart, Value::Ten),
+            create_card(CardSuit::Spade, Value::Nine),
+        ];
+        let held_cards = vec![];
+        let mut events = vec![];
+
+        let mut context = crate::joker::traits::ProcessContext {
+            hand_score: &mut hand_score,
+            played_cards: &played_cards,
+            held_cards: &held_cards,
+            events: &mut events,
+            joker_state_manager: &state_manager,
+        };
+
+        // Should not trigger without face cards
+        let blind_stage = create_blind_stage();
+        let result = joker.process(&blind_stage, &mut context);
+        assert_eq!(result.mult_added, 0.0);
+
+        // State should remain untriggered
+        assert!(!joker.face_card_triggered);
+    }
+
+    #[test]
+    fn test_photograph_round_reset() {
+        let mut joker = PhotographJoker::new();
+
+        // Simulate being triggered
+        joker.face_card_triggered = true;
+
+        // Round reset should clear the flag
+        joker.on_round_start();
+        assert!(!joker.face_card_triggered);
+
+        // NOTE: In actual game flow, the Game engine should also reset
+        // the state in JokerStateManager
     }
 
     /// Helper function to create basic test context
@@ -868,8 +1023,8 @@ mod tests {
         };
 
         // Test with face cards
-        let jack = create_card(Suit::Heart, Value::Jack);
-        let ace = create_card(Suit::Club, Value::Ace);
+        let jack = create_card(CardSuit::Heart, Value::Jack);
+        let ace = create_card(CardSuit::Club, Value::Ace);
 
         // Face cards should give money
         let effect_jack = joker.on_card_scored(&mut context, &jack);
@@ -901,10 +1056,10 @@ mod tests {
 
         // Test with all 4 suits
         let cards_all_suits = vec![
-            create_card(Suit::Heart, Value::Ace),
-            create_card(Suit::Diamond, Value::Two),
-            create_card(Suit::Club, Value::Three),
-            create_card(Suit::Spade, Value::Four),
+            create_card(CardSuit::Heart, Value::Ace),
+            create_card(CardSuit::Diamond, Value::Two),
+            create_card(CardSuit::Club, Value::Three),
+            create_card(CardSuit::Spade, Value::Four),
         ];
         let hand_all_suits = SelectHand::new(cards_all_suits.clone());
         let hand_for_context = crate::hand::Hand::new(cards_all_suits);

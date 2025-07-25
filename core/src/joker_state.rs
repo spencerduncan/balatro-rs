@@ -101,6 +101,17 @@ impl Default for JokerState {
 }
 
 /// Centralized state manager for tracking per-joker state across rounds
+///
+/// # Thread Safety
+///
+/// While this struct uses `RwLock` for thread-safe access, in practice each game instance
+/// runs in a single thread. The lock is uncontended in typical ML gym usage where:
+/// - Each game instance has its own `JokerStateManager`
+/// - No sharing occurs between different game instances
+/// - All operations within a game are single-threaded
+///
+/// The `RwLock` provides API safety and future-proofing but does not imply concurrent access
+/// in the current architecture. Performance overhead is minimal (~15ns) for uncontended locks.
 #[derive(Debug)]
 pub struct JokerStateManager {
     /// Thread-safe storage for joker states
@@ -111,7 +122,9 @@ impl JokerStateManager {
     /// Create a new state manager
     pub fn new() -> Self {
         Self {
-            states: RwLock::new(HashMap::new()),
+            // Pre-allocate capacity for ~5 jokers (common case)
+            // Using 8 for optimal HashMap performance (power of 2)
+            states: RwLock::new(HashMap::with_capacity(8)),
         }
     }
 

@@ -114,7 +114,7 @@ impl Joker for Baron {
 }
 
 impl JokerGameplay for Baron {
-    fn process(&self, stage: &Stage, context: &mut ProcessContext) -> ProcessResult {
+    fn process(&mut self, stage: &Stage, context: &mut ProcessContext) -> ProcessResult {
         if !matches!(stage, Stage::Blind(_)) {
             return ProcessResult::default();
         }
@@ -241,7 +241,7 @@ impl Joker for SteelJoker {
 }
 
 impl JokerGameplay for SteelJoker {
-    fn process(&self, stage: &Stage, context: &mut ProcessContext) -> ProcessResult {
+    fn process(&mut self, stage: &Stage, context: &mut ProcessContext) -> ProcessResult {
         if !matches!(stage, Stage::Blind(_)) {
             return ProcessResult::default();
         }
@@ -390,7 +390,7 @@ impl Joker for AncientJoker {
 }
 
 impl JokerGameplay for AncientJoker {
-    fn process(&self, stage: &Stage, context: &mut ProcessContext) -> ProcessResult {
+    fn process(&mut self, stage: &Stage, context: &mut ProcessContext) -> ProcessResult {
         if !matches!(stage, Stage::Blind(_)) {
             return ProcessResult::default();
         }
@@ -551,7 +551,7 @@ impl Joker for TheDuo {
 }
 
 impl JokerGameplay for TheDuo {
-    fn process(&self, stage: &Stage, context: &mut ProcessContext) -> ProcessResult {
+    fn process(&mut self, stage: &Stage, context: &mut ProcessContext) -> ProcessResult {
         if !matches!(stage, Stage::Blind(_)) {
             return ProcessResult::default();
         }
@@ -663,7 +663,7 @@ impl Joker for TheTrio {
 }
 
 impl JokerGameplay for TheTrio {
-    fn process(&self, stage: &Stage, context: &mut ProcessContext) -> ProcessResult {
+    fn process(&mut self, stage: &Stage, context: &mut ProcessContext) -> ProcessResult {
         if !matches!(stage, Stage::Blind(_)) {
             return ProcessResult::default();
         }

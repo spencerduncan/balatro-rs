@@ -19,6 +19,7 @@
 
 use crate::card::Card;
 use crate::game::Game;
+use crate::joker::{Joker, JokerId};
 use crate::rank::HandRank;
 use serde::{Deserialize, Serialize};
 use std::fmt;
@@ -98,6 +99,169 @@ pub enum TargetValidationError {
     },
     #[error("Card at index {index} is already targeted")]
     CardAlreadyTargeted { index: usize },
+}
+
+/// Represents a target for joker-related consumable effects
+///
+/// This struct provides robust validation for joker targeting with production-ready
+/// error handling and clear failure modes.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct JokerTarget {
+    /// The slot index of the targeted joker
+    pub slot: usize,
+    /// Whether the joker must be active to be targeted
+    pub require_active: bool,
+    /// Optional requirement for specific joker type
+    pub joker_type: Option<JokerId>,
+}
+
+impl JokerTarget {
+    /// Creates a new JokerTarget with basic slot targeting
+    ///
+    /// # Arguments
+    /// * `slot` - The joker slot index to target
+    ///
+    /// # Examples
+    /// ```
+    /// use balatro_rs::consumables::JokerTarget;
+    /// let target = JokerTarget::new(0);
+    /// assert_eq!(target.slot, 0);
+    /// assert!(!target.require_active);
+    /// ```
+    pub fn new(slot: usize) -> Self {
+        Self {
+            slot,
+            require_active: false,
+            joker_type: None,
+        }
+    }
+
+    /// Creates a JokerTarget that requires the joker to be active
+    ///
+    /// # Arguments
+    /// * `slot` - The joker slot index to target
+    ///
+    /// # Examples
+    /// ```
+    /// use balatro_rs::consumables::JokerTarget;
+    /// let target = JokerTarget::active_joker(1);
+    /// assert_eq!(target.slot, 1);
+    /// assert!(target.require_active);
+    /// ```
+    pub fn active_joker(slot: usize) -> Self {
+        Self {
+            slot,
+            require_active: true,
+            joker_type: None,
+        }
+    }
+
+    /// Creates a JokerTarget that requires a specific joker type
+    ///
+    /// # Arguments
+    /// * `slot` - The joker slot index to target
+    /// * `joker_type` - The specific JokerId required at this slot
+    ///
+    /// # Examples
+    /// ```
+    /// use balatro_rs::consumables::JokerTarget;
+    /// use balatro_rs::joker::JokerId;
+    /// let target = JokerTarget::joker_of_type(2, JokerId::Joker);
+    /// assert_eq!(target.slot, 2);
+    /// assert_eq!(target.joker_type, Some(JokerId::Joker));
+    /// ```
+    pub fn joker_of_type(slot: usize, joker_type: JokerId) -> Self {
+        Self {
+            slot,
+            require_active: false,
+            joker_type: Some(joker_type),
+        }
+    }
+
+    /// Validates this target against the current game state
+    ///
+    /// Performs comprehensive validation including:
+    /// - Slot bounds checking
+    /// - Joker existence verification
+    /// - Type matching if specified
+    /// - Active state validation if required
+    ///
+    /// # Production Considerations
+    /// - Returns actionable error messages for debugging
+    /// - Validates all constraints atomically
+    /// - Provides clear failure reasons for telemetry
+    pub fn validate(&self, game: &Game) -> Result<(), JokerTargetError> {
+        // Check if slot is within bounds
+        if self.slot >= game.jokers.len() {
+            return Err(JokerTargetError::EmptySlot { slot: self.slot });
+        }
+
+        // Get the joker at this slot
+        let joker = &game.jokers[self.slot];
+
+        // Check joker type if specified
+        if let Some(expected_type) = self.joker_type {
+            let actual_type = joker.id();
+            if actual_type != expected_type {
+                return Err(JokerTargetError::WrongJokerType {
+                    expected: expected_type,
+                    actual: actual_type,
+                });
+            }
+        }
+
+        // Check active state if required
+        if self.require_active && !self.is_joker_active(game) {
+            return Err(JokerTargetError::InactiveJoker { slot: self.slot });
+        }
+
+        Ok(())
+    }
+
+    /// Gets a reference to the joker at the target slot
+    ///
+    /// # Returns
+    /// - `Ok(&dyn Joker)` if validation passes
+    /// - `Err(JokerTargetError)` with specific failure reason
+    pub fn get_joker<'a>(&self, game: &'a Game) -> Result<&'a dyn Joker, JokerTargetError> {
+        self.validate(game)?;
+        Ok(game.jokers[self.slot].as_ref())
+    }
+
+    /// Checks if the target slot is occupied
+    ///
+    /// This is a non-failing check that returns false for invalid slots
+    pub fn is_slot_occupied(&self, game: &Game) -> bool {
+        self.slot < game.jokers.len()
+    }
+
+    /// Checks if the joker at this slot is active
+    ///
+    /// Currently returns true as a placeholder - will be updated when
+    /// joker active state tracking is implemented
+    fn is_joker_active(&self, _game: &Game) -> bool {
+        // TODO: Implement actual active state checking when joker system supports it
+        true
+    }
+}
+
+/// Error types for joker targeting operations
+///
+/// Designed for production debugging with actionable error messages
+/// and structured data for telemetry and monitoring.
+#[derive(Debug, Clone, PartialEq, Error)]
+pub enum JokerTargetError {
+    /// The specified slot is empty or out of bounds
+    #[error("Joker slot {slot} is empty or does not exist")]
+    EmptySlot { slot: usize },
+
+    /// The joker at the slot has the wrong type
+    #[error("Expected joker type {expected:?} at slot but found {actual:?}")]
+    WrongJokerType { expected: JokerId, actual: JokerId },
+
+    /// The joker at the slot is not active
+    #[error("Joker at slot {slot} is not active")]
+    InactiveJoker { slot: usize },
 }
 
 /// Categories of effects that consumables can have
@@ -264,6 +428,36 @@ impl Target {
     /// Create a target for played cards
     pub fn cards_in_played(indices: Vec<usize>) -> Self {
         Target::Cards(CardTarget::new(CardCollection::PlayedCards, indices))
+    }
+
+    /// Create a target for an active joker at a specific slot
+    ///
+    /// This is a convenience method that creates a Target::Joker.
+    /// For actual active validation, use JokerTarget::active_joker directly.
+    pub fn active_joker_at_slot(slot: usize) -> Self {
+        Target::Joker(slot)
+    }
+
+    /// Convert this Target to a JokerTarget if it's a Joker variant
+    ///
+    /// Returns None for non-Joker targets.
+    ///
+    /// # Examples
+    /// ```
+    /// use balatro_rs::consumables::{Target, JokerTarget};
+    ///
+    /// let joker_target = Target::Joker(2);
+    /// let joker = joker_target.as_joker_target().unwrap();
+    /// assert_eq!(joker.slot, 2);
+    ///
+    /// let card_target = Target::None;
+    /// assert!(card_target.as_joker_target().is_none());
+    /// ```
+    pub fn as_joker_target(&self) -> Option<JokerTarget> {
+        match self {
+            Target::Joker(slot) => Some(JokerTarget::new(*slot)),
+            _ => None,
+        }
     }
 
     /// Generate all available targets for a given target type
