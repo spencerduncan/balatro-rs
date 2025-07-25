@@ -1270,6 +1270,9 @@ pub mod scaling_xmult_jokers;
 #[cfg(test)]
 mod identity_tests;
 
+// Include basic additive mult jokers (Basic, Even Steven, Scholar, Half, Walkie)
+pub mod basic_additive_mult_jokers;
+
 // Include testing utilities for the Joker trait system
 #[cfg(test)]
 pub mod test_utils;
