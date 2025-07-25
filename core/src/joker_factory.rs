@@ -1,5 +1,6 @@
 use crate::joker::{Joker, JokerId, JokerRarity};
 use crate::joker_impl::*;
+use crate::scaling_joker_custom;
 use crate::special_jokers::*;
 use crate::static_joker_factory::StaticJokerFactory;
 
@@ -41,7 +42,9 @@ impl JokerFactory {
             JokerId::RedCard => Some(StaticJokerFactory::create_red_card()),
             JokerId::BlueJoker => Some(StaticJokerFactory::create_blue_joker()),
             JokerId::FacelessJoker => Some(StaticJokerFactory::create_faceless_joker()),
-            JokerId::Square => Some(StaticJokerFactory::create_square()),
+            JokerId::Square => {
+                scaling_joker_custom::get_custom_scaling_joker_by_id(JokerId::Square)
+            }
             JokerId::Walkie => Some(StaticJokerFactory::create_walkie()),
 
             // Placeholder jokers with TODO comments
