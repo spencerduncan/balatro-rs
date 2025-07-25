@@ -2,22 +2,18 @@
 //!
 //! Optimized for zero allocations and cache-friendly execution following the
 //! pattern established in the JokerIdentity tests.
-//!
-//! Note: Unused code (id field, new() and reset() methods) was removed
-//! in commit 8ea4fdc per review feedback, addressing issue #601.
 
 use crate::joker::traits::JokerLifecycle;
 use std::sync::{Arc, Mutex};
 
 /// Zero-allocation mock implementation with state tracking
 #[derive(Debug, Clone)]
-#[allow(dead_code)]
 struct StaticLifecycleMock {
+    id: &'static str,
     state: Arc<Mutex<LifecycleState>>,
 }
 
 #[derive(Debug, Clone, Default)]
-#[allow(dead_code)]
 struct LifecycleState {
     purchase_count: u32,
     sell_count: u32,
@@ -30,18 +26,28 @@ struct LifecycleState {
 }
 
 impl StaticLifecycleMock {
-    #[allow(dead_code)]
-    fn with_state() -> Self {
+    fn new(id: &'static str) -> Self {
         Self {
+            id,
             state: Arc::new(Mutex::new(LifecycleState::default())),
         }
     }
 
-    #[allow(dead_code)]
+    fn with_state() -> Self {
+        Self {
+            id: "stateful",
+            state: Arc::new(Mutex::new(LifecycleState::default())),
+        }
+    }
+
+    fn reset(&self) {
+        if let Ok(mut state) = self.state.lock() {
+            *state = LifecycleState::default();
+        }
+    }
+
     fn get_state(&self) -> LifecycleState {
-        // For tests, we'll panic on poisoned mutex as it indicates a serious error
-        // This is consistent with test expectations - tests should not have mutex poisoning
-        self.state.lock().expect("Mutex poisoned in test").clone()
+        self.state.lock().unwrap().clone()
     }
 }
 
@@ -97,7 +103,6 @@ impl JokerLifecycle for StaticLifecycleMock {
 }
 
 // Test macro for lifecycle events
-#[allow(unused_macros)]
 macro_rules! test_lifecycle_event {
     ($name:ident, $method:ident, $field:ident) => {
         #[test]
@@ -117,11 +122,7 @@ mod basic_lifecycle_tests {
     test_lifecycle_event!(test_on_purchase_called, on_purchase, purchase_count);
     test_lifecycle_event!(test_on_sell_called, on_sell, sell_count);
     test_lifecycle_event!(test_on_destroy_called, on_destroy, destroy_count);
-    test_lifecycle_event!(
-        test_on_round_start_called,
-        on_round_start,
-        round_start_count
-    );
+    test_lifecycle_event!(test_on_round_start_called, on_round_start, round_start_count);
     test_lifecycle_event!(test_on_round_end_called, on_round_end, round_end_count);
 
     #[test]
@@ -145,14 +146,14 @@ mod basic_lifecycle_tests {
     #[test]
     fn test_multiple_calls() {
         let mut joker = StaticLifecycleMock::with_state();
-
+        
         // Call each method multiple times
         for _ in 0..3 {
             joker.on_purchase();
             joker.on_round_start();
             joker.on_round_end();
         }
-
+        
         let state = joker.get_state();
         assert_eq!(state.purchase_count, 3);
         assert_eq!(state.round_start_count, 3);
@@ -167,77 +168,65 @@ mod lifecycle_ordering_tests {
     #[test]
     fn test_purchase_sell_lifecycle() {
         let mut joker = StaticLifecycleMock::with_state();
-
+        
         // Typical purchase -> use -> sell lifecycle
         joker.on_purchase();
         joker.on_round_start();
         joker.on_round_end();
         joker.on_sell();
-
+        
         let state = joker.get_state();
-        assert_eq!(
-            state.event_order,
-            vec!["purchase", "round_start", "round_end", "sell"]
-        );
+        assert_eq!(state.event_order, vec!["purchase", "round_start", "round_end", "sell"]);
     }
 
     #[test]
     fn test_purchase_destroy_lifecycle() {
         let mut joker = StaticLifecycleMock::with_state();
-
+        
         // Purchase -> use -> destroy lifecycle
         joker.on_purchase();
         joker.on_round_start();
         joker.on_destroy();
-
+        
         let state = joker.get_state();
-        assert_eq!(
-            state.event_order,
-            vec!["purchase", "round_start", "destroy"]
-        );
+        assert_eq!(state.event_order, vec!["purchase", "round_start", "destroy"]);
     }
 
     #[test]
     fn test_multiple_rounds_lifecycle() {
         let mut joker = StaticLifecycleMock::with_state();
-
+        
         joker.on_purchase();
-
+        
         // Simulate multiple rounds
         for _ in 0..3 {
             joker.on_round_start();
             joker.on_round_end();
         }
-
+        
         joker.on_sell();
-
+        
         let state = joker.get_state();
-        assert_eq!(
-            state.event_order,
-            vec![
-                "purchase",
-                "round_start",
-                "round_end",
-                "round_start",
-                "round_end",
-                "round_start",
-                "round_end",
-                "sell"
-            ]
-        );
+        assert_eq!(state.event_order, vec![
+            "purchase",
+            "round_start", "round_end",
+            "round_start", "round_end",
+            "round_start", "round_end",
+            "sell"
+        ]);
     }
 
     #[test]
     fn test_joker_interaction_lifecycle() {
         let mut joker = StaticLifecycleMock::with_state();
-
+        
         joker.on_purchase();
         joker.on_joker_added("companion1");
         joker.on_joker_added("companion2");
         joker.on_round_start();
         joker.on_joker_removed("companion1");
         joker.on_round_end();
-
+        
         let state = joker.get_state();
         assert_eq!(state.jokers_added, vec!["companion1", "companion2"]);
         assert_eq!(state.jokers_removed, vec!["companion1"]);
@@ -251,11 +240,11 @@ mod state_invariant_tests {
     #[test]
     fn test_no_duplicate_sell_or_destroy() {
         let mut joker = StaticLifecycleMock::with_state();
-
+        
         // A joker should only be sold OR destroyed, not both
         joker.on_purchase();
         joker.on_sell();
-
+        
         let state = joker.get_state();
         assert_eq!(state.sell_count, 1);
         assert_eq!(state.destroy_count, 0);
@@ -264,13 +253,13 @@ mod state_invariant_tests {
     #[test]
     fn test_round_start_end_pairing() {
         let mut joker = StaticLifecycleMock::with_state();
-
+        
         // Every round start should have a corresponding round end
         for _ in 0..5 {
             joker.on_round_start();
             joker.on_round_end();
         }
-
+        
         let state = joker.get_state();
         assert_eq!(state.round_start_count, state.round_end_count);
     }
@@ -278,11 +267,11 @@ mod state_invariant_tests {
     #[test]
     fn test_purchase_before_use() {
         let mut joker = StaticLifecycleMock::with_state();
-
+        
         // Purchase should always come before any usage
         joker.on_purchase();
         joker.on_round_start();
-
+        
         let state = joker.get_state();
         assert_eq!(state.event_order[0], "purchase");
     }
@@ -290,16 +279,16 @@ mod state_invariant_tests {
     #[test]
     fn test_no_events_after_terminal_state() {
         let mut joker = StaticLifecycleMock::with_state();
-
+        
         joker.on_purchase();
         joker.on_sell();
-
+        
         // These shouldn't typically happen after sell
         let events_before = joker.get_state().event_order.len();
-
+        
         // But the trait allows it (no enforcement)
         joker.on_round_start();
-
+        
         let state = joker.get_state();
         assert_eq!(state.event_order.len(), events_before + 1);
     }
@@ -312,10 +301,10 @@ mod edge_case_tests {
     #[test]
     fn test_immediate_sell_after_purchase() {
         let mut joker = StaticLifecycleMock::with_state();
-
+        
         joker.on_purchase();
         joker.on_sell();
-
+        
         let state = joker.get_state();
         assert_eq!(state.purchase_count, 1);
         assert_eq!(state.sell_count, 1);
@@ -325,18 +314,18 @@ mod edge_case_tests {
     #[test]
     fn test_multiple_joker_interactions() {
         let mut joker = StaticLifecycleMock::with_state();
-
+        
         // Add and remove multiple jokers
         let joker_types = ["joker_a", "joker_b", "joker_c", "joker_d"];
-
+        
         for jtype in &joker_types {
             joker.on_joker_added(jtype);
         }
-
+        
         for jtype in &joker_types[..2] {
             joker.on_joker_removed(jtype);
         }
-
+        
         let state = joker.get_state();
         assert_eq!(state.jokers_added.len(), 4);
         assert_eq!(state.jokers_removed.len(), 2);
@@ -345,10 +334,10 @@ mod edge_case_tests {
     #[test]
     fn test_empty_string_joker_type() {
         let mut joker = StaticLifecycleMock::with_state();
-
+        
         joker.on_joker_added("");
         joker.on_joker_removed("");
-
+        
         let state = joker.get_state();
         assert_eq!(state.jokers_added[0], "");
         assert_eq!(state.jokers_removed[0], "");
@@ -357,10 +346,10 @@ mod edge_case_tests {
     #[test]
     fn test_very_long_joker_type() {
         let mut joker = StaticLifecycleMock::with_state();
-
+        
         let long_name = "a".repeat(1000);
         joker.on_joker_added(&long_name);
-
+        
         let state = joker.get_state();
         assert_eq!(state.jokers_added[0].len(), 1000);
     }
@@ -396,7 +385,7 @@ mod concurrency_tests {
             handle.join().unwrap();
         }
 
-        let state = joker.lock().expect("Mutex poisoned in test").get_state();
+        let state = joker.lock().unwrap().get_state();
         assert_eq!(state.round_start_count, 25);
         assert_eq!(state.round_end_count, 25);
         assert_eq!(state.jokers_added.len(), 25);
@@ -407,7 +396,7 @@ mod concurrency_tests {
     fn test_send_sync_bounds() {
         fn assert_send_sync<T: Send + Sync>() {}
         assert_send_sync::<StaticLifecycleMock>();
-
+        
         // Verify trait object also works
         let mut joker = StaticLifecycleMock::with_state();
         let _trait_obj: &mut dyn JokerLifecycle = &mut joker;
@@ -420,13 +409,13 @@ mod default_implementation_tests {
 
     /// Minimal implementation that uses all default methods
     struct MinimalJoker;
-
+    
     impl JokerLifecycle for MinimalJoker {}
 
     #[test]
     fn test_default_implementations() {
         let mut joker = MinimalJoker;
-
+        
         // All methods should be callable with default no-op implementations
         joker.on_purchase();
         joker.on_sell();
@@ -435,7 +424,7 @@ mod default_implementation_tests {
         joker.on_round_end();
         joker.on_joker_added("test");
         joker.on_joker_removed("test");
-
+        
         // Test passes if no panic occurs
     }
 }
@@ -461,7 +450,7 @@ mod integration_tests {
         for i in 0..jokers.len() {
             for j in 0..jokers.len() {
                 if i != j {
-                    jokers[i].on_joker_added(&format!("joker_{j}"));
+                    jokers[i].on_joker_added(&format!("joker_{}", j));
                 }
             }
         }
@@ -478,7 +467,7 @@ mod integration_tests {
 
         // Sell one joker
         jokers[1].on_sell();
-
+        
         // Notify others about removal
         jokers[0].on_joker_removed("joker_1");
         jokers[2].on_joker_removed("joker_1");
@@ -491,7 +480,7 @@ mod integration_tests {
 
         let state1 = jokers[1].get_state();
         assert_eq!(state1.sell_count, 1);
-
+        
         let state2 = jokers[2].get_state();
         assert_eq!(state2.jokers_removed[0], "joker_1");
     }
@@ -512,10 +501,8 @@ mod integration_tests {
             }
         }
 
-        let mut joker = ErrorProneJoker {
-            fail_on_round_start: true,
-        };
-
+        let mut joker = ErrorProneJoker { fail_on_round_start: true };
+        
         // Should not panic even with "errors"
         joker.on_purchase();
         joker.on_round_start();
@@ -523,3 +510,4 @@ mod integration_tests {
         joker.on_sell();
     }
 }
+

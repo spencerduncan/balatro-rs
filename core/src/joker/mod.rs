@@ -1327,6 +1327,10 @@ pub mod scaling_chips_jokers;
 pub mod test_utils;
 pub mod tests;
 
+// Include comprehensive tests for the new trait system
+#[cfg(test)]
+pub mod tests;
+
 // Re-export important types
 pub use conditional::{ConditionalJoker, JokerCondition};
 
