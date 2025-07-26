@@ -68,18 +68,11 @@ fn test_cargo_fmt_check() {
 /// Test that cargo clippy passes without warnings
 #[test]
 fn test_cargo_clippy_check() {
-    // Skip this test in CI to avoid recursive checking issues
-    if std::env::var("CI").is_ok() {
-        println!("Skipping clippy check in CI environment");
-        return;
-    }
-
     let output = Command::new("cargo")
         .args([
             "clippy",
-            "--workspace",
-            "--lib",
-            "--bins",
+            "--all-targets",
+            "--all-features",
             "--",
             "-D",
             "warnings",
@@ -100,14 +93,8 @@ fn test_cargo_clippy_check() {
 /// Test that cargo check passes (compilation check)
 #[test]
 fn test_cargo_check() {
-    // Skip this test in CI to avoid recursive checking issues
-    if std::env::var("CI").is_ok() {
-        println!("Skipping cargo check in CI environment");
-        return;
-    }
-
     let output = Command::new("cargo")
-        .args(["check", "--workspace", "--lib", "--bins"])
+        .args(["check", "--all-targets", "--all-features"])
         .current_dir("..")
         .output()
         .expect("Should be able to run cargo check");
@@ -350,7 +337,6 @@ fn test_clean_code_principles_in_config() {
 #[cfg(test)]
 mod test_utilities {
     /// Helper function to check if a command exists in the system
-    #[allow(dead_code)]
     pub fn command_exists(command: &str) -> bool {
         use std::process::Command;
         Command::new("which")
