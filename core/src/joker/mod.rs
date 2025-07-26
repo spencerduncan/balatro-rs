@@ -81,6 +81,7 @@ pub enum JokerId {
     Matador,
     HitTheRoad,
     TheDuo,
+    TheTrio,
     TheTrip,
     TheFamily,
     TheOrder,
@@ -1252,6 +1253,9 @@ pub mod resource_chips_jokers;
 
 // Include FourFingers joker
 pub mod four_fingers;
+
+// Include multiplicative jokers (Baron, Steel, Ancient, etc.)
+pub mod multiplicative_jokers;
 
 // Include tests for hand composition jokers (Ride the Bus, Blackboard, DNA)
 #[cfg(test)]

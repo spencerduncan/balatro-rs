@@ -36,7 +36,9 @@ fn test_send_sync_with_mutable_state() {
                 ProcessResult {
                     chips_added: 0,
                     mult_added: 2.0,
+                    mult_multiplier: 1.0,
                     retriggered: false,
+                    message: None,
                 }
             } else {
                 ProcessResult::default()
@@ -135,7 +137,9 @@ fn test_complex_state_thread_safety() {
             ProcessResult {
                 chips_added: 0,
                 mult_added: mult,
+                mult_multiplier: 1.0,
                 retriggered: false,
+                message: None,
             }
         }
     }
@@ -227,7 +231,9 @@ fn test_trait_object_thread_safety() {
             ProcessResult {
                 chips_added: self.counter as u64,
                 mult_added: 1.0,
+                mult_multiplier: 1.0,
                 retriggered: false,
+                message: None,
             }
         }
     }
@@ -244,7 +250,9 @@ fn test_trait_object_thread_safety() {
             ProcessResult {
                 chips_added: *state as u64,
                 mult_added: 2.0,
+                mult_multiplier: 1.0,
                 retriggered: false,
+                message: None,
             }
         }
     }

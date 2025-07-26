@@ -2399,7 +2399,7 @@ mod tests {
 
         // First call should miss cache
         let initial_metrics = game.get_joker_cache_metrics().clone();
-        let (chips1, mult1, money1, _mult_multiplier1, messages1) =
+        let (chips1, mult1, money1, _mult_multiplier1, _messages1) =
             game.process_joker_effects(&made_hand);
 
         // Verify cache metrics show a miss
@@ -2409,7 +2409,7 @@ mod tests {
         // Second call with same input should potentially hit cache
         // Note: Since we create a new GameContext each time with current game state,
         // cache hits depend on the game state being identical
-        let (chips2, mult2, money2, _mult_multiplier2, messages2) =
+        let (chips2, mult2, money2, _mult_multiplier2, _messages2) =
             game.process_joker_effects(&made_hand);
 
         // Results should be identical regardless of cache

@@ -5,6 +5,7 @@
 //! joker behavior, making the system more modular and maintainable.
 
 use crate::card::Card;
+use crate::hand::SelectHand;
 use crate::joker_state::JokerStateManager;
 use crate::stage::Stage;
 use serde::{Deserialize, Serialize};
@@ -242,6 +243,7 @@ pub struct ProcessContext<'a> {
     pub played_cards: &'a [Card],
     pub held_cards: &'a [Card],
     pub events: &'a mut Vec<GameEvent>,
+    pub hand: &'a SelectHand,
     pub joker_state_manager: &'a JokerStateManager,
 }
 
@@ -249,7 +251,9 @@ pub struct ProcessContext<'a> {
 pub struct ProcessResult {
     pub chips_added: u64,
     pub mult_added: f64,
+    pub mult_multiplier: f64,
     pub retriggered: bool,
+    pub message: Option<String>,
 }
 
 impl Default for ProcessResult {
@@ -257,7 +261,9 @@ impl Default for ProcessResult {
         Self {
             chips_added: 0,
             mult_added: 0.0,
+            mult_multiplier: 1.0,
             retriggered: false,
+            message: None,
         }
     }
 }

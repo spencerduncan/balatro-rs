@@ -813,7 +813,7 @@ mod dna_first_hand_tests {
             let hand = SelectHand::new(single_card);
 
             // DNA might still trigger but depends on implementation
-            let effect = dna_joker.on_hand_played(&mut context, &hand);
+            let _effect = dna_joker.on_hand_played(&mut context, &hand);
 
             // This test just ensures no crash on different stages
             // The actual behavior depends on whether DNA checks stage
@@ -982,7 +982,7 @@ mod edge_case_tests {
         // This test demonstrates the bug - it will pass with the wrong implementation
         // and fail when we fix it to the correct behavior
 
-        let joker = create_blackboard();
+        let _joker = create_blackboard();
 
         // The current implementation uses AllSameSuitOrRank which is incorrect
         // It should only activate when all cards are Spades OR Clubs (black suits)
@@ -994,7 +994,7 @@ mod edge_case_tests {
             Card::new(Rank::King, Suit::Heart),
             Card::new(Rank::Queen, Suit::Heart),
         ];
-        let hand_hearts = SelectHand::new(all_hearts);
+        let _hand_hearts = SelectHand::new(all_hearts);
         // With correct implementation, this should NOT activate
         // but with current AllSameSuitOrRank it DOES activate (incorrectly)
 
