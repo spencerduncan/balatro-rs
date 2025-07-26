@@ -8,8 +8,7 @@ use crate::{
     hand::SelectHand,
     joker::{
         traits::{ProcessContext, ProcessResult, Rarity},
-        GameContext, Joker, JokerEffect, JokerGameplay, JokerId, JokerIdentity,
-        JokerRarity,
+        GameContext, Joker, JokerEffect, JokerGameplay, JokerId, JokerIdentity, JokerRarity,
     },
     stage::Stage,
 };
@@ -204,7 +203,10 @@ impl Joker for BullJoker {
 
         JokerEffect::new()
             .with_chips(chips_bonus)
-            .with_message(format!("Bull: +{chips_bonus} Chips (${} owned)", context.money))
+            .with_message(format!(
+                "Bull: +{chips_bonus} Chips (${} owned)",
+                context.money
+            ))
     }
 }
 
@@ -445,11 +447,7 @@ impl JokerGameplay for ScaryFaceJoker {
     }
 
     fn can_trigger(&self, stage: &Stage, context: &ProcessContext) -> bool {
-        matches!(stage, Stage::Blind(_))
-            && context
-                .played_cards
-                .iter()
-                .any(|card| Self::is_face_card(card))
+        matches!(stage, Stage::Blind(_)) && context.played_cards.iter().any(Self::is_face_card)
     }
 }
 
