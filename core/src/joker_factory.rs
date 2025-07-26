@@ -1,3 +1,4 @@
+use crate::joker::four_fingers::FourFingersJoker;
 use crate::joker::{Joker, JokerId, JokerRarity};
 use crate::joker_impl::*;
 use crate::scaling_joker_custom;
@@ -68,6 +69,7 @@ impl JokerFactory {
             JokerId::Blueprint => Some(Box::new(BlueprintJoker::new())),
             JokerId::Photograph => Some(Box::new(PhotographJoker::new())),
             JokerId::TheOrder => Some(Box::new(TheOrderJoker)),
+            JokerId::FourFingers => Some(Box::new(FourFingersJoker::new())),
             // TODO: Implement remaining jokers
             _ => None,
         }
@@ -128,6 +130,7 @@ impl JokerFactory {
                 VagabondJoker,
                 // Special mechanic jokers
                 TheOrder,
+                FourFingers,
             ],
             JokerRarity::Rare => vec![
                 // RNG-based jokers (Issue #442)

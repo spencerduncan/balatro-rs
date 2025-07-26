@@ -4,7 +4,7 @@
 use balatro_rs::card::{Card, Suit, Value};
 use balatro_rs::hand::{Hand, SelectHand};
 use balatro_rs::joker::{GameContext, Joker, JokerEffect, JokerId, JokerRarity};
-use balatro_rs::joker_state::{JokerState, JokerStateManager};
+use balatro_rs::joker_state::{JokerPersistenceManager, JokerState, JokerStateManager};
 use balatro_rs::rank::HandRank;
 use balatro_rs::scaling_joker::*;
 use balatro_rs::scaling_joker_custom::*;
@@ -483,11 +483,227 @@ fn test_joker_descriptions_are_descriptive() {
 // These are placeholder tests since we can't easily create full GameContext in unit tests
 
 #[test]
-#[ignore] // Ignore until we have proper test harness
 fn test_scaling_joker_state_persistence() {
-    // This test would verify that joker state is properly saved and restored
-    // across game sessions using the JokerStateManager
-    todo!("Implement integration test for state persistence");
+    // Create test harness with state manager
+    let mut harness = create_test_harness();
+
+    // Create scaling jokers with different triggers and reset conditions
+    let hand_trigger_joker = ScalingJoker::new(
+        JokerId::Trousers,
+        "Spare Trousers".to_string(),
+        "+2 Mult per Two Pair played".to_string(),
+        JokerRarity::Common,
+        0.0,
+        2.0,
+        ScalingTrigger::HandPlayed(HandRank::TwoPair),
+        ScalingEffectType::Mult,
+    );
+
+    let discard_trigger_joker = ScalingJoker::new(
+        JokerId::GreenJoker,
+        "Green Joker".to_string(),
+        "+1 Mult per card discarded".to_string(),
+        JokerRarity::Common,
+        0.0,
+        1.0,
+        ScalingTrigger::CardDiscarded,
+        ScalingEffectType::Mult,
+    );
+
+    let money_trigger_joker = ScalingJoker::new(
+        JokerId::Matador,
+        "Matador".to_string(),
+        "+0.5X Mult per money gained".to_string(),
+        JokerRarity::Uncommon,
+        1.0,
+        0.5,
+        ScalingTrigger::MoneyGained,
+        ScalingEffectType::MultMultiplier,
+    );
+
+    let round_reset_joker = ScalingJoker::new(
+        JokerId::Ceremonial,
+        "Ceremonial Dagger".to_string(),
+        "+1X Mult per blind completed, resets each round".to_string(),
+        JokerRarity::Rare,
+        1.0,
+        1.0,
+        ScalingTrigger::BlindCompleted,
+        ScalingEffectType::MultMultiplier,
+    )
+    .with_reset_condition(ResetCondition::RoundEnd);
+
+    // Add jokers to harness
+    harness.add_joker(hand_trigger_joker);
+    harness.add_joker(discard_trigger_joker);
+    harness.add_joker(money_trigger_joker);
+    harness.add_joker(round_reset_joker);
+
+    // Step 1: Accumulate state through various game actions
+
+    // Play hands to trigger Spare Trousers
+    harness.simulate_hand_played(HandRank::TwoPair);
+    harness.simulate_hand_played(HandRank::TwoPair);
+    harness.simulate_hand_played(HandRank::OnePair); // Should not trigger
+    harness.simulate_hand_played(HandRank::TwoPair);
+
+    // Discard cards to trigger Green Joker
+    harness.simulate_cards_discarded(3);
+    harness.simulate_cards_discarded(2);
+
+    // Trigger money gained for Matador
+    harness.process_scaling_event(ScalingEvent::MoneyGained);
+    harness.process_scaling_event(ScalingEvent::MoneyGained);
+    harness.process_scaling_event(ScalingEvent::MoneyGained);
+
+    // Complete blinds for Ceremonial Dagger
+    harness.process_scaling_event(ScalingEvent::BlindCompleted);
+    harness.process_scaling_event(ScalingEvent::BlindCompleted);
+
+    // Step 2: Verify accumulated values before save
+    assert_eq!(harness.get_accumulated_value(JokerId::Trousers), 6.0); // 3 * 2.0
+    assert_eq!(harness.get_accumulated_value(JokerId::GreenJoker), 5.0); // 3 + 2
+    assert_eq!(harness.get_accumulated_value(JokerId::Matador), 2.5); // 1.0 + 3 * 0.5
+    assert_eq!(harness.get_accumulated_value(JokerId::Ceremonial), 3.0); // 1.0 + 2 * 1.0
+
+    // Step 3: Create persistence manager and save state
+    let state_manager_arc = Arc::clone(&harness.test_data.state_manager);
+    let persistence_manager = JokerPersistenceManager::new(state_manager_arc);
+
+    // Convert scaling jokers to Box<dyn Joker> for persistence
+    let jokers_as_trait: Vec<Box<dyn Joker>> = harness
+        .jokers
+        .iter()
+        .map(|j| Box::new(j.clone()) as Box<dyn Joker>)
+        .collect();
+
+    let context = harness.create_context();
+
+    // Save all states
+    let save_data = persistence_manager
+        .save_all_states(&jokers_as_trait, &context)
+        .expect("Failed to save joker states");
+
+    // Verify save data structure
+    assert_eq!(save_data.joker_states.len(), 4);
+    assert!(save_data.joker_states.contains_key(&JokerId::Trousers));
+    assert!(save_data.joker_states.contains_key(&JokerId::GreenJoker));
+    assert!(save_data.joker_states.contains_key(&JokerId::Matador));
+    assert!(save_data.joker_states.contains_key(&JokerId::Ceremonial));
+
+    // Step 4: Clear state to simulate loading from save
+    harness.test_data.state_manager.clear();
+
+    // Verify state is cleared
+    assert_eq!(harness.get_accumulated_value(JokerId::Trousers), 0.0);
+    assert_eq!(harness.get_accumulated_value(JokerId::GreenJoker), 0.0);
+    assert_eq!(harness.get_accumulated_value(JokerId::Matador), 0.0);
+    assert_eq!(harness.get_accumulated_value(JokerId::Ceremonial), 0.0);
+
+    // Step 5: Load state back
+    let load_result = persistence_manager
+        .load_all_states(&save_data, &jokers_as_trait, &context)
+        .expect("Failed to load joker states");
+
+    assert_eq!(load_result.loaded_count, 4);
+    assert_eq!(load_result.errors.len(), 0);
+
+    // Step 6: Verify state was restored correctly
+    assert_eq!(harness.get_accumulated_value(JokerId::Trousers), 6.0);
+    assert_eq!(harness.get_accumulated_value(JokerId::GreenJoker), 5.0);
+    assert_eq!(harness.get_accumulated_value(JokerId::Matador), 2.5);
+    assert_eq!(harness.get_accumulated_value(JokerId::Ceremonial), 3.0);
+
+    // Step 7: Test that jokers continue accumulating from restored state
+    harness.simulate_hand_played(HandRank::TwoPair);
+    harness.simulate_cards_discarded(1);
+    harness.process_scaling_event(ScalingEvent::MoneyGained);
+    harness.process_scaling_event(ScalingEvent::BlindCompleted);
+
+    assert_eq!(harness.get_accumulated_value(JokerId::Trousers), 8.0); // 6.0 + 2.0
+    assert_eq!(harness.get_accumulated_value(JokerId::GreenJoker), 6.0); // 5.0 + 1.0
+    assert_eq!(harness.get_accumulated_value(JokerId::Matador), 3.0); // 2.5 + 0.5
+    assert_eq!(harness.get_accumulated_value(JokerId::Ceremonial), 4.0); // 3.0 + 1.0
+
+    // Step 8: Test reset conditions still work after load
+    harness.process_scaling_event(ScalingEvent::RoundEnd);
+
+    // Only Ceremonial should reset
+    assert_eq!(harness.get_accumulated_value(JokerId::Trousers), 8.0); // No change
+    assert_eq!(harness.get_accumulated_value(JokerId::GreenJoker), 6.0); // No change
+    assert_eq!(harness.get_accumulated_value(JokerId::Matador), 3.0); // No change
+    assert_eq!(harness.get_accumulated_value(JokerId::Ceremonial), 1.0); // Reset to base
+
+    // Step 9: Test independent state tracking
+    // Create a new harness with different joker IDs to test independence
+    let mut harness2 = create_test_harness();
+
+    let banner_joker = ScalingJoker::new(
+        JokerId::Banner,
+        "Banner".to_string(),
+        "+1 Chips per dollar held".to_string(),
+        JokerRarity::Common,
+        0.0,
+        1.0,
+        ScalingTrigger::MoneyGained,
+        ScalingEffectType::Chips,
+    );
+
+    harness2.add_joker(banner_joker);
+
+    // Accumulate some state
+    harness2.process_scaling_event(ScalingEvent::MoneyGained);
+    harness2.process_scaling_event(ScalingEvent::MoneyGained);
+
+    assert_eq!(harness2.get_accumulated_value(JokerId::Banner), 2.0);
+
+    // Create separate save data
+    let jokers2_as_trait: Vec<Box<dyn Joker>> = harness2
+        .jokers
+        .iter()
+        .map(|j| Box::new(j.clone()) as Box<dyn Joker>)
+        .collect();
+
+    let state_manager2_arc = Arc::clone(&harness2.test_data.state_manager);
+    let persistence_manager2 = JokerPersistenceManager::new(state_manager2_arc);
+
+    let context2 = harness2.create_context();
+    let save_data2 = persistence_manager2
+        .save_all_states(&jokers2_as_trait, &context2)
+        .expect("Failed to save second set of joker states");
+
+    // Verify the two save files are independent
+    assert_eq!(save_data2.joker_states.len(), 1);
+    assert!(save_data2.joker_states.contains_key(&JokerId::Banner));
+    assert!(!save_data2.joker_states.contains_key(&JokerId::Trousers));
+
+    // Step 10: Test partial load (loading subset of jokers)
+    let partial_jokers: Vec<Box<dyn Joker>> = vec![
+        Box::new(harness.jokers[0].clone()), // Just Trousers
+        Box::new(harness.jokers[2].clone()), // Just Matador
+    ];
+
+    harness.test_data.state_manager.clear();
+
+    let partial_load_result = persistence_manager
+        .load_all_states(&save_data, &partial_jokers, &context)
+        .expect("Failed to load partial joker states");
+
+    assert_eq!(partial_load_result.loaded_count, 2);
+
+    // Only the requested jokers should be loaded from the original save data
+    assert_eq!(harness.get_accumulated_value(JokerId::Trousers), 6.0); // Original saved value
+    assert_eq!(harness.get_accumulated_value(JokerId::GreenJoker), 0.0); // Not loaded
+    assert_eq!(harness.get_accumulated_value(JokerId::Matador), 2.5); // Original saved value
+    assert_eq!(harness.get_accumulated_value(JokerId::Ceremonial), 0.0); // Not loaded
+
+    println!("✅ Scaling joker state persistence test passed!");
+    println!("   - Multiple jokers with different triggers preserved state correctly");
+    println!("   - State restored accurately after save/load cycle");
+    println!("   - Jokers continued accumulating from restored state");
+    println!("   - Reset conditions preserved and functional after load");
+    println!("   - Independent state tracking verified");
+    println!("   - Partial loading supported");
 }
 
 #[test]

@@ -9,6 +9,37 @@ use crate::card::Suit;
 use crate::card::Value;
 use crate::error::PlayHandError;
 use crate::rank::HandRank;
+use std::cell::RefCell;
+
+// Thread-local state for hand evaluation modifiers (e.g., FourFingers)
+thread_local! {
+    static HAND_EVAL_CONFIG: RefCell<HandEvalConfig> = RefCell::new(HandEvalConfig::default());
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct HandEvalConfig {
+    pub min_flush_cards: usize,
+    pub min_straight_cards: usize,
+}
+
+impl Default for HandEvalConfig {
+    fn default() -> Self {
+        Self {
+            min_flush_cards: 5,
+            min_straight_cards: 5,
+        }
+    }
+}
+
+pub fn set_hand_eval_config(config: HandEvalConfig) {
+    HAND_EVAL_CONFIG.with(|c| {
+        *c.borrow_mut() = config;
+    });
+}
+
+pub fn get_hand_eval_config() -> HandEvalConfig {
+    HAND_EVAL_CONFIG.with(|c| *c.borrow())
+}
 
 // Hand, SelectHand and MadeHand are all representations of a collection of Card,
 // just at different phases in the cycle of selecting, executing and scoring cards.
@@ -85,11 +116,21 @@ impl HandAnalysis {
         let mut sorted_counts: Vec<u8> = value_counts.iter().copied().filter(|&c| c > 0).collect();
         sorted_counts.sort_by(|a, b| b.cmp(a)); // Sort descending
 
-        // Check for flush (5 cards of same suit)
-        let is_flush = cards.len() == 5 && suit_counts.contains(&5);
+        // Check for flush (normally 5 cards of same suit, but FourFingers allows 4)
+        let config = get_hand_eval_config();
+        let is_flush = if config.min_flush_cards < 5 && cards.len() >= config.min_flush_cards {
+            // FourFingers mode: check if we have at least min_flush_cards of same suit
+            suit_counts
+                .iter()
+                .any(|&count| count as usize >= config.min_flush_cards)
+        } else {
+            // Normal mode: need exactly 5 cards of same suit
+            cards.len() == 5 && suit_counts.contains(&5)
+        };
 
         // Check for straight
-        let is_straight = Self::check_straight(&value_counts, cards.len());
+        let is_straight =
+            Self::check_straight(&value_counts, cards.len(), config.min_straight_cards);
 
         Self {
             value_counts,
@@ -103,17 +144,22 @@ impl HandAnalysis {
     }
 
     /// Check if hand forms a straight
-    fn check_straight(value_counts: &[u8; 13], hand_size: usize) -> bool {
-        if hand_size != 5 {
+    fn check_straight(
+        value_counts: &[u8; 13],
+        hand_size: usize,
+        min_straight_cards: usize,
+    ) -> bool {
+        // Need at least min_straight_cards to form a straight
+        if hand_size < min_straight_cards {
             return false;
         }
 
-        // Find consecutive sequence of 5 cards
+        // Find consecutive sequence of min_straight_cards
         let mut consecutive = 0;
         for &count in value_counts.iter() {
             if count > 0 {
                 consecutive += 1;
-                if consecutive == 5 {
+                if consecutive == min_straight_cards {
                     return true;
                 }
             } else {
@@ -121,14 +167,18 @@ impl HandAnalysis {
             }
         }
 
-        // Check for low ace straight (A, 2, 3, 4, 5)
-        if value_counts[Value::Ace as usize] > 0
-            && value_counts[Value::Two as usize] > 0
-            && value_counts[Value::Three as usize] > 0
-            && value_counts[Value::Four as usize] > 0
-            && value_counts[Value::Five as usize] > 0
-        {
-            return true;
+        // Check for low ace straight (A, 2, 3, 4, 5) or (A, 2, 3, 4) for FourFingers
+        if min_straight_cards <= 5 && value_counts[Value::Ace as usize] > 0 {
+            let required_low_cards = min_straight_cards - 1; // Ace counts as one
+            let mut found_low_cards = 0;
+            for i in 0..required_low_cards {
+                if value_counts[Value::Two as usize + i] > 0 {
+                    found_low_cards += 1;
+                }
+            }
+            if found_low_cards == required_low_cards {
+                return true;
+            }
         }
 
         false
@@ -445,42 +495,94 @@ impl SelectHand {
     }
 
     pub(crate) fn is_straight(&self) -> Option<SelectHand> {
-        if self.len() != 5 {
+        let config = get_hand_eval_config();
+        if self.len() < config.min_straight_cards {
             return None;
         }
-        // Iterate our sorted values. Each value must be one more than the previous.
-        let values = self.values();
-        if values.windows(2).all(|v| (v[1] as u16 - v[0] as u16) == 1) {
-            return Some(self.clone());
-        }
 
-        // Special case for low ace.
-        // Values are sorted with Ace as high (2, 3, 4, 5, A)
-        // Therefore, we can check that last value is ace, first value is two.
-        // Then remove the last value (ace) from vec and check for incremental values
-        // for everything else (2, 3, 4, 5).
-        if values[4] == Value::Ace && values[0] == Value::Two {
-            let skip_last: Vec<Value> = values.into_iter().rev().skip(1).rev().collect();
-            if skip_last
-                .windows(2)
-                .all(|v| (v[1] as u16 - v[0] as u16) == 1)
-            {
+        let values = self.values();
+
+        // For FourFingers mode, we need to find any consecutive sequence of min_straight_cards
+        if config.min_straight_cards < 5 {
+            // Check all possible consecutive sequences
+            for start in 0..=(values.len().saturating_sub(config.min_straight_cards)) {
+                let sequence = &values[start..start + config.min_straight_cards];
+                if sequence
+                    .windows(2)
+                    .all(|v| (v[1] as u16 - v[0] as u16) == 1)
+                {
+                    // Found a straight - collect the cards for this sequence
+                    let straight_values: Vec<Value> = sequence.to_vec();
+                    let straight_cards: Vec<Card> = self
+                        .0
+                        .iter()
+                        .filter(|card| straight_values.contains(&card.value))
+                        .take(config.min_straight_cards)
+                        .cloned()
+                        .collect();
+                    return Some(SelectHand::new(straight_cards));
+                }
+            }
+
+            // Special case for low ace straight (A, 2, 3, 4) in FourFingers mode
+            if config.min_straight_cards == 4 && values.contains(&Value::Ace) {
+                let low_values = [Value::Two, Value::Three, Value::Four];
+                if low_values.iter().all(|v| values.contains(v)) {
+                    let straight_cards: Vec<Card> = self
+                        .0
+                        .iter()
+                        .filter(|card| card.value == Value::Ace || low_values.contains(&card.value))
+                        .take(4)
+                        .cloned()
+                        .collect();
+                    return Some(SelectHand::new(straight_cards));
+                }
+            }
+        } else {
+            // Normal 5-card straight logic
+            if self.len() != 5 {
+                return None;
+            }
+
+            if values.windows(2).all(|v| (v[1] as u16 - v[0] as u16) == 1) {
                 return Some(self.clone());
             }
+
+            // Special case for low ace (A, 2, 3, 4, 5)
+            if values[4] == Value::Ace && values[0] == Value::Two {
+                let skip_last: Vec<Value> = values.into_iter().rev().skip(1).rev().collect();
+                if skip_last
+                    .windows(2)
+                    .all(|v| (v[1] as u16 - v[0] as u16) == 1)
+                {
+                    return Some(self.clone());
+                }
+            }
         }
+
         None
     }
 
     pub(crate) fn is_flush(&self) -> Option<SelectHand> {
-        if self.len() < 5 {
+        let config = get_hand_eval_config();
+        if self.len() < config.min_flush_cards {
             return None;
         }
+
+        // Find any suit with at least min_flush_cards cards
         if let Some((_value, cards)) = self
             .suits_freq()
             .into_iter()
-            .find(|(_key, val)| val.len() == 5)
+            .find(|(_key, val)| val.len() >= config.min_flush_cards)
         {
-            Some(SelectHand::new(cards))
+            // For FourFingers, return the first min_flush_cards of the suit
+            if cards.len() > config.min_flush_cards {
+                Some(SelectHand::new(
+                    cards.into_iter().take(config.min_flush_cards).collect(),
+                ))
+            } else {
+                Some(SelectHand::new(cards))
+            }
         } else {
             None
         }

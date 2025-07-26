@@ -341,9 +341,9 @@ fn test_joker_target_comprehensive_validation() {
     for (target, should_pass, description) in test_cases {
         let result = target.validate(&game);
         if should_pass {
-            assert!(result.is_ok(), "Failed: {}", description);
+            assert!(result.is_ok(), "Failed: {description}");
         } else {
-            assert!(result.is_err(), "Should have failed: {}", description);
+            assert!(result.is_err(), "Should have failed: {description}");
         }
     }
 }
@@ -357,17 +357,17 @@ fn test_joker_target_with_different_game_states() {
     // Test single joker game
     let target = JokerTarget::new(0);
     assert!(target.validate(&single_joker_game).is_ok());
-    assert!(!target.validate(&Game::default()).is_ok()); // Empty game
+    assert!(target.validate(&Game::default()).is_err()); // Empty game
 
     let invalid_target = JokerTarget::new(1);
-    assert!(!invalid_target.validate(&single_joker_game).is_ok());
+    assert!(invalid_target.validate(&single_joker_game).is_err());
     assert!(invalid_target.validate(&many_jokers_game).is_ok());
 }
 
 #[test]
 fn test_joker_target_debug_output() {
     let target = JokerTarget::joker_of_type(2, JokerId::Joker);
-    let debug_output = format!("{:?}", target);
+    let debug_output = format!("{target:?}");
 
     assert!(debug_output.contains("JokerTarget"));
     assert!(debug_output.contains("slot: 2"));

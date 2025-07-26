@@ -18,7 +18,7 @@ mod corrupted_save_handling_tests {
 
         assert!(result.is_err());
         if let Err(e) = result {
-            println!("Error message: {}", e);
+            println!("Error message: {e}");
             // Just check that it's a deserialization error for now
             assert!(
                 e.to_string().contains("Deserialization") || e.to_string().contains("expected")
@@ -280,7 +280,7 @@ mod save_format_versioning_tests {
             }
             Err(e) => {
                 // If it fails, should be due to version incompatibility
-                println!("Future version error: {}", e);
+                println!("Future version error: {e}");
                 assert!(
                     e.to_string().contains("version")
                         || e.to_string().contains("unsupported")

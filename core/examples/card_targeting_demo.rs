@@ -47,7 +47,7 @@ fn main() {
 
     match target.validate(&game) {
         Ok(()) => println!("✓ Target validation successful"),
-        Err(e) => println!("✗ Target validation failed: {}", e),
+        Err(e) => println!("✗ Target validation failed: {e}"),
     }
 
     // Test 2: Test out of bounds validation
@@ -57,7 +57,7 @@ fn main() {
 
     match invalid_target.validate(&game) {
         Ok(()) => println!("✗ Unexpected success - target should be invalid"),
-        Err(e) => println!("✓ Expected validation error: {}", e),
+        Err(e) => println!("✓ Expected validation error: {e}"),
     }
 
     // Test 3: Test duplicate indices
@@ -67,7 +67,7 @@ fn main() {
 
     match duplicate_target.validate(&game) {
         Ok(()) => println!("✗ Unexpected success - target should be invalid"),
-        Err(e) => println!("✓ Expected validation error: {}", e),
+        Err(e) => println!("✓ Expected validation error: {e}"),
     }
 
     // Test 4: Test Target helper methods
@@ -94,10 +94,10 @@ fn main() {
     for (i, target) in targets.iter().enumerate() {
         println!("Target {}: {:?}", i + 1, target.target_type());
         let is_valid = target.is_valid(&game);
-        println!("  Valid: {}", is_valid);
+        println!("  Valid: {is_valid}");
         if !is_valid {
             if let Err(e) = target.validate(&game) {
-                println!("  Error: {}", e);
+                println!("  Error: {e}");
             }
         }
     }
@@ -112,7 +112,7 @@ fn main() {
     ];
 
     for collection in collections {
-        println!("Collection: {}", collection);
+        println!("Collection: {collection}");
     }
 
     // Test 7: Get cards from discard pile (the only implemented collection)
@@ -128,7 +128,7 @@ fn main() {
                 println!("  Card {}: {:?} of {:?}", i, card.value, card.suit);
             }
         }
-        Err(e) => println!("✗ Failed to get cards: {}", e),
+        Err(e) => println!("✗ Failed to get cards: {e}"),
     }
 
     println!("\nDemo completed successfully!");

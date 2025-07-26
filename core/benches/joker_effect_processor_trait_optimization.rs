@@ -5,8 +5,8 @@
 
 use balatro_rs::card::{Card, Suit, Value};
 use balatro_rs::hand::SelectHand;
-use balatro_rs::joker::{GameContext, Joker, JokerEffect, JokerId};
-use balatro_rs::joker_effect_processor::{JokerEffectProcessor, ProcessingContext};
+use balatro_rs::joker::{GameContext, Joker};
+use balatro_rs::joker_effect_processor::JokerEffectProcessor;
 use balatro_rs::joker_impl::{GreedyJoker, LustyJoker, TheJoker};
 use balatro_rs::rank::HandRank;
 use balatro_rs::rng::GameRng;
@@ -197,7 +197,7 @@ fn bench_trait_detection_caching(c: &mut Criterion) {
 
     group.bench_function("cold_trait_detection", |b| {
         b.iter(|| {
-            let mut processor = JokerEffectProcessor::new();
+            let processor = JokerEffectProcessor::new();
 
             // Cold cache - first detection of each joker
             for joker in &jokers {
@@ -208,7 +208,7 @@ fn bench_trait_detection_caching(c: &mut Criterion) {
     });
 
     group.bench_function("warm_trait_detection", |b| {
-        let mut processor = JokerEffectProcessor::new();
+        let processor = JokerEffectProcessor::new();
 
         // Pre-warm the cache
         // TODO: Fix - detect_joker_traits is now private

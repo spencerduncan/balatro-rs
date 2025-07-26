@@ -42,7 +42,7 @@ mod play_hand_error_tests {
     fn test_play_hand_error_clone() {
         let error = PlayHandError::TooManyCards;
         let cloned_error = error.clone();
-        assert_eq!(format!("{}", error), format!("{}", cloned_error));
+        assert_eq!(format!("{error}"), format!("{}", cloned_error));
     }
 
     #[test]
@@ -50,7 +50,7 @@ mod play_hand_error_tests {
         // Test that the same error types produce the same string representation
         let error1 = PlayHandError::TooManyCards;
         let error2 = PlayHandError::TooManyCards;
-        assert_eq!(format!("{}", error1), format!("{}", error2));
+        assert_eq!(format!("{error1}"), format!("{}", error2));
     }
 
     #[test]
@@ -110,7 +110,7 @@ mod action_space_error_tests {
     fn test_action_space_error_clone() {
         let error = ActionSpaceError::InvalidIndex;
         let cloned_error = error.clone();
-        assert_eq!(format!("{}", error), format!("{}", cloned_error));
+        assert_eq!(format!("{error}"), format!("{}", cloned_error));
     }
 
     #[test]
@@ -118,7 +118,7 @@ mod action_space_error_tests {
         // Test that the same error types produce the same string representation
         let error1 = ActionSpaceError::InvalidIndex;
         let error2 = ActionSpaceError::InvalidIndex;
-        assert_eq!(format!("{}", error1), format!("{}", error2));
+        assert_eq!(format!("{error1}"), format!("{}", error2));
     }
 
     #[test]
@@ -180,11 +180,11 @@ mod game_error_tests {
     #[test]
     fn test_game_error_with_data() {
         let joker_not_found = GameError::JokerNotFound("TestJoker".to_string());
-        assert_eq!(format!("{}", joker_not_found), "Joker not found: TestJoker");
+        assert_eq!(format!("{joker_not_found}"), "Joker not found: TestJoker");
 
         let invalid_operation = GameError::InvalidOperation("test operation".to_string());
         assert_eq!(
-            format!("{}", invalid_operation),
+            format!("{invalid_operation}"),
             "Invalid operation: test operation"
         );
     }
@@ -197,10 +197,7 @@ mod game_error_tests {
         match game_error {
             GameError::InvalidHand(inner) => {
                 // Test that the inner error produces the expected string
-                assert_eq!(
-                    format!("{}", inner),
-                    "Played hand contains more than 5 cards"
-                );
+                assert_eq!(format!("{inner}"), "Played hand contains more than 5 cards");
             }
             _ => panic!("Expected InvalidHand variant"),
         }
@@ -212,7 +209,7 @@ mod game_error_tests {
         let game_error = GameError::from(action_space_error);
 
         // Test that the conversion produces the expected error message
-        assert_eq!(format!("{}", game_error), "Invalid action space");
+        assert_eq!(format!("{game_error}"), "Invalid action space");
     }
 
     #[test]
@@ -221,7 +218,7 @@ mod game_error_tests {
         let game_error: GameError = play_hand_error.into();
 
         if let GameError::InvalidHand(inner) = game_error {
-            assert_eq!(format!("{}", inner), "Played hand contains no cards");
+            assert_eq!(format!("{inner}"), "Played hand contains no cards");
         } else {
             panic!("Expected InvalidHand variant");
         }
@@ -232,14 +229,14 @@ mod game_error_tests {
         assert_eq!(format!("{:?}", GameError::InvalidAction), "InvalidAction");
 
         let joker_not_found = GameError::JokerNotFound("test".to_string());
-        assert_eq!(format!("{:?}", joker_not_found), "JokerNotFound(\"test\")");
+        assert_eq!(format!("{joker_not_found:?}"), "JokerNotFound(\"test\")");
     }
 
     #[test]
     fn test_game_error_clone() {
         let error = GameError::InvalidBalance;
         let cloned_error = error.clone();
-        assert_eq!(format!("{}", error), format!("{}", cloned_error));
+        assert_eq!(format!("{error}"), format!("{}", cloned_error));
     }
 
     #[test]
@@ -247,14 +244,14 @@ mod game_error_tests {
         // Test string representations are consistent
         let error1 = GameError::InvalidAction;
         let error2 = GameError::InvalidAction;
-        assert_eq!(format!("{}", error1), format!("{}", error2));
+        assert_eq!(format!("{error1}"), format!("{}", error2));
 
         let joker1 = GameError::JokerNotFound("joker1".to_string());
         let joker2 = GameError::JokerNotFound("joker1".to_string());
         let joker3 = GameError::JokerNotFound("joker2".to_string());
 
-        assert_eq!(format!("{}", joker1), format!("{}", joker2));
-        assert_ne!(format!("{}", joker1), format!("{}", joker3));
+        assert_eq!(format!("{joker1}"), format!("{}", joker2));
+        assert_ne!(format!("{joker1}"), format!("{}", joker3));
     }
 
     #[test]
@@ -302,8 +299,8 @@ mod game_error_tests {
         ];
 
         for error in errors {
-            let _ = format!("{}", error);
-            let _ = format!("{:?}", error);
+            let _ = format!("{error}");
+            let _ = format!("{error:?}");
         }
     }
 }
@@ -321,11 +318,11 @@ mod error_conversion_tests {
         ];
 
         for play_error in play_hand_errors {
-            let expected_message = format!("{}", play_error);
+            let expected_message = format!("{play_error}");
             let game_error: GameError = play_error.into();
             match game_error {
                 GameError::InvalidHand(inner) => {
-                    assert_eq!(format!("{}", inner), expected_message);
+                    assert_eq!(format!("{inner}"), expected_message);
                 }
                 _ => panic!("Expected InvalidHand variant"),
             }
@@ -342,7 +339,7 @@ mod error_conversion_tests {
 
         for action_error in action_space_errors {
             let game_error: GameError = action_error.into();
-            assert_eq!(format!("{}", game_error), "Invalid action space");
+            assert_eq!(format!("{game_error}"), "Invalid action space");
         }
     }
 }
@@ -406,7 +403,7 @@ mod comprehensive_error_tests {
         let game_error = GameError::InvalidHand(PlayHandError::NoCards);
 
         if let GameError::InvalidHand(inner) = game_error {
-            assert_eq!(format!("{}", inner), "Played hand contains no cards");
+            assert_eq!(format!("{inner}"), "Played hand contains no cards");
         } else {
             panic!("Error downcasting failed");
         }
@@ -418,11 +415,11 @@ mod comprehensive_error_tests {
         let long_string = "a".repeat(1000);
         let error = GameError::JokerNotFound(long_string.clone());
 
-        assert!(format!("{}", error).contains(&long_string));
+        assert!(format!("{error}").contains(&long_string));
 
         // Test cloning with owned data
         let cloned_error = error.clone();
-        assert_eq!(format!("{}", error), format!("{}", cloned_error));
+        assert_eq!(format!("{error}"), format!("{}", cloned_error));
     }
 
     #[test]
@@ -435,8 +432,8 @@ mod comprehensive_error_tests {
         ];
 
         for error in simple_errors {
-            let display_str = format!("{}", error);
-            let debug_str = format!("{:?}", error);
+            let display_str = format!("{error}");
+            let debug_str = format!("{error:?}");
 
             // Both should be non-empty
             assert!(!display_str.is_empty());
@@ -462,7 +459,7 @@ mod security_error_tests {
         ];
 
         for error in user_errors {
-            let message = format!("{}", error);
+            let message = format!("{error}");
 
             // Ensure messages are generic and don't contain sensitive keywords
             assert!(!message.to_lowercase().contains("internal"));
@@ -480,7 +477,7 @@ mod security_error_tests {
             }
 
             // Messages should be short and generic
-            assert!(message.len() < 50, "Error message too long: {}", message);
+            assert!(message.len() < 50, "Error message too long: {message}");
         }
     }
 
@@ -521,7 +518,7 @@ mod security_error_tests {
 
         for (dev_error, expected_user_error) in test_cases {
             let sanitized = sanitizer.sanitize_game_error(&dev_error);
-            assert_eq!(format!("{}", sanitized), format!("{}", expected_user_error));
+            assert_eq!(format!("{sanitized}"), format!("{}", expected_user_error));
         }
     }
 
@@ -548,7 +545,7 @@ mod security_error_tests {
 
         for (dev_error, expected_user_error) in test_cases {
             let sanitized = sanitizer.sanitize_game_error(&dev_error);
-            assert_eq!(format!("{}", sanitized), format!("{}", expected_user_error));
+            assert_eq!(format!("{sanitized}"), format!("{}", expected_user_error));
         }
     }
 
@@ -567,7 +564,7 @@ mod security_error_tests {
 
         for sensitive_error in sensitive_errors {
             let sanitized = sanitizer.sanitize_game_error(&sensitive_error);
-            let sanitized_msg = format!("{}", sanitized);
+            let sanitized_msg = format!("{sanitized}");
 
             // Ensure no sensitive data leaks through
             assert!(!sanitized_msg.contains("secret"));
@@ -590,7 +587,7 @@ mod security_error_tests {
         ];
 
         for error in detailed_errors {
-            let error_msg = format!("{}", error);
+            let error_msg = format!("{error}");
 
             // Developer errors should contain specific details
             match error {
@@ -616,13 +613,13 @@ mod security_error_tests {
         let action_error: ActionSpaceError = DeveloperActionSpaceError::InvalidIndex;
 
         // Should be able to format them
-        let _ = format!("{}", play_error);
-        let _ = format!("{}", game_error);
-        let _ = format!("{}", action_error);
+        let _ = format!("{play_error}");
+        let _ = format!("{game_error}");
+        let _ = format!("{action_error}");
 
         // Should be able to convert between them
         let converted_game_error: GameError = play_error.into();
-        let _ = format!("{}", converted_game_error);
+        let _ = format!("{converted_game_error}");
     }
 }
 
@@ -726,14 +723,12 @@ mod error_security_compliance_tests {
         ];
 
         for error in all_user_errors {
-            let error_msg = format!("{}", error).to_lowercase();
+            let error_msg = format!("{error}").to_lowercase();
 
             for pattern in &forbidden_patterns {
                 assert!(
                     !error_msg.contains(pattern),
-                    "User error '{}' contains forbidden pattern '{}'",
-                    error_msg,
-                    pattern
+                    "User error '{error_msg}' contains forbidden pattern '{pattern}'"
                 );
             }
         }
@@ -752,7 +747,7 @@ mod error_security_compliance_tests {
         ];
 
         for error in all_user_errors {
-            let error_msg = format!("{}", error);
+            let error_msg = format!("{error}");
 
             // User error messages should be short and generic
             assert!(
@@ -803,7 +798,7 @@ mod error_security_compliance_tests {
         // All errors should be sanitizable without panicking
         for error in all_developer_errors {
             let sanitized = sanitizer.sanitize_game_error(&error);
-            let _ = format!("{}", sanitized); // Should not panic
+            let _ = format!("{sanitized}"); // Should not panic
         }
     }
 }

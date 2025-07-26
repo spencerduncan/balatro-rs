@@ -505,8 +505,7 @@ mod toml_schema_integration_tests {
         // Should parse 100 jokers in under 100ms
         assert!(
             duration.as_millis() < 100,
-            "Parsing took too long: {:?}",
-            duration
+            "Parsing took too long: {duration:?}"
         );
     }
 

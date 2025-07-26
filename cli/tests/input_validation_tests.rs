@@ -14,7 +14,7 @@ mod input_validation_tests {
     #[test]
     fn test_cli_binary_exists() {
         let output = Command::new("cargo")
-            .args(&["build", "-p", "balatro-cli"])
+            .args(["build", "-p", "balatro-cli"])
             .output()
             .expect("Failed to build CLI");
 
@@ -27,7 +27,7 @@ mod input_validation_tests {
         // This test would need to be run with actual CLI interaction
         // For now, we test that the binary compiles and can be executed
         let output = Command::new("cargo")
-            .args(&["run", "-p", "balatro-cli", "--", "--help"])
+            .args(["run", "-p", "balatro-cli", "--", "--help"])
             .output();
 
         // CLI might not have --help flag, but it should at least start
@@ -39,7 +39,7 @@ mod input_validation_tests {
             }
             Err(e) => {
                 // Only fail if it's a compilation error, not a runtime issue
-                panic!("CLI failed to start: {}", e);
+                panic!("CLI failed to start: {e}");
             }
         }
     }
@@ -147,8 +147,7 @@ mod input_validation_tests {
                 // Should stop after max attempts
                 assert_eq!(
                     attempts, MAX_ATTEMPTS,
-                    "Should stop after {} attempts",
-                    MAX_ATTEMPTS
+                    "Should stop after {MAX_ATTEMPTS} attempts"
                 );
                 break;
             }
@@ -181,7 +180,7 @@ mod input_validation_tests {
                 }
                 Ok(_) => {
                     // Out of range
-                    let message = format!("Must be 0-{}", max);
+                    let message = format!("Must be 0-{max}");
                     assert!(
                         message.contains(expected_message_type)
                             || expected_message_type.contains("Must be"),
@@ -223,8 +222,7 @@ mod input_validation_tests {
         // Even 1000 iterations should complete in well under 100ms
         assert!(
             elapsed < Duration::from_millis(100),
-            "Input validation should be fast, took {:?}",
-            elapsed
+            "Input validation should be fast, took {elapsed:?}"
         );
     }
 
@@ -286,8 +284,7 @@ mod input_validation_tests {
 
             assert_eq!(
                 actually_parses, should_parse,
-                "Input '{}' parse result doesn't match expectation",
-                input
+                "Input '{input}' parse result doesn't match expectation"
             );
         }
     }
@@ -372,7 +369,7 @@ mod input_validation_tests {
         let padded_input = "  5  ";
         match padded_input.trim().parse::<usize>() {
             Ok(5) => assert!(true, "Input trimming works correctly"),
-            Ok(val) => panic!("Trimming failed: got {} instead of 5", val),
+            Ok(val) => panic!("Trimming failed: got {val} instead of 5"),
             Err(_) => panic!("Trimmed input should parse successfully"),
         }
     }
@@ -406,8 +403,7 @@ mod performance_tests {
         // Each validation should be extremely fast (< 1 microsecond)
         assert!(
             per_validation < Duration::from_micros(1),
-            "Input validation too slow: {:?} per validation",
-            per_validation
+            "Input validation too slow: {per_validation:?} per validation"
         );
     }
 }
