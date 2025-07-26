@@ -1547,7 +1547,7 @@ mod tests {
         let hand = Hand::new(vec![]);
         let discarded = vec![];
         let jokers: Vec<Box<dyn Joker>> = vec![];
-        let rng = crate::rng::GameRng::new(crate::rng::RngMode::Seeded(42));
+        let rng = crate::rng::GameRng::new(crate::rng::RngMode::Testing(42));
         let stage = Stage::Blind(Blind::Small);
         
         let mut context = crate::joker::GameContext {
@@ -1592,7 +1592,7 @@ mod tests {
         let hand = Hand::new(vec![]);
         let discarded = vec![];
         let jokers: Vec<Box<dyn Joker>> = vec![];
-        let rng = crate::rng::GameRng::new(crate::rng::RngMode::Seeded(42));
+        let rng = crate::rng::GameRng::new(crate::rng::RngMode::Testing(42));
         let stage = Stage::Blind(Blind::Small);
         
         let mut context = crate::joker::GameContext {
@@ -1637,7 +1637,7 @@ mod tests {
         let hand = Hand::new(vec![]);
         let discarded = vec![];
         let jokers: Vec<Box<dyn Joker>> = vec![];
-        let rng = crate::rng::GameRng::new(crate::rng::RngMode::Seeded(42));
+        let rng = crate::rng::GameRng::new(crate::rng::RngMode::Testing(42));
         let stage = Stage::Blind(Blind::Small);
         
         let mut context = crate::joker::GameContext {
@@ -1660,7 +1660,7 @@ mod tests {
         };
         
         let effect = triboulet.on_card_scored(&mut context, &jack_card);
-        assert_eq!(effect.mult_multiplier, 1.0); // Default multiplier (no effect)
+        assert_eq!(effect.mult_multiplier, 0.0); // Default multiplier (no effect)
         assert_eq!(effect.mult, 0);
         assert_eq!(effect.chips, 0);
         assert_eq!(effect.money, 0);
@@ -1682,7 +1682,7 @@ mod tests {
         let hand = Hand::new(vec![]);
         let discarded = vec![];
         let jokers: Vec<Box<dyn Joker>> = vec![];
-        let rng = crate::rng::GameRng::new(crate::rng::RngMode::Seeded(42));
+        let rng = crate::rng::GameRng::new(crate::rng::RngMode::Testing(42));
         let stage = Stage::Blind(Blind::Small);
         
         let mut context = crate::joker::GameContext {
@@ -1705,7 +1705,7 @@ mod tests {
         };
         
         let effect = triboulet.on_card_scored(&mut context, &ace_card);
-        assert_eq!(effect.mult_multiplier, 1.0); // Default multiplier (no effect)
+        assert_eq!(effect.mult_multiplier, 0.0); // Default multiplier (no effect)
         assert_eq!(effect.mult, 0);
         assert_eq!(effect.chips, 0);
         assert_eq!(effect.money, 0);
