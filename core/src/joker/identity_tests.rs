@@ -83,16 +83,7 @@ const RARITY_COSTS: &[(Rarity, u64)] = &[
 ];
 
 // Test macro for parameterized tests - eliminates code duplication
-#[allow(unused_macros)]
-macro_rules! test_joker_property {
-    ($name:ident, $joker:expr, $check:expr) => {
-        #[test]
-        fn $name() {
-            let joker = $joker;
-            assert!($check(&joker));
-        }
-    };
-}
+// NOTE: Removed unused macro
 
 macro_rules! test_batch {
     ($($name:ident => $joker_idx:expr, $prop:expr, $expected:expr);* $(;)?) => {
