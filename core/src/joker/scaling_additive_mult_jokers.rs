@@ -8,16 +8,44 @@ use crate::{
     hand::SelectHand,
     joker::{
         traits::{JokerState as JokerStateTrait, ProcessContext, ProcessResult, Rarity},
-        GameContext, Joker, JokerEffect, JokerGameplay, JokerId, JokerIdentity, JokerLifecycle,
+        GameContext, Joker, JokerEffect, JokerGameplay, JokerId, JokerIdentity,
         JokerRarity,
     },
     rank::HandRank,
     stage::Stage,
 };
-use serde_json::json;
 
 /// Maximum accumulated value to prevent overflow (production safety)
+/// This matches the bounds defined in joker_state.rs validation
 const MAX_ACCUMULATED_VALUE: f64 = 1_000_000.0;
+
+/// Production resource bounds validation
+/// Prevents memory exhaustion from unbounded accumulation
+fn validate_resource_bounds(accumulated_value: f64, context: &str) -> Result<(), String> {
+    if accumulated_value > MAX_ACCUMULATED_VALUE {
+        return Err(format!(
+            "Resource bounds exceeded in {}: {} > {} (max allowed)",
+            context, accumulated_value, MAX_ACCUMULATED_VALUE
+        ));
+    }
+    
+    if accumulated_value < 0.0 {
+        return Err(format!(
+            "Invalid negative accumulated value in {}: {}",
+            context, accumulated_value
+        ));
+    }
+    
+    // Additional production safety: Check for NaN/Infinity
+    if !accumulated_value.is_finite() {
+        return Err(format!(
+            "Invalid non-finite accumulated value in {}: {}",
+            context, accumulated_value
+        ));
+    }
+    
+    Ok(())
+}
 
 /// Spare Trousers - +2 Mult per Two Pair hand played
 /// Production: Uses state manager as single source of truth
@@ -485,6 +513,7 @@ impl JokerGameplay for GreenJoker {
 }
 
 /// Ride the Bus - +1 Mult per hand played this round (no face cards)
+/// Production: Uses state manager as single source of truth
 #[derive(Debug, Clone)]
 pub struct RideTheBusJoker {
     id: JokerId,
@@ -492,7 +521,7 @@ pub struct RideTheBusJoker {
     description: String,
     rarity: JokerRarity,
     cost: usize,
-    hands_this_round: u32,
+    // Removed: hands_this_round field (dual state eliminated)
 }
 
 impl Default for RideTheBusJoker {
@@ -509,7 +538,7 @@ impl RideTheBusJoker {
             description: "+1 Mult per hand played this round (no face cards)".to_string(),
             rarity: JokerRarity::Common,
             cost: 3,
-            hands_this_round: 0,
+            // Removed: hands_this_round initialization (dual state eliminated)
         }
     }
 
@@ -547,12 +576,7 @@ impl JokerIdentity for RideTheBusJoker {
     }
 }
 
-impl JokerLifecycle for RideTheBusJoker {
-    fn on_round_end(&mut self) {
-        // Reset counter at the end of each round
-        self.hands_this_round = 0;
-    }
-}
+// Production: Lifecycle events handled through state manager callbacks
 
 impl Joker for RideTheBusJoker {
     fn id(&self) -> JokerId {
@@ -585,11 +609,12 @@ impl Joker for RideTheBusJoker {
                 });
             JokerEffect::new().with_message("Ride the Bus: Reset! (Face card played)".to_string())
         } else {
-            // Increment the counter
+            // Increment the counter with bounds checking
             context
                 .joker_state_manager
                 .update_state(self.id(), |state| {
-                    state.accumulated_value += 1.0;
+                    // Production safety: Apply bounds checking to prevent overflow
+                    state.accumulated_value = (state.accumulated_value + 1.0).min(MAX_ACCUMULATED_VALUE);
                 });
 
             let current_count = context
@@ -621,18 +646,13 @@ impl JokerStateTrait for RideTheBusJoker {
     }
 
     fn serialize_state(&self) -> Option<serde_json::Value> {
-        Some(json!({
-            "hands_this_round": self.hands_this_round
-        }))
+        // Production: State is managed centrally, no local serialization needed
+        None
     }
 
-    fn deserialize_state(&mut self, value: serde_json::Value) -> Result<(), String> {
-        if let Some(hands) = value.get("hands_this_round").and_then(|v| v.as_u64()) {
-            self.hands_this_round = hands as u32;
-            Ok(())
-        } else {
-            Err("Invalid state format".to_string())
-        }
+    fn deserialize_state(&mut self, _value: serde_json::Value) -> Result<(), String> {
+        // Production: State is managed centrally, no local deserialization needed
+        Ok(())
     }
 }
 
@@ -645,15 +665,20 @@ impl JokerGameplay for RideTheBusJoker {
                 .iter()
                 .any(|card| matches!(card.value, Value::Jack | Value::Queen | Value::King));
 
+            // Production: Get state from state manager (single source of truth)
+            let accumulated_value = context
+                .joker_state_manager
+                .get_state(self.id)
+                .map(|state| state.accumulated_value)
+                .unwrap_or(0.0);
+
             if has_face {
-                // Reset counter
-                self.hands_this_round = 0;
+                // Reset counter (no dual state to maintain)
                 ProcessResult::default()
             } else {
-                // Increment and apply mult
-                self.hands_this_round += 1;
+                // Apply mult based on current accumulated value
                 ProcessResult {
-                    mult_added: self.hands_this_round as f64,
+                    mult_added: accumulated_value,
                     ..Default::default()
                 }
             }
@@ -668,6 +693,7 @@ impl JokerGameplay for RideTheBusJoker {
 }
 
 /// Red Card - +3 Mult per pack skipped
+/// Production: Uses state manager as single source of truth
 #[derive(Debug, Clone)]
 pub struct RedCardJoker {
     id: JokerId,
@@ -675,7 +701,7 @@ pub struct RedCardJoker {
     description: String,
     rarity: JokerRarity,
     cost: usize,
-    packs_skipped: u32,
+    // Removed: packs_skipped field (dual state eliminated)
 }
 
 impl Default for RedCardJoker {
@@ -692,7 +718,7 @@ impl RedCardJoker {
             description: "+3 Mult per pack skipped".to_string(),
             rarity: JokerRarity::Common,
             cost: 4,
-            packs_skipped: 0,
+            // Removed: packs_skipped initialization (dual state eliminated)
         }
     }
 }
@@ -762,7 +788,8 @@ impl Joker for RedCardJoker {
         }
     }
 
-    // TODO: Add on_pack_skipped when implemented in trait system
+    // Production: Pack functionality requires trait system enhancement
+    // This will be implemented when the core trait system supports pack events
 }
 
 impl JokerStateTrait for RedCardJoker {
@@ -771,27 +798,33 @@ impl JokerStateTrait for RedCardJoker {
     }
 
     fn serialize_state(&self) -> Option<serde_json::Value> {
-        Some(json!({
-            "packs_skipped": self.packs_skipped
-        }))
+        // Production: State is managed centrally, no local serialization needed
+        None
     }
 
-    fn deserialize_state(&mut self, value: serde_json::Value) -> Result<(), String> {
-        if let Some(packs) = value.get("packs_skipped").and_then(|v| v.as_u64()) {
-            self.packs_skipped = packs as u32;
-            Ok(())
-        } else {
-            Err("Invalid state format".to_string())
-        }
+    fn deserialize_state(&mut self, _value: serde_json::Value) -> Result<(), String> {
+        // Production: State is managed centrally, no local deserialization needed
+        Ok(())
     }
 }
 
 impl JokerGameplay for RedCardJoker {
-    fn process(&mut self, stage: &Stage, _context: &mut ProcessContext) -> ProcessResult {
-        if matches!(stage, Stage::Blind(_)) && self.packs_skipped > 0 {
-            ProcessResult {
-                mult_added: (self.packs_skipped * 3) as f64,
-                ..Default::default()
+    fn process(&mut self, stage: &Stage, context: &mut ProcessContext) -> ProcessResult {
+        if matches!(stage, Stage::Blind(_)) {
+            // Production: Get state from state manager (single source of truth)
+            let accumulated_value = context
+                .joker_state_manager
+                .get_state(self.id)
+                .map(|state| state.accumulated_value)
+                .unwrap_or(0.0);
+            
+            if accumulated_value > 0.0 {
+                ProcessResult {
+                    mult_added: accumulated_value * 3.0, // +3 mult per pack skipped
+                    ..Default::default()
+                }
+            } else {
+                ProcessResult::default()
             }
         } else {
             ProcessResult::default()
