@@ -17,31 +17,32 @@ jobs:
   aggregate-test-results:
     name: Aggregate Test Results
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.conclusion != 'skipped'
+    if: github.event.workflow_run.conclusion != 'skipped' && github.event.workflow_run.conclusion != 'cancelled'
     steps:
       - uses: actions/checkout@v4
       
       - name: Download test artifacts from CI
         uses: dawidd6/action-download-artifact@v2
         with:
-          workflow: ci.yml
-          workflow_conclusion: ""
+          workflow: CI
+          name_is_regexp: true
+          name: "test-results-.*"
           path: test-artifacts
           if_no_artifact_found: ignore
           
       - name: Download test artifacts from PR workflow
         uses: dawidd6/action-download-artifact@v2
         with:
-          workflow: pr.yml
-          workflow_conclusion: ""
+          workflow: "PR Checks"
+          name_is_regexp: true
+          name: "test-results-pr-.*"
           path: test-artifacts
           if_no_artifact_found: ignore
           
       - name: Download benchmark artifacts
         uses: dawidd6/action-download-artifact@v2
         with:
-          workflow: ci.yml
-          workflow_conclusion: ""
+          workflow: CI
           name: benchmark-results
           path: benchmark-artifacts
           if_no_artifact_found: ignore
@@ -49,8 +50,7 @@ jobs:
       - name: Download security scan artifacts
         uses: dawidd6/action-download-artifact@v2
         with:
-          workflow: ci.yml
-          workflow_conclusion: ""
+          workflow: CI
           name: security-scan-results
           path: security-artifacts
           if_no_artifact_found: ignore
@@ -62,28 +62,57 @@ jobs:
           echo "**Generated:** $(date)" >> test_report.md
           echo "**Workflow:** ${{ github.event.workflow_run.name }}" >> test_report.md
           echo "**Conclusion:** ${{ github.event.workflow_run.conclusion }}" >> test_report.md
+          echo "**Commit SHA:** ${{ github.event.workflow_run.head_sha }}" >> test_report.md
+          echo "**Branch:** ${{ github.event.workflow_run.head_branch }}" >> test_report.md
+          echo "" >> test_report.md
+          
+          # Debug: Show what we downloaded
+          echo "## Debug: Downloaded Artifacts" >> test_report.md
+          echo "" >> test_report.md
+          echo "### Available Directories:" >> test_report.md
+          ls -la . | grep "^d" | sed 's/^/- /' >> test_report.md
           echo "" >> test_report.md
           
           # Process test results from each platform
           echo "## Platform Test Results" >> test_report.md
           echo "" >> test_report.md
           
-          # Check if test-artifacts directory exists
+          # Check if test-artifacts directory exists and process results
           if [ -d "test-artifacts" ]; then
-            # Use a different approach that handles the case where no matching directories exist
+            echo "Debug: test-artifacts directory found" >&2
+            ls -la test-artifacts/ >&2 || echo "Debug: Unable to list test-artifacts" >&2
+            
+            # Use a robust approach that handles the case where no matching directories exist
             FOUND_PLATFORMS=false
             
+            # First check for CI test results (test-results-*)
             for platform_dir in test-artifacts/test-results-*; do
-              # Check if the glob actually matched any directories
-              if [ -d "$platform_dir" ]; then
+              # Check if the glob actually matched any directories (not just the literal string)
+              if [ -d "$platform_dir" ] && [ "$platform_dir" != "test-artifacts/test-results-*" ]; then
                 FOUND_PLATFORMS=true
-                platform_name=$(basename "$platform_dir" | sed 's/test-results-//')
+                platform_name=$(basename "$platform_dir" | sed 's/test-results-//' | sed 's/test-results-pr-/PR-/')
                 echo "### $platform_name" >> test_report.md
                 
                 if [ -f "$platform_dir/test_summary.md" ]; then
                   cat "$platform_dir/test_summary.md" >> test_report.md
                 else
-                  echo "- Status: No summary available" >> test_report.md
+                  echo "- Status: Summary file not found for $platform_name" >> test_report.md
+                fi
+                echo "" >> test_report.md
+              fi
+            done
+            
+            # Also check for PR test results (test-results-pr-*)
+            for platform_dir in test-artifacts/test-results-pr-*; do
+              if [ -d "$platform_dir" ] && [ "$platform_dir" != "test-artifacts/test-results-pr-*" ]; then
+                FOUND_PLATFORMS=true
+                platform_name=$(basename "$platform_dir" | sed 's/test-results-pr-/PR-/')
+                echo "### $platform_name" >> test_report.md
+                
+                if [ -f "$platform_dir/test_summary.md" ]; then
+                  cat "$platform_dir/test_summary.md" >> test_report.md
+                else
+                  echo "- Status: Summary file not found for $platform_name" >> test_report.md
                 fi
                 echo "" >> test_report.md
               fi
@@ -91,11 +120,18 @@ jobs:
             
             # If no platforms were found, add a message
             if [ "$FOUND_PLATFORMS" = false ]; then
-              echo "- Status: No test result artifacts found" >> test_report.md
+              echo "- Status: No test result artifacts found in test-artifacts directory" >> test_report.md
+              echo "- Debug: Available artifacts:" >> test_report.md
+              if ls test-artifacts/ >/dev/null 2>&1; then
+                ls test-artifacts/ | sed 's/^/  - /' >> test_report.md
+              else
+                echo "  - Directory is empty or unreadable" >> test_report.md
+              fi
               echo "" >> test_report.md
             fi
           else
             echo "- Status: Test artifacts directory not found" >> test_report.md
+            echo "- This may indicate that no workflow artifacts were available to download" >> test_report.md
             echo "" >> test_report.md
           fi
           
