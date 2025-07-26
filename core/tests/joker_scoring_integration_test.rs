@@ -109,7 +109,7 @@ fn test_score_breakdown_tracking() {
     assert!(breakdown.base_chips > 0.0);
     assert!(breakdown.base_mult > 0.0);
     assert!(breakdown.card_chips > 0.0);
-    assert!(breakdown.joker_contributions.len() > 0);
+    assert!(!breakdown.joker_contributions.is_empty());
     assert!(breakdown.final_score > 0.0);
 }
 
@@ -203,8 +203,7 @@ fn test_killscreen_behavior() {
     // Test passes if either score is infinite OR we got a killscreen message
     assert!(
         !score.is_finite() || has_killscreen_msg,
-        "Should reach killscreen either through infinite score ({}) or killscreen detection. Messages: {:?}",
-        score, debug_messages
+        "Should reach killscreen either through infinite score ({score}) or killscreen detection. Messages: {debug_messages:?}"
     );
 }
 
@@ -282,7 +281,7 @@ impl Joker for TestOrderJoker {
         JokerEffect::new()
             .with_chips(self.chip_bonus)
             .with_mult(self.mult_bonus)
-            .with_mult_multiplier(self.mult_multiplier as f64)
+            .with_mult_multiplier(self.mult_multiplier)
     }
 }
 

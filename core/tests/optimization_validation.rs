@@ -83,8 +83,8 @@ mod optimization_tests {
         let metrics = processor.trait_optimization_metrics();
 
         println!("\n=== Optimization Performance Test Results ===");
-        println!("Legacy time: {:?}", legacy_time);
-        println!("Optimized time: {:?}", optimized_time);
+        println!("Legacy time: {legacy_time:?}");
+        println!("Optimized time: {optimized_time:?}");
         println!(
             "Speedup: {:.2}x",
             legacy_time.as_nanos() as f64 / optimized_time.as_nanos() as f64

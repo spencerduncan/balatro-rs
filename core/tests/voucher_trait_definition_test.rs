@@ -17,7 +17,6 @@ mod tests {
     use balatro_rs::vouchers::{
         GameState, StackingRule, Voucher, VoucherCollection, VoucherEffect, VoucherId, VoucherTier,
     };
-    use serde_json;
 
     // Test struct that implements the new Voucher trait
     #[derive(Debug)]
@@ -173,7 +172,7 @@ mod tests {
     /// Test effect query methods for game systems
     #[test]
     fn test_effect_query_methods() {
-        let effects = vec![
+        let effects = [
             VoucherEffect::HandSizeIncrease(2),
             VoucherEffect::JokerSlotIncrease(1),
             VoucherEffect::MoneyGain(100),
@@ -379,8 +378,7 @@ mod tests {
         // Effect queries should be very fast (under 1ms for 1000 calls)
         assert!(
             duration.as_millis() < 10,
-            "Effect queries took too long: {:?}",
-            duration
+            "Effect queries took too long: {duration:?}"
         );
     }
 }

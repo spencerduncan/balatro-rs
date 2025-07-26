@@ -36,7 +36,7 @@ fn create_test_context_with_deck_and_stones(
     let hand = HAND.get_or_init(|| Hand::new(Vec::new()));
 
     static HAND_TYPE_COUNTS: OnceLock<HashMap<HandRank, u32>> = OnceLock::new();
-    let hand_type_counts = HAND_TYPE_COUNTS.get_or_init(|| HashMap::new());
+    let hand_type_counts = HAND_TYPE_COUNTS.get_or_init(HashMap::new);
 
     static JOKER_STATE_MANAGER: OnceLock<Arc<JokerStateManager>> = OnceLock::new();
     let joker_state_manager =

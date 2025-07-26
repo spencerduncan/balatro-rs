@@ -1,16 +1,12 @@
 use balatro_rs::{
     card::{Card, Suit, Value},
-    game::Game,
     hand::SelectHand,
-    joker::{GameContext, Joker, JokerEffect, JokerId},
+    joker::{GameContext, Joker, JokerId},
     joker_effect_processor::{
         ConflictResolutionStrategy, EffectPriority, JokerEffectProcessor, ProcessingContext,
     },
-    rng::GameRng,
-    static_joker::StaticJoker,
 };
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
-use std::collections::HashMap;
 
 /// Benchmark suite for JokerEffectProcessor performance testing
 pub fn effect_processor_benchmarks(c: &mut Criterion) {
