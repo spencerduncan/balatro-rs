@@ -50,6 +50,18 @@ python test/main.py      # Run tests
 python examples/simulation.py  # Run example
 ```
 
+## 🚨 CRITICAL: Code Formatting Requirements 🚨
+
+**ALWAYS RUN RUSTFMT BEFORE CREATING A PR - CI WILL FAIL WITHOUT IT**
+
+Before committing ANY Rust code changes:
+```bash
+cargo fmt --all        # Format all code in the workspace
+cargo fmt --check      # Check if formatting is needed (CI runs this)
+```
+
+**This is MANDATORY - Every PR must pass rustfmt checks or CI will fail.**
+
 ## Architecture
 
 ### Workspace Structure
@@ -640,6 +652,11 @@ fn test_with_utilities() {
 ## Testing Requirements
 
 When modifying the codebase:
+
+### MANDATORY Pre-PR Checklist
+1. **Run `cargo fmt --all`** - REQUIRED, CI will fail without this
+2. Run `cargo test --all` to ensure no regressions
+3. Run `cargo clippy --all -- -D warnings` to check for lints
 
 ### Core Testing
 1. Run `cargo test --all` to ensure no regressions

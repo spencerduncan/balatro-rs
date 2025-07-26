@@ -1247,10 +1247,19 @@ pub mod conditional;
 
 // Include hand composition jokers (Ride the Bus, Blackboard, DNA)
 pub mod hand_composition_jokers;
+// Include resource-based chips jokers (Banner, Bull, Stone, Scary Face, Blue)
+pub mod resource_chips_jokers;
+
+// Include FourFingers joker
+pub mod four_fingers;
 
 // Include tests for hand composition jokers (Ride the Bus, Blackboard, DNA)
 #[cfg(test)]
 mod hand_composition_tests;
+
+// Include tests for JokerIdentity trait
+#[cfg(test)]
+mod identity_tests;
 
 // Include testing utilities for the Joker trait system
 #[cfg(test)]
@@ -1268,8 +1277,13 @@ pub use traits::{
 // Re-export old API types for backwards compatibility
 pub use compat::{Joker as OldJoker, Jokers};
 
+// Include tests module with trait tests
 #[cfg(test)]
-mod tests {
+pub mod tests;
+
+// Module-level trait tests
+#[cfg(test)]
+mod trait_tests {
     use super::*;
 
     #[test]

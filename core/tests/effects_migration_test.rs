@@ -179,8 +179,7 @@ fn test_migration_all_joker_types() {
 
         assert!(
             score_with_joker >= score_without_joker,
-            "Joker {:?} should not decrease score",
-            joker_id
+            "Joker {joker_id:?} should not decrease score"
         );
     }
 }

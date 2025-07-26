@@ -5,7 +5,6 @@
 
 use balatro_rs::boss_blinds::{BlindEffect, BossBlind, CounterType};
 use balatro_rs::game::Game;
-use serde_json;
 
 /// Mock implementation for testing the BossBlind trait
 #[derive(Debug)]
@@ -122,7 +121,7 @@ fn test_counter_type_enum_variants() {
     let money_counter = CounterType::MoneySpent;
 
     // Test that counters can be matched and used in collections
-    let counters = vec![hands_counter, cards_counter, money_counter];
+    let counters = [hands_counter, cards_counter, money_counter];
     assert_eq!(counters.len(), 3);
 
     // Test that counters implement required traits for collections
