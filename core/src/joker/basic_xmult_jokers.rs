@@ -8,8 +8,8 @@ use crate::{
     hand::SelectHand,
     joker::{
         traits::{JokerState, ProcessContext, ProcessResult, Rarity},
-        GameContext, Joker, JokerEffect, JokerGameplay, JokerId, JokerIdentity,
-        JokerLifecycle, JokerRarity,
+        GameContext, Joker, JokerEffect, JokerGameplay, JokerId, JokerIdentity, JokerLifecycle,
+        JokerRarity,
     },
     stage::Stage,
 };
@@ -131,9 +131,9 @@ impl JokerGameplay for PhotographJoker {
     }
 
     fn can_trigger(&self, stage: &Stage, context: &ProcessContext) -> bool {
-        matches!(stage, Stage::Blind(_)) 
-        && !self.face_card_played
-        && context.played_cards.iter().any(|card| Self::is_face_card(card))
+        matches!(stage, Stage::Blind(_))
+            && !self.face_card_played
+            && context.played_cards.iter().any(Self::is_face_card)
     }
 }
 
@@ -255,10 +255,12 @@ impl Joker for PolishedJoker {
     fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
         let joker_count = context.jokers.len();
         let multiplier = Self::calculate_multiplier(joker_count);
-        
+
         JokerEffect::new()
             .with_mult_multiplier(multiplier)
-            .with_message(format!("Polished Joker: X{} Mult ({} jokers)", multiplier, joker_count))
+            .with_message(format!(
+                "Polished Joker: X{multiplier} Mult ({joker_count} jokers)"
+            ))
     }
 }
 
@@ -299,7 +301,8 @@ impl RoughGemJoker {
         Self {
             id: JokerId::RoughGem,
             name: "Rough Gem".to_string(),
-            description: "Clubs: +25 Chips, Diamonds: +1 Mult, Spades/Hearts: X1.5 Mult".to_string(),
+            description: "Clubs: +25 Chips, Diamonds: +1 Mult, Spades/Hearts: X1.5 Mult"
+                .to_string(),
             rarity: JokerRarity::Uncommon,
             cost: 7,
         }
@@ -489,7 +492,9 @@ impl Joker for BloodstoneJoker {
             let multiplier = 1.5_f64.powi(unique_suits as i32);
             JokerEffect::new()
                 .with_mult_multiplier(multiplier)
-                .with_message(format!("Bloodstone: X{} Mult ({} unique suits)", multiplier, unique_suits))
+                .with_message(format!(
+                    "Bloodstone: X{multiplier} Mult ({unique_suits} unique suits)"
+                ))
         } else {
             JokerEffect::new()
         }
@@ -497,7 +502,7 @@ impl Joker for BloodstoneJoker {
 }
 
 impl JokerGameplay for BloodstoneJoker {
-    fn process(&mut self, stage: &Stage, context: &mut ProcessContext) -> ProcessResult {
+    fn process(&mut self, stage: &Stage, _context: &mut ProcessContext) -> ProcessResult {
         if !matches!(stage, Stage::Blind(_)) {
             return ProcessResult::default();
         }
@@ -591,10 +596,10 @@ impl Joker for MisprintJoker {
     fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
         // Use game RNG to generate random multiplier between 1 and 23
         let multiplier = context.rng.gen_range(1..=23) as f64;
-        
+
         JokerEffect::new()
             .with_mult_multiplier(multiplier)
-            .with_message(format!("Misprint: X{} Mult", multiplier))
+            .with_message(format!("Misprint: X{multiplier} Mult"))
     }
 }
 
@@ -642,17 +647,17 @@ mod tests {
     #[test]
     fn test_photograph_joker() {
         let mut photograph = PhotographJoker::new();
-        
+
         // Test identity
         assert_eq!(photograph.joker_type(), "photograph");
         assert_eq!(JokerIdentity::name(&photograph), "Photograph");
         assert_eq!(photograph.base_cost(), 5);
-        
+
         // Test state management
         assert!(!photograph.face_card_played);
         photograph.face_card_played = true;
         assert!(photograph.face_card_played);
-        
+
         // Test round reset
         JokerLifecycle::on_round_start(&mut photograph);
         assert!(!photograph.face_card_played);
@@ -661,12 +666,12 @@ mod tests {
     #[test]
     fn test_polished_joker_multiplier() {
         let polished = PolishedJoker::new();
-        
+
         // Test identity
         assert_eq!(polished.joker_type(), "polished");
         assert_eq!(JokerIdentity::name(&polished), "Polished Joker");
         assert_eq!(JokerIdentity::rarity(&polished), Rarity::Uncommon);
-        
+
         // Test multiplier calculation
         assert_eq!(PolishedJoker::calculate_multiplier(0), 1.0);
         assert_eq!(PolishedJoker::calculate_multiplier(1), 1.25);
@@ -678,15 +683,15 @@ mod tests {
     fn test_rough_gem_suit_effects() {
         let mut rough_gem = RoughGemJoker::new();
         let stage = Stage::Blind(Blind::Small);
-        
+
         // Test with different suits
         let cards = vec![
-            Card::new(Value::Ace, Suit::Club),      // +25 chips
-            Card::new(Value::King, Suit::Diamond),  // +1 mult
-            Card::new(Value::Queen, Suit::Spade),   // X1.5 mult
-            Card::new(Value::Jack, Suit::Heart),    // X1.5 mult
+            Card::new(Value::Ace, Suit::Club),     // +25 chips
+            Card::new(Value::King, Suit::Diamond), // +1 mult
+            Card::new(Value::Queen, Suit::Spade),  // X1.5 mult
+            Card::new(Value::Jack, Suit::Heart),   // X1.5 mult
         ];
-        
+
         let played_cards = cards;
         let held_cards = vec![];
         let mut events = vec![];
@@ -694,9 +699,9 @@ mod tests {
             chips: 0,
             mult: 0.0,
         };
-        
+
         let joker_state_manager = crate::joker_state::JokerStateManager::new();
-        
+
         let mut context = ProcessContext {
             hand_score: &mut hand_score,
             played_cards: &played_cards,
@@ -704,7 +709,7 @@ mod tests {
             events: &mut events,
             joker_state_manager: &joker_state_manager,
         };
-        
+
         let result = rough_gem.process(&stage, &mut context);
         assert_eq!(result.chips_added, 25);
         assert_eq!(result.mult_added, 1.0);
@@ -718,7 +723,7 @@ mod tests {
             Card::new(Value::King, Suit::Heart),
         ];
         assert_eq!(BloodstoneJoker::count_unique_suits(&cards1), 1);
-        
+
         let cards2 = vec![
             Card::new(Value::Ace, Suit::Heart),
             Card::new(Value::King, Suit::Diamond),
@@ -731,12 +736,12 @@ mod tests {
     #[test]
     fn test_misprint_joker() {
         let misprint = MisprintJoker::new();
-        
+
         // Test identity
         assert_eq!(misprint.joker_type(), "misprint");
         assert_eq!(JokerIdentity::name(&misprint), "Misprint");
         assert_eq!(misprint.base_cost(), 4);
-        
+
         // Test can trigger
         let stage = Stage::Blind(Blind::Small);
         let played_cards = vec![];
@@ -746,9 +751,9 @@ mod tests {
             chips: 0,
             mult: 0.0,
         };
-        
+
         let joker_state_manager = crate::joker_state::JokerStateManager::new();
-        
+
         let context = ProcessContext {
             hand_score: &mut hand_score,
             played_cards: &played_cards,
@@ -756,7 +761,7 @@ mod tests {
             events: &mut events,
             joker_state_manager: &joker_state_manager,
         };
-        
+
         assert!(misprint.can_trigger(&stage, &context));
     }
 }
