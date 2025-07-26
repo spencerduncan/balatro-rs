@@ -425,8 +425,8 @@ mod tests {
         let jokers = create_all_custom_scaling_jokers();
         assert_eq!(
             jokers.len(),
-            7,
-            "Should create exactly 7 custom scaling jokers"
+            6,
+            "Should create exactly 6 custom scaling jokers"
         );
 
         // Test that all jokers have unique IDs

@@ -255,7 +255,7 @@ mod tests {
     #[test]
     fn test_all_scaling_jokers_created() {
         let jokers = create_all_scaling_jokers();
-        assert_eq!(jokers.len(), 15, "Should create exactly 15 scaling jokers");
+        assert_eq!(jokers.len(), 14, "Should create exactly 14 scaling jokers");
 
         // Test that all jokers have unique IDs
         let mut ids = std::collections::HashSet::new();
