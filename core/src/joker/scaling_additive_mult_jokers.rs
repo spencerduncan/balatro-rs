@@ -266,7 +266,7 @@ impl Joker for FortuneTellerJoker {
         if tarot_count > 0 {
             JokerEffect::new()
                 .with_mult(tarot_count as i32)
-                .with_message(format!("Fortune Teller: +{} Mult", tarot_count))
+                .with_message(format!("Fortune Teller: +{tarot_count} Mult"))
         } else {
             JokerEffect::new()
         }
@@ -408,7 +408,7 @@ impl Joker for GreenJoker {
         if current_mult > 0 {
             JokerEffect::new()
                 .with_mult(current_mult)
-                .with_message(format!("Green Joker: +{} Mult", current_mult))
+                .with_message(format!("Green Joker: +{current_mult} Mult"))
         } else {
             JokerEffect::new()
         }
@@ -580,7 +580,7 @@ impl Joker for RideTheBusJoker {
 
             JokerEffect::new()
                 .with_mult(current_count as i32)
-                .with_message(format!("Ride the Bus: +{} Mult", current_count))
+                .with_message(format!("Ride the Bus: +{current_count} Mult"))
         }
     }
 
