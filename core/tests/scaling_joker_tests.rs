@@ -421,7 +421,6 @@ fn test_joker_factory_functions() {
     // Test that we can get scaling jokers by ID
     assert!(get_scaling_joker_by_id(JokerId::Trousers).is_some());
     assert!(get_scaling_joker_by_id(JokerId::GreenJoker).is_some());
-    assert!(get_scaling_joker_by_id(JokerId::Banner).is_some());
     assert!(get_scaling_joker_by_id(JokerId::Ceremonial).is_some());
 
     // Test that non-scaling jokers return None

@@ -89,20 +89,6 @@ pub fn create_ceremonial_dagger() -> ScalingJoker {
     .with_reset_condition(ResetCondition::RoundEnd)
 }
 
-/// Banner: +30 chips per discard remaining
-pub fn create_banner() -> ScalingJoker {
-    ScalingJoker::new(
-        JokerId::Banner,
-        "Banner".to_string(),
-        "+30 Chips per discard remaining".to_string(),
-        JokerRarity::Common,
-        0.0,
-        30.0,
-        ScalingTrigger::CardDiscarded, // Will need custom logic for remaining discards
-        ScalingEffectType::Chips,
-    )
-    .with_reset_condition(ResetCondition::RoundEnd)
-}
 
 /// Throwback: X mult for each reroll in shop
 pub fn create_throwback() -> ScalingJoker {
@@ -230,7 +216,6 @@ pub fn create_all_scaling_jokers() -> Vec<ScalingJoker> {
         create_bootstraps(),
         create_fortune_teller(),
         create_ceremonial_dagger(),
-        create_banner(),
         create_throwback(),
         create_green_joker(),
         create_red_card(),
@@ -251,7 +236,6 @@ pub fn get_scaling_joker_by_id(id: JokerId) -> Option<ScalingJoker> {
         JokerId::Bootstraps => Some(create_bootstraps()),
         JokerId::Fortune => Some(create_fortune_teller()),
         JokerId::Ceremonial => Some(create_ceremonial_dagger()),
-        JokerId::Banner => Some(create_banner()),
         JokerId::Reserved => Some(create_throwback()),
         JokerId::GreenJoker => Some(create_green_joker()),
         JokerId::RedCard => Some(create_red_card()),
