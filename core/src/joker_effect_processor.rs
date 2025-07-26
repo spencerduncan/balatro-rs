@@ -2803,8 +2803,8 @@ mod tests {
         metrics.legacy_path_count = 100;
 
         // Test optimization ratio calculation
-        let total_optimized = 50 + 30 + 20; // 100
-        let total_calls = 100 + 100; // 200
+        let _total_optimized = 50 + 30 + 20; // 100
+        let _total_calls = 100 + 100; // 200
         let expected_ratio = 100.0 / 200.0;
         assert!((metrics.optimization_ratio() - expected_ratio).abs() < 0.001);
 

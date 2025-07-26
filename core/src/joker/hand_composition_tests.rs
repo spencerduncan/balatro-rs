@@ -1004,7 +1004,7 @@ mod edge_case_tests {
             Card::new(Rank::King, Suit::Club),
             Card::new(Rank::Three, Suit::Spade),
         ];
-        let hand_mixed = SelectHand::new(mixed_black);
+        let _hand_mixed = SelectHand::new(mixed_black);
         // With correct implementation, this SHOULD activate
         // but with current AllSameSuitOrRank it does NOT (incorrectly)
     }
