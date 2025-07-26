@@ -2399,7 +2399,7 @@
 <a href=#2399 id=2399 data-nosnippet>2399</a>
 <a href=#2400 id=2400 data-nosnippet>2400</a>        <span class="comment">// First call should miss cache
 <a href=#2401 id=2401 data-nosnippet>2401</a>        </span><span class="kw">let </span>initial_metrics = game.get_joker_cache_metrics().clone();
-<a href=#2402 id=2402 data-nosnippet>2402</a>        <span class="kw">let </span>(chips1, mult1, money1, _mult_multiplier1, messages1) =
+<a href=#2402 id=2402 data-nosnippet>2402</a>        <span class="kw">let </span>(chips1, mult1, money1, _mult_multiplier1, _messages1) =
 <a href=#2403 id=2403 data-nosnippet>2403</a>            game.process_joker_effects(<span class="kw-2">&amp;</span>made_hand);
 <a href=#2404 id=2404 data-nosnippet>2404</a>
 <a href=#2405 id=2405 data-nosnippet>2405</a>        <span class="comment">// Verify cache metrics show a miss
@@ -2409,7 +2409,7 @@
 <a href=#2409 id=2409 data-nosnippet>2409</a>        <span class="comment">// Second call with same input should potentially hit cache
 <a href=#2410 id=2410 data-nosnippet>2410</a>        // Note: Since we create a new GameContext each time with current game state,
 <a href=#2411 id=2411 data-nosnippet>2411</a>        // cache hits depend on the game state being identical
-<a href=#2412 id=2412 data-nosnippet>2412</a>        </span><span class="kw">let </span>(chips2, mult2, money2, _mult_multiplier2, messages2) =
+<a href=#2412 id=2412 data-nosnippet>2412</a>        </span><span class="kw">let </span>(chips2, mult2, money2, _mult_multiplier2, _messages2) =
 <a href=#2413 id=2413 data-nosnippet>2413</a>            game.process_joker_effects(<span class="kw-2">&amp;</span>made_hand);
 <a href=#2414 id=2414 data-nosnippet>2414</a>
 <a href=#2415 id=2415 data-nosnippet>2415</a>        <span class="comment">// Results should be identical regardless of cache
