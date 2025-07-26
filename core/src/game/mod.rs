@@ -187,6 +187,10 @@ pub struct Game {
     pub reward: f64,
     pub money: f64,
 
+    // shop reroll state
+    pub shop_reroll_cost: f64,
+    pub shop_rerolls_this_round: u32,
+
     // for scoring
     pub chips: f64,
     pub mult: f64,
@@ -314,6 +318,8 @@ impl Game {
             discards: config.discards as f64,
             reward: config.reward_base as f64,
             money: config.money_start as f64,
+            shop_reroll_cost: 5.0, // Base reroll cost
+            shop_rerolls_this_round: 0,
             chips: config.base_chips as f64,
             mult: config.base_mult as f64,
             score: config.base_score as f64,
@@ -1089,6 +1095,11 @@ impl Game {
         self.money += self.reward;
         self.reward = 0.0;
         self.stage = Stage::Shop();
+        
+        // Reset reroll cost and count for new shop round
+        self.shop_reroll_cost = 5.0; // Base reroll cost
+        self.shop_rerolls_this_round = 0;
+        
         self.shop.refresh(&self.rng);
         Ok(())
     }
@@ -1265,6 +1276,33 @@ impl Game {
             return Err(GameError::NoAvailableSlot);
         }
 
+        Ok(())
+    }
+
+    /// Reroll the shop contents and update the reroll cost
+    pub(crate) fn reroll_shop(&mut self) -> Result<(), GameError> {
+        // Check if game is in shop stage
+        if self.stage != Stage::Shop() {
+            return Err(GameError::InvalidStage);
+        }
+        
+        // Check if player has enough money for reroll
+        if self.money < self.shop_reroll_cost {
+            return Err(GameError::InvalidBalance);
+        }
+        
+        // Deduct reroll cost
+        self.money -= self.shop_reroll_cost;
+        
+        // Update reroll cost for next reroll (escalate by 5 each time)
+        self.shop_reroll_cost += 5.0;
+        
+        // Track number of rerolls this round
+        self.shop_rerolls_this_round += 1;
+        
+        // Refresh the shop with new items
+        self.shop.refresh(&self.rng);
+        
         Ok(())
     }
 
@@ -1533,6 +1571,10 @@ impl Game {
                 option_index,
             } => self.select_from_pack(pack_id, option_index),
             Action::SkipPack { pack_id } => self.skip_pack(pack_id),
+            Action::RerollShop() => match self.stage {
+                Stage::Shop() => self.reroll_shop(),
+                _ => Err(GameError::InvalidStage),
+            },
 
             // Multi-select actions - placeholder implementations for now
             Action::SelectCards(_) => {
@@ -1817,6 +1859,8 @@ struct SaveableGameState {
     pub discards: f64,
     pub reward: f64,
     pub money: f64,
+    pub shop_reroll_cost: f64,
+    pub shop_rerolls_this_round: u32,
     pub chips: f64,
     pub mult: f64,
     pub score: f64,
@@ -1889,6 +1933,8 @@ impl Game {
             discards: self.discards,
             reward: self.reward,
             money: self.money,
+            shop_reroll_cost: self.shop_reroll_cost,
+            shop_rerolls_this_round: self.shop_rerolls_this_round,
             chips: self.chips,
             mult: self.mult,
             score: self.score,
@@ -1946,6 +1992,8 @@ impl Game {
             discards: saveable_state.discards,
             reward: saveable_state.reward,
             money: saveable_state.money,
+            shop_reroll_cost: saveable_state.shop_reroll_cost,
+            shop_rerolls_this_round: saveable_state.shop_rerolls_this_round,
             chips: saveable_state.chips,
             mult: saveable_state.mult,
             score: saveable_state.score,
@@ -3168,5 +3216,206 @@ mod tests {
         assert!(game
             .can_purchase_consumable(crate::shop::ConsumableType::Spectral)
             .is_ok());
+    }
+
+    // Reroll cost escalation tests
+    #[test]
+    fn test_reroll_shop_basic_functionality() {
+        let mut game = Game::default();
+        game.start();
+        game.stage = Stage::Shop();
+        game.money = 50.0;
+
+        // Initial reroll cost should be 5
+        assert_eq!(game.shop_reroll_cost, 5.0);
+        assert_eq!(game.shop_rerolls_this_round, 0);
+
+        // First reroll should succeed
+        let result = game.reroll_shop();
+        assert!(result.is_ok());
+        assert_eq!(game.money, 45.0); // 50 - 5 = 45
+        assert_eq!(game.shop_reroll_cost, 10.0); // 5 + 5 = 10
+        assert_eq!(game.shop_rerolls_this_round, 1);
+    }
+
+    #[test]
+    fn test_reroll_shop_cost_escalation() {
+        let mut game = Game::default();
+        game.start();
+        game.stage = Stage::Shop();
+        game.money = 100.0;
+
+        // Reroll multiple times and verify cost escalation
+        assert_eq!(game.shop_reroll_cost, 5.0);
+        
+        // First reroll: 5 coins
+        game.reroll_shop().unwrap();
+        assert_eq!(game.money, 95.0);
+        assert_eq!(game.shop_reroll_cost, 10.0);
+        assert_eq!(game.shop_rerolls_this_round, 1);
+
+        // Second reroll: 10 coins
+        game.reroll_shop().unwrap();
+        assert_eq!(game.money, 85.0);
+        assert_eq!(game.shop_reroll_cost, 15.0);
+        assert_eq!(game.shop_rerolls_this_round, 2);
+
+        // Third reroll: 15 coins
+        game.reroll_shop().unwrap();
+        assert_eq!(game.money, 70.0);
+        assert_eq!(game.shop_reroll_cost, 20.0);
+        assert_eq!(game.shop_rerolls_this_round, 3);
+
+        // Fourth reroll: 20 coins
+        game.reroll_shop().unwrap();
+        assert_eq!(game.money, 50.0);
+        assert_eq!(game.shop_reroll_cost, 25.0);
+        assert_eq!(game.shop_rerolls_this_round, 4);
+    }
+
+    #[test]
+    fn test_reroll_shop_insufficient_money() {
+        let mut game = Game::default();
+        game.start();
+        game.stage = Stage::Shop();
+        game.money = 3.0; // Less than base reroll cost of 5
+
+        let result = game.reroll_shop();
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), GameError::InvalidBalance));
+
+        // State should remain unchanged
+        assert_eq!(game.money, 3.0);
+        assert_eq!(game.shop_reroll_cost, 5.0);
+        assert_eq!(game.shop_rerolls_this_round, 0);
+    }
+
+    #[test]
+    fn test_reroll_shop_invalid_stage() {
+        let mut game = Game::default();
+        game.start();
+        game.stage = Stage::PreBlind(); // Not shop stage
+        game.money = 50.0;
+
+        let result = game.reroll_shop();
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), GameError::InvalidStage));
+
+        // State should remain unchanged
+        assert_eq!(game.money, 50.0);
+        assert_eq!(game.shop_reroll_cost, 5.0);
+        assert_eq!(game.shop_rerolls_this_round, 0);
+    }
+
+    #[test]
+    fn test_reroll_cost_reset_on_new_shop_round() {
+        let mut game = Game::default();
+        game.start();
+        
+        // Set up initial state
+        game.stage = Stage::Shop();
+        game.money = 50.0;
+        game.shop_reroll_cost = 15.0; // Simulate previous rerolls
+        game.shop_rerolls_this_round = 2;
+
+        // Simulate transitioning to new round
+        game.stage = Stage::PostBlind();
+        game.reward = 10.0;
+        let cashout_result = game.cashout();
+        assert!(cashout_result.is_ok());
+
+        // Reroll cost and count should be reset
+        assert_eq!(game.stage, Stage::Shop());
+        assert_eq!(game.shop_reroll_cost, 5.0); // Reset to base cost
+        assert_eq!(game.shop_rerolls_this_round, 0); // Reset count
+        assert_eq!(game.money, 60.0); // Original money + reward
+    }
+
+    #[test]
+    fn test_reroll_shop_action_integration() {
+        let mut game = Game::default();
+        game.start();
+        game.stage = Stage::Shop();
+        game.money = 50.0;
+
+        // Test using the RerollShop action
+        let action = Action::RerollShop();
+        let result = game.handle_action(action);
+        
+        assert!(result.is_ok());
+        assert_eq!(game.money, 45.0);
+        assert_eq!(game.shop_reroll_cost, 10.0);
+        assert_eq!(game.shop_rerolls_this_round, 1);
+    }
+
+    #[test]
+    fn test_reroll_shop_action_invalid_stage() {
+        let mut game = Game::default();
+        game.start();
+        game.stage = Stage::PreBlind(); // Not shop stage
+        game.money = 50.0;
+
+        let action = Action::RerollShop();
+        let result = game.handle_action(action);
+        
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), GameError::InvalidStage));
+        assert_eq!(game.money, 50.0); // Money unchanged
+    }
+
+    #[test]
+    fn test_reroll_shop_save_load_state() {
+        let mut game = Game::default();
+        game.start();
+        game.stage = Stage::Shop();
+        game.money = 50.0;
+        
+        // Perform some rerolls to establish state
+        game.reroll_shop().unwrap();
+        game.reroll_shop().unwrap();
+        
+        // Verify state before save
+        assert_eq!(game.money, 35.0); // 50 - 5 - 10 = 35
+        assert_eq!(game.shop_reroll_cost, 15.0);
+        assert_eq!(game.shop_rerolls_this_round, 2);
+
+        // Save and reload game state
+        let saved_state = game.save_state_to_json().unwrap();
+        let loaded_game = Game::load_state_from_json(&saved_state).unwrap();
+
+        // Verify reroll state is preserved
+        assert_eq!(loaded_game.money, 35.0);
+        assert_eq!(loaded_game.shop_reroll_cost, 15.0);
+        assert_eq!(loaded_game.shop_rerolls_this_round, 2);
+    }
+
+    #[test]
+    fn test_reroll_shop_multiple_rounds() {
+        let mut game = Game::default();
+        game.start();
+        game.money = 100.0;
+
+        // First round
+        game.stage = Stage::Shop();
+        game.reroll_shop().unwrap(); // Cost: 5, total spent: 5
+        game.reroll_shop().unwrap(); // Cost: 10, total spent: 15
+        assert_eq!(game.money, 85.0);
+        assert_eq!(game.shop_reroll_cost, 15.0);
+
+        // Transition to next round
+        game.stage = Stage::PostBlind();
+        game.reward = 20.0;
+        game.cashout().unwrap();
+
+        // Second round - costs should be reset
+        assert_eq!(game.shop_reroll_cost, 5.0);
+        assert_eq!(game.shop_rerolls_this_round, 0);
+        assert_eq!(game.money, 105.0); // 85 + 20 = 105
+
+        // Reroll in second round
+        game.reroll_shop().unwrap(); // Should cost 5 again
+        assert_eq!(game.money, 100.0);
+        assert_eq!(game.shop_reroll_cost, 10.0);
+        assert_eq!(game.shop_rerolls_this_round, 1);
     }
 }
