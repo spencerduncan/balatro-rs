@@ -207,6 +207,128 @@ impl std::convert::From<DeveloperActionSpaceError> for DeveloperGameError {
     }
 }
 
+/// Developer-facing pack system errors with detailed information for debugging
+#[derive(Error, Debug, Clone)]
+pub enum DeveloperPackError {
+    // Pack Purchase Errors
+    #[error("Insufficient funds to purchase {pack_type} pack: need ${cost}, have ${available}")]
+    InsufficientFunds {
+        pack_type: String,
+        cost: usize,
+        available: f64,
+    },
+    #[error("Pack type {pack_type} is not available for purchase")]
+    PackTypeNotAvailable { pack_type: String },
+    #[error("Cannot purchase packs during {current_stage} stage")]
+    InvalidPurchaseStage { current_stage: String },
+    #[error("Pack purchase limit exceeded: {current}/{limit}")]
+    PurchaseLimitExceeded { current: usize, limit: usize },
+    #[error("Pack cost calculation failed for {pack_type}: {reason}")]
+    CostCalculationFailed { pack_type: String, reason: String },
+
+    // Pack Opening Errors
+    #[error("Pack not found in inventory: ID {pack_id}")]
+    PackNotFound { pack_id: usize },
+    #[error("Invalid pack ID {pack_id}: inventory size is {inventory_size}")]
+    InvalidPackId {
+        pack_id: usize,
+        inventory_size: usize,
+    },
+    #[error("Pack {pack_id} is already open")]
+    PackAlreadyOpen { pack_id: usize },
+    #[error("Cannot open pack during {current_stage} stage")]
+    InvalidOpenStage { current_stage: String },
+    #[error("Pack opening failed: {reason}")]
+    OpeningFailed { reason: String },
+
+    // Pack Selection Errors  
+    #[error("No pack is currently open")]
+    NoPackOpen,
+    #[error("Invalid option index {option_index}: pack has {total_options} options")]
+    InvalidOptionIndex {
+        option_index: usize,
+        total_options: usize,
+    },
+    #[error("Pack ID mismatch: expected {expected}, got {actual}")]
+    PackIdMismatch { expected: usize, actual: usize },
+    #[error("Option {option_index} has already been selected")]
+    OptionAlreadySelected { option_index: usize },
+    #[error("Cannot select from pack during {current_stage} stage")]
+    InvalidSelectionStage { current_stage: String },
+
+    // Pack Skip Errors
+    #[error("Pack {pack_id} cannot be skipped")]
+    PackNotSkippable { pack_id: usize },
+    #[error("No pack available to skip")]
+    NoPackToSkip,
+    #[error("Skip operation failed: {reason}")]
+    SkipFailed { reason: String },
+
+    // Pack Content Generation Errors
+    #[error("Failed to generate pack contents for {pack_type}: {reason}")]
+    ContentGenerationFailed { pack_type: String, reason: String },
+    #[error("Joker generation failed for {pack_type}: {reason}")]
+    JokerGenerationFailed { pack_type: String, reason: String },
+    #[error("Card generation failed for {pack_type}: {reason}")]
+    CardGenerationFailed { pack_type: String, reason: String },
+    #[error("Consumable generation failed for {pack_type}: {reason}")]
+    ConsumableGenerationFailed { pack_type: String, reason: String },
+    #[error("Insufficient options generated: expected {expected}, got {actual}")]
+    InsufficientOptions { expected: usize, actual: usize },
+    #[error("Pack rarity distribution failed: {reason}")]
+    RarityDistributionFailed { reason: String },
+
+    // RNG and Random Generation Errors
+    #[error("RNG selection failed during pack generation: {reason}")]
+    RngSelectionFailed { reason: String },
+    #[error("Empty selection pool for {item_type} in {pack_type}")]
+    EmptySelectionPool { item_type: String, pack_type: String },
+    #[error("Weighted random selection failed: {reason}")]
+    WeightedSelectionFailed { reason: String },
+
+    // Voucher Integration Errors
+    #[error("Voucher effect calculation failed for {voucher_id}: {reason}")]
+    VoucherEffectFailed { voucher_id: String, reason: String },
+    #[error("Grab Bag voucher processing failed: {reason}")]
+    GrabBagProcessingFailed { reason: String },
+
+    // Pack Item Processing Errors
+    #[error("Failed to process selected pack item: {reason}")]
+    ItemProcessingFailed { reason: String },
+    #[error("Failed to add item to deck: {reason}")]
+    ItemAdditionFailed { reason: String },
+    #[error("Inventory space validation failed: {reason}")]
+    InventoryValidationFailed { reason: String },
+
+    // Pack State Errors
+    #[error("Pack state corruption detected: {reason}")]
+    StateCorruption { reason: String },
+    #[error("Pack inventory desynchronization: {reason}")]
+    InventoryDesync { reason: String },
+    #[error("Pack validation failed: {reason}")]
+    PackValidationFailed { reason: String },
+}
+
+impl std::convert::From<DeveloperPackError> for DeveloperGameError {
+    fn from(err: DeveloperPackError) -> DeveloperGameError {
+        match err {
+            DeveloperPackError::InsufficientFunds { .. } => DeveloperGameError::InvalidBalance,
+            DeveloperPackError::PackNotFound { .. } 
+            | DeveloperPackError::NoPackOpen 
+            | DeveloperPackError::NoPackToSkip => DeveloperGameError::NoCardMatch,
+            DeveloperPackError::InvalidPackId { .. }
+            | DeveloperPackError::InvalidOptionIndex { .. }
+            | DeveloperPackError::PackIdMismatch { .. } => DeveloperGameError::InvalidAction,
+            DeveloperPackError::InvalidPurchaseStage { .. }
+            | DeveloperPackError::InvalidOpenStage { .. }
+            | DeveloperPackError::InvalidSelectionStage { .. } => DeveloperGameError::InvalidStage,
+            DeveloperPackError::RngSelectionFailed { .. }
+            | DeveloperPackError::WeightedSelectionFailed { .. } => DeveloperGameError::RngFailed("Pack generation RNG failure".to_string()),
+            _ => DeveloperGameError::InvalidOperation(format!("Pack system error: {}", err)),
+        }
+    }
+}
+
 /// Error sanitizer that converts detailed developer errors to safe user errors
 pub struct ErrorSanitizer {
     detail_level: ErrorDetailLevel,
