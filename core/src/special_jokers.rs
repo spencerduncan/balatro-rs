@@ -767,7 +767,7 @@ mod tests {
         JokerGameplay, JokerIdentity, JokerLifecycle, JokerModifiers,
         JokerState as JokerStateTrait, Rarity,
     };
-    use crate::joker::{GameContext, JokerId};
+    use crate::joker::GameContext;
     use crate::joker_state::JokerStateManager;
     use crate::stage::{Blind, Stage};
     use std::sync::Arc;

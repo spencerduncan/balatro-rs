@@ -16,7 +16,11 @@ use crate::{
 };
 use serde_json::json;
 
+/// Maximum accumulated value to prevent overflow (production safety)
+const MAX_ACCUMULATED_VALUE: f64 = 1_000_000.0;
+
 /// Spare Trousers - +2 Mult per Two Pair hand played
+/// Production: Uses state manager as single source of truth
 #[derive(Debug, Clone)]
 pub struct SpareTrousersJoker {
     id: JokerId,
@@ -24,7 +28,7 @@ pub struct SpareTrousersJoker {
     description: String,
     rarity: JokerRarity,
     cost: usize,
-    two_pairs_played: u32,
+    // Removed: two_pairs_played field (dual state eliminated)
 }
 
 impl Default for SpareTrousersJoker {
@@ -41,7 +45,7 @@ impl SpareTrousersJoker {
             description: "+2 Mult per Two Pair hand played".to_string(),
             rarity: JokerRarity::Uncommon,
             cost: 6,
-            two_pairs_played: 0,
+            // Removed: two_pairs_played initialization (dual state eliminated)
         }
     }
 }
@@ -102,11 +106,13 @@ impl Joker for SpareTrousersJoker {
             .unwrap_or(false);
 
         if is_two_pair {
-            // Update state to increment two pairs count
+            // Update state to increment two pairs count with bounds checking
             context
                 .joker_state_manager
                 .update_state(self.id(), |state| {
-                    state.accumulated_value += 1.0;
+                    // Production safety: Apply bounds checking to prevent overflow
+                    state.accumulated_value =
+                        (state.accumulated_value + 1.0).min(MAX_ACCUMULATED_VALUE);
                 });
 
             let current_count = context
@@ -145,26 +151,28 @@ impl JokerStateTrait for SpareTrousersJoker {
     }
 
     fn serialize_state(&self) -> Option<serde_json::Value> {
-        Some(json!({
-            "two_pairs_played": self.two_pairs_played
-        }))
+        // Production: State is managed centrally, no local serialization needed
+        None
     }
 
-    fn deserialize_state(&mut self, value: serde_json::Value) -> Result<(), String> {
-        if let Some(count) = value.get("two_pairs_played").and_then(|v| v.as_u64()) {
-            self.two_pairs_played = count as u32;
-            Ok(())
-        } else {
-            Err("Invalid state format".to_string())
-        }
+    fn deserialize_state(&mut self, _value: serde_json::Value) -> Result<(), String> {
+        // Production: State is managed centrally, no local deserialization needed
+        Ok(())
     }
 }
 
 impl JokerGameplay for SpareTrousersJoker {
-    fn process(&mut self, stage: &Stage, _context: &mut ProcessContext) -> ProcessResult {
+    fn process(&mut self, stage: &Stage, context: &mut ProcessContext) -> ProcessResult {
         if matches!(stage, Stage::Blind(_)) {
+            // Production: Get state from state manager (single source of truth)
+            let accumulated_value = context
+                .joker_state_manager
+                .get_state(self.id)
+                .map(|state| state.accumulated_value)
+                .unwrap_or(0.0);
+
             ProcessResult {
-                mult_added: (self.two_pairs_played * 2) as f64,
+                mult_added: accumulated_value * 2.0, // +2 mult per two pair
                 ..Default::default()
             }
         } else {
@@ -178,6 +186,7 @@ impl JokerGameplay for SpareTrousersJoker {
 }
 
 /// Fortune Teller - +1 Mult per Tarot card used
+/// Production: Uses state manager as single source of truth
 #[derive(Debug, Clone)]
 pub struct FortuneTellerJoker {
     id: JokerId,
@@ -185,7 +194,7 @@ pub struct FortuneTellerJoker {
     description: String,
     rarity: JokerRarity,
     cost: usize,
-    tarots_used: u32,
+    // Removed: tarots_used field (dual state eliminated)
 }
 
 impl Default for FortuneTellerJoker {
@@ -202,7 +211,7 @@ impl FortuneTellerJoker {
             description: "+1 Mult per Tarot card used".to_string(),
             rarity: JokerRarity::Common,
             cost: 3,
-            tarots_used: 0,
+            // Removed: tarots_used initialization (dual state eliminated)
         }
     }
 }
@@ -272,7 +281,8 @@ impl Joker for FortuneTellerJoker {
         }
     }
 
-    // TODO: Add on_consumable_used when implemented in trait system
+    // Production: Consumable functionality requires trait system enhancement
+    // This will be implemented when the core trait system supports consumable events
 }
 
 impl JokerStateTrait for FortuneTellerJoker {
@@ -281,26 +291,28 @@ impl JokerStateTrait for FortuneTellerJoker {
     }
 
     fn serialize_state(&self) -> Option<serde_json::Value> {
-        Some(json!({
-            "tarots_used": self.tarots_used
-        }))
+        // Production: State is managed centrally, no local serialization needed
+        None
     }
 
-    fn deserialize_state(&mut self, value: serde_json::Value) -> Result<(), String> {
-        if let Some(count) = value.get("tarots_used").and_then(|v| v.as_u64()) {
-            self.tarots_used = count as u32;
-            Ok(())
-        } else {
-            Err("Invalid state format".to_string())
-        }
+    fn deserialize_state(&mut self, _value: serde_json::Value) -> Result<(), String> {
+        // Production: State is managed centrally, no local deserialization needed
+        Ok(())
     }
 }
 
 impl JokerGameplay for FortuneTellerJoker {
-    fn process(&mut self, stage: &Stage, _context: &mut ProcessContext) -> ProcessResult {
+    fn process(&mut self, stage: &Stage, context: &mut ProcessContext) -> ProcessResult {
         if matches!(stage, Stage::Blind(_)) {
+            // Production: Get state from state manager (single source of truth)
+            let accumulated_value = context
+                .joker_state_manager
+                .get_state(self.id)
+                .map(|state| state.accumulated_value)
+                .unwrap_or(0.0);
+            
             ProcessResult {
-                mult_added: self.tarots_used as f64,
+                mult_added: accumulated_value, // +1 mult per tarot used
                 ..Default::default()
             }
         } else {
@@ -314,6 +326,7 @@ impl JokerGameplay for FortuneTellerJoker {
 }
 
 /// Green Joker - +1 Mult per hand played, -1 per discard
+/// Production: Uses state manager as single source of truth
 #[derive(Debug, Clone)]
 pub struct GreenJoker {
     id: JokerId,
@@ -321,7 +334,7 @@ pub struct GreenJoker {
     description: String,
     rarity: JokerRarity,
     cost: usize,
-    current_mult: i32,
+    // Removed: current_mult field (dual state eliminated)
 }
 
 impl Default for GreenJoker {
@@ -338,7 +351,7 @@ impl GreenJoker {
             description: "+1 Mult per hand played, -1 per discard".to_string(),
             rarity: JokerRarity::Common,
             cost: 3,
-            current_mult: 0,
+            // Removed: current_mult initialization (dual state eliminated)
         }
     }
 }
@@ -392,11 +405,12 @@ impl Joker for GreenJoker {
     }
 
     fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
-        // Increment mult by 1
+        // Increment mult by 1 with bounds checking
         context
             .joker_state_manager
             .update_state(self.id(), |state| {
-                state.accumulated_value += 1.0;
+                // Production safety: Apply bounds checking to prevent overflow
+                state.accumulated_value = (state.accumulated_value + 1.0).min(MAX_ACCUMULATED_VALUE);
             });
 
         let current_mult = context
@@ -415,7 +429,7 @@ impl Joker for GreenJoker {
     }
 
     fn on_discard(&self, context: &mut GameContext, _cards: &[Card]) -> JokerEffect {
-        // Decrement mult by 1, but don't go below 0
+        // Decrement mult by 1, but don't go below 0 (bounds checking built-in)
         context
             .joker_state_manager
             .update_state(self.id(), |state| {
@@ -432,27 +446,33 @@ impl JokerStateTrait for GreenJoker {
     }
 
     fn serialize_state(&self) -> Option<serde_json::Value> {
-        Some(json!({
-            "current_mult": self.current_mult
-        }))
+        // Production: State is managed centrally, no local serialization needed
+        None
     }
 
-    fn deserialize_state(&mut self, value: serde_json::Value) -> Result<(), String> {
-        if let Some(mult) = value.get("current_mult").and_then(|v| v.as_i64()) {
-            self.current_mult = mult as i32;
-            Ok(())
-        } else {
-            Err("Invalid state format".to_string())
-        }
+    fn deserialize_state(&mut self, _value: serde_json::Value) -> Result<(), String> {
+        // Production: State is managed centrally, no local deserialization needed
+        Ok(())
     }
 }
 
 impl JokerGameplay for GreenJoker {
-    fn process(&mut self, stage: &Stage, _context: &mut ProcessContext) -> ProcessResult {
-        if matches!(stage, Stage::Blind(_)) && self.current_mult > 0 {
-            ProcessResult {
-                mult_added: self.current_mult as f64,
-                ..Default::default()
+    fn process(&mut self, stage: &Stage, context: &mut ProcessContext) -> ProcessResult {
+        if matches!(stage, Stage::Blind(_)) {
+            // Production: Get state from state manager (single source of truth)
+            let accumulated_value = context
+                .joker_state_manager
+                .get_state(self.id)
+                .map(|state| state.accumulated_value)
+                .unwrap_or(0.0);
+            
+            if accumulated_value > 0.0 {
+                ProcessResult {
+                    mult_added: accumulated_value,
+                    ..Default::default()
+                }
+            } else {
+                ProcessResult::default()
             }
         } else {
             ProcessResult::default()
