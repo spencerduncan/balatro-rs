@@ -138,11 +138,13 @@ mod tests {
         let played_cards = vec![];
         let held_cards = vec![];
         let mut events = vec![];
+        let hand = SelectHand::new(played_cards.clone());
         let mut context = ProcessContext {
             hand_score: &mut hand_score,
             played_cards: &played_cards,
             held_cards: &held_cards,
             events: &mut events,
+            hand: &hand,
             joker_state_manager: &state_manager,
         };
 
