@@ -66,10 +66,37 @@ The following features are missing and may or may not be added
 - [ ] boss blind modifiers
 - [ ] skip blind/tags
 - [ ] card enhancements, foils and seals
-- [ ] joker foils 
+- [ ] joker foils
 - [ ] alternative decks
 - [ ] alternative stakes
 
+## Development
+
+### Quick Start
+
+1. Clone the repository and set up pre-commit hooks:
+```bash
+git clone https://github.com/spencerduncan/balatro-rs.git
+cd balatro-rs
+./scripts/setup-precommit.sh  # Install automated code quality checks
+```
+
+2. Build and test:
+```bash
+cargo build --all
+cargo test --all
+```
+
+### Code Quality (Automated)
+
+This project uses pre-commit hooks to maintain code quality:
+
+- **Formatting**: Rust code is automatically formatted with `rustfmt`
+- **Linting**: Zero warnings policy with `clippy`
+- **Testing**: Core tests run before each commit
+- **Security**: Dependency vulnerability scanning
+
+The hooks run automatically on `git commit`. See `PRE_COMMIT_GUIDE.md` for details.
 
 ## Python bindings
 
@@ -91,7 +118,7 @@ while not engine.is_over:
     actions = engine.gen_actions()        # Actions from engine
     if actions:
         engine.handle_action(actions[0])  # Execute via engine
-        
+
     # Access read-only state when needed
     state = engine.state
     print(f"Score: {state.score}, Money: {state.money}")
