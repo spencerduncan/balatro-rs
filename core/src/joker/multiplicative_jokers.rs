@@ -708,11 +708,12 @@ pub fn create_the_trio() -> Box<dyn Joker> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::joker_state::JokerStateManager;
     use crate::stage::Blind;
 
     #[test]
     fn test_baron_no_kings() {
-        let baron = Baron::new();
+        let mut baron = Baron::new();
         let hand = SelectHand::new(vec![
             Card::new(Value::Ace, Suit::Heart),
             Card::new(Value::Two, Suit::Spade),
@@ -727,12 +728,14 @@ mod tests {
         let held_cards = vec![];
         let mut events = vec![];
 
+        let state_manager = JokerStateManager::new();
         let mut context = ProcessContext {
             hand_score: &mut hand_score,
             played_cards: &played_cards,
             held_cards: &held_cards,
             events: &mut events,
             hand: &hand,
+            joker_state_manager: &state_manager,
         };
 
         let stage = Stage::Blind(Blind::Small);

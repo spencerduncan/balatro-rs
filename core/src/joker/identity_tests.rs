@@ -83,15 +83,7 @@ const RARITY_COSTS: &[(Rarity, u64)] = &[
 ];
 
 // Test macro for parameterized tests - eliminates code duplication
-macro_rules! test_joker_property {
-    ($name:ident, $joker:expr, $check:expr) => {
-        #[test]
-        fn $name() {
-            let joker = $joker;
-            assert!($check(&joker));
-        }
-    };
-}
+// NOTE: Removed unused macro
 
 macro_rules! test_batch {
     ($($name:ident => $joker_idx:expr, $prop:expr, $expected:expr);* $(;)?) => {
@@ -263,18 +255,19 @@ mod integration_tests {
 }
 
 // Performance comparison benchmark (not run by default)
-#[cfg(all(test, feature = "bench"))]
-mod bench {
-    use super::*;
-    use test::Bencher;
-
-    #[bench]
-    fn bench_static_joker_access(b: &mut Bencher) {
-        b.iter(|| {
-            for joker in TEST_JOKERS {
-                test::black_box(joker.joker_type());
-                test::black_box(joker.base_cost());
-            }
-        });
-    }
-}
+// NOTE: Commented out benchmark code as "bench" feature is not defined
+// #[cfg(all(test, feature = "bench"))]
+// mod bench {
+//     use super::*;
+//     use test::Bencher;
+//
+//     #[bench]
+//     fn bench_static_joker_access(b: &mut Bencher) {
+//         b.iter(|| {
+//             for joker in TEST_JOKERS {
+//                 test::black_box(joker.joker_type());
+//                 test::black_box(joker.base_cost());
+//             }
+//         });
+//     }
+// }
