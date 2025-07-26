@@ -94,6 +94,23 @@ Example: `feat: add tarot card consumables system`
    - Reference to any related issues
    - Test results
 
+### Merge Strategy
+
+**This repository uses squash and merge exclusively** to maintain a clean, linear commit history. When your PR is approved:
+
+- All commits will be squashed into a single commit
+- The PR title becomes the commit message
+- The PR description is preserved in the squash commit body
+- Feature branches are automatically deleted after merge
+
+This approach:
+- Keeps the main branch history clean and easy to navigate
+- Makes it easier to revert changes if needed
+- Allows for detailed commit messages during development without cluttering main
+- Simplifies bisecting for bug hunting
+
+Feel free to make as many commits as needed during development - they'll be squashed on merge!
+
 ### CI/CD Pipeline
 
 All pull requests must pass the following CI checks:
