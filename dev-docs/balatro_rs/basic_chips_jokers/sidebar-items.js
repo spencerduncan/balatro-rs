@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["BannerJoker","BlueJoker","BullJoker","ScaryFaceJoker","StoneJoker"]};
+window.SIDEBAR_ITEMS = {};
