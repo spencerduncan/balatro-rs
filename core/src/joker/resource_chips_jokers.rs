@@ -442,7 +442,9 @@ impl JokerGameplay for ScaryFaceJoker {
         ProcessResult {
             chips_added,
             mult_added: 0.0,
+            mult_multiplier: 1.0,
             retriggered: false,
+            message: None,
         }
     }
 
