@@ -73,6 +73,7 @@ impl JokerFactory {
             JokerId::Photograph => Some(Box::new(PhotographJoker::new())),
             JokerId::TheOrder => Some(Box::new(TheOrderJoker)),
             JokerId::FourFingers => Some(Box::new(FourFingersJoker::new())),
+            JokerId::Triboulet => Some(Box::new(TribouletJoker)),
             // TODO: Implement remaining jokers
             _ => None,
         }
@@ -145,6 +146,7 @@ impl JokerFactory {
             JokerRarity::Legendary => vec![
                 // RNG-based jokers (Issue #442)
                 Reserved9, // ChaoticJoker
+                Triboulet, // Legendary joker that gives X2 mult for Kings and Queens
             ],
         }
     }
@@ -200,7 +202,9 @@ impl JokerFactory {
             Photograph,
             TheOrder,
             SteelJoker, // Now properly implemented as scaling joker
-                        // Note: HalfJoker and Banner are still placeholders
+            FourFingers,
+            Triboulet, // Legendary joker - Kings and Queens give X2 mult
+            // Note: HalfJoker and Banner are still placeholders
         ]
     }
 }
