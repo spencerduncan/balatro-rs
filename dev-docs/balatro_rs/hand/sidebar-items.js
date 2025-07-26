@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["Hand","HandAnalysis","MadeHand","SelectHand"]};
+window.SIDEBAR_ITEMS = {"fn":["get_hand_eval_config","set_hand_eval_config"],"struct":["Hand","HandAnalysis","HandEvalConfig","MadeHand","SelectHand"]};
