@@ -70,7 +70,9 @@ struct ComplexMockJoker {
 
 impl ComplexMockJoker {
     fn new() -> Self {
-        Self { state: None }
+        Self {
+            state: None,
+        }
     }
 
     fn with_initial_state() -> Self {
@@ -464,6 +466,7 @@ mod validation_tests {
         assert!(result3.is_err());
         assert!(result3.unwrap_err().contains("Deserialization failed"));
     }
+
 }
 
 #[cfg(test)]
