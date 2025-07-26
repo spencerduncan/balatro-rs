@@ -100,8 +100,7 @@ impl Joker for DelayedGratificationJoker {
             JokerEffect::new()
                 .with_money(money_earned)
                 .with_message(format!(
-                    "Delayed Gratification: +${} (no discards used)",
-                    money_earned
+                    "Delayed Gratification: +${money_earned} (no discards used)"
                 ))
         } else {
             JokerEffect::new()
@@ -319,12 +318,12 @@ impl Joker for ToTheMoonJoker {
 
     fn on_round_end(&self, context: &mut GameContext) -> JokerEffect {
         // Calculate interest: $1 per $5 owned, max $5
-        let interest = ((context.money / 5) as i32).min(5).max(0);
+        let interest = (context.money / 5).clamp(0, 5);
 
         if interest > 0 {
             JokerEffect::new()
                 .with_money(interest)
-                .with_message(format!("To The Moon: +${} interest", interest))
+                .with_message(format!("To The Moon: +${interest} interest"))
         } else {
             JokerEffect::new()
         }
@@ -427,8 +426,7 @@ impl Joker for GiftCardJoker {
             JokerEffect::new()
                 .with_sell_value_increase(1)
                 .with_message(format!(
-                    "Gift Card: {} items gained $1 sell value",
-                    total_items
+                    "Gift Card: {total_items} items gained $1 sell value"
                 ))
         } else {
             JokerEffect::new()

@@ -4,13 +4,12 @@
 //! These jokers add fixed amounts of mult to the score under various conditions.
 
 use crate::{
-    card::{Card, Suit, Value},
+    card::{Card, Value},
     hand::SelectHand,
     joker::{
         traits::{ProcessContext, ProcessResult, Rarity},
         GameContext, Joker, JokerEffect, JokerGameplay, JokerId, JokerIdentity, JokerRarity,
     },
-    rank::HandRank,
     stage::Stage,
 };
 
@@ -231,7 +230,7 @@ impl JokerGameplay for EvenStevenJoker {
             && context
                 .played_cards
                 .iter()
-                .any(|card| Self::is_even_card(card))
+                .any(Self::is_even_card)
     }
 }
 
