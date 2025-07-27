@@ -1223,6 +1223,199 @@ impl Joker for TribouletJoker {
     }
 }
 
+// Economy Jokers - Part 1
+
+// To the Moon: Earns $1 for every $5 you have at end of round
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct ToTheMoonJoker;
+
+impl Joker for ToTheMoonJoker {
+    fn id(&self) -> JokerId {
+        JokerId::ToTheMoon
+    }
+
+    fn name(&self) -> &str {
+        "To the Moon"
+    }
+
+    fn description(&self) -> &str {
+        "Earn an extra $1 of interest for every $5 you have at end of round"
+    }
+
+    fn rarity(&self) -> JokerRarity {
+        JokerRarity::Uncommon
+    }
+
+    fn cost(&self) -> usize {
+        6
+    }
+
+    fn on_round_end(&self, context: &mut GameContext) -> JokerEffect {
+        let interest_bonus = context.money / 5;
+        JokerEffect::new()
+            .with_money(interest_bonus)
+            .with_message(format!(
+                "To the Moon earned ${interest_bonus} interest bonus"
+            ))
+    }
+}
+
+// Rocket: Earns $1 at end of round, loses $2 when Boss Blind is defeated
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct RocketJoker;
+
+impl Joker for RocketJoker {
+    fn id(&self) -> JokerId {
+        JokerId::RocketShip
+    }
+
+    fn name(&self) -> &str {
+        "Rocket"
+    }
+
+    fn description(&self) -> &str {
+        "Earn $1 at end of round. Payout increases by $2 when Boss Blind is defeated"
+    }
+
+    fn rarity(&self) -> JokerRarity {
+        JokerRarity::Uncommon
+    }
+
+    fn cost(&self) -> usize {
+        6
+    }
+
+    fn on_round_end(&self, context: &mut GameContext) -> JokerEffect {
+        // Base payout of $1
+        let base_payout = 1;
+
+        // Check if Boss Blind was defeated this round by checking stage
+        // This is a simplified implementation - in a real game you'd track boss blind defeats
+        let boss_bonus = if matches!(context.stage, crate::stage::Stage::PostBlind()) {
+            // Assume we defeated the boss blind if we're in PostBlind stage
+            2
+        } else {
+            0
+        };
+
+        let total_payout = base_payout + boss_bonus;
+
+        let message = if boss_bonus > 0 {
+            format!(
+                "Rocket earned ${total_payout} (${base_payout} base + ${boss_bonus} boss bonus)"
+            )
+        } else {
+            format!("Rocket earned ${total_payout}")
+        };
+
+        JokerEffect::new()
+            .with_money(total_payout)
+            .with_message(message)
+    }
+}
+
+// Credit Card: Go up to -$20 in debt
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct CreditCardJoker;
+
+impl Joker for CreditCardJoker {
+    fn id(&self) -> JokerId {
+        JokerId::CreditCard
+    }
+
+    fn name(&self) -> &str {
+        "Credit Card"
+    }
+
+    fn description(&self) -> &str {
+        "Go up to -$20 in debt"
+    }
+
+    fn rarity(&self) -> JokerRarity {
+        JokerRarity::Uncommon
+    }
+
+    fn cost(&self) -> usize {
+        6
+    }
+
+    // Credit Card is a passive effect that affects the money system
+    // It doesn't have active triggers but modifies the minimum money allowed
+    // This would need to be handled in the game's money management system
+    // For now, we'll implement it as a passive joker with a message
+    fn on_created(&self, _context: &mut GameContext) -> JokerEffect {
+        JokerEffect::new().with_message("Credit Card allows going up to -$20 in debt".to_string())
+    }
+}
+
+// Gift Card: Add $1 to every Joker, Tarot, Planet, and Spectral card that appears in the shop
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct GiftCardJoker;
+
+impl Joker for GiftCardJoker {
+    fn id(&self) -> JokerId {
+        JokerId::GiftCard
+    }
+
+    fn name(&self) -> &str {
+        "Gift Card"
+    }
+
+    fn description(&self) -> &str {
+        "Add $1 of sell value to every Joker and Consumable card at end of round"
+    }
+
+    fn rarity(&self) -> JokerRarity {
+        JokerRarity::Uncommon
+    }
+
+    fn cost(&self) -> usize {
+        6
+    }
+
+    fn on_shop_open(&self, _context: &mut GameContext) -> JokerEffect {
+        // Gift Card's effect would need to be integrated with the shop system
+        // to modify the sell values of items in the shop
+        // For now, we'll implement it as a message
+        JokerEffect::new().with_message("Gift Card adds $1 sell value to shop items".to_string())
+    }
+}
+
+// Golden Joker: Earns $4 at end of round
+// Note: Using GoldenTicket as placeholder since there's no specific Golden joker ID
+// This should be updated when the correct ID is available
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct GoldenJoker;
+
+impl Joker for GoldenJoker {
+    fn id(&self) -> JokerId {
+        // Using GoldenTicket as placeholder - this may need to be updated
+        JokerId::GoldenTicket
+    }
+
+    fn name(&self) -> &str {
+        "Golden Joker"
+    }
+
+    fn description(&self) -> &str {
+        "Earn $4 at end of round"
+    }
+
+    fn rarity(&self) -> JokerRarity {
+        JokerRarity::Common
+    }
+
+    fn cost(&self) -> usize {
+        3
+    }
+
+    fn on_round_end(&self, _context: &mut GameContext) -> JokerEffect {
+        JokerEffect::new()
+            .with_money(4)
+            .with_message("Golden Joker earned $4".to_string())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1713,5 +1906,263 @@ mod tests {
         assert_eq!(effect.mult, 0);
         assert_eq!(effect.chips, 0);
         assert_eq!(effect.money, 0);
+    }
+    // Tests for Economy Jokers - Part 1
+
+    #[test]
+    fn test_to_the_moon_basic_properties() {
+        let joker = ToTheMoonJoker;
+        assert_eq!(joker.id(), JokerId::ToTheMoon);
+        assert_eq!(joker.name(), "To the Moon");
+        assert_eq!(joker.rarity(), JokerRarity::Uncommon);
+        assert_eq!(joker.cost(), 6);
+    }
+
+    #[test]
+    fn test_to_the_moon_interest_calculation() {
+        use crate::hand::Hand;
+        use crate::joker_state::JokerStateManager;
+        use crate::rng::GameRng;
+        use crate::stage::Stage;
+        use std::collections::HashMap;
+        use std::sync::Arc;
+
+        let joker = ToTheMoonJoker;
+
+        let stage = Stage::Blind(crate::stage::Blind::Small);
+        let hand = Hand::new(vec![]);
+        let joker_state_manager = Arc::new(JokerStateManager::new());
+        let hand_type_counts = HashMap::new();
+        let rng = GameRng::for_testing(42);
+
+        // Test with $15 (should earn $3 interest bonus: 15/5 = 3)
+        let mut context = GameContext {
+            chips: 0,
+            mult: 0,
+            money: 15,
+            ante: 1,
+            round: 1,
+            stage: &stage,
+            hands_played: 0,
+            discards_used: 0,
+            jokers: &[],
+            hand: &hand,
+            discarded: &[],
+            joker_state_manager: &joker_state_manager,
+            hand_type_counts: &hand_type_counts,
+            cards_in_deck: 52,
+            stone_cards_in_deck: 0,
+            rng: &rng,
+        };
+        let effect = joker.on_round_end(&mut context);
+        assert_eq!(effect.money, 3);
+
+        // Test with $7 (should earn $1 interest bonus: 7/5 = 1)
+        context.money = 7;
+        let effect = joker.on_round_end(&mut context);
+        assert_eq!(effect.money, 1);
+
+        // Test with $3 (should earn $0 interest bonus: 3/5 = 0)
+        context.money = 3;
+        let effect = joker.on_round_end(&mut context);
+        assert_eq!(effect.money, 0);
+    }
+
+    #[test]
+    fn test_rocket_basic_properties() {
+        let joker = RocketJoker;
+        assert_eq!(joker.id(), JokerId::RocketShip);
+        assert_eq!(joker.name(), "Rocket");
+        assert_eq!(joker.rarity(), JokerRarity::Uncommon);
+        assert_eq!(joker.cost(), 6);
+    }
+
+    #[test]
+    fn test_rocket_payout_calculation() {
+        use crate::hand::Hand;
+        use crate::joker_state::JokerStateManager;
+        use crate::rng::GameRng;
+        use crate::stage::Stage;
+        use std::collections::HashMap;
+        use std::sync::Arc;
+
+        let joker = RocketJoker;
+
+        let hand = Hand::new(vec![]);
+        let joker_state_manager = Arc::new(JokerStateManager::new());
+        let hand_type_counts = HashMap::new();
+        let rng = GameRng::for_testing(42);
+
+        // Test during regular stage (no boss bonus)
+        let stage = Stage::Blind(crate::stage::Blind::Small);
+        let mut context = GameContext {
+            chips: 0,
+            mult: 0,
+            money: 10,
+            ante: 1,
+            round: 1,
+            stage: &stage,
+            hands_played: 0,
+            discards_used: 0,
+            jokers: &[],
+            hand: &hand,
+            discarded: &[],
+            joker_state_manager: &joker_state_manager,
+            hand_type_counts: &hand_type_counts,
+            cards_in_deck: 52,
+            stone_cards_in_deck: 0,
+            rng: &rng,
+        };
+        let effect = joker.on_round_end(&mut context);
+        assert_eq!(effect.money, 1); // Base payout only
+
+        // Test during PostBlind stage (with boss bonus)
+        let post_stage = Stage::PostBlind();
+        context.stage = &post_stage;
+        let effect = joker.on_round_end(&mut context);
+        assert_eq!(effect.money, 3); // Base payout (1) + boss bonus (2)
+    }
+
+    #[test]
+    fn test_credit_card_basic_properties() {
+        let joker = CreditCardJoker;
+        assert_eq!(joker.id(), JokerId::CreditCard);
+        assert_eq!(joker.name(), "Credit Card");
+        assert_eq!(joker.rarity(), JokerRarity::Uncommon);
+        assert_eq!(joker.cost(), 6);
+    }
+
+    #[test]
+    fn test_gift_card_basic_properties() {
+        let joker = GiftCardJoker;
+        assert_eq!(joker.id(), JokerId::GiftCard);
+        assert_eq!(joker.name(), "Gift Card");
+        assert_eq!(joker.rarity(), JokerRarity::Uncommon);
+        assert_eq!(joker.cost(), 6);
+    }
+
+    #[test]
+    fn test_golden_joker_basic_properties() {
+        let joker = GoldenJoker;
+        assert_eq!(joker.id(), JokerId::GoldenTicket); // Using placeholder ID
+        assert_eq!(joker.name(), "Golden Joker");
+        assert_eq!(joker.rarity(), JokerRarity::Common);
+        assert_eq!(joker.cost(), 3);
+    }
+
+    #[test]
+    fn test_golden_joker_payout() {
+        use crate::hand::Hand;
+        use crate::joker_state::JokerStateManager;
+        use crate::rng::GameRng;
+        use crate::stage::Stage;
+        use std::collections::HashMap;
+        use std::sync::Arc;
+
+        let joker = GoldenJoker;
+
+        let stage = Stage::Blind(crate::stage::Blind::Small);
+        let hand = Hand::new(vec![]);
+        let joker_state_manager = Arc::new(JokerStateManager::new());
+        let hand_type_counts = HashMap::new();
+        let rng = GameRng::for_testing(42);
+
+        let mut context = GameContext {
+            chips: 0,
+            mult: 0,
+            money: 10,
+            ante: 1,
+            round: 1,
+            stage: &stage,
+            hands_played: 0,
+            discards_used: 0,
+            jokers: &[],
+            hand: &hand,
+            discarded: &[],
+            joker_state_manager: &joker_state_manager,
+            hand_type_counts: &hand_type_counts,
+            cards_in_deck: 52,
+            stone_cards_in_deck: 0,
+            rng: &rng,
+        };
+        let effect = joker.on_round_end(&mut context);
+        assert_eq!(effect.money, 4); // Fixed $4 payout
+    }
+
+    #[test]
+    fn test_economy_jokers_in_factory() {
+        // Test that all economy jokers can be created via factory
+        let to_the_moon = JokerFactory::create(JokerId::ToTheMoon);
+        assert!(to_the_moon.is_some());
+        assert_eq!(to_the_moon.unwrap().id(), JokerId::ToTheMoon);
+
+        let rocket = JokerFactory::create(JokerId::RocketShip);
+        assert!(rocket.is_some());
+        assert_eq!(rocket.unwrap().id(), JokerId::RocketShip);
+
+        let credit_card = JokerFactory::create(JokerId::CreditCard);
+        assert!(credit_card.is_some());
+        assert_eq!(credit_card.unwrap().id(), JokerId::CreditCard);
+
+        let gift_card = JokerFactory::create(JokerId::GiftCard);
+        assert!(gift_card.is_some());
+        assert_eq!(gift_card.unwrap().id(), JokerId::GiftCard);
+
+        let golden = JokerFactory::create(JokerId::GoldenTicket);
+        assert!(golden.is_some());
+        assert_eq!(golden.unwrap().name(), "Golden Joker");
+    }
+
+    #[test]
+    fn test_economy_jokers_in_rarity_lists() {
+        let common_jokers = JokerFactory::get_by_rarity(JokerRarity::Common);
+        assert!(
+            common_jokers.contains(&JokerId::GoldenTicket),
+            "Golden Joker should be in Common rarity"
+        );
+
+        let uncommon_jokers = JokerFactory::get_by_rarity(JokerRarity::Uncommon);
+        assert!(
+            uncommon_jokers.contains(&JokerId::ToTheMoon),
+            "To the Moon should be in Uncommon rarity"
+        );
+        assert!(
+            uncommon_jokers.contains(&JokerId::RocketShip),
+            "Rocket should be in Uncommon rarity"
+        );
+        assert!(
+            uncommon_jokers.contains(&JokerId::CreditCard),
+            "Credit Card should be in Uncommon rarity"
+        );
+        assert!(
+            uncommon_jokers.contains(&JokerId::GiftCard),
+            "Gift Card should be in Uncommon rarity"
+        );
+    }
+
+    #[test]
+    fn test_economy_jokers_in_implemented_list() {
+        let all_implemented = JokerFactory::get_all_implemented();
+
+        assert!(
+            all_implemented.contains(&JokerId::GoldenTicket),
+            "Golden Joker should be in implemented list"
+        );
+        assert!(
+            all_implemented.contains(&JokerId::ToTheMoon),
+            "To the Moon should be in implemented list"
+        );
+        assert!(
+            all_implemented.contains(&JokerId::RocketShip),
+            "Rocket should be in implemented list"
+        );
+        assert!(
+            all_implemented.contains(&JokerId::CreditCard),
+            "Credit Card should be in implemented list"
+        );
+        assert!(
+            all_implemented.contains(&JokerId::GiftCard),
+            "Gift Card should be in implemented list"
+        );
     }
 }

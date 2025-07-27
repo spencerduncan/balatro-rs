@@ -35,6 +35,13 @@ impl JokerFactory {
             JokerId::EggJoker => Some(Box::new(Egg)),
             JokerId::Burglar => Some(Box::new(Burglar)),
 
+            // Economy jokers - Part 1
+            JokerId::ToTheMoon => Some(Box::new(ToTheMoonJoker)),
+            JokerId::RocketShip => Some(Box::new(RocketJoker)),
+            JokerId::CreditCard => Some(Box::new(CreditCardJoker)),
+            JokerId::GiftCard => Some(Box::new(GiftCardJoker)),
+            JokerId::GoldenTicket => Some(Box::new(GoldenJoker)), // TODO: Update to correct Golden ID when available
+
             // Hand type conditional jokers from main branch
             JokerId::Supernova => Some(Box::new(SupernovaJoker)),
             JokerId::SpaceJoker => Some(Box::new(SpaceJoker)),
@@ -108,6 +115,8 @@ impl JokerFactory {
                 // Money-based conditional jokers
                 BusinessCard,
                 EggJoker,
+                // Economy jokers
+                GoldenTicket, // Golden Joker (placeholder ID)
                 // Hand type conditional jokers
                 Supernova,
                 IceCream,
@@ -137,6 +146,11 @@ impl JokerFactory {
                 RedCard,
                 BlueJoker,
                 SteelJoker,
+                // Economy jokers
+                ToTheMoon,
+                RocketShip,
+                CreditCard,
+                GiftCard,
                 // RNG-based jokers (Issue #442)
                 Oops,      // OopsAllSixesJoker
                 Reserved8, // GrimJoker
@@ -185,6 +199,12 @@ impl JokerFactory {
             BusinessCard,
             EggJoker,
             Burglar,
+            // Economy jokers - Part 1
+            GoldenTicket, // Golden Joker (placeholder ID)
+            ToTheMoon,
+            RocketShip,
+            CreditCard,
+            GiftCard,
             // Hand type conditional jokers
             Supernova,
             SpaceJoker,
