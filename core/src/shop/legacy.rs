@@ -252,7 +252,7 @@ mod tests {
             Jokers::LustyJoker(LustyJoker::default()),
         ];
 
-        for (_attempts, test_joker) in test_jokers.into_iter().enumerate() {
+        for test_joker in test_jokers.into_iter() {
             if !shop.jokers.contains(&test_joker) {
                 non_existent_joker = Some(test_joker);
                 break;
