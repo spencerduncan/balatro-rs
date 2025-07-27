@@ -272,6 +272,7 @@ impl Default for ProcessResult {
 mod tests {
     use super::*;
     use crate::card::{Card, Suit, Value};
+    use crate::hand::SelectHand;
     use crate::joker_state::JokerStateManager;
     use crate::stage::{Blind, Stage};
     use serde_json::json;
@@ -331,7 +332,7 @@ mod tests {
     }
 
     impl JokerGameplay for StaticGameplayJoker {
-        fn process(&self, stage: &Stage, context: &mut ProcessContext) -> ProcessResult {
+        fn process(&mut self, stage: &Stage, context: &mut ProcessContext) -> ProcessResult {
             if !self.can_trigger(stage, context) {
                 return ProcessResult::default();
             }
@@ -353,13 +354,17 @@ mod tests {
                 ProcessResult {
                     chips_added: self.base_chips * (trigger_count + 1) as u64,
                     mult_added: self.base_mult * (trigger_count + 1) as f64,
+                    mult_multiplier: 1.0,
                     retriggered: trigger_count > 0,
+                    message: None,
                 }
             } else {
                 ProcessResult {
                     chips_added: self.base_chips,
                     mult_added: self.base_mult,
+                    mult_multiplier: 1.0,
                     retriggered: false,
+                    message: None,
                 }
             }
         }
@@ -491,7 +496,7 @@ mod tests {
 
     #[test]
     fn test_basic_process() {
-        let joker = &TEST_JOKERS[0];
+        let mut joker = TEST_JOKERS[0].clone();
         let mut hand_score = HandScore {
             chips: 50,
             mult: 2.0,
@@ -499,12 +504,14 @@ mod tests {
         let mut events = Vec::new();
         let state_manager = JokerStateManager::new();
         let cards = test_cards();
+        let hand = SelectHand::new(cards[..3].to_vec());
 
         let mut context = ProcessContext {
             hand_score: &mut hand_score,
             played_cards: &cards[..3],
             held_cards: &[],
             events: &mut events,
+            hand: &hand,
             joker_state_manager: &state_manager,
         };
 
@@ -531,11 +538,13 @@ mod tests {
         let cards = test_cards();
         let mut hand_score_copy = hand_score.clone();
         let mut events_copy = events.clone();
+        let hand = SelectHand::new(cards[..1].to_vec());
         let context_with_ace = ProcessContext {
             hand_score: &mut hand_score_copy,
             played_cards: &cards[..1], // Has ace
             held_cards: &[],
             events: &mut events_copy,
+            hand: &hand,
             joker_state_manager: &state_manager,
         };
         assert!(ace_joker.can_trigger(&Stage::Blind(Blind::Small), &context_with_ace));
@@ -550,19 +559,21 @@ mod tests {
 
     #[test]
     fn test_state_scaling() {
-        let joker = &TEST_JOKERS[3]; // state_scaler
+        let mut joker = TEST_JOKERS[3].clone(); // state_scaler
         let mut hand_score = HandScore {
             chips: 50,
             mult: 2.0,
         };
         let mut events = Vec::new();
         let state_manager = JokerStateManager::new();
+        let hand = SelectHand::new(vec![]);
 
         let mut context = ProcessContext {
             hand_score: &mut hand_score,
             played_cards: &[],
             held_cards: &[],
             events: &mut events,
+            hand: &hand,
             joker_state_manager: &state_manager,
         };
 
@@ -605,11 +616,14 @@ mod tests {
         // Test flush
         let mut hand_score_flush = hand_score.clone();
         let mut events_flush = events.clone();
+        let flush_hand_cards = flush_cards();
+        let flush_hand = SelectHand::new(flush_hand_cards.clone());
         let context_flush = ProcessContext {
             hand_score: &mut hand_score_flush,
-            played_cards: &flush_cards(),
+            played_cards: &flush_hand_cards,
             held_cards: &[],
             events: &mut events_flush,
+            hand: &flush_hand,
             joker_state_manager: &state_manager,
         };
         assert!(flush_joker.can_trigger(&Stage::Blind(Blind::Small), &context_flush));
@@ -617,11 +631,14 @@ mod tests {
         // Test pair
         let mut hand_score_pair = hand_score.clone();
         let mut events_pair = events.clone();
+        let pair_hand_cards = pair_cards();
+        let pair_hand = SelectHand::new(pair_hand_cards.clone());
         let context_pair = ProcessContext {
             hand_score: &mut hand_score_pair,
-            played_cards: &pair_cards(),
+            played_cards: &pair_hand_cards,
             held_cards: &[],
             events: &mut events_pair,
+            hand: &pair_hand,
             joker_state_manager: &state_manager,
         };
         assert!(pair_joker.can_trigger(&Stage::Blind(Blind::Small), &context_pair));
@@ -630,11 +647,13 @@ mod tests {
         let cards_for_big = test_cards();
         let mut hand_score_big = hand_score.clone();
         let mut events_big = events.clone();
+        let big_hand = SelectHand::new(cards_for_big[..4].to_vec());
         let context_big = ProcessContext {
             hand_score: &mut hand_score_big,
             played_cards: &cards_for_big[..4],
             held_cards: &[],
             events: &mut events_big,
+            hand: &big_hand,
             joker_state_manager: &state_manager,
         };
         assert!(big_hand_joker.can_trigger(&Stage::Blind(Blind::Small), &context_big));
@@ -644,6 +663,7 @@ mod tests {
     fn test_scoring_invariants() {
         // Property: Processing should never produce negative scores
         for joker in TEST_JOKERS {
+            let mut joker_copy = joker.clone();
             let mut hand_score = HandScore {
                 chips: 100,
                 mult: 2.0,
@@ -651,16 +671,18 @@ mod tests {
             let mut events = Vec::new();
             let state_manager = JokerStateManager::new();
             let cards = test_cards();
+            let hand = SelectHand::new(cards.clone());
 
             let mut context = ProcessContext {
                 hand_score: &mut hand_score,
                 played_cards: &cards,
                 held_cards: &[],
                 events: &mut events,
+                hand: &hand,
                 joker_state_manager: &state_manager,
             };
 
-            let result = joker.process(&Stage::Blind(Blind::Small), &mut context);
+            let result = joker_copy.process(&Stage::Blind(Blind::Small), &mut context);
 
             // chips_added is u64, always non-negative by type
             assert!(result.mult_added >= 0.0);
