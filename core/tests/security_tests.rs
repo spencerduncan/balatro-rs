@@ -43,7 +43,7 @@ mod tests {
         assert_eq!(action_space.move_card_right.len(), 0);
         assert_eq!(action_space.select_card.len(), 1);
 
-        // Test with 2 cards available  
+        // Test with 2 cards available
         let config_two_cards = Config {
             available_max: 2,
             ..Default::default()

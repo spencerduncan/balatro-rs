@@ -23,7 +23,7 @@ use crate::{
 use rand::Rng;
 use serde_json;
 
-/// Photograph Joker - First played face card gives X2 Mult when scored
+/// Photograph Joker - First played face card gives X1.5 Mult when scored
 #[derive(Debug, Clone)]
 pub struct PhotographJoker {
     id: JokerId,
@@ -45,7 +45,7 @@ impl PhotographJoker {
         Self {
             id: JokerId::Photograph,
             name: "Photograph".to_string(),
-            description: "First played face card gives X2 Mult when scored".to_string(),
+            description: "First played face card gives X1.5 Mult when scored".to_string(),
             rarity: JokerRarity::Common,
             cost: 5,
             face_card_played: false,
@@ -109,8 +109,8 @@ impl Joker for PhotographJoker {
         if !self.face_card_played && Self::is_face_card(card) {
             // Note: State update happens in JokerGameplay::process
             JokerEffect::new()
-                .with_mult_multiplier(2.0)
-                .with_message("Photograph: X2 Mult (first face card)".to_string())
+                .with_mult_multiplier(1.5)
+                .with_message("Photograph: X1.5 Mult (first face card)".to_string())
         } else {
             JokerEffect::new()
         }
@@ -128,7 +128,7 @@ impl JokerGameplay for PhotographJoker {
             for card in context.played_cards {
                 if Self::is_face_card(card) {
                     self.face_card_played = true;
-                    // Note: The actual X2 mult is applied via on_card_scored
+                    // Note: The actual X1.5 mult is applied via on_card_scored
                     // This just tracks the state
                     return ProcessResult::default();
                 }

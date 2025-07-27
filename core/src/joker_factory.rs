@@ -1,10 +1,12 @@
+use crate::joker::basic_xmult_jokers::{
+    AncientJoker, BaronJoker, PhotographJoker, SteelJoker, TheIdolJoker,
+};
 use crate::joker::four_fingers::FourFingersJoker;
 use crate::joker::scaling_additive_mult_jokers::*;
 use crate::joker::{Joker, JokerId, JokerRarity};
 use crate::joker_impl::*;
 use crate::scaling_joker_custom;
-use crate::scaling_joker_impl::{create_red_card, create_steel_joker_scaling};
-use crate::special_jokers::*;
+use crate::scaling_joker_impl::create_red_card;
 use crate::static_joker_factory::StaticJokerFactory;
 
 /// Factory for creating joker instances by ID
@@ -54,7 +56,7 @@ impl JokerFactory {
             JokerId::HalfJoker => Some(StaticJokerFactory::create_half_joker()),
             JokerId::Banner => Some(StaticJokerFactory::create_banner()),
             JokerId::AbstractJoker => Some(Box::new(AbstractJoker)),
-            JokerId::SteelJoker => Some(Box::new(create_steel_joker_scaling())),
+            JokerId::SteelJoker => Some(Box::new(SteelJoker::new())),
 
             // RNG-based jokers (Issue #442)
             JokerId::Oops => Some(Box::new(OopsAllSixesJoker)),
@@ -71,6 +73,9 @@ impl JokerFactory {
             // JokerId::Erosion => Some(Box::new(ErosionJoker)),
             // JokerId::Blueprint => Some(Box::new(BlueprintJoker::new())),
             JokerId::Photograph => Some(Box::new(PhotographJoker::new())),
+            JokerId::AncientJoker => Some(Box::new(AncientJoker::new())),
+            JokerId::BaronJoker => Some(Box::new(BaronJoker::new())),
+            JokerId::TheIdol => Some(Box::new(TheIdolJoker::new())),
             // JokerId::TheOrder => Some(Box::new(TheOrderJoker)),
             JokerId::FourFingers => Some(Box::new(FourFingersJoker::new())),
             JokerId::Triboulet => Some(Box::new(TribouletJoker)),
@@ -138,6 +143,7 @@ impl JokerFactory {
                 RedCard,
                 BlueJoker,
                 SteelJoker,
+                TheIdol,
                 // RNG-based jokers (Issue #442)
                 Oops,      // OopsAllSixesJoker
                 Reserved8, // GrimJoker
@@ -154,6 +160,8 @@ impl JokerFactory {
                 Fortune, // MysteryJoker
                 // Special mechanic jokers
                 Blueprint,
+                AncientJoker,
+                BaronJoker,
             ],
             JokerRarity::Legendary => vec![
                 // RNG-based jokers (Issue #442)
@@ -212,8 +220,11 @@ impl JokerFactory {
             Erosion,
             Blueprint,
             Photograph,
+            AncientJoker,
+            BaronJoker,
+            TheIdol,
             TheOrder,
-            SteelJoker, // Now properly implemented as scaling joker
+            SteelJoker, // Now properly implemented as basic xmult joker
             FourFingers,
             Triboulet, // Legendary joker - Kings and Queens give X2 mult
             // Scaling additive mult jokers

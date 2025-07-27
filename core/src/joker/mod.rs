@@ -37,13 +37,10 @@ pub enum JokerId {
     AbstractJoker,
     AcrobatJoker,
     MysticalJoker,
-    Misprint,
     RaisedFist,
     SteelJoker,
     FibonacciJoker,
     ScaryFace,
-    RoughGem,
-    PolishedJoker,
 
     // Conditional jokers (Common/Uncommon)
     Banner,
@@ -75,7 +72,6 @@ pub enum JokerId {
     Smiley,
     Onyx,
     Arrowhead,
-    Bloodstone,
     Ancient,
     Baron,
     TheIdol,
@@ -1264,7 +1260,7 @@ pub mod multiplicative_jokers;
 // Include basic economy jokers
 pub mod basic_economy_jokers;
 
-// Include basic xmult jokers (Photograph, Polished, Rough Gem, Bloodstone, Misprint)
+// Include basic xmult jokers (Photograph, Ancient, Steel, Baron, The Idol)
 pub mod basic_xmult_jokers;
 
 // Include tests for hand composition jokers (Ride the Bus, Blackboard, DNA)
