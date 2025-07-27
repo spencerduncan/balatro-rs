@@ -6,7 +6,7 @@
 
 use balatro_rs::{
     hand::SelectHand,
-    joker::{Joker, JokerEffect, JokerId, JokerRarity, GameContext},
+    joker::{GameContext, Joker, JokerEffect, JokerId, JokerRarity},
     joker_state::JokerState,
 };
 
@@ -148,27 +148,31 @@ impl Joker for FireworkJoker {
 
     fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
         // Get current trigger count, with safe fallback
-        let triggers_remaining = context.joker_state_manager
+        let triggers_remaining = context
+            .joker_state_manager
             .get_state(self.id())
             .and_then(|state| state.triggers_remaining)
             .unwrap_or(3); // Default to 3 if state is missing
 
         if triggers_remaining > 0 {
             // Decrement trigger count safely using closure
-            context.joker_state_manager.update_state(self.id(), |state| {
-                state.triggers_remaining = Some(triggers_remaining.saturating_sub(1));
-            });
+            context
+                .joker_state_manager
+                .update_state(self.id(), |state| {
+                    state.triggers_remaining = Some(triggers_remaining.saturating_sub(1));
+                });
 
             // Check if this was the last trigger
             if triggers_remaining == 1 {
                 JokerEffect::new()
                     .with_mult(20)
                     .with_message("BOOM! Firework explodes in a final burst!".to_string())
-                    // Note: In real implementation, this would trigger self-destruction
+                // Note: In real implementation, this would trigger self-destruction
             } else {
-                JokerEffect::new()
-                    .with_mult(20)
-                    .with_message(format!("Firework sparkles! {} uses remaining", triggers_remaining - 1))
+                JokerEffect::new().with_mult(20).with_message(format!(
+                    "Firework sparkles! {} uses remaining",
+                    triggers_remaining - 1
+                ))
             }
         } else {
             // This shouldn't happen if joker is properly removed, but handle gracefully
@@ -216,10 +220,10 @@ impl Joker for PerfectionistJoker {
     fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
         // For demo purposes, use ante as a proxy for hand quality
         // In a real implementation, this would validate hand size and contents
-        
+
         // Demonstrate validation pattern with available context
         let is_perfect_conditions = context.ante >= 3 && context.round % 5 == 0;
-        
+
         if is_perfect_conditions {
             JokerEffect::new()
                 .with_mult(15)
@@ -255,28 +259,33 @@ impl Joker for BankJoker {
     fn on_round_end(&self, context: &mut GameContext) -> JokerEffect {
         // Safely add money to accumulated value with overflow protection
         const MAX_ACCUMULATED: f64 = 500.0; // Max $500 accumulated
-        
+
         let current_money = context.money.max(0) as f64; // Ensure non-negative
-        let current_accumulated = context.joker_state_manager
+        let current_accumulated = context
+            .joker_state_manager
             .get_accumulated_value(self.id())
             .unwrap_or(0.0);
 
         // Safe addition with bounds checking
         let new_accumulated = (current_accumulated + current_money).min(MAX_ACCUMULATED);
-        
+
         // Use the safe add method rather than trying to set directly
         let addition = new_accumulated - current_accumulated;
         if addition > 0.0 {
-            context.joker_state_manager.add_accumulated_value(self.id(), addition);
+            context
+                .joker_state_manager
+                .add_accumulated_value(self.id(), addition);
         }
 
         // Calculate mult bonus with overflow protection
         let mult_bonus = ((new_accumulated / 10.0) as i32).min(50);
-        
+
         if mult_bonus > 0 {
             JokerEffect::new()
                 .with_mult(mult_bonus)
-                .with_message(format!("Bank: ${:.0} stored, +{} Mult", new_accumulated, mult_bonus))
+                .with_message(format!(
+                    "Bank: ${new_accumulated:.0} stored, +{mult_bonus} Mult"
+                ))
         } else {
             JokerEffect::new()
         }
@@ -321,32 +330,49 @@ impl Joker for PhoenixJoker {
         } else {
             // State missing - initialize with default
             let recovery_state = self.initialize_state(context);
-            context.joker_state_manager.update_state(self.id(), |state| {
-                *state = recovery_state.clone();
-            });
+            context
+                .joker_state_manager
+                .update_state(self.id(), |state| {
+                    *state = recovery_state.clone();
+                });
             recovery_state
         };
 
         // Validate state and recover if needed
         if self.validate_state(context, &state).is_err() {
             // State corrupted - reset and increment recovery counter
-            let recoveries = state.get_custom::<u32>("recoveries").unwrap_or(Some(0)).unwrap_or(0);
-            context.joker_state_manager.update_state(self.id(), |state| {
-                *state = self.initialize_state(context);
-                let _ = state.set_custom("recoveries", recoveries + 1);
-            });
-            
+            let recoveries = state
+                .get_custom::<u32>("recoveries")
+                .unwrap_or(Some(0))
+                .unwrap_or(0);
+            context
+                .joker_state_manager
+                .update_state(self.id(), |state| {
+                    *state = self.initialize_state(context);
+                    let _ = state.set_custom("recoveries", recoveries + 1);
+                });
+
             JokerEffect::new()
                 .with_mult(5 * (recoveries + 1) as i32)
-                .with_message(format!("Phoenix: Recovered from corruption! (+{} recoveries)", recoveries + 1))
+                .with_message(format!(
+                    "Phoenix: Recovered from corruption! (+{} recoveries)",
+                    recoveries + 1
+                ))
         } else {
             // Normal operation
-            let recoveries = state.get_custom::<u32>("recoveries").unwrap_or(Some(0)).unwrap_or(0);
-            
+            let recoveries = state
+                .get_custom::<u32>("recoveries")
+                .unwrap_or(Some(0))
+                .unwrap_or(0);
+
             if recoveries > 0 {
                 JokerEffect::new()
                     .with_mult(5 * recoveries as i32)
-                    .with_message(format!("Phoenix: {} recoveries, +{} Mult", recoveries, 5 * recoveries))
+                    .with_message(format!(
+                        "Phoenix: {} recoveries, +{} Mult",
+                        recoveries,
+                        5 * recoveries
+                    ))
             } else {
                 JokerEffect::new().with_mult(5)
             }
@@ -378,28 +404,33 @@ impl Joker for PhoenixJoker {
         Ok(())
     }
 
-    fn migrate_state(&self, _context: &GameContext, old_state: &serde_json::Value, from_version: u32) -> Result<JokerState, String> {
+    fn migrate_state(
+        &self,
+        _context: &GameContext,
+        old_state: &serde_json::Value,
+        from_version: u32,
+    ) -> Result<JokerState, String> {
         match from_version {
             0 => {
                 // Migrate from version 0 (no version field)
                 let mut state = JokerState::new();
-                
+
                 // Try to preserve recoveries if they exist
                 if let Some(recoveries) = old_state.get("recoveries") {
                     if let Some(recoveries_val) = recoveries.as_u64() {
                         let _ = state.set_custom("recoveries", recoveries_val as u32);
                     }
                 }
-                
+
                 let _ = state.set_custom("version", 1u32);
                 Ok(state)
             }
             1 => {
                 // Current version - direct deserialization
                 serde_json::from_value(old_state.clone())
-                    .map_err(|e| format!("Failed to deserialize v1 state: {}", e))
+                    .map_err(|e| format!("Failed to deserialize v1 state: {e}"))
             }
-            _ => Err(format!("Unknown version for migration: {}", from_version))
+            _ => Err(format!("Unknown version for migration: {from_version}")),
         }
     }
 }

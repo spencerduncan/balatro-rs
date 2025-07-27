@@ -7,7 +7,7 @@
 use balatro_rs::{
     card::{Card, Suit, Value},
     hand::SelectHand,
-    joker::{Joker, JokerEffect, JokerId, JokerRarity, GameContext},
+    joker::{GameContext, Joker, JokerEffect, JokerId, JokerRarity},
     joker_state::JokerState,
 };
 use std::time::Instant;
@@ -206,17 +206,17 @@ impl Joker for InefficientConditionJoker {
     fn on_card_scored(&self, _context: &mut GameContext, card: &Card) -> JokerEffect {
         // Inefficient: Complex nested conditions and allocations
         let card_name = format!("{:?}", card.value); // Unnecessary allocation
-        let is_face_card = card_name.contains("Jack") || 
-                          card_name.contains("Queen") || 
-                          card_name.contains("King");
-        
+        let is_face_card =
+            card_name.contains("Jack") || card_name.contains("Queen") || card_name.contains("King");
+
         if is_face_card {
             let suit_name = format!("{:?}", card.suit); // More allocations
             let bonus = if suit_name.len() > 4 { 4 } else { 3 }; // Pointless calculation
-            
+
             JokerEffect::new()
                 .with_mult(bonus)
-                .with_message(format!("Face card: {} of {}", card_name, suit_name)) // Even more allocations
+                .with_message(format!("Face card: {card_name} of {suit_name}"))
+        // Even more allocations
         } else {
             JokerEffect::new()
         }
@@ -248,12 +248,14 @@ impl Joker for CachedStateJoker {
         // Efficient: Get state once and cache values
         if let Some(state) = context.joker_state_manager.get_state(self.id()) {
             let cached_mult = state.accumulated_value as i32;
-            
+
             // Single state update with closure
-            context.joker_state_manager.update_state(self.id(), |state| {
-                state.accumulated_value += 1.0;
-            });
-            
+            context
+                .joker_state_manager
+                .update_state(self.id(), |state| {
+                    state.accumulated_value += 1.0;
+                });
+
             JokerEffect::new().with_mult(cached_mult.min(20))
         } else {
             JokerEffect::new()
@@ -290,18 +292,22 @@ impl Joker for DirectStateJoker {
 
     fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
         // Inefficient: Multiple state manager calls
-        let current_value = context.joker_state_manager
+        let _current_value = context
+            .joker_state_manager
             .get_accumulated_value(self.id())
             .unwrap_or(0.0);
-        
+
         // Separate call to increment
-        context.joker_state_manager.add_accumulated_value(self.id(), 1.0);
-        
+        context
+            .joker_state_manager
+            .add_accumulated_value(self.id(), 1.0);
+
         // Another call to get updated value
-        let new_value = context.joker_state_manager
+        let new_value = context
+            .joker_state_manager
             .get_accumulated_value(self.id())
             .unwrap_or(0.0);
-        
+
         // More unnecessary state access
         if let Some(_state) = context.joker_state_manager.get_state(self.id()) {
             JokerEffect::new().with_mult((new_value as i32).min(20))
@@ -337,17 +343,17 @@ impl Joker for EarlyReturnJoker {
         if card.suit != Suit::Spade {
             return JokerEffect::new();
         }
-        
+
         // Guard clause: Early return for low-value cards
         if matches!(card.value, Value::Two | Value::Three | Value::Four) {
             return JokerEffect::new();
         }
-        
+
         // Guard clause: Check ante threshold
         if context.ante < 3 {
             return JokerEffect::new();
         }
-        
+
         // Only reach expensive calculation if all conditions pass
         let bonus = match card.value {
             Value::Ace => 10,
@@ -355,7 +361,7 @@ impl Joker for EarlyReturnJoker {
             Value::Ten => 6,
             _ => 4,
         };
-        
+
         JokerEffect::new().with_mult(bonus)
     }
 }
@@ -364,21 +370,21 @@ impl Joker for EarlyReturnJoker {
 #[allow(dead_code)]
 fn performance_measurement_example() {
     // Example of how to measure joker performance
-    let joker = EfficientConditionJoker;
+    let _joker = EfficientConditionJoker;
     let test_cards = vec![
         Card::new(Value::King, Suit::Spade),
         Card::new(Value::Two, Suit::Heart),
         Card::new(Value::Ace, Suit::Diamond),
     ];
-    
+
     let start = Instant::now();
-    
+
     // Simulate processing many cards
     for _ in 0..10000 {
         for card in &test_cards {
             // This would normally be called with proper game context
             // let _ = joker.on_card_scored(&mut context, card);
-            
+
             // Simulate the work
             match card.value {
                 Value::Jack | Value::Queen | Value::King => { /* work */ }
@@ -386,9 +392,9 @@ fn performance_measurement_example() {
             }
         }
     }
-    
+
     let duration = start.elapsed();
-    println!("Performance test completed in: {:?}", duration);
+    println!("Performance test completed in: {duration:?}");
 }
 
 /// Demonstrates memory-efficient patterns
@@ -417,15 +423,19 @@ impl Joker for ZeroAllocationJoker {
         // Zero allocations: everything on the stack
         const SPADE_BONUS: i32 = 5;
         const FACE_BONUS: i32 = 3;
-        
-        let suit_bonus = if card.suit == Suit::Spade { SPADE_BONUS } else { 0 };
+
+        let suit_bonus = if card.suit == Suit::Spade {
+            SPADE_BONUS
+        } else {
+            0
+        };
         let face_bonus = match card.value {
             Value::Jack | Value::Queen | Value::King => FACE_BONUS,
             _ => 0,
         };
-        
+
         let total_mult = suit_bonus + face_bonus;
-        
+
         if total_mult > 0 {
             JokerEffect::new().with_mult(total_mult)
         } else {

@@ -604,11 +604,13 @@ mod tests {
 
         let joker_state_manager = crate::joker_state::JokerStateManager::new();
 
+        let test_hand = crate::hand::SelectHand::new(played_cards.clone());
         let mut context = ProcessContext {
             hand_score: &mut hand_score,
             played_cards: &played_cards,
             held_cards: &held_cards,
             events: &mut events,
+            hand: &test_hand,
             joker_state_manager: &joker_state_manager,
         };
 
@@ -652,11 +654,13 @@ mod tests {
 
         let joker_state_manager = crate::joker_state::JokerStateManager::new();
 
+        let test_hand = crate::hand::SelectHand::new(played_cards.clone());
         let context = ProcessContext {
             hand_score: &mut hand_score,
             played_cards: &played_cards,
             held_cards: &held_cards,
             events: &mut events,
+            hand: &test_hand,
             joker_state_manager: &joker_state_manager,
         };
 

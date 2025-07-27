@@ -7,7 +7,7 @@
 use balatro_rs::{
     card::{Card, Suit, Value},
     hand::SelectHand,
-    joker::{Joker, JokerEffect, JokerId, JokerRarity, GameContext},
+    joker::{GameContext, Joker, JokerEffect, JokerId, JokerRarity},
     joker_state::JokerState,
 };
 
@@ -145,13 +145,14 @@ impl Joker for AristocratJoker {
     // Per-card scoring for face cards
     fn on_card_scored(&self, context: &mut GameContext, card: &Card) -> JokerEffect {
         let is_face_card = matches!(card.value, Value::Jack | Value::Queen | Value::King);
-        
+
         if is_face_card {
             // Get accumulated bonus from shops visited
-            let shops_bonus = context.joker_state_manager
+            let shops_bonus = context
+                .joker_state_manager
                 .get_accumulated_value(self.id())
                 .unwrap_or(0.0) as i32;
-            
+
             JokerEffect::new().with_mult(3 + shops_bonus)
         } else {
             JokerEffect::new()
@@ -168,7 +169,8 @@ impl Joker for AristocratJoker {
     // Accumulate value when visiting shops
     fn on_shop_open(&self, context: &mut GameContext) -> JokerEffect {
         // Increment accumulated value for future bonuses
-        context.joker_state_manager
+        context
+            .joker_state_manager
             .add_accumulated_value(self.id(), 1.0);
 
         JokerEffect::new().with_message("The Aristocrat gains power...".to_string())
@@ -199,13 +201,13 @@ impl Joker for ScholarJoker {
     fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
         // Count unique hand types played
         let unique_types = context.hand_type_counts.len() as i32;
-        
+
         // Bonus scales with unique hand types discovered
         let bonus = unique_types * 2;
-        
-        JokerEffect::new()
-            .with_mult(bonus)
-            .with_message(format!("Scholar: {} unique hands discovered!", unique_types))
+
+        JokerEffect::new().with_mult(bonus).with_message(format!(
+            "Scholar: {unique_types} unique hands discovered!"
+        ))
     }
 
     fn initialize_state(&self, _context: &GameContext) -> JokerState {
@@ -382,12 +384,10 @@ impl Joker for ShapeshifterJoker {
 
         // Add suit-based conditional bonus
         match card.suit {
-            Suit::Spade if context.ante >= 6 => {
-                JokerEffect::new()
-                    .with_mult(3)
-                    .with_chips(adaptation_bonus.chips)
-                    .with_money(adaptation_bonus.money)
-            }
+            Suit::Spade if context.ante >= 6 => JokerEffect::new()
+                .with_mult(3)
+                .with_chips(adaptation_bonus.chips)
+                .with_money(adaptation_bonus.money),
             _ => adaptation_bonus,
         }
     }
@@ -397,7 +397,7 @@ impl Joker for ShapeshifterJoker {
         // Track the current form based on ante
         let form = match context.ante {
             1..=2 => "chip",
-            3..=5 => "mult", 
+            3..=5 => "mult",
             _ => "economy",
         };
         let _ = state.set_custom("current_form", form.to_string());

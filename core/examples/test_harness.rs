@@ -93,7 +93,10 @@ fn test_factory_creation() -> Result<(), Box<dyn std::error::Error>> {
     for joker_id in common_jokers.iter().take(5) {
         if let Some(joker) = JokerFactory::create(*joker_id) {
             assert!(!joker.name().is_empty(), "Joker name should not be empty");
-            assert!(!joker.description().is_empty(), "Joker description should not be empty");
+            assert!(
+                !joker.description().is_empty(),
+                "Joker description should not be empty"
+            );
             assert_eq!(joker.id(), *joker_id, "Joker ID should match requested ID");
             println!("    ✓ {}: {}", joker.name(), joker.description());
         }
@@ -167,7 +170,7 @@ fn test_state_operations() -> Result<(), Box<dyn std::error::Error>> {
     // Test state modification
     state.accumulated_value = 42.0;
     state.triggers_remaining = Some(3);
-    
+
     assert_eq!(state.accumulated_value, 42.0);
     assert_eq!(state.triggers_remaining, Some(3));
 
@@ -190,7 +193,7 @@ fn test_basic_performance() -> Result<(), Box<dyn std::error::Error>> {
     let test_joker = TestJoker;
 
     let start = std::time::Instant::now();
-    
+
     // Execute many trait method calls
     for _ in 0..10000 {
         let _ = test_joker.name();
@@ -199,12 +202,15 @@ fn test_basic_performance() -> Result<(), Box<dyn std::error::Error>> {
         let _ = test_joker.rarity();
         let _ = test_joker.cost();
     }
-    
+
     let duration = start.elapsed();
-    println!("  Executed 50,000 trait method calls in {:?}", duration);
-    
+    println!("  Executed 50,000 trait method calls in {duration:?}");
+
     // Ensure reasonable performance (less than 10ms for 50k calls)
-    assert!(duration.as_millis() < 10, "Performance too slow: {:?}", duration);
+    assert!(
+        duration.as_millis() < 10,
+        "Performance too slow: {duration:?}"
+    );
 
     // Test effect creation performance
     let start = std::time::Instant::now();
@@ -212,7 +218,7 @@ fn test_basic_performance() -> Result<(), Box<dyn std::error::Error>> {
         let _effect = JokerEffect::new().with_mult(5).with_chips(10);
     }
     let duration = start.elapsed();
-    println!("  Created 10,000 effects in {:?}", duration);
+    println!("  Created 10,000 effects in {duration:?}");
 
     println!("  ✓ Trait method calls are fast");
     println!("  ✓ Effect creation is efficient");
@@ -221,13 +227,14 @@ fn test_basic_performance() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 /// Test game engine basics
+#[allow(dead_code)]
 fn test_game_engine_basics() -> Result<(), Box<dyn std::error::Error>> {
     println!("Testing game engine basics...");
 
     // Create a minimal game context
     let config = Config::default();
     let _game = Game::new(config);
-    
+
     // Test that jokers can be created
     if let Some(joker) = JokerFactory::create(JokerId::Joker) {
         println!("  ✓ Created joker: {}", joker.name());
@@ -236,19 +243,22 @@ fn test_game_engine_basics() -> Result<(), Box<dyn std::error::Error>> {
     // Test multiple joker types
     let joker_types = vec![JokerId::Joker, JokerId::GreedyJoker, JokerId::LustyJoker];
     let mut created_count = 0;
-    
+
     for joker_type in joker_types {
         if JokerFactory::create(joker_type).is_some() {
             created_count += 1;
         }
     }
-    
-    println!("  ✓ Successfully created {} different joker types", created_count);
+
+    println!(
+        "  ✓ Successfully created {created_count} different joker types"
+    );
     println!("  Game engine basics tests passed");
     Ok(())
 }
 
 /// Test joker property validation
+#[allow(dead_code)]
 fn test_joker_properties() -> Result<(), Box<dyn std::error::Error>> {
     println!("Testing joker properties...");
 
@@ -263,11 +273,14 @@ fn test_joker_properties() -> Result<(), Box<dyn std::error::Error>> {
     // Test card creation
     for card in &test_cards {
         assert!(card.value != Value::Jack || matches!(card.value, Value::Jack));
-        assert!(matches!(card.suit, Suit::Spade | Suit::Heart | Suit::Diamond | Suit::Club));
+        assert!(matches!(
+            card.suit,
+            Suit::Spade | Suit::Heart | Suit::Diamond | Suit::Club
+        ));
     }
 
     // Test hand creation
-    let hand = SelectHand::new(test_cards.clone());
+    let _hand = SelectHand::new(test_cards.clone());
     // Just verify it doesn't panic
 
     println!("  ✓ Card creation works correctly");
@@ -314,7 +327,7 @@ mod tests {
             .with_mult(10)
             .with_chips(20)
             .with_money(5);
-        
+
         assert_eq!(effect.mult, 10);
         assert_eq!(effect.chips, 20);
         assert_eq!(effect.money, 5);
