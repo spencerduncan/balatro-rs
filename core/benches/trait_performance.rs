@@ -24,7 +24,7 @@ pub fn trait_dispatch_benchmark(c: &mut Criterion) {
     for joker_id in joker_ids {
         if let Ok(joker) = joker_registry::registry::create_joker(&joker_id) {
             group.bench_with_input(
-                BenchmarkId::new("trait_method_dispatch", format!("{:?}", joker_id)),
+                BenchmarkId::new("trait_method_dispatch", format!("{joker_id:?}")),
                 &joker,
                 |b, joker| {
                     b.iter(|| {
@@ -145,7 +145,7 @@ pub fn conflict_resolution_benchmark(c: &mut Criterion) {
 
     for strategy in strategies {
         group.bench_with_input(
-            BenchmarkId::new("strategy", format!("{:?}", strategy)),
+            BenchmarkId::new("strategy", format!("{strategy:?}")),
             &strategy,
             |b, strategy| {
                 let context = ProcessingContext::builder()
@@ -266,8 +266,7 @@ pub fn regression_test(c: &mut Criterion) {
             // This should complete in well under 1ms
             assert!(
                 duration.as_micros() < 1000,
-                "Trait system overhead too high: {:?}",
-                duration
+                "Trait system overhead too high: {duration:?}"
             );
 
             black_box(duration);
@@ -290,7 +289,7 @@ fn create_test_hand() -> SelectHand {
 }
 
 fn create_test_jokers(count: usize) -> Vec<Box<dyn balatro_rs::joker::Joker>> {
-    let joker_ids = vec![JokerId::Joker, JokerId::GreedyJoker, JokerId::LustyJoker];
+    let joker_ids = [JokerId::Joker, JokerId::GreedyJoker, JokerId::LustyJoker];
     let mut jokers = Vec::new();
 
     for i in 0..count {

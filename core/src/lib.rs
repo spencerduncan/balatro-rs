@@ -1,3 +1,8 @@
+// Temporary lint overrides - see GitHub issues for tracking
+#![warn(clippy::field_reassign_with_default)]
+#![warn(unused_variables)]
+#![warn(dead_code)]
+
 pub mod action;
 pub mod ante;
 pub mod available;

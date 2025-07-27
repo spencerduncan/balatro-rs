@@ -2488,8 +2488,8 @@ mod tests {
 
         // The test passes if the caching infrastructure works correctly
         // Performance benefits depend on joker complexity and may not be measurable in simple tests
-        println!("Cached processing: {:?}", cached_duration);
-        println!("Uncached processing: {:?}", uncached_duration);
+        println!("Cached processing: {cached_duration:?}");
+        println!("Uncached processing: {uncached_duration:?}");
         if metrics.total_lookups > 0 {
             println!("Cache hit ratio: {:.2}%", metrics.hit_ratio() * 100.0);
         }

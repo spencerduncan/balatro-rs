@@ -59,6 +59,12 @@ pub struct MockIdentityJoker {
     pub cost: Option<usize>,
 }
 
+impl Default for MockIdentityJoker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MockIdentityJoker {
     /// Create a new mock identity joker with default values.
     pub fn new() -> Self {
@@ -120,7 +126,7 @@ impl Joker for MockIdentityJoker {
     }
 
     fn cost(&self) -> usize {
-        self.cost.unwrap_or_else(|| match self.rarity {
+        self.cost.unwrap_or(match self.rarity {
             JokerRarity::Common => 3,
             JokerRarity::Uncommon => 6,
             JokerRarity::Rare => 8,
@@ -143,6 +149,12 @@ pub struct MockLifecycleJoker {
     pub on_activated_effect: Option<JokerEffect>,
     pub on_deactivated_effect: Option<JokerEffect>,
     pub on_cleanup_effect: Option<JokerEffect>,
+}
+
+impl Default for MockLifecycleJoker {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl MockLifecycleJoker {
@@ -235,6 +247,12 @@ pub struct MockGameplayJoker {
     pub on_shop_open_effect: Option<JokerEffect>,
     pub on_discard_effect: Option<JokerEffect>,
     pub on_round_end_effect: Option<JokerEffect>,
+}
+
+impl Default for MockGameplayJoker {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl MockGameplayJoker {
@@ -363,6 +381,12 @@ impl std::fmt::Debug for MockModifierJoker {
     }
 }
 
+impl Default for MockModifierJoker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl MockModifierJoker {
     /// Create a new mock modifier joker.
     pub fn new() -> Self {
@@ -479,6 +503,12 @@ pub struct MockStateJoker {
     pub custom_deserialization: bool,
     pub validation_should_fail: bool,
     pub initial_state: Option<JokerState>,
+}
+
+impl Default for MockStateJoker {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl MockStateJoker {
@@ -806,12 +836,11 @@ pub fn assert_effect_message(effect: &JokerEffect, expected: Option<&str>) {
     match (effect.message.as_deref(), expected) {
         (Some(actual), Some(expected)) => assert_eq!(
             actual, expected,
-            "Expected message: '{}', got: '{}'",
-            expected, actual
+            "Expected message: '{expected}', got: '{actual}'"
         ),
         (None, None) => (),
-        (Some(actual), None) => panic!("Expected no message, got: '{}'", actual),
-        (None, Some(expected)) => panic!("Expected message: '{}', got: None", expected),
+        (Some(actual), None) => panic!("Expected no message, got: '{actual}'"),
+        (None, Some(expected)) => panic!("Expected message: '{expected}', got: None"),
     }
 }
 
@@ -917,7 +946,7 @@ mod tests {
 
         let mut context = TestContextBuilder::new().build();
         let test_card = create_test_card(Value::Ace, Suit::Spade);
-        let hand = SelectHand::new(vec![test_card.clone()]);
+        let hand = SelectHand::new(vec![test_card]);
 
         let effect = joker.on_hand_played(&mut context, &hand);
         assert_effect_mult(&effect, 10);

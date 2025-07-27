@@ -2490,8 +2490,8 @@ mod tests {
         // Performance improvement should be measurable
         // Note: This is a simple demonstration - in practice, you'd need
         // more complex joker processing to see significant differences
-        println!("Cached processing: {:?}", cached_duration);
-        println!("Uncached processing: {:?}", uncached_duration);
+        println!("Cached processing: {cached_duration:?}");
+        println!("Uncached processing: {uncached_duration:?}");
         println!("Cache hit ratio: {:.2}%", metrics.hit_ratio() * 100.0);
         println!("Total time saved: {}μs", metrics.time_saved_micros);
 
@@ -2760,7 +2760,7 @@ mod tests {
             .validate_effects(false);
 
         // Should be able to debug print the builder
-        let debug_string = format!("{:?}", builder);
+        let debug_string = format!("{builder:?}");
         assert!(debug_string.contains("ProcessingContextBuilder"));
     }
 
@@ -3090,7 +3090,7 @@ mod tests {
     fn test_priority_strategy_api_from_issue() {
         // Test the exact API proposed in the issue
         let context = ProcessingContext::builder()
-            .priority_strategy(Arc::new(MetadataPriorityStrategy::default()))
+            .priority_strategy(Arc::new(MetadataPriorityStrategy))
             .build();
 
         let processor = JokerEffectProcessor::with_context(context);
@@ -3111,7 +3111,7 @@ mod tests {
             .build();
 
         assert_eq!(context.processing_mode, ProcessingMode::Delayed);
-        assert_eq!(context.validate_effects, false);
+        assert!(!context.validate_effects);
         assert_eq!(context.max_retriggered_effects, 50);
 
         // Test the processor can be created with this context

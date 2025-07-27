@@ -1468,7 +1468,7 @@ mod tests {
         // Test that Value::from_u8 works correctly for all values
         for i in 0..13 {
             let value = Value::from_u8(i);
-            assert!(value.is_some(), "Value::from_u8({}) should return Some", i);
+            assert!(value.is_some(), "Value::from_u8({i}) should return Some");
         }
 
         // Test invalid values
