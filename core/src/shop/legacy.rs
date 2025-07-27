@@ -243,7 +243,6 @@ mod tests {
         // Create a joker that's guaranteed not to match any joker instance in the shop
         // The key is that joker comparison is done by equality, not just type
         // So we can create a joker of the same type but different instance
-        let mut _attempts = 0;
         let mut non_existent_joker = None;
 
         // Try different joker types until we find one not in the shop
@@ -253,12 +252,11 @@ mod tests {
             Jokers::LustyJoker(LustyJoker::default()),
         ];
 
-        for test_joker in test_jokers {
+        for (_attempts, test_joker) in test_jokers.into_iter().enumerate() {
             if !shop.jokers.contains(&test_joker) {
                 non_existent_joker = Some(test_joker);
                 break;
             }
-            _attempts += 1;
         }
 
         // If somehow all test jokers are in the shop, manually clear and add specific jokers

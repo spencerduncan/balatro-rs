@@ -469,9 +469,9 @@ mod tests {
         assert!(val < 100);
 
         // Test boolean generation
-        let bool_val = rng.gen_bool(0.5);
-        // Verify bool_val is a valid boolean (this will always be true but satisfies the test)
-        assert!(bool_val == true || bool_val == false);
+        let _bool_val = rng.gen_bool(0.5);
+        // Boolean generation test - just verify it compiles and runs
+        assert!(true);
 
         // Test shuffle
         let mut vec = vec![1, 2, 3, 4, 5];
