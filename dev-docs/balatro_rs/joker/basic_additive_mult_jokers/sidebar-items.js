@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["create_basic_joker","create_even_steven_joker","create_half_joker","create_scholar_joker","create_walkie_joker"],"struct":["BasicJoker","EvenStevenJoker","HalfJoker","ScholarJoker","WalkieJoker"]};
