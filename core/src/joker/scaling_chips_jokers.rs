@@ -142,14 +142,18 @@ impl JokerGameplay for SquareJoker {
             ProcessResult {
                 chips_added: 4,
                 mult_added: 0.0,
+                mult_multiplier: 1.0,
                 retriggered: false,
+                message: None,
             }
         } else if self.accumulated_chips > 0 {
             // Provide accumulated chips even when not incrementing
             ProcessResult {
                 chips_added: self.accumulated_chips as u64,
                 mult_added: 0.0,
+                mult_multiplier: 1.0,
                 retriggered: false,
+                message: None,
             }
         } else {
             ProcessResult::default()
@@ -306,7 +310,9 @@ impl JokerGameplay for MarbleJoker {
             ProcessResult {
                 chips_added: self.accumulated_chips as u64,
                 mult_added: 0.0,
+                mult_multiplier: 1.0,
                 retriggered: false,
+                message: None,
             }
         } else {
             ProcessResult::default()
@@ -483,7 +489,9 @@ impl JokerGameplay for CastleJoker {
             ProcessResult {
                 chips_added: self.current_round_chips as u64,
                 mult_added: 0.0,
+                mult_multiplier: 1.0,
                 retriggered: false,
+                message: None,
             }
         } else {
             ProcessResult::default()

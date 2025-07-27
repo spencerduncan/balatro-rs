@@ -48,6 +48,13 @@ impl Baron {
             .filter(|card| matches!(card.value, Value::King))
             .count()
     }
+
+    fn count_kings_in_cards(cards: &[Card]) -> usize {
+        cards
+            .iter()
+            .filter(|card| matches!(card.value, Value::King))
+            .count()
+    }
 }
 
 impl JokerIdentity for Baron {
@@ -119,7 +126,7 @@ impl JokerGameplay for Baron {
             return ProcessResult::default();
         }
 
-        let king_count = Self::count_kings_in_hand(context.hand);
+        let king_count = Self::count_kings_in_cards(context.played_cards);
         if king_count == 0 {
             return ProcessResult::default();
         }
@@ -734,7 +741,6 @@ mod tests {
             played_cards: &played_cards,
             held_cards: &held_cards,
             events: &mut events,
-            hand: &hand,
             joker_state_manager: &state_manager,
         };
 

@@ -99,7 +99,7 @@ impl Joker for ErosionJoker {
     }
 }
 
-/// FigureJoker: $3 when face card played, face cards give +0 Chips  
+/// FigureJoker: $3 when face card played, face cards give +0 Chips
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct FigureJoker;
 
@@ -765,11 +765,7 @@ mod tests {
         JokerGameplay, JokerIdentity, JokerLifecycle, JokerModifiers,
         JokerState as JokerStateTrait, Rarity,
     };
-<<<<<<< HEAD
     use crate::joker::GameContext;
-=======
-    use crate::joker::{GameContext, JokerId};
->>>>>>> a850b4a (fix: Refactor JokerGameplay trait to support mutable state in process())
     use crate::joker_state::JokerStateManager;
     use crate::stage::{Blind, Stage};
     use std::collections::HashMap;
@@ -812,7 +808,6 @@ mod tests {
         // First face card should trigger
         let blind_stage = create_blind_stage();
         let result = joker.process(&blind_stage, &mut context);
-<<<<<<< HEAD
         assert_eq!(result.mult_multiplier, 2.0); // Should double the current mult (X2)
 
         // Verify state was updated internally

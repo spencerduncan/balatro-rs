@@ -175,7 +175,6 @@ fn test_complex_state_management_pain() {
         }
         _ => {}
     }
-    }
 
     // Compare to what we want:
     // match self.phase {

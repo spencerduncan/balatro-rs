@@ -190,7 +190,6 @@ mod tests {
             played_cards: &played_cards,
             held_cards: &held_cards,
             events: &mut events,
-            hand: &hand,
             joker_state_manager: &state_manager,
         };
 
