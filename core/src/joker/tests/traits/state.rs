@@ -70,9 +70,7 @@ struct ComplexMockJoker {
 
 impl ComplexMockJoker {
     fn new() -> Self {
-        Self {
-            state: None,
-        }
+        Self { state: None }
     }
 
     fn with_initial_state() -> Self {
@@ -454,7 +452,7 @@ mod validation_tests {
         assert!(result2.is_err());
         assert!(result2.unwrap_err().contains("Deserialization failed"));
 
-        // Wrong type for multiplier 
+        // Wrong type for multiplier
         let invalid3 = json!({
             "counter": 5,
             "multiplier": "not a float",
@@ -466,7 +464,6 @@ mod validation_tests {
         assert!(result3.is_err());
         assert!(result3.unwrap_err().contains("Deserialization failed"));
     }
-
 }
 
 #[cfg(test)]
