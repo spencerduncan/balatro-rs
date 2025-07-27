@@ -258,6 +258,7 @@ mod tests {
                 non_existent_joker = Some(test_joker);
                 break;
             }
+            _attempts += 1;
         }
 
         // If somehow all test jokers are in the shop, manually clear and add specific jokers
