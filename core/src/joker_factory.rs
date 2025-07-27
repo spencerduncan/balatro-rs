@@ -3,9 +3,7 @@ use crate::joker::scaling_additive_mult_jokers::*;
 use crate::joker::{Joker, JokerId, JokerRarity};
 use crate::joker_impl::*;
 use crate::scaling_joker_custom;
-use crate::scaling_joker_impl::{
-    create_fortune_teller, create_red_card, create_steel_joker_scaling,
-};
+use crate::scaling_joker_impl::{create_red_card, create_steel_joker_scaling};
 use crate::special_jokers::*;
 use crate::static_joker_factory::StaticJokerFactory;
 
@@ -64,7 +62,7 @@ impl JokerFactory {
             JokerId::LuckyCharm => Some(Box::new(LuckyCardJoker)),
             JokerId::Reserved8 => Some(Box::new(GrimJoker)),
             JokerId::AcrobatJoker => Some(Box::new(AcrobatJokerImpl)),
-            JokerId::Fortune => Some(Box::new(create_fortune_teller())),
+            JokerId::Fortune => Some(create_fortune_teller()),
             JokerId::VagabondJoker => Some(Box::new(VagabondJokerImpl)),
             JokerId::Reserved9 => Some(Box::new(ChaoticJoker)),
 
@@ -81,7 +79,6 @@ impl JokerFactory {
             JokerId::GreenJoker => Some(Box::new(GreenJoker::new())),
             JokerId::Reserved5 => Some(Box::new(RideTheBusJoker::new())), // RideTheBus
             JokerId::Reserved6 => Some(Box::new(RedCardJoker::new())),    // RedCard (pack skipping)
-            JokerId::Reserved10 => Some(Box::new(FortuneTellerJoker::new())), // FortuneTeller
             // TODO: Implement remaining jokers
             _ => None,
         }
@@ -130,9 +127,8 @@ impl JokerFactory {
                 Photograph,
                 // Scaling additive mult jokers
                 GreenJoker,
-                Reserved5,  // RideTheBus
-                Reserved6,  // RedCard (pack skipping)
-                Reserved10, // FortuneTeller
+                Reserved5, // RideTheBus
+                Reserved6, // RedCard (pack skipping)
             ],
             JokerRarity::Uncommon => vec![
                 // Money-based conditional jokers
@@ -224,7 +220,6 @@ impl JokerFactory {
             GreenJoker,
             Reserved5, // RideTheBus
             Reserved6, // RedCard (pack skipping)
-            Reserved10, // FortuneTeller
                        // Note: HalfJoker and Banner are still placeholders
         ]
     }

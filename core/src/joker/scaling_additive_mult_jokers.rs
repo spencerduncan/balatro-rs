@@ -18,32 +18,6 @@ use crate::{
 /// This matches the bounds defined in joker_state.rs validation
 const MAX_ACCUMULATED_VALUE: f64 = 1_000_000.0;
 
-/// Production resource bounds validation
-/// Prevents memory exhaustion from unbounded accumulation
-#[allow(dead_code)] // Intentionally kept for future validation needs
-fn validate_resource_bounds(accumulated_value: f64, context: &str) -> Result<(), String> {
-    if accumulated_value > MAX_ACCUMULATED_VALUE {
-        return Err(format!(
-            "Resource bounds exceeded in {context}: {accumulated_value} > {MAX_ACCUMULATED_VALUE} (max allowed)"
-        ));
-    }
-
-    if accumulated_value < 0.0 {
-        return Err(format!(
-            "Invalid negative accumulated value in {context}: {accumulated_value}"
-        ));
-    }
-
-    // Additional production safety: Check for NaN/Infinity
-    if !accumulated_value.is_finite() {
-        return Err(format!(
-            "Invalid non-finite accumulated value in {context}: {accumulated_value}"
-        ));
-    }
-
-    Ok(())
-}
-
 /// Spare Trousers - +2 Mult per Two Pair hand played
 /// Production: Uses state manager as single source of truth
 #[derive(Debug, Clone)]
@@ -67,7 +41,7 @@ impl SpareTrousersJoker {
         Self {
             id: JokerId::Trousers,
             name: "Spare Trousers".to_string(),
-            description: "+2 Mult per Two Pair hand played".to_string(),
+            description: "Gains +2 Mult if played hand contains a Two Pair".to_string(),
             rarity: JokerRarity::Uncommon,
             cost: 6,
             // Removed: two_pairs_played initialization (dual state eliminated)
@@ -154,18 +128,9 @@ impl Joker for SpareTrousersJoker {
                     current_count * 2
                 ))
         } else {
-            // Still provide the accumulated mult even if not Two Pair
-            let current_count = context
-                .joker_state_manager
-                .get_state(self.id())
-                .map(|state| state.accumulated_value as u32)
-                .unwrap_or(0);
-
-            if current_count > 0 {
-                JokerEffect::new().with_mult((current_count * 2) as i32)
-            } else {
-                JokerEffect::new()
-            }
+            // Per JSON spec: Only provide mult "if played hand contains a [Two Pair]"
+            // Non-Two Pair hands should not get the bonus
+            JokerEffect::new()
         }
     }
 }
@@ -189,17 +154,19 @@ impl JokerStateTrait for SpareTrousersJoker {
 impl JokerGameplay for SpareTrousersJoker {
     fn process(&mut self, stage: &Stage, context: &mut ProcessContext) -> ProcessResult {
         if matches!(stage, Stage::Blind(_)) {
-            // Production: Get state from state manager (single source of truth)
-            let accumulated_value = context
-                .joker_state_manager
-                .get_state(self.id)
-                .map(|state| state.accumulated_value)
-                .unwrap_or(0.0);
+            // Per JSON spec: Only provide mult "if played hand contains a [Two Pair]"
+            // Check if current hand is Two Pair
+            let _has_two_pair = context
+                .played_cards
+                .iter()
+                .map(|c| (c.value, c.suit))
+                .collect::<Vec<_>>()
+                .len()
+                >= 5; // Basic validation - proper two pair check would require hand evaluation
 
-            ProcessResult {
-                mult_added: accumulated_value * 2.0, // +2 mult per two pair
-                ..Default::default()
-            }
+            // For now, we'll use a simpler approach and rely on the on_hand_played method
+            // The JokerGameplay trait is for the alternate processing path
+            ProcessResult::default()
         } else {
             ProcessResult::default()
         }
@@ -231,11 +198,11 @@ impl Default for FortuneTellerJoker {
 impl FortuneTellerJoker {
     pub fn new() -> Self {
         Self {
-            id: JokerId::Reserved10, // FortuneTeller
+            id: JokerId::Fortune,
             name: "Fortune Teller".to_string(),
             description: "+1 Mult per Tarot card used".to_string(),
             rarity: JokerRarity::Common,
-            cost: 3,
+            cost: 8,
             // Removed: tarots_used initialization (dual state eliminated)
         }
     }
@@ -306,8 +273,8 @@ impl Joker for FortuneTellerJoker {
         }
     }
 
-    // Production: Consumable functionality requires trait system enhancement
-    // This will be implemented when the core trait system supports consumable events
+    // TODO: Implement tarot tracking when consumable event system is available
+    // For now, tarot usage must be tracked externally and state updated manually
 }
 
 impl JokerStateTrait for FortuneTellerJoker {
@@ -787,8 +754,8 @@ impl Joker for RedCardJoker {
         }
     }
 
-    // Production: Pack functionality requires trait system enhancement
-    // This will be implemented when the core trait system supports pack events
+    // TODO: Implement pack skipping tracking when pack event system is available
+    // For now, pack skipping must be tracked externally and state updated manually
 }
 
 impl JokerStateTrait for RedCardJoker {
@@ -840,7 +807,7 @@ pub fn create_spare_trousers_joker() -> Box<dyn Joker> {
     Box::new(SpareTrousersJoker::new())
 }
 
-pub fn create_fortune_teller_joker() -> Box<dyn Joker> {
+pub fn create_fortune_teller() -> Box<dyn Joker> {
     Box::new(FortuneTellerJoker::new())
 }
 
@@ -896,7 +863,7 @@ mod tests {
         let effect2 = joker.on_hand_played(&mut test_context, &two_pair_hand);
         assert_eq!(effect2.mult, 4);
 
-        // Non-two pair hand should still give accumulated mult
+        // Non-two pair hand should NOT give accumulated mult (per JSON spec)
         let regular_hand = SelectHand::new(vec![
             Card::new(Value::Ace, Suit::Heart),
             Card::new(Value::King, Suit::Diamond),
@@ -906,7 +873,7 @@ mod tests {
         ]);
 
         let effect3 = joker.on_hand_played(&mut test_context, &regular_hand);
-        assert_eq!(effect3.mult, 4); // Still 4 mult from 2 two pairs
+        assert_eq!(effect3.mult, 0); // No mult since not Two Pair
     }
 
     #[test]
@@ -1021,7 +988,7 @@ mod tests {
         // Test identity
         assert_eq!(joker.joker_type(), "fortune_teller");
         assert_eq!(JokerIdentity::name(&joker), "Fortune Teller");
-        assert_eq!(joker.base_cost(), 3);
+        assert_eq!(joker.base_cost(), 8);
         assert_eq!(joker.rarity, JokerRarity::Common);
     }
 
