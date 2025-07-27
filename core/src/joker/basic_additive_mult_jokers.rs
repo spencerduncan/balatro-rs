@@ -226,11 +226,7 @@ impl JokerGameplay for EvenStevenJoker {
     }
 
     fn can_trigger(&self, stage: &Stage, context: &ProcessContext) -> bool {
-        matches!(stage, Stage::Blind(_))
-            && context
-                .played_cards
-                .iter()
-                .any(Self::is_even_card)
+        matches!(stage, Stage::Blind(_)) && context.played_cards.iter().any(Self::is_even_card)
     }
 }
 
@@ -645,7 +641,8 @@ pub fn create_walkie_joker() -> Box<dyn Joker> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::card::Card;
+    use crate::card::{Card, Suit};
+    use crate::hand::SelectHand;
     use crate::stage::Blind;
 
     #[test]
@@ -691,6 +688,7 @@ mod tests {
             chips: 0,
             mult: 0.0,
         };
+        let hand = SelectHand::new(played_cards.clone());
 
         let joker_state_manager = crate::joker_state::JokerStateManager::new();
 
@@ -699,6 +697,7 @@ mod tests {
             played_cards: &played_cards,
             held_cards: &held_cards,
             events: &mut events,
+            hand: &hand,
             joker_state_manager: &joker_state_manager,
         };
 
@@ -724,6 +723,7 @@ mod tests {
             chips: 0,
             mult: 0.0,
         };
+        let hand = SelectHand::new(played_cards.clone());
 
         let joker_state_manager = crate::joker_state::JokerStateManager::new();
 
@@ -732,6 +732,7 @@ mod tests {
             played_cards: &played_cards,
             held_cards: &held_cards,
             events: &mut events,
+            hand: &hand,
             joker_state_manager: &joker_state_manager,
         };
 
@@ -759,6 +760,7 @@ mod tests {
             chips: 0,
             mult: 0.0,
         };
+        let hand = SelectHand::new(played_cards.clone());
 
         let joker_state_manager = crate::joker_state::JokerStateManager::new();
 
@@ -767,6 +769,7 @@ mod tests {
             played_cards: &played_cards,
             held_cards: &held_cards,
             events: &mut events,
+            hand: &hand,
             joker_state_manager: &joker_state_manager,
         };
 
@@ -782,11 +785,13 @@ mod tests {
             Card::new(Value::Six, Suit::Heart),
         ];
 
+        let hand_5 = SelectHand::new(played_cards_5.clone());
         let mut context_5 = ProcessContext {
             hand_score: &mut hand_score,
             played_cards: &played_cards_5,
             held_cards: &held_cards,
             events: &mut events,
+            hand: &hand_5,
             joker_state_manager: &joker_state_manager,
         };
 

@@ -750,6 +750,12 @@ impl JokerEffectProcessor {
                 self.trait_metrics.modifier_optimized_count += 1;
                 self.process_modifiers_optimized(optimized_joker.joker, game_context)
             }
+            JokerTraitProfile::HybridOptimized | JokerTraitProfile::FullTraitOptimized => {
+                // NOTE: Currently disabled due to JokerGameplay requiring &mut self
+                // Fallback to legacy path until optimization layer is refactored
+                self.trait_metrics.legacy_path_count += 1;
+                self.process_legacy_joker(optimized_joker.joker, game_context, hand, card)
+            }
             JokerTraitProfile::LegacyOnly => {
                 // Use legacy super trait path
                 self.trait_metrics.legacy_path_count += 1;
