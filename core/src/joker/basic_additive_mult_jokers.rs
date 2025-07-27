@@ -454,7 +454,7 @@ impl JokerGameplay for HalfJoker {
     }
 }
 
-/// Walkie - +10 Chips and +4 Mult if played hand contains a Straight
+/// Walkie Talkie - Each played 10 or 4 gives +10 Chips and +4 Mult when scored
 #[derive(Debug, Clone)]
 pub struct WalkieJoker {
     id: JokerId,
@@ -475,60 +475,14 @@ impl WalkieJoker {
         Self {
             id: JokerId::Walkie,
             name: "Walkie Talkie".to_string(),
-            description: "+10 Chips and +4 Mult if played hand contains a Straight".to_string(),
+            description: "Each played 10 or 4 gives +10 Chips and +4 Mult when scored".to_string(),
             rarity: JokerRarity::Common,
             cost: 3,
         }
     }
 
-    fn contains_straight(cards: &[Card]) -> bool {
-        // Simple check for straight - in real implementation would use hand evaluation
-        if cards.len() < 5 {
-            return false;
-        }
-
-        let mut values: Vec<u8> = cards
-            .iter()
-            .map(|c| match c.value {
-                Value::Ace => 14, // Can also be 1 for A-2-3-4-5
-                Value::Two => 2,
-                Value::Three => 3,
-                Value::Four => 4,
-                Value::Five => 5,
-                Value::Six => 6,
-                Value::Seven => 7,
-                Value::Eight => 8,
-                Value::Nine => 9,
-                Value::Ten => 10,
-                Value::Jack => 11,
-                Value::Queen => 12,
-                Value::King => 13,
-            })
-            .collect();
-
-        values.sort_unstable();
-        values.dedup();
-
-        // Check for 5 consecutive values
-        if values.len() >= 5 {
-            for window in values.windows(5) {
-                if window[4] - window[0] == 4 {
-                    return true;
-                }
-            }
-        }
-
-        // Check for A-2-3-4-5 straight
-        if values.contains(&14)
-            && values.contains(&2)
-            && values.contains(&3)
-            && values.contains(&4)
-            && values.contains(&5)
-        {
-            return true;
-        }
-
-        false
+    fn is_ten_or_four(card: &Card) -> bool {
+        matches!(card.value, Value::Ten | Value::Four)
     }
 }
 
@@ -580,14 +534,15 @@ impl Joker for WalkieJoker {
         self.cost
     }
 
-    fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
-        // Check if the played cards form a straight
-        let cards: Vec<Card> = hand.cards().to_vec();
-        if Self::contains_straight(&cards) {
+    fn on_card_scored(&self, _context: &mut GameContext, card: &Card) -> JokerEffect {
+        if Self::is_ten_or_four(card) {
             JokerEffect::new()
                 .with_chips(10)
                 .with_mult(4)
-                .with_message("Walkie Talkie: +10 Chips, +4 Mult (Straight)".to_string())
+                .with_message(format!(
+                    "Walkie Talkie: +10 Chips, +4 Mult ({:?})",
+                    card.value
+                ))
         } else {
             JokerEffect::new()
         }
@@ -600,20 +555,21 @@ impl JokerGameplay for WalkieJoker {
             return ProcessResult::default();
         }
 
-        // Check if played cards form a straight
-        if Self::contains_straight(context.played_cards) {
-            ProcessResult {
-                chips_added: 10,
-                mult_added: 4.0,
-                ..Default::default()
-            }
-        } else {
-            ProcessResult::default()
+        let tens_and_fours_count = context
+            .played_cards
+            .iter()
+            .filter(|card| Self::is_ten_or_four(card))
+            .count();
+
+        ProcessResult {
+            chips_added: (tens_and_fours_count * 10) as u64,
+            mult_added: (tens_and_fours_count * 4) as f64,
+            ..Default::default()
         }
     }
 
     fn can_trigger(&self, stage: &Stage, context: &ProcessContext) -> bool {
-        matches!(stage, Stage::Blind(_)) && Self::contains_straight(context.played_cards)
+        matches!(stage, Stage::Blind(_)) && context.played_cards.iter().any(Self::is_ten_or_four)
     }
 }
 
@@ -800,38 +756,82 @@ mod tests {
     }
 
     #[test]
-    fn test_walkie_straight_detection() {
-        // Test straight detection
-        let straight_cards = vec![
-            Card::new(Value::Two, Suit::Heart),
-            Card::new(Value::Three, Suit::Diamond),
-            Card::new(Value::Four, Suit::Spade),
-            Card::new(Value::Five, Suit::Club),
-            Card::new(Value::Six, Suit::Heart),
-        ];
+    fn test_walkie_talkie_tens_and_fours() {
+        let mut walkie = WalkieJoker::new();
 
-        assert!(WalkieJoker::contains_straight(&straight_cards));
+        // Test identity
+        assert_eq!(walkie.joker_type(), "walkie");
+        assert_eq!(JokerIdentity::name(&walkie), "Walkie Talkie");
+        assert_eq!(walkie.base_cost(), 3);
 
-        // Test A-2-3-4-5 straight
-        let low_straight = vec![
-            Card::new(Value::Ace, Suit::Heart),
-            Card::new(Value::Two, Suit::Diamond),
-            Card::new(Value::Three, Suit::Spade),
-            Card::new(Value::Four, Suit::Club),
-            Card::new(Value::Five, Suit::Heart),
-        ];
-
-        assert!(WalkieJoker::contains_straight(&low_straight));
-
-        // Test non-straight
-        let non_straight = vec![
-            Card::new(Value::Two, Suit::Heart),
-            Card::new(Value::Four, Suit::Diamond),
-            Card::new(Value::Six, Suit::Spade),
-            Card::new(Value::Eight, Suit::Club),
+        // Test with 10s and 4s
+        let stage = Stage::Blind(Blind::Small);
+        let played_cards = vec![
             Card::new(Value::Ten, Suit::Heart),
+            Card::new(Value::Four, Suit::Diamond),
+            Card::new(Value::King, Suit::Spade), // Should not trigger
         ];
 
-        assert!(!WalkieJoker::contains_straight(&non_straight));
+        let held_cards = vec![];
+        let mut events = vec![];
+        let mut hand_score = crate::joker::traits::HandScore {
+            chips: 0,
+            mult: 0.0,
+        };
+        let hand = SelectHand::new(played_cards.clone());
+
+        let joker_state_manager = crate::joker_state::JokerStateManager::new();
+
+        let mut context = ProcessContext {
+            hand_score: &mut hand_score,
+            played_cards: &played_cards,
+            held_cards: &held_cards,
+            events: &mut events,
+            hand: &hand,
+            joker_state_manager: &joker_state_manager,
+        };
+
+        let result = walkie.process(&stage, &mut context);
+        assert_eq!(result.chips_added, 20); // 2 cards (10 + 4) * 10 chips
+        assert_eq!(result.mult_added, 8.0); // 2 cards (10 + 4) * 4 mult
+
+        // Test with no 10s or 4s
+        let no_trigger_cards = vec![
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::Queen, Suit::Diamond),
+            Card::new(Value::Jack, Suit::Spade),
+        ];
+
+        let hand_no_trigger = SelectHand::new(no_trigger_cards.clone());
+        let mut context_no_trigger = ProcessContext {
+            hand_score: &mut hand_score,
+            played_cards: &no_trigger_cards,
+            held_cards: &held_cards,
+            events: &mut events,
+            hand: &hand_no_trigger,
+            joker_state_manager: &joker_state_manager,
+        };
+
+        let result_no_trigger = walkie.process(&stage, &mut context_no_trigger);
+        assert_eq!(result_no_trigger.chips_added, 0);
+        assert_eq!(result_no_trigger.mult_added, 0.0);
+
+        // Test is_ten_or_four helper
+        assert!(WalkieJoker::is_ten_or_four(&Card::new(
+            Value::Ten,
+            Suit::Heart
+        )));
+        assert!(WalkieJoker::is_ten_or_four(&Card::new(
+            Value::Four,
+            Suit::Spade
+        )));
+        assert!(!WalkieJoker::is_ten_or_four(&Card::new(
+            Value::King,
+            Suit::Heart
+        )));
+        assert!(!WalkieJoker::is_ten_or_four(&Card::new(
+            Value::Ace,
+            Suit::Diamond
+        )));
     }
 }
