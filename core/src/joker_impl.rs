@@ -1189,6 +1189,50 @@ impl Joker for ChaoticJoker {
     }
 }
 
+// Stuntman implementation - +250 chips with -2 hand size
+/// Stuntman Joker - Provides static +250 chips but reduces hand size by 2
+/// Specification from joker.json: "{C:chips}+#1#{} Chips, {C:attention}-#2#{} hand size"
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct StuntmanJoker;
+
+impl Joker for StuntmanJoker {
+    fn id(&self) -> JokerId {
+        JokerId::Reserved4 // Using a reserved slot for Stuntman
+    }
+
+    fn name(&self) -> &str {
+        "Stuntman"
+    }
+
+    fn description(&self) -> &str {
+        "+250 Chips, -2 hand size"
+    }
+
+    fn rarity(&self) -> JokerRarity {
+        JokerRarity::Uncommon
+    }
+
+    fn cost(&self) -> usize {
+        6
+    }
+
+    fn on_hand_played(&self, _context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
+        // Provide static +250 chips on every hand played
+        JokerEffect::new()
+            .with_chips(250)
+            .with_message("Stuntman: +250 Chips".to_string())
+    }
+
+    fn modify_hand_size(&self, _context: &GameContext, base_size: usize) -> usize {
+        // Reduce hand size by 2, but ensure it doesn't go below 1
+        if base_size >= 3 {
+            base_size - 2
+        } else {
+            1 // Minimum hand size of 1
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

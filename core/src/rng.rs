@@ -468,9 +468,9 @@ mod tests {
         let val: u32 = rng.gen_range(0..100);
         assert!(val < 100);
 
-        // Test boolean generation
-        let bool_val = rng.gen_bool(0.5);
-        assert!(bool_val || !bool_val);
+        // Test boolean generation - should be able to generate both true and false
+        let _bool_val = rng.gen_bool(0.5);
+        // Note: Individual call can't test distribution, just that it doesn't panic
 
         // Test shuffle
         let mut vec = vec![1, 2, 3, 4, 5];

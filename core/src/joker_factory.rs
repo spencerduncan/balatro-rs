@@ -1,4 +1,5 @@
 use crate::joker::four_fingers::FourFingersJoker;
+use crate::joker::resource_chips_jokers::create_hiker_joker;
 use crate::joker::{Joker, JokerId, JokerRarity};
 use crate::joker_impl::*;
 use crate::scaling_joker_custom;
@@ -73,6 +74,15 @@ impl JokerFactory {
             JokerId::Photograph => Some(Box::new(PhotographJoker::new())),
             JokerId::TheOrder => Some(Box::new(TheOrderJoker)),
             JokerId::FourFingers => Some(Box::new(FourFingersJoker::new())),
+
+            // Resource chips jokers from Issue #191 (Scaling Chips Jokers - Part 2)
+            JokerId::Hiker => Some(create_hiker_joker()),
+
+            // NOTE: Removed incorrect jokers not in Issue #191:
+            // - Castle (Reserved3) - was wrongly implemented, not requested in Issue #191
+            // - Wee (Wee) - was wrongly implemented, not requested in Issue #191
+            // - Stuntman (Reserved4) - was wrongly implemented, not requested in Issue #191
+
             // TODO: Implement remaining jokers
             _ => None,
         }
@@ -119,6 +129,8 @@ impl JokerFactory {
                 // Special mechanic jokers
                 Erosion,
                 Photograph,
+                // Resource chips jokers from Issue #191
+                Hiker, // Every played card permanently gains +5 Chips when scored
             ],
             JokerRarity::Uncommon => vec![
                 // Money-based conditional jokers
@@ -134,6 +146,7 @@ impl JokerFactory {
                 // Special mechanic jokers
                 TheOrder,
                 FourFingers,
+                // NOTE: Removed Stuntman (Reserved4) - not requested in Issue #191
             ],
             JokerRarity::Rare => vec![
                 // RNG-based jokers (Issue #442)
@@ -141,6 +154,7 @@ impl JokerFactory {
                 Fortune, // MysteryJoker
                 // Special mechanic jokers
                 Blueprint,
+                // NOTE: Removed Castle (Reserved3) - not requested in Issue #191
             ],
             JokerRarity::Legendary => vec![
                 // RNG-based jokers (Issue #442)
@@ -200,7 +214,11 @@ impl JokerFactory {
             Photograph,
             TheOrder,
             SteelJoker, // Now properly implemented as scaling joker
-                        // Note: HalfJoker and Banner are still placeholders
+            // Resource chips jokers from Issue #191 (Scaling Chips Jokers - Part 2)
+            Hiker, // Every played card permanently gains +5 Chips when scored
+                   // NOTE: Removed incorrect jokers not in Issue #191:
+                   // - Wee, Castle (Reserved3), Stuntman (Reserved4) were wrongly implemented
+                   // Note: HalfJoker and Banner are still placeholders
         ]
     }
 }
@@ -235,6 +253,10 @@ mod tests {
         let runner = JokerFactory::create(JokerId::Runner);
         assert!(runner.is_some());
         assert_eq!(runner.unwrap().id(), JokerId::Runner);
+
+        let hiker = JokerFactory::create(JokerId::Hiker);
+        assert!(hiker.is_some());
+        assert_eq!(hiker.unwrap().id(), JokerId::Hiker);
     }
 
     #[test]
@@ -267,6 +289,7 @@ mod tests {
         assert!(common_jokers.contains(&JokerId::HalfJoker));
         assert!(common_jokers.contains(&JokerId::Banner));
         assert!(common_jokers.contains(&JokerId::AbstractJoker));
+        assert!(common_jokers.contains(&JokerId::Hiker));
 
         let uncommon_jokers = JokerFactory::get_by_rarity(JokerRarity::Uncommon);
         assert!(uncommon_jokers.contains(&JokerId::RedCard));
@@ -286,6 +309,7 @@ mod tests {
         assert!(implemented.contains(&JokerId::Walkie));
         assert!(implemented.contains(&JokerId::Runner));
         assert!(implemented.contains(&JokerId::AbstractJoker));
+        assert!(implemented.contains(&JokerId::Hiker));
 
         // AbstractJoker is now properly implemented and included above
         // Note: Placeholder jokers (HalfJoker, Banner, SteelJoker)

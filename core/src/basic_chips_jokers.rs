@@ -17,5 +17,5 @@
     note = "Use joker::resource_chips_jokers module instead"
 )]
 pub use crate::joker::resource_chips_jokers::{
-    BannerJoker, BlueJoker, BullJoker, ScaryFaceJoker, StoneJoker,
+    BannerJoker, BlueJoker, BullJoker, HikerJoker, ScaryFaceJoker, StoneJoker,
 };
