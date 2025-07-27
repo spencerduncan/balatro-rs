@@ -469,7 +469,7 @@ mod tests {
         assert!(val < 100);
 
         // Test boolean generation
-        let bool_val = rng.gen_bool(0.5);
+        let _bool_val = rng.gen_bool(0.5);
         // Boolean test - this just verifies the function runs without panic
 
         // Test shuffle
