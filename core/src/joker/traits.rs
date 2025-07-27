@@ -465,55 +465,89 @@ mod tests {
         ),
     ];
 
-    // Test card data - using lazy_static approach for compile-time cards
-    fn test_cards() -> Vec<Card> {
-        vec![
-            Card::new(Value::Ace, Suit::Spade),
-            Card::new(Value::King, Suit::Heart),
-            Card::new(Value::Queen, Suit::Diamond),
-            Card::new(Value::Jack, Suit::Club),
-            Card::new(Value::Ten, Suit::Spade),
-        ]
+    // Test card data - efficient functions that return static slices
+    fn test_cards() -> &'static [Card] {
+        use once_cell::sync::Lazy;
+        static CARDS: Lazy<Vec<Card>> = Lazy::new(|| {
+            vec![
+                Card::new(Value::Ace, Suit::Spade),
+                Card::new(Value::King, Suit::Heart),
+                Card::new(Value::Queen, Suit::Diamond),
+                Card::new(Value::Jack, Suit::Club),
+                Card::new(Value::Ten, Suit::Spade),
+            ]
+        });
+        &CARDS
     }
 
-    fn flush_cards() -> Vec<Card> {
-        vec![
-            Card::new(Value::Ace, Suit::Heart),
-            Card::new(Value::King, Suit::Heart),
-            Card::new(Value::Queen, Suit::Heart),
-            Card::new(Value::Jack, Suit::Heart),
-            Card::new(Value::Ten, Suit::Heart),
-        ]
+    fn flush_cards() -> &'static [Card] {
+        use once_cell::sync::Lazy;
+        static CARDS: Lazy<Vec<Card>> = Lazy::new(|| {
+            vec![
+                Card::new(Value::Ace, Suit::Heart),
+                Card::new(Value::King, Suit::Heart),
+                Card::new(Value::Queen, Suit::Heart),
+                Card::new(Value::Jack, Suit::Heart),
+                Card::new(Value::Ten, Suit::Heart),
+            ]
+        });
+        &CARDS
     }
 
-    fn pair_cards() -> Vec<Card> {
-        vec![
-            Card::new(Value::Ace, Suit::Heart),
-            Card::new(Value::Ace, Suit::Spade),
-            Card::new(Value::King, Suit::Diamond),
-        ]
+    fn pair_cards() -> &'static [Card] {
+        use once_cell::sync::Lazy;
+        static CARDS: Lazy<Vec<Card>> = Lazy::new(|| {
+            vec![
+                Card::new(Value::Ace, Suit::Heart),
+                Card::new(Value::Ace, Suit::Spade),
+                Card::new(Value::King, Suit::Diamond),
+            ]
+        });
+        &CARDS
+    }
+
+    // Test fixtures to reduce repetitive setup
+    struct TestFixture {
+        hand_score: HandScore,
+        events: Vec<GameEvent>,
+        state_manager: JokerStateManager,
+    }
+
+    impl TestFixture {
+        fn new() -> Self {
+            Self {
+                hand_score: HandScore {
+                    chips: 50,
+                    mult: 2.0,
+                },
+                events: Vec::new(),
+                state_manager: JokerStateManager::new(),
+            }
+        }
+
+        fn create_context<'a>(
+            &'a mut self,
+            played_cards: &'a [Card],
+            held_cards: &'a [Card],
+            hand: &'a SelectHand,
+        ) -> ProcessContext<'a> {
+            ProcessContext {
+                hand_score: &mut self.hand_score,
+                played_cards,
+                held_cards,
+                events: &mut self.events,
+                hand,
+                joker_state_manager: &self.state_manager,
+            }
+        }
     }
 
     #[test]
     fn test_basic_process() {
-        let mut joker = TEST_JOKERS[0].clone();
-        let mut hand_score = HandScore {
-            chips: 50,
-            mult: 2.0,
-        };
-        let mut events = Vec::new();
-        let state_manager = JokerStateManager::new();
-        let cards = test_cards();
-        let hand = SelectHand::new(cards[..3].to_vec());
-
-        let mut context = ProcessContext {
-            hand_score: &mut hand_score,
-            played_cards: &cards[..3],
-            held_cards: &[],
-            events: &mut events,
-            hand: &hand,
-            joker_state_manager: &state_manager,
-        };
+        let mut joker = TEST_JOKERS[0];
+        let mut fixture = TestFixture::new();
+        let hand = SelectHand::new(test_cards()[..3].to_vec());
+        let mut context = fixture.create_context(&test_cards()[..3], &[], &hand);
 
         let result = joker.process(&Stage::Blind(Blind::Small), &mut context);
         assert_eq!(result.chips_added, 10);
@@ -527,55 +561,27 @@ mod tests {
         let shop_joker = &TEST_JOKERS[2];
         let never_joker = &TEST_JOKERS[4];
 
-        let hand_score = HandScore {
-            chips: 50,
-            mult: 2.0,
-        };
-        let events = Vec::new();
-        let state_manager = JokerStateManager::new();
+        let mut fixture = TestFixture::new();
+        let hand = SelectHand::new(test_cards()[..1].to_vec());
+        let context = fixture.create_context(&test_cards()[..1], &[], &hand);
 
-        // Test ace trigger
-        let cards = test_cards();
-        let mut hand_score_copy = hand_score.clone();
-        let mut events_copy = events.clone();
-        let hand = SelectHand::new(cards[..1].to_vec());
-        let context_with_ace = ProcessContext {
-            hand_score: &mut hand_score_copy,
-            played_cards: &cards[..1], // Has ace
-            held_cards: &[],
-            events: &mut events_copy,
-            hand: &hand,
-            joker_state_manager: &state_manager,
-        };
-        assert!(ace_joker.can_trigger(&Stage::Blind(Blind::Small), &context_with_ace));
+        // Test ace trigger (first card is an ace)
+        assert!(ace_joker.can_trigger(&Stage::Blind(Blind::Small), &context));
 
         // Test shop stage trigger
-        assert!(shop_joker.can_trigger(&Stage::Shop(), &context_with_ace));
-        assert!(!shop_joker.can_trigger(&Stage::Blind(Blind::Small), &context_with_ace));
+        assert!(shop_joker.can_trigger(&Stage::Shop(), &context));
+        assert!(!shop_joker.can_trigger(&Stage::Blind(Blind::Small), &context));
 
         // Test never trigger
-        assert!(!never_joker.can_trigger(&Stage::Blind(Blind::Small), &context_with_ace));
+        assert!(!never_joker.can_trigger(&Stage::Blind(Blind::Small), &context));
     }
 
     #[test]
     fn test_state_scaling() {
-        let mut joker = TEST_JOKERS[3].clone(); // state_scaler
-        let mut hand_score = HandScore {
-            chips: 50,
-            mult: 2.0,
-        };
-        let mut events = Vec::new();
-        let state_manager = JokerStateManager::new();
+        let mut joker = TEST_JOKERS[3]; // state_scaler
+        let mut fixture = TestFixture::new();
         let hand = SelectHand::new(vec![]);
-
-        let mut context = ProcessContext {
-            hand_score: &mut hand_score,
-            played_cards: &[],
-            held_cards: &[],
-            events: &mut events,
-            hand: &hand,
-            joker_state_manager: &state_manager,
-        };
+        let mut context = fixture.create_context(&[], &[], &hand);
 
         // Test scaling over multiple triggers
         let expected = [(5, 0.5), (10, 1.0), (15, 1.5)];
@@ -606,88 +612,43 @@ mod tests {
         let pair_joker = &TEST_JOKERS[6];
         let big_hand_joker = &TEST_JOKERS[7];
 
-        let hand_score = HandScore {
-            chips: 50,
-            mult: 2.0,
-        };
-        let events = Vec::new();
-        let state_manager = JokerStateManager::new();
-
         // Test flush
-        let mut hand_score_flush = hand_score.clone();
-        let mut events_flush = events.clone();
-        let flush_hand_cards = flush_cards();
-        let flush_hand = SelectHand::new(flush_hand_cards.clone());
-        let context_flush = ProcessContext {
-            hand_score: &mut hand_score_flush,
-            played_cards: &flush_hand_cards,
-            held_cards: &[],
-            events: &mut events_flush,
-            hand: &flush_hand,
-            joker_state_manager: &state_manager,
-        };
+        let mut fixture_flush = TestFixture::new();
+        let flush_hand = SelectHand::new(flush_cards().to_vec());
+        let context_flush = fixture_flush.create_context(flush_cards(), &[], &flush_hand);
         assert!(flush_joker.can_trigger(&Stage::Blind(Blind::Small), &context_flush));
 
         // Test pair
-        let mut hand_score_pair = hand_score.clone();
-        let mut events_pair = events.clone();
-        let pair_hand_cards = pair_cards();
-        let pair_hand = SelectHand::new(pair_hand_cards.clone());
-        let context_pair = ProcessContext {
-            hand_score: &mut hand_score_pair,
-            played_cards: &pair_hand_cards,
-            held_cards: &[],
-            events: &mut events_pair,
-            hand: &pair_hand,
-            joker_state_manager: &state_manager,
-        };
+        let mut fixture_pair = TestFixture::new();
+        let pair_hand = SelectHand::new(pair_cards().to_vec());
+        let context_pair = fixture_pair.create_context(pair_cards(), &[], &pair_hand);
         assert!(pair_joker.can_trigger(&Stage::Blind(Blind::Small), &context_pair));
 
         // Test min cards
-        let cards_for_big = test_cards();
-        let mut hand_score_big = hand_score.clone();
-        let mut events_big = events.clone();
-        let big_hand = SelectHand::new(cards_for_big[..4].to_vec());
-        let context_big = ProcessContext {
-            hand_score: &mut hand_score_big,
-            played_cards: &cards_for_big[..4],
-            held_cards: &[],
-            events: &mut events_big,
-            hand: &big_hand,
-            joker_state_manager: &state_manager,
-        };
+        let mut fixture_big = TestFixture::new();
+        let big_hand = SelectHand::new(test_cards()[..4].to_vec());
+        let context_big = fixture_big.create_context(&test_cards()[..4], &[], &big_hand);
         assert!(big_hand_joker.can_trigger(&Stage::Blind(Blind::Small), &context_big));
     }
 
     #[test]
     fn test_scoring_invariants() {
         // Property: Processing should never produce negative scores
-        for joker in TEST_JOKERS {
-            let mut joker_copy = joker.clone();
-            let mut hand_score = HandScore {
-                chips: 100,
-                mult: 2.0,
-            };
-            let mut events = Vec::new();
-            let state_manager = JokerStateManager::new();
-            let cards = test_cards();
-            let hand = SelectHand::new(cards.clone());
+        for &joker in TEST_JOKERS {
+            let mut joker_copy = joker;
+            let mut fixture = TestFixture::new();
+            fixture.hand_score.chips = 100;
+            fixture.hand_score.mult = 2.0;
 
-            let mut context = ProcessContext {
-                hand_score: &mut hand_score,
-                played_cards: &cards,
-                held_cards: &[],
-                events: &mut events,
-                hand: &hand,
-                joker_state_manager: &state_manager,
-            };
+            let hand = SelectHand::new(test_cards().to_vec());
+            let mut context = fixture.create_context(test_cards(), &[], &hand);
 
             let result = joker_copy.process(&Stage::Blind(Blind::Small), &mut context);
 
             // chips_added is u64, always non-negative by type
             assert!(result.mult_added >= 0.0);
-            assert_eq!(hand_score.chips, 100); // Hand score unchanged
-            assert_eq!(hand_score.mult, 2.0);
+            assert_eq!(fixture.hand_score.chips, 100); // Hand score unchanged
+            assert_eq!(fixture.hand_score.mult, 2.0);
         }
     }
 
@@ -695,5 +656,164 @@ mod tests {
     fn test_thread_safety() {
         fn assert_send_sync<T: Send + Sync>() {}
         assert_send_sync::<StaticGameplayJoker>();
+    }
+
+    #[test]
+    fn test_multi_joker_interactions() {
+        // Test multiple jokers processing in sequence
+        let mut fixture = TestFixture::new();
+
+        // Test different jokers with their appropriate conditions
+        let mut always_joker = TEST_JOKERS[0]; // priority 0, always triggers
+        let mut ace_joker = TEST_JOKERS[1]; // priority 10, requires ace
+        let mut flush_joker = TEST_JOKERS[5]; // priority 15, requires flush
+
+        // Test with flush hand for flush joker
+        let flush_hand = SelectHand::new(flush_cards().to_vec());
+        let mut context = fixture.create_context(flush_cards(), &[], &flush_hand);
+
+        let result1 = flush_joker.process(&Stage::Blind(Blind::Small), &mut context);
+        assert_eq!(result1.chips_added, 30); // flush_master
+        assert_eq!(result1.mult_added, 3.0);
+
+        // Apply effects to hand score for cumulative testing
+        fixture.hand_score.chips += result1.chips_added;
+        fixture.hand_score.mult += result1.mult_added;
+
+        // Test with ace hand for ace joker
+        let ace_hand = SelectHand::new(test_cards()[..1].to_vec()); // First card is ace
+        let mut context2 = fixture.create_context(&test_cards()[..1], &[], &ace_hand);
+        let result2 = ace_joker.process(&Stage::Blind(Blind::Small), &mut context2);
+        assert_eq!(result2.chips_added, 50); // ace_hunter
+        assert_eq!(result2.mult_added, 2.0);
+
+        // Test always joker with any hand
+        let any_hand = SelectHand::new(test_cards().to_vec());
+        let mut context3 = fixture.create_context(test_cards(), &[], &any_hand);
+        let result3 = always_joker.process(&Stage::Blind(Blind::Small), &mut context3);
+        assert_eq!(result3.chips_added, 10); // basic joker
+        assert_eq!(result3.mult_added, 1.5);
+
+        // Verify cumulative effects
+        let total_chips_added = result1.chips_added + result2.chips_added + result3.chips_added;
+        let total_mult_added = result1.mult_added + result2.mult_added + result3.mult_added;
+        assert_eq!(total_chips_added, 90); // 30 + 50 + 10
+        assert_eq!(total_mult_added, 6.5); // 3.0 + 2.0 + 1.5
+    }
+
+    #[test]
+    fn test_multi_joker_state_interactions() {
+        // Test jokers with shared state via JokerStateManager
+        let mut fixture = TestFixture::new();
+        let hand = SelectHand::new(vec![]);
+
+        // Two state-based jokers
+        let mut state_joker1 = TEST_JOKERS[3]; // state_scaler
+        let mut state_joker2 = TEST_JOKERS[3]; // another state_scaler
+
+        // First joker triggers and updates state
+        let mut context1 = fixture.create_context(&[], &[], &hand);
+        let result1 = state_joker1.process(&Stage::Blind(Blind::Small), &mut context1);
+        assert_eq!(result1.chips_added, 5);
+        assert_eq!(result1.mult_added, 0.5);
+
+        // Second joker sees updated state
+        let mut context2 = fixture.create_context(&[], &[], &hand);
+        let result2 = state_joker2.process(&Stage::Blind(Blind::Small), &mut context2);
+        assert_eq!(result2.chips_added, 10); // Should see incremented state
+        assert_eq!(result2.mult_added, 1.0);
+
+        // First joker again should see further updated state
+        let mut context3 = fixture.create_context(&[], &[], &hand);
+        let result3 = state_joker1.process(&Stage::Blind(Blind::Small), &mut context3);
+        assert_eq!(result3.chips_added, 15);
+        assert_eq!(result3.mult_added, 1.5);
+        assert!(result3.retriggered);
+    }
+
+    #[test]
+    fn test_edge_case_empty_hand() {
+        // Edge case: no cards in hand
+        let mut fixture = TestFixture::new();
+        let empty_hand = SelectHand::new(vec![]);
+        let mut context = fixture.create_context(&[], &[], &empty_hand);
+
+        for &joker in TEST_JOKERS {
+            let mut joker_copy = joker;
+            let result = joker_copy.process(&Stage::Blind(Blind::Small), &mut context);
+
+            // Jokers should handle empty hands gracefully
+            match joker.trigger_condition {
+                TriggerCondition::RequiresAce
+                | TriggerCondition::RequiresPair
+                | TriggerCondition::RequiresFlush
+                | TriggerCondition::MinCards(_) => {
+                    // These should not trigger
+                    assert_eq!(result.chips_added, 0);
+                    assert_eq!(result.mult_added, 0.0);
+                }
+                TriggerCondition::Always => {
+                    // These should still work
+                    assert!(result.chips_added > 0 || result.mult_added > 0.0);
+                }
+                _ => {}
+            }
+        }
+    }
+
+    #[test]
+    fn test_edge_case_max_cards() {
+        // Edge case: maximum allowed cards
+        let max_cards = vec![
+            Card::new(Value::Ace, Suit::Spade),
+            Card::new(Value::King, Suit::Spade),
+            Card::new(Value::Queen, Suit::Spade),
+            Card::new(Value::Jack, Suit::Spade),
+            Card::new(Value::Ten, Suit::Spade),
+            Card::new(Value::Nine, Suit::Spade),
+            Card::new(Value::Eight, Suit::Spade),
+            Card::new(Value::Seven, Suit::Spade),
+        ];
+
+        let mut fixture = TestFixture::new();
+        let hand = SelectHand::new(max_cards.clone());
+        let mut context = fixture.create_context(&max_cards, &[], &hand);
+
+        // MinCards joker should definitely trigger
+        let mut min_cards_joker = TEST_JOKERS[7];
+        let result = min_cards_joker.process(&Stage::Blind(Blind::Small), &mut context);
+        assert_eq!(result.chips_added, 15);
+        assert_eq!(result.mult_added, 2.5);
+    }
+
+    #[test]
+    fn test_stage_specific_behaviors() {
+        // Test jokers behave differently in different stages
+        let mut fixture = TestFixture::new();
+        let hand = SelectHand::new(test_cards().to_vec());
+        let stages = [
+            Stage::Blind(Blind::Small),
+            Stage::Blind(Blind::Big),
+            Stage::Blind(Blind::Boss),
+            Stage::Shop(),
+            Stage::PreBlind(),
+            Stage::PostBlind(),
+        ];
+
+        for stage in &stages {
+            let mut context = fixture.create_context(test_cards(), &[], &hand);
+
+            // Shop-specific joker
+            let mut shop_joker = TEST_JOKERS[2];
+            let result = shop_joker.process(stage, &mut context);
+
+            if matches!(stage, Stage::Shop()) {
+                assert_eq!(result.chips_added, 0);
+                assert_eq!(result.mult_added, 1.0);
+            } else {
+                assert_eq!(result.chips_added, 0);
+                assert_eq!(result.mult_added, 0.0);
+            }
+        }
     }
 }
