@@ -205,9 +205,9 @@ impl Joker for ScholarJoker {
         // Bonus scales with unique hand types discovered
         let bonus = unique_types * 2;
 
-        JokerEffect::new().with_mult(bonus).with_message(format!(
-            "Scholar: {unique_types} unique hands discovered!"
-        ))
+        JokerEffect::new()
+            .with_mult(bonus)
+            .with_message(format!("Scholar: {unique_types} unique hands discovered!"))
     }
 
     fn initialize_state(&self, _context: &GameContext) -> JokerState {

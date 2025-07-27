@@ -250,9 +250,7 @@ fn test_game_engine_basics() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    println!(
-        "  ✓ Successfully created {created_count} different joker types"
-    );
+    println!("  ✓ Successfully created {created_count} different joker types");
     println!("  Game engine basics tests passed");
     Ok(())
 }
