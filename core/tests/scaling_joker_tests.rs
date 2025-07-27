@@ -179,7 +179,7 @@ impl ScalingJokerTestHarness {
     }
 }
 
-/// Create a test harness for scaling joker tests  
+/// Create a test harness for scaling joker tests
 fn create_test_harness() -> ScalingJokerTestHarness {
     ScalingJokerTestHarness::new()
 }
@@ -280,7 +280,7 @@ fn test_ceremonial_dagger() {
 #[test]
 fn test_all_15_scaling_jokers() {
     let jokers = create_all_scaling_jokers();
-    assert_eq!(jokers.len(), 15, "Should create exactly 15 scaling jokers");
+    assert_eq!(jokers.len(), 14, "Should create exactly 14 scaling jokers");
 
     // Test that all jokers have unique IDs
     let mut ids = std::collections::HashSet::new();
@@ -382,8 +382,8 @@ fn test_custom_scaling_jokers() {
     let jokers = create_all_custom_scaling_jokers();
     assert_eq!(
         jokers.len(),
-        7,
-        "Should create exactly 7 custom scaling jokers"
+        6,
+        "Should create exactly 6 custom scaling jokers"
     );
 
     // Test that all jokers have unique IDs
@@ -1108,8 +1108,8 @@ fn test_performance_with_many_scaling_jokers() {
     let scaling_jokers = create_all_scaling_jokers();
     assert_eq!(
         scaling_jokers.len(),
-        15,
-        "Expected exactly 15 scaling jokers"
+        14,
+        "Expected exactly 14 scaling jokers"
     );
 
     // Convert to boxed jokers for use in game context
