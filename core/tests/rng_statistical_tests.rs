@@ -462,6 +462,7 @@ fn test_lucky_card_joker_probability() {
             hand_type_counts: &hand_type_counts,
             cards_in_deck: 52,
             stone_cards_in_deck: 0,
+            steel_cards_in_deck: 0,
             rng: &rng,
         };
 

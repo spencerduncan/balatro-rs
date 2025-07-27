@@ -43,6 +43,7 @@ mod optimization_tests {
             hand_type_counts: &test_hand_type_counts,
             cards_in_deck: 52,
             stone_cards_in_deck: 0,
+            steel_cards_in_deck: 0,
             rng: &test_rng,
         };
 
