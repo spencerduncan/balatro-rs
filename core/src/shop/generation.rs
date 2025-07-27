@@ -1050,10 +1050,10 @@ mod tests {
     #[test]
     fn test_standard_reroll_mechanics_creation() {
         let mechanics = StandardRerollMechanics::new();
-        assert!(format!("{:?}", mechanics).contains("StandardRerollMechanics"));
+        assert!(format!("{mechanics:?}").contains("StandardRerollMechanics"));
 
-        let default_mechanics = StandardRerollMechanics::default();
-        assert!(format!("{:?}", default_mechanics).contains("StandardRerollMechanics"));
+        let default_mechanics = StandardRerollMechanics;
+        assert!(format!("{default_mechanics:?}").contains("StandardRerollMechanics"));
     }
 
     #[test]
