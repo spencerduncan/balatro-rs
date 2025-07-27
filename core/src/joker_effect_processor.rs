@@ -1951,10 +1951,12 @@ mod tests {
         let mut processor = JokerEffectProcessor::new();
 
         // Test context modification
-        let mut new_context = ProcessingContext::default();
-        new_context.processing_mode = ProcessingMode::Delayed;
-        new_context.resolution_strategy = ConflictResolutionStrategy::Maximum;
-        new_context.validate_effects = false;
+        let new_context = ProcessingContext {
+            processing_mode: ProcessingMode::Delayed,
+            resolution_strategy: ConflictResolutionStrategy::Maximum,
+            validate_effects: false,
+            ..Default::default()
+        };
 
         processor.set_context(new_context.clone());
 

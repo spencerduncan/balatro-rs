@@ -4,7 +4,8 @@ use balatro_rs::{
     joker::{GameContext, Joker, JokerEffect, JokerId},
     joker_effect_processor::{ConflictResolutionStrategy, JokerEffectProcessor, ProcessingContext},
 };
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use std::hint::black_box;
 
 /// Minimal benchmark focusing on public JokerEffectProcessor API
 pub fn effect_processor_benchmarks(c: &mut Criterion) {
@@ -14,7 +15,7 @@ pub fn effect_processor_benchmarks(c: &mut Criterion) {
     scaling_benchmarks(c);
 }
 
-/// Test hand effects processing performance  
+/// Test hand effects processing performance
 fn hand_effects_benchmarks(c: &mut Criterion) {
     let mut group = c.benchmark_group("hand_effects");
 

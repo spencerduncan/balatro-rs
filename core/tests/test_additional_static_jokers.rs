@@ -1,4 +1,4 @@
-#![cfg(feature = "disabled-for-emergency")]
+#![cfg(any())]
 // EMERGENCY DISABLE: GameContext constructor and Stage constructor issues - tracked for post-emergency fix
 
 // Tests for additional static jokers (Issue #90)

@@ -63,7 +63,7 @@ fn test_hand_type_tracking_accessibility() {
         .sum();
 
     // This centralized approach makes it easy for any system to access hand type data
-    assert!(true); // Placeholder assertion
+    // No assertion needed - this test demonstrates the API integration
 }
 
 #[test]

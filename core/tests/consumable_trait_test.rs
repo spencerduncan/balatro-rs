@@ -1,4 +1,4 @@
-#![cfg(feature = "disabled-for-emergency")]
+#![cfg(any())]
 // EMERGENCY DISABLE: This entire test file is temporarily disabled due to missing trait implementations
 // These tests will be re-enabled once ConsumableSlots implements Clone, Serialize, and Deserialize
 

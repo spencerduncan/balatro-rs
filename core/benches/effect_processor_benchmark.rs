@@ -6,7 +6,8 @@ use balatro_rs::{
         ConflictResolutionStrategy, EffectPriority, JokerEffectProcessor, ProcessingContext,
     },
 };
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use std::hint::black_box;
 
 /// Benchmark suite for JokerEffectProcessor performance testing
 pub fn effect_processor_benchmarks(c: &mut Criterion) {
@@ -491,7 +492,7 @@ fn create_conflicting_joker_collection() -> Vec<Box<dyn Joker>> {
 fn create_priority_joker_collection(priorities: Vec<EffectPriority>) -> Vec<Box<dyn Joker>> {
     let mut jokers = Vec::new();
 
-    for (i, &_priority) in priorities.iter().enumerate() {
+    for (_i, &_priority) in priorities.iter().enumerate() {
         // Create a joker for benchmarking purposes
         // Note: Actual priority handling is implemented in the processor
         if let Some(joker) = balatro_rs::joker_factory::JokerFactory::create(JokerId::Joker) {
