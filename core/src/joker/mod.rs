@@ -81,6 +81,7 @@ pub enum JokerId {
     Matador,
     HitTheRoad,
     TheDuo,
+    TheTrio,
     TheTrip,
     TheFamily,
     TheOrder,
@@ -100,7 +101,6 @@ pub enum JokerId {
     Luchador,
     Photograph,
     GiftCard,
-    CouponJoker,
     CloudNine,
     StockBroker,
     EggHead,
@@ -512,6 +512,8 @@ pub struct GameContext<'a> {
     pub cards_in_deck: usize,
     /// Number of Stone cards in deck
     pub stone_cards_in_deck: usize,
+    /// Number of Steel cards in deck (for Steel Joker calculations)
+    pub steel_cards_in_deck: usize,
     /// Random number generator for secure randomness
     pub rng: &'a crate::rng::GameRng,
 }
@@ -1250,20 +1252,39 @@ pub mod hand_composition_jokers;
 // Include resource-based chips jokers (Banner, Bull, Stone, Scary Face, Blue)
 pub mod resource_chips_jokers;
 
-// Include basic xmult jokers (Photograph, Polished, Rough Gem, Bloodstone, Misprint)
+// Include basic xmult jokers (Photograph, Ancient, Steel, Baron, The Idol)
 pub mod basic_xmult_jokers;
+
+// Include FourFingers joker
+pub mod four_fingers;
+
+// Include multiplicative jokers (Baron, Steel, Ancient, etc.)
+pub mod multiplicative_jokers;
+
+// Include basic economy jokers
+pub mod basic_economy_jokers;
 
 // Include tests for hand composition jokers (Ride the Bus, Blackboard, DNA)
 #[cfg(test)]
 mod hand_composition_tests;
 
+// Include scaling xmult jokers (Throwback, Steel Joker Scaling, Ceremonial Dagger)
+pub mod scaling_xmult_jokers;
+
 // Include tests for JokerIdentity trait
 #[cfg(test)]
 mod identity_tests;
 
+// Include scaling additive mult jokers
+pub mod scaling_additive_mult_jokers;
+
 // Include testing utilities for the Joker trait system
 #[cfg(test)]
 pub mod test_utils;
+
+// Include comprehensive tests for the new trait system
+#[cfg(test)]
+pub mod tests;
 
 // Re-export important types
 pub use conditional::{ConditionalJoker, JokerCondition};
@@ -1277,13 +1298,9 @@ pub use traits::{
 // Re-export old API types for backwards compatibility
 pub use compat::{Joker as OldJoker, Jokers};
 
-// Include tests module with trait tests
-#[cfg(test)]
-pub mod tests;
-
 // Module-level trait tests
 #[cfg(test)]
-mod trait_tests {
+mod joker_trait_tests {
     use super::*;
 
     #[test]

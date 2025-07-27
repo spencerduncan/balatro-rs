@@ -1,3 +1,3 @@
-//! Test modules for joker traits
+//! Test modules for the joker system
 
 pub mod traits;

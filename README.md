@@ -12,7 +12,7 @@ Game engine and move generator for a simplified version of [balatro](https://www
 - `Game.{chips, mult, score, money, round}`: `usize` → `f64` ✅ COMPLETE
 - `JokerEffect` numeric fields: `i32/f32` → `f64` ❌ IN PROGRESS
 - Save files are automatically migrated ✅
-- **See [F64_MIGRATION_GUIDE.md](F64_MIGRATION_GUIDE.md) for current status and migration instructions**
+- **See breaking changes above for current migration status**
 
 ## Overview
 
@@ -66,10 +66,37 @@ The following features are missing and may or may not be added
 - [ ] boss blind modifiers
 - [ ] skip blind/tags
 - [ ] card enhancements, foils and seals
-- [ ] joker foils 
+- [ ] joker foils
 - [ ] alternative decks
 - [ ] alternative stakes
 
+## Development
+
+### Quick Start
+
+1. Clone the repository and set up pre-commit hooks:
+```bash
+git clone https://github.com/spencerduncan/balatro-rs.git
+cd balatro-rs
+./scripts/setup-precommit.sh  # Install automated code quality checks
+```
+
+2. Build and test:
+```bash
+cargo build --all
+cargo test --all
+```
+
+### Code Quality (Automated)
+
+This project uses pre-commit hooks to maintain code quality:
+
+- **Formatting**: Rust code is automatically formatted with `rustfmt`
+- **Linting**: Zero warnings policy with `clippy`
+- **Testing**: Core tests run before each commit
+- **Security**: Dependency vulnerability scanning
+
+The hooks run automatically on `git commit`. See `PRE_COMMIT_GUIDE.md` for details.
 
 ## Python bindings
 
@@ -91,7 +118,7 @@ while not engine.is_over:
     actions = engine.gen_actions()        # Actions from engine
     if actions:
         engine.handle_action(actions[0])  # Execute via engine
-        
+
     # Access read-only state when needed
     state = engine.state
     print(f"Score: {state.score}, Money: {state.money}")
@@ -107,6 +134,6 @@ If you're upgrading from the previous "dual framework" design where both `GameSt
 - **Use `GameState`** for read-only access: `score`, `money`, `available`, `joker_ids`, etc.
 - **Backwards compatibility**: Old API still works but shows deprecation warnings
 
-For detailed migration guidance, see [DUAL_FRAMEWORK_ELIMINATION_MIGRATION_GUIDE.md](DUAL_FRAMEWORK_ELIMINATION_MIGRATION_GUIDE.md).
+The new unified API provides better performance and clearer semantics. The old API still works with deprecation warnings for backwards compatibility.
 
 For more details on the python work and reinforcement learning applications, check the [/pylatro](https://github.com/spencerduncan/balatro-rs/tree/main/pylatro) directory.

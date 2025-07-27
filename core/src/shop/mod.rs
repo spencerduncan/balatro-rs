@@ -171,7 +171,7 @@ impl ShopItem {
     ///
     /// This provides the default cost before any modifiers are applied.
     /// Actual shop prices may differ due to vouchers, sales, or other effects.
-    pub fn base_cost(&self) -> usize {
+    pub fn base_cost(&self, config: &crate::config::Config) -> usize {
         match self {
             ShopItem::Joker(joker_id) => {
                 // Would need to look up joker rarity, using placeholder for now
@@ -186,7 +186,7 @@ impl ShopItem {
                 ConsumableType::Spectral => 4,
             },
             ShopItem::Voucher(_) => 10, // Standard voucher cost
-            ShopItem::Pack(pack_type) => pack_type.base_cost(),
+            ShopItem::Pack(pack_type) => pack_type.base_cost(config),
             ShopItem::PlayingCard(_) => 2, // Standard playing card cost
         }
     }
@@ -540,17 +540,18 @@ mod tests {
 
     #[test]
     fn test_shop_item_base_cost() {
+        let config = crate::config::Config::default();
         let joker_item = ShopItem::Joker(JokerId::Joker);
         let tarot_item = ShopItem::Consumable(ConsumableType::Tarot);
         let voucher_item = ShopItem::Voucher(VoucherId::Overstock);
         let pack_item = ShopItem::Pack(PackType::Standard);
         let card_item = ShopItem::PlayingCard(Card::new(Value::Ace, Suit::Heart));
 
-        assert_eq!(joker_item.base_cost(), 3);
-        assert_eq!(tarot_item.base_cost(), 3);
-        assert_eq!(voucher_item.base_cost(), 10);
-        assert_eq!(pack_item.base_cost(), 4);
-        assert_eq!(card_item.base_cost(), 2);
+        assert_eq!(joker_item.base_cost(&config), 3);
+        assert_eq!(tarot_item.base_cost(&config), 3);
+        assert_eq!(voucher_item.base_cost(&config), 10);
+        assert_eq!(pack_item.base_cost(&config), 4);
+        assert_eq!(card_item.base_cost(&config), 2);
     }
 
     #[test]
@@ -588,22 +589,33 @@ mod tests {
 
     #[test]
     fn test_pack_type_costs() {
-        assert_eq!(ShopItem::Pack(PackType::Standard).base_cost(), 4);
-        assert_eq!(ShopItem::Pack(PackType::Buffoon).base_cost(), 4);
-        assert_eq!(ShopItem::Pack(PackType::Arcana).base_cost(), 4);
-        assert_eq!(ShopItem::Pack(PackType::Celestial).base_cost(), 4);
-        assert_eq!(ShopItem::Pack(PackType::Spectral).base_cost(), 4);
-        assert_eq!(ShopItem::Pack(PackType::MegaBuffoon).base_cost(), 8);
-        assert_eq!(ShopItem::Pack(PackType::MegaArcana).base_cost(), 8);
-        assert_eq!(ShopItem::Pack(PackType::MegaCelestial).base_cost(), 8);
+        let config = crate::config::Config::default();
+        assert_eq!(ShopItem::Pack(PackType::Standard).base_cost(&config), 4);
+        assert_eq!(ShopItem::Pack(PackType::Buffoon).base_cost(&config), 4);
+        assert_eq!(ShopItem::Pack(PackType::Arcana).base_cost(&config), 4);
+        assert_eq!(ShopItem::Pack(PackType::Celestial).base_cost(&config), 4);
+        assert_eq!(ShopItem::Pack(PackType::Spectral).base_cost(&config), 4);
+        assert_eq!(ShopItem::Pack(PackType::MegaBuffoon).base_cost(&config), 8);
+        assert_eq!(ShopItem::Pack(PackType::MegaArcana).base_cost(&config), 8);
+        assert_eq!(
+            ShopItem::Pack(PackType::MegaCelestial).base_cost(&config),
+            8
+        );
     }
 
     #[test]
     fn test_consumable_type_costs() {
-        assert_eq!(ShopItem::Consumable(ConsumableType::Tarot).base_cost(), 3);
-        assert_eq!(ShopItem::Consumable(ConsumableType::Planet).base_cost(), 3);
+        let config = crate::config::Config::default();
         assert_eq!(
-            ShopItem::Consumable(ConsumableType::Spectral).base_cost(),
+            ShopItem::Consumable(ConsumableType::Tarot).base_cost(&config),
+            3
+        );
+        assert_eq!(
+            ShopItem::Consumable(ConsumableType::Planet).base_cost(&config),
+            3
+        );
+        assert_eq!(
+            ShopItem::Consumable(ConsumableType::Spectral).base_cost(&config),
             4
         );
     }

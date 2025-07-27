@@ -52,6 +52,7 @@ dependencies = [
  "criterion",
  "indexmap",
  "itertools 0.13.0",
+ "once_cell",
  "pyo3",
  "rand",
  "rand_chacha",

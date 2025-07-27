@@ -1,4 +1,5 @@
 use crate::card::Card;
+use crate::config::Config;
 use crate::consumables::ConsumableId;
 use crate::error::GameError;
 use crate::game::Game;
@@ -39,41 +40,41 @@ pub enum PackType {
 }
 
 impl PackType {
-    /// Get the base cost of this pack type
-    pub fn base_cost(self) -> usize {
+    /// Get the base cost of this pack type using configuration values
+    pub fn base_cost(self, config: &Config) -> usize {
         match self {
-            PackType::Standard => 4,
-            PackType::Jumbo => 6,
-            PackType::Mega => 8,
-            PackType::Enhanced => 6,
-            PackType::Variety => 5,
-            PackType::Buffoon => 4,
-            PackType::Arcana => 4,
-            PackType::Celestial => 4,
-            PackType::Spectral => 4,
-            PackType::MegaBuffoon => 8,
-            PackType::MegaArcana => 8,
-            PackType::MegaCelestial => 8,
-            PackType::MegaSpectral => 8,
+            PackType::Standard => config.pack_standard_cost,
+            PackType::Jumbo => config.pack_jumbo_cost,
+            PackType::Mega => config.pack_mega_cost,
+            PackType::Enhanced => config.pack_enhanced_cost,
+            PackType::Variety => config.pack_variety_cost,
+            PackType::Buffoon => config.pack_buffoon_cost,
+            PackType::Arcana => config.pack_consumable_cost,
+            PackType::Celestial => config.pack_consumable_cost,
+            PackType::Spectral => config.pack_consumable_cost,
+            PackType::MegaBuffoon => config.pack_mega_consumable_cost,
+            PackType::MegaArcana => config.pack_mega_consumable_cost,
+            PackType::MegaCelestial => config.pack_mega_consumable_cost,
+            PackType::MegaSpectral => config.pack_mega_consumable_cost,
         }
     }
 
-    /// Get the number of options this pack type generates
-    pub fn option_count(self) -> (usize, usize) {
+    /// Get the number of options this pack type generates using configuration values
+    pub fn option_count(self, config: &Config) -> (usize, usize) {
         match self {
-            PackType::Standard => (3, 3),      // Exactly 3 options
-            PackType::Jumbo => (5, 5),         // Exactly 5 options
-            PackType::Mega => (7, 7),          // Exactly 7 options
-            PackType::Enhanced => (3, 4),      // 3-4 options
-            PackType::Variety => (3, 5),       // 3-5 options (mixed)
-            PackType::Buffoon => (2, 2),       // Exactly 2 options
-            PackType::Arcana => (2, 3),        // 2-3 options
-            PackType::Celestial => (2, 3),     // 2-3 options
-            PackType::Spectral => (2, 3),      // 2-3 options
-            PackType::MegaBuffoon => (4, 4),   // Exactly 4 options
-            PackType::MegaArcana => (4, 6),    // 4-6 options
-            PackType::MegaCelestial => (4, 6), // 4-6 options
-            PackType::MegaSpectral => (4, 6),  // 4-6 options
+            PackType::Standard => config.pack_standard_options,
+            PackType::Jumbo => config.pack_jumbo_options,
+            PackType::Mega => config.pack_mega_options,
+            PackType::Enhanced => config.pack_enhanced_options,
+            PackType::Variety => config.pack_variety_options,
+            PackType::Buffoon => config.pack_buffoon_options,
+            PackType::Arcana => config.pack_consumable_options,
+            PackType::Celestial => config.pack_consumable_options,
+            PackType::Spectral => config.pack_consumable_options,
+            PackType::MegaBuffoon => config.pack_mega_buffoon_options,
+            PackType::MegaArcana => config.pack_mega_consumable_options,
+            PackType::MegaCelestial => config.pack_mega_consumable_options,
+            PackType::MegaSpectral => config.pack_mega_consumable_options,
         }
     }
 
@@ -142,20 +143,20 @@ pub struct Pack {
 }
 
 impl Pack {
-    /// Create a new pack of the specified type
-    pub fn new(pack_type: PackType) -> Self {
+    /// Create a new pack of the specified type using configuration values
+    pub fn new(pack_type: PackType, config: &Config) -> Self {
         Self {
             pack_type,
             options: Vec::new(),
             choose_count: pack_type.choose_count(),
             can_skip: pack_type.can_skip(),
-            cost: pack_type.base_cost(),
+            cost: pack_type.base_cost(config),
         }
     }
 
-    /// Generate pack contents based on pack type and game state
-    pub fn generate_contents(&mut self, game: &Game) -> Result<(), GameError> {
-        let (min_options, max_options) = self.pack_type.option_count();
+    /// Generate pack contents based on pack type, game state, and configuration
+    pub fn generate_contents(&mut self, game: &Game, config: &Config) -> Result<(), GameError> {
+        let (min_options, max_options) = self.pack_type.option_count(config);
         let mut option_count = if min_options == max_options {
             min_options
         } else {
@@ -172,23 +173,23 @@ impl Pack {
 
         match self.pack_type {
             PackType::Standard | PackType::Jumbo | PackType::Mega | PackType::Enhanced => {
-                self.generate_standard_options(option_count, game)?
+                self.generate_standard_options(option_count, game, config)?
             }
             PackType::Variety => {
                 // Variety packs have mixed contents - for now just use standard
-                self.generate_standard_options(option_count, game)?
+                self.generate_standard_options(option_count, game, config)?
             }
             PackType::Buffoon | PackType::MegaBuffoon => {
-                self.generate_buffoon_options(option_count, game)?
+                self.generate_buffoon_options(option_count, game, config)?
             }
             PackType::Arcana | PackType::MegaArcana => {
-                self.generate_arcana_options(option_count, game)?
+                self.generate_arcana_options(option_count, game, config)?
             }
             PackType::Celestial | PackType::MegaCelestial => {
-                self.generate_celestial_options(option_count, game)?
+                self.generate_celestial_options(option_count, game, config)?
             }
             PackType::Spectral | PackType::MegaSpectral => {
-                self.generate_spectral_options(option_count, game)?
+                self.generate_spectral_options(option_count, game, config)?
             }
         }
 
@@ -196,7 +197,12 @@ impl Pack {
     }
 
     /// Generate standard pack options (playing cards)
-    fn generate_standard_options(&mut self, count: usize, game: &Game) -> Result<(), GameError> {
+    fn generate_standard_options(
+        &mut self,
+        count: usize,
+        game: &Game,
+        config: &Config,
+    ) -> Result<(), GameError> {
         use crate::card::{Enhancement, Suit, Value};
 
         let suits = [Suit::Heart, Suit::Diamond, Suit::Club, Suit::Spade];
@@ -221,10 +227,9 @@ impl Pack {
             let suit = *game.rng.choose(&suits).unwrap();
             let value = *game.rng.choose(&values).unwrap();
 
-            // Create card with potential enhancement (10% chance)
+            // Create card with potential enhancement (configurable chance)
             let mut card = Card::new(value, suit);
-            if game.rng.gen_bool(0.1) {
-                // 10% chance for enhancement
+            if game.rng.gen_bool(config.enhancement_rate) {
                 let enhancements = [
                     Enhancement::Bonus,
                     Enhancement::Mult,
@@ -251,14 +256,19 @@ impl Pack {
     }
 
     /// Generate buffoon pack options (jokers)
-    fn generate_buffoon_options(&mut self, count: usize, game: &Game) -> Result<(), GameError> {
+    fn generate_buffoon_options(
+        &mut self,
+        count: usize,
+        game: &Game,
+        config: &Config,
+    ) -> Result<(), GameError> {
         use crate::joker::JokerRarity;
 
-        // Define rarity weights: 70% Common, 25% Uncommon, 5% Rare
+        // Define rarity weights using configuration values
         let rarities = [
-            (JokerRarity::Common, 70),
-            (JokerRarity::Uncommon, 25),
-            (JokerRarity::Rare, 5),
+            (JokerRarity::Common, config.joker_rarity_weight_common),
+            (JokerRarity::Uncommon, config.joker_rarity_weight_uncommon),
+            (JokerRarity::Rare, config.joker_rarity_weight_rare),
         ];
 
         // Available jokers by rarity (using the jokers we know exist)
@@ -319,7 +329,12 @@ impl Pack {
     }
 
     /// Generate arcana pack options (tarot cards)
-    fn generate_arcana_options(&mut self, count: usize, game: &Game) -> Result<(), GameError> {
+    fn generate_arcana_options(
+        &mut self,
+        count: usize,
+        game: &Game,
+        _config: &Config,
+    ) -> Result<(), GameError> {
         let tarot_cards = ConsumableId::tarot_cards();
 
         for _ in 0..count {
@@ -340,7 +355,12 @@ impl Pack {
     }
 
     /// Generate celestial pack options (planet cards)
-    fn generate_celestial_options(&mut self, count: usize, game: &Game) -> Result<(), GameError> {
+    fn generate_celestial_options(
+        &mut self,
+        count: usize,
+        game: &Game,
+        _config: &Config,
+    ) -> Result<(), GameError> {
         let planet_cards = ConsumableId::planet_cards();
 
         for _ in 0..count {
@@ -361,7 +381,12 @@ impl Pack {
     }
 
     /// Generate spectral pack options (spectral cards)
-    fn generate_spectral_options(&mut self, count: usize, game: &Game) -> Result<(), GameError> {
+    fn generate_spectral_options(
+        &mut self,
+        count: usize,
+        game: &Game,
+        _config: &Config,
+    ) -> Result<(), GameError> {
         let spectral_cards = ConsumableId::spectral_cards();
 
         for _ in 0..count {
@@ -430,14 +455,15 @@ pub struct DefaultPackGenerator;
 
 impl PackGenerator for DefaultPackGenerator {
     fn generate_pack(&self, pack_type: PackType, game: &Game) -> Result<Pack, GameError> {
-        let mut pack = Pack::new(pack_type);
-        pack.generate_contents(game)?;
+        let config = &game.config;
+        let mut pack = Pack::new(pack_type, config);
+        pack.generate_contents(game, config)?;
         Ok(pack)
     }
 
     fn is_pack_available(&self, pack_type: PackType, game: &Game) -> bool {
         // Basic availability logic - all packs available if player has money
-        game.money >= pack_type.base_cost() as f64
+        game.money >= pack_type.base_cost(&game.config) as f64
     }
 
     fn available_pack_types(&self, game: &Game) -> Vec<PackType> {

@@ -238,12 +238,12 @@ mod tests {
         let mut shop = Shop::new();
         let rng = crate::rng::GameRng::for_testing(42);
         shop.refresh(&rng);
-        let original_jokers = shop.jokers.clone();
+        let _original_jokers = shop.jokers.clone();
 
         // Create a joker that's guaranteed not to match any joker instance in the shop
         // The key is that joker comparison is done by equality, not just type
         // So we can create a joker of the same type but different instance
-        let mut attempts = 0;
+        let mut _attempts = 0;
         let mut non_existent_joker = None;
 
         // Try different joker types until we find one not in the shop
@@ -258,7 +258,6 @@ mod tests {
                 non_existent_joker = Some(test_joker);
                 break;
             }
-            attempts += 1;
         }
 
         // If somehow all test jokers are in the shop, manually clear and add specific jokers
@@ -401,7 +400,7 @@ mod tests {
             .count();
 
         // Each joker can be placed in slots 0 to current_joker_count (inclusive)
-        let expected_moves = affordable_jokers * 1; // current_joker_count=0, so only slot 0
+        let expected_moves = affordable_jokers; // current_joker_count=0, so only slot 0
         assert_eq!(moves.len(), expected_moves);
     }
 
@@ -451,7 +450,7 @@ mod tests {
     #[test]
     fn test_shop_debug() {
         let shop = Shop::new();
-        let debug_str = format!("{:?}", shop);
+        let debug_str = format!("{shop:?}");
 
         // Debug output should contain shop information
         assert!(debug_str.contains("Shop"));

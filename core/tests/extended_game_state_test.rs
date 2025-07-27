@@ -3,6 +3,8 @@
 //! Tests the new consumables, vouchers, boss blinds, and state versioning functionality
 //! added to the Game struct for issue #35.
 
+#![allow(clippy::field_reassign_with_default)]
+
 use balatro_rs::boss_blinds::BossBlindId;
 use balatro_rs::config::Config;
 use balatro_rs::consumables::ConsumableId;

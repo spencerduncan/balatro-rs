@@ -350,6 +350,7 @@ impl Joker for ScalingJoker {
 mod tests {
     use super::*;
 
+    #[allow(dead_code)]
     fn create_test_context() -> GameContext<'static> {
         // This is a simplified test context - in real tests we'd need proper initialization
         todo!("Implement test context creation")

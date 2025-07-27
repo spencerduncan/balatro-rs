@@ -466,7 +466,7 @@ mod tests {
     #[test]
     fn test_deck_debug() {
         let deck = Deck::default();
-        let debug_str = format!("{:?}", deck);
+        let debug_str = format!("{deck:?}");
 
         // Debug output should contain deck information
         assert!(debug_str.contains("Deck"));

@@ -54,7 +54,7 @@ fn test_single_hand_level_joker() {
     // Debug messages are generated in debug builds
     #[cfg(debug_assertions)]
     {
-        assert!(messages.len() > 0);
+        assert!(!messages.is_empty());
         assert!(messages[0].contains("Hand effects"));
     }
 
@@ -93,7 +93,7 @@ fn test_single_card_level_joker() {
     // Debug messages are generated in debug builds (one per card)
     #[cfg(debug_assertions)]
     {
-        assert!(messages.len() > 0);
+        assert!(!messages.is_empty());
     }
 
     #[cfg(not(debug_assertions))]
@@ -133,7 +133,7 @@ fn test_mixed_hand_and_card_level_jokers() {
 
     #[cfg(debug_assertions)]
     {
-        assert!(messages.len() > 0);
+        assert!(!messages.is_empty());
     }
 }
 

@@ -1,4 +1,4 @@
-#![cfg(feature = "disabled-for-emergency")]
+#![cfg(any())]
 // EMERGENCY DISABLE: CardTarget API mismatch and Vec indexing errors - tracked for post-emergency fix
 
 use balatro_rs::config::Config;

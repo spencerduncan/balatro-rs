@@ -391,7 +391,9 @@ impl JokerGameplay for RoughGemJoker {
         ProcessResult {
             chips_added: chips_added as u64,
             mult_added,
+            mult_multiplier: 1.0,
             retriggered: false,
+            message: None,
         }
     }
 
@@ -701,10 +703,12 @@ mod tests {
         };
 
         let joker_state_manager = crate::joker_state::JokerStateManager::new();
+        let hand = SelectHand::new(played_cards.clone());
 
         let mut context = ProcessContext {
             hand_score: &mut hand_score,
             played_cards: &played_cards,
+            hand: &hand,
             held_cards: &held_cards,
             events: &mut events,
             joker_state_manager: &joker_state_manager,
@@ -753,10 +757,12 @@ mod tests {
         };
 
         let joker_state_manager = crate::joker_state::JokerStateManager::new();
+        let hand = SelectHand::new(played_cards.clone());
 
         let context = ProcessContext {
             hand_score: &mut hand_score,
             played_cards: &played_cards,
+            hand: &hand,
             held_cards: &held_cards,
             events: &mut events,
             joker_state_manager: &joker_state_manager,

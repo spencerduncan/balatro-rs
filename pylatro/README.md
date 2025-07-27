@@ -30,7 +30,7 @@ while not engine.is_over:
         import random
         action = random.choice(actions)
         engine.handle_action(action)
-    
+
     # Access game state
     state = engine.state
     print(f"Score: {state.score}, Money: {state.money}")
@@ -83,7 +83,7 @@ observation = env.reset()
 for step in range(1000):
     action = env.action_space.sample()  # Random action
     observation, reward, done, info = env.step(action)
-    
+
     if done:
         observation = env.reset()
 ```
@@ -92,7 +92,7 @@ for step in range(1000):
 
 ```python
 # Get binary action space for ML frameworks
-space = engine.gen_action_space()  # Returns [0, 1, 0, 1, ...] 
+space = engine.gen_action_space()  # Returns [0, 1, 0, 1, ...]
 
 # Execute action by index
 valid_indices = [i for i, valid in enumerate(space) if valid]
@@ -144,5 +144,4 @@ See the `examples/` directory for complete usage patterns:
 
 - [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) - Upgrading from legacy API
 - [JOKER_API_MIGRATION_GUIDE.md](JOKER_API_MIGRATION_GUIDE.md) - Joker system migration
-- [../DUAL_FRAMEWORK_ELIMINATION_MIGRATION_GUIDE.md](../DUAL_FRAMEWORK_ELIMINATION_MIGRATION_GUIDE.md) - Architectural changes
-
+- See the main README.md for architectural overview and design principles

@@ -1189,6 +1189,40 @@ impl Joker for ChaoticJoker {
     }
 }
 
+// Triboulet Joker implementation - Kings and Queens give X2 Mult when scored
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct TribouletJoker;
+
+impl Joker for TribouletJoker {
+    fn id(&self) -> JokerId {
+        JokerId::Triboulet
+    }
+
+    fn name(&self) -> &str {
+        "Triboulet"
+    }
+
+    fn description(&self) -> &str {
+        "Played Kings and Queens each give X2 Mult when scored"
+    }
+
+    fn rarity(&self) -> JokerRarity {
+        JokerRarity::Legendary
+    }
+
+    fn cost(&self) -> usize {
+        20
+    }
+
+    fn on_card_scored(&self, _context: &mut GameContext, card: &Card) -> JokerEffect {
+        if matches!(card.value, Value::Queen | Value::King) {
+            JokerEffect::new().with_mult_multiplier(2.0)
+        } else {
+            JokerEffect::new()
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1480,5 +1514,204 @@ mod tests {
             all_implemented.contains(&JokerId::Reserved9),
             "ChaoticJoker should be in implemented list"
         );
+    }
+
+    // Tests for Triboulet joker
+    #[test]
+    fn test_triboulet_basic_properties() {
+        let triboulet = TribouletJoker;
+        assert_eq!(triboulet.id(), JokerId::Triboulet);
+        assert_eq!(triboulet.name(), "Triboulet");
+        assert_eq!(
+            triboulet.description(),
+            "Played Kings and Queens each give X2 Mult when scored"
+        );
+        assert_eq!(triboulet.rarity(), JokerRarity::Legendary);
+        assert_eq!(triboulet.cost(), 20);
+    }
+
+    #[test]
+    fn test_triboulet_king_gives_x2_mult() {
+        let triboulet = TribouletJoker;
+        let king_card = Card::new(Value::King, Suit::Heart);
+
+        // Create a mock context (we don't use it in this implementation but it's required)
+        use crate::hand::Hand;
+        use crate::joker_state::JokerStateManager;
+        use crate::stage::{Blind, Stage};
+        use std::collections::HashMap;
+        use std::sync::Arc;
+
+        let joker_state_manager = Arc::new(JokerStateManager::new());
+        let hand_type_counts = HashMap::new();
+        let hand = Hand::new(vec![]);
+        let discarded = vec![];
+        let jokers: Vec<Box<dyn Joker>> = vec![];
+        let rng = crate::rng::GameRng::new(crate::rng::RngMode::Testing(42));
+        let stage = Stage::Blind(Blind::Small);
+
+        let mut context = crate::joker::GameContext {
+            chips: 0,
+            mult: 0,
+            money: 0,
+            ante: 1,
+            round: 1,
+            stage: &stage,
+            hands_played: 0,
+            discards_used: 0,
+            jokers: &jokers,
+            hand: &hand,
+            discarded: &discarded,
+            joker_state_manager: &joker_state_manager,
+            hand_type_counts: &hand_type_counts,
+            cards_in_deck: 52,
+            stone_cards_in_deck: 0,
+            steel_cards_in_deck: 0,
+            rng: &rng,
+        };
+
+        let effect = triboulet.on_card_scored(&mut context, &king_card);
+        assert_eq!(effect.mult_multiplier, 2.0);
+        assert_eq!(effect.mult, 0);
+        assert_eq!(effect.chips, 0);
+        assert_eq!(effect.money, 0);
+    }
+
+    #[test]
+    fn test_triboulet_queen_gives_x2_mult() {
+        let triboulet = TribouletJoker;
+        let queen_card = Card::new(Value::Queen, Suit::Spade);
+
+        use crate::hand::Hand;
+        use crate::joker_state::JokerStateManager;
+        use crate::stage::{Blind, Stage};
+        use std::collections::HashMap;
+        use std::sync::Arc;
+
+        let joker_state_manager = Arc::new(JokerStateManager::new());
+        let hand_type_counts = HashMap::new();
+        let hand = Hand::new(vec![]);
+        let discarded = vec![];
+        let jokers: Vec<Box<dyn Joker>> = vec![];
+        let rng = crate::rng::GameRng::new(crate::rng::RngMode::Testing(42));
+        let stage = Stage::Blind(Blind::Small);
+
+        let mut context = crate::joker::GameContext {
+            chips: 0,
+            mult: 0,
+            money: 0,
+            ante: 1,
+            round: 1,
+            stage: &stage,
+            hands_played: 0,
+            discards_used: 0,
+            jokers: &jokers,
+            hand: &hand,
+            discarded: &discarded,
+            joker_state_manager: &joker_state_manager,
+            hand_type_counts: &hand_type_counts,
+            cards_in_deck: 52,
+            stone_cards_in_deck: 0,
+            steel_cards_in_deck: 0,
+            rng: &rng,
+        };
+
+        let effect = triboulet.on_card_scored(&mut context, &queen_card);
+        assert_eq!(effect.mult_multiplier, 2.0);
+        assert_eq!(effect.mult, 0);
+        assert_eq!(effect.chips, 0);
+        assert_eq!(effect.money, 0);
+    }
+
+    #[test]
+    fn test_triboulet_jack_gives_no_effect() {
+        let triboulet = TribouletJoker;
+        let jack_card = Card::new(Value::Jack, Suit::Diamond);
+
+        use crate::hand::Hand;
+        use crate::joker_state::JokerStateManager;
+        use crate::stage::{Blind, Stage};
+        use std::collections::HashMap;
+        use std::sync::Arc;
+
+        let joker_state_manager = Arc::new(JokerStateManager::new());
+        let hand_type_counts = HashMap::new();
+        let hand = Hand::new(vec![]);
+        let discarded = vec![];
+        let jokers: Vec<Box<dyn Joker>> = vec![];
+        let rng = crate::rng::GameRng::new(crate::rng::RngMode::Testing(42));
+        let stage = Stage::Blind(Blind::Small);
+
+        let mut context = crate::joker::GameContext {
+            chips: 0,
+            mult: 0,
+            money: 0,
+            ante: 1,
+            round: 1,
+            stage: &stage,
+            hands_played: 0,
+            discards_used: 0,
+            jokers: &jokers,
+            hand: &hand,
+            discarded: &discarded,
+            joker_state_manager: &joker_state_manager,
+            hand_type_counts: &hand_type_counts,
+            cards_in_deck: 52,
+            stone_cards_in_deck: 0,
+            steel_cards_in_deck: 0,
+            rng: &rng,
+        };
+
+        let effect = triboulet.on_card_scored(&mut context, &jack_card);
+        assert_eq!(effect.mult_multiplier, 0.0); // Default multiplier (no effect)
+        assert_eq!(effect.mult, 0);
+        assert_eq!(effect.chips, 0);
+        assert_eq!(effect.money, 0);
+    }
+
+    #[test]
+    fn test_triboulet_non_face_card_gives_no_effect() {
+        let triboulet = TribouletJoker;
+        let ace_card = Card::new(Value::Ace, Suit::Club);
+
+        use crate::hand::Hand;
+        use crate::joker_state::JokerStateManager;
+        use crate::stage::{Blind, Stage};
+        use std::collections::HashMap;
+        use std::sync::Arc;
+
+        let joker_state_manager = Arc::new(JokerStateManager::new());
+        let hand_type_counts = HashMap::new();
+        let hand = Hand::new(vec![]);
+        let discarded = vec![];
+        let jokers: Vec<Box<dyn Joker>> = vec![];
+        let rng = crate::rng::GameRng::new(crate::rng::RngMode::Testing(42));
+        let stage = Stage::Blind(Blind::Small);
+
+        let mut context = crate::joker::GameContext {
+            chips: 0,
+            mult: 0,
+            money: 0,
+            ante: 1,
+            round: 1,
+            stage: &stage,
+            hands_played: 0,
+            discards_used: 0,
+            jokers: &jokers,
+            hand: &hand,
+            discarded: &discarded,
+            joker_state_manager: &joker_state_manager,
+            hand_type_counts: &hand_type_counts,
+            cards_in_deck: 52,
+            stone_cards_in_deck: 0,
+            steel_cards_in_deck: 0,
+            rng: &rng,
+        };
+
+        let effect = triboulet.on_card_scored(&mut context, &ace_card);
+        assert_eq!(effect.mult_multiplier, 0.0); // Default multiplier (no effect)
+        assert_eq!(effect.mult, 0);
+        assert_eq!(effect.chips, 0);
+        assert_eq!(effect.money, 0);
     }
 }

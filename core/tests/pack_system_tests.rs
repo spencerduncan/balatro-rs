@@ -1,4 +1,5 @@
 use balatro_rs::action::Action;
+use balatro_rs::config::Config;
 use balatro_rs::game::Game;
 use balatro_rs::shop::packs::{Pack, PackType};
 use balatro_rs::vouchers::VoucherId;
@@ -357,13 +358,14 @@ fn test_pack_skip_mechanics() {
 #[test]
 fn test_pack_costs() {
     let _game = create_shop_game();
+    let config = Config::new();
 
     // Create pack instances to test costs
-    let standard_pack = Pack::new(PackType::Standard);
-    let buffoon_pack = Pack::new(PackType::Buffoon);
-    let arcana_pack = Pack::new(PackType::Arcana);
-    let celestial_pack = Pack::new(PackType::Celestial);
-    let spectral_pack = Pack::new(PackType::Spectral);
+    let standard_pack = Pack::new(PackType::Standard, &config);
+    let buffoon_pack = Pack::new(PackType::Buffoon, &config);
+    let arcana_pack = Pack::new(PackType::Arcana, &config);
+    let celestial_pack = Pack::new(PackType::Celestial, &config);
+    let spectral_pack = Pack::new(PackType::Spectral, &config);
 
     // All basic packs should cost $4
     assert_eq!(standard_pack.cost, 4, "Standard pack should cost $4");
@@ -373,9 +375,9 @@ fn test_pack_costs() {
     assert_eq!(spectral_pack.cost, 4, "Spectral pack should cost $4");
 
     // Mega packs should cost double
-    let mega_buffoon_pack = Pack::new(PackType::MegaBuffoon);
-    let mega_arcana_pack = Pack::new(PackType::MegaArcana);
-    let mega_celestial_pack = Pack::new(PackType::MegaCelestial);
+    let mega_buffoon_pack = Pack::new(PackType::MegaBuffoon, &config);
+    let mega_arcana_pack = Pack::new(PackType::MegaArcana, &config);
+    let mega_celestial_pack = Pack::new(PackType::MegaCelestial, &config);
 
     assert_eq!(
         mega_buffoon_pack.cost, 8,
@@ -470,4 +472,148 @@ fn test_grab_bag_voucher_adds_option() {
         4,
         "Standard pack with Grab Bag should have 4 options"
     );
+}
+
+#[test]
+fn test_pack_costs_use_config_values() {
+    // Test that PackType uses config values for costs
+    let mut custom_config = Config::new();
+    custom_config.pack_standard_cost = 10; // Change from default 4
+    custom_config.pack_buffoon_cost = 15; // Change from default 4
+
+    // Test that PackType methods use config values
+    assert_eq!(PackType::Standard.base_cost(&custom_config), 10);
+    assert_eq!(PackType::Buffoon.base_cost(&custom_config), 15);
+
+    // Compare with default config to ensure they're different
+    let default_config = Config::new();
+    assert_ne!(
+        PackType::Standard.base_cost(&custom_config),
+        PackType::Standard.base_cost(&default_config)
+    );
+    assert_ne!(
+        PackType::Buffoon.base_cost(&custom_config),
+        PackType::Buffoon.base_cost(&default_config)
+    );
+
+    // Test that Pack creation uses config costs
+    let custom_pack = Pack::new(PackType::Standard, &custom_config);
+    let default_pack = Pack::new(PackType::Standard, &default_config);
+    assert_eq!(custom_pack.cost, 10);
+    assert_eq!(default_pack.cost, 4);
+    assert_ne!(custom_pack.cost, default_pack.cost);
+}
+
+#[test]
+fn test_pack_option_counts_use_config_values() {
+    // Test that PackType uses config values for option counts
+    let mut custom_config = Config::new();
+    custom_config.pack_standard_options = (5, 5); // Change from default (3, 3)
+    custom_config.pack_buffoon_options = (4, 4); // Change from default (2, 2)
+
+    // Test that PackType methods use config values
+    assert_eq!(PackType::Standard.option_count(&custom_config), (5, 5));
+    assert_eq!(PackType::Buffoon.option_count(&custom_config), (4, 4));
+
+    // Compare with default config to ensure they're different
+    let default_config = Config::new();
+    assert_ne!(
+        PackType::Standard.option_count(&custom_config),
+        PackType::Standard.option_count(&default_config)
+    );
+    assert_ne!(
+        PackType::Buffoon.option_count(&custom_config),
+        PackType::Buffoon.option_count(&default_config)
+    );
+}
+
+#[test]
+fn test_default_config_values_match_original_hardcoded_values() {
+    // This test ensures backward compatibility by verifying that default
+    // config values match the original hardcoded values
+    let config = Config::new();
+
+    // Test pack costs match original hardcoded values
+    assert_eq!(config.pack_standard_cost, 4);
+    assert_eq!(config.pack_buffoon_cost, 4);
+    assert_eq!(config.pack_consumable_cost, 4);
+    assert_eq!(config.pack_mega_consumable_cost, 8);
+
+    // Test enhancement rate matches original 10%
+    assert_eq!(config.enhancement_rate, 0.1);
+
+    // Test joker rarity weights match original 70/25/5
+    assert_eq!(config.joker_rarity_weight_common, 70);
+    assert_eq!(config.joker_rarity_weight_uncommon, 25);
+    assert_eq!(config.joker_rarity_weight_rare, 5);
+
+    // Test pack option counts match original values
+    assert_eq!(config.pack_standard_options, (3, 3));
+    assert_eq!(config.pack_buffoon_options, (2, 2));
+    assert_eq!(config.pack_consumable_options, (2, 3));
+}
+
+#[test]
+fn test_config_can_be_modified_at_runtime() {
+    // Test that config changes affect pack behavior immediately
+    let mut config = Config::new();
+
+    // Create a pack with default config
+    let original_pack = Pack::new(PackType::Standard, &config);
+    assert_eq!(original_pack.cost, 4);
+
+    // Modify config
+    config.pack_standard_cost = 99;
+
+    // Create a new pack with modified config
+    let modified_pack = Pack::new(PackType::Standard, &config);
+    assert_eq!(modified_pack.cost, 99);
+
+    // Verify the change took effect
+    assert_ne!(original_pack.cost, modified_pack.cost);
+}
+
+#[test]
+fn test_all_pack_types_use_config_for_costs() {
+    let mut custom_config = Config::new();
+    custom_config.pack_standard_cost = 10;
+    custom_config.pack_jumbo_cost = 12;
+    custom_config.pack_mega_cost = 14;
+    custom_config.pack_enhanced_cost = 11;
+    custom_config.pack_variety_cost = 13;
+    custom_config.pack_buffoon_cost = 15;
+    custom_config.pack_consumable_cost = 16;
+    custom_config.pack_mega_consumable_cost = 20;
+
+    // Test that all pack types use config values
+    let pack_types_and_expected_costs = [
+        (PackType::Standard, 10),
+        (PackType::Jumbo, 12),
+        (PackType::Mega, 14),
+        (PackType::Enhanced, 11),
+        (PackType::Variety, 13),
+        (PackType::Buffoon, 15),
+        (PackType::Arcana, 16),
+        (PackType::Celestial, 16),
+        (PackType::Spectral, 16),
+        (PackType::MegaBuffoon, 20),
+        (PackType::MegaArcana, 20),
+        (PackType::MegaCelestial, 20),
+        (PackType::MegaSpectral, 20),
+    ];
+
+    for (pack_type, expected_cost) in pack_types_and_expected_costs {
+        let pack = Pack::new(pack_type, &custom_config);
+        assert_eq!(
+            pack.cost, expected_cost,
+            "Pack type {pack_type:?} should use config cost {expected_cost}"
+        );
+
+        // Also verify the base_cost method returns the expected value
+        assert_eq!(
+            pack_type.base_cost(&custom_config),
+            expected_cost,
+            "PackType {pack_type:?} base_cost should return {expected_cost}"
+        );
+    }
 }

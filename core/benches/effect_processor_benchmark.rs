@@ -1,16 +1,13 @@
 use balatro_rs::{
     card::{Card, Suit, Value},
-    game::Game,
     hand::SelectHand,
-    joker::{GameContext, Joker, JokerEffect, JokerId},
+    joker::{GameContext, Joker, JokerId},
     joker_effect_processor::{
         ConflictResolutionStrategy, EffectPriority, JokerEffectProcessor, ProcessingContext,
     },
-    rng::GameRng,
-    static_joker::StaticJoker,
 };
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
-use std::collections::HashMap;
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use std::hint::black_box;
 
 /// Benchmark suite for JokerEffectProcessor performance testing
 pub fn effect_processor_benchmarks(c: &mut Criterion) {
@@ -184,8 +181,10 @@ fn conflict_resolution_benchmarks(c: &mut Criterion) {
             strategy,
             |b, strategy| {
                 b.iter(|| {
-                    let mut context = ProcessingContext::default();
-                    context.resolution_strategy = strategy.clone();
+                    let context = ProcessingContext {
+                        resolution_strategy: strategy.clone(),
+                        ..Default::default()
+                    };
                     let mut processor = JokerEffectProcessor::with_context(context);
                     let mut game_context = create_test_game_context();
                     let hand = create_test_hand();
@@ -360,6 +359,7 @@ fn create_test_game_context() -> GameContext<'static> {
         hand_type_counts,
         cards_in_deck: 52,
         stone_cards_in_deck: 0,
+        steel_cards_in_deck: 0,
         rng,
     }
 }
@@ -494,7 +494,7 @@ fn create_conflicting_joker_collection() -> Vec<Box<dyn Joker>> {
 fn create_priority_joker_collection(priorities: Vec<EffectPriority>) -> Vec<Box<dyn Joker>> {
     let mut jokers = Vec::new();
 
-    for (i, &_priority) in priorities.iter().enumerate() {
+    for &_priority in priorities.iter() {
         // Create a joker for benchmarking purposes
         // Note: Actual priority handling is implemented in the processor
         if let Some(joker) = balatro_rs::joker_factory::JokerFactory::create(JokerId::Joker) {

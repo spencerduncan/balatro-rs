@@ -239,7 +239,7 @@ mod ride_the_bus_tests {
         let hand = HAND.get_or_init(|| Hand::new(Vec::new()));
 
         static HAND_TYPE_COUNTS: OnceLock<HashMap<HandRank, u32>> = OnceLock::new();
-        let hand_type_counts = HAND_TYPE_COUNTS.get_or_init(|| HashMap::new());
+        let hand_type_counts = HAND_TYPE_COUNTS.get_or_init(HashMap::new);
 
         // Create a new state manager for each test to avoid cross-test contamination
         let joker_state_manager = Box::leak(Box::new(Arc::new(JokerStateManager::new())));
@@ -263,6 +263,7 @@ mod ride_the_bus_tests {
             hand_type_counts,
             cards_in_deck: 52,
             stone_cards_in_deck: 0,
+            steel_cards_in_deck: 0,
             rng,
         }
     }
@@ -813,7 +814,7 @@ mod dna_first_hand_tests {
             let hand = SelectHand::new(single_card);
 
             // DNA might still trigger but depends on implementation
-            let effect = dna_joker.on_hand_played(&mut context, &hand);
+            let _effect = dna_joker.on_hand_played(&mut context, &hand);
 
             // This test just ensures no crash on different stages
             // The actual behavior depends on whether DNA checks stage
@@ -982,7 +983,7 @@ mod edge_case_tests {
         // This test demonstrates the bug - it will pass with the wrong implementation
         // and fail when we fix it to the correct behavior
 
-        let joker = create_blackboard();
+        let _joker = create_blackboard();
 
         // The current implementation uses AllSameSuitOrRank which is incorrect
         // It should only activate when all cards are Spades OR Clubs (black suits)
@@ -994,7 +995,7 @@ mod edge_case_tests {
             Card::new(Rank::King, Suit::Heart),
             Card::new(Rank::Queen, Suit::Heart),
         ];
-        let hand_hearts = SelectHand::new(all_hearts);
+        let _hand_hearts = SelectHand::new(all_hearts);
         // With correct implementation, this should NOT activate
         // but with current AllSameSuitOrRank it DOES activate (incorrectly)
 
@@ -1004,7 +1005,7 @@ mod edge_case_tests {
             Card::new(Rank::King, Suit::Club),
             Card::new(Rank::Three, Suit::Spade),
         ];
-        let hand_mixed = SelectHand::new(mixed_black);
+        let _hand_mixed = SelectHand::new(mixed_black);
         // With correct implementation, this SHOULD activate
         // but with current AllSameSuitOrRank it does NOT (incorrectly)
     }

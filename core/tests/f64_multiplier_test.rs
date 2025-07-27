@@ -189,7 +189,7 @@ fn test_multiplier_defaults_f64() {
 /// Ensures save/load compatibility with f64 precision
 #[test]
 fn test_multiplier_serialization_f64() {
-    let precise_value = 2.718281828459045_f64; // e to high precision
+    let precise_value = std::f64::consts::E; // Use the constant directly
     let effect = JokerEffect::new().with_mult_multiplier(precise_value);
 
     // This would test serialization if implemented

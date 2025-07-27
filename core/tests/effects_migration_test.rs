@@ -179,8 +179,7 @@ fn test_migration_all_joker_types() {
 
         assert!(
             score_with_joker >= score_without_joker,
-            "Joker {:?} should not decrease score",
-            joker_id
+            "Joker {joker_id:?} should not decrease score"
         );
     }
 }
@@ -220,6 +219,7 @@ fn test_migration_structured_effects_type_safety() {
         hand_type_counts: &game.hand_type_counts,
         cards_in_deck: 52,      // Standard deck size
         stone_cards_in_deck: 0, // No stone cards by default
+        steel_cards_in_deck: 0, // No steel cards by default
         rng: &game.rng,
     };
 

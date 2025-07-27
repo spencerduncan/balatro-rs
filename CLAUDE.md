@@ -62,6 +62,41 @@ cargo fmt --check      # Check if formatting is needed (CI runs this)
 
 **This is MANDATORY - Every PR must pass rustfmt checks or CI will fail.**
 
+## Pre-Commit Hooks - Automated Code Quality
+
+### Quick Setup (Recommended)
+
+For automated code quality enforcement, set up pre-commit hooks:
+
+```bash
+# One-time setup - installs hooks and security tools
+./scripts/setup-precommit.sh
+
+# Verify installation
+pre-commit run --all-files
+```
+
+### What Pre-Commit Hooks Do
+
+Pre-commit hooks automatically run before each commit to ensure:
+- **Formatting**: `cargo fmt` applied automatically
+- **Linting**: `cargo clippy` with zero warnings
+- **Compilation**: Code compiles successfully
+- **Fast Tests**: Core tests pass
+- **Security**: Dependency vulnerability scanning (optional)
+- **File Quality**: No trailing whitespace, proper file endings
+
+### Benefits
+
+- **Catch issues early**: Problems found at commit time, not in CI
+- **Consistent quality**: All code meets standards before reaching main branch
+- **Faster CI**: Fewer CI failures due to formatting/linting issues
+- **Professional workflow**: Automated quality checks are industry standard
+
+### Documentation
+
+See `PRE_COMMIT_GUIDE.md` for complete setup instructions, troubleshooting, and advanced usage.
+
 ## Architecture
 
 ### Workspace Structure
@@ -177,7 +212,7 @@ All computation stays in Rust; Python is purely for interfacing with ML framewor
 **Choose traits based on joker functionality:**
 
 1. **All jokers must implement `JokerIdentity`** - This is mandatory for basic joker information
-2. **Simple scoring jokers:** `JokerIdentity` + `JokerGameplay` 
+2. **Simple scoring jokers:** `JokerIdentity` + `JokerGameplay`
 3. **Jokers with modifiers:** `JokerIdentity` + `JokerModifiers`
 4. **Stateful jokers:** `JokerIdentity` + `JokerState` + relevant gameplay traits
 5. **Event-driven jokers:** `JokerIdentity` + `JokerLifecycle` + relevant traits
@@ -190,7 +225,7 @@ Does the joker need basic info? → Yes → Implement JokerIdentity (mandatory)
     ↓
 Does it trigger during gameplay? → Yes → Implement JokerGameplay
     ↓
-Does it modify base values? → Yes → Implement JokerModifiers  
+Does it modify base values? → Yes → Implement JokerModifiers
     ↓
 Does it have internal state? → Yes → Implement JokerState
     ↓
@@ -227,7 +262,7 @@ impl JokerGameplay for GreedyJoker {
             ProcessResult::default()
         }
     }
-    
+
     fn can_trigger(&self, stage: &Stage, _context: &ProcessContext) -> bool {
         *stage == Stage::Blind
     }
@@ -280,7 +315,7 @@ impl JokerGameplay for ScalingJoker {
             ProcessResult::default()
         }
     }
-    
+
     fn can_trigger(&self, stage: &Stage, _context: &ProcessContext) -> bool {
         *stage == Stage::Blind
     }
@@ -294,11 +329,11 @@ impl JokerLifecycle for ScalingJoker {
 
 impl JokerState for ScalingJoker {
     fn has_state(&self) -> bool { true }
-    
+
     fn serialize_state(&self) -> Option<serde_json::Value> {
         Some(serde_json::json!({ "level": self.level }))
     }
-    
+
     fn deserialize_state(&mut self, value: serde_json::Value) -> Result<(), String> {
         if let Some(level) = value.get("level").and_then(|v| v.as_u64()) {
             self.level = level as u32;
@@ -405,7 +440,7 @@ Key planned features:
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_joker_identity() {
         let joker = MyJoker::new();
@@ -414,28 +449,28 @@ mod tests {
         assert_eq!(joker.rarity(), Rarity::Common);
         assert_eq!(joker.base_cost(), 3);
     }
-    
+
     #[test]
     fn test_joker_gameplay() {
         let mut joker = MyJoker::new();
         let stage = Stage::Blind;
         let mut context = create_test_context();
-        
+
         let result = joker.process(&stage, &mut context);
         assert_eq!(result.mult_added, 5.0);
-        
+
         assert!(joker.can_trigger(&stage, &context));
     }
-    
+
     #[test]
     fn test_joker_state_serialization() {
         let mut joker = StatefulJoker::new();
         joker.level = 10;
-        
+
         let serialized = joker.serialize_state().unwrap();
         let mut new_joker = StatefulJoker::new();
         new_joker.deserialize_state(serialized).unwrap();
-        
+
         assert_eq!(new_joker.level, 10);
     }
 }
@@ -449,27 +484,27 @@ mod tests {
 #[test]
 fn test_multiple_trait_interactions() {
     let mut joker = ComplexJoker::new();
-    
+
     // Test identity
     assert_eq!(joker.name(), "Complex Joker");
-    
+
     // Test lifecycle
     joker.on_purchase();
     assert_eq!(joker.purchase_count, 1);
-    
+
     // Test gameplay with state
     let stage = Stage::Blind;
     let mut context = create_test_context();
     let result = joker.process(&stage, &mut context);
-    
+
     // Verify state changed during processing
     assert!(joker.has_state());
-    
+
     // Test state persistence
     let state = joker.serialize_state().unwrap();
     let mut restored_joker = ComplexJoker::new();
     restored_joker.deserialize_state(state).unwrap();
-    
+
     assert_eq!(restored_joker.internal_counter, joker.internal_counter);
 }
 ```
@@ -483,28 +518,28 @@ fn test_multiple_trait_interactions() {
 mod benches {
     use super::*;
     use test::Bencher;
-    
+
     #[bench]
     fn bench_joker_process_hot_path(b: &mut Bencher) {
         let mut joker = PerformanceCriticalJoker::new();
         let stage = Stage::Blind;
         let mut context = create_test_context();
-        
+
         b.iter(|| {
             joker.process(&stage, &mut context)
         });
     }
-    
+
     #[bench]
     fn bench_trait_composition_overhead(b: &mut Bencher) {
         let jokers: Vec<Box<dyn JokerGameplay>> = vec![
             Box::new(SimpleJoker::new()),
             Box::new(ComplexJoker::new()),
         ];
-        
+
         let stage = Stage::Blind;
         let mut context = create_test_context();
-        
+
         b.iter(|| {
             for joker in &jokers {
                 if joker.can_trigger(&stage, &context) {
@@ -530,7 +565,7 @@ fn test_with_utilities() {
     let mut joker = MyJoker::new();
     let mut test_game = create_test_game_state();
     let test_hand = create_test_hand(&[Card::new(Rank::Ace, Suit::Spades)]);
-    
+
     // Test with realistic game context
     let result = test_joker_with_hand(&mut joker, &test_hand, &test_game);
     assert_eq!(result.mult_added, 4.0);
@@ -615,7 +650,7 @@ fn test_with_utilities() {
    fn test_trait_debug() {
        let joker = DebuggableJoker::new();
        println!("State: {}", joker.debug_state());
-       
+
        // Test specific trait behavior
        assert!(joker.has_state());
    }
@@ -637,7 +672,7 @@ fn test_with_utilities() {
    ```rust
    // Old monolithic implementation
    impl Joker for OldJoker { /* 20+ methods */ }
-   
+
    // New focused implementations
    impl JokerIdentity for NewJoker { /* 6 methods */ }
    impl JokerGameplay for NewJoker { /* 3 methods */ }
