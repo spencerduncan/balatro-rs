@@ -509,6 +509,48 @@ impl Joker for CraftyJoker {
     }
 }
 
+// Odd Todd Joker implementation - Issue #191 Scaling Chips Jokers
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct OddToddJoker;
+
+impl Joker for OddToddJoker {
+    fn id(&self) -> JokerId {
+        JokerId::OddTodd
+    }
+
+    fn name(&self) -> &str {
+        "Odd Todd"
+    }
+
+    fn description(&self) -> &str {
+        "Played cards with odd rank give +30 Chips when scored (A, 9, 7, 5, 3)"
+    }
+
+    fn rarity(&self) -> JokerRarity {
+        JokerRarity::Common
+    }
+
+    fn cost(&self) -> usize {
+        4
+    }
+
+    fn on_card_scored(&self, _context: &mut GameContext, card: &Card) -> JokerEffect {
+        // Check if card has odd rank: A, 9, 7, 5, 3
+        let is_odd_rank = matches!(
+            card.value,
+            Value::Ace | Value::Nine | Value::Seven | Value::Five | Value::Three
+        );
+
+        if is_odd_rank {
+            JokerEffect::new()
+                .with_chips(30)
+                .with_message("Odd Todd: +30 Chips (odd rank)".to_string())
+        } else {
+            JokerEffect::new()
+        }
+    }
+}
+
 // Money-Based Conditional Jokers for Issue #82
 
 // Business Card: face cards have 1 in 2 chance of giving $2 when scored

@@ -1,5 +1,7 @@
 use crate::joker::four_fingers::FourFingersJoker;
-use crate::joker::resource_chips_jokers::create_hiker_joker;
+use crate::joker::resource_chips_jokers::{
+    create_bull_joker, create_hiker_joker, create_scary_face_joker, create_stone_joker,
+};
 use crate::joker::{Joker, JokerId, JokerRarity};
 use crate::joker_impl::*;
 use crate::scaling_joker_custom;
@@ -31,6 +33,7 @@ impl JokerFactory {
             JokerId::CleverJoker => Some(Box::new(CleverJoker)),
             JokerId::DeviousJoker => Some(Box::new(DeviousJoker)),
             JokerId::CraftyJoker => Some(Box::new(CraftyJoker)),
+            JokerId::OddTodd => Some(Box::new(OddToddJoker)),
 
             // Money-based conditional jokers
             JokerId::BusinessCard => Some(Box::new(BusinessCard)),
@@ -77,13 +80,17 @@ impl JokerFactory {
 
             // Resource chips jokers from Issue #191 (Scaling Chips Jokers - Part 2)
             JokerId::Hiker => Some(create_hiker_joker()),
+            JokerId::BullMarket => Some(create_bull_joker()),
+            JokerId::Stone => Some(create_stone_joker()),
+            JokerId::ScaryFace => Some(create_scary_face_joker()),
+            // NOTE: Banner, BlueJoker, Square, Walkie already implemented via StaticJokerFactory
 
             // NOTE: Removed incorrect jokers not in Issue #191:
             // - Castle (Reserved3) - was wrongly implemented, not requested in Issue #191
             // - Wee (Wee) - was wrongly implemented, not requested in Issue #191
             // - Stuntman (Reserved4) - was wrongly implemented, not requested in Issue #191
 
-            // TODO: Implement remaining jokers
+            // TODO: Implement remaining scaling chips jokers
             _ => None,
         }
     }
@@ -109,6 +116,7 @@ impl JokerFactory {
                 CleverJoker,
                 DeviousJoker,
                 CraftyJoker,
+                OddTodd,
                 // Money-based conditional jokers
                 BusinessCard,
                 EggJoker,
@@ -130,7 +138,10 @@ impl JokerFactory {
                 Erosion,
                 Photograph,
                 // Resource chips jokers from Issue #191
-                Hiker, // Every played card permanently gains +5 Chips when scored
+                Hiker,      // Every played card permanently gains +5 Chips when scored
+                BullMarket, // +2 Chips for each $1 you have
+                Stone,      // +25 Chips for each Stone Card in your full deck
+                ScaryFace,  // Played face cards give +30 Chips when scored
             ],
             JokerRarity::Uncommon => vec![
                 // Money-based conditional jokers
