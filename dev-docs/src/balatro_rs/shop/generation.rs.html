@@ -410,7 +410,7 @@
 <a href=#410 id=410 data-nosnippet>410</a>            </span>};
 <a href=#411 id=411 data-nosnippet>411</a>
 <a href=#412 id=412 data-nosnippet>412</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(shop_item) = item {
-<a href=#413 id=413 data-nosnippet>413</a>                <span class="kw">let </span>base_cost = shop_item.base_cost();
+<a href=#413 id=413 data-nosnippet>413</a>                <span class="kw">let </span>base_cost = shop_item.base_cost(<span class="kw-2">&amp;</span>game.config);
 <a href=#414 id=414 data-nosnippet>414</a>                <span class="comment">// For now, use empty voucher list since voucher system is placeholder
 <a href=#415 id=415 data-nosnippet>415</a>                </span><span class="kw">let </span>shop_vouchers: Vec&lt;VoucherId&gt; = <span class="macro">vec!</span>[];
 <a href=#416 id=416 data-nosnippet>416</a>                <span class="kw">let </span>final_cost = <span class="self">self</span>.calculate_final_cost(base_cost, <span class="kw-2">&amp;</span>shop_vouchers);
@@ -428,7 +428,7 @@
 <a href=#428 id=428 data-nosnippet>428</a>    }
 <a href=#429 id=429 data-nosnippet>429</a>
 <a href=#430 id=430 data-nosnippet>430</a>    <span class="kw">fn </span>generate_pack(<span class="kw-2">&amp;</span><span class="self">self</span>, pack_type: PackType, game: <span class="kw-2">&amp;</span>Game) -&gt; Pack {
-<a href=#431 id=431 data-nosnippet>431</a>        <span class="kw">let </span>cost = pack_type.base_cost();
+<a href=#431 id=431 data-nosnippet>431</a>        <span class="kw">let </span>cost = pack_type.base_cost(<span class="kw-2">&amp;</span>game.config);
 <a href=#432 id=432 data-nosnippet>432</a>
 <a href=#433 id=433 data-nosnippet>433</a>        <span class="kw">let </span><span class="kw-2">mut </span>contents = Vec::new();
 <a href=#434 id=434 data-nosnippet>434</a>
