@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["create_banner_joker","create_blue_joker","create_bull_joker","create_scary_face_joker","create_stone_joker"],"struct":["BannerJoker","BlueJoker","BullJoker","ScaryFaceJoker","StoneJoker"]};
+window.SIDEBAR_ITEMS = {"fn":["create_blue_joker","create_bull_joker","create_scary_face_joker","create_stone_joker"],"struct":["BlueJoker","BullJoker","ScaryFaceJoker","StoneJoker"]};
