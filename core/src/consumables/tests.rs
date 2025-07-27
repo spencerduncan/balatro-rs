@@ -182,8 +182,7 @@ mod tests {
                 // Expected - index 0 is out of bounds for empty hand
             }
             error => panic!(
-                "Expected CardIndexOutOfBounds error for index 0 in empty hand, got: {:?}",
-                error
+                "Expected CardIndexOutOfBounds error for index 0 in empty hand, got: {error:?}"
             ),
         }
     }
@@ -223,11 +222,7 @@ mod tests {
         ];
 
         for target in valid_targets {
-            assert!(
-                target.is_valid(&game),
-                "Target should be valid: {:?}",
-                target
-            );
+            assert!(target.is_valid(&game), "Target should be valid: {target:?}");
         }
 
         // Test invalid targets
@@ -239,8 +234,7 @@ mod tests {
         for target in invalid_targets {
             assert!(
                 !target.is_valid(&game),
-                "Target should be invalid: {:?}",
-                target
+                "Target should be invalid: {target:?}"
             );
         }
     }
@@ -572,9 +566,9 @@ mod tests {
         for (target, should_pass, description) in test_cases {
             let result = target.validate(&game);
             if should_pass {
-                assert!(result.is_ok(), "Failed: {}", description);
+                assert!(result.is_ok(), "Failed: {description}");
             } else {
-                assert!(result.is_err(), "Should have failed: {}", description);
+                assert!(result.is_err(), "Should have failed: {description}");
             }
         }
     }
@@ -588,17 +582,17 @@ mod tests {
         // Test single joker game
         let target = JokerTarget::new(0);
         assert!(target.validate(&single_joker_game).is_ok());
-        assert!(!target.validate(&Game::new(Config::new())).is_ok()); // Empty game
+        assert!(target.validate(&Game::new(Config::new())).is_err()); // Empty game
 
         let invalid_target = JokerTarget::new(1);
-        assert!(!invalid_target.validate(&single_joker_game).is_ok());
+        assert!(invalid_target.validate(&single_joker_game).is_err());
         assert!(invalid_target.validate(&many_jokers_game).is_ok());
     }
 
     #[test]
     fn test_joker_target_debug_output() {
         let target = JokerTarget::joker_of_type(2, JokerId::Joker);
-        let debug_output = format!("{:?}", target);
+        let debug_output = format!("{target:?}");
 
         assert!(debug_output.contains("JokerTarget"));
         assert!(debug_output.contains("slot: 2"));
@@ -640,12 +634,7 @@ mod tests {
         for (slot, should_pass, desc) in boundary_cases {
             let target = JokerTarget::new(slot);
             let result = target.validate(&game);
-            assert_eq!(
-                result.is_ok(),
-                should_pass,
-                "Boundary test failed: {}",
-                desc
-            );
+            assert_eq!(result.is_ok(), should_pass, "Boundary test failed: {desc}");
         }
     }
 

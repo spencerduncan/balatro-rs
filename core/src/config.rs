@@ -365,7 +365,7 @@ mod tests {
     #[test]
     fn test_config_debug() {
         let config = Config::new();
-        let debug_str = format!("{:?}", config);
+        let debug_str = format!("{config:?}");
 
         // Debug output should contain key fields
         assert!(debug_str.contains("Config"));

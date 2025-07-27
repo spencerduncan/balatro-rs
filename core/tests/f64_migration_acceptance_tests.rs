@@ -197,7 +197,7 @@ mod f64_migration_acceptance_tests {
         // Apply effect to game state (simulating game logic)
         game.chips += effect.chips as f64;
         game.mult += effect.mult as f64;
-        game.mult *= effect.mult_multiplier as f64;
+        game.mult *= effect.mult_multiplier;
 
         // Verify results
         assert_eq!(game.chips, 1050.0);

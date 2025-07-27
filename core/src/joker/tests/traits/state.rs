@@ -44,7 +44,7 @@ impl JokerState for SimpleMockJoker {
 
     fn debug_state(&self) -> String {
         match &self.internal_state {
-            Some(state) => format!("State: {}", state),
+            Some(state) => format!("State: {state}"),
             None => "No state".to_string(),
         }
     }
@@ -104,7 +104,7 @@ impl JokerState for ComplexMockJoker {
                 self.state = Some(state);
                 Ok(())
             }
-            Err(e) => Err(format!("Deserialization failed: {}", e)),
+            Err(e) => Err(format!("Deserialization failed: {e}")),
         }
     }
 
@@ -318,7 +318,7 @@ mod state_transition_tests {
         // Deserialize preserves structure
         let original_state = json!({
             "counter": 42,
-            "multiplier": 3.14,
+            "multiplier": std::f64::consts::PI,
             "tags": ["test", "invariant"],
             "metadata": {"key": "value"}
         });
@@ -407,7 +407,7 @@ mod serialization_tests {
         // Create a large state object
         let mut large_object = serde_json::Map::new();
         for i in 0..1000 {
-            large_object.insert(format!("key_{}", i), json!(i));
+            large_object.insert(format!("key_{i}"), json!(i));
         }
         let large_state = Value::Object(large_object);
 
@@ -518,7 +518,7 @@ mod property_based_tests {
             json!(true),
             json!(false),
             json!(42),
-            json!(3.14),
+            json!(std::f64::consts::PI),
             json!("string"),
             json!([1, 2, 3]),
             json!({"key": "value"}),

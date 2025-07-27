@@ -1,6 +1,5 @@
 use balatro_rs::consumables::{Target, TargetType};
 use balatro_rs::rank::HandRank;
-use serde_json;
 
 #[test]
 fn test_target_type_serialization() {
@@ -197,8 +196,7 @@ fn test_serialization_error_handling() {
         let result: Result<Target, _> = serde_json::from_str(invalid_json);
         assert!(
             result.is_err(),
-            "Expected error for invalid JSON: {}",
-            invalid_json
+            "Expected error for invalid JSON: {invalid_json}"
         );
     }
 }

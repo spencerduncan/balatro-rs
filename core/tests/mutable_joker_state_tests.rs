@@ -1,7 +1,6 @@
 use balatro_rs::card::{Suit, Value};
 use balatro_rs::joker::JokerId;
 use balatro_rs::joker_state::JokerStateManager;
-use balatro_rs::stage::Stage;
 use std::sync::{Arc, Mutex};
 
 /// A simple counter joker that needs mutable state
@@ -155,25 +154,22 @@ fn test_complex_state_management_pain() {
         .flatten()
         .unwrap_or_else(|| "Charging".to_string());
 
-    match phase_str.as_str() {
-        "Charging" => {
-            let mult = state_manager
-                .get_custom_data::<f64>(joker_id, "accumulated_mult")
-                .ok()
-                .flatten()
-                .unwrap_or(1.0);
+    if phase_str.as_str() == "Charging" {
+        let mult = state_manager
+            .get_custom_data::<f64>(joker_id, "accumulated_mult")
+            .ok()
+            .flatten()
+            .unwrap_or(1.0);
 
+        state_manager
+            .set_custom_data(joker_id, "accumulated_mult", serde_json::json!(mult + 0.5))
+            .unwrap();
+
+        if mult >= 3.0 {
             state_manager
-                .set_custom_data(joker_id, "accumulated_mult", serde_json::json!(mult + 0.5))
+                .set_custom_data(joker_id, "phase", serde_json::json!("Ready"))
                 .unwrap();
-
-            if mult >= 3.0 {
-                state_manager
-                    .set_custom_data(joker_id, "phase", serde_json::json!("Ready"))
-                    .unwrap();
-            }
         }
-        _ => {}
     }
 
     // Compare to what we want:
@@ -277,7 +273,7 @@ fn test_performance_impact_of_external_state() {
     let direct_duration = start.elapsed();
 
     // External state is significantly slower
-    println!("External state: {:?}", external_duration);
-    println!("Direct field: {:?}", direct_duration);
+    println!("External state: {external_duration:?}");
+    println!("Direct field: {direct_duration:?}");
     assert!(external_duration > direct_duration * 10); // At least 10x slower
 }

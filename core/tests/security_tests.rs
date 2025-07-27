@@ -277,13 +277,13 @@ mod tests {
         let action_space = ActionSpace::from(config);
 
         // These should be empty vectors, safe to iterate over
-        for _ in &action_space.move_card_left {
+        if let Some(_) = action_space.move_card_left.iter().next() {
             panic!("Should not iterate over empty vector");
         }
-        for _ in &action_space.move_card_right {
+        if let Some(_) = action_space.move_card_right.iter().next() {
             panic!("Should not iterate over empty vector");
         }
-        for _ in &action_space.select_card {
+        if let Some(_) = action_space.select_card.iter().next() {
             panic!("Should not iterate over empty vector");
         }
     }

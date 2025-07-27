@@ -88,6 +88,52 @@ impl JokerModifiers for FourFingersJoker {
     }
 }
 
+impl JokerStateTrait for FourFingersJoker {
+    fn has_state(&self) -> bool {
+        true
+    }
+
+    fn serialize_state(&self) -> Option<serde_json::Value> {
+        serde_json::to_value(self.hand_modified_this_round).ok()
+    }
+
+    fn deserialize_state(&mut self, value: serde_json::Value) -> Result<(), String> {
+        self.hand_modified_this_round = serde_json::from_value(value)
+            .map_err(|e| format!("Failed to deserialize FourFingers state: {e}"))?;
+        Ok(())
+    }
+
+    fn debug_state(&self) -> String {
+        format!(
+            "hand_modified_this_round: {}",
+            self.hand_modified_this_round
+        )
+    }
+
+    fn reset_state(&mut self) {
+        self.hand_modified_this_round = false;
+    }
+}
+
+// Legacy Joker trait implementation for backward compatibility
+impl Joker for FourFingersJoker {
+    fn id(&self) -> JokerId {
+        JokerId::FourFingers
+    }
+
+    fn name(&self) -> &str {
+        JokerIdentity::name(self)
+    }
+
+    fn description(&self) -> &str {
+        JokerIdentity::description(self)
+    }
+
+    fn rarity(&self) -> JokerRarity {
+        JokerRarity::Uncommon
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -138,11 +184,13 @@ mod tests {
         let played_cards = vec![];
         let held_cards = vec![];
         let mut events = vec![];
+        let hand = SelectHand::new(played_cards.clone());
         let mut context = ProcessContext {
             hand_score: &mut hand_score,
             played_cards: &played_cards,
             held_cards: &held_cards,
             events: &mut events,
+            hand: &hand,
             joker_state_manager: &state_manager,
         };
 
@@ -273,51 +321,5 @@ mod tests {
         let config = crate::hand::get_hand_eval_config();
         assert_eq!(config.min_flush_cards, 5);
         assert_eq!(config.min_straight_cards, 5);
-    }
-}
-
-impl JokerStateTrait for FourFingersJoker {
-    fn has_state(&self) -> bool {
-        true
-    }
-
-    fn serialize_state(&self) -> Option<serde_json::Value> {
-        serde_json::to_value(self.hand_modified_this_round).ok()
-    }
-
-    fn deserialize_state(&mut self, value: serde_json::Value) -> Result<(), String> {
-        self.hand_modified_this_round = serde_json::from_value(value)
-            .map_err(|e| format!("Failed to deserialize FourFingers state: {e}"))?;
-        Ok(())
-    }
-
-    fn debug_state(&self) -> String {
-        format!(
-            "hand_modified_this_round: {}",
-            self.hand_modified_this_round
-        )
-    }
-
-    fn reset_state(&mut self) {
-        self.hand_modified_this_round = false;
-    }
-}
-
-// Legacy Joker trait implementation for backward compatibility
-impl Joker for FourFingersJoker {
-    fn id(&self) -> JokerId {
-        JokerId::FourFingers
-    }
-
-    fn name(&self) -> &str {
-        JokerIdentity::name(self)
-    }
-
-    fn description(&self) -> &str {
-        JokerIdentity::description(self)
-    }
-
-    fn rarity(&self) -> JokerRarity {
-        JokerRarity::Uncommon
     }
 }

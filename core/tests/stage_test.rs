@@ -74,7 +74,7 @@ mod blind_tests {
     #[test]
     fn test_blind_clone() {
         let blind = Blind::Big;
-        let cloned_blind = blind.clone();
+        let cloned_blind = blind;
         assert_eq!(blind, cloned_blind);
     }
 
@@ -116,8 +116,8 @@ mod blind_tests {
             // Test that all methods work for all variants
             let _ = blind.reward();
             let _ = blind.next();
-            let _ = format!("{}", blind);
-            let _ = format!("{:?}", blind);
+            let _ = format!("{blind}");
+            let _ = format!("{blind:?}");
         }
     }
 }
@@ -150,7 +150,7 @@ mod end_tests {
     #[test]
     fn test_end_clone() {
         let end = End::Win;
-        let cloned_end = end.clone();
+        let cloned_end = end;
         assert_eq!(end, cloned_end);
     }
 
@@ -191,7 +191,7 @@ mod stage_tests {
         ];
 
         for stage in stages {
-            let _ = format!("{:?}", stage);
+            let _ = format!("{stage:?}");
         }
     }
 
@@ -228,7 +228,7 @@ mod stage_tests {
     #[test]
     fn test_stage_clone() {
         let stage = Stage::Blind(Blind::Boss);
-        let cloned_stage = stage.clone();
+        let cloned_stage = stage;
         assert_eq!(stage, cloned_stage);
     }
 
@@ -268,7 +268,7 @@ mod stage_tests {
 
         for stage in stages {
             // Test that all debug format works for all variants
-            let _ = format!("{:?}", stage);
+            let _ = format!("{stage:?}");
         }
     }
 

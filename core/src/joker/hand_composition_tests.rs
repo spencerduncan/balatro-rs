@@ -239,7 +239,7 @@ mod ride_the_bus_tests {
         let hand = HAND.get_or_init(|| Hand::new(Vec::new()));
 
         static HAND_TYPE_COUNTS: OnceLock<HashMap<HandRank, u32>> = OnceLock::new();
-        let hand_type_counts = HAND_TYPE_COUNTS.get_or_init(|| HashMap::new());
+        let hand_type_counts = HAND_TYPE_COUNTS.get_or_init(HashMap::new);
 
         // Create a new state manager for each test to avoid cross-test contamination
         let joker_state_manager = Box::leak(Box::new(Arc::new(JokerStateManager::new())));
@@ -1004,7 +1004,7 @@ mod edge_case_tests {
             Card::new(Rank::King, Suit::Club),
             Card::new(Rank::Three, Suit::Spade),
         ];
-        let hand_mixed = SelectHand::new(mixed_black);
+        let _hand_mixed = SelectHand::new(mixed_black);
         // With correct implementation, this SHOULD activate
         // but with current AllSameSuitOrRank it does NOT (incorrectly)
     }

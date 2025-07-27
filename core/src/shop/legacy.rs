@@ -401,7 +401,7 @@ mod tests {
             .count();
 
         // Each joker can be placed in slots 0 to current_joker_count (inclusive)
-        let expected_moves = affordable_jokers * 1; // current_joker_count=0, so only slot 0
+        let expected_moves = affordable_jokers; // current_joker_count=0, so only slot 0
         assert_eq!(moves.len(), expected_moves);
     }
 
@@ -451,7 +451,7 @@ mod tests {
     #[test]
     fn test_shop_debug() {
         let shop = Shop::new();
-        let debug_str = format!("{:?}", shop);
+        let debug_str = format!("{shop:?}");
 
         // Debug output should contain shop information
         assert!(debug_str.contains("Shop"));

@@ -30,7 +30,7 @@ pub fn trait_dispatch_benchmark(c: &mut Criterion) {
     for joker_id in joker_ids {
         if let Ok(joker) = joker_registry::registry::create_joker(&joker_id) {
             group.bench_with_input(
-                BenchmarkId::new("trait_method_call", format!("{:?}", joker_id)),
+                BenchmarkId::new("trait_method_call", format!("{joker_id:?}")),
                 &joker,
                 |b, joker| {
                     let test_data = TestGameData::new();
@@ -119,7 +119,7 @@ pub fn conflict_resolution_benchmark(c: &mut Criterion) {
 
     for strategy in strategies {
         group.bench_with_input(
-            BenchmarkId::new("strategy", format!("{:?}", strategy)),
+            BenchmarkId::new("strategy", format!("{strategy:?}")),
             &strategy,
             |b, strategy| {
                 let jokers = create_test_jokers(5);
@@ -314,7 +314,7 @@ pub fn retrigger_benchmark(c: &mut Criterion) {
             BenchmarkId::new("retrigger_effects", retrigger_count),
             &retrigger_count,
             |b, &retrigger_count| {
-                let mut processor = JokerEffectProcessor::new();
+                let processor = JokerEffectProcessor::new();
                 let joker_effects = vec![JokerEffect {
                     chips: 10,
                     mult: 2,
@@ -394,7 +394,7 @@ fn create_test_hand() -> SelectHand {
 }
 
 fn create_test_jokers(count: usize) -> Vec<Box<dyn Joker>> {
-    let joker_ids = vec![JokerId::Joker, JokerId::GreedyJoker, JokerId::LustyJoker];
+    let joker_ids = [JokerId::Joker, JokerId::GreedyJoker, JokerId::LustyJoker];
     let mut jokers = Vec::new();
 
     for i in 0..count {

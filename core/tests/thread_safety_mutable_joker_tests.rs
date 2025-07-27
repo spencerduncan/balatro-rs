@@ -1,7 +1,6 @@
 use balatro_rs::card::{Suit, Value};
-use balatro_rs::joker::{JokerGameplay, JokerId, ProcessContext, ProcessResult};
+use balatro_rs::joker::{JokerGameplay, JokerId, ProcessResult};
 use balatro_rs::joker_state::JokerStateManager;
-use balatro_rs::stage::Stage;
 use std::sync::{
     atomic::{AtomicU32, Ordering},
     Arc, Mutex, RwLock,
@@ -76,17 +75,12 @@ fn test_complex_state_thread_safety() {
         phase: Phase,
     }
 
-    #[derive(Debug, Clone, PartialEq)]
+    #[derive(Debug, Clone, PartialEq, Default)]
     enum Phase {
+        #[default]
         Charging,
         Ready,
         Cooldown(u32),
-    }
-
-    impl Default for Phase {
-        fn default() -> Self {
-            Phase::Charging
-        }
     }
 
     impl ComplexThreadSafeJoker {
@@ -385,8 +379,8 @@ fn test_thread_safety_performance() {
     }
     let mutex_time = start.elapsed();
 
-    println!("Performance comparison ({} iterations):", ITERATIONS);
-    println!("Direct access: {:?}", direct_time);
+    println!("Performance comparison ({ITERATIONS} iterations):");
+    println!("Direct access: {direct_time:?}");
     println!(
         "Atomic access: {:?} ({}x slower)",
         atomic_time,

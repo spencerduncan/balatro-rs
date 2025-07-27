@@ -34,7 +34,7 @@ fn test_action_history_doesnt_grow_unbounded() {
 
     // Simulate many actions
     for _ in 0..10000 {
-        let _ = game.action_history.push(Action::Play());
+        game.action_history.push(Action::Play());
     }
 
     // Action history should be bounded
@@ -156,8 +156,8 @@ fn test_long_running_simulation_memory_stability() {
     }
 
     let elapsed = start_time.elapsed();
-    println!("Long-running simulation took: {:?}", elapsed);
-    println!("Memory measurements: {:?}", memory_measurements);
+    println!("Long-running simulation took: {elapsed:?}");
+    println!("Memory measurements: {memory_measurements:?}");
 
     // Memory should be stable (not growing unbounded)
     if memory_measurements.len() >= 2 {
@@ -168,9 +168,7 @@ fn test_long_running_simulation_memory_stability() {
         // For bytes, we allow growth up to 20x the initial size as action history fills up, then stabilizes
         assert!(
             last < first * 20,
-            "Memory grew too much: {} bytes -> {} bytes",
-            first,
-            last
+            "Memory grew too much: {first} bytes -> {last} bytes"
         );
 
         // Most importantly, memory should stabilize (not continue growing unbounded)
@@ -221,13 +219,12 @@ fn test_game_state_snapshot_memory_efficiency() {
     }
 
     let elapsed = start_time.elapsed();
-    println!("Creating 100 snapshots took: {:?}", elapsed);
+    println!("Creating 100 snapshots took: {elapsed:?}");
 
     // Should be fast (under 10ms for basic operations)
     assert!(
         elapsed.as_millis() < 100,
-        "Snapshot creation too slow: {:?}",
-        elapsed
+        "Snapshot creation too slow: {elapsed:?}"
     );
 }
 
@@ -251,7 +248,7 @@ fn test_memory_report_generation() {
     assert!(report.contains("Memory Usage Report"));
     assert!(report.contains("Estimated Usage"));
 
-    println!("Memory Report:\n{}", report);
+    println!("Memory Report:\n{report}");
 }
 
 #[cfg(test)]
@@ -282,8 +279,8 @@ mod performance_benchmarks {
         }
         let vec_time = start.elapsed();
 
-        println!("BoundedActionHistory: {:?}", bounded_time);
-        println!("Vec with manual bounds: {:?}", vec_time);
+        println!("BoundedActionHistory: {bounded_time:?}");
+        println!("Vec with manual bounds: {vec_time:?}");
 
         // BoundedActionHistory should be competitive or better
         // (Vec::remove(0) is O(n), our circular buffer is O(1))
@@ -314,8 +311,8 @@ mod performance_benchmarks {
         }
         let with_monitoring_time = start.elapsed();
 
-        println!("Without monitoring: {:?}", no_monitoring_time);
-        println!("With monitoring: {:?}", with_monitoring_time);
+        println!("Without monitoring: {no_monitoring_time:?}");
+        println!("With monitoring: {with_monitoring_time:?}");
 
         // Monitoring overhead should be reasonable for various environments
         // In high-load environments, we allow significant overhead since the
