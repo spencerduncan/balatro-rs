@@ -177,8 +177,8 @@ impl JokerFactory {
                 Banner,
                 AbstractJoker,
                 // RNG-based jokers (Issue #442)
-                Reserved7,  // SixShooterJoker
-                LuckyCharm, // LuckyCardJoker
+                Reserved7,     // SixShooterJoker
+                LuckyCharm,    // LuckyCardJoker
                 FortuneTeller, // Fortune Teller scaling joker
                 // Special mechanic jokers
                 Erosion,
@@ -288,7 +288,7 @@ impl JokerFactory {
             Reserved8,  // GrimJoker
             AcrobatJoker,
             FortuneTeller, // Fortune Teller scaling joker
-            MysteryJoker, // MysteryJoker
+            MysteryJoker,  // MysteryJoker
             VagabondJoker,
             Reserved9, // ChaoticJoker
             // Special mechanic jokers using new trait system

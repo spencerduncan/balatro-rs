@@ -117,8 +117,11 @@ fn test_jokers_in_rarity_lists() {
     assert!(common_jokers.contains(&JokerId::FortuneTeller));
 
     // Red Card (Reserved6) should be in Common
-    let common_jokers = JokerFactory::get_by_rarity(JokerRarity::Common);
     assert!(common_jokers.contains(&JokerId::Reserved6));
+
+    // Red Card should be in Uncommon  
+    let uncommon_jokers = JokerFactory::get_by_rarity(JokerRarity::Uncommon);
+    assert!(uncommon_jokers.contains(&JokerId::RedCard));
 
     // Steel Joker should be in Uncommon
     let uncommon_jokers = JokerFactory::get_by_rarity(JokerRarity::Uncommon);
@@ -147,21 +150,21 @@ fn test_no_joker_id_conflicts() {
     // Test that FortuneTeller and MysteryJoker are distinct
     let fortune_teller = JokerFactory::create(JokerId::FortuneTeller).unwrap();
     let mystery_joker = JokerFactory::create(JokerId::MysteryJoker).unwrap();
-    
+
     // Ensure they have different IDs
     assert_ne!(fortune_teller.id(), mystery_joker.id());
-    
+
     // Ensure they have different names
     assert_ne!(fortune_teller.name(), mystery_joker.name());
-    
+
     // Ensure they have different descriptions
     assert_ne!(fortune_teller.description(), mystery_joker.description());
-    
+
     // Verify specific expected values
     assert_eq!(fortune_teller.id(), JokerId::FortuneTeller);
     assert_eq!(fortune_teller.name(), "Fortune Teller");
     assert_eq!(fortune_teller.description(), "+1 Mult per Tarot card used");
-    
+
     assert_eq!(mystery_joker.id(), JokerId::MysteryJoker);
     assert_eq!(mystery_joker.name(), "Mystery Joker");
     assert_eq!(mystery_joker.description(), "Random effect each hand");
