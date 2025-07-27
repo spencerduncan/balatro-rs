@@ -83,14 +83,29 @@ pub struct SquareJoker {
 }
 
 impl SquareJoker {
+    /// DEPRECATED: SquareJoker was not part of original specification #191
+    #[deprecated(
+        note = "SquareJoker not requested in original issue #191 - remove for specification compliance"
+    )]
     pub fn new() -> Self {
+        // Use a placeholder implementation to avoid calling deprecated function
         Self {
-            base: crate::scaling_joker_impl::create_square_joker(),
+            base: crate::scaling_joker::ScalingJoker::new(
+                crate::joker::JokerId::Square,
+                "DEPRECATED Square Joker".to_string(),
+                "This joker was not in the original specification".to_string(),
+                crate::joker::JokerRarity::Common,
+                0.0,
+                0.0,
+                crate::scaling_joker::ScalingTrigger::CardDiscarded,
+                crate::scaling_joker::ScalingEffectType::Chips,
+            ),
         }
     }
 }
 
 impl Default for SquareJoker {
+    #[allow(deprecated)]
     fn default() -> Self {
         Self::new()
     }
@@ -430,6 +445,7 @@ impl Joker for MysticSummit {
 }
 
 /// Factory function to create all custom scaling jokers
+#[allow(deprecated)]
 pub fn create_all_custom_scaling_jokers() -> Vec<Box<dyn Joker>> {
     vec![
         Box::new(GreenJoker::new()),
@@ -443,6 +459,7 @@ pub fn create_all_custom_scaling_jokers() -> Vec<Box<dyn Joker>> {
 }
 
 /// Get custom scaling joker by ID
+#[allow(deprecated)]
 pub fn get_custom_scaling_joker_by_id(id: JokerId) -> Option<Box<dyn Joker>> {
     match id {
         JokerId::GreenJoker => Some(Box::new(GreenJoker::new())),

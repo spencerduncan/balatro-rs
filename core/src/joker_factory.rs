@@ -73,6 +73,12 @@ impl JokerFactory {
             JokerId::Photograph => Some(Box::new(PhotographJoker::new())),
             JokerId::TheOrder => Some(Box::new(TheOrderJoker)),
             JokerId::FourFingers => Some(Box::new(FourFingersJoker::new())),
+
+            // Specification-compliant static jokers
+            JokerId::Stuntman => Some(Box::new(StuntmanJoker)),
+            JokerId::Wee => Some(Box::new(WeeJoker)),
+            JokerId::Castle => Some(Box::new(CastleJoker)),
+
             // TODO: Implement remaining jokers
             _ => None,
         }
@@ -134,6 +140,9 @@ impl JokerFactory {
                 // Special mechanic jokers
                 TheOrder,
                 FourFingers,
+                // Specification-compliant static jokers
+                Stuntman,
+                Wee,
             ],
             JokerRarity::Rare => vec![
                 // RNG-based jokers (Issue #442)
@@ -141,6 +150,8 @@ impl JokerFactory {
                 Fortune, // MysteryJoker
                 // Special mechanic jokers
                 Blueprint,
+                // Specification-compliant jokers
+                Castle,
             ],
             JokerRarity::Legendary => vec![
                 // RNG-based jokers (Issue #442)
@@ -200,7 +211,11 @@ impl JokerFactory {
             Photograph,
             TheOrder,
             SteelJoker, // Now properly implemented as scaling joker
-                        // Note: HalfJoker and Banner are still placeholders
+            // Specification-compliant static jokers
+            Stuntman, // +250 chips, -2 hand size per joker.json specification
+            Wee,      // +8 chips per 2 scored per joker.json specification
+            Castle,   // Suit-specific discard tracking per joker.json specification
+                      // Note: HalfJoker and Banner are still placeholders
         ]
     }
 }

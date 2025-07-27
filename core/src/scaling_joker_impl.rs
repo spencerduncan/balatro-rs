@@ -17,8 +17,13 @@ pub fn create_spare_trousers() -> ScalingJoker {
     )
 }
 
-/// Square Joker: +4 chips if hand has exactly 4 cards (this is more conditional than scaling)
-/// For scaling version: +4 chips per hand played with exactly 4 cards
+/// DEPRECATED: Square Joker - Not requested in original issue #191
+/// This joker was implemented as feature creep in PR #605, violating the specification
+/// that only requested Castle, Wee, and Stuntman jokers.
+/// Per issue #644: "Remove SquareJoker and MarbleJoker (not requested in issue #191)"
+#[deprecated(
+    note = "Not requested in original issue #191 - remove to maintain specification compliance"
+)]
 pub fn create_square_joker() -> ScalingJoker {
     ScalingJoker::new(
         JokerId::Square,
@@ -176,7 +181,13 @@ pub fn create_mystic_summit() -> ScalingJoker {
     )
 }
 
-/// Marble Joker: +50 chips per joker sold
+/// DEPRECATED: Marble Joker - Not requested in original issue #191
+/// This joker was implemented as feature creep in PR #605, violating the specification
+/// that only requested Castle, Wee, and Stuntman jokers.
+/// Per issue #644: "Remove SquareJoker and MarbleJoker (not requested in issue #191)"
+#[deprecated(
+    note = "Not requested in original issue #191 - remove to maintain specification compliance"
+)]
 pub fn create_marble_joker_scaling() -> ScalingJoker {
     ScalingJoker::new(
         JokerId::MarbleJoker,
@@ -205,8 +216,16 @@ pub fn create_loyalty_card() -> ScalingJoker {
     .with_reset_condition(ResetCondition::AnteEnd)
 }
 
-/// Castle: +3 chips per discarded card of specific suit (requires custom implementation)
-/// Note: This is a placeholder - Castle requires custom logic for suit-specific scaling
+/// DEPRECATED: Castle Joker - Use CastleJoker from joker_impl.rs instead
+/// This implementation was incorrect per joker.json specification:
+/// - Wrong trigger: Generic CardDiscarded (should be suit-specific discard tracking)
+/// - Missing suit rotation: No logic for suit changes every round
+/// - Generic scaling framework cannot handle complex suit-specific state management
+///
+/// The new CastleJoker implementation provides specification-compliant behavior
+#[deprecated(
+    note = "Use CastleJoker from joker_impl.rs - this implementation uses wrong trigger and lacks suit rotation"
+)]
 pub fn create_castle() -> ScalingJoker {
     ScalingJoker::new(
         JokerId::Castle,
@@ -216,13 +235,19 @@ pub fn create_castle() -> ScalingJoker {
         JokerRarity::Rare,
         0.0,
         3.0,
-        ScalingTrigger::CardDiscarded, // Will need custom implementation for suit-specific logic
+        ScalingTrigger::CardDiscarded, // WRONG: Should be suit-specific discard tracking
         ScalingEffectType::Chips,
     )
     .with_reset_condition(ResetCondition::RoundEnd)
 }
 
-/// Wee Joker: +8 chips when each played 2 is scored
+/// DEPRECATED: Wee Joker - Use WeeJoker from joker_impl.rs instead
+/// This implementation was incorrect per joker.json specification:
+/// - Wrong trigger: CardDiscarded (should be when 2s are scored, not when cards discarded)
+/// - Generic scaling framework cannot handle "when specific card value is scored"
+///
+/// The new WeeJoker implementation provides specification-compliant behavior
+#[deprecated(note = "Use WeeJoker from joker_impl.rs - this implementation uses wrong trigger")]
 pub fn create_wee_joker() -> ScalingJoker {
     ScalingJoker::new(
         JokerId::Wee,
@@ -231,16 +256,18 @@ pub fn create_wee_joker() -> ScalingJoker {
         JokerRarity::Uncommon,
         0.0,
         8.0,
-        ScalingTrigger::CardDiscarded, // Placeholder - needs custom logic for played 2s
+        ScalingTrigger::CardDiscarded, // WRONG: Should trigger when 2s are scored
         ScalingEffectType::Chips,
     )
 }
 
 /// Factory function to create all scaling jokers
+/// NOTE: Deprecated jokers (Castle, Wee, Square, Marble) removed for specification compliance
+/// These are now implemented in joker_impl.rs with proper specification-compliant behavior
 pub fn create_all_scaling_jokers() -> Vec<ScalingJoker> {
     vec![
         create_spare_trousers(),
-        create_square_joker(),
+        // create_square_joker(), // REMOVED: Not in original specification #191
         create_bull_joker(),
         create_bootstraps(),
         create_fortune_teller(),
@@ -251,18 +278,20 @@ pub fn create_all_scaling_jokers() -> Vec<ScalingJoker> {
         create_red_card(),
         create_steel_joker_scaling(),
         create_mystic_summit(),
-        create_marble_joker_scaling(),
+        // create_marble_joker_scaling(), // REMOVED: Not in original specification #191
         create_loyalty_card(),
-        create_castle(),
-        create_wee_joker(),
+        // create_castle(), // REMOVED: Now properly implemented in joker_impl.rs
+        // create_wee_joker(), // REMOVED: Now properly implemented in joker_impl.rs
     ]
 }
 
 /// Get scaling joker by ID
+/// NOTE: Deprecated jokers (Castle, Wee, Square, Marble) removed for specification compliance
+/// These are now implemented in joker_impl.rs and available through JokerFactory
 pub fn get_scaling_joker_by_id(id: JokerId) -> Option<ScalingJoker> {
     match id {
         JokerId::Trousers => Some(create_spare_trousers()),
-        JokerId::Square => Some(create_square_joker()),
+        // JokerId::Square => Some(create_square_joker()), // REMOVED: Not in original specification #191
         JokerId::BullMarket => Some(create_bull_joker()),
         JokerId::Bootstraps => Some(create_bootstraps()),
         JokerId::Fortune => Some(create_fortune_teller()),
@@ -273,10 +302,10 @@ pub fn get_scaling_joker_by_id(id: JokerId) -> Option<ScalingJoker> {
         JokerId::RedCard => Some(create_red_card()),
         JokerId::SteelJoker => Some(create_steel_joker_scaling()),
         JokerId::Reserved2 => Some(create_mystic_summit()),
-        JokerId::MarbleJoker => Some(create_marble_joker_scaling()),
+        // JokerId::MarbleJoker => Some(create_marble_joker_scaling()), // REMOVED: Not in original specification #191
         JokerId::Loyalty => Some(create_loyalty_card()),
-        JokerId::Castle => Some(create_castle()),
-        JokerId::Wee => Some(create_wee_joker()),
+        // JokerId::Castle => Some(create_castle()), // REMOVED: Now properly implemented in joker_impl.rs
+        // JokerId::Wee => Some(create_wee_joker()), // REMOVED: Now properly implemented in joker_impl.rs
         _ => None,
     }
 }
@@ -290,8 +319,8 @@ mod tests {
         let jokers = create_all_scaling_jokers();
         assert_eq!(
             jokers.len(),
-            16,
-            "Should create exactly 16 scaling jokers (including Wee)"
+            12,
+            "Should create exactly 12 scaling jokers (removed 4 deprecated jokers for specification compliance)"
         );
 
         // Test that all jokers have unique IDs
@@ -325,11 +354,17 @@ mod tests {
     }
 
     #[test]
-    fn test_castle_with_round_reset() {
+    #[allow(deprecated)]
+    fn test_deprecated_castle_scaling_properties() {
+        // NOTE: This test validates the deprecated Castle implementation
+        // The new specification-compliant Castle is implemented in joker_impl.rs
         let joker = create_castle();
         assert_eq!(joker.max_value, None); // No max value for suit-specific scaling
         assert_eq!(joker.reset_condition, Some(ResetCondition::RoundEnd));
         assert_eq!(joker.increment, 3.0); // +3 chips per suit-specific discard
+
+        // This test documents the deprecated behavior for reference
+        // The proper Castle implementation is now in CastleJoker
     }
 
     #[test]

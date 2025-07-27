@@ -507,10 +507,18 @@ impl StaticJokerFactory {
     }
 
     /// Create Stuntman (+300 Chips, -2 hand size)
-    /// NOTE: This provides only the chip bonus - hand size reduction requires custom implementation
-    /// TODO: Implement custom Stuntman joker with both chip bonus AND hand size modification
+    /// DEPRECATED: Use StuntmanJoker from joker_impl.rs instead
+    /// This implementation was incorrect per joker.json specification
+    /// - Wrong chip value: +300 (should be +250)
+    /// - Missing hand size reduction: -2 hand size not implemented
+    ///
+    /// The new StuntmanJoker implementation provides specification-compliant behavior
+    #[deprecated(
+        note = "Use StuntmanJoker from joker_impl.rs - this implementation violates joker.json specification"
+    )]
     pub fn create_stuntman() -> Box<dyn Joker> {
-        // INCOMPLETE: Only provides chips, does NOT reduce hand size
+        // This method is deprecated - the factory now uses the correct StuntmanJoker implementation
+        // Keeping for compatibility but marking as deprecated
         Box::new(
             StaticJoker::builder(JokerId::Stuntman, "Stuntman", "+300 Chips, -2 hand size")
                 .rarity(JokerRarity::Uncommon)
