@@ -56,7 +56,7 @@ impl RerollMechanics for StandardRerollMechanics {
         // Base reroll cost escalation: each reroll increases cost by 5
         let base_increase = 5;
         let new_cost = current_cost + base_increase;
-        
+
         // Apply voucher effects after base calculation
         let shop_vouchers: Vec<VoucherId> = self.get_active_shop_vouchers(game);
         self.apply_voucher_effects(new_cost, &shop_vouchers)
@@ -68,19 +68,19 @@ impl RerollMechanics for StandardRerollMechanics {
         if shop.rerolls_remaining == 0 {
             return false;
         }
-        
+
         // Check if player has enough money for the reroll
         if (shop.reroll_cost as f64) > game.money {
             return false;
         }
-        
+
         true
     }
 
     /// Apply voucher effects to reroll cost
     fn apply_voucher_effects(&self, base_cost: usize, vouchers: &[VoucherId]) -> usize {
         let mut final_cost = base_cost as f64;
-        
+
         for &voucher in vouchers {
             match voucher {
                 VoucherId::Reroll => {
@@ -94,7 +94,7 @@ impl RerollMechanics for StandardRerollMechanics {
                 _ => {} // Other vouchers don't affect reroll costs
             }
         }
-        
+
         // Ensure minimum cost of 0 (free rerolls are possible)
         (final_cost.round() as usize).max(0)
     }
@@ -105,7 +105,7 @@ impl StandardRerollMechanics {
     pub fn new() -> Self {
         Self
     }
-    
+
     /// Extract active shop vouchers from game state
     /// TODO: Replace with actual voucher system integration when available
     fn get_active_shop_vouchers(&self, _game: &Game) -> Vec<VoucherId> {
@@ -598,23 +598,25 @@ impl ShopGenerator for WeightedGenerator {
             // Return current shop unchanged if reroll not possible
             return current_shop.clone();
         }
-        
+
         // Generate new shop contents while preserving shop state
         let mut new_shop = self.generate_shop(game);
-        
+
         // Calculate new reroll cost using the mechanics
-        let new_reroll_cost = self.reroll_mechanics.calculate_reroll_cost(current_shop.reroll_cost, game);
-        
+        let new_reroll_cost = self
+            .reroll_mechanics
+            .calculate_reroll_cost(current_shop.reroll_cost, game);
+
         // Preserve and update shop state from the current shop
         new_shop.reroll_cost = new_reroll_cost;
-        
+
         // Handle reroll count - for now we'll use unlimited rerolls (common in Balatro)
         // In the future, this could be limited by vouchers or game settings
         new_shop.rerolls_remaining = current_shop.rerolls_remaining.saturating_sub(0); // Unlimited for now
-        
+
         // Preserve generation weights from current shop for consistency
         new_shop.weights = current_shop.weights.clone();
-        
+
         new_shop
     }
 }
@@ -1027,19 +1029,19 @@ mod tests {
         let generator = WeightedGenerator::new();
         let mut game = Game::new(Config::default());
         game.money = 50.0; // Ensure sufficient money for reroll
-        
+
         let shop = EnhancedShop {
             slots: vec![],
             rerolls_remaining: 5,
             reroll_cost: 5,
             weights: ItemWeights::default(),
         };
-        
+
         let new_shop = generator.reroll_shop(&shop, &game);
 
         // Should generate a new shop with 5 slots (standard shop)
         assert_eq!(new_shop.slots.len(), 5);
-        
+
         // Should have updated reroll cost
         assert_eq!(new_shop.reroll_cost, 10); // 5 + 5 = 10
     }
@@ -1049,7 +1051,7 @@ mod tests {
     fn test_standard_reroll_mechanics_creation() {
         let mechanics = StandardRerollMechanics::new();
         assert!(format!("{:?}", mechanics).contains("StandardRerollMechanics"));
-        
+
         let default_mechanics = StandardRerollMechanics::default();
         assert!(format!("{:?}", default_mechanics).contains("StandardRerollMechanics"));
     }
@@ -1168,7 +1170,7 @@ mod tests {
         let generator = WeightedGenerator::new();
         let mut game = Game::new(Config::default());
         game.money = 50.0;
-        
+
         let current_shop = EnhancedShop {
             slots: vec![],
             rerolls_remaining: 5,
@@ -1180,15 +1182,18 @@ mod tests {
 
         // Should generate new contents
         assert!(!new_shop.slots.is_empty());
-        
+
         // Should calculate new reroll cost (10 + 5 = 15)
         assert_eq!(new_shop.reroll_cost, 15);
-        
+
         // Should preserve rerolls remaining
         assert_eq!(new_shop.rerolls_remaining, 5);
-        
+
         // Should preserve weights
-        assert_eq!(new_shop.weights.joker_weight, current_shop.weights.joker_weight);
+        assert_eq!(
+            new_shop.weights.joker_weight,
+            current_shop.weights.joker_weight
+        );
     }
 
     #[test]
@@ -1196,7 +1201,7 @@ mod tests {
         let generator = WeightedGenerator::new();
         let mut game = Game::new(Config::default());
         game.money = 5.0; // Less than reroll cost
-        
+
         let current_shop = EnhancedShop {
             slots: vec![],
             rerolls_remaining: 5,
@@ -1216,7 +1221,7 @@ mod tests {
         let generator = WeightedGenerator::new();
         let mut game = Game::new(Config::default());
         game.money = 50.0;
-        
+
         let current_shop = EnhancedShop {
             slots: vec![],
             rerolls_remaining: 0, // No rerolls left

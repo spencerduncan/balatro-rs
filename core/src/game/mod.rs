@@ -1095,11 +1095,11 @@ impl Game {
         self.money += self.reward;
         self.reward = 0.0;
         self.stage = Stage::Shop();
-        
+
         // Reset reroll cost and count for new shop round
         self.shop_reroll_cost = 5.0; // Base reroll cost
         self.shop_rerolls_this_round = 0;
-        
+
         self.shop.refresh(&self.rng);
         Ok(())
     }
@@ -1285,24 +1285,24 @@ impl Game {
         if self.stage != Stage::Shop() {
             return Err(GameError::InvalidStage);
         }
-        
+
         // Check if player has enough money for reroll
         if self.money < self.shop_reroll_cost {
             return Err(GameError::InvalidBalance);
         }
-        
+
         // Deduct reroll cost
         self.money -= self.shop_reroll_cost;
-        
+
         // Update reroll cost for next reroll (escalate by 5 each time)
         self.shop_reroll_cost += 5.0;
-        
+
         // Track number of rerolls this round
         self.shop_rerolls_this_round += 1;
-        
+
         // Refresh the shop with new items
         self.shop.refresh(&self.rng);
-        
+
         Ok(())
     }
 
@@ -3247,7 +3247,7 @@ mod tests {
 
         // Reroll multiple times and verify cost escalation
         assert_eq!(game.shop_reroll_cost, 5.0);
-        
+
         // First reroll: 5 coins
         game.reroll_shop().unwrap();
         assert_eq!(game.money, 95.0);
@@ -3311,7 +3311,7 @@ mod tests {
     fn test_reroll_cost_reset_on_new_shop_round() {
         let mut game = Game::default();
         game.start();
-        
+
         // Set up initial state
         game.stage = Stage::Shop();
         game.money = 50.0;
@@ -3341,7 +3341,7 @@ mod tests {
         // Test using the RerollShop action
         let action = Action::RerollShop();
         let result = game.handle_action(action);
-        
+
         assert!(result.is_ok());
         assert_eq!(game.money, 45.0);
         assert_eq!(game.shop_reroll_cost, 10.0);
@@ -3357,7 +3357,7 @@ mod tests {
 
         let action = Action::RerollShop();
         let result = game.handle_action(action);
-        
+
         assert!(result.is_err());
         assert!(matches!(result.unwrap_err(), GameError::InvalidStage));
         assert_eq!(game.money, 50.0); // Money unchanged
@@ -3369,11 +3369,11 @@ mod tests {
         game.start();
         game.stage = Stage::Shop();
         game.money = 50.0;
-        
+
         // Perform some rerolls to establish state
         game.reroll_shop().unwrap();
         game.reroll_shop().unwrap();
-        
+
         // Verify state before save
         assert_eq!(game.money, 35.0); // 50 - 5 - 10 = 35
         assert_eq!(game.shop_reroll_cost, 15.0);
