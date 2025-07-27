@@ -207,94 +207,216 @@
 <a href=#207 id=207 data-nosnippet>207</a>    }
 <a href=#208 id=208 data-nosnippet>208</a>}
 <a href=#209 id=209 data-nosnippet>209</a>
-<a href=#210 id=210 data-nosnippet>210</a><span class="doccomment">/// Error sanitizer that converts detailed developer errors to safe user errors
-<a href=#211 id=211 data-nosnippet>211</a></span><span class="kw">pub struct </span>ErrorSanitizer {
-<a href=#212 id=212 data-nosnippet>212</a>    detail_level: ErrorDetailLevel,
-<a href=#213 id=213 data-nosnippet>213</a>}
-<a href=#214 id=214 data-nosnippet>214</a>
-<a href=#215 id=215 data-nosnippet>215</a><span class="kw">impl </span>ErrorSanitizer {
-<a href=#216 id=216 data-nosnippet>216</a>    <span class="kw">pub fn </span>new(detail_level: ErrorDetailLevel) -&gt; <span class="self">Self </span>{
-<a href=#217 id=217 data-nosnippet>217</a>        <span class="self">Self </span>{ detail_level }
-<a href=#218 id=218 data-nosnippet>218</a>    }
-<a href=#219 id=219 data-nosnippet>219</a>
-<a href=#220 id=220 data-nosnippet>220</a>    <span class="doccomment">/// Convert developer errors to user-safe errors based on configuration
-<a href=#221 id=221 data-nosnippet>221</a>    </span><span class="kw">pub fn </span>sanitize_game_error(<span class="kw-2">&amp;</span><span class="self">self</span>, error: <span class="kw-2">&amp;</span>DeveloperGameError) -&gt; UserError {
-<a href=#222 id=222 data-nosnippet>222</a>        <span class="kw">match </span><span class="self">self</span>.detail_level {
-<a href=#223 id=223 data-nosnippet>223</a>            ErrorDetailLevel::Production =&gt; <span class="self">self</span>.to_generic_user_error(error),
-<a href=#224 id=224 data-nosnippet>224</a>            ErrorDetailLevel::Development | ErrorDetailLevel::Testing =&gt; {
-<a href=#225 id=225 data-nosnippet>225</a>                <span class="comment">// In development/testing, we can provide slightly more specific errors
-<a href=#226 id=226 data-nosnippet>226</a>                // but still avoid exposing internal system details
-<a href=#227 id=227 data-nosnippet>227</a>                </span><span class="self">self</span>.to_specific_user_error(error)
-<a href=#228 id=228 data-nosnippet>228</a>            }
-<a href=#229 id=229 data-nosnippet>229</a>        }
-<a href=#230 id=230 data-nosnippet>230</a>    }
-<a href=#231 id=231 data-nosnippet>231</a>
-<a href=#232 id=232 data-nosnippet>232</a>    <span class="kw">fn </span>to_generic_user_error(<span class="kw-2">&amp;</span><span class="self">self</span>, error: <span class="kw-2">&amp;</span>DeveloperGameError) -&gt; UserError {
-<a href=#233 id=233 data-nosnippet>233</a>        <span class="kw">match </span>error {
-<a href=#234 id=234 data-nosnippet>234</a>            DeveloperGameError::InvalidInput(<span class="kw">_</span>) =&gt; UserError::InvalidInput,
-<a href=#235 id=235 data-nosnippet>235</a>            DeveloperGameError::InvalidOperation(<span class="kw">_</span>) =&gt; UserError::InvalidOperation,
-<a href=#236 id=236 data-nosnippet>236</a>            DeveloperGameError::NoCardMatch
-<a href=#237 id=237 data-nosnippet>237</a>            | DeveloperGameError::NoJokerMatch
-<a href=#238 id=238 data-nosnippet>238</a>            | DeveloperGameError::JokerNotFound(<span class="kw">_</span>)
-<a href=#239 id=239 data-nosnippet>239</a>            | DeveloperGameError::JokerNotInShop =&gt; UserError::NotFound,
-<a href=#240 id=240 data-nosnippet>240</a>            DeveloperGameError::InvalidHand(<span class="kw">_</span>)
-<a href=#241 id=241 data-nosnippet>241</a>            | DeveloperGameError::InvalidStage
-<a href=#242 id=242 data-nosnippet>242</a>            | DeveloperGameError::InvalidAction
-<a href=#243 id=243 data-nosnippet>243</a>            | DeveloperGameError::InvalidBlind
-<a href=#244 id=244 data-nosnippet>244</a>            | DeveloperGameError::InvalidBalance
-<a href=#245 id=245 data-nosnippet>245</a>            | DeveloperGameError::InvalidActionSpace
-<a href=#246 id=246 data-nosnippet>246</a>            | DeveloperGameError::InvalidSlot =&gt; UserError::InvalidState,
-<a href=#247 id=247 data-nosnippet>247</a>            <span class="kw">_ </span>=&gt; UserError::SystemError,
-<a href=#248 id=248 data-nosnippet>248</a>        }
-<a href=#249 id=249 data-nosnippet>249</a>    }
-<a href=#250 id=250 data-nosnippet>250</a>
-<a href=#251 id=251 data-nosnippet>251</a>    <span class="kw">fn </span>to_specific_user_error(<span class="kw-2">&amp;</span><span class="self">self</span>, error: <span class="kw-2">&amp;</span>DeveloperGameError) -&gt; UserError {
-<a href=#252 id=252 data-nosnippet>252</a>        <span class="kw">match </span>error {
-<a href=#253 id=253 data-nosnippet>253</a>            DeveloperGameError::InvalidInput(<span class="kw">_</span>) =&gt; UserError::InvalidInput,
-<a href=#254 id=254 data-nosnippet>254</a>            DeveloperGameError::InvalidOperation(<span class="kw">_</span>) =&gt; UserError::InvalidOperation,
-<a href=#255 id=255 data-nosnippet>255</a>            DeveloperGameError::NoCardMatch
-<a href=#256 id=256 data-nosnippet>256</a>            | DeveloperGameError::NoJokerMatch
-<a href=#257 id=257 data-nosnippet>257</a>            | DeveloperGameError::JokerNotFound(<span class="kw">_</span>)
-<a href=#258 id=258 data-nosnippet>258</a>            | DeveloperGameError::JokerNotInShop =&gt; UserError::NotFound,
-<a href=#259 id=259 data-nosnippet>259</a>            DeveloperGameError::InvalidHand(<span class="kw">_</span>)
-<a href=#260 id=260 data-nosnippet>260</a>            | DeveloperGameError::InvalidStage
-<a href=#261 id=261 data-nosnippet>261</a>            | DeveloperGameError::InvalidAction
-<a href=#262 id=262 data-nosnippet>262</a>            | DeveloperGameError::InvalidBlind
-<a href=#263 id=263 data-nosnippet>263</a>            | DeveloperGameError::InvalidBalance
-<a href=#264 id=264 data-nosnippet>264</a>            | DeveloperGameError::InvalidActionSpace
-<a href=#265 id=265 data-nosnippet>265</a>            | DeveloperGameError::InvalidSlot =&gt; UserError::InvalidState,
-<a href=#266 id=266 data-nosnippet>266</a>            DeveloperGameError::NoRemainingDiscards | DeveloperGameError::NoRemainingPlays =&gt; {
-<a href=#267 id=267 data-nosnippet>267</a>                UserError::OperationFailed
-<a href=#268 id=268 data-nosnippet>268</a>            }
-<a href=#269 id=269 data-nosnippet>269</a>            <span class="kw">_ </span>=&gt; UserError::SystemError,
-<a href=#270 id=270 data-nosnippet>270</a>        }
-<a href=#271 id=271 data-nosnippet>271</a>    }
-<a href=#272 id=272 data-nosnippet>272</a>}
-<a href=#273 id=273 data-nosnippet>273</a>
-<a href=#274 id=274 data-nosnippet>274</a><span class="kw">impl </span>Default <span class="kw">for </span>ErrorSanitizer {
-<a href=#275 id=275 data-nosnippet>275</a>    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
-<a href=#276 id=276 data-nosnippet>276</a>        <span class="self">Self</span>::new(ErrorDetailLevel::default())
-<a href=#277 id=277 data-nosnippet>277</a>    }
-<a href=#278 id=278 data-nosnippet>278</a>}
-<a href=#279 id=279 data-nosnippet>279</a>
-<a href=#280 id=280 data-nosnippet>280</a><span class="doccomment">/// Backward compatibility aliases (deprecated - use DeveloperGameError directly)
-<a href=#281 id=281 data-nosnippet>281</a></span><span class="kw">pub type </span>PlayHandError = DeveloperPlayHandError;
-<a href=#282 id=282 data-nosnippet>282</a><span class="kw">pub type </span>GameError = DeveloperGameError;
-<a href=#283 id=283 data-nosnippet>283</a><span class="kw">pub type </span>ActionSpaceError = DeveloperActionSpaceError;
-<a href=#284 id=284 data-nosnippet>284</a>
-<a href=#285 id=285 data-nosnippet>285</a><span class="attr">#[cfg(feature = <span class="string">"python"</span>)]
-<a href=#286 id=286 data-nosnippet>286</a></span><span class="kw">impl </span>std::convert::From&lt;DeveloperGameError&gt; <span class="kw">for </span>PyErr {
-<a href=#287 id=287 data-nosnippet>287</a>    <span class="kw">fn </span>from(err: DeveloperGameError) -&gt; PyErr {
-<a href=#288 id=288 data-nosnippet>288</a>        <span class="comment">// In Python bindings, always use sanitized errors for security
-<a href=#289 id=289 data-nosnippet>289</a>        </span><span class="kw">let </span>sanitizer = ErrorSanitizer::default();
-<a href=#290 id=290 data-nosnippet>290</a>        <span class="kw">let </span>user_error = sanitizer.sanitize_game_error(<span class="kw-2">&amp;</span>err);
-<a href=#291 id=291 data-nosnippet>291</a>        PyException::new_err(user_error.to_string())
-<a href=#292 id=292 data-nosnippet>292</a>    }
-<a href=#293 id=293 data-nosnippet>293</a>}
+<a href=#210 id=210 data-nosnippet>210</a><span class="doccomment">/// Developer-facing pack system errors with detailed information for debugging
+<a href=#211 id=211 data-nosnippet>211</a></span><span class="attr">#[derive(Error, Debug, Clone)]
+<a href=#212 id=212 data-nosnippet>212</a></span><span class="kw">pub enum </span>DeveloperPackError {
+<a href=#213 id=213 data-nosnippet>213</a>    <span class="comment">// Pack Purchase Errors
+<a href=#214 id=214 data-nosnippet>214</a>    </span><span class="attr">#[error(<span class="string">"Insufficient funds to purchase {pack_type} pack: need ${cost}, have ${available}"</span>)]
+<a href=#215 id=215 data-nosnippet>215</a>    </span>InsufficientFunds {
+<a href=#216 id=216 data-nosnippet>216</a>        pack_type: String,
+<a href=#217 id=217 data-nosnippet>217</a>        cost: usize,
+<a href=#218 id=218 data-nosnippet>218</a>        available: f64,
+<a href=#219 id=219 data-nosnippet>219</a>    },
+<a href=#220 id=220 data-nosnippet>220</a>    <span class="attr">#[error(<span class="string">"Pack type {pack_type} is not available for purchase"</span>)]
+<a href=#221 id=221 data-nosnippet>221</a>    </span>PackTypeNotAvailable { pack_type: String },
+<a href=#222 id=222 data-nosnippet>222</a>    <span class="attr">#[error(<span class="string">"Cannot purchase packs during {current_stage} stage"</span>)]
+<a href=#223 id=223 data-nosnippet>223</a>    </span>InvalidPurchaseStage { current_stage: String },
+<a href=#224 id=224 data-nosnippet>224</a>    <span class="attr">#[error(<span class="string">"Pack purchase limit exceeded: {current}/{limit}"</span>)]
+<a href=#225 id=225 data-nosnippet>225</a>    </span>PurchaseLimitExceeded { current: usize, limit: usize },
+<a href=#226 id=226 data-nosnippet>226</a>    <span class="attr">#[error(<span class="string">"Pack cost calculation failed for {pack_type}: {reason}"</span>)]
+<a href=#227 id=227 data-nosnippet>227</a>    </span>CostCalculationFailed { pack_type: String, reason: String },
+<a href=#228 id=228 data-nosnippet>228</a>
+<a href=#229 id=229 data-nosnippet>229</a>    <span class="comment">// Pack Opening Errors
+<a href=#230 id=230 data-nosnippet>230</a>    </span><span class="attr">#[error(<span class="string">"Pack not found in inventory: ID {pack_id}"</span>)]
+<a href=#231 id=231 data-nosnippet>231</a>    </span>PackNotFound { pack_id: usize },
+<a href=#232 id=232 data-nosnippet>232</a>    <span class="attr">#[error(<span class="string">"Invalid pack ID {pack_id}: inventory size is {inventory_size}"</span>)]
+<a href=#233 id=233 data-nosnippet>233</a>    </span>InvalidPackId {
+<a href=#234 id=234 data-nosnippet>234</a>        pack_id: usize,
+<a href=#235 id=235 data-nosnippet>235</a>        inventory_size: usize,
+<a href=#236 id=236 data-nosnippet>236</a>    },
+<a href=#237 id=237 data-nosnippet>237</a>    <span class="attr">#[error(<span class="string">"Pack {pack_id} is already open"</span>)]
+<a href=#238 id=238 data-nosnippet>238</a>    </span>PackAlreadyOpen { pack_id: usize },
+<a href=#239 id=239 data-nosnippet>239</a>    <span class="attr">#[error(<span class="string">"Cannot open pack during {current_stage} stage"</span>)]
+<a href=#240 id=240 data-nosnippet>240</a>    </span>InvalidOpenStage { current_stage: String },
+<a href=#241 id=241 data-nosnippet>241</a>    <span class="attr">#[error(<span class="string">"Pack opening failed: {reason}"</span>)]
+<a href=#242 id=242 data-nosnippet>242</a>    </span>OpeningFailed { reason: String },
+<a href=#243 id=243 data-nosnippet>243</a>
+<a href=#244 id=244 data-nosnippet>244</a>    <span class="comment">// Pack Selection Errors  
+<a href=#245 id=245 data-nosnippet>245</a>    </span><span class="attr">#[error(<span class="string">"No pack is currently open"</span>)]
+<a href=#246 id=246 data-nosnippet>246</a>    </span>NoPackOpen,
+<a href=#247 id=247 data-nosnippet>247</a>    <span class="attr">#[error(<span class="string">"Invalid option index {option_index}: pack has {total_options} options"</span>)]
+<a href=#248 id=248 data-nosnippet>248</a>    </span>InvalidOptionIndex {
+<a href=#249 id=249 data-nosnippet>249</a>        option_index: usize,
+<a href=#250 id=250 data-nosnippet>250</a>        total_options: usize,
+<a href=#251 id=251 data-nosnippet>251</a>    },
+<a href=#252 id=252 data-nosnippet>252</a>    <span class="attr">#[error(<span class="string">"Pack ID mismatch: expected {expected}, got {actual}"</span>)]
+<a href=#253 id=253 data-nosnippet>253</a>    </span>PackIdMismatch { expected: usize, actual: usize },
+<a href=#254 id=254 data-nosnippet>254</a>    <span class="attr">#[error(<span class="string">"Option {option_index} has already been selected"</span>)]
+<a href=#255 id=255 data-nosnippet>255</a>    </span>OptionAlreadySelected { option_index: usize },
+<a href=#256 id=256 data-nosnippet>256</a>    <span class="attr">#[error(<span class="string">"Cannot select from pack during {current_stage} stage"</span>)]
+<a href=#257 id=257 data-nosnippet>257</a>    </span>InvalidSelectionStage { current_stage: String },
+<a href=#258 id=258 data-nosnippet>258</a>
+<a href=#259 id=259 data-nosnippet>259</a>    <span class="comment">// Pack Skip Errors
+<a href=#260 id=260 data-nosnippet>260</a>    </span><span class="attr">#[error(<span class="string">"Pack {pack_id} cannot be skipped"</span>)]
+<a href=#261 id=261 data-nosnippet>261</a>    </span>PackNotSkippable { pack_id: usize },
+<a href=#262 id=262 data-nosnippet>262</a>    <span class="attr">#[error(<span class="string">"No pack available to skip"</span>)]
+<a href=#263 id=263 data-nosnippet>263</a>    </span>NoPackToSkip,
+<a href=#264 id=264 data-nosnippet>264</a>    <span class="attr">#[error(<span class="string">"Skip operation failed: {reason}"</span>)]
+<a href=#265 id=265 data-nosnippet>265</a>    </span>SkipFailed { reason: String },
+<a href=#266 id=266 data-nosnippet>266</a>
+<a href=#267 id=267 data-nosnippet>267</a>    <span class="comment">// Pack Content Generation Errors
+<a href=#268 id=268 data-nosnippet>268</a>    </span><span class="attr">#[error(<span class="string">"Failed to generate pack contents for {pack_type}: {reason}"</span>)]
+<a href=#269 id=269 data-nosnippet>269</a>    </span>ContentGenerationFailed { pack_type: String, reason: String },
+<a href=#270 id=270 data-nosnippet>270</a>    <span class="attr">#[error(<span class="string">"Joker generation failed for {pack_type}: {reason}"</span>)]
+<a href=#271 id=271 data-nosnippet>271</a>    </span>JokerGenerationFailed { pack_type: String, reason: String },
+<a href=#272 id=272 data-nosnippet>272</a>    <span class="attr">#[error(<span class="string">"Card generation failed for {pack_type}: {reason}"</span>)]
+<a href=#273 id=273 data-nosnippet>273</a>    </span>CardGenerationFailed { pack_type: String, reason: String },
+<a href=#274 id=274 data-nosnippet>274</a>    <span class="attr">#[error(<span class="string">"Consumable generation failed for {pack_type}: {reason}"</span>)]
+<a href=#275 id=275 data-nosnippet>275</a>    </span>ConsumableGenerationFailed { pack_type: String, reason: String },
+<a href=#276 id=276 data-nosnippet>276</a>    <span class="attr">#[error(<span class="string">"Insufficient options generated: expected {expected}, got {actual}"</span>)]
+<a href=#277 id=277 data-nosnippet>277</a>    </span>InsufficientOptions { expected: usize, actual: usize },
+<a href=#278 id=278 data-nosnippet>278</a>    <span class="attr">#[error(<span class="string">"Pack rarity distribution failed: {reason}"</span>)]
+<a href=#279 id=279 data-nosnippet>279</a>    </span>RarityDistributionFailed { reason: String },
+<a href=#280 id=280 data-nosnippet>280</a>
+<a href=#281 id=281 data-nosnippet>281</a>    <span class="comment">// RNG and Random Generation Errors
+<a href=#282 id=282 data-nosnippet>282</a>    </span><span class="attr">#[error(<span class="string">"RNG selection failed during pack generation: {reason}"</span>)]
+<a href=#283 id=283 data-nosnippet>283</a>    </span>RngSelectionFailed { reason: String },
+<a href=#284 id=284 data-nosnippet>284</a>    <span class="attr">#[error(<span class="string">"Empty selection pool for {item_type} in {pack_type}"</span>)]
+<a href=#285 id=285 data-nosnippet>285</a>    </span>EmptySelectionPool { item_type: String, pack_type: String },
+<a href=#286 id=286 data-nosnippet>286</a>    <span class="attr">#[error(<span class="string">"Weighted random selection failed: {reason}"</span>)]
+<a href=#287 id=287 data-nosnippet>287</a>    </span>WeightedSelectionFailed { reason: String },
+<a href=#288 id=288 data-nosnippet>288</a>
+<a href=#289 id=289 data-nosnippet>289</a>    <span class="comment">// Voucher Integration Errors
+<a href=#290 id=290 data-nosnippet>290</a>    </span><span class="attr">#[error(<span class="string">"Voucher effect calculation failed for {voucher_id}: {reason}"</span>)]
+<a href=#291 id=291 data-nosnippet>291</a>    </span>VoucherEffectFailed { voucher_id: String, reason: String },
+<a href=#292 id=292 data-nosnippet>292</a>    <span class="attr">#[error(<span class="string">"Grab Bag voucher processing failed: {reason}"</span>)]
+<a href=#293 id=293 data-nosnippet>293</a>    </span>GrabBagProcessingFailed { reason: String },
 <a href=#294 id=294 data-nosnippet>294</a>
-<a href=#295 id=295 data-nosnippet>295</a><span class="attr">#[cfg(feature = <span class="string">"python"</span>)]
-<a href=#296 id=296 data-nosnippet>296</a></span><span class="kw">impl </span>std::convert::From&lt;UserError&gt; <span class="kw">for </span>PyErr {
-<a href=#297 id=297 data-nosnippet>297</a>    <span class="kw">fn </span>from(err: UserError) -&gt; PyErr {
-<a href=#298 id=298 data-nosnippet>298</a>        PyException::new_err(err.to_string())
-<a href=#299 id=299 data-nosnippet>299</a>    }
-<a href=#300 id=300 data-nosnippet>300</a>}</code></pre></div></section></main></body></html>
+<a href=#295 id=295 data-nosnippet>295</a>    <span class="comment">// Pack Item Processing Errors
+<a href=#296 id=296 data-nosnippet>296</a>    </span><span class="attr">#[error(<span class="string">"Failed to process selected pack item: {reason}"</span>)]
+<a href=#297 id=297 data-nosnippet>297</a>    </span>ItemProcessingFailed { reason: String },
+<a href=#298 id=298 data-nosnippet>298</a>    <span class="attr">#[error(<span class="string">"Failed to add item to deck: {reason}"</span>)]
+<a href=#299 id=299 data-nosnippet>299</a>    </span>ItemAdditionFailed { reason: String },
+<a href=#300 id=300 data-nosnippet>300</a>    <span class="attr">#[error(<span class="string">"Inventory space validation failed: {reason}"</span>)]
+<a href=#301 id=301 data-nosnippet>301</a>    </span>InventoryValidationFailed { reason: String },
+<a href=#302 id=302 data-nosnippet>302</a>
+<a href=#303 id=303 data-nosnippet>303</a>    <span class="comment">// Pack State Errors
+<a href=#304 id=304 data-nosnippet>304</a>    </span><span class="attr">#[error(<span class="string">"Pack state corruption detected: {reason}"</span>)]
+<a href=#305 id=305 data-nosnippet>305</a>    </span>StateCorruption { reason: String },
+<a href=#306 id=306 data-nosnippet>306</a>    <span class="attr">#[error(<span class="string">"Pack inventory desynchronization: {reason}"</span>)]
+<a href=#307 id=307 data-nosnippet>307</a>    </span>InventoryDesync { reason: String },
+<a href=#308 id=308 data-nosnippet>308</a>    <span class="attr">#[error(<span class="string">"Pack validation failed: {reason}"</span>)]
+<a href=#309 id=309 data-nosnippet>309</a>    </span>PackValidationFailed { reason: String },
+<a href=#310 id=310 data-nosnippet>310</a>}
+<a href=#311 id=311 data-nosnippet>311</a>
+<a href=#312 id=312 data-nosnippet>312</a><span class="kw">impl </span>std::convert::From&lt;DeveloperPackError&gt; <span class="kw">for </span>DeveloperGameError {
+<a href=#313 id=313 data-nosnippet>313</a>    <span class="kw">fn </span>from(err: DeveloperPackError) -&gt; DeveloperGameError {
+<a href=#314 id=314 data-nosnippet>314</a>        <span class="kw">match </span>err {
+<a href=#315 id=315 data-nosnippet>315</a>            DeveloperPackError::InsufficientFunds { .. } =&gt; DeveloperGameError::InvalidBalance,
+<a href=#316 id=316 data-nosnippet>316</a>            DeveloperPackError::PackNotFound { .. } 
+<a href=#317 id=317 data-nosnippet>317</a>            | DeveloperPackError::NoPackOpen 
+<a href=#318 id=318 data-nosnippet>318</a>            | DeveloperPackError::NoPackToSkip =&gt; DeveloperGameError::NoCardMatch,
+<a href=#319 id=319 data-nosnippet>319</a>            DeveloperPackError::InvalidPackId { .. }
+<a href=#320 id=320 data-nosnippet>320</a>            | DeveloperPackError::InvalidOptionIndex { .. }
+<a href=#321 id=321 data-nosnippet>321</a>            | DeveloperPackError::PackIdMismatch { .. } =&gt; DeveloperGameError::InvalidAction,
+<a href=#322 id=322 data-nosnippet>322</a>            DeveloperPackError::InvalidPurchaseStage { .. }
+<a href=#323 id=323 data-nosnippet>323</a>            | DeveloperPackError::InvalidOpenStage { .. }
+<a href=#324 id=324 data-nosnippet>324</a>            | DeveloperPackError::InvalidSelectionStage { .. } =&gt; DeveloperGameError::InvalidStage,
+<a href=#325 id=325 data-nosnippet>325</a>            DeveloperPackError::RngSelectionFailed { .. }
+<a href=#326 id=326 data-nosnippet>326</a>            | DeveloperPackError::WeightedSelectionFailed { .. } =&gt; DeveloperGameError::RngFailed(<span class="string">"Pack generation RNG failure"</span>.to_string()),
+<a href=#327 id=327 data-nosnippet>327</a>            <span class="kw">_ </span>=&gt; DeveloperGameError::InvalidOperation(<span class="macro">format!</span>(<span class="string">"Pack system error: {}"</span>, err)),
+<a href=#328 id=328 data-nosnippet>328</a>        }
+<a href=#329 id=329 data-nosnippet>329</a>    }
+<a href=#330 id=330 data-nosnippet>330</a>}
+<a href=#331 id=331 data-nosnippet>331</a>
+<a href=#332 id=332 data-nosnippet>332</a><span class="doccomment">/// Error sanitizer that converts detailed developer errors to safe user errors
+<a href=#333 id=333 data-nosnippet>333</a></span><span class="kw">pub struct </span>ErrorSanitizer {
+<a href=#334 id=334 data-nosnippet>334</a>    detail_level: ErrorDetailLevel,
+<a href=#335 id=335 data-nosnippet>335</a>}
+<a href=#336 id=336 data-nosnippet>336</a>
+<a href=#337 id=337 data-nosnippet>337</a><span class="kw">impl </span>ErrorSanitizer {
+<a href=#338 id=338 data-nosnippet>338</a>    <span class="kw">pub fn </span>new(detail_level: ErrorDetailLevel) -&gt; <span class="self">Self </span>{
+<a href=#339 id=339 data-nosnippet>339</a>        <span class="self">Self </span>{ detail_level }
+<a href=#340 id=340 data-nosnippet>340</a>    }
+<a href=#341 id=341 data-nosnippet>341</a>
+<a href=#342 id=342 data-nosnippet>342</a>    <span class="doccomment">/// Convert developer errors to user-safe errors based on configuration
+<a href=#343 id=343 data-nosnippet>343</a>    </span><span class="kw">pub fn </span>sanitize_game_error(<span class="kw-2">&amp;</span><span class="self">self</span>, error: <span class="kw-2">&amp;</span>DeveloperGameError) -&gt; UserError {
+<a href=#344 id=344 data-nosnippet>344</a>        <span class="kw">match </span><span class="self">self</span>.detail_level {
+<a href=#345 id=345 data-nosnippet>345</a>            ErrorDetailLevel::Production =&gt; <span class="self">self</span>.to_generic_user_error(error),
+<a href=#346 id=346 data-nosnippet>346</a>            ErrorDetailLevel::Development | ErrorDetailLevel::Testing =&gt; {
+<a href=#347 id=347 data-nosnippet>347</a>                <span class="comment">// In development/testing, we can provide slightly more specific errors
+<a href=#348 id=348 data-nosnippet>348</a>                // but still avoid exposing internal system details
+<a href=#349 id=349 data-nosnippet>349</a>                </span><span class="self">self</span>.to_specific_user_error(error)
+<a href=#350 id=350 data-nosnippet>350</a>            }
+<a href=#351 id=351 data-nosnippet>351</a>        }
+<a href=#352 id=352 data-nosnippet>352</a>    }
+<a href=#353 id=353 data-nosnippet>353</a>
+<a href=#354 id=354 data-nosnippet>354</a>    <span class="kw">fn </span>to_generic_user_error(<span class="kw-2">&amp;</span><span class="self">self</span>, error: <span class="kw-2">&amp;</span>DeveloperGameError) -&gt; UserError {
+<a href=#355 id=355 data-nosnippet>355</a>        <span class="kw">match </span>error {
+<a href=#356 id=356 data-nosnippet>356</a>            DeveloperGameError::InvalidInput(<span class="kw">_</span>) =&gt; UserError::InvalidInput,
+<a href=#357 id=357 data-nosnippet>357</a>            DeveloperGameError::InvalidOperation(<span class="kw">_</span>) =&gt; UserError::InvalidOperation,
+<a href=#358 id=358 data-nosnippet>358</a>            DeveloperGameError::NoCardMatch
+<a href=#359 id=359 data-nosnippet>359</a>            | DeveloperGameError::NoJokerMatch
+<a href=#360 id=360 data-nosnippet>360</a>            | DeveloperGameError::JokerNotFound(<span class="kw">_</span>)
+<a href=#361 id=361 data-nosnippet>361</a>            | DeveloperGameError::JokerNotInShop =&gt; UserError::NotFound,
+<a href=#362 id=362 data-nosnippet>362</a>            DeveloperGameError::InvalidHand(<span class="kw">_</span>)
+<a href=#363 id=363 data-nosnippet>363</a>            | DeveloperGameError::InvalidStage
+<a href=#364 id=364 data-nosnippet>364</a>            | DeveloperGameError::InvalidAction
+<a href=#365 id=365 data-nosnippet>365</a>            | DeveloperGameError::InvalidBlind
+<a href=#366 id=366 data-nosnippet>366</a>            | DeveloperGameError::InvalidBalance
+<a href=#367 id=367 data-nosnippet>367</a>            | DeveloperGameError::InvalidActionSpace
+<a href=#368 id=368 data-nosnippet>368</a>            | DeveloperGameError::InvalidSlot =&gt; UserError::InvalidState,
+<a href=#369 id=369 data-nosnippet>369</a>            <span class="kw">_ </span>=&gt; UserError::SystemError,
+<a href=#370 id=370 data-nosnippet>370</a>        }
+<a href=#371 id=371 data-nosnippet>371</a>    }
+<a href=#372 id=372 data-nosnippet>372</a>
+<a href=#373 id=373 data-nosnippet>373</a>    <span class="kw">fn </span>to_specific_user_error(<span class="kw-2">&amp;</span><span class="self">self</span>, error: <span class="kw-2">&amp;</span>DeveloperGameError) -&gt; UserError {
+<a href=#374 id=374 data-nosnippet>374</a>        <span class="kw">match </span>error {
+<a href=#375 id=375 data-nosnippet>375</a>            DeveloperGameError::InvalidInput(<span class="kw">_</span>) =&gt; UserError::InvalidInput,
+<a href=#376 id=376 data-nosnippet>376</a>            DeveloperGameError::InvalidOperation(<span class="kw">_</span>) =&gt; UserError::InvalidOperation,
+<a href=#377 id=377 data-nosnippet>377</a>            DeveloperGameError::NoCardMatch
+<a href=#378 id=378 data-nosnippet>378</a>            | DeveloperGameError::NoJokerMatch
+<a href=#379 id=379 data-nosnippet>379</a>            | DeveloperGameError::JokerNotFound(<span class="kw">_</span>)
+<a href=#380 id=380 data-nosnippet>380</a>            | DeveloperGameError::JokerNotInShop =&gt; UserError::NotFound,
+<a href=#381 id=381 data-nosnippet>381</a>            DeveloperGameError::InvalidHand(<span class="kw">_</span>)
+<a href=#382 id=382 data-nosnippet>382</a>            | DeveloperGameError::InvalidStage
+<a href=#383 id=383 data-nosnippet>383</a>            | DeveloperGameError::InvalidAction
+<a href=#384 id=384 data-nosnippet>384</a>            | DeveloperGameError::InvalidBlind
+<a href=#385 id=385 data-nosnippet>385</a>            | DeveloperGameError::InvalidBalance
+<a href=#386 id=386 data-nosnippet>386</a>            | DeveloperGameError::InvalidActionSpace
+<a href=#387 id=387 data-nosnippet>387</a>            | DeveloperGameError::InvalidSlot =&gt; UserError::InvalidState,
+<a href=#388 id=388 data-nosnippet>388</a>            DeveloperGameError::NoRemainingDiscards | DeveloperGameError::NoRemainingPlays =&gt; {
+<a href=#389 id=389 data-nosnippet>389</a>                UserError::OperationFailed
+<a href=#390 id=390 data-nosnippet>390</a>            }
+<a href=#391 id=391 data-nosnippet>391</a>            <span class="kw">_ </span>=&gt; UserError::SystemError,
+<a href=#392 id=392 data-nosnippet>392</a>        }
+<a href=#393 id=393 data-nosnippet>393</a>    }
+<a href=#394 id=394 data-nosnippet>394</a>}
+<a href=#395 id=395 data-nosnippet>395</a>
+<a href=#396 id=396 data-nosnippet>396</a><span class="kw">impl </span>Default <span class="kw">for </span>ErrorSanitizer {
+<a href=#397 id=397 data-nosnippet>397</a>    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+<a href=#398 id=398 data-nosnippet>398</a>        <span class="self">Self</span>::new(ErrorDetailLevel::default())
+<a href=#399 id=399 data-nosnippet>399</a>    }
+<a href=#400 id=400 data-nosnippet>400</a>}
+<a href=#401 id=401 data-nosnippet>401</a>
+<a href=#402 id=402 data-nosnippet>402</a><span class="doccomment">/// Backward compatibility aliases (deprecated - use DeveloperGameError directly)
+<a href=#403 id=403 data-nosnippet>403</a></span><span class="kw">pub type </span>PlayHandError = DeveloperPlayHandError;
+<a href=#404 id=404 data-nosnippet>404</a><span class="kw">pub type </span>GameError = DeveloperGameError;
+<a href=#405 id=405 data-nosnippet>405</a><span class="kw">pub type </span>ActionSpaceError = DeveloperActionSpaceError;
+<a href=#406 id=406 data-nosnippet>406</a>
+<a href=#407 id=407 data-nosnippet>407</a><span class="attr">#[cfg(feature = <span class="string">"python"</span>)]
+<a href=#408 id=408 data-nosnippet>408</a></span><span class="kw">impl </span>std::convert::From&lt;DeveloperGameError&gt; <span class="kw">for </span>PyErr {
+<a href=#409 id=409 data-nosnippet>409</a>    <span class="kw">fn </span>from(err: DeveloperGameError) -&gt; PyErr {
+<a href=#410 id=410 data-nosnippet>410</a>        <span class="comment">// In Python bindings, always use sanitized errors for security
+<a href=#411 id=411 data-nosnippet>411</a>        </span><span class="kw">let </span>sanitizer = ErrorSanitizer::default();
+<a href=#412 id=412 data-nosnippet>412</a>        <span class="kw">let </span>user_error = sanitizer.sanitize_game_error(<span class="kw-2">&amp;</span>err);
+<a href=#413 id=413 data-nosnippet>413</a>        PyException::new_err(user_error.to_string())
+<a href=#414 id=414 data-nosnippet>414</a>    }
+<a href=#415 id=415 data-nosnippet>415</a>}
+<a href=#416 id=416 data-nosnippet>416</a>
+<a href=#417 id=417 data-nosnippet>417</a><span class="attr">#[cfg(feature = <span class="string">"python"</span>)]
+<a href=#418 id=418 data-nosnippet>418</a></span><span class="kw">impl </span>std::convert::From&lt;UserError&gt; <span class="kw">for </span>PyErr {
+<a href=#419 id=419 data-nosnippet>419</a>    <span class="kw">fn </span>from(err: UserError) -&gt; PyErr {
+<a href=#420 id=420 data-nosnippet>420</a>        PyException::new_err(err.to_string())
+<a href=#421 id=421 data-nosnippet>421</a>    }
+<a href=#422 id=422 data-nosnippet>422</a>}</code></pre></div></section></main></body></html>
