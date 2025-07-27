@@ -4,6 +4,7 @@
 //! improvements from the JokerEffectProcessor optimizations.
 
 use balatro_rs::joker_effect_processor::JokerEffectProcessor;
+#[allow(deprecated)]
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 
 /// Basic processing benchmarks with different numbers of jokers

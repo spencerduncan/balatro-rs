@@ -1,7 +1,7 @@
 //! Tests for consumable card targeting functionality
 
 #[cfg(test)]
-mod tests {
+mod test_mod {
     use crate::card::{Card, Suit, Value};
     use crate::config::Config;
     use crate::consumables::{

@@ -2263,8 +2263,10 @@ mod tests {
         let mut processor = JokerEffectProcessor::new();
 
         // Set very short TTL for testing
-        let mut config = CacheConfig::default();
-        config.ttl_seconds = 0; // Immediate expiration
+        let config = CacheConfig {
+            ttl_seconds: 0, // Immediate expiration
+            ..Default::default()
+        };
         processor.set_cache_config(config);
 
         let cache_key = "test_key".to_string();
@@ -2295,8 +2297,10 @@ mod tests {
         let mut processor = JokerEffectProcessor::new();
 
         // Set very small cache size for testing
-        let mut config = CacheConfig::default();
-        config.max_entries = 2;
+        let config = CacheConfig {
+            max_entries: 2,
+            ..Default::default()
+        };
         processor.set_cache_config(config);
 
         let test_result = ProcessingResult {
@@ -2323,8 +2327,10 @@ mod tests {
         let mut processor = JokerEffectProcessor::new();
 
         // Disable caching
-        let mut config = CacheConfig::default();
-        config.enabled = false;
+        let config = CacheConfig {
+            enabled: false,
+            ..Default::default()
+        };
         processor.set_cache_config(config);
 
         let cache_key = "test_key".to_string();
@@ -2378,8 +2384,10 @@ mod tests {
         let mut processor = JokerEffectProcessor::new();
 
         // Set short TTL
-        let mut config = CacheConfig::default();
-        config.ttl_seconds = 0;
+        let config = CacheConfig {
+            ttl_seconds: 0,
+            ..Default::default()
+        };
         processor.set_cache_config(config);
 
         let test_result = ProcessingResult {
@@ -2419,8 +2427,10 @@ mod tests {
         let mut processor_without_cache = JokerEffectProcessor::new();
 
         // Disable cache for one processor
-        let mut config = CacheConfig::default();
-        config.enabled = false;
+        let config = CacheConfig {
+            enabled: false,
+            ..Default::default()
+        };
         processor_without_cache.set_cache_config(config);
         // Create long-lived values for the context
         let stage = Box::leak(Box::new(crate::stage::Stage::PreBlind()));
@@ -2730,9 +2740,11 @@ mod tests {
     #[test]
     fn test_processing_context_builder_backward_compatibility() {
         // Test that existing code still works
-        let mut manual_context = ProcessingContext::default();
-        manual_context.processing_mode = ProcessingMode::Delayed;
-        manual_context.validate_effects = false;
+        let manual_context = ProcessingContext {
+            processing_mode: ProcessingMode::Delayed,
+            validate_effects: false,
+            ..Default::default()
+        };
 
         let builder_context = ProcessingContext::builder()
             .processing_mode(ProcessingMode::Delayed)
@@ -2798,13 +2810,13 @@ mod tests {
 
     #[test]
     fn test_trait_optimization_metrics_calculation() {
-        let mut metrics = TraitOptimizationMetrics::default();
-
-        // Simulate some optimization usage
-        metrics.gameplay_optimized_count = 50;
-        metrics.modifier_optimized_count = 30;
-        metrics.hybrid_optimized_count = 20;
-        metrics.legacy_path_count = 100;
+        let metrics = TraitOptimizationMetrics {
+            gameplay_optimized_count: 50,
+            modifier_optimized_count: 30,
+            hybrid_optimized_count: 20,
+            legacy_path_count: 100,
+            ..Default::default()
+        };
 
         // Test optimization ratio calculation
         let _total_optimized = 50 + 30 + 20; // 100
@@ -2819,10 +2831,11 @@ mod tests {
 
     #[test]
     fn test_trait_cache_hit_ratio() {
-        let mut metrics = TraitOptimizationMetrics::default();
-
-        metrics.trait_detection_cache_hits = 80;
-        metrics.trait_detection_cache_misses = 20;
+        let metrics = TraitOptimizationMetrics {
+            trait_detection_cache_hits: 80,
+            trait_detection_cache_misses: 20,
+            ..Default::default()
+        };
 
         let expected_ratio = 80.0 / 100.0;
         assert!((metrics.trait_cache_hit_ratio() - expected_ratio).abs() < 0.001);

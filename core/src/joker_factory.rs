@@ -204,7 +204,7 @@ impl JokerFactory {
             SteelJoker, // Now properly implemented as scaling joker
             FourFingers,
             Triboulet, // Legendary joker - Kings and Queens give X2 mult
-            // Note: HalfJoker and Banner are still placeholders
+                       // Note: HalfJoker and Banner are still placeholders
         ]
     }
 }

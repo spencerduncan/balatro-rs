@@ -5,7 +5,6 @@ use std::time::{Duration, Instant};
 /// Test module for CLI input validation security fixes
 /// These tests verify that the CLI handles malformed input gracefully
 /// and prevents denial of service attacks through input validation.
-
 #[cfg(test)]
 mod input_validation_tests {
     use super::*;

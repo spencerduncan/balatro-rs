@@ -16,6 +16,7 @@ use balatro_rs::{
     shop::Shop,
     stage::Stage,
 };
+#[allow(deprecated)]
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use std::collections::HashMap;
 use std::time::Instant;

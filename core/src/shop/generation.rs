@@ -666,8 +666,8 @@ mod tests {
 
         let common_jokers = generator.get_jokers_by_rarity(JokerRarity::Common);
         let uncommon_jokers = generator.get_jokers_by_rarity(JokerRarity::Uncommon);
-        let rare_jokers = generator.get_jokers_by_rarity(JokerRarity::Rare);
-        let legendary_jokers = generator.get_jokers_by_rarity(JokerRarity::Legendary);
+        let _rare_jokers = generator.get_jokers_by_rarity(JokerRarity::Rare);
+        let _legendary_jokers = generator.get_jokers_by_rarity(JokerRarity::Legendary);
 
         // Should have jokers for Common and Uncommon (currently implemented)
         assert!(!common_jokers.is_empty());

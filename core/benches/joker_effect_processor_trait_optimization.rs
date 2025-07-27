@@ -11,6 +11,7 @@ use balatro_rs::joker_impl::{GreedyJoker, LustyJoker, TheJoker};
 use balatro_rs::rank::HandRank;
 use balatro_rs::rng::GameRng;
 use balatro_rs::stage::Stage;
+#[allow(deprecated)]
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use std::collections::HashMap;
 
