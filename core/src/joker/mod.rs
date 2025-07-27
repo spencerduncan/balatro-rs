@@ -1351,23 +1351,6 @@ pub use crate::static_joker::{StaticContext, StaticJoker, StaticJokerAdapter};
 // Re-export old API types for backwards compatibility
 pub use compat::{Joker as OldJoker, Jokers};
 
-// Re-export advanced framework types
-pub use advanced_conditions::{
-    AdvancedCondition, AdvancedConditionBuilder, AdvancedConditionEvaluator,
-    AdvancedEvaluationContext, ConditionCache, GameHistory,
-};
-
-pub use advanced_traits::{
-    AdvancedJokerFramework, AdvancedJokerGameplay, AdvancedJokerIdentity, EnhancedJoker,
-    EnhancedJokerBuilder, EvaluationCost, GameEvent, InternalJokerState, JokerProcessor,
-};
-
-pub use compatibility_bridge::{CompatibilityBridge, LegacyJokerAdapter, MixedJokerCollection};
-
-// Re-export scaling chips joker structs (factory functions not available in current implementation)
-pub use scaling_chips_jokers::{
-    ArrowheadJoker, CastleJoker, HikerJoker, OddToddJoker, ScholarJoker, StuntmanJoker, WeeJoker,
-};
 // Module-level trait tests
 #[cfg(test)]
 mod joker_trait_tests {

@@ -9,7 +9,6 @@ use std::sync::{Arc, Mutex};
 /// Zero-allocation mock implementation with state tracking
 #[derive(Debug, Clone)]
 struct StaticLifecycleMock {
-    id: &'static str,
     state: Arc<Mutex<LifecycleState>>,
 }
 
@@ -26,28 +25,16 @@ struct LifecycleState {
 }
 
 impl StaticLifecycleMock {
-    fn new(id: &'static str) -> Self {
-        Self {
-            id,
-            state: Arc::new(Mutex::new(LifecycleState::default())),
-        }
-    }
-
     fn with_state() -> Self {
         Self {
-            id: "stateful",
             state: Arc::new(Mutex::new(LifecycleState::default())),
-        }
-    }
-
-    fn reset(&self) {
-        if let Ok(mut state) = self.state.lock() {
-            *state = LifecycleState::default();
         }
     }
 
     fn get_state(&self) -> LifecycleState {
-        self.state.lock().unwrap().clone()
+        // For tests, we'll panic on poisoned mutex as it indicates a serious error
+        // This is consistent with test expectations - tests should not have mutex poisoning
+        self.state.lock().expect("Mutex poisoned in test").clone()
     }
 }
 
@@ -401,7 +388,7 @@ mod concurrency_tests {
             handle.join().unwrap();
         }
 
-        let state = joker.lock().unwrap().get_state();
+        let state = joker.lock().expect("Mutex poisoned in test").get_state();
         assert_eq!(state.round_start_count, 25);
         assert_eq!(state.round_end_count, 25);
         assert_eq!(state.jokers_added.len(), 25);
