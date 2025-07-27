@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["WeightedGenerator"]};
+window.SIDEBAR_ITEMS = {"struct":["StandardRerollMechanics","WeightedGenerator"]};
