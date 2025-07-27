@@ -232,7 +232,6 @@ impl Joker for BootstrapsJoker {
     }
 }
 
-
 /// Ceremonial Dagger: Mult doubles when Blind starts, resets when completed
 #[derive(Debug, Clone)]
 pub struct CeremonialDagger {

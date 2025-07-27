@@ -89,7 +89,6 @@ pub fn create_ceremonial_dagger() -> ScalingJoker {
     .with_reset_condition(ResetCondition::RoundEnd)
 }
 
-
 /// Throwback: X mult for each reroll in shop
 pub fn create_throwback() -> ScalingJoker {
     ScalingJoker::new(
@@ -191,7 +190,7 @@ pub fn create_loyalty_card() -> ScalingJoker {
     .with_reset_condition(ResetCondition::AnteEnd)
 }
 
-/// Castle: +300 chips per discard used this round  
+/// Castle: +300 chips per discard used this round
 pub fn create_castle() -> ScalingJoker {
     ScalingJoker::new(
         JokerId::Reserved3,
