@@ -7,9 +7,6 @@ use balatro_rs::{
 /// that gains +1 Mult per Tarot card used
 #[test]
 fn test_fortune_teller_joker_correctly_created() {
-    // Initialize all systems before running the test to avoid factory race conditions
-    balatro_rs::initialize().expect("Failed to initialize core systems");
-
     let fortune = JokerFactory::create(JokerId::FortuneTeller);
     assert!(fortune.is_some());
 
@@ -108,12 +105,16 @@ fn test_steel_joker_creation() {
 /// Test that all three jokers appear in the correct rarity lists
 #[test]
 fn test_jokers_in_rarity_lists() {
-    // Initialize all systems before running the test to avoid factory race conditions
-    balatro_rs::initialize().expect("Failed to initialize core systems");
-
-    // Fortune should be in Rare (based on the MysteryJoker's original rarity)
+    // Fortune Teller should be in Rare rarity
     let rare_jokers = JokerFactory::get_by_rarity(JokerRarity::Rare);
     assert!(rare_jokers.contains(&JokerId::FortuneTeller));
+    
+    // MysteryJoker should be in Rare rarity  
+    assert!(rare_jokers.contains(&JokerId::MysteryJoker));
+    
+    // Fortune Teller should also be in Common rarity for scaling variant
+    let common_jokers = JokerFactory::get_by_rarity(JokerRarity::Common);
+    assert!(common_jokers.contains(&JokerId::FortuneTeller));
 
     // Red Card (Reserved6) should be in Common
     let common_jokers = JokerFactory::get_by_rarity(JokerRarity::Common);
@@ -133,8 +134,37 @@ fn test_jokers_in_implemented_list() {
     let implemented = JokerFactory::get_all_implemented();
 
     assert!(implemented.contains(&JokerId::FortuneTeller));
+    assert!(implemented.contains(&JokerId::MysteryJoker));
     assert!(implemented.contains(&JokerId::Reserved6)); // Red Card
+    assert!(implemented.contains(&JokerId::RedCard));
     assert!(implemented.contains(&JokerId::SteelJoker));
+}
+
+/// Validation test to prevent future ID conflicts
+/// Ensures each joker type has unique ID and proper factory mapping
+#[test]
+fn test_no_joker_id_conflicts() {
+    // Test that FortuneTeller and MysteryJoker are distinct
+    let fortune_teller = JokerFactory::create(JokerId::FortuneTeller).unwrap();
+    let mystery_joker = JokerFactory::create(JokerId::MysteryJoker).unwrap();
+    
+    // Ensure they have different IDs
+    assert_ne!(fortune_teller.id(), mystery_joker.id());
+    
+    // Ensure they have different names
+    assert_ne!(fortune_teller.name(), mystery_joker.name());
+    
+    // Ensure they have different descriptions
+    assert_ne!(fortune_teller.description(), mystery_joker.description());
+    
+    // Verify specific expected values
+    assert_eq!(fortune_teller.id(), JokerId::FortuneTeller);
+    assert_eq!(fortune_teller.name(), "Fortune Teller");
+    assert_eq!(fortune_teller.description(), "+1 Mult per Tarot card used");
+    
+    assert_eq!(mystery_joker.id(), JokerId::MysteryJoker);
+    assert_eq!(mystery_joker.name(), "Mystery Joker");
+    assert_eq!(mystery_joker.description(), "Random effect each hand");
 }
 
 /// Regression test: Ensure other jokers still work correctly

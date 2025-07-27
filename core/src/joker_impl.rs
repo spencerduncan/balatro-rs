@@ -1072,7 +1072,7 @@ pub struct MysteryJoker;
 
 impl Joker for MysteryJoker {
     fn id(&self) -> JokerId {
-        JokerId::Reserved4 // Use Reserved4 to avoid conflict with Fortune Teller
+        JokerId::MysteryJoker
     }
 
     fn name(&self) -> &str {
@@ -1524,7 +1524,7 @@ mod tests {
     #[test]
     fn test_mystery_joker_basic_properties() {
         let mystery = MysteryJoker;
-        assert_eq!(mystery.id(), JokerId::Reserved4);
+        assert_eq!(mystery.id(), JokerId::MysteryJoker);
         assert_eq!(mystery.name(), "Mystery Joker");
         assert_eq!(mystery.description(), "Random effect each hand");
         assert_eq!(mystery.rarity(), JokerRarity::Rare);
@@ -1750,7 +1750,7 @@ mod tests {
             "AcrobatJoker should be creatable from factory"
         );
 
-        let mystery = JokerFactory::create(JokerId::Reserved4);
+        let mystery = JokerFactory::create(JokerId::MysteryJoker);
         assert!(
             mystery.is_some(),
             "MysteryJoker should be creatable from factory"
@@ -1804,6 +1804,10 @@ mod tests {
             rare_jokers.contains(&JokerId::FortuneTeller),
             "Fortune Teller (JokerId::FortuneTeller) should be in Rare rarity"
         );
+        assert!(
+            rare_jokers.contains(&JokerId::MysteryJoker),
+            "MysteryJoker should be in Rare rarity"
+        );
 
         let legendary_jokers = JokerFactory::get_by_rarity(JokerRarity::Legendary);
         assert!(
@@ -1838,7 +1842,11 @@ mod tests {
             "AcrobatJoker should be in implemented list"
         );
         assert!(
-            all_implemented.contains(&JokerId::Reserved4),
+            all_implemented.contains(&JokerId::FortuneTeller),
+            "FortuneTeller should be in implemented list"
+        );
+        assert!(
+            all_implemented.contains(&JokerId::MysteryJoker),
             "MysteryJoker should be in implemented list"
         );
         assert!(

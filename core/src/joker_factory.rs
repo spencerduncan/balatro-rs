@@ -71,9 +71,9 @@ impl JokerFactory {
             JokerId::Reserved7 => Some(Box::new(SixShooterJoker)),
             JokerId::LuckyCharm => Some(Box::new(LuckyCardJoker)),
             JokerId::Reserved8 => Some(Box::new(GrimJoker)),
-            JokerId::AcrobatJoker => Some(Box::new(AcrobatJoker::new())),
-            JokerId::FortuneTeller => Some(Box::new(FortuneTellerJoker::new())),
-            JokerId::Reserved4 => Some(Box::new(MysteryJoker)),
+            JokerId::AcrobatJoker => Some(Box::new(AcrobatJokerImpl)),
+            JokerId::FortuneTeller => Some(Box::new(create_fortune_teller())),
+            JokerId::MysteryJoker => Some(Box::new(MysteryJoker)),
             JokerId::VagabondJoker => Some(Box::new(VagabondJokerImpl)),
             JokerId::Reserved9 => Some(Box::new(ChaoticJoker)),
 
@@ -177,9 +177,9 @@ impl JokerFactory {
                 Banner,
                 AbstractJoker,
                 // RNG-based jokers (Issue #442)
-                Reserved7,     // SixShooterJoker
-                LuckyCharm,    // LuckyCardJoker
-                FortuneTeller, // Fortune Teller
+                Reserved7,  // SixShooterJoker
+                LuckyCharm, // LuckyCardJoker
+                FortuneTeller, // Fortune Teller scaling joker
                 // Special mechanic jokers
                 Erosion,
                 Photograph,
@@ -226,7 +226,7 @@ impl JokerFactory {
             JokerRarity::Rare => vec![
                 // RNG-based jokers (Issue #442)
                 AcrobatJoker,
-                Reserved4, // Mystery Joker
+                MysteryJoker, // MysteryJoker
                 // Special mechanic jokers
                 Blueprint,
                 // Scaling mult jokers
@@ -287,7 +287,8 @@ impl JokerFactory {
             LuckyCharm, // LuckyCardJoker
             Reserved8,  // GrimJoker
             AcrobatJoker,
-            Reserved4, // MysteryJoker
+            FortuneTeller, // Fortune Teller scaling joker
+            MysteryJoker, // MysteryJoker
             VagabondJoker,
             Reserved9, // ChaoticJoker
             // Special mechanic jokers using new trait system
