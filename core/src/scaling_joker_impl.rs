@@ -205,20 +205,35 @@ pub fn create_loyalty_card() -> ScalingJoker {
     .with_reset_condition(ResetCondition::AnteEnd)
 }
 
-/// Castle: +300 chips per discard used this round  
+/// Castle: +3 chips per discarded card of specific suit (requires custom implementation)
+/// Note: This is a placeholder - Castle requires custom logic for suit-specific scaling
 pub fn create_castle() -> ScalingJoker {
     ScalingJoker::new(
-        JokerId::Reserved3,
+        JokerId::Castle,
         "Castle".to_string(),
-        "+300 Chips per discard used this round".to_string(),
+        "This Joker gains +3 Chips per discarded card of specific suit, suit changes every round"
+            .to_string(),
         JokerRarity::Rare,
         0.0,
-        300.0,
-        ScalingTrigger::CardDiscarded,
+        3.0,
+        ScalingTrigger::CardDiscarded, // Will need custom implementation for suit-specific logic
         ScalingEffectType::Chips,
     )
     .with_reset_condition(ResetCondition::RoundEnd)
-    .with_max_value(1200.0) // Max 4 discards per round typically
+}
+
+/// Wee Joker: +8 chips when each played 2 is scored
+pub fn create_wee_joker() -> ScalingJoker {
+    ScalingJoker::new(
+        JokerId::Wee,
+        "Wee Joker".to_string(),
+        "This Joker gains +8 Chips when each played 2 is scored".to_string(),
+        JokerRarity::Uncommon,
+        0.0,
+        8.0,
+        ScalingTrigger::CardDiscarded, // Placeholder - needs custom logic for played 2s
+        ScalingEffectType::Chips,
+    )
 }
 
 /// Factory function to create all scaling jokers
@@ -239,6 +254,7 @@ pub fn create_all_scaling_jokers() -> Vec<ScalingJoker> {
         create_marble_joker_scaling(),
         create_loyalty_card(),
         create_castle(),
+        create_wee_joker(),
     ]
 }
 
@@ -259,7 +275,8 @@ pub fn get_scaling_joker_by_id(id: JokerId) -> Option<ScalingJoker> {
         JokerId::Reserved2 => Some(create_mystic_summit()),
         JokerId::MarbleJoker => Some(create_marble_joker_scaling()),
         JokerId::Loyalty => Some(create_loyalty_card()),
-        JokerId::Reserved3 => Some(create_castle()),
+        JokerId::Castle => Some(create_castle()),
+        JokerId::Wee => Some(create_wee_joker()),
         _ => None,
     }
 }
@@ -271,7 +288,11 @@ mod tests {
     #[test]
     fn test_all_scaling_jokers_created() {
         let jokers = create_all_scaling_jokers();
-        assert_eq!(jokers.len(), 15, "Should create exactly 15 scaling jokers");
+        assert_eq!(
+            jokers.len(),
+            16,
+            "Should create exactly 16 scaling jokers (including Wee)"
+        );
 
         // Test that all jokers have unique IDs
         let mut ids = std::collections::HashSet::new();
@@ -304,10 +325,11 @@ mod tests {
     }
 
     #[test]
-    fn test_castle_with_max_value() {
+    fn test_castle_with_round_reset() {
         let joker = create_castle();
-        assert_eq!(joker.max_value, Some(1200.0));
+        assert_eq!(joker.max_value, None); // No max value for suit-specific scaling
         assert_eq!(joker.reset_condition, Some(ResetCondition::RoundEnd));
+        assert_eq!(joker.increment, 3.0); // +3 chips per suit-specific discard
     }
 
     #[test]

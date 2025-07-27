@@ -161,6 +161,8 @@ pub enum JokerId {
     Driver,
     Blueprint,
     Wee,
+    Castle,
+    Stuntman,
     Merry,
     Gros,
     Reserved,

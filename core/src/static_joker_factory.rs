@@ -506,6 +506,23 @@ impl StaticJokerFactory {
         )
     }
 
+    /// Create Stuntman (+300 Chips, -2 hand size)
+    /// NOTE: This provides only the chip bonus - hand size reduction requires custom implementation
+    /// TODO: Implement custom Stuntman joker with both chip bonus AND hand size modification
+    pub fn create_stuntman() -> Box<dyn Joker> {
+        // INCOMPLETE: Only provides chips, does NOT reduce hand size
+        Box::new(
+            StaticJoker::builder(JokerId::Stuntman, "Stuntman", "+300 Chips, -2 hand size")
+                .rarity(JokerRarity::Uncommon)
+                .cost(6)
+                .chips(300)
+                .condition(StaticCondition::Always)
+                .per_hand()
+                .build()
+                .expect("Valid joker configuration"),
+        )
+    }
+
     /// Test-only methods that return concrete types for internal testing
     #[cfg(test)]
     pub fn create_greedy_joker_concrete() -> StaticJoker {
