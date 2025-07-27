@@ -2,7 +2,6 @@
 ///
 /// These tests verify that all numeric values in the game use f64 to match Lua semantics.
 /// Tests should fail initially (RED phase) and pass after migration (GREEN phase).
-
 #[cfg(test)]
 mod f64_migration_acceptance_tests {
     use balatro_rs::ante::Ante;
@@ -114,7 +113,7 @@ mod f64_migration_acceptance_tests {
         let chips = card.chips();
 
         // Should be able to handle chip values
-        assert!(chips >= 0); // Basic validation - exact value depends on implementation
+        // Basic validation - chips value should be reasonable (removed >= 0 check as it's always true for unsigned)
 
         // Verify we can add values to card chips
         let total_chips = chips + 1;
@@ -128,7 +127,7 @@ mod f64_migration_acceptance_tests {
         let base_cost = pack_type.base_cost();
 
         // Should return usize and support cost calculations
-        assert!(base_cost >= 0);
+        // Base cost validation (removed >= 0 check as it's always true for unsigned)
 
         // Verify arithmetic operations work with costs (converting to f64)
         let discounted_cost = (base_cost as f64) * 0.75; // 25% discount
@@ -156,7 +155,7 @@ mod f64_migration_acceptance_tests {
         let base_requirement = ante.base();
 
         // Should return usize and support requirements
-        assert!(base_requirement >= 0);
+        // Base requirement validation (removed >= 0 check as it's always true for unsigned)
 
         // Verify arithmetic operations with ante requirements (converting to f64)
         let modified_requirement = (base_requirement as f64) * 1.25; // 25% increase
@@ -170,7 +169,7 @@ mod f64_migration_acceptance_tests {
         let reward = blind.reward();
 
         // Should return usize and support rewards
-        assert!(reward >= 0);
+        // Reward validation (removed >= 0 check as it's always true for unsigned)
 
         // Verify arithmetic operations with rewards (converting to f64)
         let bonus_reward = (reward as f64) + 0.5;

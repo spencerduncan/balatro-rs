@@ -13,8 +13,8 @@ use balatro_rs::rng::GameRng;
 use balatro_rs::stage::Stage;
 #[allow(deprecated)]
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
-use std::hint::black_box;
 use std::collections::HashMap;
+use std::hint::black_box;
 
 // Test data holder to maintain ownership
 struct TestGameData {

@@ -1,7 +1,7 @@
 use balatro_rs::card::{Suit, Value};
-use balatro_rs::joker::{JokerGameplay, JokerId, ProcessContext, ProcessResult};
+use balatro_rs::joker::{JokerId, ProcessResult};
 use balatro_rs::joker_state::JokerStateManager;
-use balatro_rs::stage::Stage;
+// Stage import removed - unused
 use std::sync::{
     atomic::{AtomicU32, Ordering},
     Arc, Mutex, RwLock,

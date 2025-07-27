@@ -18,8 +18,8 @@ use balatro_rs::{
 };
 #[allow(deprecated)]
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
-use std::hint::black_box;
 use std::collections::HashMap;
+use std::hint::black_box;
 use std::time::Instant;
 
 /// Benchmark trait method dispatch overhead

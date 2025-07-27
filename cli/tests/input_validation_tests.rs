@@ -33,8 +33,7 @@ mod input_validation_tests {
         // The important thing is that it doesn't panic on startup
         match output {
             Ok(_) => {
-                // CLI started successfully
-                assert!(true);
+                // CLI started successfully - test passes
             }
             Err(e) => {
                 // Only fail if it's a compilation error, not a runtime issue
@@ -53,7 +52,7 @@ mod input_validation_tests {
         let valid_input = "5";
         let max = 10;
         match valid_input.trim().parse::<usize>() {
-            Ok(i) if i <= max => assert!(true, "Valid input should be accepted"),
+            Ok(i) if i <= max => { /* Valid input accepted as expected */ }
             Ok(_) => panic!("Valid input within range should be accepted"),
             Err(_) => panic!("Valid numeric input should parse successfully"),
         }
@@ -62,7 +61,7 @@ mod input_validation_tests {
         let invalid_input = "abc";
         match invalid_input.trim().parse::<usize>() {
             Ok(_) => panic!("Non-numeric input should not parse"),
-            Err(_) => assert!(true, "Non-numeric input should be rejected"),
+            Err(_) => { /* Non-numeric input rejected as expected */ }
         }
 
         // Test 3: Input out of range
@@ -70,7 +69,7 @@ mod input_validation_tests {
         let max = 10;
         match out_of_range.trim().parse::<usize>() {
             Ok(i) if i <= max => panic!("Out of range input should be rejected"),
-            Ok(_) => assert!(true, "Out of range input should be handled"),
+            Ok(_) => { /* Out of range input handled as expected */ }
             Err(_) => panic!("Numeric input should parse"),
         }
 
@@ -85,7 +84,7 @@ mod input_validation_tests {
         let edge_cases = vec!["0", " 0 ", "10", " 10 "];
         for input in edge_cases {
             match input.trim().parse::<usize>() {
-                Ok(i) if i <= 10 => assert!(true, "Valid edge case should be accepted"),
+                Ok(i) if i <= 10 => { /* Valid edge case accepted as expected */ }
                 Ok(_) => panic!("Edge case parsing failed"),
                 Err(_) => panic!("Valid edge case should parse"),
             }
@@ -349,7 +348,7 @@ mod input_validation_tests {
             // Should not panic
             let _ = input.trim().parse::<usize>();
             // The fact that we reach this line means no panic occurred
-            assert!(true, "Malformed input should not cause panic");
+            // Malformed input handled without panic - test passes
         }
 
         // 3. Range validation prevents out-of-bounds access
@@ -358,7 +357,7 @@ mod input_validation_tests {
         match out_of_range.trim().parse::<usize>() {
             Ok(val) if val > max => {
                 // This is expected - value parsed but is out of range
-                assert!(true, "Out of range detection works");
+                // Out of range detection works as expected
             }
             Ok(_) => panic!("Test case error: input should be out of range"),
             Err(_) => panic!("Test case error: input should parse as number"),
@@ -367,7 +366,7 @@ mod input_validation_tests {
         // 4. Input sanitization (trimming) works
         let padded_input = "  5  ";
         match padded_input.trim().parse::<usize>() {
-            Ok(5) => assert!(true, "Input trimming works correctly"),
+            Ok(5) => { /* Input trimming works correctly */ }
             Ok(val) => panic!("Trimming failed: got {val} instead of 5"),
             Err(_) => panic!("Trimmed input should parse successfully"),
         }
