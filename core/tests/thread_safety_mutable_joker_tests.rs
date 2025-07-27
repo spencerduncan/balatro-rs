@@ -75,16 +75,13 @@ fn test_complex_state_thread_safety() {
         phase: Phase,
     }
 
-    #[derive(Debug, Clone, PartialEq)]
-    #[derive(Default)]
+    #[derive(Debug, Clone, PartialEq, Default)]
     enum Phase {
         #[default]
         Charging,
         Ready,
         Cooldown(u32),
     }
-
-    
 
     impl ComplexThreadSafeJoker {
         fn new() -> Self {

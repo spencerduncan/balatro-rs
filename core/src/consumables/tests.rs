@@ -222,10 +222,7 @@ mod tests {
         ];
 
         for target in valid_targets {
-            assert!(
-                target.is_valid(&game),
-                "Target should be valid: {target:?}"
-            );
+            assert!(target.is_valid(&game), "Target should be valid: {target:?}");
         }
 
         // Test invalid targets
@@ -637,11 +634,7 @@ mod tests {
         for (slot, should_pass, desc) in boundary_cases {
             let target = JokerTarget::new(slot);
             let result = target.validate(&game);
-            assert_eq!(
-                result.is_ok(),
-                should_pass,
-                "Boundary test failed: {desc}"
-            );
+            assert_eq!(result.is_ok(), should_pass, "Boundary test failed: {desc}");
         }
     }
 
