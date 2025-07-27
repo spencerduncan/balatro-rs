@@ -140,7 +140,7 @@ fn bench_bulk_operations(c: &mut Criterion) {
                     6 => JokerId::MysticalJoker,
                     7 => JokerId::FibonacciJoker,
                     8 => JokerId::ScaryFace,
-                    _ => JokerId::RoughGem,
+                    _ => JokerId::Baron,
                 };
                 manager.set_state(joker_id, JokerState::with_accumulated_value(i as f64));
             }
@@ -199,7 +199,7 @@ fn bench_memory_usage(c: &mut Criterion) {
                             6 => JokerId::MysticalJoker,
                             7 => JokerId::FibonacciJoker,
                             8 => JokerId::ScaryFace,
-                            9 => JokerId::RoughGem,
+                            9 => JokerId::Ancient,
                             10 => JokerId::Banner,
                             11 => JokerId::EvenSteven,
                             12 => JokerId::OddTodd,
