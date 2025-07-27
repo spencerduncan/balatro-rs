@@ -176,7 +176,8 @@ mod tests {
             VoucherEffect::HandSizeIncrease(2),
             VoucherEffect::JokerSlotIncrease(1),
             VoucherEffect::MoneyGain(100),
-            VoucherEffect::ExtraPackOptions(1)];
+            VoucherEffect::ExtraPackOptions(1),
+        ];
 
         // Test filtering effects by category
         let hand_effects: Vec<&VoucherEffect> = effects

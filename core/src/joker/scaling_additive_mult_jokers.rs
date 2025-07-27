@@ -8,8 +8,7 @@ use crate::{
     hand::SelectHand,
     joker::{
         traits::{JokerState as JokerStateTrait, ProcessContext, ProcessResult, Rarity},
-        GameContext, Joker, JokerEffect, JokerGameplay, JokerId, JokerIdentity,
-        JokerRarity,
+        GameContext, Joker, JokerEffect, JokerGameplay, JokerId, JokerIdentity, JokerRarity,
     },
     rank::HandRank,
     stage::Stage,
@@ -21,29 +20,27 @@ const MAX_ACCUMULATED_VALUE: f64 = 1_000_000.0;
 
 /// Production resource bounds validation
 /// Prevents memory exhaustion from unbounded accumulation
+#[allow(dead_code)] // Intentionally kept for future validation needs
 fn validate_resource_bounds(accumulated_value: f64, context: &str) -> Result<(), String> {
     if accumulated_value > MAX_ACCUMULATED_VALUE {
         return Err(format!(
-            "Resource bounds exceeded in {}: {} > {} (max allowed)",
-            context, accumulated_value, MAX_ACCUMULATED_VALUE
+            "Resource bounds exceeded in {context}: {accumulated_value} > {MAX_ACCUMULATED_VALUE} (max allowed)"
         ));
     }
-    
+
     if accumulated_value < 0.0 {
         return Err(format!(
-            "Invalid negative accumulated value in {}: {}",
-            context, accumulated_value
+            "Invalid negative accumulated value in {context}: {accumulated_value}"
         ));
     }
-    
+
     // Additional production safety: Check for NaN/Infinity
     if !accumulated_value.is_finite() {
         return Err(format!(
-            "Invalid non-finite accumulated value in {}: {}",
-            context, accumulated_value
+            "Invalid non-finite accumulated value in {context}: {accumulated_value}"
         ));
     }
-    
+
     Ok(())
 }
 
@@ -338,7 +335,7 @@ impl JokerGameplay for FortuneTellerJoker {
                 .get_state(self.id)
                 .map(|state| state.accumulated_value)
                 .unwrap_or(0.0);
-            
+
             ProcessResult {
                 mult_added: accumulated_value, // +1 mult per tarot used
                 ..Default::default()
@@ -438,7 +435,8 @@ impl Joker for GreenJoker {
             .joker_state_manager
             .update_state(self.id(), |state| {
                 // Production safety: Apply bounds checking to prevent overflow
-                state.accumulated_value = (state.accumulated_value + 1.0).min(MAX_ACCUMULATED_VALUE);
+                state.accumulated_value =
+                    (state.accumulated_value + 1.0).min(MAX_ACCUMULATED_VALUE);
             });
 
         let current_mult = context
@@ -493,7 +491,7 @@ impl JokerGameplay for GreenJoker {
                 .get_state(self.id)
                 .map(|state| state.accumulated_value)
                 .unwrap_or(0.0);
-            
+
             if accumulated_value > 0.0 {
                 ProcessResult {
                     mult_added: accumulated_value,
@@ -614,7 +612,8 @@ impl Joker for RideTheBusJoker {
                 .joker_state_manager
                 .update_state(self.id(), |state| {
                     // Production safety: Apply bounds checking to prevent overflow
-                    state.accumulated_value = (state.accumulated_value + 1.0).min(MAX_ACCUMULATED_VALUE);
+                    state.accumulated_value =
+                        (state.accumulated_value + 1.0).min(MAX_ACCUMULATED_VALUE);
                 });
 
             let current_count = context
@@ -817,7 +816,7 @@ impl JokerGameplay for RedCardJoker {
                 .get_state(self.id)
                 .map(|state| state.accumulated_value)
                 .unwrap_or(0.0);
-            
+
             if accumulated_value > 0.0 {
                 ProcessResult {
                     mult_added: accumulated_value * 3.0, // +3 mult per pack skipped
