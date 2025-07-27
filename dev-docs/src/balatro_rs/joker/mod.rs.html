@@ -1269,25 +1269,25 @@
 <a href=#1269 id=1269 data-nosnippet>1269</a></span><span class="attr">#[cfg(test)]
 <a href=#1270 id=1270 data-nosnippet>1270</a></span><span class="kw">pub mod </span>test_utils;
 <a href=#1271 id=1271 data-nosnippet>1271</a>
-<a href=#1272 id=1272 data-nosnippet>1272</a><span class="comment">// Re-export important types
-<a href=#1273 id=1273 data-nosnippet>1273</a></span><span class="kw">pub use </span>conditional::{ConditionalJoker, JokerCondition};
-<a href=#1274 id=1274 data-nosnippet>1274</a>
-<a href=#1275 id=1275 data-nosnippet>1275</a><span class="comment">// Re-export new trait definitions
-<a href=#1276 id=1276 data-nosnippet>1276</a></span><span class="kw">pub use </span>traits::{
-<a href=#1277 id=1277 data-nosnippet>1277</a>    JokerGameplay, JokerIdentity, JokerLifecycle, JokerModifiers, JokerState <span class="kw">as </span>JokerStateTrait,
-<a href=#1278 id=1278 data-nosnippet>1278</a>    ProcessContext, ProcessResult, Rarity,
-<a href=#1279 id=1279 data-nosnippet>1279</a>};
-<a href=#1280 id=1280 data-nosnippet>1280</a>
-<a href=#1281 id=1281 data-nosnippet>1281</a><span class="comment">// Re-export old API types for backwards compatibility
-<a href=#1282 id=1282 data-nosnippet>1282</a></span><span class="kw">pub use </span>compat::{Joker <span class="kw">as </span>OldJoker, Jokers};
-<a href=#1283 id=1283 data-nosnippet>1283</a>
-<a href=#1284 id=1284 data-nosnippet>1284</a><span class="comment">// Include tests module with trait tests
-<a href=#1285 id=1285 data-nosnippet>1285</a></span><span class="attr">#[cfg(test)]
-<a href=#1286 id=1286 data-nosnippet>1286</a></span><span class="kw">pub mod </span>tests;
+<a href=#1272 id=1272 data-nosnippet>1272</a><span class="comment">// Include comprehensive tests for the new trait system
+<a href=#1273 id=1273 data-nosnippet>1273</a></span><span class="attr">#[cfg(test)]
+<a href=#1274 id=1274 data-nosnippet>1274</a></span><span class="kw">pub mod </span>tests;
+<a href=#1275 id=1275 data-nosnippet>1275</a>
+<a href=#1276 id=1276 data-nosnippet>1276</a><span class="comment">// Re-export important types
+<a href=#1277 id=1277 data-nosnippet>1277</a></span><span class="kw">pub use </span>conditional::{ConditionalJoker, JokerCondition};
+<a href=#1278 id=1278 data-nosnippet>1278</a>
+<a href=#1279 id=1279 data-nosnippet>1279</a><span class="comment">// Re-export new trait definitions
+<a href=#1280 id=1280 data-nosnippet>1280</a></span><span class="kw">pub use </span>traits::{
+<a href=#1281 id=1281 data-nosnippet>1281</a>    JokerGameplay, JokerIdentity, JokerLifecycle, JokerModifiers, JokerState <span class="kw">as </span>JokerStateTrait,
+<a href=#1282 id=1282 data-nosnippet>1282</a>    ProcessContext, ProcessResult, Rarity,
+<a href=#1283 id=1283 data-nosnippet>1283</a>};
+<a href=#1284 id=1284 data-nosnippet>1284</a>
+<a href=#1285 id=1285 data-nosnippet>1285</a><span class="comment">// Re-export old API types for backwards compatibility
+<a href=#1286 id=1286 data-nosnippet>1286</a></span><span class="kw">pub use </span>compat::{Joker <span class="kw">as </span>OldJoker, Jokers};
 <a href=#1287 id=1287 data-nosnippet>1287</a>
 <a href=#1288 id=1288 data-nosnippet>1288</a><span class="comment">// Module-level trait tests
 <a href=#1289 id=1289 data-nosnippet>1289</a></span><span class="attr">#[cfg(test)]
-<a href=#1290 id=1290 data-nosnippet>1290</a></span><span class="kw">mod </span>trait_tests {
+<a href=#1290 id=1290 data-nosnippet>1290</a></span><span class="kw">mod </span>joker_trait_tests {
 <a href=#1291 id=1291 data-nosnippet>1291</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
 <a href=#1292 id=1292 data-nosnippet>1292</a>
 <a href=#1293 id=1293 data-nosnippet>1293</a>    <span class="attr">#[test]
