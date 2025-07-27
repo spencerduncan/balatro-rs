@@ -76,6 +76,8 @@ pub enum JokerId {
     Onyx,
     Arrowhead,
     Bloodstone,
+    Ancient,
+    Baron,
     TheIdol,
     SeeingDouble,
     Matador,

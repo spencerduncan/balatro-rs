@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use balatro_rs::card::{Suit, Value};
-use balatro_rs::joker::{JokerGameplay, JokerId, ProcessResult};
+use balatro_rs::joker::{JokerId, ProcessResult};
 use balatro_rs::joker_state::JokerStateManager;
 use std::sync::{
     atomic::{AtomicU32, Ordering},
@@ -14,6 +14,7 @@ use std::thread;
 #[test]
 fn test_send_sync_with_mutable_state() {
     // Joker with atomic state - lock-free and thread-safe
+    #[allow(dead_code)]
     struct AtomicJoker {
         id: JokerId,
         trigger_count: AtomicU32,
@@ -21,6 +22,7 @@ fn test_send_sync_with_mutable_state() {
     }
 
     impl AtomicJoker {
+        #[allow(dead_code)]
         fn new(max_triggers: u32) -> Self {
             Self {
                 id: JokerId::Joker,
@@ -30,6 +32,7 @@ fn test_send_sync_with_mutable_state() {
         }
 
         // This would work with &mut self in the trait
+        #[allow(dead_code)]
         fn process_with_atomic(&mut self) -> ProcessResult {
             let current = self.trigger_count.load(Ordering::SeqCst);
             if current < self.max_triggers {
@@ -59,6 +62,7 @@ fn test_send_sync_with_mutable_state() {
 #[test]
 fn test_complex_state_thread_safety() {
     // Complex joker with mixed state types
+    #[allow(dead_code)]
     struct ComplexThreadSafeJoker {
         id: JokerId,
         // Immutable data
@@ -71,6 +75,7 @@ fn test_complex_state_thread_safety() {
     }
 
     #[derive(Default)]
+    #[allow(dead_code)]
     struct ComplexState {
         cards_seen: Vec<(Value, Suit)>,
         accumulated_mult: f64,
@@ -78,6 +83,7 @@ fn test_complex_state_thread_safety() {
     }
 
     #[derive(Debug, Clone, PartialEq, Default)]
+    #[allow(dead_code)]
     enum Phase {
         #[default]
         Charging,
@@ -85,6 +91,7 @@ fn test_complex_state_thread_safety() {
         Cooldown(u32),
     }
     impl ComplexThreadSafeJoker {
+        #[allow(dead_code)]
         fn new() -> Self {
             Self {
                 id: JokerId::Joker,
@@ -96,6 +103,7 @@ fn test_complex_state_thread_safety() {
         }
 
         // This pattern would work with &mut self
+        #[allow(dead_code)]
         fn process_thread_safe(&mut self) -> ProcessResult {
             // Increment trigger count atomically
             self.trigger_count.fetch_add(1, Ordering::SeqCst);
@@ -148,6 +156,7 @@ fn test_complex_state_thread_safety() {
 #[test]
 fn test_concurrent_joker_access() {
     // Shared joker with thread-safe state
+    #[allow(dead_code)]
     struct ConcurrentJoker {
         id: JokerId,
         // Use atomics for simple counters
@@ -211,11 +220,13 @@ fn test_concurrent_joker_access() {
 #[test]
 fn test_trait_object_thread_safety() {
     // Mock trait that simulates JokerGameplay with &mut self
+    #[allow(dead_code)]
     trait MutableJokerGameplay: Send + Sync {
         fn process_mut(&mut self) -> ProcessResult;
     }
 
     // Simple implementation
+    #[allow(dead_code)]
     struct SimpleJoker {
         counter: u32,
     }
@@ -234,6 +245,7 @@ fn test_trait_object_thread_safety() {
     }
 
     // Complex implementation with interior mutability
+    #[allow(dead_code)]
     struct ComplexJoker {
         state: Mutex<u32>,
     }
@@ -272,11 +284,13 @@ fn test_trait_object_thread_safety() {
 #[test]
 fn test_migration_compatibility() {
     // Current pattern with external state
+    #[allow(dead_code)]
     struct LegacyJoker {
         id: JokerId,
     }
 
     impl LegacyJoker {
+        #[allow(dead_code)]
         fn process_legacy(&self, state_manager: &JokerStateManager) -> ProcessResult {
             // Verbose state access
             let counter = state_manager
@@ -293,12 +307,14 @@ fn test_migration_compatibility() {
     }
 
     // New pattern with internal state
+    #[allow(dead_code)]
     struct ModernJoker {
         id: JokerId,
         counter: u32,
     }
 
     impl ModernJoker {
+        #[allow(dead_code)]
         fn process_modern(&mut self) -> ProcessResult {
             // Simple and direct
             self.counter += 1;

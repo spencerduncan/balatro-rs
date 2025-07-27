@@ -3019,7 +3019,7 @@ mod tests {
 
     #[test]
     fn test_can_purchase_consumable_validation() {
-        let mut game = Game {
+        let game = Game {
             stage: Stage::Shop(),
             money: 10.0,
             ..Default::default()
@@ -3088,7 +3088,7 @@ mod tests {
     #[test]
     fn test_can_purchase_consumable_no_available_slots() {
         // Fill consumable hand to capacity (default is 2)
-        let mut game = Game {
+        let game = Game {
             stage: Stage::Shop(),
             money: 10.0,
             consumables_in_hand: vec![

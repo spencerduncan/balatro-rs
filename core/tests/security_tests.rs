@@ -31,22 +31,24 @@ mod tests {
     /// Test that ActionSpace creation handles small available_max values correctly
     #[test]
     fn test_action_space_small_available_max() {
-        let config1 = Config {
+        // Test with 1 card available
+        let config_one_card = Config {
             available_max: 1,
             ..Default::default()
         };
-        let action_space = ActionSpace::from(config1);
+        let action_space = ActionSpace::from(config_one_card);
 
         // With 1 card available, no move operations should be possible
         assert_eq!(action_space.move_card_left.len(), 0);
         assert_eq!(action_space.move_card_right.len(), 0);
         assert_eq!(action_space.select_card.len(), 1);
 
-        let config = Config {
+        // Test with 2 cards available  
+        let config_two_cards = Config {
             available_max: 2,
             ..Default::default()
         };
-        let action_space = ActionSpace::from(config);
+        let action_space = ActionSpace::from(config_two_cards);
 
         // With 2 cards available, 1 move operation should be possible
         assert_eq!(action_space.move_card_left.len(), 1);

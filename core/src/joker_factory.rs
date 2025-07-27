@@ -67,10 +67,11 @@ impl JokerFactory {
             JokerId::Reserved9 => Some(Box::new(ChaoticJoker)),
 
             // Special mechanic jokers using new trait system
-            JokerId::Erosion => Some(Box::new(ErosionJoker)),
-            JokerId::Blueprint => Some(Box::new(BlueprintJoker::new())),
+            // TODO: Fix joker ID mappings - these jokers don't exist in current scope
+            // JokerId::Erosion => Some(Box::new(ErosionJoker)),
+            // JokerId::Blueprint => Some(Box::new(BlueprintJoker::new())),
             JokerId::Photograph => Some(Box::new(PhotographJoker::new())),
-            JokerId::TheOrder => Some(Box::new(TheOrderJoker)),
+            // JokerId::TheOrder => Some(Box::new(TheOrderJoker)),
             JokerId::FourFingers => Some(Box::new(FourFingersJoker::new())),
             JokerId::Triboulet => Some(Box::new(TribouletJoker)),
 

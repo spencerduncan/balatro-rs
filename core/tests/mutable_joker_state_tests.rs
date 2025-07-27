@@ -210,6 +210,7 @@ fn test_thread_safety_with_mutable_state() {
     }
 
     impl ThreadSafeJoker {
+        #[allow(dead_code)]
         fn new() -> Self {
             Self {
                 id: JokerId::Joker,
@@ -221,6 +222,7 @@ fn test_thread_safety_with_mutable_state() {
         }
 
         // This would work with &mut self in the trait
+        #[allow(dead_code)]
         fn process_with_mutex(&mut self) -> bool {
             let mut state = self.state.lock().unwrap();
             if state.active {

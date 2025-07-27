@@ -112,8 +112,10 @@ fn test_state_version_tracking() {
     assert_eq!(game.state_version, StateVersion::V2);
 
     // Verify version can be changed (for migration testing)
-    let mut game_v1 = Game::default();
-    game_v1.state_version = StateVersion::V1;
+    let game_v1 = Game {
+        state_version: StateVersion::V1,
+        ..Default::default()
+    };
     assert_eq!(game_v1.state_version, StateVersion::V1);
     assert!(game_v1.state_version.can_migrate_to_current());
 }

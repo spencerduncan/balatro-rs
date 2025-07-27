@@ -245,6 +245,7 @@ fn test_complex_joker_interaction_scenario() {
 // Test helper jokers for acceptance testing
 
 #[derive(Debug)]
+#[allow(dead_code)]
 struct TestOrderJoker {
     _position: usize,
     mult_bonus: i32,
