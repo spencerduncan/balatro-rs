@@ -12,7 +12,7 @@ Game engine and move generator for a simplified version of [balatro](https://www
 - `Game.{chips, mult, score, money, round}`: `usize` → `f64` ✅ COMPLETE
 - `JokerEffect` numeric fields: `i32/f32` → `f64` ❌ IN PROGRESS
 - Save files are automatically migrated ✅
-- **See [F64_MIGRATION_GUIDE.md](F64_MIGRATION_GUIDE.md) for current status and migration instructions**
+- **See breaking changes above for current migration status**
 
 ## Overview
 
@@ -134,6 +134,6 @@ If you're upgrading from the previous "dual framework" design where both `GameSt
 - **Use `GameState`** for read-only access: `score`, `money`, `available`, `joker_ids`, etc.
 - **Backwards compatibility**: Old API still works but shows deprecation warnings
 
-For detailed migration guidance, see [DUAL_FRAMEWORK_ELIMINATION_MIGRATION_GUIDE.md](DUAL_FRAMEWORK_ELIMINATION_MIGRATION_GUIDE.md).
+The new unified API provides better performance and clearer semantics. The old API still works with deprecation warnings for backwards compatibility.
 
 For more details on the python work and reinforcement learning applications, check the [/pylatro](https://github.com/spencerduncan/balatro-rs/tree/main/pylatro) directory.
