@@ -365,7 +365,7 @@
 <a href=#365 id=365 data-nosnippet>365</a>    <span class="attr">#[test]
 <a href=#366 id=366 data-nosnippet>366</a>    </span><span class="kw">fn </span>test_config_debug() {
 <a href=#367 id=367 data-nosnippet>367</a>        <span class="kw">let </span>config = Config::new();
-<a href=#368 id=368 data-nosnippet>368</a>        <span class="kw">let </span>debug_str = <span class="macro">format!</span>(<span class="string">"{:?}"</span>, config);
+<a href=#368 id=368 data-nosnippet>368</a>        <span class="kw">let </span>debug_str = <span class="macro">format!</span>(<span class="string">"{config:?}"</span>);
 <a href=#369 id=369 data-nosnippet>369</a>
 <a href=#370 id=370 data-nosnippet>370</a>        <span class="comment">// Debug output should contain key fields
 <a href=#371 id=371 data-nosnippet>371</a>        </span><span class="macro">assert!</span>(debug_str.contains(<span class="string">"Config"</span>));

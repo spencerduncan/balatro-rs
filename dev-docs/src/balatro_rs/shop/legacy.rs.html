@@ -401,7 +401,7 @@
 <a href=#401 id=401 data-nosnippet>401</a>            .count();
 <a href=#402 id=402 data-nosnippet>402</a>
 <a href=#403 id=403 data-nosnippet>403</a>        <span class="comment">// Each joker can be placed in slots 0 to current_joker_count (inclusive)
-<a href=#404 id=404 data-nosnippet>404</a>        </span><span class="kw">let </span>expected_moves = affordable_jokers * <span class="number">1</span>; <span class="comment">// current_joker_count=0, so only slot 0
+<a href=#404 id=404 data-nosnippet>404</a>        </span><span class="kw">let </span>expected_moves = affordable_jokers; <span class="comment">// current_joker_count=0, so only slot 0
 <a href=#405 id=405 data-nosnippet>405</a>        </span><span class="macro">assert_eq!</span>(moves.len(), expected_moves);
 <a href=#406 id=406 data-nosnippet>406</a>    }
 <a href=#407 id=407 data-nosnippet>407</a>
@@ -451,7 +451,7 @@
 <a href=#451 id=451 data-nosnippet>451</a>    <span class="attr">#[test]
 <a href=#452 id=452 data-nosnippet>452</a>    </span><span class="kw">fn </span>test_shop_debug() {
 <a href=#453 id=453 data-nosnippet>453</a>        <span class="kw">let </span>shop = Shop::new();
-<a href=#454 id=454 data-nosnippet>454</a>        <span class="kw">let </span>debug_str = <span class="macro">format!</span>(<span class="string">"{:?}"</span>, shop);
+<a href=#454 id=454 data-nosnippet>454</a>        <span class="kw">let </span>debug_str = <span class="macro">format!</span>(<span class="string">"{shop:?}"</span>);
 <a href=#455 id=455 data-nosnippet>455</a>
 <a href=#456 id=456 data-nosnippet>456</a>        <span class="comment">// Debug output should contain shop information
 <a href=#457 id=457 data-nosnippet>457</a>        </span><span class="macro">assert!</span>(debug_str.contains(<span class="string">"Shop"</span>));

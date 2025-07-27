@@ -2490,8 +2490,8 @@
 <a href=#2490 id=2490 data-nosnippet>2490</a>        <span class="comment">// Performance improvement should be measurable
 <a href=#2491 id=2491 data-nosnippet>2491</a>        // Note: This is a simple demonstration - in practice, you'd need
 <a href=#2492 id=2492 data-nosnippet>2492</a>        // more complex joker processing to see significant differences
-<a href=#2493 id=2493 data-nosnippet>2493</a>        </span><span class="macro">println!</span>(<span class="string">"Cached processing: {:?}"</span>, cached_duration);
-<a href=#2494 id=2494 data-nosnippet>2494</a>        <span class="macro">println!</span>(<span class="string">"Uncached processing: {:?}"</span>, uncached_duration);
+<a href=#2493 id=2493 data-nosnippet>2493</a>        </span><span class="macro">println!</span>(<span class="string">"Cached processing: {cached_duration:?}"</span>);
+<a href=#2494 id=2494 data-nosnippet>2494</a>        <span class="macro">println!</span>(<span class="string">"Uncached processing: {uncached_duration:?}"</span>);
 <a href=#2495 id=2495 data-nosnippet>2495</a>        <span class="macro">println!</span>(<span class="string">"Cache hit ratio: {:.2}%"</span>, metrics.hit_ratio() * <span class="number">100.0</span>);
 <a href=#2496 id=2496 data-nosnippet>2496</a>        <span class="macro">println!</span>(<span class="string">"Total time saved: {}μs"</span>, metrics.time_saved_micros);
 <a href=#2497 id=2497 data-nosnippet>2497</a>
@@ -2760,7 +2760,7 @@
 <a href=#2760 id=2760 data-nosnippet>2760</a>            .validate_effects(<span class="bool-val">false</span>);
 <a href=#2761 id=2761 data-nosnippet>2761</a>
 <a href=#2762 id=2762 data-nosnippet>2762</a>        <span class="comment">// Should be able to debug print the builder
-<a href=#2763 id=2763 data-nosnippet>2763</a>        </span><span class="kw">let </span>debug_string = <span class="macro">format!</span>(<span class="string">"{:?}"</span>, builder);
+<a href=#2763 id=2763 data-nosnippet>2763</a>        </span><span class="kw">let </span>debug_string = <span class="macro">format!</span>(<span class="string">"{builder:?}"</span>);
 <a href=#2764 id=2764 data-nosnippet>2764</a>        <span class="macro">assert!</span>(debug_string.contains(<span class="string">"ProcessingContextBuilder"</span>));
 <a href=#2765 id=2765 data-nosnippet>2765</a>    }
 <a href=#2766 id=2766 data-nosnippet>2766</a>
@@ -2803,8 +2803,8 @@
 <a href=#2803 id=2803 data-nosnippet>2803</a>        metrics.legacy_path_count = <span class="number">100</span>;
 <a href=#2804 id=2804 data-nosnippet>2804</a>
 <a href=#2805 id=2805 data-nosnippet>2805</a>        <span class="comment">// Test optimization ratio calculation
-<a href=#2806 id=2806 data-nosnippet>2806</a>        </span><span class="kw">let </span>total_optimized = <span class="number">50 </span>+ <span class="number">30 </span>+ <span class="number">20</span>; <span class="comment">// 100
-<a href=#2807 id=2807 data-nosnippet>2807</a>        </span><span class="kw">let </span>total_calls = <span class="number">100 </span>+ <span class="number">100</span>; <span class="comment">// 200
+<a href=#2806 id=2806 data-nosnippet>2806</a>        </span><span class="kw">let </span>_total_optimized = <span class="number">50 </span>+ <span class="number">30 </span>+ <span class="number">20</span>; <span class="comment">// 100
+<a href=#2807 id=2807 data-nosnippet>2807</a>        </span><span class="kw">let </span>_total_calls = <span class="number">100 </span>+ <span class="number">100</span>; <span class="comment">// 200
 <a href=#2808 id=2808 data-nosnippet>2808</a>        </span><span class="kw">let </span>expected_ratio = <span class="number">100.0 </span>/ <span class="number">200.0</span>;
 <a href=#2809 id=2809 data-nosnippet>2809</a>        <span class="macro">assert!</span>((metrics.optimization_ratio() - expected_ratio).abs() &lt; <span class="number">0.001</span>);
 <a href=#2810 id=2810 data-nosnippet>2810</a>
@@ -3090,7 +3090,7 @@
 <a href=#3090 id=3090 data-nosnippet>3090</a>    </span><span class="kw">fn </span>test_priority_strategy_api_from_issue() {
 <a href=#3091 id=3091 data-nosnippet>3091</a>        <span class="comment">// Test the exact API proposed in the issue
 <a href=#3092 id=3092 data-nosnippet>3092</a>        </span><span class="kw">let </span>context = ProcessingContext::builder()
-<a href=#3093 id=3093 data-nosnippet>3093</a>            .priority_strategy(Arc::new(MetadataPriorityStrategy::default()))
+<a href=#3093 id=3093 data-nosnippet>3093</a>            .priority_strategy(Arc::new(MetadataPriorityStrategy))
 <a href=#3094 id=3094 data-nosnippet>3094</a>            .build();
 <a href=#3095 id=3095 data-nosnippet>3095</a>
 <a href=#3096 id=3096 data-nosnippet>3096</a>        <span class="kw">let </span>processor = JokerEffectProcessor::with_context(context);
@@ -3111,7 +3111,7 @@
 <a href=#3111 id=3111 data-nosnippet>3111</a>            .build();
 <a href=#3112 id=3112 data-nosnippet>3112</a>
 <a href=#3113 id=3113 data-nosnippet>3113</a>        <span class="macro">assert_eq!</span>(context.processing_mode, ProcessingMode::Delayed);
-<a href=#3114 id=3114 data-nosnippet>3114</a>        <span class="macro">assert_eq!</span>(context.validate_effects, <span class="bool-val">false</span>);
+<a href=#3114 id=3114 data-nosnippet>3114</a>        <span class="macro">assert!</span>(!context.validate_effects);
 <a href=#3115 id=3115 data-nosnippet>3115</a>        <span class="macro">assert_eq!</span>(context.max_retriggered_effects, <span class="number">50</span>);
 <a href=#3116 id=3116 data-nosnippet>3116</a>
 <a href=#3117 id=3117 data-nosnippet>3117</a>        <span class="comment">// Test the processor can be created with this context

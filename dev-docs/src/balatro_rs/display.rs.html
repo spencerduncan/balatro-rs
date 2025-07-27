@@ -395,7 +395,7 @@
 <a href=#395 id=395 data-nosnippet>395</a>
 <a href=#396 id=396 data-nosnippet>396</a>    <span class="attr">#[test]
 <a href=#397 id=397 data-nosnippet>397</a>    </span><span class="kw">fn </span>test_precision_preservation() {
-<a href=#398 id=398 data-nosnippet>398</a>        <span class="kw">let </span>precise_value = <span class="number">123.456789123456789</span>;
+<a href=#398 id=398 data-nosnippet>398</a>        <span class="kw">let </span>precise_value = <span class="number">123.456_789_123_456_79</span>;
 <a href=#399 id=399 data-nosnippet>399</a>        <span class="comment">// Internal precision should be preserved even if display is rounded
 <a href=#400 id=400 data-nosnippet>400</a>        </span><span class="kw">let </span>display = DisplayF64::new(precise_value);
 <a href=#401 id=401 data-nosnippet>401</a>        <span class="macro">assert_eq!</span>(display.value(), precise_value);
