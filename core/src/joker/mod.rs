@@ -101,7 +101,6 @@ pub enum JokerId {
     Luchador,
     Photograph,
     GiftCard,
-    CouponJoker,
     CloudNine,
     StockBroker,
     EggHead,
