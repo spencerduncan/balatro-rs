@@ -2,7 +2,7 @@
 // All tests in this file are marked with #[ignore] due to API issues
 
 use balatro_rs::config::Config;
-use balatro_rs::consumables::{Target, TargetType, TargetValidationError};
+use balatro_rs::consumables::{CardCollection, CardTarget, Target, TargetType, TargetValidationError};
 use balatro_rs::game::Game;
 use balatro_rs::rank::HandRank;
 
@@ -12,7 +12,12 @@ fn test_target_validation_empty_hand() {
     let game = Game::new(Config::default());
 
     // No cards available should fail validation
-    let target = Target::Cards(vec![0]);
+    let target = Target::Cards(CardTarget {
+        indices: vec![0],
+        collection: CardCollection::Hand,
+        min_cards: 1,
+        max_cards: 1,
+    });
     assert!(!target.is_valid(&game));
 
     match target.validate(&game) {
@@ -31,12 +36,22 @@ fn test_target_validation_card_index_bounds() {
     // In a real scenario, you'd use the game's methods to deal cards
 
     // Test valid card index
-    let _valid_target = Target::Cards(vec![0]);
+    let _valid_target = Target::Cards(CardTarget {
+        indices: vec![0],
+        collection: CardCollection::Hand,
+        min_cards: 1,
+        max_cards: 1,
+    });
     // Note: Without actual cards, this will fail with NoCardsAvailable
     // This test demonstrates the structure for when cards are present
 
     // Test invalid card index (out of bounds)
-    let invalid_target = Target::Cards(vec![5]);
+    let invalid_target = Target::Cards(CardTarget {
+        indices: vec![5],
+        collection: CardCollection::Hand,
+        min_cards: 1,
+        max_cards: 1,
+    });
     assert!(!invalid_target.is_valid(&game));
 
     match invalid_target.validate(&game) {
@@ -51,7 +66,12 @@ fn test_target_validation_card_index_bounds() {
 fn test_target_validation_empty_card_list() {
     let game = Game::new(Config::default());
 
-    let target = Target::Cards(vec![]);
+    let target = Target::Cards(CardTarget {
+        indices: vec![],
+        collection: CardCollection::Hand,
+        min_cards: 0,
+        max_cards: 0,
+    });
     assert!(!target.is_valid(&game));
 
     match target.validate(&game) {
@@ -245,7 +265,12 @@ fn test_target_validation_performance() {
     let game = Game::new(Config::default());
     let targets = vec![
         Target::None,
-        Target::Cards(vec![0, 1, 2]),
+        Target::Cards(CardTarget {
+            indices: vec![0, 1, 2],
+            collection: CardCollection::Hand,
+            min_cards: 3,
+            max_cards: 3,
+        }),
         Target::HandType(HandRank::FullHouse),
         Target::Joker(0),
         Target::Deck,
