@@ -74,7 +74,7 @@ impl JokerFactory {
             JokerId::Photograph => Some(Box::new(PhotographJoker::new())),
             JokerId::TheOrder => Some(Box::new(TheOrderJoker)),
             JokerId::FourFingers => Some(Box::new(FourFingersJoker::new())),
-            JokerId::Triboulet => Some(Box::new(TribouletJoker)),
+            // JokerId::Triboulet => Some(Box::new(TribouletJoker)), // Commented out: TribouletJoker removed in cleanup
 
             // Retrigger jokers
             JokerId::Dusk => Some(Box::new(DuskJoker::new())),
@@ -216,7 +216,7 @@ impl JokerFactory {
             TheOrder,
             SteelJoker, // Now properly implemented as scaling joker
             FourFingers,
-            Triboulet, // Legendary joker - Kings and Queens give X2 mult
+            // Triboulet, // Legendary joker - Kings and Queens give X2 mult (removed in cleanup)
             // Retrigger jokers
             Dusk,
             Seltzer,
