@@ -1663,7 +1663,7 @@ mod tests {
         };
 
         let effect = triboulet.on_card_scored(&mut context, &jack_card);
-        assert_eq!(effect.mult_multiplier, 0.0); // Default multiplier (no effect)
+        assert_eq!(effect.mult_multiplier, 1.0); // Default multiplier (no effect)
         assert_eq!(effect.mult, 0);
         assert_eq!(effect.chips, 0);
         assert_eq!(effect.money, 0);
@@ -1709,7 +1709,7 @@ mod tests {
         };
 
         let effect = triboulet.on_card_scored(&mut context, &ace_card);
-        assert_eq!(effect.mult_multiplier, 0.0); // Default multiplier (no effect)
+        assert_eq!(effect.mult_multiplier, 1.0); // Default multiplier (no effect)
         assert_eq!(effect.mult, 0);
         assert_eq!(effect.chips, 0);
         assert_eq!(effect.money, 0);
