@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CompatibilityBridge","LegacyIdentityAdapter","LegacyJokerAdapter","MixedJokerCollection"],"trait":["EnhancedJokerBuilderExt"]};

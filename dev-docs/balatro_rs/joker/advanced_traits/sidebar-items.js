@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["EvaluationCost","GameEvent"],"struct":["AdvancedJokerFramework","EnhancedJoker","EnhancedJokerBuilder","InternalJokerState"],"trait":["AdvancedJokerGameplay","AdvancedJokerIdentity","JokerProcessor"]};

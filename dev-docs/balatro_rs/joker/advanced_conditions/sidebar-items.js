@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["AdvancedCondition"],"struct":["AdvancedConditionBuilder","AdvancedEvaluationContext","ConditionCache","GameHistory"],"trait":["AdvancedConditionEvaluator"]};
