@@ -762,6 +762,8 @@ mod tests {
     use super::*;
     use crate::card::{Card, Suit as CardSuit, Value};
     use crate::hand::SelectHand;
+    // Note: These imports are used throughout the tests despite CI warnings
+    #[allow(unused_imports)]
     use crate::joker::traits::{
         JokerGameplay, JokerIdentity, JokerLifecycle, JokerModifiers,
         JokerState as JokerStateTrait, Rarity,

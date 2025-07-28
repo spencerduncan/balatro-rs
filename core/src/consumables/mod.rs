@@ -765,6 +765,18 @@ pub trait Consumable: Send + Sync + fmt::Debug {
     fn apply_effect(&self, game: &mut Game) -> bool {
         self.use_effect(game, Target::None).is_ok()
     }
+
+    /// Get mock ID for testing purposes - only used in tests
+    /// Production implementations should not override this
+    fn get_mock_id(&self) -> u32 {
+        panic!("get_mock_id() called on non-mock consumable")
+    }
+
+    /// Get real ConsumableId for testing purposes - only used in tests
+    /// Production implementations should not override this
+    fn get_real_id(&self) -> ConsumableId {
+        panic!("get_real_id() called on non-wrapper consumable")
+    }
 }
 
 /// Categories of consumable cards
@@ -1441,10 +1453,52 @@ impl ConsumableSlots {
     }
 }
 
+impl Clone for ConsumableSlots {
+    /// Clone implementation for ConsumableSlots
+    /// Note: This creates a new ConsumableSlots with the same capacity but empty slots,
+    /// since trait objects cannot be cloned. This is primarily for testing purposes.
+    fn clone(&self) -> Self {
+        Self::with_capacity(self.capacity)
+    }
+}
+
 impl Default for ConsumableSlots {
     /// Creates ConsumableSlots with default capacity of 2
     fn default() -> Self {
         Self::new()
+    }
+}
+
+/// Serializable representation of ConsumableSlots for serde support
+/// Since trait objects cannot be serialized, we only store capacity and length
+#[derive(Serialize, Deserialize)]
+struct ConsumableSlotsData {
+    capacity: usize,
+    occupied_count: usize,
+}
+
+impl Serialize for ConsumableSlots {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let data = ConsumableSlotsData {
+            capacity: self.capacity,
+            occupied_count: self.len(),
+        };
+        data.serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for ConsumableSlots {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let data = ConsumableSlotsData::deserialize(deserializer)?;
+        // Create empty slots with the same capacity
+        // Note: We can't restore the actual consumables since they weren't serialized
+        Ok(Self::with_capacity(data.capacity))
     }
 }
 
