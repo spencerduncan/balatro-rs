@@ -407,50 +407,44 @@
 <a href=#407 id=407 data-nosnippet>407</a></span><span class="kw">mod </span>tests {
 <a href=#408 id=408 data-nosnippet>408</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
 <a href=#409 id=409 data-nosnippet>409</a>
-<a href=#410 id=410 data-nosnippet>410</a>    <span class="attr">#[allow(dead_code)]
-<a href=#411 id=411 data-nosnippet>411</a>    </span><span class="kw">fn </span>create_test_context() -&gt; GameContext&lt;<span class="lifetime">'static</span>&gt; {
-<a href=#412 id=412 data-nosnippet>412</a>        <span class="comment">// Placeholder - in real tests we'd need proper context setup
-<a href=#413 id=413 data-nosnippet>413</a>        </span><span class="macro">panic!</span>(<span class="string">"Test context creation not implemented - requires full game setup"</span>)
-<a href=#414 id=414 data-nosnippet>414</a>    }
-<a href=#415 id=415 data-nosnippet>415</a>
-<a href=#416 id=416 data-nosnippet>416</a>    <span class="attr">#[test]
-<a href=#417 id=417 data-nosnippet>417</a>    </span><span class="kw">fn </span>test_green_joker_creation() {
-<a href=#418 id=418 data-nosnippet>418</a>        <span class="kw">let </span>joker = GreenJoker::new();
-<a href=#419 id=419 data-nosnippet>419</a>        <span class="macro">assert_eq!</span>(joker.id(), JokerId::GreenJoker);
-<a href=#420 id=420 data-nosnippet>420</a>        <span class="macro">assert_eq!</span>(joker.name(), <span class="string">"Green Joker"</span>);
-<a href=#421 id=421 data-nosnippet>421</a>    }
-<a href=#422 id=422 data-nosnippet>422</a>
-<a href=#423 id=423 data-nosnippet>423</a>    <span class="attr">#[test]
-<a href=#424 id=424 data-nosnippet>424</a>    </span><span class="kw">fn </span>test_all_custom_jokers_created() {
-<a href=#425 id=425 data-nosnippet>425</a>        <span class="kw">let </span>jokers = create_all_custom_scaling_jokers();
-<a href=#426 id=426 data-nosnippet>426</a>        <span class="macro">assert_eq!</span>(
-<a href=#427 id=427 data-nosnippet>427</a>            jokers.len(),
-<a href=#428 id=428 data-nosnippet>428</a>            <span class="number">6</span>,
-<a href=#429 id=429 data-nosnippet>429</a>            <span class="string">"Should create exactly 6 custom scaling jokers"
-<a href=#430 id=430 data-nosnippet>430</a>        </span>);
-<a href=#431 id=431 data-nosnippet>431</a>
-<a href=#432 id=432 data-nosnippet>432</a>        <span class="comment">// Test that all jokers have unique IDs
-<a href=#433 id=433 data-nosnippet>433</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>ids = std::collections::HashSet::new();
-<a href=#434 id=434 data-nosnippet>434</a>        <span class="kw">for </span>joker <span class="kw">in </span><span class="kw-2">&amp;</span>jokers {
-<a href=#435 id=435 data-nosnippet>435</a>            <span class="macro">assert!</span>(
-<a href=#436 id=436 data-nosnippet>436</a>                ids.insert(joker.id()),
-<a href=#437 id=437 data-nosnippet>437</a>                <span class="string">"Duplicate joker ID found: {:?}"</span>,
-<a href=#438 id=438 data-nosnippet>438</a>                joker.id()
-<a href=#439 id=439 data-nosnippet>439</a>            );
-<a href=#440 id=440 data-nosnippet>440</a>        }
-<a href=#441 id=441 data-nosnippet>441</a>    }
-<a href=#442 id=442 data-nosnippet>442</a>
-<a href=#443 id=443 data-nosnippet>443</a>    <span class="attr">#[test]
-<a href=#444 id=444 data-nosnippet>444</a>    </span><span class="kw">fn </span>test_ceremonial_dagger_creation() {
-<a href=#445 id=445 data-nosnippet>445</a>        <span class="kw">let </span>joker = CeremonialDagger::new();
-<a href=#446 id=446 data-nosnippet>446</a>        <span class="macro">assert_eq!</span>(joker.id(), JokerId::Ceremonial);
-<a href=#447 id=447 data-nosnippet>447</a>        <span class="macro">assert_eq!</span>(joker.rarity(), JokerRarity::Uncommon);
-<a href=#448 id=448 data-nosnippet>448</a>    }
-<a href=#449 id=449 data-nosnippet>449</a>
-<a href=#450 id=450 data-nosnippet>450</a>    <span class="attr">#[test]
-<a href=#451 id=451 data-nosnippet>451</a>    </span><span class="kw">fn </span>test_get_custom_scaling_joker_by_id() {
-<a href=#452 id=452 data-nosnippet>452</a>        <span class="macro">assert!</span>(get_custom_scaling_joker_by_id(JokerId::GreenJoker).is_some());
-<a href=#453 id=453 data-nosnippet>453</a>        <span class="macro">assert!</span>(get_custom_scaling_joker_by_id(JokerId::Square).is_some());
-<a href=#454 id=454 data-nosnippet>454</a>        <span class="macro">assert!</span>(get_custom_scaling_joker_by_id(JokerId::Joker).is_none()); <span class="comment">// Not a custom scaling joker
-<a href=#455 id=455 data-nosnippet>455</a>    </span>}
-<a href=#456 id=456 data-nosnippet>456</a>}</code></pre></div></section></main></body></html>
+<a href=#410 id=410 data-nosnippet>410</a>    <span class="attr">#[test]
+<a href=#411 id=411 data-nosnippet>411</a>    </span><span class="kw">fn </span>test_green_joker_creation() {
+<a href=#412 id=412 data-nosnippet>412</a>        <span class="kw">let </span>joker = GreenJoker::new();
+<a href=#413 id=413 data-nosnippet>413</a>        <span class="macro">assert_eq!</span>(joker.id(), JokerId::GreenJoker);
+<a href=#414 id=414 data-nosnippet>414</a>        <span class="macro">assert_eq!</span>(joker.name(), <span class="string">"Green Joker"</span>);
+<a href=#415 id=415 data-nosnippet>415</a>    }
+<a href=#416 id=416 data-nosnippet>416</a>
+<a href=#417 id=417 data-nosnippet>417</a>    <span class="attr">#[test]
+<a href=#418 id=418 data-nosnippet>418</a>    </span><span class="kw">fn </span>test_all_custom_jokers_created() {
+<a href=#419 id=419 data-nosnippet>419</a>        <span class="kw">let </span>jokers = create_all_custom_scaling_jokers();
+<a href=#420 id=420 data-nosnippet>420</a>        <span class="macro">assert_eq!</span>(
+<a href=#421 id=421 data-nosnippet>421</a>            jokers.len(),
+<a href=#422 id=422 data-nosnippet>422</a>            <span class="number">6</span>,
+<a href=#423 id=423 data-nosnippet>423</a>            <span class="string">"Should create exactly 6 custom scaling jokers"
+<a href=#424 id=424 data-nosnippet>424</a>        </span>);
+<a href=#425 id=425 data-nosnippet>425</a>
+<a href=#426 id=426 data-nosnippet>426</a>        <span class="comment">// Test that all jokers have unique IDs
+<a href=#427 id=427 data-nosnippet>427</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>ids = std::collections::HashSet::new();
+<a href=#428 id=428 data-nosnippet>428</a>        <span class="kw">for </span>joker <span class="kw">in </span><span class="kw-2">&amp;</span>jokers {
+<a href=#429 id=429 data-nosnippet>429</a>            <span class="macro">assert!</span>(
+<a href=#430 id=430 data-nosnippet>430</a>                ids.insert(joker.id()),
+<a href=#431 id=431 data-nosnippet>431</a>                <span class="string">"Duplicate joker ID found: {:?}"</span>,
+<a href=#432 id=432 data-nosnippet>432</a>                joker.id()
+<a href=#433 id=433 data-nosnippet>433</a>            );
+<a href=#434 id=434 data-nosnippet>434</a>        }
+<a href=#435 id=435 data-nosnippet>435</a>    }
+<a href=#436 id=436 data-nosnippet>436</a>
+<a href=#437 id=437 data-nosnippet>437</a>    <span class="attr">#[test]
+<a href=#438 id=438 data-nosnippet>438</a>    </span><span class="kw">fn </span>test_ceremonial_dagger_creation() {
+<a href=#439 id=439 data-nosnippet>439</a>        <span class="kw">let </span>joker = CeremonialDagger::new();
+<a href=#440 id=440 data-nosnippet>440</a>        <span class="macro">assert_eq!</span>(joker.id(), JokerId::Ceremonial);
+<a href=#441 id=441 data-nosnippet>441</a>        <span class="macro">assert_eq!</span>(joker.rarity(), JokerRarity::Uncommon);
+<a href=#442 id=442 data-nosnippet>442</a>    }
+<a href=#443 id=443 data-nosnippet>443</a>
+<a href=#444 id=444 data-nosnippet>444</a>    <span class="attr">#[test]
+<a href=#445 id=445 data-nosnippet>445</a>    </span><span class="kw">fn </span>test_get_custom_scaling_joker_by_id() {
+<a href=#446 id=446 data-nosnippet>446</a>        <span class="macro">assert!</span>(get_custom_scaling_joker_by_id(JokerId::GreenJoker).is_some());
+<a href=#447 id=447 data-nosnippet>447</a>        <span class="macro">assert!</span>(get_custom_scaling_joker_by_id(JokerId::Square).is_some());
+<a href=#448 id=448 data-nosnippet>448</a>        <span class="macro">assert!</span>(get_custom_scaling_joker_by_id(JokerId::Joker).is_none()); <span class="comment">// Not a custom scaling joker
+<a href=#449 id=449 data-nosnippet>449</a>    </span>}
+<a href=#450 id=450 data-nosnippet>450</a>}</code></pre></div></section></main></body></html>
