@@ -431,8 +431,8 @@ fn test_lucky_card_joker_probability() {
             joker_state_manager: &state_manager,
             hand_type_counts: &hand_type_counts,
             cards_in_deck: 52,
-            stone_cards_in_deck: 0,
-            steel_cards_in_deck: 0,
+            stone_cards_in_deck: 0, // TEST: Using standard test deck composition
+            steel_cards_in_deck: 0, // TEST: Using standard test deck composition
             rng: &rng,
         };
 

@@ -645,8 +645,8 @@ impl JokerEffectProcessor {
             joker_state_manager: &test_joker_state_manager,
             hand_type_counts: &test_hand_type_counts,
             cards_in_deck: 52,
-            stone_cards_in_deck: 0,
-            steel_cards_in_deck: 0,
+            stone_cards_in_deck: 0, // TEST: Should use proper test deck composition
+            steel_cards_in_deck: 0, // TEST: Should use proper test deck composition
             rng: &test_rng,
         };
 
@@ -2207,8 +2207,8 @@ mod tests {
             joker_state_manager: &std::sync::Arc::new(crate::joker_state::JokerStateManager::new()),
             hand_type_counts: &HashMap::new(),
             cards_in_deck: 52,
-            stone_cards_in_deck: 0,
-            steel_cards_in_deck: 0,
+            stone_cards_in_deck: 0, // TEST: Should use proper test deck composition
+            steel_cards_in_deck: 0, // TEST: Should use proper test deck composition
             rng: &crate::rng::GameRng::secure(),
         };
 
@@ -2550,8 +2550,8 @@ mod tests {
             joker_state_manager: &std::sync::Arc::new(crate::joker_state::JokerStateManager::new()),
             hand_type_counts: &HashMap::new(),
             cards_in_deck: 52,
-            stone_cards_in_deck: 0,
-            steel_cards_in_deck: 0,
+            stone_cards_in_deck: 0, // TEST: Should use proper test deck composition
+            steel_cards_in_deck: 0, // TEST: Should use proper test deck composition
             rng: &crate::rng::GameRng::secure(),
         };
 
@@ -2939,8 +2939,8 @@ mod tests {
             joker_state_manager: &std::sync::Arc::new(crate::joker_state::JokerStateManager::new()),
             hand_type_counts: &HashMap::new(),
             cards_in_deck: 52,
-            stone_cards_in_deck: 0,
-            steel_cards_in_deck: 0,
+            stone_cards_in_deck: 0, // TEST: Should use proper test deck composition
+            steel_cards_in_deck: 0, // TEST: Should use proper test deck composition
             rng: &crate::rng::GameRng::secure(),
         };
 
@@ -2984,8 +2984,8 @@ mod tests {
             joker_state_manager: &std::sync::Arc::new(crate::joker_state::JokerStateManager::new()),
             hand_type_counts: &HashMap::new(),
             cards_in_deck: 52,
-            stone_cards_in_deck: 0,
-            steel_cards_in_deck: 0,
+            stone_cards_in_deck: 0, // TEST: Should use proper test deck composition
+            steel_cards_in_deck: 0, // TEST: Should use proper test deck composition
             rng: &crate::rng::GameRng::secure(),
         };
 

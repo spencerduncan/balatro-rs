@@ -206,6 +206,13 @@ pub struct Game {
     // hand type tracking for this game run
     pub hand_type_counts: HashMap<HandRank, u32>,
 
+    // Card enhancement tracking for this game run
+    /// Count of Stone cards currently in deck (cached for performance)
+    pub stone_cards_in_deck: usize,
+    
+    /// Count of Steel cards currently in deck (cached for performance)
+    pub steel_cards_in_deck: usize,
+
     // Extended state for consumables, vouchers, and boss blinds
     /// Consumable cards currently in the player's hand
     pub consumables_in_hand: Vec<ConsumableId>,
@@ -331,6 +338,10 @@ impl Game {
             mult: config.base_mult as f64,
             score: config.base_score as f64,
             hand_type_counts: HashMap::new(),
+            
+            // Initialize enhancement tracking (will be calculated after deck is set up)
+            stone_cards_in_deck: 0,
+            steel_cards_in_deck: 0,
 
             // Initialize extended state fields
             consumables_in_hand: Vec::new(),
@@ -360,9 +371,54 @@ impl Game {
         }
     }
 
+    /// Count Stone cards in the current deck
+    /// Following clean code principle: functions should do one thing
+    fn count_stone_cards(&self) -> usize {
+        self.deck
+            .cards()
+            .iter()
+            .filter(|card| matches!(card.enhancement, Some(crate::card::Enhancement::Stone)))
+            .count()
+    }
+
+    /// Count Steel cards in the current deck  
+    /// Following clean code principle: functions should do one thing
+    fn count_steel_cards(&self) -> usize {
+        self.deck
+            .cards()
+            .iter()
+            .filter(|card| matches!(card.enhancement, Some(crate::card::Enhancement::Steel)))
+            .count()
+    }
+
+    /// Refresh enhancement card counts based on current deck state
+    /// Call this whenever the deck composition changes
+    pub fn refresh_enhancement_counts(&mut self) {
+        self.stone_cards_in_deck = self.count_stone_cards();
+        self.steel_cards_in_deck = self.count_steel_cards();
+    }
+
+    /// Add cards to deck for testing purposes
+    /// Following clean code: separate testing concerns from production logic
+    #[cfg(test)]
+    pub fn add_cards_to_deck_for_testing(&mut self, cards: Vec<crate::card::Card>) {
+        self.deck.extend(cards);
+    }
+
+    /// Get deck size for testing purposes  
+    /// Following clean code: provide necessary test access without exposing internals
+    #[cfg(test)]
+    pub fn deck_size_for_testing(&self) -> usize {
+        self.deck.len()
+    }
+
     pub fn start(&mut self) {
         // for now just move state to small blind
         self.stage = Stage::PreBlind();
+        
+        // Refresh enhancement counts after deck is set up
+        self.refresh_enhancement_counts();
+        
         self.deal();
     }
 
@@ -392,8 +448,8 @@ impl Game {
                 joker_state_manager: &self.joker_state_manager,
                 hand_type_counts: &self.hand_type_counts,
                 cards_in_deck: self.deck.len(),
-                stone_cards_in_deck: 0, // TODO: Track stone cards when implemented
-                steel_cards_in_deck: 0, // TODO: Track steel cards when implemented
+                stone_cards_in_deck: self.stone_cards_in_deck,
+                steel_cards_in_deck: self.steel_cards_in_deck,
                 rng: &self.rng,
             };
 
@@ -809,8 +865,8 @@ impl Game {
                 joker_state_manager: &self.joker_state_manager,
                 hand_type_counts: &self.hand_type_counts,
                 cards_in_deck: self.deck.len(),
-                stone_cards_in_deck: 0, // TODO: Track stone cards when implemented
-                steel_cards_in_deck: 0, // TODO: Track steel cards when implemented
+                stone_cards_in_deck: self.stone_cards_in_deck,
+                steel_cards_in_deck: self.steel_cards_in_deck,
                 rng: &self.rng,
             };
 
@@ -1145,8 +1201,8 @@ impl Game {
             joker_state_manager: &self.joker_state_manager,
             hand_type_counts: &self.hand_type_counts,
             cards_in_deck: self.deck.len(),
-            stone_cards_in_deck: 0, // TODO: Add proper Stone card tracking
-            steel_cards_in_deck: 0, // TODO: Add proper Steel card tracking
+            stone_cards_in_deck: self.stone_cards_in_deck,
+            steel_cards_in_deck: self.steel_cards_in_deck,
             rng: &self.rng,
         };
 
@@ -2082,6 +2138,11 @@ impl Game {
             mult: saveable_state.mult,
             score: saveable_state.score,
             hand_type_counts: saveable_state.hand_type_counts,
+            
+            // Enhancement tracking (will be calculated after loading)
+            stone_cards_in_deck: 0,
+            steel_cards_in_deck: 0,
+            
             // Extended state fields
             consumables_in_hand: saveable_state.consumables_in_hand,
             vouchers: saveable_state.vouchers,
@@ -2103,6 +2164,10 @@ impl Game {
         // Restore joker states to the state manager
         game.joker_state_manager
             .restore_from_snapshot(saveable_state.joker_states);
+
+        // Refresh enhancement counts based on loaded deck
+        let mut game = game;
+        game.refresh_enhancement_counts();
 
         Ok(game)
     }
@@ -3539,5 +3604,152 @@ mod tests {
         assert_eq!(game.money, 100.0);
         assert_eq!(game.shop_reroll_cost, 10.0);
         assert_eq!(game.shop_rerolls_this_round, 1);
+    }
+}
+
+/// Unit tests for Stone/Steel card tracking implementation
+/// Following Uncle Bob's testing principles: F.I.R.S.T. (Fast, Independent, Repeatable, Self-validating, Timely)
+#[cfg(test)]
+mod stone_steel_tracking_tests {
+    use super::*;
+    use crate::card::{Card, Enhancement, Suit, Value, Edition};
+    use crate::config::Config;
+
+    /// Test helper to create a card with specific enhancement
+    fn create_card_with_enhancement(enhancement: Option<Enhancement>) -> Card {
+        Card {
+            value: Value::Ace,
+            suit: Suit::Heart,
+            id: 1,
+            edition: Edition::Base,
+            enhancement,
+            seal: None,
+        }
+    }
+
+    #[test]
+    fn should_count_zero_stone_cards_in_empty_deck() {
+        let mut game = Game::new(Config::default());
+        game.refresh_enhancement_counts();
+        
+        assert_eq!(game.stone_cards_in_deck, 0);
+    }
+
+    #[test]
+    fn should_count_one_stone_card_in_deck() {
+        let mut game = Game::new(Config::default());
+        
+        let stone_card = create_card_with_enhancement(Some(Enhancement::Stone));
+        game.add_cards_to_deck_for_testing(vec![stone_card]);
+        
+        game.refresh_enhancement_counts();
+        
+        assert_eq!(game.stone_cards_in_deck, 1);
+    }
+
+    #[test]
+    fn should_count_multiple_stone_cards_in_deck() {
+        let mut game = Game::new(Config::default());
+        
+        let stone_cards = vec![
+            create_card_with_enhancement(Some(Enhancement::Stone)),
+            create_card_with_enhancement(Some(Enhancement::Stone)),
+            create_card_with_enhancement(Some(Enhancement::Stone)),
+        ];
+        game.add_cards_to_deck_for_testing(stone_cards);
+        
+        game.refresh_enhancement_counts();
+        
+        assert_eq!(game.stone_cards_in_deck, 3);
+    }
+
+    #[test] 
+    fn should_count_zero_steel_cards_in_empty_deck() {
+        let mut game = Game::new(Config::default());
+        game.refresh_enhancement_counts();
+        
+        assert_eq!(game.steel_cards_in_deck, 0);
+    }
+
+    #[test]
+    fn should_count_multiple_steel_cards_in_deck() {
+        let mut game = Game::new(Config::default());
+        
+        let steel_cards = vec![
+            create_card_with_enhancement(Some(Enhancement::Steel)),
+            create_card_with_enhancement(Some(Enhancement::Steel)),
+            create_card_with_enhancement(Some(Enhancement::Steel)),
+            create_card_with_enhancement(Some(Enhancement::Steel)),
+        ];
+        game.add_cards_to_deck_for_testing(steel_cards);
+        
+        game.refresh_enhancement_counts();
+        
+        assert_eq!(game.steel_cards_in_deck, 4);
+    }
+
+    #[test]
+    fn should_count_both_stone_and_steel_cards_independently() {
+        let mut game = Game::new(Config::default());
+        
+        let mixed_cards = vec![
+            create_card_with_enhancement(Some(Enhancement::Stone)),
+            create_card_with_enhancement(Some(Enhancement::Steel)),
+            create_card_with_enhancement(Some(Enhancement::Stone)),
+            create_card_with_enhancement(Some(Enhancement::Steel)),
+            create_card_with_enhancement(Some(Enhancement::Steel)),
+            create_card_with_enhancement(Some(Enhancement::Bonus)), // Should be ignored
+        ];
+        game.add_cards_to_deck_for_testing(mixed_cards);
+        
+        game.refresh_enhancement_counts();
+        
+        assert_eq!(game.stone_cards_in_deck, 2);
+        assert_eq!(game.steel_cards_in_deck, 3);
+    }
+
+    #[test]
+    fn should_refresh_enhancement_counts_on_game_start() {
+        let mut game = Game::new(Config::default());
+        
+        let enhanced_cards = vec![
+            create_card_with_enhancement(Some(Enhancement::Stone)),
+            create_card_with_enhancement(Some(Enhancement::Steel)),
+        ];
+        game.add_cards_to_deck_for_testing(enhanced_cards);
+        
+        // Counts should be 0 before start (not yet calculated)
+        assert_eq!(game.stone_cards_in_deck, 0);
+        assert_eq!(game.steel_cards_in_deck, 0);
+        
+        // Start the game (this should refresh counts)
+        game.start();
+        
+        // Counts should now be accurate
+        assert_eq!(game.stone_cards_in_deck, 1);
+        assert_eq!(game.steel_cards_in_deck, 1);
+    }
+
+    #[test]
+    fn should_handle_deck_size_calculation_correctly() {
+        let mut game = Game::new(Config::default());
+        
+        let initial_deck_size = game.deck_size_for_testing();
+        
+        let cards = vec![
+            create_card_with_enhancement(Some(Enhancement::Stone)),
+            create_card_with_enhancement(Some(Enhancement::Stone)),
+            create_card_with_enhancement(Some(Enhancement::Steel)),
+            create_card_with_enhancement(None),
+            create_card_with_enhancement(Some(Enhancement::Bonus)),
+        ];
+        game.add_cards_to_deck_for_testing(cards);
+        game.refresh_enhancement_counts();
+        
+        // Total deck size should be initial size + 5 added cards
+        assert_eq!(game.deck_size_for_testing(), initial_deck_size + 5);
+        // Enhancement counts should be accurate (only counting the added enhanced cards)
+        assert_eq!(game.stone_cards_in_deck, 2);
+        assert_eq!(game.steel_cards_in_deck, 1);
     }
 }

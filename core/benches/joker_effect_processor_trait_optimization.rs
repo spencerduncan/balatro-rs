@@ -54,8 +54,8 @@ impl TestGameData {
             joker_state_manager: &self.joker_state_manager,
             hand_type_counts: &self.hand_type_counts,
             cards_in_deck: 52,
-            stone_cards_in_deck: 0,
-            steel_cards_in_deck: 0,
+            stone_cards_in_deck: 0, // BENCHMARK: Using standard deck composition
+            steel_cards_in_deck: 0, // BENCHMARK: Using standard deck composition
             rng: &self.rng,
         }
     }
