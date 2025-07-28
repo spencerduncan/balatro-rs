@@ -223,7 +223,7 @@
 <a href=#223 id=223 data-nosnippet>223</a>        <span class="self">Self </span>{
 <a href=#224 id=224 data-nosnippet>224</a>            id: JokerId::ToTheMoon,
 <a href=#225 id=225 data-nosnippet>225</a>            name: <span class="string">"To The Moon"</span>.to_string(),
-<a href=#226 id=226 data-nosnippet>226</a>            description: <span class="string">"Earn $1 of interest for every $5 you have at end of round (max $5)"
+<a href=#226 id=226 data-nosnippet>226</a>            description: <span class="string">"Earn an extra $1 of interest for every $5 you have at end of round"
 <a href=#227 id=227 data-nosnippet>227</a>                </span>.to_string(),
 <a href=#228 id=228 data-nosnippet>228</a>            rarity: JokerRarity::Uncommon,
 <a href=#229 id=229 data-nosnippet>229</a>            cost: <span class="number">5</span>,
@@ -280,13 +280,13 @@
 <a href=#280 id=280 data-nosnippet>280</a>    }
 <a href=#281 id=281 data-nosnippet>281</a>
 <a href=#282 id=282 data-nosnippet>282</a>    <span class="kw">fn </span>on_round_end(<span class="kw-2">&amp;</span><span class="self">self</span>, context: <span class="kw-2">&amp;mut </span>GameContext) -&gt; JokerEffect {
-<a href=#283 id=283 data-nosnippet>283</a>        <span class="comment">// Calculate interest: $1 per $5 owned, max $5
-<a href=#284 id=284 data-nosnippet>284</a>        </span><span class="kw">let </span>interest = (context.money / <span class="number">5</span>).clamp(<span class="number">0</span>, <span class="number">5</span>);
+<a href=#283 id=283 data-nosnippet>283</a>        <span class="comment">// Calculate extra interest: $1 per $5 owned
+<a href=#284 id=284 data-nosnippet>284</a>        </span><span class="kw">let </span>interest_bonus = context.money / <span class="number">5</span>;
 <a href=#285 id=285 data-nosnippet>285</a>
-<a href=#286 id=286 data-nosnippet>286</a>        <span class="kw">if </span>interest &gt; <span class="number">0 </span>{
+<a href=#286 id=286 data-nosnippet>286</a>        <span class="kw">if </span>interest_bonus &gt; <span class="number">0 </span>{
 <a href=#287 id=287 data-nosnippet>287</a>            JokerEffect::new()
-<a href=#288 id=288 data-nosnippet>288</a>                .with_money(interest)
-<a href=#289 id=289 data-nosnippet>289</a>                .with_message(<span class="macro">format!</span>(<span class="string">"To The Moon: +${interest} interest"</span>))
+<a href=#288 id=288 data-nosnippet>288</a>                .with_interest_bonus(interest_bonus)
+<a href=#289 id=289 data-nosnippet>289</a>                .with_message(<span class="macro">format!</span>(<span class="string">"To The Moon: +${interest_bonus} extra interest"</span>))
 <a href=#290 id=290 data-nosnippet>290</a>        } <span class="kw">else </span>{
 <a href=#291 id=291 data-nosnippet>291</a>            JokerEffect::new()
 <a href=#292 id=292 data-nosnippet>292</a>        }
@@ -476,92 +476,110 @@
 <a href=#476 id=476 data-nosnippet>476</a>        <span class="macro">assert_eq!</span>(JokerIdentity::name(<span class="kw-2">&amp;</span>moon), <span class="string">"To The Moon"</span>);
 <a href=#477 id=477 data-nosnippet>477</a>        <span class="macro">assert_eq!</span>(moon.base_cost(), <span class="number">5</span>);
 <a href=#478 id=478 data-nosnippet>478</a>
-<a href=#479 id=479 data-nosnippet>479</a>        <span class="comment">// Test interest calculation
+<a href=#479 id=479 data-nosnippet>479</a>        <span class="comment">// Test interest bonus calculation
 <a href=#480 id=480 data-nosnippet>480</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>test_context = <span class="kw">crate</span>::joker::test_utils::TestContextBuilder::new()
-<a href=#481 id=481 data-nosnippet>481</a>            .with_money(<span class="number">23</span>) <span class="comment">// Should give $4 interest ($23 / $5 = 4.6, rounded down to 4)
+<a href=#481 id=481 data-nosnippet>481</a>            .with_money(<span class="number">23</span>) <span class="comment">// Should give $4 interest bonus ($23 / $5 = 4.6, rounded down to 4)
 <a href=#482 id=482 data-nosnippet>482</a>            </span>.build();
 <a href=#483 id=483 data-nosnippet>483</a>
 <a href=#484 id=484 data-nosnippet>484</a>        <span class="kw">let </span>effect = moon.on_round_end(<span class="kw-2">&amp;mut </span>test_context);
-<a href=#485 id=485 data-nosnippet>485</a>        <span class="macro">assert_eq!</span>(effect.money, <span class="number">4</span>);
-<a href=#486 id=486 data-nosnippet>486</a>
-<a href=#487 id=487 data-nosnippet>487</a>        <span class="comment">// Test max interest cap
-<a href=#488 id=488 data-nosnippet>488</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>rich_context = <span class="kw">crate</span>::joker::test_utils::TestContextBuilder::new()
-<a href=#489 id=489 data-nosnippet>489</a>            .with_money(<span class="number">100</span>) <span class="comment">// Should cap at $5 interest
-<a href=#490 id=490 data-nosnippet>490</a>            </span>.build();
-<a href=#491 id=491 data-nosnippet>491</a>
-<a href=#492 id=492 data-nosnippet>492</a>        <span class="kw">let </span>effect_max = moon.on_round_end(<span class="kw-2">&amp;mut </span>rich_context);
-<a href=#493 id=493 data-nosnippet>493</a>        <span class="macro">assert_eq!</span>(effect_max.money, <span class="number">5</span>);
-<a href=#494 id=494 data-nosnippet>494</a>    }
+<a href=#485 id=485 data-nosnippet>485</a>        <span class="macro">assert_eq!</span>(effect.interest_bonus, <span class="number">4</span>);
+<a href=#486 id=486 data-nosnippet>486</a>        <span class="macro">assert_eq!</span>(effect.money, <span class="number">0</span>); <span class="comment">// Should not give direct money, only interest bonus
+<a href=#487 id=487 data-nosnippet>487</a>
+<a href=#488 id=488 data-nosnippet>488</a>        // Test with $25 (should give $5 interest bonus)
+<a href=#489 id=489 data-nosnippet>489</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>test_context_25 = <span class="kw">crate</span>::joker::test_utils::TestContextBuilder::new()
+<a href=#490 id=490 data-nosnippet>490</a>            .with_money(<span class="number">25</span>) <span class="comment">// Should give $5 interest bonus ($25 / $5 = 5)
+<a href=#491 id=491 data-nosnippet>491</a>            </span>.build();
+<a href=#492 id=492 data-nosnippet>492</a>
+<a href=#493 id=493 data-nosnippet>493</a>        <span class="kw">let </span>effect_25 = moon.on_round_end(<span class="kw-2">&amp;mut </span>test_context_25);
+<a href=#494 id=494 data-nosnippet>494</a>        <span class="macro">assert_eq!</span>(effect_25.interest_bonus, <span class="number">5</span>);
 <a href=#495 id=495 data-nosnippet>495</a>
-<a href=#496 id=496 data-nosnippet>496</a>    <span class="attr">#[test]
-<a href=#497 id=497 data-nosnippet>497</a>    </span><span class="kw">fn </span>test_gift_card() {
-<a href=#498 id=498 data-nosnippet>498</a>        <span class="kw">let </span>gift_card = GiftCardJoker::new();
-<a href=#499 id=499 data-nosnippet>499</a>
-<a href=#500 id=500 data-nosnippet>500</a>        <span class="comment">// Test identity
-<a href=#501 id=501 data-nosnippet>501</a>        </span><span class="macro">assert_eq!</span>(gift_card.joker_type(), <span class="string">"gift_card"</span>);
-<a href=#502 id=502 data-nosnippet>502</a>        <span class="macro">assert_eq!</span>(JokerIdentity::name(<span class="kw-2">&amp;</span>gift_card), <span class="string">"Gift Card"</span>);
-<a href=#503 id=503 data-nosnippet>503</a>        <span class="macro">assert_eq!</span>(gift_card.base_cost(), <span class="number">6</span>);
+<a href=#496 id=496 data-nosnippet>496</a>        <span class="comment">// Test with $100 (should give $20 interest bonus, but cap applies to total interest)
+<a href=#497 id=497 data-nosnippet>497</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>rich_context = <span class="kw">crate</span>::joker::test_utils::TestContextBuilder::new()
+<a href=#498 id=498 data-nosnippet>498</a>            .with_money(<span class="number">100</span>) <span class="comment">// Should give $20 interest bonus ($100 / $5 = 20)
+<a href=#499 id=499 data-nosnippet>499</a>            </span>.build();
+<a href=#500 id=500 data-nosnippet>500</a>
+<a href=#501 id=501 data-nosnippet>501</a>        <span class="kw">let </span>effect_rich = moon.on_round_end(<span class="kw-2">&amp;mut </span>rich_context);
+<a href=#502 id=502 data-nosnippet>502</a>        <span class="macro">assert_eq!</span>(effect_rich.interest_bonus, <span class="number">20</span>); <span class="comment">// Joker provides full bonus
+<a href=#503 id=503 data-nosnippet>503</a>                                                    // Note: Cap is applied to total interest (base + bonus) in calc_reward_with_interest_bonus
 <a href=#504 id=504 data-nosnippet>504</a>
-<a href=#505 id=505 data-nosnippet>505</a>        <span class="comment">// Test round end effect
-<a href=#506 id=506 data-nosnippet>506</a>        </span><span class="kw">let </span>gift_card = GiftCardJoker::new();
-<a href=#507 id=507 data-nosnippet>507</a>        <span class="kw">let </span><span class="kw-2">mut </span>test_context = <span class="kw">crate</span>::joker::test_utils::TestContextBuilder::new().build();
-<a href=#508 id=508 data-nosnippet>508</a>
-<a href=#509 id=509 data-nosnippet>509</a>        <span class="comment">// Create some test jokers
-<a href=#510 id=510 data-nosnippet>510</a>        </span><span class="kw">let </span>test_jokers: Vec&lt;Box&lt;<span class="kw">dyn </span>Joker&gt;&gt; = <span class="macro">vec!</span>[
-<a href=#511 id=511 data-nosnippet>511</a>            Box::new(DelayedGratificationJoker::new()),
-<a href=#512 id=512 data-nosnippet>512</a>            Box::new(RocketJoker::new()),
-<a href=#513 id=513 data-nosnippet>513</a>        ];
-<a href=#514 id=514 data-nosnippet>514</a>        test_context.jokers = <span class="kw-2">&amp;</span>test_jokers;
-<a href=#515 id=515 data-nosnippet>515</a>
-<a href=#516 id=516 data-nosnippet>516</a>        <span class="kw">let </span>effect = gift_card.on_round_end(<span class="kw-2">&amp;mut </span>test_context);
-<a href=#517 id=517 data-nosnippet>517</a>        <span class="comment">// Should increase sell value for 2 jokers
-<a href=#518 id=518 data-nosnippet>518</a>        </span><span class="macro">assert_eq!</span>(effect.sell_value_increase, <span class="number">1</span>);
-<a href=#519 id=519 data-nosnippet>519</a>    }
-<a href=#520 id=520 data-nosnippet>520</a>
-<a href=#521 id=521 data-nosnippet>521</a>    <span class="attr">#[test]
-<a href=#522 id=522 data-nosnippet>522</a>    </span><span class="kw">fn </span>test_rocket_payout_modification() {
-<a href=#523 id=523 data-nosnippet>523</a>        <span class="kw">let </span><span class="kw-2">mut </span>rocket = RocketJoker::new();
-<a href=#524 id=524 data-nosnippet>524</a>
-<a href=#525 id=525 data-nosnippet>525</a>        <span class="comment">// Initial payout should be $1
-<a href=#526 id=526 data-nosnippet>526</a>        </span><span class="macro">assert_eq!</span>(rocket.payout, <span class="number">1</span>);
-<a href=#527 id=527 data-nosnippet>527</a>
-<a href=#528 id=528 data-nosnippet>528</a>        <span class="comment">// Test manual payout increase (simulating boss blind defeat)
-<a href=#529 id=529 data-nosnippet>529</a>        </span>rocket.increase_payout();
-<a href=#530 id=530 data-nosnippet>530</a>        <span class="macro">assert_eq!</span>(rocket.payout, <span class="number">2</span>); <span class="comment">// Should increase to $2
-<a href=#531 id=531 data-nosnippet>531</a>
-<a href=#532 id=532 data-nosnippet>532</a>        // Test another increase
-<a href=#533 id=533 data-nosnippet>533</a>        </span>rocket.increase_payout();
-<a href=#534 id=534 data-nosnippet>534</a>        <span class="macro">assert_eq!</span>(rocket.payout, <span class="number">3</span>); <span class="comment">// Should increase to $3
-<a href=#535 id=535 data-nosnippet>535</a>
-<a href=#536 id=536 data-nosnippet>536</a>        // Verify the new payout works on round end
-<a href=#537 id=537 data-nosnippet>537</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>test_context = <span class="kw">crate</span>::joker::test_utils::TestContextBuilder::new()
-<a href=#538 id=538 data-nosnippet>538</a>            .with_money(<span class="number">10</span>)
-<a href=#539 id=539 data-nosnippet>539</a>            .build();
-<a href=#540 id=540 data-nosnippet>540</a>
-<a href=#541 id=541 data-nosnippet>541</a>        <span class="kw">let </span>round_effect = rocket.on_round_end(<span class="kw-2">&amp;mut </span>test_context);
-<a href=#542 id=542 data-nosnippet>542</a>        <span class="macro">assert_eq!</span>(round_effect.money, <span class="number">3</span>); <span class="comment">// Should earn current payout ($3)
-<a href=#543 id=543 data-nosnippet>543</a>        </span><span class="macro">assert!</span>(round_effect.message.unwrap().contains(<span class="string">"+$3"</span>));
-<a href=#544 id=544 data-nosnippet>544</a>    }
+<a href=#505 id=505 data-nosnippet>505</a>        // Test with no money
+<a href=#506 id=506 data-nosnippet>506</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>poor_context = <span class="kw">crate</span>::joker::test_utils::TestContextBuilder::new()
+<a href=#507 id=507 data-nosnippet>507</a>            .with_money(<span class="number">4</span>) <span class="comment">// Should give $0 interest bonus ($4 / $5 = 0.8, rounded down to 0)
+<a href=#508 id=508 data-nosnippet>508</a>            </span>.build();
+<a href=#509 id=509 data-nosnippet>509</a>
+<a href=#510 id=510 data-nosnippet>510</a>        <span class="kw">let </span>effect_poor = moon.on_round_end(<span class="kw-2">&amp;mut </span>poor_context);
+<a href=#511 id=511 data-nosnippet>511</a>        <span class="macro">assert_eq!</span>(effect_poor.interest_bonus, <span class="number">0</span>);
+<a href=#512 id=512 data-nosnippet>512</a>    }
+<a href=#513 id=513 data-nosnippet>513</a>
+<a href=#514 id=514 data-nosnippet>514</a>    <span class="attr">#[test]
+<a href=#515 id=515 data-nosnippet>515</a>    </span><span class="kw">fn </span>test_gift_card() {
+<a href=#516 id=516 data-nosnippet>516</a>        <span class="kw">let </span>gift_card = GiftCardJoker::new();
+<a href=#517 id=517 data-nosnippet>517</a>
+<a href=#518 id=518 data-nosnippet>518</a>        <span class="comment">// Test identity
+<a href=#519 id=519 data-nosnippet>519</a>        </span><span class="macro">assert_eq!</span>(gift_card.joker_type(), <span class="string">"gift_card"</span>);
+<a href=#520 id=520 data-nosnippet>520</a>        <span class="macro">assert_eq!</span>(JokerIdentity::name(<span class="kw-2">&amp;</span>gift_card), <span class="string">"Gift Card"</span>);
+<a href=#521 id=521 data-nosnippet>521</a>        <span class="macro">assert_eq!</span>(gift_card.base_cost(), <span class="number">6</span>);
+<a href=#522 id=522 data-nosnippet>522</a>
+<a href=#523 id=523 data-nosnippet>523</a>        <span class="comment">// Test round end effect
+<a href=#524 id=524 data-nosnippet>524</a>        </span><span class="kw">let </span>gift_card = GiftCardJoker::new();
+<a href=#525 id=525 data-nosnippet>525</a>        <span class="kw">let </span><span class="kw-2">mut </span>test_context = <span class="kw">crate</span>::joker::test_utils::TestContextBuilder::new().build();
+<a href=#526 id=526 data-nosnippet>526</a>
+<a href=#527 id=527 data-nosnippet>527</a>        <span class="comment">// Create some test jokers
+<a href=#528 id=528 data-nosnippet>528</a>        </span><span class="kw">let </span>test_jokers: Vec&lt;Box&lt;<span class="kw">dyn </span>Joker&gt;&gt; = <span class="macro">vec!</span>[
+<a href=#529 id=529 data-nosnippet>529</a>            Box::new(DelayedGratificationJoker::new()),
+<a href=#530 id=530 data-nosnippet>530</a>            Box::new(RocketJoker::new()),
+<a href=#531 id=531 data-nosnippet>531</a>        ];
+<a href=#532 id=532 data-nosnippet>532</a>        test_context.jokers = <span class="kw-2">&amp;</span>test_jokers;
+<a href=#533 id=533 data-nosnippet>533</a>
+<a href=#534 id=534 data-nosnippet>534</a>        <span class="kw">let </span>effect = gift_card.on_round_end(<span class="kw-2">&amp;mut </span>test_context);
+<a href=#535 id=535 data-nosnippet>535</a>        <span class="comment">// Should increase sell value for 2 jokers
+<a href=#536 id=536 data-nosnippet>536</a>        </span><span class="macro">assert_eq!</span>(effect.sell_value_increase, <span class="number">1</span>);
+<a href=#537 id=537 data-nosnippet>537</a>    }
+<a href=#538 id=538 data-nosnippet>538</a>
+<a href=#539 id=539 data-nosnippet>539</a>    <span class="attr">#[test]
+<a href=#540 id=540 data-nosnippet>540</a>    </span><span class="kw">fn </span>test_rocket_payout_modification() {
+<a href=#541 id=541 data-nosnippet>541</a>        <span class="kw">let </span><span class="kw-2">mut </span>rocket = RocketJoker::new();
+<a href=#542 id=542 data-nosnippet>542</a>
+<a href=#543 id=543 data-nosnippet>543</a>        <span class="comment">// Initial payout should be $1
+<a href=#544 id=544 data-nosnippet>544</a>        </span><span class="macro">assert_eq!</span>(rocket.payout, <span class="number">1</span>);
 <a href=#545 id=545 data-nosnippet>545</a>
-<a href=#546 id=546 data-nosnippet>546</a>    <span class="attr">#[test]
-<a href=#547 id=547 data-nosnippet>547</a>    </span><span class="kw">fn </span>test_all_economy_jokers_creation() {
-<a href=#548 id=548 data-nosnippet>548</a>        <span class="comment">// Test that all economy jokers can be created successfully
-<a href=#549 id=549 data-nosnippet>549</a>        </span><span class="kw">let </span>delayed_gratification = DelayedGratificationJoker::new();
-<a href=#550 id=550 data-nosnippet>550</a>        <span class="macro">assert_eq!</span>(delayed_gratification.id, JokerId::DelayedGratification);
-<a href=#551 id=551 data-nosnippet>551</a>        <span class="macro">assert_eq!</span>(delayed_gratification.name, <span class="string">"Delayed Gratification"</span>);
-<a href=#552 id=552 data-nosnippet>552</a>        <span class="macro">assert_eq!</span>(delayed_gratification.cost, <span class="number">4</span>);
+<a href=#546 id=546 data-nosnippet>546</a>        <span class="comment">// Test manual payout increase (simulating boss blind defeat)
+<a href=#547 id=547 data-nosnippet>547</a>        </span>rocket.increase_payout();
+<a href=#548 id=548 data-nosnippet>548</a>        <span class="macro">assert_eq!</span>(rocket.payout, <span class="number">2</span>); <span class="comment">// Should increase to $2
+<a href=#549 id=549 data-nosnippet>549</a>
+<a href=#550 id=550 data-nosnippet>550</a>        // Test another increase
+<a href=#551 id=551 data-nosnippet>551</a>        </span>rocket.increase_payout();
+<a href=#552 id=552 data-nosnippet>552</a>        <span class="macro">assert_eq!</span>(rocket.payout, <span class="number">3</span>); <span class="comment">// Should increase to $3
 <a href=#553 id=553 data-nosnippet>553</a>
-<a href=#554 id=554 data-nosnippet>554</a>        <span class="kw">let </span>rocket = RocketJoker::new();
-<a href=#555 id=555 data-nosnippet>555</a>        <span class="macro">assert_eq!</span>(rocket.id, JokerId::RocketShip);
-<a href=#556 id=556 data-nosnippet>556</a>        <span class="macro">assert_eq!</span>(rocket.name, <span class="string">"Rocket"</span>);
-<a href=#557 id=557 data-nosnippet>557</a>        <span class="macro">assert_eq!</span>(rocket.payout, <span class="number">1</span>);
+<a href=#554 id=554 data-nosnippet>554</a>        // Verify the new payout works on round end
+<a href=#555 id=555 data-nosnippet>555</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>test_context = <span class="kw">crate</span>::joker::test_utils::TestContextBuilder::new()
+<a href=#556 id=556 data-nosnippet>556</a>            .with_money(<span class="number">10</span>)
+<a href=#557 id=557 data-nosnippet>557</a>            .build();
 <a href=#558 id=558 data-nosnippet>558</a>
-<a href=#559 id=559 data-nosnippet>559</a>        <span class="kw">let </span>to_the_moon = ToTheMoonJoker::new();
-<a href=#560 id=560 data-nosnippet>560</a>        <span class="macro">assert_eq!</span>(to_the_moon.id, JokerId::ToTheMoon);
-<a href=#561 id=561 data-nosnippet>561</a>        <span class="macro">assert_eq!</span>(to_the_moon.name, <span class="string">"To The Moon"</span>);
-<a href=#562 id=562 data-nosnippet>562</a>
-<a href=#563 id=563 data-nosnippet>563</a>        <span class="kw">let </span>gift_card = GiftCardJoker::new();
-<a href=#564 id=564 data-nosnippet>564</a>        <span class="macro">assert_eq!</span>(gift_card.id, JokerId::GiftCard);
-<a href=#565 id=565 data-nosnippet>565</a>        <span class="macro">assert_eq!</span>(gift_card.name, <span class="string">"Gift Card"</span>);
-<a href=#566 id=566 data-nosnippet>566</a>    }
-<a href=#567 id=567 data-nosnippet>567</a>}</code></pre></div></section></main></body></html>
+<a href=#559 id=559 data-nosnippet>559</a>        <span class="kw">let </span>round_effect = rocket.on_round_end(<span class="kw-2">&amp;mut </span>test_context);
+<a href=#560 id=560 data-nosnippet>560</a>        <span class="macro">assert_eq!</span>(round_effect.money, <span class="number">3</span>); <span class="comment">// Should earn current payout ($3)
+<a href=#561 id=561 data-nosnippet>561</a>        </span><span class="macro">assert!</span>(round_effect.message.unwrap().contains(<span class="string">"+$3"</span>));
+<a href=#562 id=562 data-nosnippet>562</a>    }
+<a href=#563 id=563 data-nosnippet>563</a>
+<a href=#564 id=564 data-nosnippet>564</a>    <span class="attr">#[test]
+<a href=#565 id=565 data-nosnippet>565</a>    </span><span class="kw">fn </span>test_all_economy_jokers_creation() {
+<a href=#566 id=566 data-nosnippet>566</a>        <span class="comment">// Test that all economy jokers can be created successfully
+<a href=#567 id=567 data-nosnippet>567</a>        </span><span class="kw">let </span>delayed_gratification = DelayedGratificationJoker::new();
+<a href=#568 id=568 data-nosnippet>568</a>        <span class="macro">assert_eq!</span>(delayed_gratification.id, JokerId::DelayedGratification);
+<a href=#569 id=569 data-nosnippet>569</a>        <span class="macro">assert_eq!</span>(delayed_gratification.name, <span class="string">"Delayed Gratification"</span>);
+<a href=#570 id=570 data-nosnippet>570</a>        <span class="macro">assert_eq!</span>(delayed_gratification.cost, <span class="number">4</span>);
+<a href=#571 id=571 data-nosnippet>571</a>
+<a href=#572 id=572 data-nosnippet>572</a>        <span class="kw">let </span>rocket = RocketJoker::new();
+<a href=#573 id=573 data-nosnippet>573</a>        <span class="macro">assert_eq!</span>(rocket.id, JokerId::RocketShip);
+<a href=#574 id=574 data-nosnippet>574</a>        <span class="macro">assert_eq!</span>(rocket.name, <span class="string">"Rocket"</span>);
+<a href=#575 id=575 data-nosnippet>575</a>        <span class="macro">assert_eq!</span>(rocket.payout, <span class="number">1</span>);
+<a href=#576 id=576 data-nosnippet>576</a>
+<a href=#577 id=577 data-nosnippet>577</a>        <span class="kw">let </span>to_the_moon = ToTheMoonJoker::new();
+<a href=#578 id=578 data-nosnippet>578</a>        <span class="macro">assert_eq!</span>(to_the_moon.id, JokerId::ToTheMoon);
+<a href=#579 id=579 data-nosnippet>579</a>        <span class="macro">assert_eq!</span>(to_the_moon.name, <span class="string">"To The Moon"</span>);
+<a href=#580 id=580 data-nosnippet>580</a>
+<a href=#581 id=581 data-nosnippet>581</a>        <span class="kw">let </span>gift_card = GiftCardJoker::new();
+<a href=#582 id=582 data-nosnippet>582</a>        <span class="macro">assert_eq!</span>(gift_card.id, JokerId::GiftCard);
+<a href=#583 id=583 data-nosnippet>583</a>        <span class="macro">assert_eq!</span>(gift_card.name, <span class="string">"Gift Card"</span>);
+<a href=#584 id=584 data-nosnippet>584</a>    }
+<a href=#585 id=585 data-nosnippet>585</a>}</code></pre></div></section></main></body></html>
