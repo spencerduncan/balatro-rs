@@ -7,7 +7,7 @@
 
 use balatro_rs::card::{Card, Suit, Value};
 use balatro_rs::hand::SelectHand;
-use balatro_rs::joker::{GameContext, Joker, JokerId, JokerRarity};
+use balatro_rs::joker::{JokerId, JokerRarity};
 use balatro_rs::stage::{Blind, Stage};
 use balatro_rs::static_joker_factory::StaticJokerFactory;
 
@@ -90,7 +90,8 @@ fn test_half_joker() {
 #[ignore = "EMERGENCY DISABLE: GameContext default issues - tracked for post-emergency fix"]
 fn test_half_joker_behavior_with_4_cards() {
     let joker = StaticJokerFactory::create_half_joker();
-    let mut context = balatro_rs::joker::test_utils::TestContextBuilder::new().build();
+    // EMERGENCY: TestContextBuilder not available in integration tests  
+    // let mut context = balatro_rs::joker::test_utils::TestContextBuilder::new().build();
 
     // Test with exactly 4 cards (should trigger)
     let four_card_hand = SelectHand::new(vec![
@@ -116,7 +117,8 @@ fn test_half_joker_behavior_with_4_cards() {
 #[ignore = "EMERGENCY DISABLE: GameContext default issues - tracked for post-emergency fix"]
 fn test_half_joker_behavior_with_3_cards() {
     let joker = StaticJokerFactory::create_half_joker();
-    let mut context = balatro_rs::joker::test_utils::TestContextBuilder::new().build();
+    // EMERGENCY: TestContextBuilder not available in integration tests  
+    // let mut context = balatro_rs::joker::test_utils::TestContextBuilder::new().build();
 
     // Test with 3 cards (should trigger)
     let three_card_hand = SelectHand::new(vec![
@@ -136,7 +138,8 @@ fn test_half_joker_behavior_with_3_cards() {
 #[ignore = "EMERGENCY DISABLE: GameContext default issues - tracked for post-emergency fix"]
 fn test_half_joker_behavior_with_2_cards() {
     let joker = StaticJokerFactory::create_half_joker();
-    let mut context = balatro_rs::joker::test_utils::TestContextBuilder::new().build();
+    // EMERGENCY: TestContextBuilder not available in integration tests  
+    // let mut context = balatro_rs::joker::test_utils::TestContextBuilder::new().build();
 
     // Test with 2 cards (should trigger)
     let two_card_hand = SelectHand::new(vec![
@@ -155,7 +158,8 @@ fn test_half_joker_behavior_with_2_cards() {
 #[ignore = "EMERGENCY DISABLE: GameContext default issues - tracked for post-emergency fix"]
 fn test_half_joker_behavior_with_1_card() {
     let joker = StaticJokerFactory::create_half_joker();
-    let mut context = balatro_rs::joker::test_utils::TestContextBuilder::new().build();
+    // EMERGENCY: TestContextBuilder not available in integration tests  
+    // let mut context = balatro_rs::joker::test_utils::TestContextBuilder::new().build();
 
     // Test with 1 card (should trigger)
     let one_card_hand = SelectHand::new(vec![Card::new(Value::King, Suit::Heart)]);
@@ -171,7 +175,8 @@ fn test_half_joker_behavior_with_1_card() {
 #[ignore = "EMERGENCY DISABLE: GameContext default issues - tracked for post-emergency fix"]
 fn test_half_joker_behavior_with_5_cards() {
     let joker = StaticJokerFactory::create_half_joker();
-    let mut context = balatro_rs::joker::test_utils::TestContextBuilder::new().build();
+    // EMERGENCY: TestContextBuilder not available in integration tests  
+    // let mut context = balatro_rs::joker::test_utils::TestContextBuilder::new().build();
 
     // Test with 5 cards (should NOT trigger)
     let five_card_hand = SelectHand::new(vec![
@@ -201,7 +206,8 @@ fn test_half_joker_behavior_with_5_cards() {
 #[ignore = "EMERGENCY DISABLE: GameContext default issues - tracked for post-emergency fix"]
 fn test_half_joker_behavior_with_6_cards() {
     let joker = StaticJokerFactory::create_half_joker();
-    let mut context = balatro_rs::joker::test_utils::TestContextBuilder::new().build();
+    // EMERGENCY: TestContextBuilder not available in integration tests  
+    // let mut context = balatro_rs::joker::test_utils::TestContextBuilder::new().build();
 
     // Test with 6 cards (should NOT trigger)
     let six_card_hand = SelectHand::new(vec![
@@ -224,7 +230,8 @@ fn test_half_joker_behavior_with_6_cards() {
 #[ignore = "EMERGENCY DISABLE: GameContext default issues - tracked for post-emergency fix"]
 fn test_half_joker_behavior_per_hand_not_per_card() {
     let joker = StaticJokerFactory::create_half_joker();
-    let mut context = balatro_rs::joker::test_utils::TestContextBuilder::new().build();
+    // EMERGENCY: TestContextBuilder not available in integration tests  
+    // let mut context = balatro_rs::joker::test_utils::TestContextBuilder::new().build();
 
     // Test that Half Joker is per-hand, not per-card
     let three_card_hand = SelectHand::new(vec![
@@ -253,7 +260,8 @@ fn test_half_joker_behavior_per_hand_not_per_card() {
 #[ignore = "EMERGENCY DISABLE: GameContext default issues - tracked for post-emergency fix"]
 fn test_half_joker_behavior_edge_case_empty_hand() {
     let joker = StaticJokerFactory::create_half_joker();
-    let mut context = balatro_rs::joker::test_utils::TestContextBuilder::new().build();
+    // EMERGENCY: TestContextBuilder not available in integration tests  
+    // let mut context = balatro_rs::joker::test_utils::TestContextBuilder::new().build();
 
     // Test with empty hand (should trigger as 0 ≤ 4)
     let empty_hand = SelectHand::new(vec![]);
@@ -291,7 +299,8 @@ fn test_banner_joker() {
     let empty_cards = vec![];
     let joker_state_manager = Arc::new(JokerStateManager::new());
     let hand_type_counts = HashMap::new();
-    let rng = balatro_rs::rng::GameRng::new();
+    use balatro_rs::rng::RngMode;
+    let rng = balatro_rs::rng::GameRng::new(RngMode::Testing);
 
     // Test with 0 discards used (5 remaining) - should give 5 * 30 = 150 chips
     let mut context_5_remaining = GameContext {
@@ -433,7 +442,7 @@ fn test_abstract_joker() {
     // Create a test game context manually
     let joker_state_manager = Arc::new(JokerStateManager::new());
     let stage = Stage::Blind;
-    let stage_ref: &'static Stage = Box::leak(Box::new(stage));
+    let stage_ref: &'static Stage = Box::leak(Box::new(Stage::Blind(Blind::Small)));
     let hand = Hand::new(vec![]);
     let hand_ref: &'static Hand = Box::leak(Box::new(hand));
     let discarded: Vec<Card> = Vec::new();
