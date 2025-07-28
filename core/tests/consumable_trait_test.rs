@@ -41,6 +41,10 @@ fn test_consumable_trait_object_compatibility() {
         fn get_effect_category(&self) -> ConsumableEffect {
             ConsumableEffect::Enhancement
         }
+
+        fn get_mock_id(&self) -> u32 {
+            42 // Fixed mock ID for basic testing
+        }
     }
 
     // Test trait object compatibility with Send + Sync + Debug bounds
@@ -199,6 +203,10 @@ fn test_enhanced_consumable_trait_methods() {
 
         fn get_effect_category(&self) -> ConsumableEffect {
             ConsumableEffect::Modification
+        }
+
+        fn get_mock_id(&self) -> u32 {
+            42 // Fixed mock ID for enhanced testing
         }
     }
 
