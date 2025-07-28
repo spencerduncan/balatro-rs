@@ -34,7 +34,6 @@ mod input_validation_tests {
         match output {
             Ok(_) => {
                 // CLI started successfully
-                assert!(true);
             }
             Err(e) => {
                 // Only fail if it's a compilation error, not a runtime issue
@@ -53,7 +52,10 @@ mod input_validation_tests {
         let valid_input = "5";
         let max = 10;
         match valid_input.trim().parse::<usize>() {
-            Ok(i) if i <= max => assert!(true, "Valid input should be accepted"),
+            Ok(i) if i <= max => {
+                // Valid input should be accepted
+                assert!(i <= max);
+            }
             Ok(_) => panic!("Valid input within range should be accepted"),
             Err(_) => panic!("Valid numeric input should parse successfully"),
         }
@@ -62,7 +64,9 @@ mod input_validation_tests {
         let invalid_input = "abc";
         match invalid_input.trim().parse::<usize>() {
             Ok(_) => panic!("Non-numeric input should not parse"),
-            Err(_) => assert!(true, "Non-numeric input should be rejected"),
+            Err(_) => {
+                // Non-numeric input should be rejected - expected behavior
+            }
         }
 
         // Test 3: Input out of range
@@ -70,7 +74,9 @@ mod input_validation_tests {
         let max = 10;
         match out_of_range.trim().parse::<usize>() {
             Ok(i) if i <= max => panic!("Out of range input should be rejected"),
-            Ok(_) => assert!(true, "Out of range input should be handled"),
+            Ok(_) => {
+                // Out of range input detected - expected behavior
+            }
             Err(_) => panic!("Numeric input should parse"),
         }
 
@@ -85,7 +91,10 @@ mod input_validation_tests {
         let edge_cases = vec!["0", " 0 ", "10", " 10 "];
         for input in edge_cases {
             match input.trim().parse::<usize>() {
-                Ok(i) if i <= 10 => assert!(true, "Valid edge case should be accepted"),
+                Ok(i) if i <= 10 => {
+                    // Valid edge case should be accepted
+                    assert!(i <= 10);
+                }
                 Ok(_) => panic!("Edge case parsing failed"),
                 Err(_) => panic!("Valid edge case should parse"),
             }

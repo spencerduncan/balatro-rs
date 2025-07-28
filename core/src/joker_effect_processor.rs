@@ -756,18 +756,6 @@ impl JokerEffectProcessor {
                 self.trait_metrics.legacy_path_count += 1;
                 self.process_legacy_joker(optimized_joker.joker, game_context, hand, card)
             }
-            JokerTraitProfile::HybridOptimized => {
-                // Hybrid path for jokers implementing both JokerGameplay and JokerModifiers
-                // For now, use legacy path until proper hybrid processing is implemented
-                self.trait_metrics.legacy_path_count += 1;
-                self.process_legacy_joker(optimized_joker.joker, game_context, hand, card)
-            }
-            JokerTraitProfile::FullTraitOptimized => {
-                // Full trait path for jokers implementing multiple new traits
-                // For now, use legacy path until proper full trait processing is implemented
-                self.trait_metrics.legacy_path_count += 1;
-                self.process_legacy_joker(optimized_joker.joker, game_context, hand, card)
-            }
         };
 
         // Update optimization metrics

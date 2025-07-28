@@ -15,10 +15,11 @@ mod tests {
     /// Test that ActionSpace creation handles zero available_max without underflow
     #[test]
     fn test_action_space_zero_available_max() {
-        let mut config = Config::default();
-
         // This should not panic or cause underflow
-        config.available_max = 0;
+        let config = Config {
+            available_max: 0,
+            ..Default::default()
+        };
         let action_space = ActionSpace::from(config);
 
         // Both move arrays should be empty when available_max is 0
@@ -30,17 +31,21 @@ mod tests {
     /// Test that ActionSpace creation handles small available_max values correctly
     #[test]
     fn test_action_space_small_available_max() {
-        let mut config = Config::default();
-
-        config.available_max = 1;
-        let action_space = ActionSpace::from(config.clone());
+        let config = Config {
+            available_max: 1,
+            ..Default::default()
+        };
+        let action_space = ActionSpace::from(config);
 
         // With 1 card available, no move operations should be possible
         assert_eq!(action_space.move_card_left.len(), 0);
         assert_eq!(action_space.move_card_right.len(), 0);
         assert_eq!(action_space.select_card.len(), 1);
 
-        config.available_max = 2;
+        let config = Config {
+            available_max: 2,
+            ..Default::default()
+        };
         let action_space = ActionSpace::from(config);
 
         // With 2 cards available, 1 move operation should be possible
@@ -169,7 +174,6 @@ mod tests {
 
     /// Test Config field access for validation
     #[test]
-    #[allow(clippy::field_reassign_with_default)]
     fn test_config_available_max_validation() {
         let config = Config {
             available_max: 0,
@@ -204,11 +208,12 @@ mod tests {
 
         // Test 1000 random valid configurations
         for _ in 0..1000 {
-            let mut config = Config::default();
-
             // Use valid range for available_max
             let available_max = rng.gen_range(0..=1000);
-            config.available_max = available_max;
+            let config = Config {
+                available_max,
+                ..Default::default()
+            };
 
             // This should never panic
             let action_space = ActionSpace::from(config);
@@ -261,11 +266,12 @@ mod tests {
         assert_eq!(safe_size_for_move_operations(2), 1);
 
         // Test with ActionSpace creation
-        let mut config = Config::default();
-
         for available_max in 0..=10 {
-            config.available_max = available_max;
-            let action_space = ActionSpace::from(config.clone());
+            let config = Config {
+                available_max,
+                ..Default::default()
+            };
+            let action_space = ActionSpace::from(config);
 
             // Verify no arrays are created with invalid sizes
             assert!(action_space.move_card_left.len() <= available_max);
@@ -276,7 +282,6 @@ mod tests {
 
     /// Memory safety test - ensure no out-of-bounds access
     #[test]
-    #[allow(clippy::field_reassign_with_default)]
     fn test_memory_safety() {
         let config = Config {
             available_max: 0,

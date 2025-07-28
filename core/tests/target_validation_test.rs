@@ -2,7 +2,9 @@
 // All tests in this file are marked with #[ignore] due to API issues
 
 use balatro_rs::config::Config;
-use balatro_rs::consumables::{CardCollection, CardTarget, Target, TargetType, TargetValidationError};
+use balatro_rs::consumables::{
+    CardCollection, CardTarget, Target, TargetType, TargetValidationError,
+};
 use balatro_rs::game::Game;
 use balatro_rs::rank::HandRank;
 

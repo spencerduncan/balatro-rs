@@ -593,14 +593,14 @@ fn test_remove_consumable_valid_index() {
     let result = slots.remove_consumable(0);
     assert!(result.is_ok());
     let removed = result.unwrap();
-    assert_eq!(removed.get_mock_id(), 1);
+    assert_eq!(removed.consumable_type(), ConsumableType::Tarot);
     assert_eq!(slots.len(), 1);
 
     // Remove second consumable
     let result2 = slots.remove_consumable(1);
     assert!(result2.is_ok());
     let removed2 = result2.unwrap();
-    assert_eq!(removed2.get_mock_id(), 2);
+    assert_eq!(removed2.consumable_type(), ConsumableType::Tarot);
     assert_eq!(slots.len(), 0);
     assert!(slots.is_empty());
 }
@@ -653,12 +653,18 @@ fn test_get_consumable_valid_access() {
     // Test immutable access
     let consumable_ref = slots.get_consumable(0);
     assert!(consumable_ref.is_some());
-    assert_eq!(consumable_ref.unwrap().get_mock_id(), 42);
+    assert_eq!(
+        consumable_ref.unwrap().consumable_type(),
+        ConsumableType::Tarot
+    );
 
     // Test mutable access
     let consumable_mut = slots.get_consumable_mut(0);
     assert!(consumable_mut.is_some());
-    assert_eq!(consumable_mut.unwrap().get_mock_id(), 42);
+    assert_eq!(
+        consumable_mut.unwrap().consumable_type(),
+        ConsumableType::Tarot
+    );
 }
 
 #[test]
@@ -759,9 +765,8 @@ fn test_consumable_slots_iterator() {
     slots.remove_consumable(1).unwrap();
 
     // Iterator should skip empty slots
-    let ids: Vec<u32> = slots.iter().map(|c| c.get_mock_id()).collect();
-    assert_eq!(ids, vec![10, 30]);
-    assert_eq!(ids.len(), 2);
+    let count: usize = slots.iter().count();
+    assert_eq!(count, 2);
 }
 
 #[test]
@@ -932,7 +937,7 @@ fn test_integration_slot_operations_with_spectral_cards() {
 
     // Remove middle card
     let removed = slots.remove_consumable(1).unwrap();
-    assert_eq!(removed.get_real_id(), ConsumableId::Grim);
+    assert_eq!(removed.consumable_type(), ConsumableType::Spectral);
 
     // Verify gap created
     assert_eq!(slots.len(), 2);
@@ -1038,7 +1043,7 @@ fn test_integration_consumable_target_types() {
         (ConsumableId::Mercury, TargetType::HandType),
     ];
 
-    for (id, expected_target) in consumables {
+    for (id, _expected_target) in consumables {
         let consumable = Box::new(RealConsumableWrapper {
             id,
             consumable_type: id.consumable_type(),

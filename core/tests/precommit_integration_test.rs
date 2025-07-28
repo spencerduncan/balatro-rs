@@ -350,6 +350,7 @@ fn test_clean_code_principles_in_config() {
 #[cfg(test)]
 mod test_utilities {
     /// Helper function to check if a command exists in the system
+    #[allow(dead_code)]
     pub fn command_exists(command: &str) -> bool {
         use std::process::Command;
         Command::new("which")

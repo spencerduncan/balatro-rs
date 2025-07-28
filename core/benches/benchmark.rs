@@ -9,8 +9,9 @@ use balatro_rs::{
     rng::GameRng,
     stage::Stage,
 };
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use std::collections::HashMap;
+use std::hint::black_box;
 
 pub fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("run game gen actions", |b| b.iter(run_game_gen_actions));
