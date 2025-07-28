@@ -15,6 +15,40 @@ use balatro_rs::static_joker_factory::StaticJokerFactory;
 use std::collections::HashMap;
 use std::sync::Arc;
 
+/// Helper function to create a minimal GameContext for testing
+fn create_test_context() -> GameContext<'static> {
+    // Create test data that will be leaked for 'static lifetime (test-only pattern)
+    let stage = Box::leak(Box::new(Stage::Blind(Blind::Small)));
+    let jokers: Vec<Box<dyn Joker>> = Vec::new();
+    let jokers_ref = Box::leak(jokers.into_boxed_slice());
+    let hand = Box::leak(Box::new(Hand::new(vec![])));
+    let discarded: Vec<Card> = Vec::new();
+    let discarded_ref = Box::leak(discarded.into_boxed_slice());
+    let hand_type_counts = Box::leak(Box::new(HashMap::new()));
+    let joker_state_manager = Box::leak(Box::new(Arc::new(JokerStateManager::new())));
+    let rng = Box::leak(Box::new(GameRng::for_testing(42)));
+
+    GameContext {
+        chips: 10,
+        mult: 1,
+        money: 5,
+        ante: 1,
+        round: 1,
+        stage,
+        hands_played: 0,
+        discards_used: 0,
+        jokers: jokers_ref,
+        hand,
+        discarded: discarded_ref,
+        joker_state_manager,
+        hand_type_counts,
+        cards_in_deck: 52,
+        stone_cards_in_deck: 0,
+        steel_cards_in_deck: 0,
+        rng,
+    }
+}
+
 #[test]
 fn test_red_card_joker() {
     let joker = StaticJokerFactory::create_red_card();
@@ -140,7 +174,7 @@ fn test_half_joker_behavior_with_4_cards() {
 #[test]
 fn test_half_joker_behavior_with_3_cards() {
     let joker = StaticJokerFactory::create_half_joker();
-    let mut context = GameContext::default();
+    let mut context = create_test_context();
 
     // Test with 3 cards (should trigger)
     let three_card_hand = SelectHand::new(vec![
@@ -159,7 +193,7 @@ fn test_half_joker_behavior_with_3_cards() {
 #[test]
 fn test_half_joker_behavior_with_2_cards() {
     let joker = StaticJokerFactory::create_half_joker();
-    let mut context = GameContext::default();
+    let mut context = create_test_context();
 
     // Test with 2 cards (should trigger)
     let two_card_hand = SelectHand::new(vec![
@@ -177,7 +211,7 @@ fn test_half_joker_behavior_with_2_cards() {
 #[test]
 fn test_half_joker_behavior_with_1_card() {
     let joker = StaticJokerFactory::create_half_joker();
-    let mut context = GameContext::default();
+    let mut context = create_test_context();
 
     // Test with 1 card (should trigger)
     let one_card_hand = SelectHand::new(vec![Card::new(Value::King, Suit::Heart)]);
@@ -192,7 +226,7 @@ fn test_half_joker_behavior_with_1_card() {
 #[test]
 fn test_half_joker_behavior_with_5_cards() {
     let joker = StaticJokerFactory::create_half_joker();
-    let mut context = GameContext::default();
+    let mut context = create_test_context();
 
     // Test with 5 cards (should NOT trigger)
     let five_card_hand = SelectHand::new(vec![
@@ -221,7 +255,7 @@ fn test_half_joker_behavior_with_5_cards() {
 #[test]
 fn test_half_joker_behavior_with_6_cards() {
     let joker = StaticJokerFactory::create_half_joker();
-    let mut context = GameContext::default();
+    let mut context = create_test_context();
 
     // Test with 6 cards (should NOT trigger)
     let six_card_hand = SelectHand::new(vec![
@@ -243,7 +277,7 @@ fn test_half_joker_behavior_with_6_cards() {
 #[test]
 fn test_half_joker_behavior_per_hand_not_per_card() {
     let joker = StaticJokerFactory::create_half_joker();
-    let mut context = GameContext::default();
+    let mut context = create_test_context();
 
     // Test that Half Joker is per-hand, not per-card
     let three_card_hand = SelectHand::new(vec![
@@ -271,7 +305,7 @@ fn test_half_joker_behavior_per_hand_not_per_card() {
 #[test]
 fn test_half_joker_behavior_edge_case_empty_hand() {
     let joker = StaticJokerFactory::create_half_joker();
-    let mut context = GameContext::default();
+    let mut context = create_test_context();
 
     // Test with empty hand (should trigger as 0 ≤ 4)
     let empty_hand = SelectHand::new(vec![]);
@@ -402,9 +436,9 @@ fn test_banner_implementation_uniqueness() {
     assert_eq!(banner.cost(), 3);
 
     // Verify it's the same type as what the joker factory produces
-    let factory_banner = balatro_rs::joker_registry::registry::create_joker(JokerId::Banner);
+    let factory_banner = balatro_rs::joker_registry::registry::create_joker(&JokerId::Banner);
     assert!(
-        factory_banner.is_some(),
+        factory_banner.is_ok(),
         "Factory should be able to create Banner joker"
     );
 
