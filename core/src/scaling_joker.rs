@@ -350,10 +350,6 @@ impl Joker for ScalingJoker {
 mod tests {
     use super::*;
 
-    fn create_test_context() -> GameContext<'static> {
-        // This is a simplified test context - in real tests we'd need proper initialization
-        todo!("Implement test context creation")
-    }
     #[test]
     fn test_scaling_joker_creation() {
         let joker = ScalingJoker::new(

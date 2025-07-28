@@ -93,8 +93,10 @@ fn conflict_resolution_benchmarks(c: &mut Criterion) {
             strategy,
             |b, strategy| {
                 b.iter(|| {
-                    let mut context = ProcessingContext::default();
-                    context.resolution_strategy = strategy.clone();
+                    let context = ProcessingContext {
+                        resolution_strategy: strategy.clone(),
+                        ..Default::default()
+                    };
                     let mut processor = JokerEffectProcessor::with_context(context);
                     let mut game_context = create_test_game_context();
                     let hand = create_test_hand();

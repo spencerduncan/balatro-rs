@@ -207,10 +207,11 @@ fn benchmark_joker_effects_with_cache() -> u64 {
     let mut processor = JokerEffectProcessor::new();
 
     // Enable aggressive caching for benchmark
-    let mut cache_config = CacheConfig::default();
-    cache_config.max_entries = 10000;
-    cache_config.ttl_seconds = 3600; // 1 hour
-    cache_config.enabled = true;
+    let cache_config = CacheConfig {
+        max_entries: 10000,
+        ttl_seconds: 3600, // 1 hour
+        enabled: true,
+    };
     processor.set_cache_config(cache_config);
 
     benchmark_joker_processing(&mut processor, 100)
@@ -221,8 +222,10 @@ fn benchmark_joker_effects_without_cache() -> u64 {
     let mut processor = JokerEffectProcessor::new();
 
     // Disable caching
-    let mut cache_config = CacheConfig::default();
-    cache_config.enabled = false;
+    let cache_config = CacheConfig {
+        enabled: false,
+        ..Default::default()
+    };
     processor.set_cache_config(cache_config);
 
     benchmark_joker_processing(&mut processor, 100)
@@ -232,12 +235,18 @@ fn benchmark_joker_effects_without_cache() -> u64 {
 fn benchmark_cache_scenario(iterations: u32, cache_enabled: bool) -> u64 {
     let mut processor = JokerEffectProcessor::new();
 
-    let mut cache_config = CacheConfig::default();
-    cache_config.enabled = cache_enabled;
-    if cache_enabled {
-        cache_config.max_entries = 10000;
-        cache_config.ttl_seconds = 3600;
-    }
+    let cache_config = if cache_enabled {
+        CacheConfig {
+            enabled: true,
+            max_entries: 10000,
+            ttl_seconds: 3600,
+        }
+    } else {
+        CacheConfig {
+            enabled: false,
+            ..Default::default()
+        }
+    };
     processor.set_cache_config(cache_config);
 
     benchmark_joker_processing(&mut processor, iterations)

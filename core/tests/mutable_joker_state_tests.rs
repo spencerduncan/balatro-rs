@@ -124,6 +124,7 @@ struct ComplexStateJoker {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+#[allow(dead_code)]
 enum Phase {
     Charging,
     Ready,
@@ -193,17 +194,20 @@ fn test_thread_safety_with_mutable_state() {
     // This test shows that we can still have thread safety with &mut self
     // by using interior mutability patterns when needed
 
+    #[allow(dead_code)]
     struct ThreadSafeJoker {
         id: JokerId,
         // Use interior mutability for thread-safe state
         state: Mutex<JokerState>,
     }
 
+    #[allow(dead_code)]
     struct JokerState {
         counter: u32,
         active: bool,
     }
 
+    #[allow(dead_code)]
     impl ThreadSafeJoker {
         fn new() -> Self {
             Self {

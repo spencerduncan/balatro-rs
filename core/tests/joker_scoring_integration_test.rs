@@ -246,6 +246,7 @@ fn test_complex_joker_interaction_scenario() {
 
 #[derive(Debug)]
 struct TestOrderJoker {
+    #[allow(dead_code)]
     position: usize,
     mult_bonus: i32,
     chip_bonus: i32,

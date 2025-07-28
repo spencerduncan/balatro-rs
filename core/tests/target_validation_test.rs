@@ -24,7 +24,7 @@ fn test_target_validation_empty_hand() {
 
     match target.validate(&game) {
         Err(TargetValidationError::NoCardsAvailable) => {} // Expected
-        other => panic!("Expected NoCardsAvailable error, got: {:?}", other),
+        other => panic!("Expected NoCardsAvailable error, got: {other:?}"),
     }
 }
 
@@ -59,7 +59,7 @@ fn test_target_validation_card_index_bounds() {
     match invalid_target.validate(&game) {
         Err(TargetValidationError::NoCardsAvailable)
         | Err(TargetValidationError::CardIndexOutOfBounds { .. }) => {} // Expected
-        other => panic!("Expected bounds error, got: {:?}", other),
+        other => panic!("Expected bounds error, got: {other:?}"),
     }
 }
 
@@ -78,7 +78,7 @@ fn test_target_validation_empty_card_list() {
 
     match target.validate(&game) {
         Err(TargetValidationError::NoCardsAvailable) => {} // Expected
-        other => panic!("Expected NoCardsAvailable error, got: {:?}", other),
+        other => panic!("Expected NoCardsAvailable error, got: {other:?}"),
     }
 }
 
@@ -96,7 +96,7 @@ fn test_target_validation_joker_slots() {
             slot: 0,
             joker_count: 0,
         }) => {} // Expected
-        other => panic!("Expected JokerSlotInvalid error, got: {:?}", other),
+        other => panic!("Expected JokerSlotInvalid error, got: {other:?}"),
     }
 
     // Test out of bounds joker slot
@@ -108,7 +108,7 @@ fn test_target_validation_joker_slots() {
             slot: 5,
             joker_count: 0,
         }) => {} // Expected
-        other => panic!("Expected JokerSlotInvalid error, got: {:?}", other),
+        other => panic!("Expected JokerSlotInvalid error, got: {other:?}"),
     }
 }
 
@@ -127,15 +127,10 @@ fn test_target_validation_always_valid_targets() {
     ];
 
     for target in always_valid_targets {
-        assert!(
-            target.is_valid(&game),
-            "Target {:?} should be valid",
-            target
-        );
+        assert!(target.is_valid(&game), "Target {target:?} should be valid");
         assert!(
             target.validate(&game).is_ok(),
-            "Target {:?} validation should succeed",
-            target
+            "Target {target:?} validation should succeed"
         );
     }
 }
@@ -205,8 +200,7 @@ fn test_get_available_targets_always_available() {
         let targets = Target::get_available_targets(target_type, &game);
         assert!(
             !targets.is_empty(),
-            "Target type {:?} should always have available targets",
-            target_type
+            "Target type {target_type:?} should always have available targets"
         );
     }
 }
@@ -253,7 +247,7 @@ fn test_target_validation_error_display() {
     ];
 
     for error in errors {
-        let message = format!("{}", error);
+        let message = format!("{error}");
         assert!(!message.is_empty(), "Error message should not be empty");
         assert!(message.len() > 10, "Error message should be descriptive");
     }

@@ -50,7 +50,7 @@ fn test_multi_card_combination_logic() {
     // But demonstrates the test structure for when cards are properly implemented
 
     // Expected combinations for 4 cards, choose 2:
-    let _expected_combinations = vec![
+    let _expected_combinations = [
         vec![0, 1],
         vec![0, 2],
         vec![0, 3],
@@ -117,8 +117,7 @@ fn test_combination_content_correctness() {
             for &index in &card_target.indices {
                 assert!(
                     index < 4,
-                    "Card index {} should be less than hand size",
-                    index
+                    "Card index {index} should be less than hand size"
                 );
             }
 
@@ -137,7 +136,7 @@ fn test_combination_content_correctness() {
                 );
             }
         } else {
-            panic!("Expected Cards target, got: {:?}", target);
+            panic!("Expected Cards target, got: {target:?}");
         }
     }
 }

@@ -1128,14 +1128,14 @@ fn test_performance_with_many_scaling_jokers() {
         state_manager.set_state(joker.id(), JokerState::with_accumulated_value(0.0));
     }
 
-    let select_hand = create_test_hand(HandRank::TwoPair);
+    let _select_hand = create_test_hand(HandRank::TwoPair);
     let hand = Hand::new(vec![]);
     let discarded: Vec<Card> = vec![];
     let hand_type_counts = HashMap::new();
     let stage = Stage::Blind(Blind::Small);
     let rng = &balatro_rs::rng::GameRng::new(balatro_rs::rng::RngMode::Testing(42));
 
-    let context = GameContext {
+    let _context = GameContext {
         chips: 0,
         mult: 1,
         money: 100, // Some starting money for money-triggered jokers

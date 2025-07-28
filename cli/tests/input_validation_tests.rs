@@ -358,7 +358,7 @@ mod input_validation_tests {
             // Should not panic
             let _ = input.trim().parse::<usize>();
             // The fact that we reach this line means no panic occurred
-            assert!(true, "Malformed input should not cause panic");
+            // Test passes if no panic
         }
 
         // 3. Range validation prevents out-of-bounds access
@@ -367,7 +367,7 @@ mod input_validation_tests {
         match out_of_range.trim().parse::<usize>() {
             Ok(val) if val > max => {
                 // This is expected - value parsed but is out of range
-                assert!(true, "Out of range detection works");
+                // Test passes - out of range detection works
             }
             Ok(_) => panic!("Test case error: input should be out of range"),
             Err(_) => panic!("Test case error: input should parse as number"),
@@ -376,7 +376,7 @@ mod input_validation_tests {
         // 4. Input sanitization (trimming) works
         let padded_input = "  5  ";
         match padded_input.trim().parse::<usize>() {
-            Ok(5) => assert!(true, "Input trimming works correctly"),
+            Ok(5) => { /* Input trimming works correctly */ }
             Ok(val) => panic!("Trimming failed: got {val} instead of 5"),
             Err(_) => panic!("Trimmed input should parse successfully"),
         }

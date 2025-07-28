@@ -113,7 +113,8 @@ mod f64_migration_acceptance_tests {
         let chips = card.chips();
 
         // Should be able to handle chip values
-        assert!(chips >= 0); // Basic validation - exact value depends on implementation
+        // chips is u64, so always >= 0 - just verify it has some value
+        let _ = chips; // Basic validation - exact value depends on implementation
 
         // Verify we can add values to card chips
         let total_chips = chips + 1;
@@ -127,7 +128,8 @@ mod f64_migration_acceptance_tests {
         let base_cost = pack_type.base_cost();
 
         // Should return usize and support cost calculations
-        assert!(base_cost >= 0);
+        // base_cost is u64, so always >= 0
+        let _ = base_cost;
 
         // Verify arithmetic operations work with costs (converting to f64)
         let discounted_cost = (base_cost as f64) * 0.75; // 25% discount
@@ -155,7 +157,8 @@ mod f64_migration_acceptance_tests {
         let base_requirement = ante.base();
 
         // Should return usize and support requirements
-        assert!(base_requirement >= 0);
+        // base_requirement is u64, so always >= 0
+        let _ = base_requirement;
 
         // Verify arithmetic operations with ante requirements (converting to f64)
         let modified_requirement = (base_requirement as f64) * 1.25; // 25% increase
@@ -169,7 +172,8 @@ mod f64_migration_acceptance_tests {
         let reward = blind.reward();
 
         // Should return usize and support rewards
-        assert!(reward >= 0);
+        // reward is u64, so always >= 0
+        let _ = reward;
 
         // Verify arithmetic operations with rewards (converting to f64)
         let bonus_reward = (reward as f64) + 0.5;

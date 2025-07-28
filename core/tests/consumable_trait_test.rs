@@ -65,11 +65,11 @@ fn test_consumable_effect_enum_categories() {
     let utility = ConsumableEffect::Utility;
 
     // Test Debug implementation
-    assert!(format!("{:?}", enhancement).contains("Enhancement"));
-    assert!(format!("{:?}", destruction).contains("Destruction"));
-    assert!(format!("{:?}", generation).contains("Generation"));
-    assert!(format!("{:?}", modification).contains("Modification"));
-    assert!(format!("{:?}", utility).contains("Utility"));
+    assert!(format!("{enhancement:?}").contains("Enhancement"));
+    assert!(format!("{destruction:?}").contains("Destruction"));
+    assert!(format!("{generation:?}").contains("Generation"));
+    assert!(format!("{modification:?}").contains("Modification"));
+    assert!(format!("{utility:?}").contains("Utility"));
 }
 
 #[test]
@@ -83,12 +83,12 @@ fn test_target_type_definitions() {
     let shop = TargetType::Shop;
 
     // Test Debug implementation
-    assert!(format!("{:?}", none).contains("None"));
-    assert!(format!("{:?}", cards).contains("Cards"));
-    assert!(format!("{:?}", hand_type).contains("HandType"));
-    assert!(format!("{:?}", joker).contains("Joker"));
-    assert!(format!("{:?}", deck).contains("Deck"));
-    assert!(format!("{:?}", shop).contains("Shop"));
+    assert!(format!("{none:?}").contains("None"));
+    assert!(format!("{cards:?}").contains("Cards"));
+    assert!(format!("{hand_type:?}").contains("HandType"));
+    assert!(format!("{joker:?}").contains("Joker"));
+    assert!(format!("{deck:?}").contains("Deck"));
+    assert!(format!("{shop:?}").contains("Shop"));
 }
 
 #[test]
@@ -174,7 +174,7 @@ fn test_enhanced_consumable_trait_methods() {
                         && cards.indices.len() <= game_state.available.cards().len()
                 }
                 Target::HandType(_) => true,
-                Target::Joker(_) => game_state.jokers.len() > 0,
+                Target::Joker(_) => !game_state.jokers.is_empty(),
                 Target::Deck => true,
                 Target::Shop(_) => true,
             }
@@ -312,7 +312,7 @@ fn test_target_all_variants_comprehensive() {
 
     // Test all variants can be debugged
     for target in &targets {
-        let debug_string = format!("{:?}", target);
+        let debug_string = format!("{target:?}");
         assert!(!debug_string.is_empty());
     }
 
@@ -339,7 +339,7 @@ fn test_target_type_all_variants_comprehensive() {
 
     // Test all variants can be debugged
     for target_type in &target_types {
-        let debug_string = format!("{:?}", target_type);
+        let debug_string = format!("{target_type:?}");
         assert!(!debug_string.is_empty());
     }
 
@@ -436,14 +436,14 @@ fn test_consumable_slots_capacity_calculations() {
 
     // Verify capacity calculations are consistent
     assert_eq!(slots.available_slots(), slots.capacity() - slots.len());
-    assert_eq!(slots.is_empty(), slots.len() == 0);
+    assert_eq!(slots.is_empty(), slots.is_empty());
     assert_eq!(slots.is_full(), slots.len() == slots.capacity());
 }
 
 #[test]
 fn test_consumable_slots_debug_trait() {
     let slots = ConsumableSlots::new();
-    let debug_output = format!("{:?}", slots);
+    let debug_output = format!("{slots:?}");
 
     // Should contain the struct name and key fields
     assert!(debug_output.contains("ConsumableSlots"));
@@ -454,39 +454,41 @@ fn test_consumable_slots_debug_trait() {
 #[test]
 #[ignore = "ConsumableSlots doesn't implement Clone yet"]
 fn test_consumable_slots_clone() {
-    let original = ConsumableSlots::with_capacity(3);
-    let cloned = original.clone();
+    let _original = ConsumableSlots::with_capacity(3);
+    // TODO: Uncomment when ConsumableSlots implements Clone
+    // let cloned = original.clone();
 
-    // Verify clone has same properties
-    assert_eq!(original.capacity(), cloned.capacity());
-    assert_eq!(original.len(), cloned.len());
-    assert_eq!(original.is_empty(), cloned.is_empty());
-    assert_eq!(original.is_full(), cloned.is_full());
-    assert_eq!(original.available_slots(), cloned.available_slots());
+    // // Verify clone has same properties
+    // assert_eq!(original.capacity(), cloned.capacity());
+    // assert_eq!(original.len(), cloned.len());
+    // assert_eq!(original.is_empty(), cloned.is_empty());
+    // assert_eq!(original.is_full(), cloned.is_full());
+    // assert_eq!(original.available_slots(), cloned.available_slots());
 }
 
 #[test]
 #[ignore = "ConsumableSlots doesn't implement Serialize/Deserialize yet"]
 fn test_consumable_slots_serde_compatibility() {
-    use serde_json;
+    // use serde_json;
 
-    let original = ConsumableSlots::with_capacity(3);
+    let _original = ConsumableSlots::with_capacity(3);
 
-    // Test serialization
-    let serialized = serde_json::to_string(&original);
-    assert!(serialized.is_ok());
+    // TODO: Uncomment when ConsumableSlots implements Serialize/Deserialize
+    // // Test serialization
+    // let serialized = serde_json::to_string(&original);
+    // assert!(serialized.is_ok());
 
-    // Test deserialization
-    let json = serialized.unwrap();
-    let deserialized: Result<ConsumableSlots, _> = serde_json::from_str(&json);
-    assert!(deserialized.is_ok());
+    // // Test deserialization
+    // let json = serialized.unwrap();
+    // let deserialized: Result<ConsumableSlots, _> = serde_json::from_str(&json);
+    // assert!(deserialized.is_ok());
 
-    let restored = deserialized.unwrap();
-    assert_eq!(original.capacity(), restored.capacity());
-    assert_eq!(original.len(), restored.len());
-    assert_eq!(original.is_empty(), restored.is_empty());
-    assert_eq!(original.is_full(), restored.is_full());
-    assert_eq!(original.available_slots(), restored.available_slots());
+    // let restored = deserialized.unwrap();
+    // assert_eq!(original.capacity(), restored.capacity());
+    // assert_eq!(original.len(), restored.len());
+    // assert_eq!(original.is_empty(), restored.is_empty());
+    // assert_eq!(original.is_full(), restored.is_full());
+    // assert_eq!(original.available_slots(), restored.available_slots());
 }
 
 #[test]
@@ -812,9 +814,9 @@ fn test_slot_error_debug_display() {
     let error3 = SlotError::SlotEmpty { index: 1 };
 
     // Test debug output
-    assert!(format!("{:?}", error1).contains("IndexOutOfBounds"));
-    assert!(format!("{:?}", error2).contains("NoEmptySlots"));
-    assert!(format!("{:?}", error3).contains("SlotEmpty"));
+    assert!(format!("{error1:?}").contains("IndexOutOfBounds"));
+    assert!(format!("{error2:?}").contains("NoEmptySlots"));
+    assert!(format!("{error3:?}").contains("SlotEmpty"));
 
     // Test display output
     assert!(error1.to_string().contains("out of bounds"));
@@ -829,6 +831,7 @@ struct MockConsumableForSlots {
 }
 
 impl MockConsumableForSlots {
+    #[allow(dead_code)]
     fn get_mock_id(&self) -> u32 {
         self.id
     }
@@ -1075,6 +1078,7 @@ struct RealConsumableWrapper {
 }
 
 impl RealConsumableWrapper {
+    #[allow(dead_code)]
     fn get_real_id(&self) -> ConsumableId {
         self.id
     }

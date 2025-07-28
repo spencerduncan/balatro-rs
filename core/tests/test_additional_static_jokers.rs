@@ -76,7 +76,7 @@ fn test_walkie_joker() {
 #[test]
 #[ignore = "EMERGENCY DISABLE: GameContext default issues - tracked for post-emergency fix"]
 fn test_half_joker() {
-    let _joker = StaticJokerFactory::create_half_joker();
+    let joker = StaticJokerFactory::create_half_joker();
     assert_eq!(joker.id(), JokerId::HalfJoker);
     assert_eq!(joker.name(), "Half Joker");
     assert_eq!(
@@ -143,7 +143,7 @@ fn test_half_joker_behavior_with_2_cards() {
     // let mut context = balatro_rs::joker::test_utils::TestContextBuilder::new().build();
 
     // Test with 2 cards (should trigger)
-    let two_card_hand = SelectHand::new(vec![
+    let _two_card_hand = SelectHand::new(vec![
         Card::new(Value::King, Suit::Heart),
         Card::new(Value::Queen, Suit::Diamond),
     ]);
@@ -163,7 +163,7 @@ fn test_half_joker_behavior_with_1_card() {
     // let mut context = balatro_rs::joker::test_utils::TestContextBuilder::new().build();
 
     // Test with 1 card (should trigger)
-    let one_card_hand = SelectHand::new(vec![Card::new(Value::King, Suit::Heart)]);
+    let _one_card_hand = SelectHand::new(vec![Card::new(Value::King, Suit::Heart)]);
 
     // let effect = joker.on_hand_played(&mut context, &one_card_hand);
     // assert_eq!(
@@ -180,7 +180,7 @@ fn test_half_joker_behavior_with_5_cards() {
     // let mut context = balatro_rs::joker::test_utils::TestContextBuilder::new().build();
 
     // Test with 5 cards (should NOT trigger)
-    let five_card_hand = SelectHand::new(vec![
+    let _five_card_hand = SelectHand::new(vec![
         Card::new(Value::King, Suit::Heart),
         Card::new(Value::Queen, Suit::Diamond),
         Card::new(Value::Jack, Suit::Club),
@@ -211,7 +211,7 @@ fn test_half_joker_behavior_with_6_cards() {
     // let mut context = balatro_rs::joker::test_utils::TestContextBuilder::new().build();
 
     // Test with 6 cards (should NOT trigger)
-    let six_card_hand = SelectHand::new(vec![
+    let _six_card_hand = SelectHand::new(vec![
         Card::new(Value::King, Suit::Heart),
         Card::new(Value::Queen, Suit::Diamond),
         Card::new(Value::Jack, Suit::Club),
@@ -235,14 +235,14 @@ fn test_half_joker_behavior_per_hand_not_per_card() {
     // let mut context = balatro_rs::joker::test_utils::TestContextBuilder::new().build();
 
     // Test that Half Joker is per-hand, not per-card
-    let three_card_hand = SelectHand::new(vec![
+    let _three_card_hand = SelectHand::new(vec![
         Card::new(Value::King, Suit::Heart),
         Card::new(Value::Queen, Suit::Diamond),
         Card::new(Value::Jack, Suit::Club),
     ]);
 
     // Test on_card_scored - should return no effect since it's per-hand
-    let card = Card::new(Value::King, Suit::Heart);
+    let _card = Card::new(Value::King, Suit::Heart);
     // let card_effect = joker.on_card_scored(&mut context, &card);
     // assert_eq!(
     //     card_effect.mult, 0,
@@ -265,7 +265,7 @@ fn test_half_joker_behavior_edge_case_empty_hand() {
     // let mut context = balatro_rs::joker::test_utils::TestContextBuilder::new().build();
 
     // Test with empty hand (should trigger as 0 ≤ 4)
-    let empty_hand = SelectHand::new(vec![]);
+    let _empty_hand = SelectHand::new(vec![]);
 
     // let effect = joker.on_hand_played(&mut context, &empty_hand);
     // assert_eq!(

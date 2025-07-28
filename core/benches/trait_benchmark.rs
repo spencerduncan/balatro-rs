@@ -211,7 +211,7 @@ pub fn shop_generation_benchmark(c: &mut Criterion) {
 
         // Add some jokers to the game state
         for joker_id in [JokerId::Joker, JokerId::GreedyJoker, JokerId::LustyJoker] {
-            if let Ok(joker) = joker_registry::registry::create_joker(&joker_id) {
+            if let Ok(_joker) = joker_registry::registry::create_joker(&joker_id) {
                 // game.add_joker(joker).ok(); // TODO: Fix - add_joker method doesn't exist
             }
         }
@@ -245,7 +245,7 @@ pub fn action_generation_benchmark(c: &mut Criterion) {
 
         // Add jokers that might affect action generation
         for joker_id in [JokerId::Joker, JokerId::GreedyJoker] {
-            if let Ok(joker) = joker_registry::registry::create_joker(&joker_id) {
+            if let Ok(_joker) = joker_registry::registry::create_joker(&joker_id) {
                 // game.add_joker(joker).ok(); // TODO: Fix - add_joker method doesn't exist
             }
         }
@@ -284,8 +284,10 @@ pub fn cache_performance_benchmark(c: &mut Criterion) {
         let context = ProcessingContext::builder().build();
         let mut processor = JokerEffectProcessor::with_context(context);
         // Disable cache
-        let mut cache_config = balatro_rs::joker_effect_processor::CacheConfig::default();
-        cache_config.enabled = false;
+        let cache_config = balatro_rs::joker_effect_processor::CacheConfig {
+            enabled: false,
+            ..Default::default()
+        };
         processor.set_cache_config(cache_config);
 
         let test_data = TestGameData::new();
@@ -315,7 +317,7 @@ pub fn retrigger_benchmark(c: &mut Criterion) {
             BenchmarkId::new("retrigger_effects", retrigger_count),
             &retrigger_count,
             |b, &retrigger_count| {
-                let processor = JokerEffectProcessor::new();
+                let _processor = JokerEffectProcessor::new();
                 let joker_effects = vec![JokerEffect {
                     chips: 10,
                     mult: 2,

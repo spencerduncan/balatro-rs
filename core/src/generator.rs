@@ -345,8 +345,10 @@ mod tests {
         let ace = Card::new(Value::Ace, Suit::Heart);
         let king = Card::new(Value::King, Suit::Diamond);
 
-        let mut g = Game::default();
-        g.stage = Stage::Blind(Blind::Small);
+        let mut g = Game {
+            stage: Stage::Blind(Blind::Small),
+            ..Default::default()
+        };
 
         // nothing selected, nothing to play
         assert!(g.gen_actions_discard().is_none());
@@ -368,8 +370,10 @@ mod tests {
         let ace = Card::new(Value::Ace, Suit::Heart);
         let king = Card::new(Value::King, Suit::Diamond);
 
-        let mut g = Game::default();
-        g.stage = Stage::Blind(Blind::Small);
+        let mut g = Game {
+            stage: Stage::Blind(Blind::Small),
+            ..Default::default()
+        };
 
         // nothing selected, nothing to discard
         assert!(g.gen_actions_discard().is_none());
@@ -466,8 +470,10 @@ mod tests {
 
     #[test]
     fn test_unmask_action_space_move_cards() {
-        let mut g = Game::default();
-        g.stage = Stage::Blind(Blind::Small);
+        let mut g = Game {
+            stage: Stage::Blind(Blind::Small),
+            ..Default::default()
+        };
         let mut space = ActionSpace::from(g.config.clone());
 
         // Default action space everything should be masked, since no cards available yet
@@ -615,10 +621,11 @@ mod tests {
 
     #[test]
     fn test_gen_actions_move_card_edge_cases() {
-        let mut g = Game::default();
-
         // Test with no blind stage
-        g.stage = Stage::Shop();
+        let mut g = Game {
+            stage: Stage::Shop(),
+            ..Default::default()
+        };
         assert!(g.gen_actions_move_card().is_none());
 
         // Set to blind stage but no cards available
@@ -648,10 +655,11 @@ mod tests {
 
     #[test]
     fn test_gen_actions_cash_out_edge_cases() {
-        let mut g = Game::default();
-
         // Test with wrong stage
-        g.stage = Stage::Shop();
+        let mut g = Game {
+            stage: Stage::Shop(),
+            ..Default::default()
+        };
         assert!(g.gen_actions_cash_out().is_none());
 
         g.stage = Stage::Blind(Blind::Small);
@@ -671,10 +679,11 @@ mod tests {
 
     #[test]
     fn test_gen_actions_next_round_edge_cases() {
-        let mut g = Game::default();
-
         // Test with wrong stage
-        g.stage = Stage::Blind(Blind::Small);
+        let mut g = Game {
+            stage: Stage::Blind(Blind::Small),
+            ..Default::default()
+        };
         assert!(g.gen_actions_next_round().is_none());
 
         g.stage = Stage::PostBlind();
@@ -871,8 +880,10 @@ mod tests {
 
     #[test]
     fn test_action_generation_boundary_conditions() {
-        let mut g = Game::default();
-        g.stage = Stage::Blind(Blind::Small);
+        let mut g = Game {
+            stage: Stage::Blind(Blind::Small),
+            ..Default::default()
+        };
 
         // Test with minimal available cards
         let ace = Card::new(Value::Ace, Suit::Heart);
@@ -913,8 +924,10 @@ mod tests {
 
     #[test]
     fn test_action_generation_with_zero_resources() {
-        let mut g = Game::default();
-        g.stage = Stage::Blind(Blind::Small);
+        let mut g = Game {
+            stage: Stage::Blind(Blind::Small),
+            ..Default::default()
+        };
         g.deal();
 
         // Test with zero plays remaining

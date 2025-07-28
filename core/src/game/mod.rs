@@ -2967,9 +2967,11 @@ mod tests {
 
     #[test]
     fn test_can_purchase_consumable_validation() {
-        let mut game = Game::default();
-        game.stage = Stage::Shop();
-        game.money = 10.0;
+        let game = Game {
+            stage: Stage::Shop(),
+            money: 10.0,
+            ..Default::default()
+        };
 
         // Test valid purchase conditions for all consumable types
         assert!(game
@@ -2985,11 +2987,12 @@ mod tests {
 
     #[test]
     fn test_can_purchase_consumable_insufficient_money() {
-        let mut game = Game::default();
-        game.stage = Stage::Shop();
-
         // Test insufficient money for Tarot (costs 3)
-        game.money = 2.0;
+        let mut game = Game {
+            stage: Stage::Shop(),
+            money: 2.0,
+            ..Default::default()
+        };
         let result = game.can_purchase_consumable(crate::shop::ConsumableType::Tarot);
         assert!(result.is_err());
         assert!(matches!(result.unwrap_err(), GameError::InvalidBalance));
@@ -3008,11 +3011,12 @@ mod tests {
 
     #[test]
     fn test_can_purchase_consumable_edge_case_exact_money() {
-        let mut game = Game::default();
-        game.stage = Stage::Shop();
-
         // Test edge case: exactly enough money for Tarot
-        game.money = 3.0;
+        let mut game = Game {
+            stage: Stage::Shop(),
+            money: 3.0,
+            ..Default::default()
+        };
         assert!(game
             .can_purchase_consumable(crate::shop::ConsumableType::Tarot)
             .is_ok());
@@ -3031,15 +3035,16 @@ mod tests {
 
     #[test]
     fn test_can_purchase_consumable_no_available_slots() {
-        let mut game = Game::default();
-        game.stage = Stage::Shop();
-        game.money = 10.0;
-
         // Fill consumable hand to capacity (default is 2)
-        game.consumables_in_hand = vec![
-            crate::consumables::ConsumableId::TheFool,
-            crate::consumables::ConsumableId::Mercury,
-        ];
+        let game = Game {
+            stage: Stage::Shop(),
+            money: 10.0,
+            consumables_in_hand: vec![
+                crate::consumables::ConsumableId::TheFool,
+                crate::consumables::ConsumableId::Mercury,
+            ],
+            ..Default::default()
+        };
         assert_eq!(
             game.consumables_in_hand.len(),
             game.config.consumable_hand_capacity
@@ -3061,11 +3066,12 @@ mod tests {
 
     #[test]
     fn test_can_purchase_consumable_wrong_stage() {
-        let mut game = Game::default();
-        game.money = 10.0;
-
         // Test all invalid stages
-        game.stage = Stage::PreBlind();
+        let mut game = Game {
+            money: 10.0,
+            stage: Stage::PreBlind(),
+            ..Default::default()
+        };
         let result = game.can_purchase_consumable(crate::shop::ConsumableType::Tarot);
         assert!(result.is_err());
         assert!(matches!(result.unwrap_err(), GameError::InvalidStage));
@@ -3088,11 +3094,12 @@ mod tests {
 
     #[test]
     fn test_can_purchase_consumable_cost_validation() {
-        let mut game = Game::default();
-        game.stage = Stage::Shop();
-
         // Test Tarot card cost (3 money)
-        game.money = 3.0;
+        let mut game = Game {
+            stage: Stage::Shop(),
+            money: 3.0,
+            ..Default::default()
+        };
         assert!(game
             .can_purchase_consumable(crate::shop::ConsumableType::Tarot)
             .is_ok());
@@ -3124,12 +3131,13 @@ mod tests {
 
     #[test]
     fn test_can_purchase_consumable_partial_hand() {
-        let mut game = Game::default();
-        game.stage = Stage::Shop();
-        game.money = 10.0;
-
         // Test with one consumable in hand (capacity is 2)
-        game.consumables_in_hand = vec![crate::consumables::ConsumableId::TheFool];
+        let game = Game {
+            stage: Stage::Shop(),
+            money: 10.0,
+            consumables_in_hand: vec![crate::consumables::ConsumableId::TheFool],
+            ..Default::default()
+        };
         assert_eq!(game.consumables_in_hand.len(), 1);
         assert!(game.consumables_in_hand.len() < game.config.consumable_hand_capacity);
 
@@ -3147,12 +3155,12 @@ mod tests {
 
     #[test]
     fn test_can_purchase_consumable_empty_hand() {
-        let mut game = Game::default();
-        game.stage = Stage::Shop();
-        game.money = 10.0;
-
-        // Test with empty consumable hand
-        game.consumables_in_hand = vec![];
+        let game = Game {
+            stage: Stage::Shop(),
+            money: 10.0,
+            consumables_in_hand: vec![],
+            ..Default::default()
+        };
         assert_eq!(game.consumables_in_hand.len(), 0);
 
         // Should be able to purchase any consumable
