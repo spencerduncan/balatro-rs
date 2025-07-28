@@ -4,14 +4,11 @@
 //! These jokers affect the player's economy through various triggers and conditions.
 
 use crate::{
-    card::Card,
-    hand::SelectHand,
+    config::Config,
     joker::{
-        traits::{ProcessContext, ProcessResult, Rarity},
-        GameContext, Joker, JokerEffect, JokerGameplay, JokerId, JokerIdentity, JokerLifecycle,
+        traits::Rarity, GameContext, Joker, JokerEffect, JokerId, JokerIdentity, JokerLifecycle,
         JokerRarity,
     },
-    stage::Stage,
 };
 
 /// Delayed Gratification - Earn $2 per discard if no discards are used by end of round
@@ -93,10 +90,9 @@ impl Joker for DelayedGratificationJoker {
     fn on_round_end(&self, context: &mut GameContext) -> JokerEffect {
         // Check if player used no discards
         if context.discards_used == 0 {
-            // Award $2 per discard (assuming standard 3 discards)
-            // TODO: Get actual discard count from game state
-            let base_discards = 3; // Standard discard count
-            let money_earned = base_discards * 2;
+            // Award $2 per discard using proper config constant
+            let base_discards = Config::new().discards; // Use proper config value
+            let money_earned = (base_discards * 2) as i32;
             JokerEffect::new()
                 .with_money(money_earned)
                 .with_message(format!(
@@ -114,48 +110,45 @@ impl JokerLifecycle for DelayedGratificationJoker {
     }
 }
 
-/// Seed Money - Earn $1 for each 5 of a kind contained in played hand
+/// Rocket - Earn $1 at end of round, payout increases by $1 when Boss Blind is defeated
 #[derive(Debug, Clone)]
-pub struct SeedMoneyJoker {
+pub struct RocketJoker {
     id: JokerId,
     name: String,
     description: String,
     rarity: JokerRarity,
     cost: usize,
+    payout: i32, // Current payout amount, increases when boss blinds are defeated
 }
 
-impl Default for SeedMoneyJoker {
+impl Default for RocketJoker {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl SeedMoneyJoker {
+impl RocketJoker {
     pub fn new() -> Self {
         Self {
-            id: JokerId::SeedMoney,
-            name: "Seed Money".to_string(),
-            description: "Earn $1 for each 5 of a kind contained in played hand".to_string(),
+            id: JokerId::RocketShip,
+            name: "Rocket".to_string(),
+            description:
+                "Earn $1 at end of round, payout increases by $1 when Boss Blind is defeated"
+                    .to_string(),
             rarity: JokerRarity::Common,
-            cost: 3,
+            cost: 4,
+            payout: 1, // Starts at $1
         }
     }
 
-    fn count_five_of_a_kinds(cards: &[Card]) -> usize {
-        // Count occurrences of each value
-        let mut value_counts = std::collections::HashMap::new();
-        for card in cards {
-            *value_counts.entry(card.value).or_insert(0) += 1;
-        }
-
-        // Count how many values have 5 or more cards
-        value_counts.values().filter(|&&count| count >= 5).count()
+    pub fn increase_payout(&mut self) {
+        self.payout += 1;
     }
 }
 
-impl JokerIdentity for SeedMoneyJoker {
+impl JokerIdentity for RocketJoker {
     fn joker_type(&self) -> &'static str {
-        "seed_money"
+        "rocket"
     }
 
     fn name(&self) -> &str {
@@ -180,7 +173,7 @@ impl JokerIdentity for SeedMoneyJoker {
     }
 }
 
-impl Joker for SeedMoneyJoker {
+impl Joker for RocketJoker {
     fn id(&self) -> JokerId {
         self.id
     }
@@ -201,41 +194,11 @@ impl Joker for SeedMoneyJoker {
         self.cost
     }
 
-    fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
-        let cards: Vec<Card> = hand.cards().to_vec();
-        let five_of_a_kind_count = Self::count_five_of_a_kinds(&cards);
-
-        if five_of_a_kind_count > 0 {
-            let money_earned = five_of_a_kind_count as i32;
-            JokerEffect::new()
-                .with_money(money_earned)
-                .with_message(format!(
-                    "Seed Money: +${} ({} five of a kind{})",
-                    money_earned,
-                    five_of_a_kind_count,
-                    if five_of_a_kind_count > 1 { "s" } else { "" }
-                ))
-        } else {
-            JokerEffect::new()
-        }
-    }
-}
-
-impl JokerGameplay for SeedMoneyJoker {
-    fn process(&mut self, stage: &Stage, context: &mut ProcessContext) -> ProcessResult {
-        if !matches!(stage, Stage::Blind(_)) {
-            return ProcessResult::default();
-        }
-
-        let _five_of_a_kind_count = Self::count_five_of_a_kinds(context.played_cards);
-
-        // Note: ProcessResult doesn't have money_earned field
-        // Money earning is handled through JokerEffect in the old trait
-        ProcessResult::default()
-    }
-
-    fn can_trigger(&self, stage: &Stage, context: &ProcessContext) -> bool {
-        matches!(stage, Stage::Blind(_)) && Self::count_five_of_a_kinds(context.played_cards) > 0
+    fn on_round_end(&self, _context: &mut GameContext) -> JokerEffect {
+        // Always earn current payout at end of round
+        JokerEffect::new()
+            .with_money(self.payout)
+            .with_message(format!("Rocket: +${} (current payout)", self.payout))
     }
 }
 
@@ -445,8 +408,8 @@ pub fn create_delayed_gratification_joker() -> Box<dyn Joker> {
     Box::new(DelayedGratificationJoker::new())
 }
 
-pub fn create_seed_money_joker() -> Box<dyn Joker> {
-    Box::new(SeedMoneyJoker::new())
+pub fn create_rocket_joker() -> Box<dyn Joker> {
+    Box::new(RocketJoker::new())
 }
 
 pub fn create_to_the_moon_joker() -> Box<dyn Joker> {
@@ -460,7 +423,6 @@ pub fn create_gift_card_joker() -> Box<dyn Joker> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::card::{Card, Suit, Value};
 
     #[test]
     fn test_delayed_gratification() {
@@ -478,28 +440,31 @@ mod tests {
             .build();
 
         let effect = delayed.on_round_end(&mut test_context);
-        assert_eq!(effect.money, 6); // Standard 3 discards * $2
+        assert_eq!(effect.money, 8); // Config default 4 discards * $2
     }
 
     #[test]
-    fn test_seed_money() {
-        let seed_money = SeedMoneyJoker::new();
+    fn test_rocket() {
+        let rocket = RocketJoker::new();
 
         // Test identity
-        assert_eq!(seed_money.joker_type(), "seed_money");
-        assert_eq!(JokerIdentity::name(&seed_money), "Seed Money");
-        assert_eq!(seed_money.base_cost(), 3);
+        assert_eq!(rocket.joker_type(), "rocket");
+        assert_eq!(JokerIdentity::name(&rocket), "Rocket");
+        assert_eq!(rocket.base_cost(), 4);
 
-        // Test with five of a kind
-        let cards = vec![
-            Card::new(Value::Ace, Suit::Heart),
-            Card::new(Value::Ace, Suit::Diamond),
-            Card::new(Value::Ace, Suit::Spade),
-            Card::new(Value::Ace, Suit::Club),
-            Card::new(Value::Ace, Suit::Heart), // 5th Ace
-        ];
+        // Test round end effect
+        let mut test_context = crate::joker::test_utils::TestContextBuilder::new()
+            .with_money(10)
+            .build();
 
-        assert_eq!(SeedMoneyJoker::count_five_of_a_kinds(&cards), 1);
+        let effect = rocket.on_round_end(&mut test_context);
+        assert_eq!(effect.money, 1); // Starts with $1 payout
+
+        // Test payout increase
+        let mut rocket = RocketJoker::new();
+        rocket.increase_payout();
+        let effect = rocket.on_round_end(&mut test_context);
+        assert_eq!(effect.money, 2); // Increased to $2
     }
 
     #[test]
@@ -544,7 +509,7 @@ mod tests {
         // Create some test jokers
         let test_jokers: Vec<Box<dyn Joker>> = vec![
             Box::new(DelayedGratificationJoker::new()),
-            Box::new(SeedMoneyJoker::new()),
+            Box::new(RocketJoker::new()),
         ];
         test_context.jokers = &test_jokers;
 
@@ -554,53 +519,27 @@ mod tests {
     }
 
     #[test]
-    fn test_five_of_a_kind_detection() {
-        // Test with exactly 5 of a kind
-        let five_cards = vec![
-            Card::new(Value::King, Suit::Heart),
-            Card::new(Value::King, Suit::Diamond),
-            Card::new(Value::King, Suit::Spade),
-            Card::new(Value::King, Suit::Club),
-            Card::new(Value::King, Suit::Heart), // 5th King
-            Card::new(Value::Ace, Suit::Heart),  // Different card
-        ];
-        assert_eq!(SeedMoneyJoker::count_five_of_a_kinds(&five_cards), 1);
+    fn test_rocket_payout_modification() {
+        let mut rocket = RocketJoker::new();
 
-        // Test with more than 5 of a kind
-        let six_cards = vec![
-            Card::new(Value::Queen, Suit::Heart),
-            Card::new(Value::Queen, Suit::Diamond),
-            Card::new(Value::Queen, Suit::Spade),
-            Card::new(Value::Queen, Suit::Club),
-            Card::new(Value::Queen, Suit::Heart),   // 5th Queen
-            Card::new(Value::Queen, Suit::Diamond), // 6th Queen
-        ];
-        assert_eq!(SeedMoneyJoker::count_five_of_a_kinds(&six_cards), 1);
+        // Initial payout should be $1
+        assert_eq!(rocket.payout, 1);
 
-        // Test with multiple five of a kinds
-        let multiple = vec![
-            // 5 Aces
-            Card::new(Value::Ace, Suit::Heart),
-            Card::new(Value::Ace, Suit::Diamond),
-            Card::new(Value::Ace, Suit::Spade),
-            Card::new(Value::Ace, Suit::Club),
-            Card::new(Value::Ace, Suit::Heart),
-            // 5 Kings
-            Card::new(Value::King, Suit::Heart),
-            Card::new(Value::King, Suit::Diamond),
-            Card::new(Value::King, Suit::Spade),
-            Card::new(Value::King, Suit::Club),
-            Card::new(Value::King, Suit::Heart),
-        ];
-        assert_eq!(SeedMoneyJoker::count_five_of_a_kinds(&multiple), 2);
+        // Test manual payout increase (simulating boss blind defeat)
+        rocket.increase_payout();
+        assert_eq!(rocket.payout, 2); // Should increase to $2
 
-        // Test with no five of a kind
-        let no_five = vec![
-            Card::new(Value::Ace, Suit::Heart),
-            Card::new(Value::King, Suit::Diamond),
-            Card::new(Value::Queen, Suit::Spade),
-            Card::new(Value::Jack, Suit::Club),
-        ];
-        assert_eq!(SeedMoneyJoker::count_five_of_a_kinds(&no_five), 0);
+        // Test another increase
+        rocket.increase_payout();
+        assert_eq!(rocket.payout, 3); // Should increase to $3
+
+        // Verify the new payout works on round end
+        let mut test_context = crate::joker::test_utils::TestContextBuilder::new()
+            .with_money(10)
+            .build();
+
+        let round_effect = rocket.on_round_end(&mut test_context);
+        assert_eq!(round_effect.money, 3); // Should earn current payout ($3)
+        assert!(round_effect.message.unwrap().contains("+$3"));
     }
 }

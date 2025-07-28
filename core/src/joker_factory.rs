@@ -1,3 +1,6 @@
+use crate::joker::basic_economy_jokers::{
+    DelayedGratificationJoker, GiftCardJoker, RocketJoker, ToTheMoonJoker,
+};
 use crate::joker::four_fingers::FourFingersJoker;
 use crate::joker::retrigger_jokers::*;
 use crate::joker::scaling_additive_mult_jokers::*;
@@ -37,10 +40,11 @@ impl JokerFactory {
             JokerId::Burglar => Some(Box::new(Burglar)),
 
             // Economy jokers - Part 1
-            JokerId::ToTheMoon => Some(Box::new(ToTheMoonJoker)),
-            JokerId::RocketShip => Some(Box::new(RocketJoker)),
+            JokerId::DelayedGratification => Some(Box::new(DelayedGratificationJoker::new())),
+            JokerId::ToTheMoon => Some(Box::new(ToTheMoonJoker::new())),
+            JokerId::RocketShip => Some(Box::new(RocketJoker::new())),
             JokerId::CreditCard => Some(Box::new(CreditCardJoker)),
-            JokerId::GiftCard => Some(Box::new(GiftCardJoker)),
+            JokerId::GiftCard => Some(Box::new(GiftCardJoker::new())),
             JokerId::GoldenTicket => Some(Box::new(GoldenJoker)), // TODO: Update to correct Golden ID when available
 
             // Hand type conditional jokers from main branch
