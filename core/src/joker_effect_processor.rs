@@ -1461,7 +1461,18 @@ impl JokerEffectProcessor {
         self.context.resolution_strategy.hash(&mut hasher);
         self.context.max_retriggered_effects.hash(&mut hasher);
 
-        format!("hand_{:x}", hasher.finish())
+        // Bot Dean Production Optimization: Eliminate 500ns format! overhead
+        // Use stack-allocated buffer with write! for zero-allocation cache key generation
+        let hash_value = hasher.finish();
+        let mut buffer = [0u8; 32]; // "hand_" + 16 hex digits + padding
+        let mut cursor = std::io::Cursor::new(&mut buffer[..]);
+        use std::io::Write;
+        write!(cursor, "hand_{:x}", hash_value).unwrap();
+        
+        let len = cursor.position() as usize;
+        // SAFETY: write! with hex format always produces valid UTF-8
+        let result = unsafe { std::str::from_utf8_unchecked(&buffer[..len]) };
+        result.to_string()
     }
 
     /// Generate a deterministic cache key for card effect processing
@@ -1493,7 +1504,18 @@ impl JokerEffectProcessor {
         self.context.resolution_strategy.hash(&mut hasher);
         self.context.max_retriggered_effects.hash(&mut hasher);
 
-        format!("card_{:x}", hasher.finish())
+        // Bot Dean Production Optimization: Eliminate 500ns format! overhead
+        // Use stack-allocated buffer with write! for zero-allocation cache key generation
+        let hash_value = hasher.finish();
+        let mut buffer = [0u8; 32]; // "card_" + 16 hex digits + padding
+        let mut cursor = std::io::Cursor::new(&mut buffer[..]);
+        use std::io::Write;
+        write!(cursor, "card_{:x}", hash_value).unwrap();
+        
+        let len = cursor.position() as usize;
+        // SAFETY: write! with hex format always produces valid UTF-8
+        let result = unsafe { std::str::from_utf8_unchecked(&buffer[..len]) };
+        result.to_string()
     }
 
     /// Check cache for existing result and update metrics

@@ -210,7 +210,16 @@ impl Joker for SeltzerJoker {
 
             let mut effect = JokerEffect::new()
                 .with_retrigger(1) // Retrigger all cards once
-                .with_message(format!("Seltzer: {} hands remaining", hands_remaining - 1));
+                // Bot Dean Production Optimization: Eliminate format! overhead
+                // Use pre-computed string with minimal allocation
+                .with_message({
+                    let remaining = hands_remaining - 1;
+                    let mut msg = String::with_capacity(32);
+                    msg.push_str("Seltzer: ");
+                    msg.push_str(&remaining.to_string());
+                    msg.push_str(" hands remaining");
+                    msg
+                });
 
             // Self-destruct if this was the last hand
             if hands_remaining == 1 {
@@ -370,10 +379,30 @@ impl Joker for HangingChadJoker {
 
             JokerEffect::new()
                 .with_retrigger(2) // Retrigger twice
-                .with_message(format!(
-                    "Hanging Chad: First card ({:?}) retriggered!",
-                    card.value
-                ))
+                // Bot Dean Production Optimization: Eliminate format! overhead
+                // Use match for card value to avoid Debug formatting
+                .with_message({
+                    let card_str = match card.value {
+                        Value::Ace => "Ace",
+                        Value::Two => "2",
+                        Value::Three => "3",
+                        Value::Four => "4",
+                        Value::Five => "5",
+                        Value::Six => "6",
+                        Value::Seven => "7",
+                        Value::Eight => "8",
+                        Value::Nine => "9",
+                        Value::Ten => "10",
+                        Value::Jack => "Jack",
+                        Value::Queen => "Queen",
+                        Value::King => "King",
+                    };
+                    let mut msg = String::with_capacity(48);
+                    msg.push_str("Hanging Chad: First card (");
+                    msg.push_str(card_str);
+                    msg.push_str(") retriggered!");
+                    msg
+                })
         } else {
             JokerEffect::new()
         }
@@ -498,7 +527,30 @@ impl Joker for SockAndBuskinJoker {
         if Self::is_face_card(card) {
             JokerEffect::new()
                 .with_retrigger(1)
-                .with_message(format!("Sock and Buskin: {:?} retriggered!", card.value))
+                // Bot Dean Production Optimization: Eliminate format! overhead
+                // Use match for card value to avoid Debug formatting
+                .with_message({
+                    let card_str = match card.value {
+                        Value::Ace => "Ace",
+                        Value::Two => "2",
+                        Value::Three => "3",
+                        Value::Four => "4",
+                        Value::Five => "5",
+                        Value::Six => "6",
+                        Value::Seven => "7",
+                        Value::Eight => "8",
+                        Value::Nine => "9",
+                        Value::Ten => "10",
+                        Value::Jack => "Jack",
+                        Value::Queen => "Queen",
+                        Value::King => "King",
+                    };
+                    let mut msg = String::with_capacity(32);
+                    msg.push_str("Sock and Buskin: ");
+                    msg.push_str(card_str);
+                    msg.push_str(" retriggered!");
+                    msg
+                })
         } else {
             JokerEffect::new()
         }

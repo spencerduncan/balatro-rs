@@ -200,7 +200,29 @@ impl Joker for EvenStevenJoker {
         if Self::is_even_card(card) {
             JokerEffect::new()
                 .with_mult(4)
-                .with_message(format!("Even Steven: +4 Mult ({:?})", card.value))
+                // Bot Dean Production Optimization: Eliminate format! overhead 
+                .with_message({
+                    let card_str = match card.value {
+                        Value::Ace => "Ace",
+                        Value::Two => "2",
+                        Value::Three => "3", 
+                        Value::Four => "4",
+                        Value::Five => "5",
+                        Value::Six => "6",
+                        Value::Seven => "7",
+                        Value::Eight => "8",
+                        Value::Nine => "9",
+                        Value::Ten => "10",
+                        Value::Jack => "Jack",
+                        Value::Queen => "Queen", 
+                        Value::King => "King",
+                    };
+                    let mut msg = String::with_capacity(32);
+                    msg.push_str("Even Steven: +4 Mult (");
+                    msg.push_str(card_str);
+                    msg.push(')');
+                    msg
+                })
         } else {
             JokerEffect::new()
         }
