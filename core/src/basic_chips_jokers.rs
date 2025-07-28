@@ -16,6 +16,4 @@
     since = "0.1.0",
     note = "Use joker::resource_chips_jokers module instead"
 )]
-pub use crate::joker::resource_chips_jokers::{
-    BannerJoker, BlueJoker, BullJoker, ScaryFaceJoker, StoneJoker,
-};
+pub use crate::joker::resource_chips_jokers::{BlueJoker, BullJoker, ScaryFaceJoker, StoneJoker};

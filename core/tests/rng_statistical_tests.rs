@@ -9,6 +9,7 @@
 ///
 /// To run these tests locally, use: cargo test --test rng_statistical_tests --features statistical_tests
 use balatro_rs::rng::GameRng;
+#[allow(unused_imports)] // Used in statistical tests feature
 use std::collections::HashMap;
 
 /// Test that uniform distribution is actually uniform within statistical bounds
@@ -33,20 +34,11 @@ fn test_uniform_distribution_fairness() {
 
     // Check that all buckets are within tolerance
     for (i, &count) in counts.iter().enumerate() {
-        let deviation = if count > expected_count {
-            count - expected_count
-        } else {
-            expected_count - count
-        };
+        let deviation = (count as usize).abs_diff(expected_count);
 
         assert!(
             deviation <= tolerance,
-            "Bucket {} has count {} (expected ~{}), deviation {} exceeds tolerance {}",
-            i,
-            count,
-            expected_count,
-            deviation,
-            tolerance
+            "Bucket {i} has count {count} (expected ~{expected_count}), deviation {deviation} exceeds tolerance {tolerance}"
         );
     }
 }
@@ -81,8 +73,7 @@ fn test_chi_square_uniform_distribution() {
     // We use a more conservative threshold to account for RNG variance
     assert!(
         chi_square < 45.0,
-        "Chi-square statistic {} indicates non-uniform distribution (critical value ~38.58)",
-        chi_square
+        "Chi-square statistic {chi_square} indicates non-uniform distribution (critical value ~38.58)"
     );
 }
 
@@ -111,10 +102,7 @@ fn test_boolean_probability_distribution() {
 
         assert!(
             (observed_prob - prob).abs() < tolerance,
-            "Boolean generation with p={} gave observed probability {} (tolerance {})",
-            prob,
-            observed_prob,
-            tolerance
+            "Boolean generation with p={prob} gave observed probability {observed_prob} (tolerance {tolerance})"
         );
     }
 }
@@ -157,10 +145,7 @@ fn test_shuffle_permutation_coverage() {
 
     assert!(
         *max_count <= max_acceptable,
-        "Most common permutation appeared {} times (expected avg: {}, max acceptable: {})",
-        max_count,
-        expected_avg,
-        max_acceptable
+        "Most common permutation appeared {max_count} times (expected avg: {expected_avg}, max acceptable: {max_acceptable})"
     );
 }
 
@@ -194,11 +179,7 @@ fn test_weighted_choice_distribution() {
 
         assert!(
             (observed_prop - expected_prop).abs() < tolerance,
-            "Item {} expected proportion {} but observed {} (tolerance {})",
-            item,
-            expected_prop,
-            observed_prop,
-            tolerance
+            "Item {item} expected proportion {expected_prop} but observed {observed_prop} (tolerance {tolerance})"
         );
     }
 }
@@ -261,10 +242,7 @@ fn test_seed_independence() {
 
     assert!(
         differences >= min_expected_differences,
-        "Only {} out of {} values differed between different seeds (expected at least {})",
-        differences,
-        sample_size,
-        min_expected_differences
+        "Only {differences} out of {sample_size} values differed between different seeds (expected at least {min_expected_differences})"
     );
 }
 
@@ -295,10 +273,7 @@ fn test_fork_independence() {
 
     assert!(
         differences >= min_expected_differences,
-        "Only {} out of {} values differed between parent and forked RNG (expected at least {})",
-        differences,
-        sample_size,
-        min_expected_differences
+        "Only {differences} out of {sample_size} values differed between parent and forked RNG (expected at least {min_expected_differences})"
     );
 }
 
@@ -330,9 +305,7 @@ fn test_secure_rng_unpredictability() {
 
     assert!(
         similarities <= max_expected_similarities,
-        "Too many similarities ({}) between independent secure RNGs (max expected: {})",
-        similarities,
-        max_expected_similarities
+        "Too many similarities ({similarities}) between independent secure RNGs (max expected: {max_expected_similarities})"
     );
 }
 
@@ -408,8 +381,7 @@ fn test_thread_safety() {
             .count();
         assert_eq!(
             thread_count, 1000,
-            "Thread {} should have contributed 1000 results",
-            thread_id
+            "Thread {thread_id} should have contributed 1000 results"
         );
     }
 }

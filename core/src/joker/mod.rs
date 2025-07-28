@@ -101,7 +101,6 @@ pub enum JokerId {
     Luchador,
     Photograph,
     GiftCard,
-    CouponJoker,
     CloudNine,
     StockBroker,
     EggHead,
@@ -161,6 +160,8 @@ pub enum JokerId {
     Driver,
     Blueprint,
     Wee,
+    Castle,
+    Stuntman,
     Merry,
     Gros,
     Reserved,
@@ -1250,15 +1251,19 @@ pub mod conditional;
 
 // Include hand composition jokers (Ride the Bus, Blackboard, DNA)
 pub mod hand_composition_jokers;
-
 // Include resource-based chips jokers (Banner, Bull, Stone, Scary Face, Blue)
 pub mod resource_chips_jokers;
+
+// Include basic xmult jokers (Photograph, Ancient, Steel, Baron, The Idol)
+pub mod basic_xmult_jokers;
 
 // Include FourFingers joker
 pub mod four_fingers;
 
 // Include multiplicative jokers (Baron, Steel, Ancient, etc.)
 pub mod multiplicative_jokers;
+// Include retrigger jokers
+pub mod retrigger_jokers;
 
 // Include basic economy jokers
 pub mod basic_economy_jokers;
@@ -1276,6 +1281,9 @@ mod identity_tests;
 
 // Include scaling additive mult jokers
 pub mod scaling_additive_mult_jokers;
+
+// Include scaling chips jokers (Castle, Wee, Stuntman, etc.)
+pub mod scaling_chips_jokers;
 
 // Include testing utilities for the Joker trait system
 #[cfg(test)]

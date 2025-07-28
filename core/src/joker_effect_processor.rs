@@ -727,10 +727,7 @@ impl JokerEffectProcessor {
         let start_time = Instant::now();
 
         let effect = match optimized_joker.trait_profile {
-            JokerTraitProfile::GameplayOptimized
-            | JokerTraitProfile::HybridOptimized
-            | JokerTraitProfile::FullTraitOptimized => {
-                // Use optimized gameplay trait path
+            JokerTraitProfile::GameplayOptimized => {
                 // NOTE: Currently disabled due to JokerGameplay requiring &mut self
                 // gameplay_trait is always None in current implementation
                 // if let Some(gameplay_trait) = optimized_joker.gameplay_trait {
@@ -741,8 +738,6 @@ impl JokerEffectProcessor {
                 // }
 
                 // Always use legacy path until optimization layer is refactored
-                // Fallback to legacy path until optimization layer is refactored
-                self.trait_metrics.legacy_path_count += 1;
                 self.process_legacy_joker(optimized_joker.joker, game_context, hand, card)
             }
             JokerTraitProfile::ModifierOptimized => {
@@ -752,6 +747,18 @@ impl JokerEffectProcessor {
             }
             JokerTraitProfile::LegacyOnly => {
                 // Use legacy super trait path
+                self.trait_metrics.legacy_path_count += 1;
+                self.process_legacy_joker(optimized_joker.joker, game_context, hand, card)
+            }
+            JokerTraitProfile::HybridOptimized => {
+                // Hybrid path for jokers implementing both JokerGameplay and JokerModifiers
+                // For now, use legacy path until proper hybrid processing is implemented
+                self.trait_metrics.legacy_path_count += 1;
+                self.process_legacy_joker(optimized_joker.joker, game_context, hand, card)
+            }
+            JokerTraitProfile::FullTraitOptimized => {
+                // Full trait path for jokers implementing multiple new traits
+                // For now, use legacy path until proper full trait processing is implemented
                 self.trait_metrics.legacy_path_count += 1;
                 self.process_legacy_joker(optimized_joker.joker, game_context, hand, card)
             }

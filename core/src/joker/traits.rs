@@ -170,6 +170,12 @@ pub trait JokerModifiers: Send + Sync {
     fn get_discard_modifier(&self) -> i32 {
         0
     }
+
+    /// Returns the hand evaluation configuration this joker provides.
+    /// If None, this joker doesn't affect hand evaluation rules.
+    fn get_hand_eval_config(&self) -> Option<crate::hand::HandEvalConfig> {
+        None
+    }
 }
 
 /// Trait for joker state management.

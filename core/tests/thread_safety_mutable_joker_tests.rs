@@ -3,7 +3,6 @@
 use balatro_rs::card::{Suit, Value};
 use balatro_rs::joker::{JokerId, ProcessResult};
 use balatro_rs::joker_state::JokerStateManager;
-// Stage import removed - unused
 use std::sync::{
     atomic::{AtomicU32, Ordering},
     Arc, Mutex, RwLock,
@@ -85,6 +84,7 @@ fn test_complex_state_thread_safety() {
         Ready,
         Cooldown(u32),
     }
+
     impl ComplexThreadSafeJoker {
         fn new() -> Self {
             Self {
@@ -133,9 +133,8 @@ fn test_complex_state_thread_safety() {
             ProcessResult {
                 chips_added: 0,
                 mult_added: mult,
-                mult_multiplier: 1.0,
                 retriggered: false,
-                message: None,
+                ..Default::default()
             }
         }
     }
@@ -227,9 +226,8 @@ fn test_trait_object_thread_safety() {
             ProcessResult {
                 chips_added: self.counter as u64,
                 mult_added: 1.0,
-                mult_multiplier: 1.0,
                 retriggered: false,
-                message: None,
+                ..Default::default()
             }
         }
     }
@@ -246,9 +244,8 @@ fn test_trait_object_thread_safety() {
             ProcessResult {
                 chips_added: *state as u64,
                 mult_added: 2.0,
-                mult_multiplier: 1.0,
                 retriggered: false,
-                message: None,
+                ..Default::default()
             }
         }
     }

@@ -1,12 +1,11 @@
-use balatro_rs::basic_chips_jokers::{
-    BannerJoker, BlueJoker, BullJoker, ScaryFaceJoker, StoneJoker,
-};
+use balatro_rs::basic_chips_jokers::{BlueJoker, BullJoker, ScaryFaceJoker, StoneJoker};
 use balatro_rs::card::{Card, Suit, Value};
 use balatro_rs::hand::{Hand, SelectHand};
 use balatro_rs::joker::{GameContext, Joker};
 use balatro_rs::joker_state::JokerStateManager;
 use balatro_rs::rank::HandRank;
 use balatro_rs::stage::{Blind, Stage};
+use balatro_rs::static_joker_factory::StaticJokerFactory;
 use std::collections::HashMap;
 use std::sync::{Arc, OnceLock};
 
@@ -88,7 +87,7 @@ mod banner_joker_tests {
     #[test]
     fn test_banner_joker_zero_discards_remaining() {
         // ARRANGE: No discards remaining (5 used out of 5 total)
-        let joker = create_banner_joker();
+        let joker = StaticJokerFactory::create_banner();
         let mut context = create_test_context(10, 5);
         let hand = SelectHand::new(vec![]);
 
@@ -104,7 +103,7 @@ mod banner_joker_tests {
     #[test]
     fn test_banner_joker_three_discards_remaining() {
         // ARRANGE: 3 discards remaining (2 used out of 5 total)
-        let joker = create_banner_joker();
+        let joker = StaticJokerFactory::create_banner();
         let mut context = create_test_context(10, 2);
         let hand = SelectHand::new(vec![]);
 
@@ -120,7 +119,7 @@ mod banner_joker_tests {
     #[test]
     fn test_banner_joker_max_discards() {
         // ARRANGE: All 5 discards remaining (0 used out of 5 total)
-        let joker = create_banner_joker();
+        let joker = StaticJokerFactory::create_banner();
         let mut context = create_test_context(10, 0);
         let hand = SelectHand::new(vec![]);
 
@@ -322,9 +321,6 @@ mod blue_joker_tests {
 }
 
 // Factory functions for creating joker instances
-fn create_banner_joker() -> Box<dyn Joker> {
-    Box::new(BannerJoker::new())
-}
 
 fn create_bull_joker() -> Box<dyn Joker> {
     Box::new(BullJoker::new())

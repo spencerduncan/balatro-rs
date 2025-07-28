@@ -13,115 +13,6 @@ use crate::{
     stage::Stage,
 };
 
-/// Banner joker - +30 chips per remaining discard
-#[derive(Debug, Clone)]
-pub struct BannerJoker {
-    id: JokerId,
-    name: String,
-    description: String,
-    rarity: JokerRarity,
-    cost: usize,
-}
-
-impl Default for BannerJoker {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl BannerJoker {
-    pub fn new() -> Self {
-        Self {
-            id: JokerId::Banner,
-            name: "Banner".to_string(),
-            description: "+30 Chips for each remaining discard".to_string(),
-            rarity: JokerRarity::Common,
-            cost: 3,
-        }
-    }
-
-    fn calculate_remaining_discards(context: &GameContext) -> u32 {
-        const MAX_DISCARDS: u32 = 5;
-        MAX_DISCARDS.saturating_sub(context.discards_used)
-    }
-}
-
-impl JokerIdentity for BannerJoker {
-    fn joker_type(&self) -> &'static str {
-        "banner"
-    }
-
-    fn name(&self) -> &str {
-        &self.name
-    }
-
-    fn description(&self) -> &str {
-        &self.description
-    }
-
-    fn rarity(&self) -> Rarity {
-        match self.rarity {
-            JokerRarity::Common => Rarity::Common,
-            JokerRarity::Uncommon => Rarity::Uncommon,
-            JokerRarity::Rare => Rarity::Rare,
-            JokerRarity::Legendary => Rarity::Legendary,
-        }
-    }
-
-    fn base_cost(&self) -> u64 {
-        self.cost as u64
-    }
-}
-
-impl Joker for BannerJoker {
-    fn id(&self) -> JokerId {
-        self.id
-    }
-
-    fn name(&self) -> &str {
-        &self.name
-    }
-
-    fn description(&self) -> &str {
-        &self.description
-    }
-
-    fn rarity(&self) -> JokerRarity {
-        self.rarity
-    }
-
-    fn cost(&self) -> usize {
-        self.cost
-    }
-
-    fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
-        let discards_remaining = Self::calculate_remaining_discards(context);
-        let chips_bonus = 30 * discards_remaining as i32;
-
-        JokerEffect::new()
-            .with_chips(chips_bonus)
-            .with_message(format!(
-                "Banner: +{chips_bonus} Chips ({discards_remaining} discards remaining)"
-            ))
-    }
-}
-
-impl JokerGameplay for BannerJoker {
-    fn process(&mut self, stage: &Stage, _context: &mut ProcessContext) -> ProcessResult {
-        if !matches!(stage, Stage::Blind(_)) {
-            return ProcessResult::default();
-        }
-
-        // Note: ProcessContext doesn't have access to game resources
-        // The main logic is in the Joker trait's on_hand_played method
-        ProcessResult::default()
-    }
-
-    fn can_trigger(&self, stage: &Stage, _context: &ProcessContext) -> bool {
-        matches!(stage, Stage::Blind(_))
-    }
-}
-
 /// Bull joker - +2 chips per $1 owned
 #[derive(Debug, Clone)]
 pub struct BullJoker {
@@ -558,10 +449,6 @@ impl JokerGameplay for BlueJoker {
 }
 
 /// Factory functions for creating resource-based chips jokers
-pub fn create_banner_joker() -> Box<dyn Joker> {
-    Box::new(BannerJoker::new())
-}
-
 pub fn create_bull_joker() -> Box<dyn Joker> {
     Box::new(BullJoker::new())
 }
@@ -582,16 +469,6 @@ pub fn create_blue_joker() -> Box<dyn Joker> {
 mod tests {
     use super::*;
     use crate::stage::Blind;
-
-    #[test]
-    fn test_banner_joker_remaining_discards() {
-        let banner = BannerJoker::new();
-
-        // Test identity
-        assert_eq!(banner.joker_type(), "banner");
-        assert_eq!(JokerIdentity::name(&banner), "Banner");
-        assert_eq!(banner.base_cost(), 3);
-    }
 
     #[test]
     fn test_bull_joker_money_scaling() {

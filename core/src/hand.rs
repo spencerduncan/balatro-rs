@@ -9,12 +9,6 @@ use crate::card::Suit;
 use crate::card::Value;
 use crate::error::PlayHandError;
 use crate::rank::HandRank;
-use std::cell::RefCell;
-
-// Thread-local state for hand evaluation modifiers (e.g., FourFingers)
-thread_local! {
-    static HAND_EVAL_CONFIG: RefCell<HandEvalConfig> = RefCell::new(HandEvalConfig::default());
-}
 
 #[derive(Debug, Clone, Copy)]
 pub struct HandEvalConfig {
@@ -29,16 +23,6 @@ impl Default for HandEvalConfig {
             min_straight_cards: 5,
         }
     }
-}
-
-pub fn set_hand_eval_config(config: HandEvalConfig) {
-    HAND_EVAL_CONFIG.with(|c| {
-        *c.borrow_mut() = config;
-    });
-}
-
-pub fn get_hand_eval_config() -> HandEvalConfig {
-    HAND_EVAL_CONFIG.with(|c| *c.borrow())
 }
 
 // Hand, SelectHand and MadeHand are all representations of a collection of Card,
@@ -94,7 +78,7 @@ pub struct HandAnalysis {
 
 impl HandAnalysis {
     /// Create analysis from cards with single pass through the hand
-    pub fn new(cards: &[Card]) -> Self {
+    pub fn new(cards: &[Card], config: &HandEvalConfig) -> Self {
         let mut value_counts = [0u8; 13];
         let mut suit_counts = [0u8; 4];
         let mut high_value = Value::Two;
@@ -117,7 +101,6 @@ impl HandAnalysis {
         sorted_counts.sort_by(|a, b| b.cmp(a)); // Sort descending
 
         // Check for flush (normally 5 cards of same suit, but FourFingers allows 4)
-        let config = get_hand_eval_config();
         let is_flush = if config.min_flush_cards < 5 && cards.len() >= config.min_flush_cards {
             // FourFingers mode: check if we have at least min_flush_cards of same suit
             suit_counts
@@ -385,6 +368,14 @@ impl SelectHand {
     /// FlushFive, FlushHouse, FiveOfAKind, RoyalFlush, StraightFlush,
     /// FourOfAKind, FullHouse, Flush, Straight, ThreeOfAKind, TwoPair, OnePair, HighCard
     pub fn best_hand(&self) -> Result<MadeHand, PlayHandError> {
+        self.best_hand_with_config(&HandEvalConfig::default())
+    }
+
+    /// Evaluate best hand with explicit configuration
+    pub fn best_hand_with_config(
+        &self,
+        config: &HandEvalConfig,
+    ) -> Result<MadeHand, PlayHandError> {
         if self.len() == 0 {
             return Err(PlayHandError::NoCards);
         }
@@ -393,7 +384,7 @@ impl SelectHand {
         }
 
         // Single-pass analysis for O(n) complexity
-        let analysis = HandAnalysis::new(&self.0);
+        let analysis = HandAnalysis::new(&self.0, config);
         let rank = analysis.detect_hand_rank();
         let hand = analysis.build_hand(rank);
 
@@ -405,6 +396,10 @@ impl SelectHand {
     }
 
     pub(crate) fn is_highcard(&self) -> Option<SelectHand> {
+        self.is_highcard_with_config(&HandEvalConfig::default())
+    }
+
+    pub(crate) fn is_highcard_with_config(&self, config: &HandEvalConfig) -> Option<SelectHand> {
         if self.len() < 1 {
             return None;
         }
@@ -414,15 +409,15 @@ impl SelectHand {
         if self.is_pair().is_some()
             || self.is_two_pair().is_some()
             || self.is_three_of_kind().is_some()
-            || self.is_straight().is_some()
-            || self.is_flush().is_some()
+            || self.is_straight_with_config(config).is_some()
+            || self.is_flush_with_config(config).is_some()
             || self.is_fullhouse().is_some()
             || self.is_four_of_kind().is_some()
-            || self.is_straight_flush().is_some()
-            || self.is_royal_flush().is_some()
+            || self.is_straight_flush_with_config(config).is_some()
+            || self.is_royal_flush_with_config(config).is_some()
             || self.is_five_of_kind().is_some()
-            || self.is_flush_house().is_some()
-            || self.is_flush_five().is_some()
+            || self.is_flush_house_with_config(config).is_some()
+            || self.is_flush_five_with_config(config).is_some()
         {
             return None;
         }
@@ -495,7 +490,10 @@ impl SelectHand {
     }
 
     pub(crate) fn is_straight(&self) -> Option<SelectHand> {
-        let config = get_hand_eval_config();
+        self.is_straight_with_config(&HandEvalConfig::default())
+    }
+
+    pub(crate) fn is_straight_with_config(&self, config: &HandEvalConfig) -> Option<SelectHand> {
         if self.len() < config.min_straight_cards {
             return None;
         }
@@ -564,7 +562,10 @@ impl SelectHand {
     }
 
     pub(crate) fn is_flush(&self) -> Option<SelectHand> {
-        let config = get_hand_eval_config();
+        self.is_flush_with_config(&HandEvalConfig::default())
+    }
+
+    pub(crate) fn is_flush_with_config(&self, config: &HandEvalConfig) -> Option<SelectHand> {
         if self.len() < config.min_flush_cards {
             return None;
         }
@@ -631,14 +632,27 @@ impl SelectHand {
     }
 
     pub(crate) fn is_straight_flush(&self) -> Option<SelectHand> {
-        if self.is_flush().is_some() && self.is_straight().is_some() {
+        self.is_straight_flush_with_config(&HandEvalConfig::default())
+    }
+
+    pub(crate) fn is_straight_flush_with_config(
+        &self,
+        config: &HandEvalConfig,
+    ) -> Option<SelectHand> {
+        if self.is_flush_with_config(config).is_some()
+            && self.is_straight_with_config(config).is_some()
+        {
             return Some(self.clone());
         }
         None
     }
 
     pub(crate) fn is_royal_flush(&self) -> Option<SelectHand> {
-        if self.is_straight_flush().is_some()
+        self.is_royal_flush_with_config(&HandEvalConfig::default())
+    }
+
+    pub(crate) fn is_royal_flush_with_config(&self, config: &HandEvalConfig) -> Option<SelectHand> {
+        if self.is_straight_flush_with_config(config).is_some()
             && self.values().into_iter().eq(vec![
                 Value::Ten,
                 Value::Jack,
@@ -668,14 +682,22 @@ impl SelectHand {
     }
 
     pub(crate) fn is_flush_house(&self) -> Option<SelectHand> {
-        if self.is_flush().is_some() && self.is_fullhouse().is_some() {
+        self.is_flush_house_with_config(&HandEvalConfig::default())
+    }
+
+    pub(crate) fn is_flush_house_with_config(&self, config: &HandEvalConfig) -> Option<SelectHand> {
+        if self.is_flush_with_config(config).is_some() && self.is_fullhouse().is_some() {
             return Some(self.clone());
         }
         None
     }
 
     pub(crate) fn is_flush_five(&self) -> Option<SelectHand> {
-        if self.is_flush().is_some() && self.is_five_of_kind().is_some() {
+        self.is_flush_five_with_config(&HandEvalConfig::default())
+    }
+
+    pub(crate) fn is_flush_five_with_config(&self, config: &HandEvalConfig) -> Option<SelectHand> {
+        if self.is_flush_with_config(config).is_some() && self.is_five_of_kind().is_some() {
             return Some(self.clone());
         }
         None
@@ -1526,5 +1548,83 @@ mod tests {
         assert_eq!(result.rank, HandRank::OnePair);
         // The pair should contain the two kings
         assert_eq!(result.hand.len(), 2);
+    }
+
+    /// Test demonstrating thread safety with explicit config passing
+    /// This test shows that explicit parameter passing provides consistent behavior
+    /// across different threads
+    #[test]
+    fn test_four_fingers_thread_safety_fixed() {
+        use crate::rank::HandRank;
+        use std::sync::{Arc, Mutex};
+        use std::thread;
+
+        // Create a test hand with 4 hearts that should be a flush with FourFingers
+        let test_cards = vec![
+            Card::new(Value::Ace, Suit::Heart),
+            Card::new(Value::King, Suit::Heart),
+            Card::new(Value::Queen, Suit::Heart),
+            Card::new(Value::Jack, Suit::Heart),
+            Card::new(Value::Two, Suit::Diamond), // Different suit
+        ];
+
+        // Results from each thread
+        let results = Arc::new(Mutex::new(Vec::new()));
+
+        // Create FourFingers config
+        let four_fingers_config = HandEvalConfig {
+            min_flush_cards: 4,
+            min_straight_cards: 4,
+        };
+
+        // Spawn multiple threads that each use explicit config and evaluate the same hand
+        let mut handles = vec![];
+        for thread_id in 0..4 {
+            let test_cards = test_cards.clone();
+            let config = four_fingers_config;
+            let results = Arc::clone(&results);
+
+            let handle = thread::spawn(move || {
+                // Evaluate the hand with explicit config
+                let hand = SelectHand::new(test_cards);
+                let result = hand.best_hand_with_config(&config).unwrap();
+                let is_flush = matches!(
+                    result.rank,
+                    HandRank::Flush | HandRank::StraightFlush | HandRank::RoyalFlush
+                );
+
+                // Store result from this thread
+                {
+                    let mut results = results.lock().unwrap();
+                    results.push((thread_id, is_flush, result.rank));
+                }
+
+                // Return whether this was detected as a flush (should be true with FourFingers config)
+                is_flush
+            });
+
+            handles.push(handle);
+        }
+
+        // Wait for all threads to complete
+        let thread_results: Vec<bool> = handles.into_iter().map(|h| h.join().unwrap()).collect();
+
+        // Print results for debugging
+        {
+            let results = results.lock().unwrap();
+            println!("Thread safety test results:");
+            for (thread_id, is_flush, rank) in results.iter() {
+                println!("  Thread {thread_id}: is_flush={is_flush}, rank={rank:?}");
+            }
+        }
+
+        // ALL threads should detect this as a flush since they all use the same config
+        let all_flush = thread_results.iter().all(|&is_flush| is_flush);
+
+        assert!(
+            all_flush,
+            "All threads should detect 4-card flush with FourFingers config. Got: {thread_results:?}"
+        );
+        println!("All threads got consistent results - thread safety working correctly");
     }
 }

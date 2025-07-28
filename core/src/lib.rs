@@ -35,6 +35,7 @@ pub mod multi_select;
 pub mod priority_strategy;
 pub mod rank;
 pub mod rng;
+pub mod scaling_chips_jokers;
 pub mod scaling_joker;
 pub mod scaling_joker_custom;
 pub mod scaling_joker_impl;

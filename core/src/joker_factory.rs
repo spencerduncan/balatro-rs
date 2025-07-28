@@ -1,4 +1,5 @@
 use crate::joker::four_fingers::FourFingersJoker;
+use crate::joker::retrigger_jokers::*;
 use crate::joker::scaling_additive_mult_jokers::*;
 use crate::joker::{Joker, JokerId, JokerRarity};
 use crate::joker_impl::*;
@@ -86,6 +87,13 @@ impl JokerFactory {
             JokerId::GreenJoker => Some(Box::new(GreenJoker::new())),
             JokerId::Reserved5 => Some(Box::new(RideTheBusJoker::new())), // RideTheBus
             JokerId::Reserved6 => Some(Box::new(RedCardJoker::new())),    // RedCard (pack skipping)
+
+            // Retrigger jokers
+            JokerId::Dusk => Some(Box::new(DuskJoker::new())),
+            JokerId::Seltzer => Some(Box::new(SeltzerJoker::new())),
+            JokerId::Hanging => Some(Box::new(HangingChadJoker::new())),
+            JokerId::SockAndBuskin => Some(Box::new(SockAndBuskinJoker::new())),
+
             // TODO: Implement remaining jokers
             _ => None,
         }
@@ -138,6 +146,8 @@ impl JokerFactory {
                 GreenJoker,
                 Reserved5, // RideTheBus
                 Reserved6, // RedCard (pack skipping)
+                // Retrigger jokers
+                Hanging, // HangingChadJoker
             ],
             JokerRarity::Uncommon => vec![
                 // Money-based conditional jokers
@@ -160,6 +170,10 @@ impl JokerFactory {
                 FourFingers,
                 // Scaling additive mult jokers
                 Trousers, // Spare Trousers
+                // Retrigger jokers
+                Dusk,
+                Seltzer,
+                SockAndBuskin,
             ],
             JokerRarity::Rare => vec![
                 // RNG-based jokers (Issue #442)
@@ -240,7 +254,12 @@ impl JokerFactory {
             GreenJoker,
             Reserved5, // RideTheBus
             Reserved6, // RedCard (pack skipping)
-                       // Note: HalfJoker and Banner are still placeholders
+            // Retrigger jokers
+            Dusk,
+            Seltzer,
+            Hanging,
+            SockAndBuskin,
+            // Note: HalfJoker and Banner are still placeholders
         ]
     }
 }

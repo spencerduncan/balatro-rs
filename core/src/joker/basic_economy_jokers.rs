@@ -440,110 +440,6 @@ impl JokerLifecycle for GiftCardJoker {
     }
 }
 
-/// Coupon Joker - Final card of the round adds $1 sell value
-#[derive(Debug, Clone)]
-pub struct CouponJoker {
-    id: JokerId,
-    name: String,
-    description: String,
-    rarity: JokerRarity,
-    cost: usize,
-    hands_played_this_round: u32,
-}
-
-impl Default for CouponJoker {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl CouponJoker {
-    pub fn new() -> Self {
-        Self {
-            id: JokerId::CouponJoker,
-            name: "Coupon".to_string(),
-            description: "Final card of the round adds $1 sell value".to_string(),
-            rarity: JokerRarity::Common,
-            cost: 4,
-            hands_played_this_round: 0,
-        }
-    }
-}
-
-impl JokerIdentity for CouponJoker {
-    fn joker_type(&self) -> &'static str {
-        "coupon"
-    }
-
-    fn name(&self) -> &str {
-        &self.name
-    }
-
-    fn description(&self) -> &str {
-        &self.description
-    }
-
-    fn rarity(&self) -> Rarity {
-        match self.rarity {
-            JokerRarity::Common => Rarity::Common,
-            JokerRarity::Uncommon => Rarity::Uncommon,
-            JokerRarity::Rare => Rarity::Rare,
-            JokerRarity::Legendary => Rarity::Legendary,
-        }
-    }
-
-    fn base_cost(&self) -> u64 {
-        self.cost as u64
-    }
-}
-
-impl Joker for CouponJoker {
-    fn id(&self) -> JokerId {
-        self.id
-    }
-
-    fn name(&self) -> &str {
-        &self.name
-    }
-
-    fn description(&self) -> &str {
-        &self.description
-    }
-
-    fn rarity(&self) -> JokerRarity {
-        self.rarity
-    }
-
-    fn cost(&self) -> usize {
-        self.cost
-    }
-
-    fn on_hand_played(&self, _context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
-        // TODO: Track hands to detect final hand
-        // For now, this needs to be implemented with proper game state tracking
-        JokerEffect::new()
-    }
-}
-
-impl JokerLifecycle for CouponJoker {
-    fn on_round_start(&mut self) {
-        self.hands_played_this_round = 0;
-    }
-}
-
-impl JokerGameplay for CouponJoker {
-    fn process(&mut self, stage: &Stage, _context: &mut ProcessContext) -> ProcessResult {
-        if matches!(stage, Stage::Blind(_)) {
-            self.hands_played_this_round += 1;
-        }
-        ProcessResult::default()
-    }
-
-    fn can_trigger(&self, stage: &Stage, _context: &ProcessContext) -> bool {
-        matches!(stage, Stage::Blind(_))
-    }
-}
-
 /// Factory functions for creating basic economy jokers
 pub fn create_delayed_gratification_joker() -> Box<dyn Joker> {
     Box::new(DelayedGratificationJoker::new())
@@ -559,10 +455,6 @@ pub fn create_to_the_moon_joker() -> Box<dyn Joker> {
 
 pub fn create_gift_card_joker() -> Box<dyn Joker> {
     Box::new(GiftCardJoker::new())
-}
-
-pub fn create_coupon_joker() -> Box<dyn Joker> {
-    Box::new(CouponJoker::new())
 }
 
 #[cfg(test)]
@@ -659,25 +551,6 @@ mod tests {
         let effect = gift_card.on_round_end(&mut test_context);
         // Should increase sell value for 2 jokers
         assert_eq!(effect.sell_value_increase, 1);
-    }
-
-    #[test]
-    fn test_coupon() {
-        let coupon = CouponJoker::new();
-
-        // Test identity
-        assert_eq!(coupon.joker_type(), "coupon");
-        assert_eq!(JokerIdentity::name(&coupon), "Coupon");
-        assert_eq!(coupon.base_cost(), 4);
-
-        // Test final hand detection
-        let mut test_context = crate::joker::test_utils::TestContextBuilder::new()
-            .with_hands_played(2) // 2 hands played, assume 3 total
-            .build();
-
-        let hand = SelectHand::new(vec![]);
-        let _effect = coupon.on_hand_played(&mut test_context, &hand);
-        // TODO: Test final hand detection when properly implemented
     }
 
     #[test]
