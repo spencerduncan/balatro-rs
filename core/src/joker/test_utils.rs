@@ -628,6 +628,7 @@ pub struct TestContextBuilder {
     hand_type_counts: HashMap<HandRank, u32>,
     cards_in_deck: usize,
     stone_cards_in_deck: usize,
+    steel_cards_in_deck: usize,
 }
 
 impl TestContextBuilder {
@@ -647,6 +648,7 @@ impl TestContextBuilder {
             hand_type_counts: HashMap::new(),
             cards_in_deck: 52,
             stone_cards_in_deck: 0,
+            steel_cards_in_deck: 0,
         }
     }
 
@@ -728,6 +730,12 @@ impl TestContextBuilder {
         self
     }
 
+    /// Set the number of steel cards in deck.
+    pub fn with_steel_cards_in_deck(mut self, count: usize) -> Self {
+        self.steel_cards_in_deck = count;
+        self
+    }
+
     /// Build the GameContext.
     ///
     /// Note: This creates a minimal context suitable for testing.
@@ -763,7 +771,7 @@ impl TestContextBuilder {
             hand_type_counts: hand_type_counts_ref,
             cards_in_deck: self.cards_in_deck,
             stone_cards_in_deck: self.stone_cards_in_deck,
-            steel_cards_in_deck: 0,
+            steel_cards_in_deck: self.steel_cards_in_deck,
             rng: rng_ref,
         }
     }

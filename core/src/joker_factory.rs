@@ -4,7 +4,7 @@ use crate::joker::scaling_additive_mult_jokers::*;
 use crate::joker::{Joker, JokerId, JokerRarity};
 use crate::joker_impl::*;
 use crate::scaling_joker_custom;
-use crate::scaling_joker_impl::{create_red_card, create_steel_joker_scaling};
+use crate::scaling_joker_impl::create_red_card;
 use crate::special_jokers::*;
 use crate::static_joker_factory::StaticJokerFactory;
 
@@ -55,7 +55,7 @@ impl JokerFactory {
             JokerId::HalfJoker => Some(StaticJokerFactory::create_half_joker()),
             JokerId::Banner => Some(StaticJokerFactory::create_banner()),
             JokerId::AbstractJoker => Some(Box::new(AbstractJoker)),
-            JokerId::SteelJoker => Some(Box::new(create_steel_joker_scaling())),
+            JokerId::SteelJoker => Some(crate::joker::multiplicative_jokers::create_steel_joker()),
 
             // RNG-based jokers (Issue #442)
             JokerId::Oops => Some(Box::new(OopsAllSixesJoker)),

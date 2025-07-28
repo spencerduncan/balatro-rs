@@ -160,18 +160,14 @@ impl SteelJoker {
         Self {
             id: JokerId::SteelJoker,
             name: "Steel Joker".to_string(),
-            description: "Gains X0.2 Mult for each Steel Card in your full deck".to_string(),
+            description: "Gives X0.5 Mult for each Steel Card in your full deck".to_string(),
             rarity: JokerRarity::Uncommon,
             cost: 6,
         }
     }
 
-    fn count_steel_cards(_context: &ProcessContext) -> usize {
-        // In a full implementation, this would check the deck for Steel card type
-        // For now, we'll use a placeholder implementation
-        // TODO: Implement deck traversal for Steel cards when CardType::Steel is available
-        0
-    }
+    // Note: Steel card counting is now done via GameContext.steel_cards_in_deck
+    // in the on_hand_played method, not through ProcessContext
 }
 
 impl JokerIdentity for SteelJoker {
@@ -222,45 +218,34 @@ impl Joker for SteelJoker {
         self.cost
     }
 
-    fn on_hand_played(&self, _context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
-        // TODO: Implement deck traversal for Steel cards when CardType::Steel is available
-        let steel_count = 0; // Placeholder
+    fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
+        let steel_count = context.steel_cards_in_deck;
         if steel_count == 0 {
             return JokerEffect::new();
         }
 
-        // X0.2 per Steel card, additive then multiplicative: 1 + (0.2 * n)
-        let multiplier = 1.0 + (0.2 * steel_count as f64);
+        // Steel Joker gives X0.5 Mult for each Steel Card per joker.json specification
+        // This equals X(1.0 + 0.5 * steel_count)
+        let multiplier = 1.0 + (steel_count as f64 * 0.5);
 
         JokerEffect::new()
             .with_mult_multiplier(multiplier)
             .with_message(format!(
-                "Steel Joker: X{multiplier} Mult ({steel_count} Steel cards)"
+                "Steel Joker: X{multiplier:.1} Mult ({steel_count} Steel cards)"
             ))
     }
 }
 
 impl JokerGameplay for SteelJoker {
-    fn process(&mut self, stage: &Stage, context: &mut ProcessContext) -> ProcessResult {
+    fn process(&mut self, stage: &Stage, _context: &mut ProcessContext) -> ProcessResult {
         if !matches!(stage, Stage::Blind(_)) {
             return ProcessResult::default();
         }
 
-        let steel_count = Self::count_steel_cards(context);
-        if steel_count == 0 {
-            return ProcessResult::default();
-        }
-
-        // X0.2 per Steel card, additive then multiplicative: 1 + (0.2 * n)
-        let multiplier = 1.0 + (0.2 * steel_count as f64);
-
-        ProcessResult {
-            mult_multiplier: multiplier,
-            message: Some(format!(
-                "Steel Joker: X{multiplier} Mult ({steel_count} Steel cards)"
-            )),
-            ..Default::default()
-        }
+        // Note: This process method is for JokerGameplay trait compatibility
+        // The main logic is in on_hand_played method which uses GameContext
+        // ProcessContext doesn't have access to full deck information
+        ProcessResult::default()
     }
 
     fn can_trigger(&self, stage: &Stage, _context: &ProcessContext) -> bool {
@@ -710,6 +695,95 @@ mod tests {
     use super::*;
     use crate::joker_state::JokerStateManager;
     use crate::stage::Blind;
+
+    #[test]
+    fn test_steel_joker_identity() {
+        let steel = SteelJoker::new();
+        assert_eq!(steel.id(), JokerId::SteelJoker);
+        assert_eq!(Joker::name(&steel), "Steel Joker");
+        assert_eq!(
+            Joker::description(&steel),
+            "Gives X0.5 Mult for each Steel Card in your full deck"
+        );
+        assert_eq!(Joker::rarity(&steel), JokerRarity::Uncommon);
+        assert_eq!(steel.cost(), 6);
+    }
+
+    #[test]
+    fn test_steel_joker_multiplier_calculation() {
+        use crate::hand::SelectHand;
+        use crate::joker::test_utils::TestContextBuilder;
+
+        let steel = SteelJoker::new();
+        let select_hand = SelectHand::new(vec![]);
+
+        // Test with 0 steel cards - should return no effect
+        let mut context = TestContextBuilder::new()
+            .with_steel_cards_in_deck(0)
+            .build();
+        let effect = steel.on_hand_played(&mut context, &select_hand);
+        assert_eq!(effect.mult_multiplier, 0.0); // No multiplier effect
+        assert!(effect.message.is_none());
+
+        // Test with 1 steel card - should give X1.5 Mult (1.0 + 0.5)
+        let mut context = TestContextBuilder::new()
+            .with_steel_cards_in_deck(1)
+            .build();
+        let effect = steel.on_hand_played(&mut context, &select_hand);
+        assert_eq!(effect.mult_multiplier, 1.5); // 1.0 + (1 * 0.5) = 1.5
+        assert!(effect.message.is_some());
+
+        // Test with 2 steel cards - should give X2.0 Mult (1.0 + 1.0)
+        let mut context = TestContextBuilder::new()
+            .with_steel_cards_in_deck(2)
+            .build();
+        let effect = steel.on_hand_played(&mut context, &select_hand);
+        assert_eq!(effect.mult_multiplier, 2.0); // 1.0 + (2 * 0.5) = 2.0
+
+        // Test with 3 steel cards - should give X2.5 Mult (1.0 + 1.5)
+        let mut context = TestContextBuilder::new()
+            .with_steel_cards_in_deck(3)
+            .build();
+        let effect = steel.on_hand_played(&mut context, &select_hand);
+        assert_eq!(effect.mult_multiplier, 2.5); // 1.0 + (3 * 0.5) = 2.5
+    }
+
+    #[test]
+    fn test_steel_joker_edge_cases() {
+        use crate::hand::SelectHand;
+        use crate::joker::test_utils::TestContextBuilder;
+
+        let steel = SteelJoker::new();
+        let select_hand = SelectHand::new(vec![]);
+
+        // Test with maximum reasonable steel card count
+        let mut context = TestContextBuilder::new()
+            .with_steel_cards_in_deck(10)
+            .build();
+        let effect = steel.on_hand_played(&mut context, &select_hand);
+        assert_eq!(effect.mult_multiplier, 6.0); // 1.0 + (10 * 0.5) = 6.0
+        assert!(effect
+            .message
+            .as_ref()
+            .unwrap()
+            .contains("Steel Joker: X6.0 Mult (10 Steel cards)"));
+
+        // Test message format consistency
+        let mut context = TestContextBuilder::new()
+            .with_steel_cards_in_deck(1)
+            .build();
+        let effect = steel.on_hand_played(&mut context, &select_hand);
+        assert!(effect
+            .message
+            .as_ref()
+            .unwrap()
+            .contains("Steel Joker: X1.5 Mult (1 Steel cards)"));
+
+        // Verify no other effects are set (chips, mult, money should be default)
+        assert_eq!(effect.chips, 0);
+        assert_eq!(effect.mult, 0);
+        assert_eq!(effect.money, 0);
+    }
 
     #[test]
     fn test_baron_no_kings() {

@@ -132,20 +132,7 @@ pub fn create_red_card() -> ScalingJoker {
     )
 }
 
-/// Additional scaling jokers to reach 15 total:
-/// Steel Joker: +0.2x mult per card destroyed
-pub fn create_steel_joker_scaling() -> ScalingJoker {
-    ScalingJoker::new(
-        JokerId::SteelJoker,
-        "Steel Joker".to_string(),
-        "+0.2x Mult per card destroyed".to_string(),
-        JokerRarity::Uncommon,
-        1.0,
-        0.2,
-        ScalingTrigger::CardDestroyed,
-        ScalingEffectType::MultMultiplier,
-    )
-}
+// Steel Joker removed - now implemented as multiplicative joker in multiplicative_jokers.rs
 
 /// Mystic Summit: +15 mult per hand type played this run
 pub fn create_mystic_summit() -> ScalingJoker {
@@ -218,7 +205,7 @@ pub fn create_all_scaling_jokers() -> Vec<ScalingJoker> {
         create_throwback(),
         create_green_joker(),
         create_red_card(),
-        create_steel_joker_scaling(),
+        // create_steel_joker_scaling(), // Removed - now multiplicative joker
         create_mystic_summit(),
         create_marble_joker_scaling(),
         create_loyalty_card(),
@@ -238,7 +225,7 @@ pub fn get_scaling_joker_by_id(id: JokerId) -> Option<ScalingJoker> {
         JokerId::Reserved => Some(create_throwback()),
         JokerId::GreenJoker => Some(create_green_joker()),
         JokerId::RedCard => Some(create_red_card()),
-        JokerId::SteelJoker => Some(create_steel_joker_scaling()),
+        // JokerId::SteelJoker => Now implemented as multiplicative joker
         JokerId::Reserved2 => Some(create_mystic_summit()),
         JokerId::MarbleJoker => Some(create_marble_joker_scaling()),
         JokerId::Loyalty => Some(create_loyalty_card()),
@@ -254,7 +241,7 @@ mod tests {
     #[test]
     fn test_all_scaling_jokers_created() {
         let jokers = create_all_scaling_jokers();
-        assert_eq!(jokers.len(), 14, "Should create exactly 14 scaling jokers");
+        assert_eq!(jokers.len(), 13, "Should create exactly 13 scaling jokers (Steel Joker moved to multiplicative)");
 
         // Test that all jokers have unique IDs
         let mut ids = std::collections::HashSet::new();
