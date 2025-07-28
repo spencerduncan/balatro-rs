@@ -1262,56 +1262,58 @@
 <a href=#1262 id=1262 data-nosnippet>1262</a>
 <a href=#1263 id=1263 data-nosnippet>1263</a><span class="comment">// Include multiplicative jokers (Baron, Steel, Ancient, etc.)
 <a href=#1264 id=1264 data-nosnippet>1264</a></span><span class="kw">pub mod </span>multiplicative_jokers;
-<a href=#1265 id=1265 data-nosnippet>1265</a>
-<a href=#1266 id=1266 data-nosnippet>1266</a><span class="comment">// Include basic economy jokers
-<a href=#1267 id=1267 data-nosnippet>1267</a></span><span class="kw">pub mod </span>basic_economy_jokers;
-<a href=#1268 id=1268 data-nosnippet>1268</a>
-<a href=#1269 id=1269 data-nosnippet>1269</a><span class="comment">// Include tests for hand composition jokers (Ride the Bus, Blackboard, DNA)
-<a href=#1270 id=1270 data-nosnippet>1270</a></span><span class="attr">#[cfg(test)]
-<a href=#1271 id=1271 data-nosnippet>1271</a></span><span class="kw">mod </span>hand_composition_tests;
-<a href=#1272 id=1272 data-nosnippet>1272</a>
-<a href=#1273 id=1273 data-nosnippet>1273</a><span class="comment">// Include scaling xmult jokers (Throwback, Steel Joker Scaling, Ceremonial Dagger)
-<a href=#1274 id=1274 data-nosnippet>1274</a></span><span class="kw">pub mod </span>scaling_xmult_jokers;
-<a href=#1275 id=1275 data-nosnippet>1275</a>
-<a href=#1276 id=1276 data-nosnippet>1276</a><span class="comment">// Include tests for JokerIdentity trait
-<a href=#1277 id=1277 data-nosnippet>1277</a></span><span class="attr">#[cfg(test)]
-<a href=#1278 id=1278 data-nosnippet>1278</a></span><span class="kw">mod </span>identity_tests;
-<a href=#1279 id=1279 data-nosnippet>1279</a>
-<a href=#1280 id=1280 data-nosnippet>1280</a><span class="comment">// Include scaling additive mult jokers
-<a href=#1281 id=1281 data-nosnippet>1281</a></span><span class="kw">pub mod </span>scaling_additive_mult_jokers;
-<a href=#1282 id=1282 data-nosnippet>1282</a>
-<a href=#1283 id=1283 data-nosnippet>1283</a><span class="comment">// Include scaling chips jokers (Castle, Wee, Stuntman, etc.)
-<a href=#1284 id=1284 data-nosnippet>1284</a></span><span class="kw">pub mod </span>scaling_chips_jokers;
-<a href=#1285 id=1285 data-nosnippet>1285</a>
-<a href=#1286 id=1286 data-nosnippet>1286</a><span class="comment">// Include testing utilities for the Joker trait system
-<a href=#1287 id=1287 data-nosnippet>1287</a></span><span class="attr">#[cfg(test)]
-<a href=#1288 id=1288 data-nosnippet>1288</a></span><span class="kw">pub mod </span>test_utils;
-<a href=#1289 id=1289 data-nosnippet>1289</a>
-<a href=#1290 id=1290 data-nosnippet>1290</a><span class="comment">// Include comprehensive tests for the new trait system
-<a href=#1291 id=1291 data-nosnippet>1291</a></span><span class="attr">#[cfg(test)]
-<a href=#1292 id=1292 data-nosnippet>1292</a></span><span class="kw">pub mod </span>tests;
-<a href=#1293 id=1293 data-nosnippet>1293</a>
-<a href=#1294 id=1294 data-nosnippet>1294</a><span class="comment">// Re-export important types
-<a href=#1295 id=1295 data-nosnippet>1295</a></span><span class="kw">pub use </span>conditional::{ConditionalJoker, JokerCondition};
-<a href=#1296 id=1296 data-nosnippet>1296</a>
-<a href=#1297 id=1297 data-nosnippet>1297</a><span class="comment">// Re-export new trait definitions
-<a href=#1298 id=1298 data-nosnippet>1298</a></span><span class="kw">pub use </span>traits::{
-<a href=#1299 id=1299 data-nosnippet>1299</a>    JokerGameplay, JokerIdentity, JokerLifecycle, JokerModifiers, JokerState <span class="kw">as </span>JokerStateTrait,
-<a href=#1300 id=1300 data-nosnippet>1300</a>    ProcessContext, ProcessResult, Rarity,
-<a href=#1301 id=1301 data-nosnippet>1301</a>};
-<a href=#1302 id=1302 data-nosnippet>1302</a>
-<a href=#1303 id=1303 data-nosnippet>1303</a><span class="comment">// Re-export old API types for backwards compatibility
-<a href=#1304 id=1304 data-nosnippet>1304</a></span><span class="kw">pub use </span>compat::{Joker <span class="kw">as </span>OldJoker, Jokers};
-<a href=#1305 id=1305 data-nosnippet>1305</a>
-<a href=#1306 id=1306 data-nosnippet>1306</a><span class="comment">// Module-level trait tests
-<a href=#1307 id=1307 data-nosnippet>1307</a></span><span class="attr">#[cfg(test)]
-<a href=#1308 id=1308 data-nosnippet>1308</a></span><span class="kw">mod </span>joker_trait_tests {
-<a href=#1309 id=1309 data-nosnippet>1309</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#1310 id=1310 data-nosnippet>1310</a>
-<a href=#1311 id=1311 data-nosnippet>1311</a>    <span class="attr">#[test]
-<a href=#1312 id=1312 data-nosnippet>1312</a>    </span><span class="kw">fn </span>test_joker_trait_bounds() {
-<a href=#1313 id=1313 data-nosnippet>1313</a>        <span class="comment">// This won't compile if Joker doesn't have Send + Sync bounds
-<a href=#1314 id=1314 data-nosnippet>1314</a>        </span><span class="kw">fn </span>assert_send_sync&lt;T: Send + Sync&gt;() {}
-<a href=#1315 id=1315 data-nosnippet>1315</a>        assert_send_sync::&lt;Box&lt;<span class="kw">dyn </span>Joker&gt;&gt;();
-<a href=#1316 id=1316 data-nosnippet>1316</a>    }
-<a href=#1317 id=1317 data-nosnippet>1317</a>}</code></pre></div></section></main></body></html>
+<a href=#1265 id=1265 data-nosnippet>1265</a><span class="comment">// Include retrigger jokers
+<a href=#1266 id=1266 data-nosnippet>1266</a></span><span class="kw">pub mod </span>retrigger_jokers;
+<a href=#1267 id=1267 data-nosnippet>1267</a>
+<a href=#1268 id=1268 data-nosnippet>1268</a><span class="comment">// Include basic economy jokers
+<a href=#1269 id=1269 data-nosnippet>1269</a></span><span class="kw">pub mod </span>basic_economy_jokers;
+<a href=#1270 id=1270 data-nosnippet>1270</a>
+<a href=#1271 id=1271 data-nosnippet>1271</a><span class="comment">// Include tests for hand composition jokers (Ride the Bus, Blackboard, DNA)
+<a href=#1272 id=1272 data-nosnippet>1272</a></span><span class="attr">#[cfg(test)]
+<a href=#1273 id=1273 data-nosnippet>1273</a></span><span class="kw">mod </span>hand_composition_tests;
+<a href=#1274 id=1274 data-nosnippet>1274</a>
+<a href=#1275 id=1275 data-nosnippet>1275</a><span class="comment">// Include scaling xmult jokers (Throwback, Steel Joker Scaling, Ceremonial Dagger)
+<a href=#1276 id=1276 data-nosnippet>1276</a></span><span class="kw">pub mod </span>scaling_xmult_jokers;
+<a href=#1277 id=1277 data-nosnippet>1277</a>
+<a href=#1278 id=1278 data-nosnippet>1278</a><span class="comment">// Include tests for JokerIdentity trait
+<a href=#1279 id=1279 data-nosnippet>1279</a></span><span class="attr">#[cfg(test)]
+<a href=#1280 id=1280 data-nosnippet>1280</a></span><span class="kw">mod </span>identity_tests;
+<a href=#1281 id=1281 data-nosnippet>1281</a>
+<a href=#1282 id=1282 data-nosnippet>1282</a><span class="comment">// Include scaling additive mult jokers
+<a href=#1283 id=1283 data-nosnippet>1283</a></span><span class="kw">pub mod </span>scaling_additive_mult_jokers;
+<a href=#1284 id=1284 data-nosnippet>1284</a>
+<a href=#1285 id=1285 data-nosnippet>1285</a><span class="comment">// Include scaling chips jokers (Castle, Wee, Stuntman, etc.)
+<a href=#1286 id=1286 data-nosnippet>1286</a></span><span class="kw">pub mod </span>scaling_chips_jokers;
+<a href=#1287 id=1287 data-nosnippet>1287</a>
+<a href=#1288 id=1288 data-nosnippet>1288</a><span class="comment">// Include testing utilities for the Joker trait system
+<a href=#1289 id=1289 data-nosnippet>1289</a></span><span class="attr">#[cfg(test)]
+<a href=#1290 id=1290 data-nosnippet>1290</a></span><span class="kw">pub mod </span>test_utils;
+<a href=#1291 id=1291 data-nosnippet>1291</a>
+<a href=#1292 id=1292 data-nosnippet>1292</a><span class="comment">// Include comprehensive tests for the new trait system
+<a href=#1293 id=1293 data-nosnippet>1293</a></span><span class="attr">#[cfg(test)]
+<a href=#1294 id=1294 data-nosnippet>1294</a></span><span class="kw">pub mod </span>tests;
+<a href=#1295 id=1295 data-nosnippet>1295</a>
+<a href=#1296 id=1296 data-nosnippet>1296</a><span class="comment">// Re-export important types
+<a href=#1297 id=1297 data-nosnippet>1297</a></span><span class="kw">pub use </span>conditional::{ConditionalJoker, JokerCondition};
+<a href=#1298 id=1298 data-nosnippet>1298</a>
+<a href=#1299 id=1299 data-nosnippet>1299</a><span class="comment">// Re-export new trait definitions
+<a href=#1300 id=1300 data-nosnippet>1300</a></span><span class="kw">pub use </span>traits::{
+<a href=#1301 id=1301 data-nosnippet>1301</a>    JokerGameplay, JokerIdentity, JokerLifecycle, JokerModifiers, JokerState <span class="kw">as </span>JokerStateTrait,
+<a href=#1302 id=1302 data-nosnippet>1302</a>    ProcessContext, ProcessResult, Rarity,
+<a href=#1303 id=1303 data-nosnippet>1303</a>};
+<a href=#1304 id=1304 data-nosnippet>1304</a>
+<a href=#1305 id=1305 data-nosnippet>1305</a><span class="comment">// Re-export old API types for backwards compatibility
+<a href=#1306 id=1306 data-nosnippet>1306</a></span><span class="kw">pub use </span>compat::{Joker <span class="kw">as </span>OldJoker, Jokers};
+<a href=#1307 id=1307 data-nosnippet>1307</a>
+<a href=#1308 id=1308 data-nosnippet>1308</a><span class="comment">// Module-level trait tests
+<a href=#1309 id=1309 data-nosnippet>1309</a></span><span class="attr">#[cfg(test)]
+<a href=#1310 id=1310 data-nosnippet>1310</a></span><span class="kw">mod </span>joker_trait_tests {
+<a href=#1311 id=1311 data-nosnippet>1311</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#1312 id=1312 data-nosnippet>1312</a>
+<a href=#1313 id=1313 data-nosnippet>1313</a>    <span class="attr">#[test]
+<a href=#1314 id=1314 data-nosnippet>1314</a>    </span><span class="kw">fn </span>test_joker_trait_bounds() {
+<a href=#1315 id=1315 data-nosnippet>1315</a>        <span class="comment">// This won't compile if Joker doesn't have Send + Sync bounds
+<a href=#1316 id=1316 data-nosnippet>1316</a>        </span><span class="kw">fn </span>assert_send_sync&lt;T: Send + Sync&gt;() {}
+<a href=#1317 id=1317 data-nosnippet>1317</a>        assert_send_sync::&lt;Box&lt;<span class="kw">dyn </span>Joker&gt;&gt;();
+<a href=#1318 id=1318 data-nosnippet>1318</a>    }
+<a href=#1319 id=1319 data-nosnippet>1319</a>}</code></pre></div></section></main></body></html>
