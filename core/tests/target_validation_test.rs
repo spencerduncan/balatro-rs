@@ -1,8 +1,5 @@
-#![cfg(test)]
-#![allow(unused)]
-// EMERGENCY DISABLE: Test disabled due to CardTarget API mismatch and GameContext default issues 
-// This test is disabled for emergency P0 fix - tracked for post-emergency resolution
 // EMERGENCY DISABLE: CardTarget API mismatch and GameContext default issues - tracked for post-emergency fix
+// All tests in this file are marked with #[ignore] due to API issues
 
 use balatro_rs::config::Config;
 use balatro_rs::consumables::{Target, TargetType, TargetValidationError};

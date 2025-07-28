@@ -1,13 +1,10 @@
-#![allow(clippy::field_reassign_with_default)]
-
 use balatro_rs::{
     card::{Card, Suit, Value},
     hand::SelectHand,
     joker::{GameContext, Joker, JokerEffect, JokerId},
     joker_effect_processor::{ConflictResolutionStrategy, JokerEffectProcessor, ProcessingContext},
 };
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
-use std::hint::black_box;
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 
 /// Minimal benchmark focusing on public JokerEffectProcessor API
 pub fn effect_processor_benchmarks(c: &mut Criterion) {
@@ -261,7 +258,6 @@ fn create_test_game_context() -> GameContext<'static> {
         hand_type_counts,
         cards_in_deck: 52,
         stone_cards_in_deck: 0,
-        steel_cards_in_deck: 0,
         rng,
     }
 }

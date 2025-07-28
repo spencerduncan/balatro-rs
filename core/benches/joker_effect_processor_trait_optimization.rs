@@ -11,10 +11,8 @@ use balatro_rs::joker_impl::{GreedyJoker, LustyJoker, TheJoker};
 use balatro_rs::rank::HandRank;
 use balatro_rs::rng::GameRng;
 use balatro_rs::stage::Stage;
-#[allow(deprecated)]
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use std::collections::HashMap;
-use std::hint::black_box;
 
 // Test data holder to maintain ownership
 struct TestGameData {
@@ -55,7 +53,6 @@ impl TestGameData {
             hand_type_counts: &self.hand_type_counts,
             cards_in_deck: 52,
             stone_cards_in_deck: 0,
-            steel_cards_in_deck: 0,
             rng: &self.rng,
         }
     }
@@ -200,10 +197,10 @@ fn bench_trait_detection_caching(c: &mut Criterion) {
 
     group.bench_function("cold_trait_detection", |b| {
         b.iter(|| {
-            let _processor = JokerEffectProcessor::new();
+            let processor = JokerEffectProcessor::new();
 
             // Cold cache - first detection of each joker
-            for _joker in &jokers {
+            for joker in &jokers {
                 // TODO: Fix - detect_joker_traits is now private
                 // black_box(processor.detect_joker_traits(joker.as_ref()));
             }
@@ -211,7 +208,7 @@ fn bench_trait_detection_caching(c: &mut Criterion) {
     });
 
     group.bench_function("warm_trait_detection", |b| {
-        let _processor = JokerEffectProcessor::new();
+        let processor = JokerEffectProcessor::new();
 
         // Pre-warm the cache
         // TODO: Fix - detect_joker_traits is now private
@@ -223,7 +220,7 @@ fn bench_trait_detection_caching(c: &mut Criterion) {
 
         b.iter(|| {
             // Warm cache - subsequent detections
-            for _joker in &jokers {
+            for joker in &jokers {
                 // TODO: Fix - detect_joker_traits is now private
                 // black_box(processor.detect_joker_traits(joker.as_ref()));
             }

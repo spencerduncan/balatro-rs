@@ -7,8 +7,7 @@ use balatro_rs::{
     joker::JokerId,
     joker_registry,
 };
-use criterion::{criterion_group, criterion_main, Criterion};
-use std::hint::black_box;
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 /// Minimal benchmark to test trait method dispatch
 pub fn minimal_trait_benchmark(c: &mut Criterion) {

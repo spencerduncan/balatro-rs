@@ -1,6 +1,5 @@
 use balatro_rs::{config::Config, game::Game, space::ActionSpace};
-use criterion::{criterion_group, criterion_main, Criterion};
-use std::hint::black_box;
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 pub fn actionspace_benchmarks(c: &mut Criterion) {
     let config = Config::default();

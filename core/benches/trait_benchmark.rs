@@ -3,8 +3,6 @@
 //! This benchmark suite measures the performance impact of the new trait system
 //! and ensures that the refactoring doesn't introduce performance regressions.
 
-#![allow(clippy::field_reassign_with_default)]
-
 use balatro_rs::{
     action::Action,
     card::{Card, Suit, Value},
@@ -18,10 +16,8 @@ use balatro_rs::{
     shop::Shop,
     stage::Stage,
 };
-#[allow(deprecated)]
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use std::collections::HashMap;
-use std::hint::black_box;
 use std::time::Instant;
 
 /// Benchmark trait method dispatch overhead
@@ -214,7 +210,7 @@ pub fn shop_generation_benchmark(c: &mut Criterion) {
 
         // Add some jokers to the game state
         for joker_id in [JokerId::Joker, JokerId::GreedyJoker, JokerId::LustyJoker] {
-            if let Ok(_joker) = joker_registry::registry::create_joker(&joker_id) {
+            if let Ok(joker) = joker_registry::registry::create_joker(&joker_id) {
                 // game.add_joker(joker).ok(); // TODO: Fix - add_joker method doesn't exist
             }
         }
@@ -248,7 +244,7 @@ pub fn action_generation_benchmark(c: &mut Criterion) {
 
         // Add jokers that might affect action generation
         for joker_id in [JokerId::Joker, JokerId::GreedyJoker] {
-            if let Ok(_joker) = joker_registry::registry::create_joker(&joker_id) {
+            if let Ok(joker) = joker_registry::registry::create_joker(&joker_id) {
                 // game.add_joker(joker).ok(); // TODO: Fix - add_joker method doesn't exist
             }
         }
@@ -318,7 +314,7 @@ pub fn retrigger_benchmark(c: &mut Criterion) {
             BenchmarkId::new("retrigger_effects", retrigger_count),
             &retrigger_count,
             |b, &retrigger_count| {
-                let _processor = JokerEffectProcessor::new();
+                let processor = JokerEffectProcessor::new();
                 let joker_effects = vec![JokerEffect {
                     chips: 10,
                     mult: 2,
@@ -382,7 +378,6 @@ impl TestGameData {
             hand_type_counts: &self.hand_type_counts,
             cards_in_deck: 52,
             stone_cards_in_deck: 0,
-            steel_cards_in_deck: 0,
             rng: &self.rng,
         }
     }

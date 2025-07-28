@@ -336,7 +336,6 @@ impl Game {
 }
 
 #[cfg(test)]
-#[allow(clippy::field_reassign_with_default)]
 mod tests {
     use super::*;
     use crate::card::{Card, Suit, Value};
@@ -616,18 +615,14 @@ mod tests {
 
     #[test]
     fn test_gen_actions_move_card_edge_cases() {
+        let mut g = Game::default();
+
         // Test with no blind stage
-        let mut g = Game {
-            stage: Stage::Shop(),
-            ..Default::default()
-        };
+        g.stage = Stage::Shop();
         assert!(g.gen_actions_move_card().is_none());
 
         // Set to blind stage but no cards available
-        g = Game {
-            stage: Stage::Blind(Blind::Small),
-            ..Default::default()
-        };
+        g.stage = Stage::Blind(Blind::Small);
         let move_actions = g
             .gen_actions_move_card()
             .expect("Should return Some even with no cards");
@@ -653,25 +648,18 @@ mod tests {
 
     #[test]
     fn test_gen_actions_cash_out_edge_cases() {
+        let mut g = Game::default();
+
         // Test with wrong stage
-        let mut g = Game {
-            stage: Stage::Shop(),
-            ..Default::default()
-        };
+        g.stage = Stage::Shop();
         assert!(g.gen_actions_cash_out().is_none());
 
-        g = Game {
-            stage: Stage::Blind(Blind::Small),
-            ..Default::default()
-        };
+        g.stage = Stage::Blind(Blind::Small);
         assert!(g.gen_actions_cash_out().is_none());
 
         // Set to correct stage
-        g = Game {
-            stage: Stage::PostBlind(),
-            reward: 100.0,
-            ..Default::default()
-        };
+        g.stage = Stage::PostBlind();
+        g.reward = 100.0;
 
         let actions = g
             .gen_actions_cash_out()
@@ -683,24 +671,17 @@ mod tests {
 
     #[test]
     fn test_gen_actions_next_round_edge_cases() {
+        let mut g = Game::default();
+
         // Test with wrong stage
-        let mut g = Game {
-            stage: Stage::Blind(Blind::Small),
-            ..Default::default()
-        };
+        g.stage = Stage::Blind(Blind::Small);
         assert!(g.gen_actions_next_round().is_none());
 
-        g = Game {
-            stage: Stage::PostBlind(),
-            ..Default::default()
-        };
+        g.stage = Stage::PostBlind();
         assert!(g.gen_actions_next_round().is_none());
 
         // Set to correct stage
-        g = Game {
-            stage: Stage::Shop(),
-            ..Default::default()
-        };
+        g.stage = Stage::Shop();
 
         let actions = g
             .gen_actions_next_round()

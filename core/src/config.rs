@@ -25,34 +25,6 @@ const DEFAULT_DECK_MAX: usize = 100;
 const DEFAULT_DISCARDED_MAX: usize = 100;
 const DEFAULT_SELECTED_MAX: usize = 5;
 
-// Pack system configuration defaults
-const DEFAULT_PACK_STANDARD_COST: usize = 4;
-const DEFAULT_PACK_JUMBO_COST: usize = 6;
-const DEFAULT_PACK_MEGA_COST: usize = 8;
-const DEFAULT_PACK_ENHANCED_COST: usize = 6;
-const DEFAULT_PACK_VARIETY_COST: usize = 5;
-const DEFAULT_PACK_BUFFOON_COST: usize = 4;
-const DEFAULT_PACK_CONSUMABLE_COST: usize = 4; // For Arcana, Celestial, Spectral
-const DEFAULT_PACK_MEGA_CONSUMABLE_COST: usize = 8; // For Mega variants
-
-const DEFAULT_ENHANCEMENT_RATE: f64 = 0.1; // 10% chance for card enhancement
-
-// Joker rarity weight defaults (out of 100)
-const DEFAULT_JOKER_RARITY_WEIGHT_COMMON: u32 = 70;
-const DEFAULT_JOKER_RARITY_WEIGHT_UNCOMMON: u32 = 25;
-const DEFAULT_JOKER_RARITY_WEIGHT_RARE: u32 = 5;
-
-// Pack option count defaults (min, max)
-const DEFAULT_PACK_STANDARD_OPTIONS: (usize, usize) = (3, 3);
-const DEFAULT_PACK_JUMBO_OPTIONS: (usize, usize) = (5, 5);
-const DEFAULT_PACK_MEGA_OPTIONS: (usize, usize) = (7, 7);
-const DEFAULT_PACK_ENHANCED_OPTIONS: (usize, usize) = (3, 4);
-const DEFAULT_PACK_VARIETY_OPTIONS: (usize, usize) = (3, 5);
-const DEFAULT_PACK_BUFFOON_OPTIONS: (usize, usize) = (2, 2);
-const DEFAULT_PACK_CONSUMABLE_OPTIONS: (usize, usize) = (2, 3); // For Arcana, Celestial, Spectral
-const DEFAULT_PACK_MEGA_BUFFOON_OPTIONS: (usize, usize) = (4, 4);
-const DEFAULT_PACK_MEGA_CONSUMABLE_OPTIONS: (usize, usize) = (4, 6); // For Mega variants
-
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "python", pyclass)]
 #[derive(Debug, Clone)]
@@ -80,32 +52,6 @@ pub struct Config {
     pub consumable_hand_capacity: usize,
     pub deck_max: usize,
     pub discarded_max: usize,
-
-    // Pack system configuration
-    pub pack_standard_cost: usize,
-    pub pack_jumbo_cost: usize,
-    pub pack_mega_cost: usize,
-    pub pack_enhanced_cost: usize,
-    pub pack_variety_cost: usize,
-    pub pack_buffoon_cost: usize,
-    pub pack_consumable_cost: usize,
-    pub pack_mega_consumable_cost: usize,
-
-    pub enhancement_rate: f64,
-
-    pub joker_rarity_weight_common: u32,
-    pub joker_rarity_weight_uncommon: u32,
-    pub joker_rarity_weight_rare: u32,
-
-    pub pack_standard_options: (usize, usize),
-    pub pack_jumbo_options: (usize, usize),
-    pub pack_mega_options: (usize, usize),
-    pub pack_enhanced_options: (usize, usize),
-    pub pack_variety_options: (usize, usize),
-    pub pack_buffoon_options: (usize, usize),
-    pub pack_consumable_options: (usize, usize),
-    pub pack_mega_buffoon_options: (usize, usize),
-    pub pack_mega_consumable_options: (usize, usize),
 }
 
 impl Config {
@@ -134,32 +80,6 @@ impl Config {
             consumable_hand_capacity: DEFAULT_CONSUMABLE_HAND_CAPACITY,
             deck_max: DEFAULT_DECK_MAX,
             discarded_max: DEFAULT_DISCARDED_MAX,
-
-            // Pack system defaults
-            pack_standard_cost: DEFAULT_PACK_STANDARD_COST,
-            pack_jumbo_cost: DEFAULT_PACK_JUMBO_COST,
-            pack_mega_cost: DEFAULT_PACK_MEGA_COST,
-            pack_enhanced_cost: DEFAULT_PACK_ENHANCED_COST,
-            pack_variety_cost: DEFAULT_PACK_VARIETY_COST,
-            pack_buffoon_cost: DEFAULT_PACK_BUFFOON_COST,
-            pack_consumable_cost: DEFAULT_PACK_CONSUMABLE_COST,
-            pack_mega_consumable_cost: DEFAULT_PACK_MEGA_CONSUMABLE_COST,
-
-            enhancement_rate: DEFAULT_ENHANCEMENT_RATE,
-
-            joker_rarity_weight_common: DEFAULT_JOKER_RARITY_WEIGHT_COMMON,
-            joker_rarity_weight_uncommon: DEFAULT_JOKER_RARITY_WEIGHT_UNCOMMON,
-            joker_rarity_weight_rare: DEFAULT_JOKER_RARITY_WEIGHT_RARE,
-
-            pack_standard_options: DEFAULT_PACK_STANDARD_OPTIONS,
-            pack_jumbo_options: DEFAULT_PACK_JUMBO_OPTIONS,
-            pack_mega_options: DEFAULT_PACK_MEGA_OPTIONS,
-            pack_enhanced_options: DEFAULT_PACK_ENHANCED_OPTIONS,
-            pack_variety_options: DEFAULT_PACK_VARIETY_OPTIONS,
-            pack_buffoon_options: DEFAULT_PACK_BUFFOON_OPTIONS,
-            pack_consumable_options: DEFAULT_PACK_CONSUMABLE_OPTIONS,
-            pack_mega_buffoon_options: DEFAULT_PACK_MEGA_BUFFOON_OPTIONS,
-            pack_mega_consumable_options: DEFAULT_PACK_MEGA_CONSUMABLE_OPTIONS,
         }
     }
 }

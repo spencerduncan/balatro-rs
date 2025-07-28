@@ -431,10 +431,8 @@ mod tests {
     use super::*;
 
     fn score_before_after_joker(joker: Jokers, hand: SelectHand, before: f64, after: f64) {
-        let mut g = Game {
-            stage: Stage::Blind(Blind::Small),
-            ..Default::default()
-        };
+        let mut g = Game::default();
+        g.stage = Stage::Blind(Blind::Small);
 
         // First score without joker
         let score = g.calc_score(hand.best_hand().unwrap());
@@ -457,10 +455,8 @@ mod tests {
         before: f64,
         after: f64,
     ) {
-        let mut g = Game {
-            stage: Stage::Blind(Blind::Small),
-            ..Default::default()
-        };
+        let mut g = Game::default();
+        g.stage = Stage::Blind(Blind::Small);
 
         // First score without joker
         let score = g.calc_score(hand.best_hand().unwrap());

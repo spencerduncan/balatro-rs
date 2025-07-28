@@ -646,7 +646,6 @@ impl JokerEffectProcessor {
             hand_type_counts: &test_hand_type_counts,
             cards_in_deck: 52,
             stone_cards_in_deck: 0,
-            steel_cards_in_deck: 0,
             rng: &test_rng,
         };
 
@@ -738,12 +737,19 @@ impl JokerEffectProcessor {
                 // }
 
                 // Always use legacy path until optimization layer is refactored
+                self.trait_metrics.legacy_path_count += 1;
                 self.process_legacy_joker(optimized_joker.joker, game_context, hand, card)
             }
             JokerTraitProfile::ModifierOptimized => {
                 // Optimized path for modifier-only jokers (fastest)
                 self.trait_metrics.modifier_optimized_count += 1;
                 self.process_modifiers_optimized(optimized_joker.joker, game_context)
+            }
+            JokerTraitProfile::HybridOptimized | JokerTraitProfile::FullTraitOptimized => {
+                // NOTE: Currently disabled due to JokerGameplay requiring &mut self
+                // Fallback to legacy path until optimization layer is refactored
+                self.trait_metrics.legacy_path_count += 1;
+                self.process_legacy_joker(optimized_joker.joker, game_context, hand, card)
             }
             JokerTraitProfile::LegacyOnly => {
                 // Use legacy super trait path
@@ -1958,12 +1964,10 @@ mod tests {
         let mut processor = JokerEffectProcessor::new();
 
         // Test context modification
-        let new_context = ProcessingContext {
-            processing_mode: ProcessingMode::Delayed,
-            resolution_strategy: ConflictResolutionStrategy::Maximum,
-            validate_effects: false,
-            ..Default::default()
-        };
+        let mut new_context = ProcessingContext::default();
+        new_context.processing_mode = ProcessingMode::Delayed;
+        new_context.resolution_strategy = ConflictResolutionStrategy::Maximum;
+        new_context.validate_effects = false;
 
         processor.set_context(new_context.clone());
 
@@ -2208,7 +2212,6 @@ mod tests {
             hand_type_counts: &HashMap::new(),
             cards_in_deck: 52,
             stone_cards_in_deck: 0,
-            steel_cards_in_deck: 0,
             rng: &crate::rng::GameRng::secure(),
         };
 
@@ -2277,10 +2280,8 @@ mod tests {
         let mut processor = JokerEffectProcessor::new();
 
         // Set very short TTL for testing
-        let config = CacheConfig {
-            ttl_seconds: 0, // Immediate expiration
-            ..Default::default()
-        };
+        let mut config = CacheConfig::default();
+        config.ttl_seconds = 0; // Immediate expiration
         processor.set_cache_config(config);
 
         let cache_key = "test_key".to_string();
@@ -2311,10 +2312,8 @@ mod tests {
         let mut processor = JokerEffectProcessor::new();
 
         // Set very small cache size for testing
-        let config = CacheConfig {
-            max_entries: 2,
-            ..Default::default()
-        };
+        let mut config = CacheConfig::default();
+        config.max_entries = 2;
         processor.set_cache_config(config);
 
         let test_result = ProcessingResult {
@@ -2341,10 +2340,8 @@ mod tests {
         let mut processor = JokerEffectProcessor::new();
 
         // Disable caching
-        let config = CacheConfig {
-            enabled: false,
-            ..Default::default()
-        };
+        let mut config = CacheConfig::default();
+        config.enabled = false;
         processor.set_cache_config(config);
 
         let cache_key = "test_key".to_string();
@@ -2398,10 +2395,8 @@ mod tests {
         let mut processor = JokerEffectProcessor::new();
 
         // Set short TTL
-        let config = CacheConfig {
-            ttl_seconds: 0,
-            ..Default::default()
-        };
+        let mut config = CacheConfig::default();
+        config.ttl_seconds = 0;
         processor.set_cache_config(config);
 
         let test_result = ProcessingResult {
@@ -2441,10 +2436,8 @@ mod tests {
         let mut processor_without_cache = JokerEffectProcessor::new();
 
         // Disable cache for one processor
-        let config = CacheConfig {
-            enabled: false,
-            ..Default::default()
-        };
+        let mut config = CacheConfig::default();
+        config.enabled = false;
         processor_without_cache.set_cache_config(config);
         // Create long-lived values for the context
         let stage = Box::leak(Box::new(crate::stage::Stage::PreBlind()));
@@ -2475,7 +2468,6 @@ mod tests {
                 hand_type_counts: hand_counts,
                 cards_in_deck: 52,
                 stone_cards_in_deck: 0,
-                steel_cards_in_deck: 0,
                 rng,
             }
         };
@@ -2551,7 +2543,6 @@ mod tests {
             hand_type_counts: &HashMap::new(),
             cards_in_deck: 52,
             stone_cards_in_deck: 0,
-            steel_cards_in_deck: 0,
             rng: &crate::rng::GameRng::secure(),
         };
 
@@ -2754,11 +2745,9 @@ mod tests {
     #[test]
     fn test_processing_context_builder_backward_compatibility() {
         // Test that existing code still works
-        let manual_context = ProcessingContext {
-            processing_mode: ProcessingMode::Delayed,
-            validate_effects: false,
-            ..Default::default()
-        };
+        let mut manual_context = ProcessingContext::default();
+        manual_context.processing_mode = ProcessingMode::Delayed;
+        manual_context.validate_effects = false;
 
         let builder_context = ProcessingContext::builder()
             .processing_mode(ProcessingMode::Delayed)
@@ -2824,13 +2813,13 @@ mod tests {
 
     #[test]
     fn test_trait_optimization_metrics_calculation() {
-        let metrics = TraitOptimizationMetrics {
-            gameplay_optimized_count: 50,
-            modifier_optimized_count: 30,
-            hybrid_optimized_count: 20,
-            legacy_path_count: 100,
-            ..Default::default()
-        };
+        let mut metrics = TraitOptimizationMetrics::default();
+
+        // Simulate some optimization usage
+        metrics.gameplay_optimized_count = 50;
+        metrics.modifier_optimized_count = 30;
+        metrics.hybrid_optimized_count = 20;
+        metrics.legacy_path_count = 100;
 
         // Test optimization ratio calculation
         let _total_optimized = 50 + 30 + 20; // 100
@@ -2845,11 +2834,10 @@ mod tests {
 
     #[test]
     fn test_trait_cache_hit_ratio() {
-        let metrics = TraitOptimizationMetrics {
-            trait_detection_cache_hits: 80,
-            trait_detection_cache_misses: 20,
-            ..Default::default()
-        };
+        let mut metrics = TraitOptimizationMetrics::default();
+
+        metrics.trait_detection_cache_hits = 80;
+        metrics.trait_detection_cache_misses = 20;
 
         let expected_ratio = 80.0 / 100.0;
         assert!((metrics.trait_cache_hit_ratio() - expected_ratio).abs() < 0.001);
@@ -2940,7 +2928,6 @@ mod tests {
             hand_type_counts: &HashMap::new(),
             cards_in_deck: 52,
             stone_cards_in_deck: 0,
-            steel_cards_in_deck: 0,
             rng: &crate::rng::GameRng::secure(),
         };
 
@@ -2985,7 +2972,6 @@ mod tests {
             hand_type_counts: &HashMap::new(),
             cards_in_deck: 52,
             stone_cards_in_deck: 0,
-            steel_cards_in_deck: 0,
             rng: &crate::rng::GameRng::secure(),
         };
 

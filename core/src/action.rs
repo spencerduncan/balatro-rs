@@ -42,7 +42,6 @@ pub enum Action {
     OpenPack { pack_id: usize },
     SelectFromPack { pack_id: usize, option_index: usize },
     SkipPack { pack_id: usize },
-    RerollShop(),
     NextRound(),
     SelectBlind(Blind),
 
@@ -110,9 +109,6 @@ impl fmt::Display for Action {
             }
             Self::SkipPack { pack_id } => {
                 write!(f, "SkipPack: {pack_id}")
-            }
-            Self::RerollShop() => {
-                write!(f, "RerollShop")
             }
             Self::NextRound() => {
                 write!(f, "NextRound")

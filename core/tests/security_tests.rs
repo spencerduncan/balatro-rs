@@ -15,11 +15,10 @@ mod tests {
     /// Test that ActionSpace creation handles zero available_max without underflow
     #[test]
     fn test_action_space_zero_available_max() {
+        let mut config = Config::default();
+
         // This should not panic or cause underflow
-        let config = Config {
-            available_max: 0,
-            ..Default::default()
-        };
+        config.available_max = 0;
         let action_space = ActionSpace::from(config);
 
         // Both move arrays should be empty when available_max is 0
@@ -31,21 +30,17 @@ mod tests {
     /// Test that ActionSpace creation handles small available_max values correctly
     #[test]
     fn test_action_space_small_available_max() {
-        let config1 = Config {
-            available_max: 1,
-            ..Default::default()
-        };
-        let action_space = ActionSpace::from(config1);
+        let mut config = Config::default();
+
+        config.available_max = 1;
+        let action_space = ActionSpace::from(config.clone());
 
         // With 1 card available, no move operations should be possible
         assert_eq!(action_space.move_card_left.len(), 0);
         assert_eq!(action_space.move_card_right.len(), 0);
         assert_eq!(action_space.select_card.len(), 1);
 
-        let config = Config {
-            available_max: 2,
-            ..Default::default()
-        };
+        config.available_max = 2;
         let action_space = ActionSpace::from(config);
 
         // With 2 cards available, 1 move operation should be possible

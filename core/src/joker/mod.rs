@@ -514,8 +514,6 @@ pub struct GameContext<'a> {
     pub cards_in_deck: usize,
     /// Number of Stone cards in deck
     pub stone_cards_in_deck: usize,
-    /// Number of Steel cards in deck (for Steel Joker calculations)
-    pub steel_cards_in_deck: usize,
     /// Random number generator for secure randomness
     pub rng: &'a crate::rng::GameRng,
 }
@@ -1265,26 +1263,16 @@ pub mod multiplicative_jokers;
 // Include retrigger jokers
 pub mod retrigger_jokers;
 
-// Include basic economy jokers
-pub mod basic_economy_jokers;
-
 // Include tests for hand composition jokers (Ride the Bus, Blackboard, DNA)
 #[cfg(test)]
 mod hand_composition_tests;
-
-// Include scaling xmult jokers (Throwback, Steel Joker Scaling, Ceremonial Dagger)
-pub mod scaling_xmult_jokers;
 
 // Include tests for JokerIdentity trait
 #[cfg(test)]
 mod identity_tests;
 
-// Include scaling additive mult jokers
-pub mod scaling_additive_mult_jokers;
-
 // Include scaling chips jokers (Castle, Wee, Stuntman, etc.)
 pub mod scaling_chips_jokers;
-
 // Include testing utilities for the Joker trait system
 #[cfg(test)]
 pub mod test_utils;

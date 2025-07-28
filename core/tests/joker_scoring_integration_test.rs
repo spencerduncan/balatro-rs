@@ -246,7 +246,7 @@ fn test_complex_joker_interaction_scenario() {
 
 #[derive(Debug)]
 struct TestOrderJoker {
-    _position: usize,
+    position: usize,
     mult_bonus: i32,
     chip_bonus: i32,
     mult_multiplier: f64,
@@ -255,7 +255,7 @@ struct TestOrderJoker {
 impl TestOrderJoker {
     fn new(position: usize, mult_bonus: i32, chip_bonus: i32, mult_multiplier: f64) -> Self {
         Self {
-            _position: position,
+            position,
             mult_bonus,
             chip_bonus,
             mult_multiplier,

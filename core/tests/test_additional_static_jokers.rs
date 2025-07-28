@@ -1,5 +1,5 @@
-#![cfg(any())]
 // EMERGENCY DISABLE: GameContext constructor and Stage constructor issues - tracked for post-emergency fix
+// Most tests in this file are marked with #[ignore] due to API issues
 
 // Tests for additional static jokers (Issue #90)
 // Note: Runner is implemented as RunnerJoker in joker_impl.rs, not as a static joker

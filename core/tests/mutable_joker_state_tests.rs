@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use balatro_rs::card::{Suit, Value};
 use balatro_rs::joker::JokerId;
 use balatro_rs::joker_state::JokerStateManager;
@@ -7,7 +5,6 @@ use std::sync::{Arc, Mutex};
 
 /// A simple counter joker that needs mutable state
 /// This test demonstrates the simplicity we could achieve with &mut self
-#[allow(dead_code)]
 struct SimpleCounterJoker {
     id: JokerId,
     trigger_count: u32,
@@ -15,7 +12,6 @@ struct SimpleCounterJoker {
 }
 
 impl SimpleCounterJoker {
-    #[allow(dead_code)]
     fn new(max_triggers: u32) -> Self {
         Self {
             id: JokerId::Joker, // Using a placeholder ID
@@ -116,7 +112,6 @@ fn test_type_safety_issues_with_state_manager() {
 }
 
 /// Complex state joker that would benefit from mutable self
-#[allow(dead_code)]
 struct ComplexStateJoker {
     id: JokerId,
     phase: Phase,
@@ -126,7 +121,6 @@ struct ComplexStateJoker {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-#[allow(dead_code)]
 enum Phase {
     Charging,
     Ready,
@@ -196,14 +190,12 @@ fn test_thread_safety_with_mutable_state() {
     // This test shows that we can still have thread safety with &mut self
     // by using interior mutability patterns when needed
 
-    #[allow(dead_code)]
     struct ThreadSafeJoker {
         id: JokerId,
         // Use interior mutability for thread-safe state
         state: Mutex<JokerState>,
     }
 
-    #[allow(dead_code)]
     struct JokerState {
         counter: u32,
         active: bool,

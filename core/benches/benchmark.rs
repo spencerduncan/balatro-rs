@@ -1,5 +1,3 @@
-#![allow(clippy::field_reassign_with_default)]
-
 use balatro_rs::{
     action::Action,
     card::{Card, Suit, Value},
@@ -11,9 +9,8 @@ use balatro_rs::{
     rng::GameRng,
     stage::Stage,
 };
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use std::collections::HashMap;
-use std::hint::black_box;
 
 pub fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("run game gen actions", |b| b.iter(run_game_gen_actions));
@@ -272,7 +269,6 @@ fn benchmark_joker_processing(processor: &mut JokerEffectProcessor, iterations: 
         hand_type_counts: &hand_type_counts,
         cards_in_deck: 52,
         stone_cards_in_deck: 0,
-        steel_cards_in_deck: 0,
         rng: &rng,
     };
 

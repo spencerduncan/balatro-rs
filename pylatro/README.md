@@ -144,4 +144,4 @@ See the `examples/` directory for complete usage patterns:
 
 - [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) - Upgrading from legacy API
 - [JOKER_API_MIGRATION_GUIDE.md](JOKER_API_MIGRATION_GUIDE.md) - Joker system migration
-- See the main README.md for architectural overview and design principles
+- [../DUAL_FRAMEWORK_ELIMINATION_MIGRATION_GUIDE.md](../DUAL_FRAMEWORK_ELIMINATION_MIGRATION_GUIDE.md) - Architectural changes

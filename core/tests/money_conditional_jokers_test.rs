@@ -46,7 +46,6 @@ fn create_test_context() -> GameContext<'static> {
         joker_state_manager,
         cards_in_deck: 52,
         stone_cards_in_deck: 0,
-        steel_cards_in_deck: 0,
         rng,
     }
 }

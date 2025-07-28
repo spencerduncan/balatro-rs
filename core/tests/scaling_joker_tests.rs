@@ -54,7 +54,6 @@ impl TestData {
             hand_type_counts: &self.hand_type_counts,
             cards_in_deck: 52,
             stone_cards_in_deck: 0,
-            steel_cards_in_deck: 0,
             rng: &self.rng,
         }
     }
@@ -282,7 +281,7 @@ fn test_ceremonial_dagger() {
 #[test]
 fn test_all_15_scaling_jokers() {
     let jokers = create_all_scaling_jokers();
-    assert_eq!(jokers.len(), 14, "Should create exactly 14 scaling jokers");
+    assert_eq!(jokers.len(), 15, "Should create exactly 15 scaling jokers");
 
     // Test that all jokers have unique IDs
     let mut ids = std::collections::HashSet::new();
@@ -384,8 +383,8 @@ fn test_custom_scaling_jokers() {
     let jokers = create_all_custom_scaling_jokers();
     assert_eq!(
         jokers.len(),
-        6,
-        "Should create exactly 6 custom scaling jokers"
+        7,
+        "Should create exactly 7 custom scaling jokers"
     );
 
     // Test that all jokers have unique IDs
@@ -423,6 +422,7 @@ fn test_joker_factory_functions() {
     // Test that we can get scaling jokers by ID
     assert!(get_scaling_joker_by_id(JokerId::Trousers).is_some());
     assert!(get_scaling_joker_by_id(JokerId::GreenJoker).is_some());
+    assert!(get_scaling_joker_by_id(JokerId::Banner).is_some());
     assert!(get_scaling_joker_by_id(JokerId::Ceremonial).is_some());
 
     // Test that non-scaling jokers return None
@@ -1110,8 +1110,8 @@ fn test_performance_with_many_scaling_jokers() {
     let scaling_jokers = create_all_scaling_jokers();
     assert_eq!(
         scaling_jokers.len(),
-        14,
-        "Expected exactly 14 scaling jokers"
+        15,
+        "Expected exactly 15 scaling jokers"
     );
 
     // Convert to boxed jokers for use in game context
@@ -1128,14 +1128,14 @@ fn test_performance_with_many_scaling_jokers() {
         state_manager.set_state(joker.id(), JokerState::with_accumulated_value(0.0));
     }
 
-    let _select_hand = create_test_hand(HandRank::TwoPair);
+    let select_hand = create_test_hand(HandRank::TwoPair);
     let hand = Hand::new(vec![]);
     let discarded: Vec<Card> = vec![];
     let hand_type_counts = HashMap::new();
     let stage = Stage::Blind(Blind::Small);
     let rng = &balatro_rs::rng::GameRng::new(balatro_rs::rng::RngMode::Testing(42));
 
-    let _context = GameContext {
+    let context = GameContext {
         chips: 0,
         mult: 1,
         money: 100, // Some starting money for money-triggered jokers
@@ -1151,7 +1151,6 @@ fn test_performance_with_many_scaling_jokers() {
         hand_type_counts: &hand_type_counts,
         cards_in_deck: 52,
         stone_cards_in_deck: 0,
-        steel_cards_in_deck: 0,
         rng,
     };
 

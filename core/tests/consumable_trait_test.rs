@@ -1,6 +1,5 @@
-#![cfg(any())]
-// EMERGENCY DISABLE: This entire test file is temporarily disabled due to missing trait implementations
-// These tests will be re-enabled once ConsumableSlots implements Clone, Serialize, and Deserialize
+// NOTE: This test file was previously disabled due to missing trait implementations
+// Tests are now enabled - if compilation fails, individual tests should be marked with #[ignore]
 
 use balatro_rs::consumables::{
     Consumable, ConsumableEffect, ConsumableError, ConsumableId, ConsumableSlots, ConsumableType,

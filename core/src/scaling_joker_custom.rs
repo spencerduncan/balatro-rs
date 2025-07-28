@@ -232,6 +232,57 @@ impl Joker for BootstrapsJoker {
     }
 }
 
+/// Banner: +30 chips per discard remaining
+#[derive(Debug, Clone)]
+pub struct BannerJoker {
+    base: ScalingJoker,
+}
+
+impl BannerJoker {
+    pub fn new() -> Self {
+        Self {
+            base: crate::scaling_joker_impl::create_banner(),
+        }
+    }
+}
+
+impl Default for BannerJoker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Joker for BannerJoker {
+    fn id(&self) -> JokerId {
+        self.base.id()
+    }
+
+    fn name(&self) -> &str {
+        self.base.name()
+    }
+
+    fn description(&self) -> &str {
+        self.base.description()
+    }
+
+    fn rarity(&self) -> JokerRarity {
+        self.base.rarity()
+    }
+
+    fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
+        // Calculate remaining discards (assuming 3 base discards per round)
+        let base_discards: usize = 3; // This should come from game config
+        let remaining_discards = base_discards.saturating_sub(context.discards_used as usize);
+        let chips_bonus = remaining_discards * 30;
+
+        JokerEffect::new().with_chips(chips_bonus as i32)
+    }
+
+    fn initialize_state(&self, _context: &GameContext) -> JokerState {
+        JokerState::new()
+    }
+}
+
 /// Ceremonial Dagger: Mult doubles when Blind starts, resets when completed
 #[derive(Debug, Clone)]
 pub struct CeremonialDagger {
@@ -385,6 +436,7 @@ pub fn create_all_custom_scaling_jokers() -> Vec<Box<dyn Joker>> {
         Box::new(SquareJoker::new()),
         Box::new(BullJoker::new()),
         Box::new(BootstrapsJoker::new()),
+        Box::new(BannerJoker::new()),
         Box::new(CeremonialDagger::new()),
         Box::new(MysticSummit::new()),
     ]
@@ -397,6 +449,7 @@ pub fn get_custom_scaling_joker_by_id(id: JokerId) -> Option<Box<dyn Joker>> {
         JokerId::Square => Some(Box::new(SquareJoker::new())),
         JokerId::BullMarket => Some(Box::new(BullJoker::new())),
         JokerId::Bootstraps => Some(Box::new(BootstrapsJoker::new())),
+        JokerId::Banner => Some(Box::new(BannerJoker::new())),
         JokerId::Ceremonial => Some(Box::new(CeremonialDagger::new())),
         JokerId::Reserved2 => Some(Box::new(MysticSummit::new())),
         _ => None,
@@ -419,8 +472,8 @@ mod tests {
         let jokers = create_all_custom_scaling_jokers();
         assert_eq!(
             jokers.len(),
-            6,
-            "Should create exactly 6 custom scaling jokers"
+            7,
+            "Should create exactly 7 custom scaling jokers"
         );
 
         // Test that all jokers have unique IDs

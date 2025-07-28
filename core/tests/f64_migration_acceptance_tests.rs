@@ -113,7 +113,7 @@ mod f64_migration_acceptance_tests {
         let chips = card.chips();
 
         // Should be able to handle chip values
-        // Basic validation - chips value should be reasonable (removed >= 0 check as it's always true for unsigned)
+        assert!(chips >= 0); // Basic validation - exact value depends on implementation
 
         // Verify we can add values to card chips
         let total_chips = chips + 1;
@@ -123,12 +123,11 @@ mod f64_migration_acceptance_tests {
     /// Acceptance Test 5: Shop system uses f64 for prices and costs
     #[test]
     fn test_shop_system_uses_f64() {
-        let config = Config::default();
         let pack_type = PackType::Arcana;
-        let base_cost = pack_type.base_cost(&config);
+        let base_cost = pack_type.base_cost();
 
         // Should return usize and support cost calculations
-        // Base cost validation (removed >= 0 check as it's always true for unsigned)
+        assert!(base_cost >= 0);
 
         // Verify arithmetic operations work with costs (converting to f64)
         let discounted_cost = (base_cost as f64) * 0.75; // 25% discount
@@ -156,7 +155,7 @@ mod f64_migration_acceptance_tests {
         let base_requirement = ante.base();
 
         // Should return usize and support requirements
-        // Base requirement validation (removed >= 0 check as it's always true for unsigned)
+        assert!(base_requirement >= 0);
 
         // Verify arithmetic operations with ante requirements (converting to f64)
         let modified_requirement = (base_requirement as f64) * 1.25; // 25% increase
@@ -170,7 +169,7 @@ mod f64_migration_acceptance_tests {
         let reward = blind.reward();
 
         // Should return usize and support rewards
-        // Reward validation (removed >= 0 check as it's always true for unsigned)
+        assert!(reward >= 0);
 
         // Verify arithmetic operations with rewards (converting to f64)
         let bonus_reward = (reward as f64) + 0.5;
