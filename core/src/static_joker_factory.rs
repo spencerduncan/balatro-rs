@@ -432,7 +432,7 @@ impl StaticJokerFactory {
     pub fn create_half_joker() -> Box<dyn Joker> {
         // Load parameters from joker.json, fallback to original hardcoded values if fails
         let (mult_value, card_limit) = Self::load_half_joker_parameters();
-        
+
         // Use a static description since the builder requires &'static str
         let description = if mult_value == 20 && card_limit == 4 {
             "+20 Mult if played hand has 4 or fewer cards"
@@ -440,20 +440,16 @@ impl StaticJokerFactory {
             // Use a generic description for non-default parameters
             "Configurable Mult if played hand has limited cards"
         };
-        
+
         Box::new(
-            StaticJoker::builder(
-                JokerId::HalfJoker,
-                "Half Joker",
-                description,
-            )
-            .rarity(JokerRarity::Common)
-            .cost(3)
-            .mult(mult_value)
-            .condition(StaticCondition::HandSizeAtMost(card_limit))
-            .per_hand()
-            .build()
-            .expect("Valid joker configuration"),
+            StaticJoker::builder(JokerId::HalfJoker, "Half Joker", description)
+                .rarity(JokerRarity::Common)
+                .cost(3)
+                .mult(mult_value)
+                .condition(StaticCondition::HandSizeAtMost(card_limit))
+                .per_hand()
+                .build()
+                .expect("Valid joker configuration"),
         )
     }
 

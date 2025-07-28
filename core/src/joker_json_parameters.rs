@@ -134,7 +134,10 @@ impl JsonParameterResolver {
     }
 
     /// Get parameters for a joker by JokerId enum
-    pub fn get_parameters_by_id(&self, joker_id: JokerId) -> Result<&JokerParameters, ParameterError> {
+    pub fn get_parameters_by_id(
+        &self,
+        joker_id: JokerId,
+    ) -> Result<&JokerParameters, ParameterError> {
         let id_str = Self::joker_id_to_string(joker_id);
         self.get_parameters(&id_str)
     }
@@ -151,9 +154,9 @@ impl JsonParameterResolver {
 
     /// Extract parameters from the JSON data
     fn extract_parameters(&mut self, json: &Value) -> Result<(), ParameterError> {
-        let root_obj = json
-            .as_object()
-            .ok_or_else(|| ParameterError::JsonParse(serde_json::from_str::<()>("invalid").unwrap_err()))?;
+        let root_obj = json.as_object().ok_or_else(|| {
+            ParameterError::JsonParse(serde_json::from_str::<()>("invalid").unwrap_err())
+        })?;
 
         for (key, value) in root_obj {
             if let Some(joker_data) = value.as_object() {
@@ -176,7 +179,11 @@ impl JsonParameterResolver {
     }
 
     /// Extract parameter values from joker text array
-    fn extract_parameters_from_text(&self, joker_id: &str, text: &Value) -> Result<Vec<i32>, ParameterError> {
+    fn extract_parameters_from_text(
+        &self,
+        joker_id: &str,
+        text: &Value,
+    ) -> Result<Vec<i32>, ParameterError> {
         let text_lines = if let Some(array) = text.as_array() {
             array
                 .iter()
@@ -192,17 +199,17 @@ impl JsonParameterResolver {
         // Use hardcoded parameter mappings based on analysis of existing implementations
         // This matches the values used in the TOML and current hardcoded implementations
         let parameters = match joker_id {
-            "j_half" => vec![20, 4], // 20 mult, 4 cards
+            "j_half" => vec![20, 4],          // 20 mult, 4 cards
             "j_walkie_talkie" => vec![10, 4], // 10 chips, 4 mult (from existing impl)
-            "j_scholar" => vec![4, 20], // 4 mult, 20 chips (from existing impl) 
-            "j_even_steven" => vec![4], // 4 mult (from existing impl)
-            "j_joker" => vec![4], // 4 mult (basic joker)
-            
+            "j_scholar" => vec![4, 20],       // 4 mult, 20 chips (from existing impl)
+            "j_even_steven" => vec![4],       // 4 mult (from existing impl)
+            "j_joker" => vec![4],             // 4 mult (basic joker)
+
             // Additional jokers with known parameter values from the codebase
             "j_castle" => vec![3, 1], // +3 chips per discarded card of suit (from scaling_chips_jokers.rs)
-            "j_wee" => vec![8, 8], // Currently +8 chips, gains +8 per 2 scored
+            "j_wee" => vec![8, 8],    // Currently +8 chips, gains +8 per 2 scored
             "j_stuntman" => vec![300, 2], // +300 chips, -2 hand size
-            
+
             // Default case - try to infer from text
             _ => self.infer_parameters_from_text(&text_lines)?,
         };
@@ -214,26 +221,28 @@ impl JsonParameterResolver {
     /// This is a fallback for jokers not explicitly mapped
     fn infer_parameters_from_text(&self, text: &str) -> Result<Vec<i32>, ParameterError> {
         let mut parameters = Vec::new();
-        
+
         // Simple heuristic: look for numbers that might be parameter values
         // This is not foolproof but provides a reasonable fallback
         let words: Vec<&str> = text.split_whitespace().collect();
-        
+
         for (i, word) in words.iter().enumerate() {
             // Look for patterns like "+20" or "20" that might be parameter values
             if let Some(stripped) = word.strip_prefix('+') {
                 if let Ok(num) = stripped.parse::<i32>() {
-                    if num > 0 && num <= 1000 { // Reasonable bounds for joker values
+                    if num > 0 && num <= 1000 {
+                        // Reasonable bounds for joker values
                         parameters.push(num);
                     }
                 }
             } else if let Ok(num) = word.parse::<i32>() {
-                if num > 0 && num <= 100 && i > 0 { // Likely a count or similar
+                if num > 0 && num <= 100 && i > 0 {
+                    // Likely a count or similar
                     parameters.push(num);
                 }
             }
         }
-        
+
         Ok(parameters)
     }
 
@@ -246,7 +255,7 @@ impl JsonParameterResolver {
             JokerId::EvenSteven => "j_even_steven".to_string(),
             JokerId::Joker => "j_joker".to_string(),
             // Add other mappings as needed
-            _ => format!("j_{:?}", joker_id).to_lowercase(),
+            _ => format!("j_{joker_id:?}").to_lowercase(),
         }
     }
 }
