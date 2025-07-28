@@ -63,10 +63,19 @@ jobs:
       
       - name: Run tests
         run: |
-          # Run all tests with verbose output and capture results
+          # Run all tests with timeout and resource management
           set +e  # Don't exit on test failure, we want to capture the results
-          cargo test --all --verbose > test_output.log 2>&1
+          
+          # Add timeout constraints and limit parallelism for PR checks
+          timeout 1200 cargo test --all --verbose --jobs 2 > test_output.log 2>&1
           TEST_EXIT_CODE=$?
+          
+          # If tests failed due to timeout, try with single thread
+          if [ $TEST_EXIT_CODE -eq 124 ] || [ $TEST_EXIT_CODE -eq 143 ]; then
+            echo "Tests timed out, retrying with single thread..." >> test_output.log
+            timeout 1800 cargo test --all --verbose --jobs 1 >> test_output.log 2>&1
+            TEST_EXIT_CODE=$?
+          fi
           set -e
           
           # Save the exit code for later use
