@@ -1313,6 +1313,9 @@ pub use traits::{
     ProcessContext, ProcessResult, Rarity,
 };
 
+// Re-export static joker trait system for migration infrastructure
+pub use crate::static_joker::{StaticJoker, StaticJokerAdapter, StaticContext};
+
 // Re-export old API types for backwards compatibility
 pub use compat::{Joker as OldJoker, Jokers};
 
