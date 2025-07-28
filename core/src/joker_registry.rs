@@ -237,6 +237,15 @@ fn initialize_default_jokers(registry: &mut JokerRegistry) {
         None,
         create_gluttonous_joker,
     );
+    register_joker(
+        registry,
+        JokerId::Banner,
+        "Banner",
+        "+30 Chips for each remaining discard",
+        JokerRarity::Common,
+        None,
+        || crate::static_joker_factory::StaticJokerFactory::create_banner(),
+    );
 }
 
 // Factory functions for creating joker instances
