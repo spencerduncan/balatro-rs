@@ -1,5 +1,6 @@
 use crate::card::{Suit, Value};
 use crate::joker::{Joker, JokerId, JokerRarity};
+use crate::joker_json_parameters::JsonParameterResolver;
 use crate::rank::HandRank;
 use crate::static_joker::{StaticCondition, StaticJoker};
 
@@ -426,22 +427,53 @@ impl StaticJokerFactory {
 
     // Note: Runner is implemented as RunnerJoker in joker_impl.rs, not as a static joker
 
-    /// Create Half Joker (+20 Mult if played hand has 4 or fewer cards)
+    /// Create Half Joker (configurable Mult if played hand has configurable or fewer cards)
+    /// Uses parameter resolution from joker.json: #1# = mult value, #2# = card count
     pub fn create_half_joker() -> Box<dyn Joker> {
+        // Load parameters from joker.json, fallback to original hardcoded values if fails
+        let (mult_value, card_limit) = Self::load_half_joker_parameters();
+
+        // Use a static description since the builder requires &'static str
+        let description = if mult_value == 20 && card_limit == 4 {
+            "+20 Mult if played hand has 4 or fewer cards"
+        } else {
+            // Use a generic description for non-default parameters
+            "Configurable Mult if played hand has limited cards"
+        };
+
         Box::new(
-            StaticJoker::builder(
-                JokerId::HalfJoker,
-                "Half Joker",
-                "+20 Mult if played hand has 4 or fewer cards",
-            )
-            .rarity(JokerRarity::Common)
-            .cost(3)
-            .mult(20)
-            .condition(StaticCondition::HandSizeAtMost(4))
-            .per_hand()
-            .build()
-            .expect("Valid joker configuration"),
+            StaticJoker::builder(JokerId::HalfJoker, "Half Joker", description)
+                .rarity(JokerRarity::Common)
+                .cost(3)
+                .mult(mult_value)
+                .condition(StaticCondition::HandSizeAtMost(card_limit))
+                .per_hand()
+                .build()
+                .expect("Valid joker configuration"),
         )
+    }
+
+    /// Load Half Joker parameters from joker.json, with fallback to original hardcoded values
+    fn load_half_joker_parameters() -> (i32, usize) {
+        match JsonParameterResolver::new() {
+            Ok(resolver) => {
+                match resolver.get_parameters_by_id(JokerId::HalfJoker) {
+                    Ok(params) => {
+                        let mult = params.first().unwrap_or(20); // #1# = mult value
+                        let cards = params.second().unwrap_or(4) as usize; // #2# = card count
+                        (mult, cards)
+                    }
+                    Err(_) => {
+                        // Fallback to original hardcoded values
+                        (20, 4)
+                    }
+                }
+            }
+            Err(_) => {
+                // Fallback to original hardcoded values
+                (20, 4)
+            }
+        }
     }
 
     /// Create Banner (+30 Chips for each remaining discard)

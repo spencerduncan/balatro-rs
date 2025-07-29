@@ -8,12 +8,49 @@
 // This file tests 9 jokers: 5 fully implemented + 4 placeholders
 
 use balatro_rs::card::{Card, Suit, Value};
-use balatro_rs::hand::SelectHand;
+use balatro_rs::hand::{Hand, SelectHand};
 use balatro_rs::joker::{GameContext, Joker, JokerId, JokerRarity};
+use balatro_rs::joker_registry::registry::create_joker;
+use balatro_rs::joker_state::JokerStateManager;
+use balatro_rs::rank::HandRank;
+use balatro_rs::rng::GameRng;
+use balatro_rs::stage::{Blind, Stage};
 use balatro_rs::static_joker_factory::StaticJokerFactory;
+use std::collections::HashMap;
+use std::sync::Arc;
+
+// Helper function to create test context (similar to benchmark patterns)
+fn create_test_context() -> GameContext<'static> {
+    let stage = Box::leak(Box::new(Stage::Blind(Blind::Small)));
+    let hand = Box::leak(Box::new(Hand::new(vec![])));
+    let jokers: &'static [Box<dyn Joker>] = Box::leak(Box::new([]));
+    let discarded: &'static [Card] = Box::leak(Box::new([]));
+    let joker_state_manager = Box::leak(Box::new(Arc::new(JokerStateManager::new())));
+    let hand_type_counts = Box::leak(Box::new(HashMap::new()));
+    let rng = Box::leak(Box::new(GameRng::for_testing(12345)));
+
+    GameContext {
+        chips: 0,
+        mult: 1,
+        money: 5,
+        ante: 1,
+        round: 1,
+        stage,
+        hands_played: 0,
+        discards_used: 0,
+        jokers,
+        hand,
+        discarded,
+        joker_state_manager,
+        hand_type_counts,
+        cards_in_deck: 52,
+        stone_cards_in_deck: 0,
+        steel_cards_in_deck: 0,
+        rng,
+    }
+}
 
 #[test]
-#[ignore = "EMERGENCY DISABLE: GameContext default issues - tracked for post-emergency fix"]
 fn test_red_card_joker() {
     let joker = StaticJokerFactory::create_red_card();
     assert_eq!(joker.id(), JokerId::RedCard);
@@ -27,7 +64,6 @@ fn test_red_card_joker() {
 }
 
 #[test]
-#[ignore = "EMERGENCY DISABLE: GameContext default issues - tracked for post-emergency fix"]
 fn test_blue_joker() {
     let joker = StaticJokerFactory::create_blue_joker();
     assert_eq!(joker.id(), JokerId::BlueJoker);
@@ -41,7 +77,6 @@ fn test_blue_joker() {
 }
 
 #[test]
-#[ignore = "EMERGENCY DISABLE: GameContext default issues - tracked for post-emergency fix"]
 fn test_faceless_joker() {
     let joker = StaticJokerFactory::create_faceless_joker();
     assert_eq!(joker.id(), JokerId::FacelessJoker);
@@ -57,7 +92,6 @@ fn test_faceless_joker() {
 // Square Joker removed - now implemented as scaling joker in scaling_joker_impl.rs
 
 #[test]
-#[ignore = "EMERGENCY DISABLE: GameContext default issues - tracked for post-emergency fix"]
 fn test_walkie_joker() {
     let joker = StaticJokerFactory::create_walkie();
     assert_eq!(joker.id(), JokerId::Walkie);
@@ -74,7 +108,6 @@ fn test_walkie_joker() {
 
 // Tests for jokers that need framework extensions
 #[test]
-#[ignore = "EMERGENCY DISABLE: GameContext default issues - tracked for post-emergency fix"]
 fn test_half_joker() {
     let joker = StaticJokerFactory::create_half_joker();
     assert_eq!(joker.id(), JokerId::HalfJoker);
@@ -88,12 +121,9 @@ fn test_half_joker() {
 }
 
 #[test]
-#[ignore = "EMERGENCY DISABLE: GameContext default issues - tracked for post-emergency fix"]
-#[ignore = "EMERGENCY DISABLE: GameContext constructor missing - tracked for post-emergency fix"]
 fn test_half_joker_behavior_with_4_cards() {
-    // EMERGENCY: GameContext doesn't have default() constructor
-    // let joker = StaticJokerFactory::create_half_joker();
-    // let mut context = GameContext::default();
+    let joker = StaticJokerFactory::create_half_joker();
+    let mut context = create_test_context();
 
     // Test with exactly 4 cards (should trigger)
     let four_card_hand = SelectHand::new(vec![
@@ -116,10 +146,9 @@ fn test_half_joker_behavior_with_4_cards() {
 }
 
 #[test]
-#[ignore = "EMERGENCY DISABLE: GameContext default issues - tracked for post-emergency fix"]
 fn test_half_joker_behavior_with_3_cards() {
     let joker = StaticJokerFactory::create_half_joker();
-    let mut context = GameContext::default();
+    let mut context = create_test_context();
 
     // Test with 3 cards (should trigger)
     let three_card_hand = SelectHand::new(vec![
@@ -136,10 +165,9 @@ fn test_half_joker_behavior_with_3_cards() {
 }
 
 #[test]
-#[ignore = "EMERGENCY DISABLE: GameContext default issues - tracked for post-emergency fix"]
 fn test_half_joker_behavior_with_2_cards() {
     let joker = StaticJokerFactory::create_half_joker();
-    let mut context = GameContext::default();
+    let mut context = create_test_context();
 
     // Test with 2 cards (should trigger)
     let two_card_hand = SelectHand::new(vec![
@@ -155,10 +183,9 @@ fn test_half_joker_behavior_with_2_cards() {
 }
 
 #[test]
-#[ignore = "EMERGENCY DISABLE: GameContext default issues - tracked for post-emergency fix"]
 fn test_half_joker_behavior_with_1_card() {
     let joker = StaticJokerFactory::create_half_joker();
-    let mut context = GameContext::default();
+    let mut context = create_test_context();
 
     // Test with 1 card (should trigger)
     let one_card_hand = SelectHand::new(vec![Card::new(Value::King, Suit::Heart)]);
@@ -171,10 +198,9 @@ fn test_half_joker_behavior_with_1_card() {
 }
 
 #[test]
-#[ignore = "EMERGENCY DISABLE: GameContext default issues - tracked for post-emergency fix"]
 fn test_half_joker_behavior_with_5_cards() {
     let joker = StaticJokerFactory::create_half_joker();
-    let mut context = GameContext::default();
+    let mut context = create_test_context();
 
     // Test with 5 cards (should NOT trigger)
     let five_card_hand = SelectHand::new(vec![
@@ -201,10 +227,9 @@ fn test_half_joker_behavior_with_5_cards() {
 }
 
 #[test]
-#[ignore = "EMERGENCY DISABLE: GameContext default issues - tracked for post-emergency fix"]
 fn test_half_joker_behavior_with_6_cards() {
     let joker = StaticJokerFactory::create_half_joker();
-    let mut context = GameContext::default();
+    let mut context = create_test_context();
 
     // Test with 6 cards (should NOT trigger)
     let six_card_hand = SelectHand::new(vec![
@@ -224,10 +249,9 @@ fn test_half_joker_behavior_with_6_cards() {
 }
 
 #[test]
-#[ignore = "EMERGENCY DISABLE: GameContext default issues - tracked for post-emergency fix"]
 fn test_half_joker_behavior_per_hand_not_per_card() {
     let joker = StaticJokerFactory::create_half_joker();
-    let mut context = GameContext::default();
+    let mut context = create_test_context();
 
     // Test that Half Joker is per-hand, not per-card
     let three_card_hand = SelectHand::new(vec![
@@ -253,10 +277,9 @@ fn test_half_joker_behavior_per_hand_not_per_card() {
 }
 
 #[test]
-#[ignore = "EMERGENCY DISABLE: GameContext default issues - tracked for post-emergency fix"]
 fn test_half_joker_behavior_edge_case_empty_hand() {
     let joker = StaticJokerFactory::create_half_joker();
-    let mut context = GameContext::default();
+    let mut context = create_test_context();
 
     // Test with empty hand (should trigger as 0 ≤ 4)
     let empty_hand = SelectHand::new(vec![]);
@@ -270,11 +293,9 @@ fn test_half_joker_behavior_edge_case_empty_hand() {
 
 #[test]
 fn test_banner_joker() {
-    use balatro_rs::card::Card;
     use balatro_rs::hand::{Hand, SelectHand};
     use balatro_rs::joker::GameContext;
     use balatro_rs::joker_state::JokerStateManager;
-    use balatro_rs::rank::HandRank;
     use balatro_rs::stage::Stage;
     use std::collections::HashMap;
     use std::sync::Arc;
@@ -289,12 +310,12 @@ fn test_banner_joker() {
     assert_eq!(joker.cost(), 3);
 
     // Test functionality with different discard counts
-    let stage = Stage::Blind;
-    let hand = Hand::new();
+    let stage = Stage::Blind(Blind::Small);
+    let hand = Hand::new(vec![]);
     let empty_cards = vec![];
     let joker_state_manager = Arc::new(JokerStateManager::new());
     let hand_type_counts = HashMap::new();
-    let rng = crate::rng::GameRng::new();
+    let rng = GameRng::for_testing(12345);
 
     // Test with 0 discards used (5 remaining) - should give 5 * 30 = 150 chips
     let mut context_5_remaining = GameContext {
@@ -313,6 +334,7 @@ fn test_banner_joker() {
         hand_type_counts: &hand_type_counts,
         cards_in_deck: 52,
         stone_cards_in_deck: 0,
+        steel_cards_in_deck: 0,
         rng: &rng,
     };
 
@@ -337,6 +359,7 @@ fn test_banner_joker() {
         hand_type_counts: &hand_type_counts,
         cards_in_deck: 52,
         stone_cards_in_deck: 0,
+        steel_cards_in_deck: 0,
         rng: &rng,
     };
 
@@ -360,6 +383,7 @@ fn test_banner_joker() {
         hand_type_counts: &hand_type_counts,
         cards_in_deck: 52,
         stone_cards_in_deck: 0,
+        steel_cards_in_deck: 0,
         rng: &rng,
     };
 
@@ -384,9 +408,9 @@ fn test_banner_implementation_uniqueness() {
     assert_eq!(banner.cost(), 3);
 
     // Verify it's the same type as what the joker factory produces
-    let factory_banner = balatro_rs::joker_factory::create_joker(JokerId::Banner);
+    let factory_banner = create_joker(&JokerId::Banner);
     assert!(
-        factory_banner.is_some(),
+        factory_banner.is_ok(),
         "Factory should be able to create Banner joker"
     );
 
@@ -400,14 +424,12 @@ fn test_banner_implementation_uniqueness() {
 }
 
 #[test]
-#[ignore = "EMERGENCY DISABLE: GameContext default issues - tracked for post-emergency fix"]
 fn test_abstract_joker() {
     use balatro_rs::card::{Card, Suit, Value};
     use balatro_rs::hand::{Hand, SelectHand};
-    use balatro_rs::joker::{GameContext, Joker, JokerEffect, JokerId, JokerRarity};
+    use balatro_rs::joker::{GameContext, Joker, JokerId, JokerRarity};
     use balatro_rs::joker_factory::JokerFactory;
     use balatro_rs::joker_state::JokerStateManager;
-    use balatro_rs::rank::HandRank;
     use balatro_rs::rng::{GameRng, RngMode};
     use balatro_rs::stage::Stage;
     use std::collections::HashMap;
@@ -435,8 +457,8 @@ fn test_abstract_joker() {
 
     // Create a test game context manually
     let joker_state_manager = Arc::new(JokerStateManager::new());
-    let stage = Stage::Blind;
-    let stage_ref: &'static Stage = Box::leak(Box::new(stage));
+    let _stage = Stage::Blind(Blind::Small);
+    let stage_ref: &'static Stage = Box::leak(Box::new(Stage::Blind(Blind::Small)));
     let hand = Hand::new(vec![]);
     let hand_ref: &'static Hand = Box::leak(Box::new(hand));
     let discarded: Vec<Card> = Vec::new();
@@ -463,6 +485,7 @@ fn test_abstract_joker() {
         hand_type_counts: hand_type_counts_ref,
         cards_in_deck: 52,
         stone_cards_in_deck: 0,
+        steel_cards_in_deck: 0,
         rng: rng_ref,
     };
 
@@ -530,8 +553,6 @@ fn test_abstract_joker() {
 }
 
 #[test]
-#[ignore = "EMERGENCY DISABLE: GameContext default issues - tracked for post-emergency fix"]
-#[ignore] // Ignore until framework supports deck composition
 fn test_steel_joker() {
     let joker = StaticJokerFactory::create_steel_joker();
     assert_eq!(joker.id(), JokerId::SteelJoker);

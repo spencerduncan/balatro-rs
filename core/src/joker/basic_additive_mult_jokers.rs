@@ -10,6 +10,7 @@ use crate::{
         traits::{ProcessContext, ProcessResult, Rarity},
         GameContext, Joker, JokerEffect, JokerGameplay, JokerId, JokerIdentity, JokerRarity,
     },
+    joker_json_parameters::{JsonParameterResolver, ParameterError},
     stage::Stage,
 };
 
@@ -200,12 +201,12 @@ impl Joker for EvenStevenJoker {
         if Self::is_even_card(card) {
             JokerEffect::new()
                 .with_mult(4)
-                // Bot Dean Production Optimization: Eliminate format! overhead 
+                // Bot Dean Production Optimization: Eliminate format! overhead
                 .with_message({
                     let card_str = match card.value {
                         Value::Ace => "Ace",
                         Value::Two => "2",
-                        Value::Three => "3", 
+                        Value::Three => "3",
                         Value::Four => "4",
                         Value::Five => "5",
                         Value::Six => "6",
@@ -214,7 +215,7 @@ impl Joker for EvenStevenJoker {
                         Value::Nine => "9",
                         Value::Ten => "10",
                         Value::Jack => "Jack",
-                        Value::Queen => "Queen", 
+                        Value::Queen => "Queen",
                         Value::King => "King",
                     };
                     let mut msg = String::with_capacity(32);
@@ -368,7 +369,8 @@ impl JokerGameplay for ScholarJoker {
     }
 }
 
-/// Half Joker - +20 Mult if played hand has 4 or fewer cards
+/// Half Joker - configurable Mult if played hand has configurable or fewer cards
+/// Uses parameter resolution from joker.json: #1# = mult value, #2# = card count
 #[derive(Debug, Clone)]
 pub struct HalfJoker {
     id: JokerId,
@@ -376,6 +378,8 @@ pub struct HalfJoker {
     description: String,
     rarity: JokerRarity,
     cost: usize,
+    mult_value: i32,
+    card_limit: usize,
 }
 
 impl Default for HalfJoker {
@@ -386,12 +390,41 @@ impl Default for HalfJoker {
 
 impl HalfJoker {
     pub fn new() -> Self {
+        // Load parameters from joker.json, fallback to original hardcoded values if fails
+        let (mult_value, card_limit, description) = Self::load_parameters();
+
         Self {
             id: JokerId::HalfJoker,
             name: "Half Joker".to_string(),
-            description: "+20 Mult if played hand has 4 or fewer cards".to_string(),
+            description,
             rarity: JokerRarity::Common,
             cost: 3,
+            mult_value,
+            card_limit,
+        }
+    }
+
+    /// Load parameters from joker.json, with fallback to original hardcoded values
+    fn load_parameters() -> (i32, usize, String) {
+        match JsonParameterResolver::new() {
+            Ok(resolver) => {
+                match resolver.get_parameters_by_id(JokerId::HalfJoker) {
+                    Ok(params) => {
+                        let mult = params.first().unwrap_or(20); // #1# = mult value
+                        let cards = params.second().unwrap_or(4) as usize; // #2# = card count
+                        let description = format!("+{} Mult if played hand has {} or fewer cards", mult, cards);
+                        (mult, cards, description)
+                    }
+                    Err(_) => {
+                        // Fallback to original hardcoded values
+                        (20, 4, "+20 Mult if played hand has 4 or fewer cards".to_string())
+                    }
+                }
+            }
+            Err(_) => {
+                // Fallback to original hardcoded values
+                (20, 4, "+20 Mult if played hand has 4 or fewer cards".to_string())
+            }
         }
     }
 }
@@ -445,10 +478,10 @@ impl Joker for HalfJoker {
     }
 
     fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
-        if hand.len() <= 4 {
+        if hand.len() <= self.card_limit {
             JokerEffect::new()
-                .with_mult(20)
-                .with_message(format!("Half Joker: +20 Mult ({} cards)", hand.len()))
+                .with_mult(self.mult_value)
+                .with_message(format!("Half Joker: +{} Mult ({} cards)", self.mult_value, hand.len()))
         } else {
             JokerEffect::new()
         }
@@ -461,9 +494,9 @@ impl JokerGameplay for HalfJoker {
             return ProcessResult::default();
         }
 
-        if context.played_cards.len() <= 4 {
+        if context.played_cards.len() <= self.card_limit {
             ProcessResult {
-                mult_added: 20.0,
+                mult_added: self.mult_value as f64,
                 ..Default::default()
             }
         } else {
@@ -472,7 +505,7 @@ impl JokerGameplay for HalfJoker {
     }
 
     fn can_trigger(&self, stage: &Stage, context: &ProcessContext) -> bool {
-        matches!(stage, Stage::Blind(_)) && context.played_cards.len() <= 4
+        matches!(stage, Stage::Blind(_)) && context.played_cards.len() <= self.card_limit
     }
 }
 
@@ -723,7 +756,7 @@ mod tests {
     fn test_half_joker() {
         let mut half_joker = HalfJoker::new();
 
-        // Test with 4 cards
+        // Test with cards at the limit (should trigger parameter-based mult)
         let stage = Stage::Blind(Blind::Small);
         let played_cards = vec![
             Card::new(Value::King, Suit::Heart),
@@ -752,29 +785,26 @@ mod tests {
         };
 
         let result = half_joker.process(&stage, &mut context);
-        assert_eq!(result.mult_added, 20.0);
+        assert_eq!(result.mult_added, half_joker.mult_value as f64);
 
-        // Test with 5 cards (should not trigger)
-        let played_cards_5 = vec![
-            Card::new(Value::Two, Suit::Heart),
-            Card::new(Value::Three, Suit::Diamond),
-            Card::new(Value::Four, Suit::Spade),
-            Card::new(Value::Five, Suit::Club),
-            Card::new(Value::Six, Suit::Heart),
-        ];
+        // Test with more cards than the limit (should not trigger)
+        let mut excess_cards = vec![];
+        for i in 0..(half_joker.card_limit + 1) {
+            excess_cards.push(Card::new(Value::Two, Suit::Heart));
+        }
 
-        let hand_5 = SelectHand::new(played_cards_5.clone());
-        let mut context_5 = ProcessContext {
+        let hand_excess = SelectHand::new(excess_cards.clone());
+        let mut context_excess = ProcessContext {
             hand_score: &mut hand_score,
-            played_cards: &played_cards_5,
+            played_cards: &excess_cards,
             held_cards: &held_cards,
             events: &mut events,
-            hand: &hand_5,
+            hand: &hand_excess,
             joker_state_manager: &joker_state_manager,
         };
 
-        let result_5 = half_joker.process(&stage, &mut context_5);
-        assert_eq!(result_5.mult_added, 0.0);
+        let result_excess = half_joker.process(&stage, &mut context_excess);
+        assert_eq!(result_excess.mult_added, 0.0);
     }
 
     #[test]

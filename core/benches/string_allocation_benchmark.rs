@@ -1,7 +1,7 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use std::hint::black_box;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
+use std::hint::black_box;
 use std::io::Write;
 
 // Bot Dean Production Benchmark for String Allocation Optimization
@@ -112,16 +112,19 @@ fn bench_card_value_format(c: &mut Criterion) {
     #[derive(Debug)]
     #[allow(dead_code)]
     enum TestCardValue {
-        Ace, Two, Three, King, Queen, Jack
+        Ace,
+        Two,
+        Three,
+        King,
+        Queen,
+        Jack,
     }
 
     let card_value = TestCardValue::King;
 
     // Current format! approach
     group.bench_function("current_format", |b| {
-        b.iter(|| {
-            black_box(format!("Sock and Buskin: {card_value:?} retriggered!"))
-        })
+        b.iter(|| black_box(format!("Sock and Buskin: {card_value:?} retriggered!")))
     });
 
     // Optimized with match-based string mapping

@@ -15,9 +15,9 @@ use balatro_rs::shop::ConsumableType;
 use balatro_rs::stage::{End, Stage};
 use pyo3::prelude::*;
 use pyo3::{PyResult, Python};
+use rayon::prelude::*;
 use std::collections::HashMap;
 use std::sync::{Arc, OnceLock};
-use rayon::prelude::*;
 
 // Security constants for input validation
 const MAX_CUSTOM_DATA_KEY_LENGTH: usize = 256;
@@ -1082,9 +1082,9 @@ impl GameEngine {
 }
 
 /// Batch operations for efficient parallel game simulation
-/// 
+///
 /// Optimized for RL training with 1000+ parallel games:
-/// - Cache-friendly memory layout with Vec<Game> 
+/// - Cache-friendly memory layout with Vec<Game>
 /// - Vectorized state extraction to NumPy arrays
 /// - SIMD-optimized batch action execution
 /// - Thread-safe concurrent access patterns
@@ -1101,29 +1101,33 @@ impl BatchGameEngine {
     fn new_aligned_games(count: usize, config: Config) -> Vec<Game> {
         // Pre-allocate with capacity to avoid reallocations during parallel creation
         let mut games = Vec::with_capacity(count);
-        
+
         // Use rayon for parallel game creation - scales to available CPU cores
-        games.par_extend((0..count).into_par_iter().map(|_| Game::new(config.clone())));
-        
+        games.par_extend(
+            (0..count)
+                .into_par_iter()
+                .map(|_| Game::new(config.clone())),
+        );
+
         games
     }
-    
+
     /// Vectorized state extraction - optimized for RL training performance
-    /// 
+    ///
     /// Extracts key state variables into contiguous NumPy arrays:
     /// - scores: [game0_score, game1_score, ...]
-    /// - money: [game0_money, game1_money, ...]  
+    /// - money: [game0_money, game1_money, ...]
     /// - rounds: [game0_round, game1_round, ...]
     /// - is_over: [game0_over, game1_over, ...] as bool array
     fn extract_vectorized_states(&mut self) -> (Vec<f64>, Vec<f64>, Vec<f64>, Vec<bool>) {
         let count = self.games.len();
-        
+
         // Pre-allocate output vectors for cache efficiency
         let mut scores = Vec::with_capacity(count);
-        let mut money = Vec::with_capacity(count); 
+        let mut money = Vec::with_capacity(count);
         let mut rounds = Vec::with_capacity(count);
         let mut is_over = Vec::with_capacity(count);
-        
+
         // Sequential access for cache locality - games stored contiguously
         for game in &self.games {
             scores.push(game.score);
@@ -1131,12 +1135,12 @@ impl BatchGameEngine {
             rounds.push(game.round);
             is_over.push(game.is_over());
         }
-        
+
         (scores, money, rounds, is_over)
     }
-    
+
     /// Batch action execution with error handling
-    /// 
+    ///
     /// Applies actions across multiple games simultaneously:
     /// - Parallel execution using rayon for CPU efficiency
     /// - Error collection without stopping entire batch
@@ -1146,7 +1150,7 @@ impl BatchGameEngine {
             // Return consistent error for mismatched lengths
             return vec![Err(GameError::InvalidAction); self.games.len()];
         }
-        
+
         // Parallel execution with proper error handling
         self.games
             .par_iter_mut()
@@ -1154,9 +1158,9 @@ impl BatchGameEngine {
             .map(|(game, action)| game.handle_action(action.clone()))
             .collect()
     }
-    
+
     /// Batch action generation - returns actions for all games
-    /// 
+    ///
     /// Performance optimized:
     /// - Parallel action generation across games
     /// - Pre-allocated result vectors
@@ -1172,7 +1176,7 @@ impl BatchGameEngine {
 #[pymethods]
 impl BatchGameEngine {
     /// Create batch of games efficiently
-    /// 
+    ///
     /// Performance targets:
     /// - 1000+ games: <50ms creation time
     /// - Linear memory scaling
@@ -1183,53 +1187,55 @@ impl BatchGameEngine {
         // Validate input for security and performance
         if count == 0 {
             return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
-                "Batch size must be greater than 0"
+                "Batch size must be greater than 0",
             ));
         }
-        
+
         if count > 10000 {
             return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
-                "Batch size limited to 10000 for memory safety"
+                "Batch size limited to 10000 for memory safety",
             ));
         }
-        
+
         let game_config = config.unwrap_or_default();
         let games = Self::new_aligned_games(count, game_config);
-        
+
         Ok(BatchGameEngine {
             games,
             state_buffer: Vec::with_capacity(count * 8), // Pre-allocate for common state fields
             action_buffer: Vec::with_capacity(count),
         })
     }
-    
+
     /// Get number of games in batch
     fn len(&self) -> usize {
         self.games.len()
     }
-    
+
     /// Check if batch is empty
     fn is_empty(&self) -> bool {
         self.games.is_empty()
     }
-    
+
     /// Get vectorized game states as Python lists
-    /// 
+    ///
     /// Returns dictionary with keys:
     /// - 'scores': List[float] of length n_games
     /// - 'money': List[float] of length n_games
     /// - 'rounds': List[float] of length n_games
     /// - 'is_over': List[bool] of length n_games
     /// - 'antes': List[int] of length n_games
-    /// 
+    ///
     /// High performance with contiguous memory layout
     /// Can be easily converted to NumPy arrays on Python side if needed
     fn get_vectorized_states(&mut self, py: Python) -> PyResult<PyObject> {
         let (scores, money, rounds, is_over) = self.extract_vectorized_states();
-        
+
         // Convert antes to integer array
-        let antes: Vec<i32> = self.games.iter().map(|game| {
-            match game.ante_current {
+        let antes: Vec<i32> = self
+            .games
+            .iter()
+            .map(|game| match game.ante_current {
                 Ante::Zero => 0,
                 Ante::One => 1,
                 Ante::Two => 2,
@@ -1239,50 +1245,50 @@ impl BatchGameEngine {
                 Ante::Six => 6,
                 Ante::Seven => 7,
                 Ante::Eight => 8,
-            }
-        }).collect();
-        
+            })
+            .collect();
+
         let dict = pyo3::types::PyDict::new(py);
-        
+
         // Return as Python lists - very fast and easily convertible to NumPy
         dict.set_item("scores", scores)?;
         dict.set_item("money", money)?;
         dict.set_item("rounds", rounds)?;
         dict.set_item("is_over", is_over)?;
         dict.set_item("antes", antes)?;
-        
+
         Ok(dict.into())
     }
-    
+
     /// Apply actions to all games in batch
-    /// 
+    ///
     /// Arguments:
     /// - actions: List of Action objects, one per game
-    /// 
+    ///
     /// Returns:
     /// - List of boolean success flags (True = action succeeded)
-    /// 
+    ///
     /// Performance: Parallelized across available CPU cores
     fn batch_handle_actions(&mut self, actions: Vec<Action>) -> PyResult<Vec<bool>> {
         let results = self.execute_batch_actions(&actions);
         Ok(results.into_iter().map(|r| r.is_ok()).collect())
     }
-    
+
     /// Generate actions for all games in batch
-    /// 
+    ///
     /// Returns:
     /// - List of action lists, one per game
-    /// 
+    ///
     /// Performance: Parallelized action generation
     fn batch_gen_actions(&self) -> Vec<Vec<Action>> {
         self.generate_batch_actions()
     }
-    
+
     /// Get action spaces for all games as 2D Python list
-    /// 
+    ///
     /// Returns:
     /// - List[List[int]] of shape (n_games, action_space_size)
-    /// 
+    ///
     /// Useful for RL frameworks expecting vectorized action spaces
     /// Can be easily converted to NumPy array on Python side
     fn batch_gen_action_spaces(&self) -> Vec<Vec<usize>> {
@@ -1291,34 +1297,34 @@ impl BatchGameEngine {
             .map(|game| game.gen_action_space().to_vec())
             .collect()
     }
-    
+
     /// Check which games are finished
-    /// 
+    ///
     /// Returns:
     /// - List[bool] of length n_games
     fn batch_is_over(&self) -> Vec<bool> {
         self.games.iter().map(|game| game.is_over()).collect()
     }
-    
+
     /// Reset finished games to initial state
-    /// 
+    ///
     /// Arguments:
     /// - reset_mask: Optional boolean array indicating which games to reset
     ///   If None, resets all finished games
-    /// 
+    ///
     /// Returns:
     /// - Count of games that were reset
     fn batch_reset_games(&mut self, reset_mask: Option<Vec<bool>>) -> PyResult<usize> {
         let mut reset_count = 0;
-        
+
         match reset_mask {
             Some(mask) => {
                 if mask.len() != self.games.len() {
                     return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
-                        "Reset mask length must match number of games"
+                        "Reset mask length must match number of games",
                     ));
                 }
-                
+
                 for (i, should_reset) in mask.iter().enumerate() {
                     if *should_reset {
                         self.games[i] = Game::new(self.games[i].config.clone());
@@ -1336,34 +1342,36 @@ impl BatchGameEngine {
                 }
             }
         }
-        
+
         Ok(reset_count)
     }
-    
+
     /// Get game state for a specific game in the batch
-    /// 
+    ///
     /// Arguments:
     /// - index: Game index (0 to len()-1)
-    /// 
+    ///
     /// Returns:
     /// - GameState snapshot for the specific game
-    /// 
+    ///
     /// This provides read-only access to individual game states
     fn get_game_state(&self, index: usize) -> PyResult<GameState> {
         if index >= self.games.len() {
-            return Err(PyErr::new::<pyo3::exceptions::PyIndexError, _>(
-                format!("Game index {} out of range (0-{})", index, self.games.len() - 1)
-            ));
+            return Err(PyErr::new::<pyo3::exceptions::PyIndexError, _>(format!(
+                "Game index {} out of range (0-{})",
+                index,
+                self.games.len() - 1
+            )));
         }
-        
+
         // Create a state snapshot - this is read-only and safe
         Ok(GameState {
             snapshot: GameStateSnapshot::from_game(&self.games[index]),
         })
     }
-    
+
     /// Get batch performance statistics
-    /// 
+    ///
     /// Returns dictionary with:
     /// - total_games: Number of games in batch
     /// - active_games: Number of games still running
@@ -1372,25 +1380,36 @@ impl BatchGameEngine {
     /// - memory_usage_mb: Estimated memory usage in MB
     fn get_batch_stats(&self, py: Python) -> PyObject {
         let dict = pyo3::types::PyDict::new(py);
-        
+
         let total_games = self.games.len();
         let active_games = self.games.iter().filter(|g| !g.is_over()).count();
-        
+
         let total_score: f64 = self.games.iter().map(|g| g.score).sum();
         let total_rounds: f64 = self.games.iter().map(|g| g.round).sum();
-        
-        let avg_score = if total_games > 0 { total_score / total_games as f64 } else { 0.0 };
-        let avg_round = if total_games > 0 { total_rounds / total_games as f64 } else { 0.0 };
-        
+
+        let avg_score = if total_games > 0 {
+            total_score / total_games as f64
+        } else {
+            0.0
+        };
+        let avg_round = if total_games > 0 {
+            total_rounds / total_games as f64
+        } else {
+            0.0
+        };
+
         // Rough memory estimation: ~10KB per game + buffers
-        let estimated_memory_mb = (total_games * 10 * 1024 + self.state_buffer.capacity() * 8 + self.action_buffer.capacity() * 8) / (1024 * 1024);
-        
+        let estimated_memory_mb = (total_games * 10 * 1024
+            + self.state_buffer.capacity() * 8
+            + self.action_buffer.capacity() * 8)
+            / (1024 * 1024);
+
         let _ = dict.set_item("total_games", total_games);
         let _ = dict.set_item("active_games", active_games);
         let _ = dict.set_item("avg_score", avg_score);
         let _ = dict.set_item("avg_round", avg_round);
         let _ = dict.set_item("memory_usage_mb", estimated_memory_mb);
-        
+
         dict.into()
     }
 }

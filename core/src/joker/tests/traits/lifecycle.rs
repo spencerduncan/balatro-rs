@@ -2,6 +2,9 @@
 //!
 //! Optimized for zero allocations and cache-friendly execution following the
 //! pattern established in the JokerIdentity tests.
+//!
+//! Note: Unused code (id field, new() and reset() methods) was removed
+//! in commit 8ea4fdc per review feedback, addressing issue #601.
 
 use crate::joker::traits::JokerLifecycle;
 use std::sync::{Arc, Mutex};
