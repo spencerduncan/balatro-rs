@@ -12,8 +12,10 @@
 //! - Comprehensive error handling for edge cases
 //! - Integration with existing game state and card system
 
-use crate::card::{Card, Enhancement, Edition, Value};
-use crate::consumables::{Consumable, ConsumableError, ConsumableType, ConsumableEffect, Target, TargetType, ConsumableId};
+use crate::card::{Card, Edition, Enhancement, Value};
+use crate::consumables::{
+    Consumable, ConsumableEffect, ConsumableError, ConsumableId, ConsumableType, Target, TargetType,
+};
 use crate::game::Game;
 use crate::joker::JokerId;
 use serde::{Deserialize, Serialize};
@@ -49,31 +51,31 @@ pub enum TarotError {
 pub trait TarotCard: Consumable + Send + Sync + fmt::Debug {
     /// Get the tarot card's unique identifier
     fn card_id(&self) -> ConsumableId;
-    
+
     /// Get the Major Arcana number (0-21)
     fn arcana_number(&self) -> u8;
-    
+
     /// Get the traditional tarot name (e.g., "The Fool", "The Magician")
     fn arcana_name(&self) -> &'static str;
-    
+
     /// Get detailed flavor text for the card
     fn flavor_text(&self) -> &'static str;
-    
+
     /// Check if this tarot card can be used in the current game state
     /// with the given target
     fn can_activate(&self, game: &Game, target: &Target) -> bool {
         self.can_use(game, target)
     }
-    
+
     /// Apply the tarot card's effect to the game state
     /// This is the main method that implements the card's unique behavior
     fn activate(&self, game: &mut Game, target: Target) -> Result<TarotEffect, TarotError>;
-    
+
     /// Get the rarity level of this tarot card (for shop generation)
     fn rarity(&self) -> TarotRarity {
         TarotRarity::Common
     }
-    
+
     /// Get the base cost in the shop
     fn shop_cost(&self) -> u32 {
         3 // Standard tarot cost in Balatro
@@ -130,7 +132,7 @@ impl TarotFactory {
             _phantom: std::marker::PhantomData,
         }
     }
-    
+
     /// Create a tarot card by its ConsumableId
     pub fn create_tarot(&self, id: ConsumableId) -> Result<Box<dyn TarotCard>, TarotError> {
         match id {
@@ -150,12 +152,12 @@ impl TarotFactory {
             }),
         }
     }
-    
+
     /// Get all available tarot card IDs
     pub fn all_tarot_ids(&self) -> Vec<ConsumableId> {
         ConsumableId::tarot_cards()
     }
-    
+
     /// Check if a ConsumableId represents a tarot card
     pub fn is_tarot_card(&self, id: ConsumableId) -> bool {
         matches!(id.consumable_type(), ConsumableType::Tarot)
@@ -167,7 +169,6 @@ impl Default for TarotFactory {
         Self::new()
     }
 }
-
 
 // Major Arcana implementations start here
 
@@ -185,30 +186,30 @@ impl TheFool {
     }
 }
 
-
 impl TarotCard for TheFool {
     fn card_id(&self) -> ConsumableId {
         ConsumableId::TheFool
     }
-    
+
     fn arcana_number(&self) -> u8 {
         0
     }
-    
+
     fn arcana_name(&self) -> &'static str {
         "The Fool"
     }
-    
+
     fn flavor_text(&self) -> &'static str {
         "A new beginning requires new steps."
     }
-    
+
     fn activate(&self, game: &mut Game, _target: Target) -> Result<TarotEffect, TarotError> {
         // For now, we'll implement a placeholder that tries to create a random joker
         // TODO: Track last joker used this round when joker usage tracking is implemented
-        
+
         // Try to add a basic joker if there's space
-        if game.jokers.len() < 5 { // Assuming 5 is max joker slots
+        if game.jokers.len() < 5 {
+            // Assuming 5 is max joker slots
             let mut effect = TarotEffect::default();
             effect.jokers_created.push(JokerId::Joker); // Basic joker as placeholder
             effect.description = "Created a basic joker (placeholder implementation)".to_string();
@@ -223,38 +224,38 @@ impl Consumable for TheFool {
     fn consumable_type(&self) -> ConsumableType {
         ConsumableType::Tarot
     }
-    
+
     fn can_use(&self, game_state: &Game, target: &Target) -> bool {
         target.is_valid_type(self.get_target_type()) && target.validate(game_state).is_ok()
     }
-    
+
     fn use_effect(&self, game_state: &mut Game, target: Target) -> Result<(), ConsumableError> {
         match self.activate(game_state, target) {
             Ok(_effect) => Ok(()),
             Err(e) => Err(ConsumableError::EffectFailed(e.to_string())),
         }
     }
-    
+
     fn get_description(&self) -> String {
         "Creates last Joker used this round if possible".to_string()
     }
-    
+
     fn get_effect_category(&self) -> ConsumableEffect {
         ConsumableEffect::Generation
     }
-    
+
     fn get_target_type(&self) -> TargetType {
         TargetType::None
     }
-    
+
     fn name(&self) -> &'static str {
         "The Fool"
     }
-    
+
     fn description(&self) -> &'static str {
         "Creates last Joker used this round if possible"
     }
-    
+
     fn cost(&self) -> usize {
         3
     }
@@ -274,40 +275,39 @@ impl TheMagician {
     }
 }
 
-
 impl TarotCard for TheMagician {
     fn card_id(&self) -> ConsumableId {
         ConsumableId::TheMagician
     }
-    
+
     fn arcana_number(&self) -> u8 {
         1
     }
-    
+
     fn arcana_name(&self) -> &'static str {
         "The Magician"
     }
-    
+
     fn flavor_text(&self) -> &'static str {
         "As above, so below."
     }
-    
+
     fn activate(&self, _game: &mut Game, target: Target) -> Result<TarotEffect, TarotError> {
-        let card_target = target.as_card_target().ok_or_else(|| {
-            TarotError::EnhancementFailed {
+        let card_target = target
+            .as_card_target()
+            .ok_or_else(|| TarotError::EnhancementFailed {
                 reason: "Invalid target for The Magician".to_string(),
-            }
-        })?;
-        
+            })?;
+
         if card_target.indices.len() != 2 {
             return Err(TarotError::InsufficientCards {
                 needed: 2,
                 available: card_target.indices.len(),
             });
         }
-        
+
         let mut effect = TarotEffect::default();
-        
+
         // Apply Lucky enhancement to the target cards
         for &index in &card_target.indices {
             effect.enhanced_cards.push(CardEnhancement {
@@ -317,7 +317,7 @@ impl TarotCard for TheMagician {
                 edition: None,
             });
         }
-        
+
         effect.description = "Enhanced 2 cards to Lucky Cards".to_string();
         Ok(effect)
     }
@@ -327,38 +327,38 @@ impl Consumable for TheMagician {
     fn consumable_type(&self) -> ConsumableType {
         ConsumableType::Tarot
     }
-    
+
     fn can_use(&self, game_state: &Game, target: &Target) -> bool {
         target.is_valid_type(self.get_target_type()) && target.validate(game_state).is_ok()
     }
-    
+
     fn use_effect(&self, game_state: &mut Game, target: Target) -> Result<(), ConsumableError> {
         match self.activate(game_state, target) {
             Ok(_effect) => Ok(()),
             Err(e) => Err(ConsumableError::EffectFailed(e.to_string())),
         }
     }
-    
+
     fn get_description(&self) -> String {
         "Enhances 2 selected cards to Lucky Cards".to_string()
     }
-    
+
     fn get_effect_category(&self) -> ConsumableEffect {
         ConsumableEffect::Enhancement
     }
-    
+
     fn get_target_type(&self) -> TargetType {
         TargetType::Cards(2)
     }
-    
+
     fn name(&self) -> &'static str {
         "The Magician"
     }
-    
+
     fn description(&self) -> &'static str {
         "Enhances 2 selected cards to Lucky Cards"
     }
-    
+
     fn cost(&self) -> usize {
         3
     }
@@ -378,8 +378,6 @@ impl TheHighPriestess {
     }
 }
 
-
-
 /// The Empress (III) - Enhances 2 selected cards to Mult Cards
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TheEmpress {
@@ -394,29 +392,36 @@ impl TheEmpress {
     }
 }
 
-
 impl TarotCard for TheEmpress {
-    fn card_id(&self) -> ConsumableId { ConsumableId::TheEmpress }
-    fn arcana_number(&self) -> u8 { 3 }
-    fn arcana_name(&self) -> &'static str { "The Empress" }
-    fn flavor_text(&self) -> &'static str { "Fertility and growth in all endeavors." }
-    
+    fn card_id(&self) -> ConsumableId {
+        ConsumableId::TheEmpress
+    }
+    fn arcana_number(&self) -> u8 {
+        3
+    }
+    fn arcana_name(&self) -> &'static str {
+        "The Empress"
+    }
+    fn flavor_text(&self) -> &'static str {
+        "Fertility and growth in all endeavors."
+    }
+
     fn activate(&self, _game: &mut Game, target: Target) -> Result<TarotEffect, TarotError> {
-        let card_target = target.as_card_target().ok_or_else(|| {
-            TarotError::EnhancementFailed {
+        let card_target = target
+            .as_card_target()
+            .ok_or_else(|| TarotError::EnhancementFailed {
                 reason: "Invalid target for The Empress".to_string(),
-            }
-        })?;
-        
+            })?;
+
         if card_target.indices.len() != 2 {
             return Err(TarotError::InsufficientCards {
                 needed: 2,
                 available: card_target.indices.len(),
             });
         }
-        
+
         let mut effect = TarotEffect::default();
-        
+
         // Apply Mult enhancement to the target cards
         for &index in &card_target.indices {
             effect.enhanced_cards.push(CardEnhancement {
@@ -426,14 +431,16 @@ impl TarotCard for TheEmpress {
                 edition: None,
             });
         }
-        
+
         effect.description = "Enhanced 2 cards to Mult Cards".to_string();
         Ok(effect)
     }
 }
 
 impl Consumable for TheEmpress {
-    fn consumable_type(&self) -> ConsumableType { ConsumableType::Tarot }
+    fn consumable_type(&self) -> ConsumableType {
+        ConsumableType::Tarot
+    }
     fn can_use(&self, game_state: &Game, target: &Target) -> bool {
         target.is_valid_type(self.get_target_type()) && target.validate(game_state).is_ok()
     }
@@ -443,12 +450,24 @@ impl Consumable for TheEmpress {
             Err(e) => Err(ConsumableError::EffectFailed(e.to_string())),
         }
     }
-    fn get_description(&self) -> String { "Enhances 2 selected cards to Mult Cards".to_string() }
-    fn get_effect_category(&self) -> ConsumableEffect { ConsumableEffect::Enhancement }
-    fn get_target_type(&self) -> TargetType { TargetType::Cards(2) }
-    fn name(&self) -> &'static str { "The Empress" }
-    fn description(&self) -> &'static str { "Enhances 2 selected cards to Mult Cards" }
-    fn cost(&self) -> usize { 3 }
+    fn get_description(&self) -> String {
+        "Enhances 2 selected cards to Mult Cards".to_string()
+    }
+    fn get_effect_category(&self) -> ConsumableEffect {
+        ConsumableEffect::Enhancement
+    }
+    fn get_target_type(&self) -> TargetType {
+        TargetType::Cards(2)
+    }
+    fn name(&self) -> &'static str {
+        "The Empress"
+    }
+    fn description(&self) -> &'static str {
+        "Enhances 2 selected cards to Mult Cards"
+    }
+    fn cost(&self) -> usize {
+        3
+    }
 }
 
 /// The Emperor (IV) - Creates up to 2 Tarot Cards
@@ -465,35 +484,44 @@ impl TheEmperor {
     }
 }
 
-
 impl TarotCard for TheEmperor {
-    fn card_id(&self) -> ConsumableId { ConsumableId::TheEmperor }
-    fn arcana_number(&self) -> u8 { 4 }
-    fn arcana_name(&self) -> &'static str { "The Emperor" }
-    fn flavor_text(&self) -> &'static str { "Authority and structure guide the realm." }
-    
+    fn card_id(&self) -> ConsumableId {
+        ConsumableId::TheEmperor
+    }
+    fn arcana_number(&self) -> u8 {
+        4
+    }
+    fn arcana_name(&self) -> &'static str {
+        "The Emperor"
+    }
+    fn flavor_text(&self) -> &'static str {
+        "Authority and structure guide the realm."
+    }
+
     fn activate(&self, game: &mut Game, _target: Target) -> Result<TarotEffect, TarotError> {
         let mut effect = TarotEffect::default();
-        
+
         // Create up to 2 random tarot cards (excluding self to avoid infinite loops)
         let mut tarot_cards = ConsumableId::tarot_cards();
         tarot_cards.retain(|&id| id != ConsumableId::TheEmperor); // Don't create self
-        
+
         let count = std::cmp::min(2, 5 - game.consumables_in_hand.len()); // Don't exceed hand limit
-        
+
         for _ in 0..count {
             if let Some(&tarot_id) = tarot_cards.get(game.rng.gen_range(0..tarot_cards.len())) {
                 effect.created_consumables.push(tarot_id);
             }
         }
-        
+
         effect.description = format!("Created {} Tarot Card(s)", count);
         Ok(effect)
     }
 }
 
 impl Consumable for TheEmperor {
-    fn consumable_type(&self) -> ConsumableType { ConsumableType::Tarot }
+    fn consumable_type(&self) -> ConsumableType {
+        ConsumableType::Tarot
+    }
     fn can_use(&self, game_state: &Game, target: &Target) -> bool {
         target.is_valid_type(self.get_target_type()) && target.validate(game_state).is_ok()
     }
@@ -503,12 +531,24 @@ impl Consumable for TheEmperor {
             Err(e) => Err(ConsumableError::EffectFailed(e.to_string())),
         }
     }
-    fn get_description(&self) -> String { "Creates up to 2 Tarot Cards".to_string() }
-    fn get_effect_category(&self) -> ConsumableEffect { ConsumableEffect::Generation }
-    fn get_target_type(&self) -> TargetType { TargetType::None }
-    fn name(&self) -> &'static str { "The Emperor" }
-    fn description(&self) -> &'static str { "Creates up to 2 Tarot Cards" }
-    fn cost(&self) -> usize { 3 }
+    fn get_description(&self) -> String {
+        "Creates up to 2 Tarot Cards".to_string()
+    }
+    fn get_effect_category(&self) -> ConsumableEffect {
+        ConsumableEffect::Generation
+    }
+    fn get_target_type(&self) -> TargetType {
+        TargetType::None
+    }
+    fn name(&self) -> &'static str {
+        "The Emperor"
+    }
+    fn description(&self) -> &'static str {
+        "Creates up to 2 Tarot Cards"
+    }
+    fn cost(&self) -> usize {
+        3
+    }
 }
 
 /// The Hierophant (V) - Enhances 2 selected cards to Bonus Cards
@@ -525,29 +565,36 @@ impl TheHierophant {
     }
 }
 
-
 impl TarotCard for TheHierophant {
-    fn card_id(&self) -> ConsumableId { ConsumableId::TheHierophant }
-    fn arcana_number(&self) -> u8 { 5 }
-    fn arcana_name(&self) -> &'static str { "The Hierophant" }
-    fn flavor_text(&self) -> &'static str { "Sacred wisdom flows through tradition." }
-    
+    fn card_id(&self) -> ConsumableId {
+        ConsumableId::TheHierophant
+    }
+    fn arcana_number(&self) -> u8 {
+        5
+    }
+    fn arcana_name(&self) -> &'static str {
+        "The Hierophant"
+    }
+    fn flavor_text(&self) -> &'static str {
+        "Sacred wisdom flows through tradition."
+    }
+
     fn activate(&self, _game: &mut Game, target: Target) -> Result<TarotEffect, TarotError> {
-        let card_target = target.as_card_target().ok_or_else(|| {
-            TarotError::EnhancementFailed {
+        let card_target = target
+            .as_card_target()
+            .ok_or_else(|| TarotError::EnhancementFailed {
                 reason: "Invalid target for The Hierophant".to_string(),
-            }
-        })?;
-        
+            })?;
+
         if card_target.indices.len() != 2 {
             return Err(TarotError::InsufficientCards {
                 needed: 2,
                 available: card_target.indices.len(),
             });
         }
-        
+
         let mut effect = TarotEffect::default();
-        
+
         // Apply Bonus enhancement to the target cards
         for &index in &card_target.indices {
             effect.enhanced_cards.push(CardEnhancement {
@@ -557,14 +604,16 @@ impl TarotCard for TheHierophant {
                 edition: None,
             });
         }
-        
+
         effect.description = "Enhanced 2 cards to Bonus Cards".to_string();
         Ok(effect)
     }
 }
 
 impl Consumable for TheHierophant {
-    fn consumable_type(&self) -> ConsumableType { ConsumableType::Tarot }
+    fn consumable_type(&self) -> ConsumableType {
+        ConsumableType::Tarot
+    }
     fn can_use(&self, game_state: &Game, target: &Target) -> bool {
         target.is_valid_type(self.get_target_type()) && target.validate(game_state).is_ok()
     }
@@ -574,12 +623,24 @@ impl Consumable for TheHierophant {
             Err(e) => Err(ConsumableError::EffectFailed(e.to_string())),
         }
     }
-    fn get_description(&self) -> String { "Enhances 2 selected cards to Bonus Cards".to_string() }
-    fn get_effect_category(&self) -> ConsumableEffect { ConsumableEffect::Enhancement }
-    fn get_target_type(&self) -> TargetType { TargetType::Cards(2) }
-    fn name(&self) -> &'static str { "The Hierophant" }
-    fn description(&self) -> &'static str { "Enhances 2 selected cards to Bonus Cards" }
-    fn cost(&self) -> usize { 3 }
+    fn get_description(&self) -> String {
+        "Enhances 2 selected cards to Bonus Cards".to_string()
+    }
+    fn get_effect_category(&self) -> ConsumableEffect {
+        ConsumableEffect::Enhancement
+    }
+    fn get_target_type(&self) -> TargetType {
+        TargetType::Cards(2)
+    }
+    fn name(&self) -> &'static str {
+        "The Hierophant"
+    }
+    fn description(&self) -> &'static str {
+        "Enhances 2 selected cards to Bonus Cards"
+    }
+    fn cost(&self) -> usize {
+        3
+    }
 }
 
 /// The Lovers (VI) - Enhances 1 selected card to Wild Card
@@ -596,29 +657,36 @@ impl TheLovers {
     }
 }
 
-
 impl TarotCard for TheLovers {
-    fn card_id(&self) -> ConsumableId { ConsumableId::TheLovers }
-    fn arcana_number(&self) -> u8 { 6 }
-    fn arcana_name(&self) -> &'static str { "The Lovers" }
-    fn flavor_text(&self) -> &'static str { "Union creates infinite possibilities." }
-    
+    fn card_id(&self) -> ConsumableId {
+        ConsumableId::TheLovers
+    }
+    fn arcana_number(&self) -> u8 {
+        6
+    }
+    fn arcana_name(&self) -> &'static str {
+        "The Lovers"
+    }
+    fn flavor_text(&self) -> &'static str {
+        "Union creates infinite possibilities."
+    }
+
     fn activate(&self, _game: &mut Game, target: Target) -> Result<TarotEffect, TarotError> {
-        let card_target = target.as_card_target().ok_or_else(|| {
-            TarotError::EnhancementFailed {
+        let card_target = target
+            .as_card_target()
+            .ok_or_else(|| TarotError::EnhancementFailed {
                 reason: "Invalid target for The Lovers".to_string(),
-            }
-        })?;
-        
+            })?;
+
         if card_target.indices.len() != 1 {
             return Err(TarotError::InsufficientCards {
                 needed: 1,
                 available: card_target.indices.len(),
             });
         }
-        
+
         let mut effect = TarotEffect::default();
-        
+
         // Apply Wild enhancement to the target card
         effect.enhanced_cards.push(CardEnhancement {
             card_index: card_target.indices[0],
@@ -626,14 +694,16 @@ impl TarotCard for TheLovers {
             enhancement: Enhancement::Wild,
             edition: None,
         });
-        
+
         effect.description = "Enhanced 1 card to Wild Card".to_string();
         Ok(effect)
     }
 }
 
 impl Consumable for TheLovers {
-    fn consumable_type(&self) -> ConsumableType { ConsumableType::Tarot }
+    fn consumable_type(&self) -> ConsumableType {
+        ConsumableType::Tarot
+    }
     fn can_use(&self, game_state: &Game, target: &Target) -> bool {
         target.is_valid_type(self.get_target_type()) && target.validate(game_state).is_ok()
     }
@@ -643,12 +713,24 @@ impl Consumable for TheLovers {
             Err(e) => Err(ConsumableError::EffectFailed(e.to_string())),
         }
     }
-    fn get_description(&self) -> String { "Enhances 1 selected card to Wild Card".to_string() }
-    fn get_effect_category(&self) -> ConsumableEffect { ConsumableEffect::Enhancement }
-    fn get_target_type(&self) -> TargetType { TargetType::Cards(1) }
-    fn name(&self) -> &'static str { "The Lovers" }
-    fn description(&self) -> &'static str { "Enhances 1 selected card to Wild Card" }
-    fn cost(&self) -> usize { 3 }
+    fn get_description(&self) -> String {
+        "Enhances 1 selected card to Wild Card".to_string()
+    }
+    fn get_effect_category(&self) -> ConsumableEffect {
+        ConsumableEffect::Enhancement
+    }
+    fn get_target_type(&self) -> TargetType {
+        TargetType::Cards(1)
+    }
+    fn name(&self) -> &'static str {
+        "The Lovers"
+    }
+    fn description(&self) -> &'static str {
+        "Enhances 1 selected card to Wild Card"
+    }
+    fn cost(&self) -> usize {
+        3
+    }
 }
 
 /// The Chariot (VII) - Enhances 1 selected card to Steel Card
@@ -665,29 +747,36 @@ impl TheChariot {
     }
 }
 
-
 impl TarotCard for TheChariot {
-    fn card_id(&self) -> ConsumableId { ConsumableId::TheChariot }
-    fn arcana_number(&self) -> u8 { 7 }
-    fn arcana_name(&self) -> &'static str { "The Chariot" }
-    fn flavor_text(&self) -> &'static str { "Victory through determination and control." }
-    
+    fn card_id(&self) -> ConsumableId {
+        ConsumableId::TheChariot
+    }
+    fn arcana_number(&self) -> u8 {
+        7
+    }
+    fn arcana_name(&self) -> &'static str {
+        "The Chariot"
+    }
+    fn flavor_text(&self) -> &'static str {
+        "Victory through determination and control."
+    }
+
     fn activate(&self, _game: &mut Game, target: Target) -> Result<TarotEffect, TarotError> {
-        let card_target = target.as_card_target().ok_or_else(|| {
-            TarotError::EnhancementFailed {
+        let card_target = target
+            .as_card_target()
+            .ok_or_else(|| TarotError::EnhancementFailed {
                 reason: "Invalid target for The Chariot".to_string(),
-            }
-        })?;
-        
+            })?;
+
         if card_target.indices.len() != 1 {
             return Err(TarotError::InsufficientCards {
                 needed: 1,
                 available: card_target.indices.len(),
             });
         }
-        
+
         let mut effect = TarotEffect::default();
-        
+
         // Apply Steel enhancement to the target card
         effect.enhanced_cards.push(CardEnhancement {
             card_index: card_target.indices[0],
@@ -695,14 +784,16 @@ impl TarotCard for TheChariot {
             enhancement: Enhancement::Steel,
             edition: None,
         });
-        
+
         effect.description = "Enhanced 1 card to Steel Card".to_string();
         Ok(effect)
     }
 }
 
 impl Consumable for TheChariot {
-    fn consumable_type(&self) -> ConsumableType { ConsumableType::Tarot }
+    fn consumable_type(&self) -> ConsumableType {
+        ConsumableType::Tarot
+    }
     fn can_use(&self, game_state: &Game, target: &Target) -> bool {
         target.is_valid_type(self.get_target_type()) && target.validate(game_state).is_ok()
     }
@@ -712,12 +803,24 @@ impl Consumable for TheChariot {
             Err(e) => Err(ConsumableError::EffectFailed(e.to_string())),
         }
     }
-    fn get_description(&self) -> String { "Enhances 1 selected card to Steel Card".to_string() }
-    fn get_effect_category(&self) -> ConsumableEffect { ConsumableEffect::Enhancement }
-    fn get_target_type(&self) -> TargetType { TargetType::Cards(1) }
-    fn name(&self) -> &'static str { "The Chariot" }
-    fn description(&self) -> &'static str { "Enhances 1 selected card to Steel Card" }
-    fn cost(&self) -> usize { 3 }
+    fn get_description(&self) -> String {
+        "Enhances 1 selected card to Steel Card".to_string()
+    }
+    fn get_effect_category(&self) -> ConsumableEffect {
+        ConsumableEffect::Enhancement
+    }
+    fn get_target_type(&self) -> TargetType {
+        TargetType::Cards(1)
+    }
+    fn name(&self) -> &'static str {
+        "The Chariot"
+    }
+    fn description(&self) -> &'static str {
+        "Enhances 1 selected card to Steel Card"
+    }
+    fn cost(&self) -> usize {
+        3
+    }
 }
 
 /// Strength (VIII) - Increases rank of up to 2 selected cards by 1
@@ -734,41 +837,53 @@ impl StrengthCard {
     }
 }
 
-
 impl TarotCard for StrengthCard {
-    fn card_id(&self) -> ConsumableId { ConsumableId::Strength }
-    fn arcana_number(&self) -> u8 { 8 }
-    fn arcana_name(&self) -> &'static str { "Strength" }
-    fn flavor_text(&self) -> &'static str { "Inner strength conquers all obstacles." }
-    
+    fn card_id(&self) -> ConsumableId {
+        ConsumableId::Strength
+    }
+    fn arcana_number(&self) -> u8 {
+        8
+    }
+    fn arcana_name(&self) -> &'static str {
+        "Strength"
+    }
+    fn flavor_text(&self) -> &'static str {
+        "Inner strength conquers all obstacles."
+    }
+
     fn activate(&self, _game: &mut Game, target: Target) -> Result<TarotEffect, TarotError> {
-        let card_target = target.as_card_target().ok_or_else(|| {
-            TarotError::EnhancementFailed {
+        let card_target = target
+            .as_card_target()
+            .ok_or_else(|| TarotError::EnhancementFailed {
                 reason: "Invalid target for Strength".to_string(),
-            }
-        })?;
-        
+            })?;
+
         if card_target.indices.is_empty() || card_target.indices.len() > 2 {
             return Err(TarotError::InsufficientCards {
                 needed: 1, // At least 1, up to 2
                 available: card_target.indices.len(),
             });
         }
-        
+
         let mut effect = TarotEffect::default();
-        
+
         // This is a placeholder implementation - actual rank changing would need
         // to modify the cards in the game state
-        effect.description = format!("Increased rank of {} card(s) by 1", card_target.indices.len());
-        
+        effect.description = format!(
+            "Increased rank of {} card(s) by 1",
+            card_target.indices.len()
+        );
+
         // TODO: Implement actual card rank modification when card mutation is available
-        
+
         Ok(effect)
     }
 }
 
 impl Consumable for StrengthCard {
-    fn consumable_type(&self) -> ConsumableType { ConsumableType::Tarot }
+    fn consumable_type(&self) -> ConsumableType {
+        ConsumableType::Tarot
+    }
     fn can_use(&self, game_state: &Game, target: &Target) -> bool {
         target.is_valid_type(self.get_target_type()) && target.validate(game_state).is_ok()
     }
@@ -778,12 +893,24 @@ impl Consumable for StrengthCard {
             Err(e) => Err(ConsumableError::EffectFailed(e.to_string())),
         }
     }
-    fn get_description(&self) -> String { "Increases rank of up to 2 selected cards by 1".to_string() }
-    fn get_effect_category(&self) -> ConsumableEffect { ConsumableEffect::Enhancement }
-    fn get_target_type(&self) -> TargetType { TargetType::Cards(2) }
-    fn name(&self) -> &'static str { "Strength" }
-    fn description(&self) -> &'static str { "Increases rank of up to 2 selected cards by 1" }
-    fn cost(&self) -> usize { 3 }
+    fn get_description(&self) -> String {
+        "Increases rank of up to 2 selected cards by 1".to_string()
+    }
+    fn get_effect_category(&self) -> ConsumableEffect {
+        ConsumableEffect::Enhancement
+    }
+    fn get_target_type(&self) -> TargetType {
+        TargetType::Cards(2)
+    }
+    fn name(&self) -> &'static str {
+        "Strength"
+    }
+    fn description(&self) -> &'static str {
+        "Increases rank of up to 2 selected cards by 1"
+    }
+    fn cost(&self) -> usize {
+        3
+    }
 }
 
 /// The Hermit (IX) - Gain $20 money
@@ -800,28 +927,37 @@ impl TheHermit {
     }
 }
 
-
 impl TarotCard for TheHermit {
-    fn card_id(&self) -> ConsumableId { ConsumableId::TheHermit }
-    fn arcana_number(&self) -> u8 { 9 }
-    fn arcana_name(&self) -> &'static str { "The Hermit" }
-    fn flavor_text(&self) -> &'static str { "Solitude illuminates inner wisdom." }
-    
+    fn card_id(&self) -> ConsumableId {
+        ConsumableId::TheHermit
+    }
+    fn arcana_number(&self) -> u8 {
+        9
+    }
+    fn arcana_name(&self) -> &'static str {
+        "The Hermit"
+    }
+    fn flavor_text(&self) -> &'static str {
+        "Solitude illuminates inner wisdom."
+    }
+
     fn activate(&self, game: &mut Game, _target: Target) -> Result<TarotEffect, TarotError> {
         let mut effect = TarotEffect::default();
-        
+
         effect.money_change = 20;
         effect.description = "Gained $20".to_string();
-        
+
         // Apply money change to game state immediately
         game.money += 20.0;
-        
+
         Ok(effect)
     }
 }
 
 impl Consumable for TheHermit {
-    fn consumable_type(&self) -> ConsumableType { ConsumableType::Tarot }
+    fn consumable_type(&self) -> ConsumableType {
+        ConsumableType::Tarot
+    }
     fn can_use(&self, game_state: &Game, target: &Target) -> bool {
         target.is_valid_type(self.get_target_type()) && target.validate(game_state).is_ok()
     }
@@ -831,12 +967,24 @@ impl Consumable for TheHermit {
             Err(e) => Err(ConsumableError::EffectFailed(e.to_string())),
         }
     }
-    fn get_description(&self) -> String { "Gain $20 money".to_string() }
-    fn get_effect_category(&self) -> ConsumableEffect { ConsumableEffect::Utility }
-    fn get_target_type(&self) -> TargetType { TargetType::None }
-    fn name(&self) -> &'static str { "The Hermit" }
-    fn description(&self) -> &'static str { "Gain $20 money" }
-    fn cost(&self) -> usize { 3 }
+    fn get_description(&self) -> String {
+        "Gain $20 money".to_string()
+    }
+    fn get_effect_category(&self) -> ConsumableEffect {
+        ConsumableEffect::Utility
+    }
+    fn get_target_type(&self) -> TargetType {
+        TargetType::None
+    }
+    fn name(&self) -> &'static str {
+        "The Hermit"
+    }
+    fn description(&self) -> &'static str {
+        "Gain $20 money"
+    }
+    fn cost(&self) -> usize {
+        3
+    }
 }
 
 /// Wheel of Fortune (X) - 1 in 4 chance to add Foil, Holographic, or Polychrome edition
@@ -853,53 +1001,62 @@ impl WheelOfFortune {
     }
 }
 
-
 impl TarotCard for WheelOfFortune {
-    fn card_id(&self) -> ConsumableId { ConsumableId::WheelOfFortune }
-    fn arcana_number(&self) -> u8 { 10 }
-    fn arcana_name(&self) -> &'static str { "Wheel of Fortune" }
-    fn flavor_text(&self) -> &'static str { "Fate spins the wheel of chance." }
-    
+    fn card_id(&self) -> ConsumableId {
+        ConsumableId::WheelOfFortune
+    }
+    fn arcana_number(&self) -> u8 {
+        10
+    }
+    fn arcana_name(&self) -> &'static str {
+        "Wheel of Fortune"
+    }
+    fn flavor_text(&self) -> &'static str {
+        "Fate spins the wheel of chance."
+    }
+
     fn activate(&self, game: &mut Game, target: Target) -> Result<TarotEffect, TarotError> {
-        let card_target = target.as_card_target().ok_or_else(|| {
-            TarotError::EnhancementFailed {
+        let card_target = target
+            .as_card_target()
+            .ok_or_else(|| TarotError::EnhancementFailed {
                 reason: "Invalid target for Wheel of Fortune".to_string(),
-            }
-        })?;
-        
+            })?;
+
         if card_target.indices.len() != 1 {
             return Err(TarotError::InsufficientCards {
                 needed: 1,
                 available: card_target.indices.len(),
             });
         }
-        
+
         let mut effect = TarotEffect::default();
-        
+
         // 1 in 4 chance to succeed
         if game.rng.gen_range(0..4) == 0 {
             // Randomly choose one of the three editions
             let editions = [Edition::Foil, Edition::Holographic, Edition::Polychrome];
             let chosen_edition = editions[game.rng.gen_range(0..3)];
-            
+
             effect.enhanced_cards.push(CardEnhancement {
                 card_index: card_target.indices[0],
                 collection: card_target.collection,
                 enhancement: Enhancement::Bonus, // Keep existing enhancement if any
                 edition: Some(chosen_edition),
             });
-            
+
             effect.description = format!("Added {:?} edition to 1 card", chosen_edition);
         } else {
             effect.description = "The wheel spins... but luck was not with you".to_string();
         }
-        
+
         Ok(effect)
     }
 }
 
 impl Consumable for WheelOfFortune {
-    fn consumable_type(&self) -> ConsumableType { ConsumableType::Tarot }
+    fn consumable_type(&self) -> ConsumableType {
+        ConsumableType::Tarot
+    }
     fn can_use(&self, game_state: &Game, target: &Target) -> bool {
         target.is_valid_type(self.get_target_type()) && target.validate(game_state).is_ok()
     }
@@ -909,39 +1066,61 @@ impl Consumable for WheelOfFortune {
             Err(e) => Err(ConsumableError::EffectFailed(e.to_string())),
         }
     }
-    fn get_description(&self) -> String { "1 in 4 chance to add Foil, Holographic, or Polychrome edition".to_string() }
-    fn get_effect_category(&self) -> ConsumableEffect { ConsumableEffect::Enhancement }
-    fn get_target_type(&self) -> TargetType { TargetType::Cards(1) }
-    fn name(&self) -> &'static str { "Wheel of Fortune" }
-    fn description(&self) -> &'static str { "1 in 4 chance to add Foil, Holographic, or Polychrome edition" }
-    fn cost(&self) -> usize { 3 }
+    fn get_description(&self) -> String {
+        "1 in 4 chance to add Foil, Holographic, or Polychrome edition".to_string()
+    }
+    fn get_effect_category(&self) -> ConsumableEffect {
+        ConsumableEffect::Enhancement
+    }
+    fn get_target_type(&self) -> TargetType {
+        TargetType::Cards(1)
+    }
+    fn name(&self) -> &'static str {
+        "Wheel of Fortune"
+    }
+    fn description(&self) -> &'static str {
+        "1 in 4 chance to add Foil, Holographic, or Polychrome edition"
+    }
+    fn cost(&self) -> usize {
+        3
+    }
 }
 
 // TheHighPriestess implementation
 impl TarotCard for TheHighPriestess {
-    fn card_id(&self) -> ConsumableId { ConsumableId::TheHighPriestess }
-    fn arcana_number(&self) -> u8 { 2 }
-    fn arcana_name(&self) -> &'static str { "The High Priestess" }
-    fn flavor_text(&self) -> &'static str { "Knowledge flows from the celestial sphere." }
-    
+    fn card_id(&self) -> ConsumableId {
+        ConsumableId::TheHighPriestess
+    }
+    fn arcana_number(&self) -> u8 {
+        2
+    }
+    fn arcana_name(&self) -> &'static str {
+        "The High Priestess"
+    }
+    fn flavor_text(&self) -> &'static str {
+        "Knowledge flows from the celestial sphere."
+    }
+
     fn activate(&self, game: &mut Game, _target: Target) -> Result<TarotEffect, TarotError> {
         let mut effect = TarotEffect::default();
         let planet_cards = ConsumableId::planet_cards();
         let count = std::cmp::min(2, 5 - game.consumables_in_hand.len());
-        
+
         for _ in 0..count {
             if let Some(&planet_id) = planet_cards.get(game.rng.gen_range(0..planet_cards.len())) {
                 effect.created_consumables.push(planet_id);
             }
         }
-        
+
         effect.description = format!("Created {} Planet Card(s)", count);
         Ok(effect)
     }
 }
 
 impl Consumable for TheHighPriestess {
-    fn consumable_type(&self) -> ConsumableType { ConsumableType::Tarot }
+    fn consumable_type(&self) -> ConsumableType {
+        ConsumableType::Tarot
+    }
     fn can_use(&self, game_state: &Game, target: &Target) -> bool {
         target.is_valid_type(self.get_target_type()) && target.validate(game_state).is_ok()
     }
@@ -951,21 +1130,25 @@ impl Consumable for TheHighPriestess {
             Err(e) => Err(ConsumableError::EffectFailed(e.to_string())),
         }
     }
-    fn get_description(&self) -> String { "Creates up to 2 Planet Cards".to_string() }
-    fn get_effect_category(&self) -> ConsumableEffect { ConsumableEffect::Generation }
-    fn get_target_type(&self) -> TargetType { TargetType::None }
-    fn name(&self) -> &'static str { "The High Priestess" }
-    fn description(&self) -> &'static str { "Creates up to 2 Planet Cards" }
-    fn cost(&self) -> usize { 3 }
+    fn get_description(&self) -> String {
+        "Creates up to 2 Planet Cards".to_string()
+    }
+    fn get_effect_category(&self) -> ConsumableEffect {
+        ConsumableEffect::Generation
+    }
+    fn get_target_type(&self) -> TargetType {
+        TargetType::None
+    }
+    fn name(&self) -> &'static str {
+        "The High Priestess"
+    }
+    fn description(&self) -> &'static str {
+        "Creates up to 2 Planet Cards"
+    }
+    fn cost(&self) -> usize {
+        3
+    }
 }
-
-
-
-
-
-
-
-
 
 #[cfg(test)]
 mod tests {
@@ -975,7 +1158,7 @@ mod tests {
     #[test]
     fn test_tarot_factory_creation() {
         let factory = TarotFactory::new();
-        
+
         // Test creating each tarot card
         let tarot_ids = factory.all_tarot_ids();
         for id in tarot_ids {
@@ -983,28 +1166,28 @@ mod tests {
             assert!(tarot.is_ok(), "Failed to create tarot card: {:?}", id);
         }
     }
-    
+
     #[test]
     fn test_the_hermit_money_gain() {
         let hermit = TheHermit::new();
         let mut game = Game::default();
         let initial_money = game.money;
-        
+
         let result = hermit.activate(&mut game, Target::None);
         assert!(result.is_ok());
-        
+
         let effect = result.unwrap();
         assert_eq!(effect.money_change, 20);
         assert_eq!(game.money, initial_money + 20.0);
     }
-    
-    #[test] 
+
+    #[test]
     fn test_tarot_card_metadata() {
         let fool = TheFool::new();
         assert_eq!(fool.arcana_number(), 0);
         assert_eq!(fool.arcana_name(), "The Fool");
         assert_eq!(fool.card_id(), ConsumableId::TheFool);
-        
+
         let magician = TheMagician::new();
         assert_eq!(magician.arcana_number(), 1);
         assert_eq!(magician.get_target_type(), TargetType::Cards(2));

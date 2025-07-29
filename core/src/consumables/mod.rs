@@ -1538,7 +1538,7 @@ pub mod tarot;
 // pub mod spectral;
 
 // Re-export key tarot types for convenience
-pub use tarot::{TarotCard, TarotFactory, TarotEffect, TarotError, TarotRarity, CardEnhancement};
+pub use tarot::{CardEnhancement, TarotCard, TarotEffect, TarotError, TarotFactory, TarotRarity};
 
 // Test module
 #[cfg(test)]
