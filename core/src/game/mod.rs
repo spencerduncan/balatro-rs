@@ -247,11 +247,10 @@ pub struct Game {
     #[cfg_attr(feature = "serde", serde(skip))]
     pub memory_monitor: MemoryMonitor,
 
-    /// Skip tags system state
+    /// Active skip tag state for persistent tag effects (unified approach)
+    pub active_skip_tags: crate::skip_tags::ActiveSkipTags,
     /// Available skip tags for selection
     pub available_skip_tags: Vec<crate::skip_tags::SkipTagInstance>,
-    /// Active skip tags (for stacking effects like Juggle)
-    pub active_skip_tags: Vec<crate::skip_tags::SkipTagInstance>,
     /// Pending skip tag selection (after skipping a blind)
     pub pending_tag_selection: bool,
 }
@@ -365,9 +364,9 @@ impl Game {
             // Initialize memory monitor with default configuration
             memory_monitor: MemoryMonitor::default(),
 
-            // Initialize skip tags system
+            // Initialize skip tags system (unified approach)
+            active_skip_tags: crate::skip_tags::ActiveSkipTags::new(),
             available_skip_tags: Vec::new(),
-            active_skip_tags: Vec::new(),
             pending_tag_selection: false,
 
             config,
@@ -378,6 +377,61 @@ impl Game {
         // for now just move state to small blind
         self.stage = Stage::PreBlind();
         self.deal();
+    }
+
+    /// Apply a skip tag effect to the game state
+    pub fn apply_skip_tag_effect(&mut self, tag_id: crate::skip_tags::SkipTagId) -> Result<crate::skip_tags::TagEffectResult, crate::skip_tags::TagError> {
+        use crate::skip_tags::{get_registry, TagError};
+
+        let registry = get_registry();
+        let tag = registry.get_tag(tag_id)
+            .ok_or(TagError::InvalidTagId(tag_id))?;
+
+        if !tag.can_apply(self) {
+            return Err(TagError::CannotApply(format!("Tag {} cannot be applied in current game state", tag.name())));
+        }
+
+        let result = tag.apply_effect(self);
+
+        // Apply immediate money reward
+        if result.money_reward > 0 {
+            self.money += result.money_reward as f64;
+        }
+
+        // Apply shop enhancement effects if this is a shop enhancement tag
+        if result.persist_tag {
+            self.active_skip_tags.apply_shop_enhancement_effect(tag_id);
+        }
+
+        Ok(result)
+    }
+
+    /// Consume next shop modifiers and return them for shop generation
+    pub fn consume_next_shop_modifiers(&mut self) -> crate::skip_tags::NextShopModifiers {
+        self.active_skip_tags.consume_next_shop_modifiers()
+    }
+
+    /// Get the count of blinds skipped (for economic tags)
+    pub fn get_blinds_skipped_count(&self) -> u32 {
+        self.active_skip_tags.blinds_skipped
+    }
+
+    /// Increment the count of blinds skipped
+    pub fn increment_blinds_skipped(&mut self) {
+        self.active_skip_tags.blinds_skipped += 1;
+    }
+
+    /// Handle boss blind defeat (for Investment tag)
+    pub fn handle_boss_blind_defeat(&mut self) -> i32 {
+        let investment_count = self.active_skip_tags.investment_count;
+        if investment_count > 0 {
+            let reward = investment_count as i32 * 25; // $25 per Investment tag
+            self.money += reward as f64;
+            self.active_skip_tags.investment_count = 0; // Reset after payout
+            reward
+        } else {
+            0
+        }
     }
 
     /// Start a new blind and trigger joker lifecycle events
@@ -2357,9 +2411,9 @@ impl Game {
             rng: crate::rng::GameRng::secure(),
             // Initialize memory monitor (not serialized)
             memory_monitor: MemoryMonitor::default(),
-            // Initialize skip tags system (not serialized)
+            // Initialize skip tags system (not serialized, unified approach)
+            active_skip_tags: crate::skip_tags::ActiveSkipTags::new(),
             available_skip_tags: Vec::new(),
-            active_skip_tags: Vec::new(),
             pending_tag_selection: false,
         };
 
