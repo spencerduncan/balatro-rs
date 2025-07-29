@@ -48,6 +48,9 @@ pub mod target_context;
 pub mod vouchers;
 
 #[cfg(test)]
+mod skip_blind_tests;
+
+#[cfg(test)]
 mod tests {
     use crate::action::Action;
     use crate::game::Game;

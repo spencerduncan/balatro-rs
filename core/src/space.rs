@@ -20,8 +20,9 @@ use pyo3::pyclass;
 // 73-76: buy joker
 // 77: next round
 // 78: select blind
+// 79: skip blind
 //
-// We end up with a vector of length 79 (so far) where each index
+// We end up with a vector of length 80 (so far) where each index
 // represents a potential action.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "python", pyclass(eq))]
@@ -36,6 +37,7 @@ pub struct ActionSpace {
     pub buy_joker: Vec<usize>,
     pub next_round: Vec<usize>,
     pub select_blind: Vec<usize>,
+    pub skip_blind: Vec<usize>,
 
     // Performance optimization: cached flat representation
     #[cfg_attr(feature = "serde", serde(skip))]
@@ -63,6 +65,7 @@ impl ActionSpace {
             self.flat_actions.extend(&self.buy_joker);
             self.flat_actions.extend(&self.next_round);
             self.flat_actions.extend(&self.select_blind);
+            self.flat_actions.extend(&self.skip_blind);
             self.cache_valid = true;
         }
     }
@@ -151,6 +154,14 @@ impl ActionSpace {
         self.select_blind_min() + self.select_blind.len() - 1
     }
 
+    fn skip_blind_min(&self) -> usize {
+        self.select_blind_max() + 1
+    }
+
+    fn skip_blind_max(&self) -> usize {
+        self.skip_blind_min() + self.skip_blind.len() - 1
+    }
+
     // Not all actions are always legal, by default all actions
     // are masked out, but provide methods to unmask valid.
     pub(crate) fn unmask_select_card(&mut self, i: usize) -> Result<(), ActionSpaceError> {
@@ -211,6 +222,11 @@ impl ActionSpace {
 
     pub(crate) fn unmask_select_blind(&mut self) {
         self.select_blind[0] = 1;
+        self.invalidate_cache();
+    }
+
+    pub(crate) fn unmask_skip_blind(&mut self) {
+        self.skip_blind[0] = 1;
         self.invalidate_cache();
     }
 
@@ -280,6 +296,12 @@ impl ActionSpace {
                     None => Ok(Action::SelectBlind(Blind::Small)),
                 }
             }
+            n if (self.skip_blind_min()..=self.skip_blind_max()).contains(&n) => {
+                match game.blind {
+                    Some(blind) => Ok(Action::SkipBlind(blind.next())),
+                    None => Ok(Action::SkipBlind(Blind::Small)),
+                }
+            }
             _ => Err(ActionSpaceError::InvalidActionConversion),
         }
     }
@@ -297,6 +319,7 @@ impl ActionSpace {
             self.buy_joker.clone(),
             self.next_round.clone(),
             self.select_blind.clone(),
+            self.skip_blind.clone(),
         ]
         .concat()
     }
@@ -321,6 +344,7 @@ impl ActionSpace {
             .chain(self.buy_joker.iter())
             .chain(self.next_round.iter())
             .chain(self.select_blind.iter())
+            .chain(self.skip_blind.iter())
             .copied()
     }
 
@@ -361,6 +385,7 @@ impl From<Config> for ActionSpace {
             buy_joker: vec![0; c.store_consumable_slots_max],
             next_round: vec![0; 1],
             select_blind: vec![0; 1],
+            skip_blind: vec![0; 1],
 
             // Initialize cache as invalid - will be computed on first access
             flat_actions: Vec::new(),
@@ -387,6 +412,7 @@ impl From<ActionSpace> for Vec<usize> {
                 a.buy_joker,
                 a.next_round,
                 a.select_blind,
+                a.skip_blind,
             ]
             .concat()
         }
@@ -434,14 +460,31 @@ mod tests {
         let space = g.gen_action_space();
         let space_vec = g.gen_action_space().to_vec();
 
-        // Game hasn't started yet, so only valid action is select blind
-        for b in space_vec.iter().rev().skip(1).rev() {
-            assert_eq!(*b, 0);
+        // Game hasn't started yet, so only valid actions are select blind and skip blind
+        for (i, b) in space_vec.iter().enumerate() {
+            if i == space_vec.len() - 2 {
+                // select blind should be unmasked
+                assert_eq!(*b, 1);
+            } else if i == space_vec.len() - 1 {
+                // skip blind should be unmasked
+                assert_eq!(*b, 1);
+            } else {
+                // all other actions should be masked
+                assert_eq!(*b, 0);
+            }
         }
-        assert_eq!(*space_vec.last().unwrap(), 1);
-        let last_index = space_vec.len() - 1;
-        let action = space.to_action(last_index, &g).expect("to action");
+        
+        // Test select blind action
+        let select_blind_index = space_vec.len() - 2;
+        let action = space.to_action(select_blind_index, &g).expect("to action");
         assert_eq!(action, Action::SelectBlind(Blind::Small));
+        
+        // Test skip blind action
+        let skip_blind_index = space_vec.len() - 1;
+        let skip_action = space.to_action(skip_blind_index, &g).expect("to action");
+        assert_eq!(skip_action, Action::SkipBlind(Blind::Small));
+        
+        // Continue with select blind for the rest of the test
         g.handle_action(action).unwrap();
 
         // Game now in small blind, we can select, move, play, discard

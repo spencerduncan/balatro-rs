@@ -119,6 +119,24 @@ impl Game {
         }
     }
 
+    fn gen_actions_skip_blind(&self) -> Option<impl Iterator<Item = Action>> {
+        // If stage is not pre blind, cannot skip blind
+        if self.stage != Stage::PreBlind() {
+            return None;
+        }
+        
+        // TODO: Add skip tag availability check when SKIP-003 is implemented
+        // For now, assume skip is always available (will be replaced with tag system)
+        
+        // Generate skip action for the expected next blind
+        if let Some(blind) = self.blind {
+            Some(vec![Action::SkipBlind(blind.next())].into_iter())
+        } else {
+            // If game just started, we can skip the small blind
+            Some(vec![Action::SkipBlind(Blind::Small)].into_iter())
+        }
+    }
+
     // Get buy joker actions
     fn gen_actions_buy_joker(&self) -> Option<impl Iterator<Item = Action> + use<'_>> {
         // If stage is not shop, cannot buy
@@ -201,6 +219,7 @@ impl Game {
         let cash_outs = self.gen_actions_cash_out();
         let next_rounds = self.gen_actions_next_round();
         let select_blinds = self.gen_actions_select_blind();
+        let skip_blinds = self.gen_actions_skip_blind();
         let buy_jokers = self.gen_actions_buy_joker();
         let buy_packs = self.gen_actions_buy_pack();
         let open_packs = self.gen_actions_open_pack();
@@ -216,6 +235,7 @@ impl Game {
             .chain(cash_outs.into_iter().flatten())
             .chain(next_rounds.into_iter().flatten())
             .chain(select_blinds.into_iter().flatten())
+            .chain(skip_blinds.into_iter().flatten())
             .chain(buy_jokers.into_iter().flatten())
             .chain(buy_packs.into_iter().flatten())
             .chain(open_packs.into_iter().flatten())
@@ -307,6 +327,15 @@ impl Game {
         space.unmask_select_blind();
     }
 
+    fn unmask_action_space_skip_blind(&self, space: &mut ActionSpace) {
+        if self.stage != Stage::PreBlind() {
+            return;
+        }
+        // TODO: Add skip tag availability check when SKIP-003 is implemented
+        // For now, assume skip is always available (will be replaced with tag system)
+        space.unmask_skip_blind();
+    }
+
     fn unmask_action_space_buy_joker(&self, space: &mut ActionSpace) {
         if self.stage != Stage::Shop() {
             return;
@@ -330,6 +359,7 @@ impl Game {
         self.unmask_action_space_cash_out(&mut space);
         self.unmask_action_space_next_round(&mut space);
         self.unmask_action_space_select_blind(&mut space);
+        self.unmask_action_space_skip_blind(&mut space);
         self.unmask_action_space_buy_joker(&mut space);
         space
     }

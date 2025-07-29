@@ -71,7 +71,8 @@ pub enum Action {
     ActivateMultiSelect(), // Enter multi-select mode
     DeactivateMultiSelect(), // Exit multi-select mode and clear selections
 
-                           // SkipBlind(Blind),
+    // Skip blind action - allows skipping a blind using skip tags
+    SkipBlind(Blind),
 }
 
 impl fmt::Display for Action {
@@ -178,6 +179,9 @@ impl fmt::Display for Action {
             }
             Self::DeactivateMultiSelect() => {
                 write!(f, "DeactivateMultiSelect")
+            }
+            Self::SkipBlind(blind) => {
+                write!(f, "SkipBlind: {blind}")
             }
         }
     }

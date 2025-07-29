@@ -1555,6 +1555,45 @@ impl Game {
         Ok(())
     }
 
+    fn skip_blind(&mut self, blind: Blind) -> Result<(), GameError> {
+        // Production validation: Can only skip blind if stage is pre blind
+        if self.stage != Stage::PreBlind() {
+            return Err(GameError::InvalidStage);
+        }
+
+        // Production validation: Provided blind must be expected next blind
+        let expected_blind = if let Some(current) = self.blind {
+            current.next()
+        } else {
+            // If game just started, blind will be None, in which case
+            // we can only skip the small blind
+            Blind::Small
+        };
+
+        if blind != expected_blind {
+            return Err(GameError::InvalidBlind);
+        }
+
+        // TODO: Add skip tag validation here when SKIP-003 is implemented
+        // For now, assume skip is always valid (will be replaced with tag system)
+        
+        // Skip to the next stage without playing the blind
+        // Award reduced money for skipping (half of blind reward)
+        let skip_reward = blind.reward() as f64 / 2.0;
+        self.money += skip_reward;
+
+        // Progress to the next blind in sequence
+        self.blind = Some(blind);
+        
+        // Skip directly to post-blind stage
+        self.stage = Stage::PostBlind();
+        
+        // TODO: When SKIP-003 is implemented, trigger tag selection interface here
+        // This is where skip tags would be consumed and tag selection would occur
+        
+        Ok(())
+    }
+
     fn next_round(&mut self) -> Result<(), GameError> {
         self.stage = Stage::PreBlind();
         self.round += 1.0;
@@ -1643,6 +1682,10 @@ impl Game {
             },
             Action::SelectBlind(blind) => match self.stage {
                 Stage::PreBlind() => self.select_blind(blind),
+                _ => Err(GameError::InvalidAction),
+            },
+            Action::SkipBlind(blind) => match self.stage {
+                Stage::PreBlind() => self.skip_blind(blind),
                 _ => Err(GameError::InvalidAction),
             },
             Action::BuyPack { pack_type } => match self.stage {
