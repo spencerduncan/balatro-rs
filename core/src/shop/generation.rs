@@ -295,7 +295,32 @@ impl WeightedGenerator {
         ];
 
         let random_type = self.rng.choose(&consumable_types).unwrap().clone();
+        
+        // If it's a tarot card, try to generate a specific one
+        if random_type == ConsumableType::Tarot {
+            if let Some(specific_tarot) = self.generate_specific_tarot() {
+                return Some(specific_tarot);
+            }
+        }
+        
+        // Fallback to generic consumable type
         Some(ShopItem::Consumable(random_type))
+    }
+    
+    /// Generate a specific tarot card using the tarot factory
+    fn generate_specific_tarot(&self) -> Option<ShopItem> {
+        use crate::consumables::tarot::get_tarot_factory;
+        use crate::shop::ShopItem;
+        
+        let factory = get_tarot_factory();
+        let available_cards = factory.available_cards().ok()?;
+        
+        if available_cards.is_empty() {
+            return None;
+        }
+        
+        let random_card = self.rng.choose(&available_cards)?;
+        Some(ShopItem::SpecificConsumable(*random_card))
     }
 
     /// Generate a random voucher
@@ -460,7 +485,13 @@ impl ShopGenerator for WeightedGenerator {
                 };
                 let num_items = self.rng.gen_range(min..=max);
                 for _ in 0..num_items {
-                    contents.push(ShopItem::Consumable(crate::shop::ConsumableType::Tarot));
+                    // Try to generate specific tarot cards for arcana packs
+                    if let Some(specific_tarot) = self.generate_specific_tarot() {
+                        contents.push(specific_tarot);
+                    } else {
+                        // Fallback to generic tarot type
+                        contents.push(ShopItem::Consumable(crate::shop::ConsumableType::Tarot));
+                    }
                 }
             }
             PackType::Enhanced => {
@@ -883,6 +914,7 @@ mod tests {
             .map(|slot| match &slot.item {
                 ShopItem::Joker(_) => "joker",
                 ShopItem::Consumable(_) => "consumable",
+                ShopItem::SpecificConsumable(_) => "specific_consumable",
                 ShopItem::Voucher(_) => "voucher",
                 ShopItem::Pack(_) => "pack",
                 ShopItem::PlayingCard(_) => "playing_card",

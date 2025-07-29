@@ -40,7 +40,7 @@ pub enum CardCollection {
 }
 
 /// Error types for consumable operations
-#[derive(Error, Debug, Clone)]
+#[derive(Error, Debug, Clone, PartialEq)]
 pub enum ConsumableError {
     #[error("Invalid target: {0}")]
     InvalidTarget(String),
@@ -75,7 +75,7 @@ impl fmt::Display for CardCollection {
 }
 
 /// Error types for target validation
-#[derive(Debug, Error, Clone)]
+#[derive(Debug, Error, Clone, PartialEq)]
 pub enum TargetValidationError {
     #[error("Card index {index} out of bounds (hand size: {hand_size})")]
     CardIndexOutOfBounds { index: usize, hand_size: usize },
@@ -310,6 +310,8 @@ pub enum TargetType {
 
 /// Specific target for consumable application
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+// Note: Python bindings disabled for now due to complex enum structure
+// #[cfg_attr(feature = "python", pyo3::pyclass)]
 pub enum Target {
     /// No target required
     None,
@@ -803,6 +805,7 @@ impl fmt::Display for ConsumableType {
 /// Identifier for all consumable cards in the game
 /// This will be extended as consumable implementations are added
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, EnumIter)]
+#[cfg_attr(feature = "python", pyo3::pyclass)]
 pub enum ConsumableId {
     // Tarot Cards
     /// The Fool - Creates last Joker used this round if possible
@@ -1503,7 +1506,7 @@ impl<'de> Deserialize<'de> for ConsumableSlots {
 }
 
 // Re-export submodules when they are implemented
-// pub mod tarot;
+pub mod tarot;
 // pub mod planet;
 // pub mod spectral;
 

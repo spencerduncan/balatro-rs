@@ -1,4 +1,5 @@
 use crate::card::Card;
+use crate::consumables::ConsumableId;
 use crate::error::GameError;
 use crate::game::Game;
 use crate::joker::JokerId;
@@ -146,6 +147,12 @@ pub enum ShopItem {
     /// Consumables provide immediate effects when used and are consumed
     /// in the process. They offer powerful but limited-use benefits.
     Consumable(ConsumableType),
+    
+    /// A specific consumable card identified by its ID.
+    ///
+    /// This provides access to individual consumable implementations rather
+    /// than generic placeholder types. Used by the tarot card system.
+    SpecificConsumable(ConsumableId),
 
     /// A voucher that provides permanent upgrades.
     ///
@@ -185,6 +192,21 @@ impl ShopItem {
                 ConsumableType::Planet => 3,
                 ConsumableType::Spectral => 4,
             },
+            ShopItem::SpecificConsumable(consumable_id) => {
+                // Get base cost from tarot factory if it's a tarot card
+                use crate::consumables::tarot::get_tarot_factory;
+                if consumable_id.consumable_type() == crate::consumables::ConsumableType::Tarot {
+                    if let Ok(Some(metadata)) = get_tarot_factory().get_metadata(*consumable_id) {
+                        return metadata.rarity as usize + 2; // Common=2+2=4, Uncommon=3+2=5, etc.
+                    }
+                }
+                // Fallback to default consumable cost by type
+                match consumable_id.consumable_type() {
+                    crate::consumables::ConsumableType::Tarot => 3,
+                    crate::consumables::ConsumableType::Planet => 3,
+                    crate::consumables::ConsumableType::Spectral => 4,
+                }
+            },
             ShopItem::Voucher(_) => 10, // Standard voucher cost
             ShopItem::Pack(pack_type) => pack_type.base_cost(config),
             ShopItem::PlayingCard(_) => 2, // Standard playing card cost
@@ -196,6 +218,7 @@ impl ShopItem {
         match self {
             ShopItem::Joker(joker_id) => format!("{joker_id:?} Joker"),
             ShopItem::Consumable(consumable_type) => format!("{consumable_type:?} Card"),
+            ShopItem::SpecificConsumable(consumable_id) => format!("{}", consumable_id),
             ShopItem::Voucher(voucher_id) => format!("{voucher_id:?} Voucher"),
             ShopItem::Pack(pack_type) => format!("{pack_type:?} Pack"),
             ShopItem::PlayingCard(card) => format!("{card}"),

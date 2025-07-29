@@ -1729,6 +1729,20 @@ impl Game {
                 // TODO: Implement multi-select deactivation
                 Err(GameError::InvalidAction)
             }
+
+            // Consumable actions - infrastructure ready for implementation
+            Action::BuyConsumable { consumable_id: _, slot: _ } => {
+                // TODO: Implement consumable buying when shop integration is complete
+                Err(GameError::InvalidAction)
+            }
+            Action::UseConsumable { slot: _, target_description: _ } => {
+                // TODO: Implement consumable usage with tarot factory
+                Err(GameError::InvalidAction)
+            }
+            Action::SellConsumable { slot: _ } => {
+                // TODO: Implement consumable selling
+                Err(GameError::InvalidAction)
+            }
         }
     }
 
