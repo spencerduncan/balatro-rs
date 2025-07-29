@@ -814,7 +814,7 @@ mod dna_first_hand_tests {
             let hand = SelectHand::new(single_card);
 
             // DNA might still trigger but depends on implementation
-            let effect = dna_joker.on_hand_played(&mut context, &hand);
+            let _effect = dna_joker.on_hand_played(&mut context, &hand);
 
             // This test just ensures no crash on different stages
             // The actual behavior depends on whether DNA checks stage
