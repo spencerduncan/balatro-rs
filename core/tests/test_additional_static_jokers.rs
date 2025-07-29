@@ -429,7 +429,7 @@ fn test_abstract_joker() {
     use balatro_rs::joker::{GameContext, Joker, JokerId, JokerRarity};
     use balatro_rs::joker_factory::JokerFactory;
     use balatro_rs::joker_state::JokerStateManager;
-    use balatro_rs::rng::GameRng;
+    use balatro_rs::rng::{GameRng, RngMode};
     use balatro_rs::stage::Stage;
     use std::collections::HashMap;
     use std::sync::Arc;
