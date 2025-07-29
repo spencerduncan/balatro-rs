@@ -1369,4 +1369,19 @@
 <a href=#1369 id=1369 data-nosnippet>1369</a>        </span><span class="kw">fn </span>assert_send_sync&lt;T: Send + Sync&gt;() {}
 <a href=#1370 id=1370 data-nosnippet>1370</a>        assert_send_sync::&lt;Box&lt;<span class="kw">dyn </span>Joker&gt;&gt;();
 <a href=#1371 id=1371 data-nosnippet>1371</a>    }
-<a href=#1372 id=1372 data-nosnippet>1372</a>}</code></pre></div></section></main></body></html>
+<a href=#1372 id=1372 data-nosnippet>1372</a>
+<a href=#1373 id=1373 data-nosnippet>1373</a>    <span class="attr">#[test]
+<a href=#1374 id=1374 data-nosnippet>1374</a>    </span><span class="kw">fn </span>test_joker_effect_default_mult_multiplier() {
+<a href=#1375 id=1375 data-nosnippet>1375</a>        <span class="kw">let </span>effect = JokerEffect::new();
+<a href=#1376 id=1376 data-nosnippet>1376</a>        <span class="macro">assert_eq!</span>(
+<a href=#1377 id=1377 data-nosnippet>1377</a>            effect.mult_multiplier, <span class="number">1.0</span>,
+<a href=#1378 id=1378 data-nosnippet>1378</a>            <span class="string">"Default mult_multiplier should be 1.0"
+<a href=#1379 id=1379 data-nosnippet>1379</a>        </span>);
+<a href=#1380 id=1380 data-nosnippet>1380</a>
+<a href=#1381 id=1381 data-nosnippet>1381</a>        <span class="kw">let </span>effect2 = JokerEffect::default();
+<a href=#1382 id=1382 data-nosnippet>1382</a>        <span class="macro">assert_eq!</span>(
+<a href=#1383 id=1383 data-nosnippet>1383</a>            effect2.mult_multiplier, <span class="number">1.0</span>,
+<a href=#1384 id=1384 data-nosnippet>1384</a>            <span class="string">"Default mult_multiplier should be 1.0"
+<a href=#1385 id=1385 data-nosnippet>1385</a>        </span>);
+<a href=#1386 id=1386 data-nosnippet>1386</a>    }
+<a href=#1387 id=1387 data-nosnippet>1387</a>}</code></pre></div></section></main></body></html>

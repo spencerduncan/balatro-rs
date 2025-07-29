@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["AntimatterVoucher","BlankVoucher","GrabberVoucher","HieroglyphVoucher","IllusionVoucher","MagicTrickVoucher","MoneyTreeVoucher","NachoTongVoucher","PaintBrushVoucher","PetroglyphVoucher","SeedMoneyVoucher","TarotMerchantVoucher","TarotTycoonVoucher","WastefulVoucher"]};
