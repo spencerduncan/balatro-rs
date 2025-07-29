@@ -7,6 +7,9 @@ use balatro_rs::{
 /// that gains +1 Mult per Tarot card used
 #[test]
 fn test_fortune_teller_joker_correctly_created() {
+    // Initialize all systems before running the test to avoid factory race conditions
+    balatro_rs::initialize().expect("Failed to initialize core systems");
+
     let fortune = JokerFactory::create(JokerId::Fortune);
     assert!(fortune.is_some());
 
@@ -24,6 +27,9 @@ fn test_fortune_teller_joker_correctly_created() {
 /// that gains +3 Mult per pack skipped
 #[test]
 fn test_red_card_joker_correctly_created() {
+    // Initialize all systems before running the test to avoid factory race conditions
+    balatro_rs::initialize().expect("Failed to initialize core systems");
+
     let red_card = JokerFactory::create(JokerId::RedCard);
     assert!(red_card.is_some());
 
@@ -44,6 +50,9 @@ fn test_red_card_joker_correctly_created() {
 /// that gains +0.2x Mult per card destroyed
 #[test]
 fn test_steel_joker_correctly_created() {
+    // Initialize all systems before running the test to avoid factory race conditions
+    balatro_rs::initialize().expect("Failed to initialize core systems");
+
     let steel = JokerFactory::create(JokerId::SteelJoker);
     assert!(steel.is_some());
 
@@ -63,6 +72,9 @@ fn test_steel_joker_correctly_created() {
 /// Integration test: Verify Fortune Teller can be created
 #[test]
 fn test_fortune_teller_creation() {
+    // Initialize all systems before running the test to avoid factory race conditions
+    balatro_rs::initialize().expect("Failed to initialize core systems");
+
     // Verify we can create Fortune Teller without crashes
     let fortune = JokerFactory::create(JokerId::Fortune).unwrap();
     assert_eq!(fortune.name(), "Fortune Teller");
@@ -72,6 +84,9 @@ fn test_fortune_teller_creation() {
 /// Integration test: Verify Red Card can be created
 #[test]
 fn test_red_card_creation() {
+    // Initialize all systems before running the test to avoid factory race conditions
+    balatro_rs::initialize().expect("Failed to initialize core systems");
+
     // Verify Red Card can be created and used without crashes
     let red_card = JokerFactory::create(JokerId::RedCard).unwrap();
     assert_eq!(red_card.name(), "Red Card");
@@ -81,6 +96,9 @@ fn test_red_card_creation() {
 /// Integration test: Verify Steel Joker can be created
 #[test]
 fn test_steel_joker_creation() {
+    // Initialize all systems before running the test to avoid factory race conditions
+    balatro_rs::initialize().expect("Failed to initialize core systems");
+
     // Verify Steel Joker can be created and used without crashes
     let steel = JokerFactory::create(JokerId::SteelJoker).unwrap();
     assert_eq!(steel.name(), "Steel Joker");
@@ -90,6 +108,9 @@ fn test_steel_joker_creation() {
 /// Test that all three jokers appear in the correct rarity lists
 #[test]
 fn test_jokers_in_rarity_lists() {
+    // Initialize all systems before running the test to avoid factory race conditions
+    balatro_rs::initialize().expect("Failed to initialize core systems");
+
     // Fortune should be in Rare (based on the MysteryJoker's original rarity)
     let rare_jokers = JokerFactory::get_by_rarity(JokerRarity::Rare);
     assert!(rare_jokers.contains(&JokerId::Fortune));
@@ -105,6 +126,9 @@ fn test_jokers_in_rarity_lists() {
 /// Test that all three jokers are in the implemented list
 #[test]
 fn test_jokers_in_implemented_list() {
+    // Initialize all systems before running the test to avoid factory race conditions
+    balatro_rs::initialize().expect("Failed to initialize core systems");
+
     let implemented = JokerFactory::get_all_implemented();
 
     assert!(implemented.contains(&JokerId::Fortune));
@@ -115,6 +139,9 @@ fn test_jokers_in_implemented_list() {
 /// Regression test: Ensure other jokers still work correctly
 #[test]
 fn test_other_jokers_not_affected() {
+    // Initialize all systems before running the test to avoid factory race conditions
+    balatro_rs::initialize().expect("Failed to initialize core systems");
+
     // Test a few other jokers to ensure we didn't break anything
     let joker = JokerFactory::create(JokerId::Joker).unwrap();
     assert_eq!(joker.name(), "Joker");

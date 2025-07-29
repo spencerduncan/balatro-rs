@@ -94,6 +94,9 @@ fn test_half_joker() {
 
 #[test]
 fn test_half_joker_behavior_with_4_cards() {
+    // Initialize all systems before running the test to avoid factory race conditions
+    balatro_rs::initialize().expect("Failed to initialize core systems");
+
     // Create a half joker and context for testing
     let _joker = StaticJokerFactory::create_half_joker();
     let hand = Hand::new(vec![]);
@@ -305,6 +308,9 @@ fn test_half_joker_behavior_edge_case_empty_hand() {
 
 #[test]
 fn test_banner_joker() {
+    // Initialize all systems before running the test to avoid factory race conditions
+    balatro_rs::initialize().expect("Failed to initialize core systems");
+
     use balatro_rs::hand::{Hand, SelectHand};
     use balatro_rs::joker::GameContext;
     use balatro_rs::joker_state::JokerStateManager;
@@ -405,6 +411,9 @@ fn test_banner_joker() {
 
 #[test]
 fn test_banner_implementation_uniqueness() {
+    // Initialize all systems before running the test to avoid factory race conditions
+    balatro_rs::initialize().expect("Failed to initialize core systems");
+
     // Test that Banner has only one correct implementation via StaticJokerFactory
     // This test verifies the cleanup of duplicate BannerJoker struct (Issue #645)
 
