@@ -403,6 +403,24 @@ impl JokerEffect {
         self.message = Some(message);
         self
     }
+
+    /// Set destroy self flag
+    pub fn with_destroy_self(mut self, destroy_self: bool) -> Self {
+        self.destroy_self = destroy_self;
+        self
+    }
+
+    /// Set other jokers to destroy
+    pub fn with_destroy_others(mut self, destroy_others: Vec<JokerId>) -> Self {
+        self.destroy_others = destroy_others;
+        self
+    }
+
+    /// Set card transformations
+    pub fn with_transform_cards(mut self, transform_cards: Vec<(Card, Card)>) -> Self {
+        self.transform_cards = transform_cards;
+        self
+    }
 }
 
 #[cfg_attr(feature = "python", pymethods)]
@@ -1299,6 +1317,9 @@ pub mod scaling_chips_jokers;
 // Include testing utilities for the Joker trait system
 #[cfg(test)]
 pub mod test_utils;
+
+// Include comprehensive TestJoker mock implementations for effect-based testing
+pub mod test_jokers;
 
 // Include comprehensive tests for the new trait system
 #[cfg(test)]
