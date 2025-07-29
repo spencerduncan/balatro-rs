@@ -95,7 +95,7 @@ fn joker_creation_patterns() -> Result<(), Box<dyn std::error::Error>> {
 
     // Pattern 3: Builder pattern (for custom static jokers)
     println!("\nBuilder Pattern:");
-    let custom_joker = StaticJoker::builder(
+    let custom_joker = FrameworkStaticJoker::builder(
         JokerId::EvenSteven,
         "Even Steven",
         "Even cards give +4 mult",

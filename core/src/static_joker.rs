@@ -1852,7 +1852,7 @@ mod tests {
         assert_eq!(TestStaticJoker::NAME, "Test Static Joker");
         assert_eq!(TestStaticJoker::DESCRIPTION, "A test implementation");
         assert_eq!(TestStaticJoker::RARITY, JokerRarity::Common);
-        assert_eq!(TestStaticJoker::TRIGGERS_PER_CARD, true);
+        assert!(TestStaticJoker::TRIGGERS_PER_CARD);
         assert_eq!(TestStaticJoker::PRIORITY, 0); // Default value
 
         // Test default cost calculation
