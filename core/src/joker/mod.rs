@@ -575,6 +575,8 @@ pub struct GameContext<'a> {
     pub hands_remaining: f64,
     /// Number of discards used this round
     pub discards_used: u32,
+    /// Whether this is the final hand of the round
+    pub is_final_hand: bool,
     /// All jokers in play
     pub jokers: &'a [Box<dyn Joker>],
     /// Cards in hand

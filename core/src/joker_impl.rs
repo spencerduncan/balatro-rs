@@ -714,9 +714,8 @@ impl Joker for AcrobatJokerImpl {
     }
 
     fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
-        // Check if this is the final hand of the round
-        // Use the definitive hands_remaining count from the game engine
-        if context.hands_remaining <= 1.0 {
+        // Use actual final hand verification instead of heuristic detection
+        if context.is_final_hand {
             // This is the final hand - apply the multiplier from joker.json parameter
             let multiplier = Self::get_multiplier_parameter();
             JokerEffect::new()
@@ -1053,26 +1052,35 @@ mod tests {
 
     #[test]
     fn test_acrobat_joker_final_hand_detection() {
+        // Test that Acrobat joker correctly triggers on final hand
         let acrobat = AcrobatJokerImpl;
-        let stage = Stage::Blind(Blind::Small);
-        let jokers: Vec<Box<dyn Joker>> = vec![];
-        let hand = Hand::new(vec![]);
-        let discarded: Vec<Card> = vec![];
+        
+        use crate::hand::{Hand, SelectHand};
+        use crate::joker_state::JokerStateManager;
+        use crate::stage::{Blind, Stage};
+        use std::collections::HashMap;
+        use std::sync::Arc;
+
         let joker_state_manager = Arc::new(JokerStateManager::new());
         let hand_type_counts = HashMap::new();
-        let rng = crate::rng::GameRng::secure();
+        let hand = Hand::new(vec![]);
+        let select_hand = SelectHand::new(vec![]);
+        let discarded = vec![];
+        let jokers: Vec<Box<dyn Joker>> = vec![];
+        let rng = crate::rng::GameRng::for_testing(42);
+        let stage = Stage::Blind(Blind::Small);
 
-        // Test final hand (hands_remaining = 1.0)
-        let mut context = GameContext {
+        // Test final hand - should trigger multiplier
+        let mut context_final = crate::joker::GameContext {
             chips: 0,
-            mult: 1,
+            mult: 0,
             money: 0,
             ante: 1,
             round: 1,
             stage: &stage,
             hands_played: 3,
-            hands_remaining: 1.0, // Final hand
             discards_used: 0,
+            is_final_hand: true, // This is the final hand - should trigger
             jokers: &jokers,
             hand: &hand,
             discarded: &discarded,
@@ -1084,37 +1092,45 @@ mod tests {
             rng: &rng,
         };
 
-        let select_hand = SelectHand::new(vec![]);
-        let effect = acrobat.on_hand_played(&mut context, &select_hand);
-
-        // Should apply multiplier on final hand
-        assert_eq!(effect.mult_multiplier, 3.0);
-        assert!(effect.message.is_some());
-        assert!(effect.message.unwrap().contains("X3 Mult"));
+        let effect_final = acrobat.on_hand_played(&mut context_final, &select_hand);
+        
+        // Should apply 3.0 multiplier on final hand
+        assert_eq!(effect_final.mult_multiplier, 3.0);
+        assert!(effect_final.message.is_some());
+        assert!(effect_final.message.unwrap().contains("Acrobat final hand bonus"));
     }
 
     #[test]
     fn test_acrobat_joker_non_final_hand() {
+        // Test that Acrobat joker does NOT trigger on non-final hands
         let acrobat = AcrobatJokerImpl;
-        let stage = Stage::Blind(Blind::Small);
-        let jokers: Vec<Box<dyn Joker>> = vec![];
-        let hand = Hand::new(vec![]);
-        let discarded: Vec<Card> = vec![];
+        
+        use crate::hand::{Hand, SelectHand};
+        use crate::joker_state::JokerStateManager;
+        use crate::stage::{Blind, Stage};
+        use std::collections::HashMap;
+        use std::sync::Arc;
+
         let joker_state_manager = Arc::new(JokerStateManager::new());
         let hand_type_counts = HashMap::new();
-        let rng = crate::rng::GameRng::secure();
+        let hand = Hand::new(vec![]);
+        let select_hand = SelectHand::new(vec![]);
+        let discarded = vec![];
+        let jokers: Vec<Box<dyn Joker>> = vec![];
+        let rng = crate::rng::GameRng::for_testing(42);
+        let stage = Stage::Blind(Blind::Small);
 
-        // Test non-final hand (hands_remaining > 1.0)
-        let mut context = GameContext {
+        // Test non-final hand - should NOT trigger
+        let mut context_non_final = crate::joker::GameContext {
             chips: 0,
-            mult: 1,
+            mult: 0,
             money: 0,
             ante: 1,
             round: 1,
             stage: &stage,
-            hands_played: 1,
-            hands_remaining: 3.0, // Not final hand
+            hands_played: 2,
             discards_used: 0,
+            is_final_hand: false, // NOT the final hand - should not trigger
             jokers: &jokers,
             hand: &hand,
             discarded: &discarded,
@@ -1126,6 +1142,42 @@ mod tests {
             rng: &rng,
         };
 
+        let effect_non_final = acrobat.on_hand_played(&mut context_non_final, &select_hand);
+        
+        // Should NOT apply multiplier on non-final hand
+        assert_eq!(effect_non_final.mult_multiplier, 0.0);
+        assert!(effect_non_final.message.is_none());
+
+        // Test case 2: 2nd hand played - should NOT trigger
+        let mut context_2nd_hand = crate::joker::GameContext {
+            chips: 0,
+            mult: 0,
+>>>>>>> 49b9024 (fix(#620): Complete Acrobat final hand detection implementation)
+            money: 0,
+            ante: 1,
+            round: 1,
+            stage: &stage,
+<<<<<<< HEAD
+            hands_played: 1,
+            hands_remaining: 3.0, // Not final hand
+            discards_used: 0,
+=======
+            hands_played: 1, // 2nd hand
+            discards_used: 0,
+            is_final_hand: false, // NOT the final hand
+>>>>>>> 49b9024 (fix(#620): Complete Acrobat final hand detection implementation)
+            jokers: &jokers,
+            hand: &hand,
+            discarded: &discarded,
+            joker_state_manager: &joker_state_manager,
+            hand_type_counts: &hand_type_counts,
+            cards_in_deck: 52,
+            stone_cards_in_deck: 0,
+            steel_cards_in_deck: 0,
+            rng: &rng,
+        };
+
+<<<<<<< HEAD
         let select_hand = SelectHand::new(vec![]);
         let effect = acrobat.on_hand_played(&mut context, &select_hand);
 
@@ -1150,13 +1202,31 @@ mod tests {
         let mut context = GameContext {
             chips: 0,
             mult: 1,
+=======
+        let effect_2nd = acrobat.on_hand_played(&mut context_2nd_hand, &select_hand);
+        
+        // Correctly does not trigger on non-final hand
+        assert_eq!(effect_2nd.mult_multiplier, 0.0);
+        assert!(effect_2nd.message.is_none());
+
+        // Test case 3: 5th hand played (if player has 5+ hands) - should NOT trigger unless final
+        let mut context_5th_not_final = crate::joker::GameContext {
+            chips: 0,
+            mult: 0,
+>>>>>>> 49b9024 (fix(#620): Complete Acrobat final hand detection implementation)
             money: 0,
             ante: 1,
             round: 1,
             stage: &stage,
+<<<<<<< HEAD
             hands_played: 3,
             hands_remaining: 0.5,
             discards_used: 0,
+=======
+            hands_played: 4, // 5th hand
+            discards_used: 0,
+            is_final_hand: false, // NOT the final hand
+>>>>>>> 49b9024 (fix(#620): Complete Acrobat final hand detection implementation)
             jokers: &jokers,
             hand: &hand,
             discarded: &discarded,
@@ -1167,6 +1237,7 @@ mod tests {
             steel_cards_in_deck: 0,
             rng: &rng,
         };
+<<<<<<< HEAD
         let effect = acrobat.on_hand_played(&mut context, &select_hand);
         assert_eq!(effect.mult_multiplier, 3.0); // Should trigger
 
@@ -1186,6 +1257,119 @@ mod tests {
         // Test that the parameter function returns the expected value
         let multiplier = AcrobatJokerImpl::get_multiplier_parameter();
         assert_eq!(multiplier, 3.0);
+=======
+
+        let effect_5th_not_final = acrobat.on_hand_played(&mut context_5th_not_final, &select_hand);
+        
+        // FIXED: No longer triggers on 5th hand when it's not final
+        assert_eq!(effect_5th_not_final.mult_multiplier, 0.0);
+        assert!(effect_5th_not_final.message.is_none());
+    }
+
+    #[test]
+    fn test_acrobat_joker_correct_final_hand_behavior() {
+        // This test demonstrates the correct behavior with proper final hand detection
+        let acrobat = AcrobatJokerImpl;
+        
+        use crate::hand::{Hand, SelectHand};
+        use crate::joker_state::JokerStateManager;
+        use crate::stage::{Blind, Stage};
+        use std::collections::HashMap;
+        use std::sync::Arc;
+
+        let joker_state_manager = Arc::new(JokerStateManager::new());
+        let hand_type_counts = HashMap::new();
+        let hand = Hand::new(vec![]);
+        let select_hand = SelectHand::new(vec![]);
+        let discarded = vec![];
+        let jokers: Vec<Box<dyn Joker>> = vec![];
+        let rng = crate::rng::GameRng::for_testing(42);
+        let stage = Stage::Blind(Blind::Small);
+
+        // Test case 1: 3rd hand but marked as final - should trigger
+        let mut context_3rd_final = crate::joker::GameContext {
+            chips: 0,
+            mult: 0,
+            money: 0,
+            ante: 1,
+            round: 1,
+            stage: &stage,
+            hands_played: 2, // 3rd hand
+            discards_used: 0,
+            is_final_hand: true, // This IS the final hand
+            jokers: &jokers,
+            hand: &hand,
+            discarded: &discarded,
+            joker_state_manager: &joker_state_manager,
+            hand_type_counts: &hand_type_counts,
+            cards_in_deck: 52,
+            stone_cards_in_deck: 0,
+            steel_cards_in_deck: 0,
+            rng: &rng,
+        };
+
+        let effect_3rd_final = acrobat.on_hand_played(&mut context_3rd_final, &select_hand);
+        
+        // Correctly triggers on final hand regardless of hand number
+        assert_eq!(effect_3rd_final.mult_multiplier, 3.0);
+        assert!(effect_3rd_final.message.as_ref().unwrap().contains("Acrobat final hand bonus"));
+
+        // Test case 2: 6th hand but marked as final - should trigger  
+        let mut context_6th_final = crate::joker::GameContext {
+            chips: 0,
+            mult: 0,
+            money: 0,
+            ante: 1,
+            round: 1,
+            stage: &stage,
+            hands_played: 5, // 6th hand
+            discards_used: 0,
+            is_final_hand: true, // This IS the final hand
+            jokers: &jokers,
+            hand: &hand,
+            discarded: &discarded,
+            joker_state_manager: &joker_state_manager,
+            hand_type_counts: &hand_type_counts,
+            cards_in_deck: 52,
+            stone_cards_in_deck: 0,
+            steel_cards_in_deck: 0,
+            rng: &rng,
+        };
+
+        let effect_6th_final = acrobat.on_hand_played(&mut context_6th_final, &select_hand);
+        
+        // Correctly triggers on final hand even if it's the 6th hand
+        assert_eq!(effect_6th_final.mult_multiplier, 3.0);
+        assert!(effect_6th_final.message.as_ref().unwrap().contains("Acrobat final hand bonus"));
+
+        // Test case 3: 1st hand marked as final - should trigger (edge case)
+        let mut context_1st_final = crate::joker::GameContext {
+            chips: 0,
+            mult: 0,
+            money: 0,
+            ante: 1,
+            round: 1,
+            stage: &stage,
+            hands_played: 0, // 1st hand
+            discards_used: 0,
+            is_final_hand: true, // Unusual but possible - only one hand available
+            jokers: &jokers,
+            hand: &hand,
+            discarded: &discarded,
+            joker_state_manager: &joker_state_manager,
+            hand_type_counts: &hand_type_counts,
+            cards_in_deck: 52,
+            stone_cards_in_deck: 0,
+            steel_cards_in_deck: 0,
+            rng: &rng,
+        };
+
+        let effect_1st_final = acrobat.on_hand_played(&mut context_1st_final, &select_hand);
+        
+        // Correctly triggers even on 1st hand if it's marked as final
+        assert_eq!(effect_1st_final.mult_multiplier, 3.0);
+        assert!(effect_1st_final.message.as_ref().unwrap().contains("Acrobat final hand bonus"));
+>>>>>>> 49b9024 (fix(#620): Complete Acrobat final hand detection implementation)
     }
 
     #[test]
@@ -1562,6 +1746,7 @@ mod tests {
             hands_played: 0,
             hands_remaining: 4.0,
             discards_used: 0,
+            is_final_hand: false, // Test context
             jokers: &jokers,
             hand: &hand,
             discarded: &discarded,
@@ -1609,6 +1794,7 @@ mod tests {
             hands_played: 0,
             hands_remaining: 4.0,
             discards_used: 0,
+            is_final_hand: false, // Test context
             jokers: &jokers,
             hand: &hand,
             discarded: &discarded,
@@ -1656,6 +1842,7 @@ mod tests {
             hands_played: 0,
             hands_remaining: 4.0,
             discards_used: 0,
+            is_final_hand: false, // Test context
             jokers: &jokers,
             hand: &hand,
             discarded: &discarded,
@@ -1703,6 +1890,7 @@ mod tests {
             hands_played: 0,
             hands_remaining: 4.0,
             discards_used: 0,
+            is_final_hand: false, // Test context
             jokers: &jokers,
             hand: &hand,
             discarded: &discarded,
