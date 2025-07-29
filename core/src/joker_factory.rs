@@ -7,6 +7,7 @@ use crate::joker::retrigger_jokers::*;
 use crate::joker::scaling_additive_mult_jokers::*;
 use crate::joker::scaling_chips_jokers::*;
 use crate::joker::scaling_xmult_jokers::*;
+use crate::joker::steel_joker_composition::SteelJoker;
 use crate::joker::{Joker, JokerId, JokerRarity};
 use crate::joker_impl::*;
 use crate::scaling_joker_custom;
