@@ -1,4 +1,5 @@
 // This test is currently disabled
+#![allow(clippy::non_minimal_cfg)]
 #![cfg(all())] // Always false, effectively disabling the file
                // EMERGENCY DISABLE: CardTarget API mismatch and Vec indexing errors - tracked for post-emergency fix
 

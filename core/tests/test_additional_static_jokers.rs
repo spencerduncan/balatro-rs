@@ -1,4 +1,5 @@
 // This test is currently disabled
+#![allow(clippy::non_minimal_cfg)]
 #![cfg(all())] // Always false, effectively disabling the file
                // EMERGENCY DISABLE: GameContext constructor and Stage constructor issues - tracked for post-emergency fix
 

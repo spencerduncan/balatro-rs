@@ -1467,8 +1467,8 @@ impl JokerEffectProcessor {
         let mut buffer = [0u8; 32]; // "hand_" + 16 hex digits + padding
         let mut cursor = std::io::Cursor::new(&mut buffer[..]);
         use std::io::Write;
-        write!(cursor, "hand_{:x}", hash_value).unwrap();
-        
+        write!(cursor, "hand_{hash_value:x}").unwrap();
+
         let len = cursor.position() as usize;
         // SAFETY: write! with hex format always produces valid UTF-8
         let result = unsafe { std::str::from_utf8_unchecked(&buffer[..len]) };
@@ -1510,8 +1510,8 @@ impl JokerEffectProcessor {
         let mut buffer = [0u8; 32]; // "card_" + 16 hex digits + padding
         let mut cursor = std::io::Cursor::new(&mut buffer[..]);
         use std::io::Write;
-        write!(cursor, "card_{:x}", hash_value).unwrap();
-        
+        write!(cursor, "card_{hash_value:x}").unwrap();
+
         let len = cursor.position() as usize;
         // SAFETY: write! with hex format always produces valid UTF-8
         let result = unsafe { std::str::from_utf8_unchecked(&buffer[..len]) };
