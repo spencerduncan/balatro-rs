@@ -148,7 +148,7 @@ impl TarotFactory {
             ConsumableId::TheHermit => Ok(Box::new(TheHermit::new())),
             ConsumableId::WheelOfFortune => Ok(Box::new(WheelOfFortune::new())),
             _ => Err(TarotError::ConsumableCreationFailed {
-                reason: format!("Unknown tarot card ID: {:?}", id),
+                reason: format!("Unknown tarot card ID: {id:?}"),
             }),
         }
     }
@@ -176,6 +176,12 @@ impl Default for TarotFactory {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TheFool {
     _phantom: std::marker::PhantomData<()>,
+}
+
+impl Default for TheFool {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl TheFool {
@@ -265,6 +271,12 @@ impl Consumable for TheFool {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TheMagician {
     _phantom: std::marker::PhantomData<()>,
+}
+
+impl Default for TheMagician {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl TheMagician {
@@ -370,6 +382,12 @@ pub struct TheHighPriestess {
     _phantom: std::marker::PhantomData<()>,
 }
 
+impl Default for TheHighPriestess {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TheHighPriestess {
     pub fn new() -> Self {
         Self {
@@ -382,6 +400,12 @@ impl TheHighPriestess {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TheEmpress {
     _phantom: std::marker::PhantomData<()>,
+}
+
+impl Default for TheEmpress {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl TheEmpress {
@@ -476,6 +500,12 @@ pub struct TheEmperor {
     _phantom: std::marker::PhantomData<()>,
 }
 
+impl Default for TheEmperor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TheEmperor {
     pub fn new() -> Self {
         Self {
@@ -513,7 +543,7 @@ impl TarotCard for TheEmperor {
             }
         }
 
-        effect.description = format!("Created {} Tarot Card(s)", count);
+        effect.description = format!("Created {count} Tarot Card(s)");
         Ok(effect)
     }
 }
@@ -555,6 +585,12 @@ impl Consumable for TheEmperor {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TheHierophant {
     _phantom: std::marker::PhantomData<()>,
+}
+
+impl Default for TheHierophant {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl TheHierophant {
@@ -649,6 +685,12 @@ pub struct TheLovers {
     _phantom: std::marker::PhantomData<()>,
 }
 
+impl Default for TheLovers {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TheLovers {
     pub fn new() -> Self {
         Self {
@@ -737,6 +779,12 @@ impl Consumable for TheLovers {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TheChariot {
     _phantom: std::marker::PhantomData<()>,
+}
+
+impl Default for TheChariot {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl TheChariot {
@@ -829,6 +877,12 @@ pub struct StrengthCard {
     _phantom: std::marker::PhantomData<()>,
 }
 
+impl Default for StrengthCard {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl StrengthCard {
     pub fn new() -> Self {
         Self {
@@ -865,14 +919,15 @@ impl TarotCard for StrengthCard {
             });
         }
 
-        let mut effect = TarotEffect::default();
-
         // This is a placeholder implementation - actual rank changing would need
         // to modify the cards in the game state
-        effect.description = format!(
-            "Increased rank of {} card(s) by 1",
-            card_target.indices.len()
-        );
+        let effect = TarotEffect {
+            description: format!(
+                "Increased rank of {count} card(s) by 1",
+                count = card_target.indices.len()
+            ),
+            ..Default::default()
+        };
 
         // TODO: Implement actual card rank modification when card mutation is available
 
@@ -919,6 +974,12 @@ pub struct TheHermit {
     _phantom: std::marker::PhantomData<()>,
 }
 
+impl Default for TheHermit {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TheHermit {
     pub fn new() -> Self {
         Self {
@@ -942,10 +1003,11 @@ impl TarotCard for TheHermit {
     }
 
     fn activate(&self, game: &mut Game, _target: Target) -> Result<TarotEffect, TarotError> {
-        let mut effect = TarotEffect::default();
-
-        effect.money_change = 20;
-        effect.description = "Gained $20".to_string();
+        let effect = TarotEffect {
+            money_change: 20,
+            description: "Gained $20".to_string(),
+            ..Default::default()
+        };
 
         // Apply money change to game state immediately
         game.money += 20.0;
@@ -991,6 +1053,12 @@ impl Consumable for TheHermit {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WheelOfFortune {
     _phantom: std::marker::PhantomData<()>,
+}
+
+impl Default for WheelOfFortune {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl WheelOfFortune {
@@ -1044,7 +1112,7 @@ impl TarotCard for WheelOfFortune {
                 edition: Some(chosen_edition),
             });
 
-            effect.description = format!("Added {:?} edition to 1 card", chosen_edition);
+            effect.description = format!("Added {chosen_edition:?} edition to 1 card");
         } else {
             effect.description = "The wheel spins... but luck was not with you".to_string();
         }
@@ -1112,7 +1180,7 @@ impl TarotCard for TheHighPriestess {
             }
         }
 
-        effect.description = format!("Created {} Planet Card(s)", count);
+        effect.description = format!("Created {count} Planet Card(s)");
         Ok(effect)
     }
 }
@@ -1163,7 +1231,7 @@ mod tests {
         let tarot_ids = factory.all_tarot_ids();
         for id in tarot_ids {
             let tarot = factory.create_tarot(id);
-            assert!(tarot.is_ok(), "Failed to create tarot card: {:?}", id);
+            assert!(tarot.is_ok(), "Failed to create tarot card: {id:?}");
         }
     }
 

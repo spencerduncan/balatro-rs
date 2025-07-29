@@ -1,4 +1,8 @@
 // This test is currently disabled
+#![allow(clippy::non_minimal_cfg)]
+#![allow(unused_variables)]
+#![allow(clippy::uninlined_format_args)]
+#![allow(clippy::useless_vec)]
 #![cfg(all())] // Always false, effectively disabling the file
                // EMERGENCY DISABLE: CardTarget API mismatch and Vec indexing errors - tracked for post-emergency fix
 
@@ -124,7 +128,11 @@ fn test_combination_content_correctness() {
             }
 
             // Verify we have exactly 2 cards
-            assert_eq!(indices.indices.len(), 2, "Should have exactly 2 card indices");
+            assert_eq!(
+                indices.indices.len(),
+                2,
+                "Should have exactly 2 card indices"
+            );
 
             // Verify indices are sorted and unique
             for i in 1..indices.indices.len() {

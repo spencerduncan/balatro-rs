@@ -1,4 +1,9 @@
 // This test is currently disabled
+#![allow(clippy::non_minimal_cfg)]
+#![allow(unused_variables)]
+#![allow(unused_imports)]
+#![allow(unused_attributes)]
+#![allow(clippy::uninlined_format_args)]
 #![cfg(all())] // Always false, effectively disabling the file
                // EMERGENCY DISABLE: GameContext constructor and Stage constructor issues - tracked for post-emergency fix
 
@@ -399,7 +404,8 @@ fn test_banner_implementation_uniqueness() {
     assert_eq!(banner.cost(), 3);
 
     // Verify it's the same type as what the joker factory produces
-    let factory_banner_result = balatro_rs::joker_registry::registry::create_joker(&JokerId::Banner);
+    let factory_banner_result =
+        balatro_rs::joker_registry::registry::create_joker(&JokerId::Banner);
     if let Ok(factory_banner) = factory_banner_result {
         assert_eq!(factory_banner.id(), banner.id());
         assert_eq!(factory_banner.name(), banner.name());

@@ -2,6 +2,9 @@
 // Fixed: ConsumableSlots now implements Clone, Serialize, and Deserialize
 // Fixed: Added get_mock_id() and get_real_id() methods to Consumable trait
 
+#![allow(clippy::uninlined_format_args)]
+#![allow(clippy::len_zero)]
+
 use balatro_rs::consumables::{
     Consumable, ConsumableEffect, ConsumableError, ConsumableId, ConsumableSlots, ConsumableType,
     Target, TargetType,
@@ -89,7 +92,7 @@ fn test_target_type_definitions() {
     assert!(format!("{:?}", hand_type).contains("HandType"));
     assert!(format!("{:?}", joker).contains("Joker"));
     assert!(format!("{:?}", deck).contains("Deck"));
-    assert!(format!("{:?}", shop).contains("Shop"));
+    assert!(format!("{shop:?}").contains("Shop"));
 }
 
 #[test]
