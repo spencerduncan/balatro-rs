@@ -380,15 +380,22 @@ impl Game {
     }
 
     /// Apply a skip tag effect to the game state
-    pub fn apply_skip_tag_effect(&mut self, tag_id: crate::skip_tags::SkipTagId) -> Result<crate::skip_tags::TagEffectResult, crate::skip_tags::TagError> {
+    pub fn apply_skip_tag_effect(
+        &mut self,
+        tag_id: crate::skip_tags::SkipTagId,
+    ) -> Result<crate::skip_tags::TagEffectResult, crate::skip_tags::TagError> {
         use crate::skip_tags::{get_registry, TagError};
 
         let registry = get_registry();
-        let tag = registry.get_tag(tag_id)
+        let tag = registry
+            .get_tag(tag_id)
             .ok_or(TagError::InvalidTagId(tag_id))?;
 
         if !tag.can_apply(self) {
-            return Err(TagError::CannotApply(format!("Tag {} cannot be applied in current game state", tag.name())));
+            return Err(TagError::CannotApply(format!(
+                "Tag {} cannot be applied in current game state",
+                tag.name()
+            )));
         }
 
         let result = tag.apply_effect(self);

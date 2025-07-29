@@ -1,6 +1,6 @@
 // This test is currently disabled
-#![cfg(not(all()))] // Always false, effectively disabling the file
-                    // EMERGENCY DISABLE: GameContext constructor and Stage constructor issues - tracked for post-emergency fix
+#![cfg(feature = "disabled-for-emergency")] // Disabling the file
+                                            // EMERGENCY DISABLE: GameContext constructor and Stage constructor issues - tracked for post-emergency fix
 
 // Tests for additional static jokers (Issue #90)
 // Note: Runner is implemented as RunnerJoker in joker_impl.rs, not as a static joker

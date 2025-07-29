@@ -313,11 +313,23 @@ mod tests {
         let registry = SkipTagRegistry::new();
 
         // Test that tag names match their IDs
-        assert_eq!(registry.get_tag(SkipTagId::Voucher).unwrap().name(), "Voucher");
-        assert_eq!(registry.get_tag(SkipTagId::Coupon).unwrap().name(), "Coupon");
+        assert_eq!(
+            registry.get_tag(SkipTagId::Voucher).unwrap().name(),
+            "Voucher"
+        );
+        assert_eq!(
+            registry.get_tag(SkipTagId::Coupon).unwrap().name(),
+            "Coupon"
+        );
         assert_eq!(registry.get_tag(SkipTagId::D6).unwrap().name(), "D6");
         assert_eq!(registry.get_tag(SkipTagId::Foil).unwrap().name(), "Foil");
-        assert_eq!(registry.get_tag(SkipTagId::Holographic).unwrap().name(), "Holographic");
-        assert_eq!(registry.get_tag(SkipTagId::Polychrome).unwrap().name(), "Polychrome");
+        assert_eq!(
+            registry.get_tag(SkipTagId::Holographic).unwrap().name(),
+            "Holographic"
+        );
+        assert_eq!(
+            registry.get_tag(SkipTagId::Polychrome).unwrap().name(),
+            "Polychrome"
+        );
     }
 }

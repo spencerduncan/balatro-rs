@@ -13,13 +13,6 @@ fn create_test_game() -> Game {
     game
 }
 
-/// Test fixture for creating a game with specific money amount
-fn create_game_with_money(money: f64) -> Game {
-    let mut game = create_test_game();
-    game.money = money;
-    game
-}
-
 #[test]
 fn test_skip_tag_registry_creation() {
     let registry = SkipTagRegistry::new();
@@ -165,7 +158,10 @@ fn test_holographic_tag_basic_functionality() {
     // Test tag metadata
     assert_eq!(holographic_tag.tag_id(), SkipTagId::Holographic);
     assert_eq!(holographic_tag.name(), "Holographic");
-    assert_eq!(holographic_tag.effect_type(), TagEffectType::NextShopModifier);
+    assert_eq!(
+        holographic_tag.effect_type(),
+        TagEffectType::NextShopModifier
+    );
     assert!(holographic_tag.description().contains("Holographic"));
     assert!(holographic_tag.description().contains("+10 Mult"));
 }
@@ -195,7 +191,10 @@ fn test_polychrome_tag_basic_functionality() {
     // Test tag metadata
     assert_eq!(polychrome_tag.tag_id(), SkipTagId::Polychrome);
     assert_eq!(polychrome_tag.name(), "Polychrome");
-    assert_eq!(polychrome_tag.effect_type(), TagEffectType::NextShopModifier);
+    assert_eq!(
+        polychrome_tag.effect_type(),
+        TagEffectType::NextShopModifier
+    );
     assert!(polychrome_tag.description().contains("Polychrome"));
     assert!(polychrome_tag.description().contains("X1.5 Mult"));
 }
@@ -337,8 +336,17 @@ fn test_all_shop_enhancement_tags_persist() {
     for tag in shop_tags {
         let result = tag.apply_effect(&game);
         assert!(result.persist_tag, "Tag {} should persist", tag.name());
-        assert_eq!(result.money_reward, 0, "Tag {} should give no immediate money", tag.name());
-        assert!(!result.messages.is_empty(), "Tag {} should have a message", tag.name());
+        assert_eq!(
+            result.money_reward,
+            0,
+            "Tag {} should give no immediate money",
+            tag.name()
+        );
+        assert!(
+            !result.messages.is_empty(),
+            "Tag {} should have a message",
+            tag.name()
+        );
     }
 }
 
@@ -351,7 +359,10 @@ fn test_invalid_tag_id() {
     assert!(result.is_err());
 
     if let Err(e) = result {
-        assert!(matches!(e, balatro_rs::skip_tags::TagError::InvalidTagId(_)));
+        assert!(matches!(
+            e,
+            balatro_rs::skip_tags::TagError::InvalidTagId(_)
+        ));
     }
 }
 
@@ -402,17 +413,29 @@ fn test_shop_enhancement_tags_comprehensive() {
 
         // All shop enhancement tags should:
         // 1. Give no immediate money
-        assert_eq!(result.money_reward, 0, "Tag {:?} should give no immediate money", tag_id);
+        assert_eq!(
+            result.money_reward, 0,
+            "Tag {tag_id:?} should give no immediate money"
+        );
 
         // 2. Persist for next shop
-        assert!(result.persist_tag, "Tag {:?} should persist", tag_id);
+        assert!(result.persist_tag, "Tag {tag_id:?} should persist");
 
         // 3. Have a descriptive message
-        assert!(!result.messages.is_empty(), "Tag {:?} should have a message", tag_id);
-        assert!(result.messages[0].contains("Tag"), "Tag {:?} message should contain 'Tag'", tag_id);
+        assert!(
+            !result.messages.is_empty(),
+            "Tag {tag_id:?} should have a message"
+        );
+        assert!(
+            result.messages[0].contains("Tag"),
+            "Tag {tag_id:?} message should contain 'Tag'"
+        );
 
         // 4. Not change money immediately
-        assert_eq!(game.money, initial_money, "Tag {:?} should not change money immediately", tag_id);
+        assert_eq!(
+            game.money, initial_money,
+            "Tag {tag_id:?} should not change money immediately"
+        );
     }
 
     // Verify all modifiers are now set

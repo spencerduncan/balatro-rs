@@ -57,10 +57,7 @@ impl SkipTag for CouponTag {
     }
 
     fn apply_effect(&self, _game_state: &Game) -> TagEffectResult {
-        TagEffectResult::with_persistence(
-            0,
-            "Coupon Tag: Next shop items will be free".to_string(),
-        )
+        TagEffectResult::with_persistence(0, "Coupon Tag: Next shop items will be free".to_string())
     }
 }
 
@@ -86,10 +83,7 @@ impl SkipTag for D6Tag {
     }
 
     fn apply_effect(&self, _game_state: &Game) -> TagEffectResult {
-        TagEffectResult::with_persistence(
-            0,
-            "D6 Tag: Next shop rerolls will be free".to_string(),
-        )
+        TagEffectResult::with_persistence(0, "D6 Tag: Next shop rerolls will be free".to_string())
     }
 }
 
@@ -344,8 +338,17 @@ mod tests {
         for tag in tags {
             let result = tag.apply_effect(&game);
             assert!(result.persist_tag, "Tag {} should persist", tag.name());
-            assert_eq!(result.money_reward, 0, "Tag {} should give no immediate money", tag.name());
-            assert!(!result.messages.is_empty(), "Tag {} should have a message", tag.name());
+            assert_eq!(
+                result.money_reward,
+                0,
+                "Tag {} should give no immediate money",
+                tag.name()
+            );
+            assert!(
+                !result.messages.is_empty(),
+                "Tag {} should have a message",
+                tag.name()
+            );
         }
     }
 }
