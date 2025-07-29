@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["ConsumableType","ShopItem","SlotModifier","VoucherId"],"mod":["generation","packs"],"struct":["EnhancedShop","ItemWeights","JokerGenerator","Pack","Shop","ShopSlot"],"trait":["PackSelector","RerollMechanics","ShopGenerator"]};
+window.SIDEBAR_ITEMS = {"enum":["ConsumableType","ShopItem","SlotModifier"],"mod":["generation","packs"],"struct":["EnhancedShop","ItemWeights","JokerGenerator","Pack","Shop","ShopSlot"],"trait":["PackSelector","RerollMechanics","ShopGenerator"]};
