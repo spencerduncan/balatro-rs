@@ -4,6 +4,7 @@ use crate::joker::OldJoker as Joker;
 use crate::shop::packs::{DefaultPackGenerator, PackGenerator};
 use crate::space::ActionSpace;
 use crate::stage::{Blind, Stage};
+// Skip tags will be used when tag selection is enabled
 
 impl Game {
     // Get all legal SelectCard actions that can be executed given current state
@@ -192,6 +193,44 @@ impl Game {
         )
     }
 
+    // Get skip blind actions
+    fn gen_actions_skip_blind(&self) -> Option<impl Iterator<Item = Action>> {
+        // Can only skip blind during PreBlind stage
+        if self.stage != Stage::PreBlind() {
+            return None;
+        }
+
+        // Determine next expected blind
+        let next_blind = if let Some(current) = self.blind {
+            current.next()
+        } else {
+            // If game just started, blind will be None, can only skip small blind
+            Blind::Small
+        };
+
+        Some(vec![Action::SkipBlind(next_blind)].into_iter())
+    }
+
+    // Get skip tag selection actions
+    fn gen_actions_select_skip_tag(&self) -> Option<impl Iterator<Item = Action> + use<'_>> {
+        // Can only select tags during TagSelection stage
+        if self.stage != Stage::TagSelection() {
+            return None;
+        }
+
+        // Get available tags from the tag selection state
+        let available_tags = &self.tag_selection_state.available_tags;
+        if available_tags.is_empty() {
+            return None;
+        }
+
+        Some(
+            available_tags
+                .iter()
+                .map(|&tag_id| Action::SelectSkipTag(tag_id))
+        )
+    }
+
     // Get all legal actions that can be executed given current state
     pub fn gen_actions(&self) -> impl Iterator<Item = Action> + use<'_> {
         let select_cards = self.gen_actions_select_card();
@@ -206,6 +245,8 @@ impl Game {
         let open_packs = self.gen_actions_open_pack();
         let select_from_packs = self.gen_actions_select_from_pack();
         let skip_packs = self.gen_actions_skip_pack();
+        let skip_blinds = self.gen_actions_skip_blind();
+        let select_skip_tags = self.gen_actions_select_skip_tag();
 
         select_cards
             .into_iter()
@@ -221,6 +262,8 @@ impl Game {
             .chain(open_packs.into_iter().flatten())
             .chain(select_from_packs.into_iter().flatten())
             .chain(skip_packs.into_iter().flatten())
+            .chain(skip_blinds.into_iter().flatten())
+            .chain(select_skip_tags.into_iter().flatten())
     }
 
     fn unmask_action_space_select_cards(&self, space: &mut ActionSpace) {
@@ -870,10 +913,15 @@ mod tests {
             // Actions should be consistent with stage
             match stage {
                 Stage::PreBlind() => {
-                    assert!(actions.iter().any(|a| matches!(a, Action::SelectBlind(_))));
+                    // PreBlind stage can have SelectBlind or SkipBlind actions
+                    assert!(actions.iter().any(|a| matches!(a, Action::SelectBlind(_) | Action::SkipBlind(_))));
                 }
                 Stage::Blind(_) => {
                     assert!(actions.iter().any(|a| matches!(a, Action::SelectCard(_))));
+                }
+                Stage::TagSelection() => {
+                    // TagSelection stage should have SelectSkipTag actions
+                    assert!(actions.iter().any(|a| matches!(a, Action::SelectSkipTag(_))));
                 }
                 Stage::PostBlind() => {
                     assert!(actions.iter().any(|a| matches!(a, Action::CashOut(_))));

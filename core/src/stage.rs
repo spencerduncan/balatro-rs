@@ -53,6 +53,7 @@ pub enum End {
 /// Stages of playing.
 // Playing through an ante looks like:
 // Pre -> Small -> Post -> Shop -> Pre -> Big -> Post -> Shop -> Boss -> Post -> Shop
+// Skip flow: Pre -> SkipBlind -> TagSelection -> Post -> Shop
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "python", pyclass)]
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, Copy)]
@@ -61,6 +62,8 @@ pub enum Stage {
     PreBlind(),
     // Play blind
     Blind(Blind),
+    // Select a skip tag after skipping a blind
+    TagSelection(),
     // Collect payout, optionally play consumables
     PostBlind(),
     // Buy jokers, consumables
@@ -86,11 +89,12 @@ impl Stage {
                 Blind::Big => 2,
                 Blind::Boss => 3,
             },
-            Self::PostBlind() => 4,
-            Self::Shop() => 5,
+            Self::TagSelection() => 4,
+            Self::PostBlind() => 5,
+            Self::Shop() => 6,
             Self::End(end) => match end {
-                End::Win => 6,
-                End::Lose => 7,
+                End::Win => 7,
+                End::Lose => 8,
             },
         }
     }

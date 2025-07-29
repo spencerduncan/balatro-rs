@@ -46,6 +46,7 @@ pub mod static_joker;
 pub mod static_joker_factory;
 pub mod target_context;
 pub mod vouchers;
+pub mod skip_tags;
 
 #[cfg(test)]
 mod tests {

@@ -22,6 +22,7 @@ use crate::stage::{Blind, End, Stage};
 use crate::state_version::StateVersion;
 use crate::target_context::TargetContext;
 use crate::vouchers::VoucherCollection;
+use crate::skip_tags::TagSelectionState;
 
 // Re-export GameState for external use with qualified name to avoid Python bindings conflict
 pub use crate::vouchers::GameState as VoucherGameState;
@@ -223,6 +224,9 @@ pub struct Game {
     /// Currently opened pack that player is choosing from
     pub open_pack: Option<OpenPackState>,
 
+    /// Skip tag selection state when player skips a blind
+    pub tag_selection_state: TagSelectionState,
+
     /// Version of the game state for serialization compatibility
     pub state_version: StateVersion,
 
@@ -340,6 +344,9 @@ impl Game {
             // Initialize pack system fields
             pack_inventory: Vec::new(),
             open_pack: None,
+
+            // Initialize skip tag selection state
+            tag_selection_state: TagSelectionState::new(),
 
             state_version: StateVersion::current(),
 
@@ -1561,6 +1568,82 @@ impl Game {
         Ok(())
     }
 
+    /// Skip a blind and initiate tag selection
+    fn skip_blind(&mut self, blind: Blind) -> Result<(), GameError> {
+        // Can only skip blind if stage is pre blind
+        if self.stage != Stage::PreBlind() {
+            return Err(GameError::InvalidStage);
+        }
+        
+        // Provided blind must be expected next blind
+        if let Some(current) = self.blind {
+            if blind != current.next() {
+                return Err(GameError::InvalidBlind);
+            }
+        } else {
+            // If game just started, blind will be None, in which case
+            // we can only skip small blind
+            if blind != Blind::Small {
+                return Err(GameError::InvalidBlind);
+            }
+        }
+        
+        // Initialize global tag registry if not already done
+        use crate::skip_tags::tag_registry::initialize_global_registry;
+        if let Err(_) = initialize_global_registry() {
+            // Registry already initialized, which is fine
+        }
+        
+        // Set the blind (for tracking purposes) but don't play it
+        self.blind = Some(blind);
+        
+        // Initialize tag selection state
+        // We need to work around the borrowing issue by extracting the needed values first
+        let rng = self.rng.clone();
+        self.tag_selection_state.initialize_selection_with_rng(rng)?;
+        
+        // Transition to tag selection stage
+        self.stage = Stage::TagSelection();
+        
+        Ok(())
+    }
+
+    /// Select a skip tag and apply its effect
+    fn select_skip_tag(&mut self, tag_id: crate::skip_tags::TagId) -> Result<(), GameError> {
+        // Can only select tag if stage is tag selection
+        if self.stage != Stage::TagSelection() {
+            return Err(GameError::InvalidStage);
+        }
+        
+        // Make the selection
+        self.tag_selection_state.select_tag(tag_id)
+            .map_err(|_| GameError::InvalidAction)?;
+        
+        // Apply the tag effect
+        self.apply_selected_tag_effect()?;
+        
+        // Transition to post blind stage (skip the blind)
+        self.stage = Stage::PostBlind();
+        
+        Ok(())
+    }
+
+    /// Apply the effect of the selected skip tag
+    fn apply_selected_tag_effect(&mut self) -> Result<(), GameError> {
+        let selected_tag_id = self.tag_selection_state.get_selected_tag()
+            .ok_or(GameError::InvalidAction)?;
+        
+        // Get the tag implementation from registry
+        use crate::skip_tags::tag_registry::get_global_registry;
+        let registry = get_global_registry().map_err(|_| GameError::InvalidAction)?;
+        let tag = registry.get_tag(selected_tag_id).map_err(|_| GameError::InvalidAction)?;
+        
+        // Apply the tag effect
+        tag.apply_effect(self).map_err(|_| GameError::InvalidAction)?;
+        
+        Ok(())
+    }
+
     // Returns true if should clear blind after, false if not.
     fn handle_score(&mut self, score: f64) -> Result<bool, GameError> {
         // can only handle score if stage is blind
@@ -1728,6 +1811,16 @@ impl Game {
             Action::DeactivateMultiSelect() => {
                 // TODO: Implement multi-select deactivation
                 Err(GameError::InvalidAction)
+            }
+
+            // Skip tag system actions
+            Action::SkipBlind(blind) => match self.stage {
+                Stage::PreBlind() => self.skip_blind(blind),
+                _ => Err(GameError::InvalidAction),
+            },
+            Action::SelectSkipTag(tag_id) => match self.stage {
+                Stage::TagSelection() => self.select_skip_tag(tag_id),
+                _ => Err(GameError::InvalidAction),
             }
         }
     }
@@ -1955,6 +2048,7 @@ struct SaveableGameState {
     pub boss_blind_state: BossBlindState,
     pub pack_inventory: Vec<Pack>,
     pub open_pack: Option<OpenPackState>,
+    pub tag_selection_state: TagSelectionState,
     pub state_version: StateVersion,
 }
 
@@ -2029,6 +2123,7 @@ impl Game {
             boss_blind_state: self.boss_blind_state.clone(),
             pack_inventory: self.pack_inventory.clone(),
             open_pack: self.open_pack.clone(),
+            tag_selection_state: self.tag_selection_state.clone(),
             state_version: self.state_version,
         };
 
@@ -2088,6 +2183,7 @@ impl Game {
             boss_blind_state: saveable_state.boss_blind_state,
             pack_inventory: saveable_state.pack_inventory,
             open_pack: saveable_state.open_pack,
+            tag_selection_state: saveable_state.tag_selection_state,
             state_version: saveable_state.state_version,
             // Initialize debug logging fields (not serialized)
             debug_logging_enabled: false,

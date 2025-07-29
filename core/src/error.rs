@@ -188,6 +188,8 @@ pub enum DeveloperGameError {
     HandAnalysisFailed(String),
     #[error("RNG operation failed: {0}")]
     RngFailed(String),
+    #[error("Skip tag error: {0}")]
+    SkipTagError(#[from] crate::skip_tags::TagError),
 }
 
 /// Developer-facing action space errors with detailed information
