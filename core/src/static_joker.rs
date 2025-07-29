@@ -11,7 +11,7 @@ use std::fmt::Debug;
 /// enabling compile-time evaluation of joker effects. Static jokers offer:
 ///
 /// - **Zero-allocation scoring**: All effects computed without heap allocations
-/// - **Compile-time validation**: Invalid configurations caught at build time  
+/// - **Compile-time validation**: Invalid configurations caught at build time
 /// - **Optimal performance**: Direct dispatch without vtable overhead
 /// - **Migration path**: Gradual conversion from dynamic to static jokers
 ///
@@ -20,30 +20,30 @@ use std::fmt::Debug;
 /// ## 1. Simple Static Joker
 /// ```rust,ignore
 /// struct GreedyJoker;
-/// 
+///
 /// impl StaticJoker for GreedyJoker {
 ///     const ID: JokerId = JokerId::GreedyJoker;
 ///     const NAME: &'static str = "Greedy Joker";
 ///     const DESCRIPTION: &'static str = "Played cards with Diamond suit give +3 Mult";
 ///     const RARITY: JokerRarity = JokerRarity::Common;
-///     
+///
 ///     type Condition = SuitCondition<{Suit::Diamond as u8}>;
 ///     type Effect = MultEffect<3>;
-///     
+///
 ///     const TRIGGERS_PER_CARD: bool = true;
 /// }
 /// ```
 ///
 /// ## 2. Complex Static Joker with Custom Logic
-/// ```rust,ignore 
+/// ```rust,ignore
 /// struct ScalingJoker {
 ///     multiplier: f64,
 /// }
-/// 
+///
 /// impl StaticJoker for ScalingJoker {
 ///     const ID: JokerId = JokerId::CustomJoker;
 ///     // ... other constants
-///     
+///
 ///     fn evaluate_effect(&self, context: &StaticContext) -> JokerEffect {
 ///         JokerEffect::new().with_mult((self.multiplier * context.round as f64) as i32)
 ///     }
@@ -63,52 +63,52 @@ use std::fmt::Debug;
 /// ```rust,ignore
 /// // Phase 1: Wrap existing dynamic joker
 /// let static_joker = StaticJokerAdapter::from_dynamic(my_dynamic_joker);
-/// 
+///
 /// // Phase 2: Implement StaticJoker trait directly
 /// // Phase 3: Remove dynamic implementation
 /// ```
 pub trait StaticJoker: Debug + Send + Sync + 'static {
     /// Unique identifier for this joker (must be compile-time constant)
     const ID: JokerId;
-    
+
     /// Display name (must be compile-time constant)
     const NAME: &'static str;
-    
+
     /// Effect description (must be compile-time constant)
     const DESCRIPTION: &'static str;
-    
+
     /// Rarity level (must be compile-time constant)
     const RARITY: JokerRarity;
-    
+
     /// Base cost override (None uses rarity-based default)
     const COST_OVERRIDE: Option<usize> = None;
-    
+
     /// Whether this joker triggers per card (true) or per hand (false)
     const TRIGGERS_PER_CARD: bool;
-    
+
     /// Priority for processing order (higher = earlier, 0 = default)
     const PRIORITY: i32 = 0;
-    
+
     /// Check if this joker's condition is met for a specific card
-    /// 
+    ///
     /// This method is called for each scoring card when `TRIGGERS_PER_CARD` is true.
     /// Implementation should be fast and avoid allocations.
     fn check_card_condition(&self, card: &Card, context: &StaticContext) -> bool;
-    
+
     /// Check if this joker's condition is met for a hand
-    /// 
+    ///
     /// This method is called once per hand when `TRIGGERS_PER_CARD` is false.
     /// Implementation should be fast and avoid allocations.
     fn check_hand_condition(&self, hand: &SelectHand, context: &StaticContext) -> bool;
-    
+
     /// Calculate the effect when the condition is met
-    /// 
+    ///
     /// This is the core performance-critical method. It should:
     /// - Execute in constant time
     /// - Avoid heap allocations
     /// - Use simple arithmetic for SIMD optimization
     fn calculate_effect(&self, context: &StaticContext) -> JokerEffect;
-    
+
     /// Get the base cost of this joker in the shop
     fn cost(&self) -> usize {
         Self::COST_OVERRIDE.unwrap_or(match Self::RARITY {
@@ -118,9 +118,9 @@ pub trait StaticJoker: Debug + Send + Sync + 'static {
             JokerRarity::Legendary => 20,
         })
     }
-    
+
     /// Convert this static joker to a dynamic joker for compatibility
-    /// 
+    ///
     /// This enables gradual migration by wrapping static jokers in the dynamic interface.
     /// The adapter handles the conversion overhead while preserving static performance
     /// for the core logic.
@@ -141,7 +141,7 @@ pub trait StaticJoker: Debug + Send + Sync + 'static {
 pub struct StaticContext<'a> {
     /// Current round number for scaling effects
     pub round: u32,
-    /// Current ante for difficulty-based effects  
+    /// Current ante for difficulty-based effects
     pub ante: u8,
     /// Money available for economy jokers
     pub money: i32,
@@ -149,7 +149,7 @@ pub struct StaticContext<'a> {
     pub discards_remaining: u32,
     /// Cards in the current hand (slice for zero-copy access)
     pub hand_cards: &'a [Card],
-    /// Cards being scored (slice for zero-copy access)  
+    /// Cards being scored (slice for zero-copy access)
     pub scoring_cards: &'a [Card],
     /// Current hand rank for hand-type conditions
     pub hand_rank: Option<HandRank>,
@@ -176,9 +176,9 @@ impl<'a> StaticContext<'a> {
             hand_rank,
         }
     }
-    
+
     /// Convert from GameContext for migration compatibility
-    /// 
+    ///
     /// This conversion is designed to be very fast (< 50ns) to minimize
     /// the overhead during the migration period.
     pub fn from_game_context(context: &'a GameContext<'a>, _hand: &SelectHand) -> Self {
@@ -203,7 +203,7 @@ impl<'a> StaticContext<'a> {
 /// # Performance Impact
 ///
 /// - **Static logic**: Core calculations remain at static performance levels
-/// - **Adapter overhead**: ~10-20ns per call for trait dispatch 
+/// - **Adapter overhead**: ~10-20ns per call for trait dispatch
 /// - **Memory**: Single allocation for the wrapper, static joker stored by value
 /// - **Cache**: Excellent locality due to embedded static joker
 ///
@@ -212,11 +212,11 @@ impl<'a> StaticContext<'a> {
 /// ```rust,ignore
 /// // Phase 1: Existing dynamic joker
 /// let dynamic_joker: Box<dyn Joker> = Box::new(MyDynamicJoker::new());
-/// 
-/// // Phase 2: Convert to static and wrap for compatibility  
+///
+/// // Phase 2: Convert to static and wrap for compatibility
 /// let static_joker = MyStaticJoker::new();
 /// let compatible_joker: Box<dyn Joker> = Box::new(static_joker.to_dynamic());
-/// 
+///
 /// // Phase 3: Use static joker directly in static-aware systems
 /// let pure_static = MyStaticJoker::new();
 /// ```
@@ -232,17 +232,17 @@ impl<T: StaticJoker> StaticJokerAdapter<T> {
             inner: static_joker,
         }
     }
-    
+
     /// Get reference to the wrapped static joker
     pub fn inner(&self) -> &T {
         &self.inner
     }
-    
+
     /// Get mutable reference to the wrapped static joker
     pub fn inner_mut(&mut self) -> &mut T {
         &mut self.inner
     }
-    
+
     /// Extract the wrapped static joker
     pub fn into_inner(self) -> T {
         self.inner
@@ -253,46 +253,46 @@ impl<T: StaticJoker> Joker for StaticJokerAdapter<T> {
     fn id(&self) -> JokerId {
         T::ID
     }
-    
+
     fn name(&self) -> &str {
         T::NAME
     }
-    
+
     fn description(&self) -> &str {
         T::DESCRIPTION
     }
-    
+
     fn rarity(&self) -> JokerRarity {
         T::RARITY
     }
-    
+
     fn cost(&self) -> usize {
         self.inner.cost()
     }
-    
+
     fn on_hand_played(&self, context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
         if T::TRIGGERS_PER_CARD {
             return JokerEffect::new(); // Per-card jokers don't trigger on hand played
         }
-        
+
         let static_context = StaticContext::from_game_context(context, hand);
-        
+
         if self.inner.check_hand_condition(hand, &static_context) {
             self.inner.calculate_effect(&static_context)
         } else {
             JokerEffect::new()
         }
     }
-    
+
     fn on_card_scored(&self, context: &mut GameContext, card: &Card) -> JokerEffect {
         if !T::TRIGGERS_PER_CARD {
             return JokerEffect::new(); // Per-hand jokers don't trigger on card scored
         }
-        
+
         // Create a minimal hand for context conversion
         let temp_hand = SelectHand::new(vec![*card]);
         let static_context = StaticContext::from_game_context(context, &temp_hand);
-        
+
         if self.inner.check_card_condition(card, &static_context) {
             self.inner.calculate_effect(&static_context)
         } else {
@@ -302,14 +302,14 @@ impl<T: StaticJoker> Joker for StaticJokerAdapter<T> {
 }
 
 /// Extensible trait for joker conditions that follows the open-closed principle.
-/// 
+///
 /// This trait replaces the StaticCondition enum to allow for unlimited condition types
 /// without modifying core framework code. Each condition type can be implemented
 /// independently and composed together.
 ///
 /// # Production Benefits
 /// - **Extensible**: New conditions without core code changes
-/// - **Composable**: Complex conditions via trait composition  
+/// - **Composable**: Complex conditions via trait composition
 /// - **Testable**: Each condition can be unit tested in isolation
 /// - **Performance**: Trait dispatch optimizes to direct calls
 /// - **Type Safety**: Compile-time validation of condition logic
@@ -318,84 +318,84 @@ impl<T: StaticJoker> Joker for StaticJokerAdapter<T> {
 ///
 /// # Production Usage Guidelines
 /// - Implement `check_card` and `check_hand` to be fast (< 100ns)
-/// - Avoid heap allocations in hot paths  
+/// - Avoid heap allocations in hot paths
 /// - Return static strings for `description` and `condition_type`
 /// - Use `performance_hint` to optimize dispatch
 /// - Implement `error_recovery` for production resilience
 pub trait JokerCondition: Debug + Send + Sync + 'static {
     /// Check if this condition is satisfied for a specific card
-    /// 
+    ///
     /// Returns true if the condition applies to this card, false otherwise.
     /// This method should be fast (< 50ns) and avoid allocations.
-    /// 
+    ///
     /// # Production Notes
     /// - Called frequently during scoring (hot path)
     /// - Must handle invalid inputs gracefully
     /// - Should not panic under any circumstances
     fn check_card(&self, card: &Card, context: &StaticContext) -> bool;
-    
+
     /// Check if this condition is satisfied for a hand
-    /// 
+    ///
     /// Returns true if the condition applies to this hand, false otherwise.
     /// This method should be fast (< 100ns) and avoid allocations.
-    /// 
+    ///
     /// # Production Notes
     /// - Called once per hand per joker
     /// - Must handle empty hands gracefully
     /// - Should not panic under any circumstances
     fn check_hand(&self, hand: &SelectHand, context: &StaticContext) -> bool;
-    
+
     /// Get a human-readable description of this condition
-    /// 
+    ///
     /// Used for debugging and error messages in production.
     /// Must return a static string for performance.
     fn description(&self) -> &'static str;
-    
+
     /// Get the condition type name for observability
-    /// 
+    ///
     /// Used for metrics, logging, and production debugging.
     /// Must return a static string for performance.
     fn condition_type(&self) -> &'static str;
-    
+
     /// Returns true if this condition can be evaluated per-card
-    /// 
+    ///
     /// This optimization hint allows the framework to skip card-level evaluation
     /// for hand-only conditions, improving performance.
     fn supports_per_card(&self) -> bool;
-    
+
     /// Returns true if this condition can be evaluated per-hand
-    /// 
+    ///
     /// This optimization hint allows the framework to skip hand-level evaluation
     /// for card-only conditions, improving performance.
     fn supports_per_hand(&self) -> bool;
-    
+
     /// Get performance characteristics hint for optimization
-    /// 
+    ///
     /// Returns estimated performance characteristics to help the framework
     /// optimize condition evaluation order and caching strategies.
     fn performance_hint(&self) -> ConditionPerformanceHint {
         ConditionPerformanceHint::default()
     }
-    
+
     /// Handle error recovery for production resilience
-    /// 
+    ///
     /// Called when condition evaluation encounters an error.
     /// Should return a safe fallback behavior.
     fn error_recovery(&self, error: &dyn std::error::Error) -> bool {
         // Default: log error and fail closed (return false) for safety
-        eprintln!("Joker condition error in {}: {} - failing closed", 
+        eprintln!("Joker condition error in {}: {} - failing closed",
                  self.condition_type(), error);
         false
     }
-    
+
     /// Get unique identifier for caching and metrics
-    /// 
+    ///
     /// Used for performance caching and detailed production metrics.
     /// Should be unique per condition type and configuration.
     fn cache_key(&self) -> u64 {
         use std::collections::hash_map::DefaultHasher;
         use std::hash::{Hash, Hasher};
-        
+
         let mut hasher = DefaultHasher::new();
         self.condition_type().hash(&mut hasher);
         hasher.finish()
@@ -434,23 +434,23 @@ impl JokerCondition for AlwaysCondition {
     fn check_card(&self, _card: &Card, _context: &StaticContext) -> bool {
         true
     }
-    
+
     fn check_hand(&self, _hand: &SelectHand, _context: &StaticContext) -> bool {
         true
     }
-    
+
     fn description(&self) -> &'static str {
         "Always triggers"
     }
-    
+
     fn condition_type(&self) -> &'static str {
         "Always"
     }
-    
+
     fn supports_per_card(&self) -> bool {
         true
     }
-    
+
     fn supports_per_hand(&self) -> bool {
         true
     }
@@ -472,32 +472,32 @@ impl JokerCondition for SuitCondition {
     fn check_card(&self, card: &Card, _context: &StaticContext) -> bool {
         card.suit == self.target_suit
     }
-    
+
     fn check_hand(&self, hand: &SelectHand, _context: &StaticContext) -> bool {
         hand.cards().iter().any(|card| card.suit == self.target_suit)
     }
-    
+
     fn description(&self) -> &'static str {
         match self.target_suit {
             Suit::Diamond => "Diamond cards",
-            Suit::Heart => "Heart cards", 
+            Suit::Heart => "Heart cards",
             Suit::Spade => "Spade cards",
             Suit::Club => "Club cards",
         }
     }
-    
+
     fn condition_type(&self) -> &'static str {
         "Suit"
     }
-    
+
     fn supports_per_card(&self) -> bool {
         true
     }
-    
+
     fn supports_per_hand(&self) -> bool {
         true
     }
-    
+
     fn performance_hint(&self) -> ConditionPerformanceHint {
         ConditionPerformanceHint {
             estimated_ns: 5,         // Very fast enum comparison
@@ -506,11 +506,11 @@ impl JokerCondition for SuitCondition {
             cpu_intensive: false,    // Simple comparison
         }
     }
-    
+
     fn cache_key(&self) -> u64 {
         use std::collections::hash_map::DefaultHasher;
         use std::hash::{Hash, Hasher};
-        
+
         let mut hasher = DefaultHasher::new();
         "Suit".hash(&mut hasher);
         (self.target_suit as u8).hash(&mut hasher);
@@ -528,11 +528,11 @@ impl AnySuitCondition {
     pub fn new(suits: Vec<Suit>) -> Self {
         Self { target_suits: suits }
     }
-    
+
     pub fn red_cards() -> Self {
         Self::new(vec![Suit::Heart, Suit::Diamond])
     }
-    
+
     pub fn black_cards() -> Self {
         Self::new(vec![Suit::Spade, Suit::Club])
     }
@@ -542,23 +542,23 @@ impl JokerCondition for AnySuitCondition {
     fn check_card(&self, card: &Card, _context: &StaticContext) -> bool {
         self.target_suits.contains(&card.suit)
     }
-    
+
     fn check_hand(&self, hand: &SelectHand, _context: &StaticContext) -> bool {
         hand.cards().iter().any(|card| self.target_suits.contains(&card.suit))
     }
-    
+
     fn description(&self) -> &'static str {
         "Multiple suit cards"
     }
-    
+
     fn condition_type(&self) -> &'static str {
         "AnySuit"
     }
-    
+
     fn supports_per_card(&self) -> bool {
         true
     }
-    
+
     fn supports_per_hand(&self) -> bool {
         true
     }
@@ -580,7 +580,7 @@ impl JokerCondition for HandTypeCondition {
     fn check_card(&self, _card: &Card, _context: &StaticContext) -> bool {
         false // Hand type conditions don't apply to individual cards
     }
-    
+
     fn check_hand(&self, hand: &SelectHand, _context: &StaticContext) -> bool {
         // Production-safe hand type checking with error recovery
         match self.target_rank {
@@ -599,7 +599,7 @@ impl JokerCondition for HandTypeCondition {
             HandRank::HighCard => hand.is_highcard().is_some(),
         }
     }
-    
+
     fn description(&self) -> &'static str {
         match self.target_rank {
             HandRank::OnePair => "Pair hands",
@@ -617,19 +617,19 @@ impl JokerCondition for HandTypeCondition {
             HandRank::HighCard => "High Card hands",
         }
     }
-    
+
     fn condition_type(&self) -> &'static str {
         "HandType"
     }
-    
+
     fn supports_per_card(&self) -> bool {
         false
     }
-    
+
     fn supports_per_hand(&self) -> bool {
         true
     }
-    
+
     fn performance_hint(&self) -> ConditionPerformanceHint {
         ConditionPerformanceHint {
             estimated_ns: 200,      // Hand evaluation is more expensive
@@ -638,11 +638,11 @@ impl JokerCondition for HandTypeCondition {
             cpu_intensive: true,    // Hand evaluation requires computation
         }
     }
-    
+
     fn cache_key(&self) -> u64 {
         use std::collections::hash_map::DefaultHasher;
         use std::hash::{Hash, Hasher};
-        
+
         let mut hasher = DefaultHasher::new();
         "HandType".hash(&mut hasher);
         (self.target_rank as u8).hash(&mut hasher);
@@ -651,7 +651,7 @@ impl JokerCondition for HandTypeCondition {
 }
 
 /// Deprecated StaticCondition enum maintained for backward compatibility during migration
-/// 
+///
 /// This enum will be removed in Phase 3 after all jokers are migrated to the trait-based system.
 /// New code should use the JokerCondition trait instead.
 #[deprecated(since = "0.1.0", note = "Use JokerCondition trait instead")]
@@ -677,12 +677,12 @@ pub enum StaticCondition {
 }
 
 /// A framework-based static joker that provides consistent bonuses based on conditions.
-/// 
+///
 /// This struct uses the builder pattern and configuration-based approach for creating
 /// static jokers. It supports both the legacy StaticCondition enum and the new
 /// JokerCondition trait during the migration period.
-/// 
-/// This struct is distinct from the `StaticJoker` trait which provides the 
+///
+/// This struct is distinct from the `StaticJoker` trait which provides the
 /// high-performance interface for migration.
 #[derive(Debug)]
 pub struct FrameworkStaticJoker {
@@ -719,7 +719,7 @@ impl Clone for FrameworkStaticJoker {
         if self.trait_condition.is_some() {
             panic!("Cannot clone FrameworkStaticJoker with trait conditions - use factory methods instead");
         }
-        
+
         Self {
             id: self.id,
             name: self.name,
@@ -757,7 +757,7 @@ impl FrameworkStaticJoker {
             per_card: false,
         }
     }
-    
+
     /// Create a new modern static joker builder with trait-based conditions
     pub fn modern_builder(
         id: JokerId,
@@ -837,46 +837,46 @@ impl FrameworkStaticJoker {
     /// Check if the condition is met for a hand with production observability
     fn check_hand_condition(&self, hand: &SelectHand) -> bool {
         let start_time = std::time::Instant::now();
-        
+
         let result = {
             // Use modern trait-based condition if available
             if let Some(trait_condition) = &self.trait_condition {
                 let static_context = StaticContext::new(1, 1, 100, 3, &[], &[], None); // Minimal context
-                
+
                 // Production observability: track condition evaluation
                 let condition_type = trait_condition.condition_type();
                 let performance_hint = trait_condition.performance_hint();
-                
+
                 let result = trait_condition.check_hand(hand, &static_context);
-                
+
                 // Log slow conditions for production debugging
                 let elapsed = start_time.elapsed();
                 if elapsed.as_nanos() > performance_hint.estimated_ns as u128 * 2 {
-                    eprintln!("WARNING: Slow condition evaluation for {} ({}): {:?} (expected: {}ns)", 
+                    eprintln!("WARNING: Slow condition evaluation for {} ({}): {:?} (expected: {}ns)",
                              self.name, condition_type, elapsed, performance_hint.estimated_ns);
                 }
-                
+
                 return result;
             }
-            
+
             // Fall back to legacy enum-based condition
             if let Some(legacy_condition) = &self.legacy_condition {
                 return self.check_legacy_hand_condition(hand, legacy_condition);
             }
-            
+
             // Default to false if no condition is set
             false
         };
-        
+
         // Production debugging: log unexpected failures for monitoring
         let elapsed = start_time.elapsed();
         if elapsed.as_nanos() > 1000 { // Warn if > 1μs
             eprintln!("PERF: Hand condition check for {} took {:?}", self.name, elapsed);
         }
-        
+
         result
     }
-    
+
     /// Legacy hand condition checking for backward compatibility
     #[allow(deprecated)]
     fn check_legacy_hand_condition(&self, hand: &SelectHand, condition: &StaticCondition) -> bool {
@@ -921,16 +921,16 @@ impl FrameworkStaticJoker {
             let static_context = StaticContext::new(1, 1, 100, 3, &[], &[], None); // Minimal context
             return trait_condition.check_card(card, &static_context);
         }
-        
+
         // Fall back to legacy enum-based condition
         if let Some(legacy_condition) = &self.legacy_condition {
             return self.check_legacy_card_condition(card, legacy_condition);
         }
-        
+
         // Default to false if no condition is set
         false
     }
-    
+
     /// Legacy card condition checking for backward compatibility
     #[allow(deprecated)]
     fn check_legacy_card_condition(&self, card: &Card, condition: &StaticCondition) -> bool {
@@ -1054,39 +1054,39 @@ impl StaticJokerBuilder {
         self.trait_condition = None; // Clear trait condition if set
         self
     }
-    
+
     /// Set a modern trait-based condition (preferred)
     pub fn trait_condition<T: JokerCondition>(mut self, condition: T) -> Self {
         self.trait_condition = Some(Box::new(condition));
         self.legacy_condition = None; // Clear legacy condition if set
         self
     }
-    
+
     /// Set suit condition (modern)
     pub fn suit_condition(self, suit: Suit) -> Self {
         self.trait_condition(SuitCondition::new(suit))
     }
-    
+
     /// Set multiple suits condition (modern)
     pub fn any_suit_condition(self, suits: Vec<Suit>) -> Self {
         self.trait_condition(AnySuitCondition::new(suits))
     }
-    
+
     /// Set red cards condition (modern)
     pub fn red_cards_condition(self) -> Self {
         self.trait_condition(AnySuitCondition::red_cards())
     }
-    
+
     /// Set black cards condition (modern)
     pub fn black_cards_condition(self) -> Self {
         self.trait_condition(AnySuitCondition::black_cards())
     }
-    
+
     /// Set hand type condition (modern)
     pub fn hand_type_condition(self, rank: HandRank) -> Self {
         self.trait_condition(HandTypeCondition::new(rank))
     }
-    
+
     /// Set always-true condition (modern)
     pub fn always_condition(self) -> Self {
         self.trait_condition(AlwaysCondition::default())
@@ -2330,36 +2330,36 @@ mod tests {
     }
 
     // Tests for the new StaticJoker trait system
-    
+
     /// Example static joker implementation for testing
     #[derive(Debug)]
     struct TestStaticJoker {
         bonus_mult: i32,
     }
-    
+
     impl StaticJoker for TestStaticJoker {
         const ID: JokerId = JokerId::Joker;
         const NAME: &'static str = "Test Static Joker";
         const DESCRIPTION: &'static str = "A test implementation";
         const RARITY: JokerRarity = JokerRarity::Common;
         const TRIGGERS_PER_CARD: bool = true;
-        
+
         fn check_card_condition(&self, card: &Card, _context: &StaticContext) -> bool {
             card.suit == Suit::Heart
         }
-        
+
         fn check_hand_condition(&self, _hand: &SelectHand, _context: &StaticContext) -> bool {
             true
         }
-        
+
         fn calculate_effect(&self, _context: &StaticContext) -> JokerEffect {
             JokerEffect::new().with_mult(self.bonus_mult)
         }
     }
-    
+
     #[derive(Debug)]
     struct TestHandStaticJoker;
-    
+
     impl StaticJoker for TestHandStaticJoker {
         const ID: JokerId = JokerId::JollyJoker;
         const NAME: &'static str = "Test Hand Static Joker";
@@ -2367,24 +2367,24 @@ mod tests {
         const RARITY: JokerRarity = JokerRarity::Uncommon;
         const TRIGGERS_PER_CARD: bool = false;
         const PRIORITY: i32 = 10;
-        
+
         fn check_card_condition(&self, _card: &Card, _context: &StaticContext) -> bool {
             false // Hand-based joker doesn't check individual cards
         }
-        
+
         fn check_hand_condition(&self, hand: &SelectHand, _context: &StaticContext) -> bool {
             hand.is_flush().is_some()
         }
-        
+
         fn calculate_effect(&self, context: &StaticContext) -> JokerEffect {
             JokerEffect::new().with_chips((context.round * 10) as i32)
         }
     }
-    
+
     #[test]
     fn test_static_joker_trait_constants() {
         let joker = TestStaticJoker { bonus_mult: 5 };
-        
+
         // Test compile-time constants
         assert_eq!(TestStaticJoker::ID, JokerId::Joker);
         assert_eq!(TestStaticJoker::NAME, "Test Static Joker");
@@ -2392,31 +2392,31 @@ mod tests {
         assert_eq!(TestStaticJoker::RARITY, JokerRarity::Common);
         assert_eq!(TestStaticJoker::TRIGGERS_PER_CARD, true);
         assert_eq!(TestStaticJoker::PRIORITY, 0); // Default value
-        
+
         // Test default cost calculation
         assert_eq!(joker.cost(), 3); // Common rarity default
     }
-    
+
     #[test]
     fn test_static_joker_trait_constants_with_overrides() {
         let joker = TestHandStaticJoker;
-        
+
         assert_eq!(TestHandStaticJoker::ID, JokerId::JollyJoker);
         assert_eq!(TestHandStaticJoker::RARITY, JokerRarity::Uncommon);
         assert_eq!(TestHandStaticJoker::TRIGGERS_PER_CARD, false);
         assert_eq!(TestHandStaticJoker::PRIORITY, 10);
-        
+
         // Test cost for uncommon rarity
         assert_eq!(joker.cost(), 6); // Uncommon rarity default
     }
-    
+
     #[test]
     fn test_static_context_creation() {
         let cards = vec![
             Card::new(Value::Ace, Suit::Heart),
             Card::new(Value::King, Suit::Heart),
         ];
-        
+
         let context = StaticContext::new(
             5,    // round
             2,    // ante
@@ -2426,7 +2426,7 @@ mod tests {
             &cards[0..1],
             Some(HandRank::OnePair),
         );
-        
+
         assert_eq!(context.round, 5);
         assert_eq!(context.ante, 2);
         assert_eq!(context.money, 100);
@@ -2435,27 +2435,27 @@ mod tests {
         assert_eq!(context.scoring_cards.len(), 1);
         assert_eq!(context.hand_rank, Some(HandRank::OnePair));
     }
-    
+
     #[test]
     fn test_static_context_from_game_context() {
         let test_context = create_default_test_context();
         let hand_cards = vec![Card::new(Value::Ace, Suit::Heart)];
         let hand = SelectHand::new(hand_cards.clone());
-        
+
         let static_context = StaticContext::from_game_context(&test_context, &hand);
-        
+
         assert_eq!(static_context.round, test_context.round);
         assert_eq!(static_context.ante, test_context.ante);
         assert_eq!(static_context.money, test_context.money);
         // discards_remaining should be calculated as 5 - discards_used
         assert_eq!(static_context.discards_remaining, 5 - test_context.discards_used);
     }
-    
+
     #[test]
     fn test_static_joker_adapter_creation() {
         let static_joker = TestStaticJoker { bonus_mult: 7 };
         let adapter = StaticJokerAdapter::new(static_joker);
-        
+
         // Test basic functionality
         assert_eq!(adapter.id(), JokerId::Joker);
         assert_eq!(adapter.name(), "Test Static Joker");
@@ -2463,65 +2463,65 @@ mod tests {
         assert_eq!(adapter.rarity(), JokerRarity::Common);
         assert_eq!(adapter.cost(), 3);
     }
-    
+
     #[test]
     fn test_static_joker_adapter_inner_access() {
         let static_joker = TestStaticJoker { bonus_mult: 8 };
         let mut adapter = StaticJokerAdapter::new(static_joker);
-        
+
         // Test inner access
         assert_eq!(adapter.inner().bonus_mult, 8);
-        
+
         // Test mutable access
         adapter.inner_mut().bonus_mult = 12;
         assert_eq!(adapter.inner().bonus_mult, 12);
-        
+
         // Test extraction
         let extracted = adapter.into_inner();
         assert_eq!(extracted.bonus_mult, 12);
     }
-    
+
     #[test]
     fn test_static_joker_to_dynamic_conversion() {
         let static_joker = TestStaticJoker { bonus_mult: 6 };
         let dynamic_joker = static_joker.to_dynamic();
-        
+
         // Test that the dynamic interface works
         assert_eq!(dynamic_joker.id(), JokerId::Joker);
         assert_eq!(dynamic_joker.name(), "Test Static Joker");
         assert_eq!(dynamic_joker.rarity(), JokerRarity::Common);
         assert_eq!(dynamic_joker.cost(), 3);
     }
-    
+
     #[test]
     fn test_static_joker_adapter_per_card_behavior() {
         let static_joker = TestStaticJoker { bonus_mult: 4 };
         let adapter = static_joker.to_dynamic();
-        
+
         let mut context = create_default_test_context();
         let heart_card = Card::new(Value::King, Suit::Heart);
         let spade_card = Card::new(Value::King, Suit::Spade);
-        
+
         // Test per-card triggering (TRIGGERS_PER_CARD = true)
         let heart_effect = adapter.on_card_scored(&mut context, &heart_card);
         let spade_effect = adapter.on_card_scored(&mut context, &spade_card);
-        
+
         assert_eq!(heart_effect.mult, 4); // Should trigger for hearts
         assert_eq!(spade_effect.mult, 0); // Should not trigger for spades
-        
+
         // Test that per-card jokers don't trigger on hand played
         let hand = SelectHand::new(vec![heart_card]);
         let hand_effect = adapter.on_hand_played(&mut context, &hand);
         assert_eq!(hand_effect.mult, 0); // Should not trigger
     }
-    
+
     #[test]
     fn test_static_joker_adapter_per_hand_behavior() {
         let static_joker = TestHandStaticJoker;
         let adapter = static_joker.to_dynamic();
-        
+
         let mut context = create_default_test_context();
-        
+
         // Create a flush hand
         let flush_hand = SelectHand::new(vec![
             Card::new(Value::Ace, Suit::Heart),
@@ -2530,43 +2530,43 @@ mod tests {
             Card::new(Value::Jack, Suit::Heart),
             Card::new(Value::Ten, Suit::Heart),
         ]);
-        
+
         // Create a non-flush hand
         let mixed_hand = SelectHand::new(vec![
             Card::new(Value::Ace, Suit::Heart),
             Card::new(Value::King, Suit::Spade),
         ]);
-        
+
         // Test per-hand triggering (TRIGGERS_PER_CARD = false)
         let flush_effect = adapter.on_hand_played(&mut context, &flush_hand);
         let mixed_effect = adapter.on_hand_played(&mut context, &mixed_hand);
-        
+
         // Flush should trigger (round * 10 chips)
         assert_eq!(flush_effect.chips, (context.round * 10) as i32);
         // Mixed hand should not trigger
         assert_eq!(mixed_effect.chips, 0);
-        
+
         // Test that per-hand jokers don't trigger on individual cards
         let card_effect = adapter.on_card_scored(&mut context, &flush_hand.cards()[0]);
         assert_eq!(card_effect.chips, 0); // Should not trigger
     }
-    
+
     #[test]
     fn test_static_joker_performance_characteristics() {
         let static_joker = TestStaticJoker { bonus_mult: 1 };
-        
+
         // Test that methods are callable (performance would need benchmarks)
         let cards = vec![Card::new(Value::Ace, Suit::Heart)];
         let context = StaticContext::new(1, 1, 100, 3, &cards, &cards, None);
-        
+
         // These should execute very quickly
         let _card_result = static_joker.check_card_condition(&cards[0], &context);
         let _effect_result = static_joker.calculate_effect(&context);
-        
+
         // No allocations should occur in the critical path
         // (This would require allocation tracking in a real benchmark)
     }
-    
+
     #[test]
     fn test_static_joker_trait_bounds() {
         // Test that StaticJoker has correct trait bounds
@@ -2574,38 +2574,38 @@ mod tests {
             fn assert_send_sync<T: Send + Sync>() {}
             fn assert_debug<T: Debug>() {}
             fn assert_static<T: 'static>() {}
-            
+
             assert_send_sync::<T>();
             assert_debug::<T>();
             assert_static::<T>();
         }
-        
+
         assert_static_joker_bounds::<TestStaticJoker>();
         assert_static_joker_bounds::<TestHandStaticJoker>();
     }
-    
+
     #[test]
     fn test_static_joker_migration_pattern() {
         // Test the complete migration pattern
-        
+
         // Phase 1: Create static joker
         let static_joker = TestStaticJoker { bonus_mult: 3 };
-        
+
         // Phase 2: Convert to dynamic for compatibility
         let dynamic_joker: Box<dyn Joker> = Box::new(static_joker.to_dynamic());
-        
+
         // Phase 3: Use through dynamic interface
         let mut context = create_default_test_context();
         let heart_card = Card::new(Value::Queen, Suit::Heart);
-        
+
         let effect = dynamic_joker.on_card_scored(&mut context, &heart_card);
         assert_eq!(effect.mult, 3);
-        
+
         // The dynamic interface should work seamlessly
         assert_eq!(dynamic_joker.id(), JokerId::Joker);
         assert_eq!(dynamic_joker.name(), "Test Static Joker");
     }
-    
+
     #[test]
     fn test_static_context_zero_copy_guarantees() {
         let hand_cards = vec![
@@ -2613,28 +2613,28 @@ mod tests {
             Card::new(Value::King, Suit::Spade),
         ];
         let scoring_cards = &hand_cards[0..1];
-        
+
         let context = StaticContext::new(
             1, 1, 100, 3,
             &hand_cards,    // Borrowed slice
             scoring_cards,  // Borrowed slice
             None,
         );
-        
+
         // Verify that we're using slices (zero-copy)
         assert_eq!(context.hand_cards.len(), 2);
         assert_eq!(context.scoring_cards.len(), 1);
-        
+
         // Verify the actual card data is accessible
         assert_eq!(context.hand_cards[0].suit, Suit::Heart);
         assert_eq!(context.scoring_cards[0].suit, Suit::Heart);
     }
-    
+
     #[test]
     fn test_static_joker_cost_override() {
         #[derive(Debug)]
         struct ExpensiveStaticJoker;
-        
+
         impl StaticJoker for ExpensiveStaticJoker {
             const ID: JokerId = JokerId::Joker;
             const NAME: &'static str = "Expensive";
@@ -2642,20 +2642,20 @@ mod tests {
             const RARITY: JokerRarity = JokerRarity::Common;
             const COST_OVERRIDE: Option<usize> = Some(15);
             const TRIGGERS_PER_CARD: bool = false;
-            
+
             fn check_card_condition(&self, _card: &Card, _context: &StaticContext) -> bool {
                 false
             }
-            
+
             fn check_hand_condition(&self, _hand: &SelectHand, _context: &StaticContext) -> bool {
                 true
             }
-            
+
             fn calculate_effect(&self, _context: &StaticContext) -> JokerEffect {
                 JokerEffect::new().with_mult(10)
             }
         }
-        
+
         let joker = ExpensiveStaticJoker;
         assert_eq!(joker.cost(), 15); // Should use override, not default for Common (3)
     }
