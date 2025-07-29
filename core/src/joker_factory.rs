@@ -6,6 +6,7 @@ use crate::joker::retrigger_jokers::*;
 use crate::joker::scaling_additive_mult_jokers::*;
 use crate::joker::scaling_chips_jokers::*;
 use crate::joker::scaling_xmult_jokers::*;
+use crate::joker::multiplicative_jokers::*;
 use crate::joker::{Joker, JokerId, JokerRarity};
 use crate::joker_impl::*;
 use crate::scaling_joker_custom;
@@ -61,6 +62,7 @@ impl JokerFactory {
             JokerId::Banner => Some(StaticJokerFactory::create_banner()),
             JokerId::AbstractJoker => Some(Box::new(AbstractJoker)),
             JokerId::SteelJoker => Some(Box::new(ScalingSteelJoker::new())),
+            JokerId::BaronJoker => Some(Box::new(Baron::new())),
 
             // RNG-based jokers (Issue #442)
             JokerId::Oops => Some(Box::new(OopsAllSixesJoker)),
@@ -216,6 +218,7 @@ impl JokerFactory {
             JokerRarity::Rare => vec![
                 // RNG-based jokers (Issue #442)
                 AcrobatJoker,
+            BaronJoker,
                 Fortune, // Fortune Teller (was MysteryJoker)
                 // Special mechanic jokers
                 Blueprint,
@@ -275,6 +278,7 @@ impl JokerFactory {
             LuckyCharm, // LuckyCardJoker
             Reserved8,  // GrimJoker
             AcrobatJoker,
+            BaronJoker,
             VagabondJoker,
             Reserved9, // ChaoticJoker
             // Special mechanic jokers using new trait system

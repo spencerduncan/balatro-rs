@@ -104,8 +104,8 @@ impl Joker for Baron {
             return JokerEffect::new();
         }
 
-        // X1.5 per King, multiplicative: 1.5^n
-        let multiplier = 1.5_f64.powi(king_count as i32);
+        // X1.5 per King, linear scaling: 1.5 * n
+        let multiplier = 1.5 * king_count as f64;
 
         JokerEffect::new()
             .with_mult_multiplier(multiplier)
@@ -124,8 +124,8 @@ impl JokerGameplay for Baron {
             return ProcessResult::default();
         }
 
-        // X1.5 per King, multiplicative: 1.5^n
-        let multiplier = 1.5_f64.powi(king_count as i32);
+        // X1.5 per King, linear scaling: 1.5 * n
+        let multiplier = 1.5 * king_count as f64;
 
         ProcessResult {
             mult_multiplier: multiplier,
@@ -372,7 +372,7 @@ impl Joker for AncientJoker {
             return JokerEffect::new();
         }
 
-        // X1.5 per card of suit, multiplicative: 1.5^n
+        // X1.5 per card of suit, linear scaling: 1.5 * n
         let multiplier = 1.5_f64.powi(suit_count as i32);
 
         JokerEffect::new()
@@ -400,7 +400,7 @@ impl JokerGameplay for AncientJoker {
             return ProcessResult::default();
         }
 
-        // X1.5 per card of suit, multiplicative: 1.5^n
+        // X1.5 per card of suit, linear scaling: 1.5 * n
         let multiplier = 1.5_f64.powi(suit_count as i32);
 
         ProcessResult {
@@ -746,12 +746,12 @@ mod tests {
     }
 
     #[test]
-    fn test_baron_exponential_scaling() {
-        // Test exponential scaling with multiple kings
+    fn test_baron_linear_scaling() {
+        // Test linear scaling with multiple kings
         // 1 King: X1.5
-        // 2 Kings: X2.25 (1.5^2)
-        // 3 Kings: X3.375 (1.5^3)
-        // 4 Kings: X5.0625 (1.5^4)
+        // 2 Kings: X3.0 (1.5 * 2)
+        // 3 Kings: X4.5 (1.5 * 3)
+        // 4 Kings: X6.0 (1.5 * 4)
     }
 
     #[test]
