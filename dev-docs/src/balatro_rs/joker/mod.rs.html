@@ -1338,50 +1338,53 @@
 <a href=#1338 id=1338 data-nosnippet>1338</a><span class="kw">pub mod </span>advanced_traits;
 <a href=#1339 id=1339 data-nosnippet>1339</a><span class="kw">pub mod </span>compatibility_bridge;
 <a href=#1340 id=1340 data-nosnippet>1340</a>
-<a href=#1341 id=1341 data-nosnippet>1341</a><span class="comment">// Re-export old API types for backwards compatibility
-<a href=#1342 id=1342 data-nosnippet>1342</a></span><span class="kw">pub use </span>compat::{Joker <span class="kw">as </span>OldJoker, Jokers};
+<a href=#1341 id=1341 data-nosnippet>1341</a><span class="comment">// Re-export static joker trait system for migration infrastructure
+<a href=#1342 id=1342 data-nosnippet>1342</a></span><span class="kw">pub use </span><span class="kw">crate</span>::static_joker::{StaticContext, StaticJoker, StaticJokerAdapter};
 <a href=#1343 id=1343 data-nosnippet>1343</a>
-<a href=#1344 id=1344 data-nosnippet>1344</a><span class="comment">// Re-export advanced framework types
-<a href=#1345 id=1345 data-nosnippet>1345</a></span><span class="kw">pub use </span>advanced_conditions::{
-<a href=#1346 id=1346 data-nosnippet>1346</a>    AdvancedCondition, AdvancedConditionBuilder, AdvancedConditionEvaluator,
-<a href=#1347 id=1347 data-nosnippet>1347</a>    AdvancedEvaluationContext, ConditionCache, GameHistory,
-<a href=#1348 id=1348 data-nosnippet>1348</a>};
-<a href=#1349 id=1349 data-nosnippet>1349</a>
-<a href=#1350 id=1350 data-nosnippet>1350</a><span class="kw">pub use </span>advanced_traits::{
-<a href=#1351 id=1351 data-nosnippet>1351</a>    AdvancedJokerFramework, AdvancedJokerGameplay, AdvancedJokerIdentity, EnhancedJoker,
-<a href=#1352 id=1352 data-nosnippet>1352</a>    EnhancedJokerBuilder, EvaluationCost, GameEvent, InternalJokerState, JokerProcessor,
-<a href=#1353 id=1353 data-nosnippet>1353</a>};
-<a href=#1354 id=1354 data-nosnippet>1354</a>
-<a href=#1355 id=1355 data-nosnippet>1355</a><span class="kw">pub use </span>compatibility_bridge::{CompatibilityBridge, LegacyJokerAdapter, MixedJokerCollection};
-<a href=#1356 id=1356 data-nosnippet>1356</a>
-<a href=#1357 id=1357 data-nosnippet>1357</a><span class="comment">// Re-export scaling chips joker structs (factory functions not available in current implementation)
-<a href=#1358 id=1358 data-nosnippet>1358</a></span><span class="kw">pub use </span>scaling_chips_jokers::{
-<a href=#1359 id=1359 data-nosnippet>1359</a>    ArrowheadJoker, CastleJoker, HikerJoker, OddToddJoker, ScholarJoker, StuntmanJoker, WeeJoker,
-<a href=#1360 id=1360 data-nosnippet>1360</a>};
-<a href=#1361 id=1361 data-nosnippet>1361</a><span class="comment">// Module-level trait tests
-<a href=#1362 id=1362 data-nosnippet>1362</a></span><span class="attr">#[cfg(test)]
-<a href=#1363 id=1363 data-nosnippet>1363</a></span><span class="kw">mod </span>joker_trait_tests {
-<a href=#1364 id=1364 data-nosnippet>1364</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#1365 id=1365 data-nosnippet>1365</a>
-<a href=#1366 id=1366 data-nosnippet>1366</a>    <span class="attr">#[test]
-<a href=#1367 id=1367 data-nosnippet>1367</a>    </span><span class="kw">fn </span>test_joker_trait_bounds() {
-<a href=#1368 id=1368 data-nosnippet>1368</a>        <span class="comment">// This won't compile if Joker doesn't have Send + Sync bounds
-<a href=#1369 id=1369 data-nosnippet>1369</a>        </span><span class="kw">fn </span>assert_send_sync&lt;T: Send + Sync&gt;() {}
-<a href=#1370 id=1370 data-nosnippet>1370</a>        assert_send_sync::&lt;Box&lt;<span class="kw">dyn </span>Joker&gt;&gt;();
-<a href=#1371 id=1371 data-nosnippet>1371</a>    }
-<a href=#1372 id=1372 data-nosnippet>1372</a>
-<a href=#1373 id=1373 data-nosnippet>1373</a>    <span class="attr">#[test]
-<a href=#1374 id=1374 data-nosnippet>1374</a>    </span><span class="kw">fn </span>test_joker_effect_default_mult_multiplier() {
-<a href=#1375 id=1375 data-nosnippet>1375</a>        <span class="kw">let </span>effect = JokerEffect::new();
-<a href=#1376 id=1376 data-nosnippet>1376</a>        <span class="macro">assert_eq!</span>(
-<a href=#1377 id=1377 data-nosnippet>1377</a>            effect.mult_multiplier, <span class="number">1.0</span>,
-<a href=#1378 id=1378 data-nosnippet>1378</a>            <span class="string">"Default mult_multiplier should be 1.0"
-<a href=#1379 id=1379 data-nosnippet>1379</a>        </span>);
-<a href=#1380 id=1380 data-nosnippet>1380</a>
-<a href=#1381 id=1381 data-nosnippet>1381</a>        <span class="kw">let </span>effect2 = JokerEffect::default();
-<a href=#1382 id=1382 data-nosnippet>1382</a>        <span class="macro">assert_eq!</span>(
-<a href=#1383 id=1383 data-nosnippet>1383</a>            effect2.mult_multiplier, <span class="number">1.0</span>,
-<a href=#1384 id=1384 data-nosnippet>1384</a>            <span class="string">"Default mult_multiplier should be 1.0"
-<a href=#1385 id=1385 data-nosnippet>1385</a>        </span>);
-<a href=#1386 id=1386 data-nosnippet>1386</a>    }
-<a href=#1387 id=1387 data-nosnippet>1387</a>}</code></pre></div></section></main></body></html>
+<a href=#1344 id=1344 data-nosnippet>1344</a><span class="comment">// Re-export old API types for backwards compatibility
+<a href=#1345 id=1345 data-nosnippet>1345</a></span><span class="kw">pub use </span>compat::{Joker <span class="kw">as </span>OldJoker, Jokers};
+<a href=#1346 id=1346 data-nosnippet>1346</a>
+<a href=#1347 id=1347 data-nosnippet>1347</a><span class="comment">// Re-export advanced framework types
+<a href=#1348 id=1348 data-nosnippet>1348</a></span><span class="kw">pub use </span>advanced_conditions::{
+<a href=#1349 id=1349 data-nosnippet>1349</a>    AdvancedCondition, AdvancedConditionBuilder, AdvancedConditionEvaluator,
+<a href=#1350 id=1350 data-nosnippet>1350</a>    AdvancedEvaluationContext, ConditionCache, GameHistory,
+<a href=#1351 id=1351 data-nosnippet>1351</a>};
+<a href=#1352 id=1352 data-nosnippet>1352</a>
+<a href=#1353 id=1353 data-nosnippet>1353</a><span class="kw">pub use </span>advanced_traits::{
+<a href=#1354 id=1354 data-nosnippet>1354</a>    AdvancedJokerFramework, AdvancedJokerGameplay, AdvancedJokerIdentity, EnhancedJoker,
+<a href=#1355 id=1355 data-nosnippet>1355</a>    EnhancedJokerBuilder, EvaluationCost, GameEvent, InternalJokerState, JokerProcessor,
+<a href=#1356 id=1356 data-nosnippet>1356</a>};
+<a href=#1357 id=1357 data-nosnippet>1357</a>
+<a href=#1358 id=1358 data-nosnippet>1358</a><span class="kw">pub use </span>compatibility_bridge::{CompatibilityBridge, LegacyJokerAdapter, MixedJokerCollection};
+<a href=#1359 id=1359 data-nosnippet>1359</a>
+<a href=#1360 id=1360 data-nosnippet>1360</a><span class="comment">// Re-export scaling chips joker structs (factory functions not available in current implementation)
+<a href=#1361 id=1361 data-nosnippet>1361</a></span><span class="kw">pub use </span>scaling_chips_jokers::{
+<a href=#1362 id=1362 data-nosnippet>1362</a>    ArrowheadJoker, CastleJoker, HikerJoker, OddToddJoker, ScholarJoker, StuntmanJoker, WeeJoker,
+<a href=#1363 id=1363 data-nosnippet>1363</a>};
+<a href=#1364 id=1364 data-nosnippet>1364</a><span class="comment">// Module-level trait tests
+<a href=#1365 id=1365 data-nosnippet>1365</a></span><span class="attr">#[cfg(test)]
+<a href=#1366 id=1366 data-nosnippet>1366</a></span><span class="kw">mod </span>joker_trait_tests {
+<a href=#1367 id=1367 data-nosnippet>1367</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#1368 id=1368 data-nosnippet>1368</a>
+<a href=#1369 id=1369 data-nosnippet>1369</a>    <span class="attr">#[test]
+<a href=#1370 id=1370 data-nosnippet>1370</a>    </span><span class="kw">fn </span>test_joker_trait_bounds() {
+<a href=#1371 id=1371 data-nosnippet>1371</a>        <span class="comment">// This won't compile if Joker doesn't have Send + Sync bounds
+<a href=#1372 id=1372 data-nosnippet>1372</a>        </span><span class="kw">fn </span>assert_send_sync&lt;T: Send + Sync&gt;() {}
+<a href=#1373 id=1373 data-nosnippet>1373</a>        assert_send_sync::&lt;Box&lt;<span class="kw">dyn </span>Joker&gt;&gt;();
+<a href=#1374 id=1374 data-nosnippet>1374</a>    }
+<a href=#1375 id=1375 data-nosnippet>1375</a>
+<a href=#1376 id=1376 data-nosnippet>1376</a>    <span class="attr">#[test]
+<a href=#1377 id=1377 data-nosnippet>1377</a>    </span><span class="kw">fn </span>test_joker_effect_default_mult_multiplier() {
+<a href=#1378 id=1378 data-nosnippet>1378</a>        <span class="kw">let </span>effect = JokerEffect::new();
+<a href=#1379 id=1379 data-nosnippet>1379</a>        <span class="macro">assert_eq!</span>(
+<a href=#1380 id=1380 data-nosnippet>1380</a>            effect.mult_multiplier, <span class="number">1.0</span>,
+<a href=#1381 id=1381 data-nosnippet>1381</a>            <span class="string">"Default mult_multiplier should be 1.0"
+<a href=#1382 id=1382 data-nosnippet>1382</a>        </span>);
+<a href=#1383 id=1383 data-nosnippet>1383</a>
+<a href=#1384 id=1384 data-nosnippet>1384</a>        <span class="kw">let </span>effect2 = JokerEffect::default();
+<a href=#1385 id=1385 data-nosnippet>1385</a>        <span class="macro">assert_eq!</span>(
+<a href=#1386 id=1386 data-nosnippet>1386</a>            effect2.mult_multiplier, <span class="number">1.0</span>,
+<a href=#1387 id=1387 data-nosnippet>1387</a>            <span class="string">"Default mult_multiplier should be 1.0"
+<a href=#1388 id=1388 data-nosnippet>1388</a>        </span>);
+<a href=#1389 id=1389 data-nosnippet>1389</a>    }
+<a href=#1390 id=1390 data-nosnippet>1390</a>}</code></pre></div></section></main></body></html>

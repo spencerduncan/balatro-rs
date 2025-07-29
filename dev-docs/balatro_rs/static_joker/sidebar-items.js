@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["StaticCondition"],"struct":["StaticJoker","StaticJokerBuilder"]};
+window.SIDEBAR_ITEMS = {"enum":["StaticCondition"],"struct":["FrameworkStaticJoker","StaticContext","StaticJokerAdapter","StaticJokerBuilder"],"trait":["StaticJoker"]};
