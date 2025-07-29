@@ -87,12 +87,35 @@ fn test_half_joker() {
 }
 
 #[test]
-#[ignore = "EMERGENCY DISABLE: GameContext default issues - tracked for post-emergency fix"]
-#[ignore = "EMERGENCY DISABLE: GameContext constructor missing - tracked for post-emergency fix"]
 fn test_half_joker_behavior_with_4_cards() {
-    // EMERGENCY: GameContext doesn't have default() constructor
-    // let joker = StaticJokerFactory::create_half_joker();
-    // let mut context = GameContext::default();
+    // Create a half joker and context for testing
+    let joker = StaticJokerFactory::create_half_joker();
+    let hand = Hand::new(vec![]);
+    let empty_cards = vec![];
+    let joker_state_manager = Arc::new(JokerStateManager::new());
+    let hand_type_counts = HashMap::new();
+    let rng = crate::rng::GameRng::for_testing(42);
+    let stage = Stage::Blind(crate::blind::Blind::SmallBlind);
+    
+    let mut context = GameContext {
+        chips: 0,
+        mult: 0,
+        money: 0,
+        ante: 1,
+        round: 1,
+        stage: &stage,
+        hands_played: 0,
+        discards_used: 0,
+        jokers: &[],
+        hand: &hand,
+        discarded: &empty_cards,
+        joker_state_manager: &joker_state_manager,
+        hand_type_counts: &hand_type_counts,
+        cards_in_deck: 52,
+        stone_cards_in_deck: 0,
+        steel_cards_in_deck: 0,
+        rng: &rng,
+    };
 
     // Test with exactly 4 cards (should trigger)
     let four_card_hand = SelectHand::new(vec![
@@ -288,12 +311,12 @@ fn test_banner_joker() {
     assert_eq!(joker.cost(), 3);
 
     // Test functionality with different discard counts
-    let stage = Stage::Blind;
-    let hand = Hand::new();
+    let stage = Stage::Blind(crate::blind::Blind::SmallBlind);
+    let hand = Hand::new(vec![]);
     let empty_cards = vec![];
     let joker_state_manager = Arc::new(JokerStateManager::new());
     let hand_type_counts = HashMap::new();
-    let rng = crate::rng::GameRng::new();
+    let rng = crate::rng::GameRng::for_testing(42);
 
     // Test with 0 discards used (5 remaining) - should give 5 * 30 = 150 chips
     let mut context_5_remaining = GameContext {
@@ -312,6 +335,7 @@ fn test_banner_joker() {
         hand_type_counts: &hand_type_counts,
         cards_in_deck: 52,
         stone_cards_in_deck: 0,
+        steel_cards_in_deck: 0,
         rng: &rng,
     };
 
@@ -336,6 +360,7 @@ fn test_banner_joker() {
         hand_type_counts: &hand_type_counts,
         cards_in_deck: 52,
         stone_cards_in_deck: 0,
+        steel_cards_in_deck: 0,
         rng: &rng,
     };
 
@@ -359,6 +384,7 @@ fn test_banner_joker() {
         hand_type_counts: &hand_type_counts,
         cards_in_deck: 52,
         stone_cards_in_deck: 0,
+        steel_cards_in_deck: 0,
         rng: &rng,
     };
 
@@ -383,7 +409,7 @@ fn test_banner_implementation_uniqueness() {
     assert_eq!(banner.cost(), 3);
 
     // Verify it's the same type as what the joker factory produces
-    let factory_banner = balatro_rs::joker_factory::create_joker(JokerId::Banner);
+    let factory_banner = balatro_rs::joker_registry::create_joker(&JokerId::Banner).unwrap();
     assert!(
         factory_banner.is_some(),
         "Factory should be able to create Banner joker"
@@ -434,7 +460,7 @@ fn test_abstract_joker() {
 
     // Create a test game context manually
     let joker_state_manager = Arc::new(JokerStateManager::new());
-    let stage = Stage::Blind;
+    let stage = Stage::Blind(crate::blind::Blind::SmallBlind);
     let stage_ref: &'static Stage = Box::leak(Box::new(stage));
     let hand = Hand::new(vec![]);
     let hand_ref: &'static Hand = Box::leak(Box::new(hand));

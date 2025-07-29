@@ -147,7 +147,7 @@ pub enum ShopItem {
     /// Consumables provide immediate effects when used and are consumed
     /// in the process. They offer powerful but limited-use benefits.
     Consumable(ConsumableType),
-    
+
     /// A specific consumable card identified by its ID.
     ///
     /// This provides access to individual consumable implementations rather
@@ -206,7 +206,7 @@ impl ShopItem {
                     crate::consumables::ConsumableType::Planet => 3,
                     crate::consumables::ConsumableType::Spectral => 4,
                 }
-            },
+            }
             ShopItem::Voucher(_) => 10, // Standard voucher cost
             ShopItem::Pack(pack_type) => pack_type.base_cost(config),
             ShopItem::PlayingCard(_) => 2, // Standard playing card cost
@@ -218,7 +218,7 @@ impl ShopItem {
         match self {
             ShopItem::Joker(joker_id) => format!("{joker_id:?} Joker"),
             ShopItem::Consumable(consumable_type) => format!("{consumable_type:?} Card"),
-            ShopItem::SpecificConsumable(consumable_id) => format!("{}", consumable_id),
+            ShopItem::SpecificConsumable(consumable_id) => format!("{consumable_id}"),
             ShopItem::Voucher(voucher_id) => format!("{voucher_id:?} Voucher"),
             ShopItem::Pack(pack_type) => format!("{pack_type:?} Pack"),
             ShopItem::PlayingCard(card) => format!("{card}"),

@@ -115,7 +115,7 @@ fn test_combination_content_correctness() {
     for target in targets {
         if let Target::Cards(indices) = target {
             // Verify all indices are valid
-            for &index in &indices {
+            for &index in &indices.indices {
                 assert!(
                     index < 4,
                     "Card index {} should be less than hand size",
@@ -124,12 +124,12 @@ fn test_combination_content_correctness() {
             }
 
             // Verify we have exactly 2 cards
-            assert_eq!(indices.len(), 2, "Should have exactly 2 card indices");
+            assert_eq!(indices.indices.len(), 2, "Should have exactly 2 card indices");
 
             // Verify indices are sorted and unique
-            for i in 1..indices.len() {
+            for i in 1..indices.indices.len() {
                 assert!(
-                    indices[i] > indices[i - 1],
+                    indices.indices[i] > indices.indices[i - 1],
                     "Indices should be sorted and unique"
                 );
             }

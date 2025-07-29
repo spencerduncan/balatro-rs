@@ -51,18 +51,18 @@ pub mod vouchers;
 ///
 /// This function should be called once during application startup to ensure
 /// all factory systems, registries, and global state are properly initialized.
-/// 
+///
 /// # Errors
-/// 
+///
 /// Returns an error if any initialization step fails. The application should
 /// not continue if initialization fails as it indicates fundamental system issues.
 pub fn initialize() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // Initialize tarot factory with all available cards
     consumables::tarot::initialize_tarot_factory()
         .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?;
-    
+
     // Future: Initialize other factory systems (planet cards, spectral cards, etc.)
-    
+
     Ok(())
 }
 
