@@ -381,7 +381,7 @@ impl Game {
             .count()
     }
 
-    /// Count Steel cards in the current deck  
+    /// Count Steel cards in the current deck
     /// Following clean code principle: functions should do one thing
     fn count_steel_cards(&self) -> usize {
         self.deck
@@ -405,7 +405,7 @@ impl Game {
         self.deck.extend(cards);
     }
 
-    /// Get deck size for testing purposes  
+    /// Get deck size for testing purposes
     /// Following clean code: provide necessary test access without exposing internals
     #[cfg(test)]
     pub fn deck_size_for_testing(&self) -> usize {
@@ -695,8 +695,8 @@ impl Game {
             joker_state_manager: &self.joker_state_manager,
             hand_type_counts: &self.hand_type_counts,
             cards_in_deck: self.deck.len(),
-            stone_cards_in_deck: 0, // TODO: Track stone cards when implemented
-            steel_cards_in_deck: 0, // TODO: Track steel cards when implemented
+            stone_cards_in_deck: self.stone_cards_in_deck,
+            steel_cards_in_deck: self.steel_cards_in_deck,
             rng: &self.rng,
         };
 
@@ -2194,8 +2194,8 @@ impl Game {
             joker_state_manager: &self.joker_state_manager,
             hand_type_counts: &self.hand_type_counts,
             cards_in_deck: self.deck.len(),
-            stone_cards_in_deck: 0, // TODO: Track stone cards when implemented
-            steel_cards_in_deck: 0, // TODO: Track steel cards when implemented
+            stone_cards_in_deck: self.stone_cards_in_deck,
+            steel_cards_in_deck: self.steel_cards_in_deck,
             rng: &self.rng,
         };
 

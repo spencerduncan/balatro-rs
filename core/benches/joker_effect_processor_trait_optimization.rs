@@ -200,7 +200,7 @@ fn bench_trait_detection_caching(c: &mut Criterion) {
 
     group.bench_function("cold_trait_detection", |b| {
         b.iter(|| {
-            let processor = JokerEffectProcessor::new();
+            let _processor = JokerEffectProcessor::new();
 
             // Cold cache - first detection of each joker
             for _joker in &jokers {
@@ -211,7 +211,7 @@ fn bench_trait_detection_caching(c: &mut Criterion) {
     });
 
     group.bench_function("warm_trait_detection", |b| {
-        let processor = JokerEffectProcessor::new();
+        let _processor = JokerEffectProcessor::new();
 
         // Pre-warm the cache
         // TODO: Fix - detect_joker_traits is now private
