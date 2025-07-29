@@ -1,3 +1,4 @@
+use crate::joker::basic_xmult_jokers::create_misprint_joker;
 use crate::joker::four_fingers::FourFingersJoker;
 use crate::joker::retrigger_jokers::*;
 use crate::joker::scaling_additive_mult_jokers::*;
@@ -30,6 +31,9 @@ impl JokerFactory {
             JokerId::CleverJoker => Some(Box::new(CleverJoker)),
             JokerId::DeviousJoker => Some(Box::new(DeviousJoker)),
             JokerId::CraftyJoker => Some(Box::new(CraftyJoker)),
+
+            // Basic X-Mult jokers
+            JokerId::Misprint => Some(create_misprint_joker()),
 
             // Money-based conditional jokers
             JokerId::BusinessCard => Some(Box::new(BusinessCard)),
@@ -113,6 +117,8 @@ impl JokerFactory {
                 CleverJoker,
                 DeviousJoker,
                 CraftyJoker,
+                // Basic X-Mult jokers
+                Misprint,
                 // Money-based conditional jokers
                 BusinessCard,
                 EggJoker,
@@ -195,6 +201,8 @@ impl JokerFactory {
             CleverJoker,
             DeviousJoker,
             CraftyJoker,
+            // Basic X-Mult jokers
+            Misprint,
             // Money-based conditional jokers
             BusinessCard,
             EggJoker,
@@ -329,5 +337,35 @@ mod tests {
         // AbstractJoker is now properly implemented and included above
         // Note: Placeholder jokers (HalfJoker, Banner, SteelJoker)
         // are intentionally not in get_all_implemented() as they're not complete
+    }
+
+    #[test]
+    fn test_misprint_joker_factory_creation() {
+        // RED: Test should fail initially - Misprint missing from factory
+        let misprint = JokerFactory::create(JokerId::Misprint);
+        assert!(misprint.is_some(), "Misprint joker should be created by factory");
+        
+        let misprint_joker = misprint.unwrap();
+        assert_eq!(misprint_joker.id(), JokerId::Misprint);
+        assert_eq!(misprint_joker.name(), "Misprint");
+    }
+
+    #[test]
+    fn test_misprint_joker_rarity_integration() {
+        // Test that Misprint is properly included in Common rarity list
+        let common_jokers = JokerFactory::get_by_rarity(JokerRarity::Common);
+        assert!(common_jokers.contains(&JokerId::Misprint), 
+                "Misprint should be in Common rarity list");
+
+        // Test that Misprint is in the implemented list
+        let implemented = JokerFactory::get_all_implemented();
+        assert!(implemented.contains(&JokerId::Misprint), 
+                "Misprint should be in implemented jokers list");
+
+        // Test that created joker has correct properties
+        let misprint = JokerFactory::create(JokerId::Misprint).unwrap();
+        assert_eq!(misprint.rarity(), JokerRarity::Common);
+        assert_eq!(misprint.cost(), 4);
+        assert_eq!(misprint.description(), "X1 to X23 Mult (random each hand)");
     }
 }
