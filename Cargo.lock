@@ -429,6 +429,7 @@ version = "0.0.1"
 dependencies = [
  "balatro-rs",
  "pyo3",
+ "rayon",
  "serde_json",
 ]
 
