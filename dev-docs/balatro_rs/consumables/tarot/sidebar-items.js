@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["TarotError","TarotRarity"],"struct":["CardEnhancement","StrengthCard","TarotEffect","TarotFactory","TheChariot","TheEmperor","TheEmpress","TheFool","TheHermit","TheHierophant","TheHighPriestess","TheLovers","TheMagician","WheelOfFortune"],"trait":["TarotCard"]};
