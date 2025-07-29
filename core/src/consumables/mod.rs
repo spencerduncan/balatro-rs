@@ -835,6 +835,18 @@ pub enum ConsumableId {
     Grim,
     /// Incantation - Destroys 1 random card, add 4 random Enhanced numbered cards to deck
     Incantation,
+    /// Talisman - Add Gold Seal to 1 selected card
+    Talisman,
+    /// Aura - Add effect (Foil, Holo, Polychrome) to 1 selected card  
+    Aura,
+    /// Wraith - Creates a random Rare Joker, sets money to $0
+    Wraith,
+    /// Sigil - Converts all cards in hand to single random suit
+    Sigil,
+    /// Ouija - Converts all cards in hand to single random rank (-1 hand size)
+    Ouija,
+    /// Ectoplasm - Add negative to a random Joker, -1 hand size
+    Ectoplasm,
 
     // Placeholder variants - will be expanded in future implementations
     /// Placeholder for future Tarot card implementations
@@ -866,6 +878,12 @@ impl fmt::Display for ConsumableId {
             ConsumableId::Familiar => write!(f, "Familiar"),
             ConsumableId::Grim => write!(f, "Grim"),
             ConsumableId::Incantation => write!(f, "Incantation"),
+            ConsumableId::Talisman => write!(f, "Talisman"),
+            ConsumableId::Aura => write!(f, "Aura"),
+            ConsumableId::Wraith => write!(f, "Wraith"),
+            ConsumableId::Sigil => write!(f, "Sigil"),
+            ConsumableId::Ouija => write!(f, "Ouija"),
+            ConsumableId::Ectoplasm => write!(f, "Ectoplasm"),
 
             // Placeholders
             ConsumableId::TarotPlaceholder => write!(f, "Tarot Placeholder"),
@@ -904,6 +922,12 @@ impl ConsumableId {
             ConsumableId::Familiar
             | ConsumableId::Grim
             | ConsumableId::Incantation
+            | ConsumableId::Talisman
+            | ConsumableId::Aura
+            | ConsumableId::Wraith
+            | ConsumableId::Sigil
+            | ConsumableId::Ouija
+            | ConsumableId::Ectoplasm
             | ConsumableId::SpectralPlaceholder => ConsumableType::Spectral,
         }
     }
@@ -936,6 +960,12 @@ impl ConsumableId {
             ConsumableId::Familiar,
             ConsumableId::Grim,
             ConsumableId::Incantation,
+            ConsumableId::Talisman,
+            ConsumableId::Aura,
+            ConsumableId::Wraith,
+            ConsumableId::Sigil,
+            ConsumableId::Ouija,
+            ConsumableId::Ectoplasm,
         ]
     }
 }
@@ -1505,7 +1535,7 @@ impl<'de> Deserialize<'de> for ConsumableSlots {
 // Re-export submodules when they are implemented
 // pub mod tarot;
 // pub mod planet;
-// pub mod spectral;
+pub mod spectral;
 
 // Test module
 #[cfg(test)]
