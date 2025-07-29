@@ -1314,7 +1314,7 @@ pub use traits::{
 };
 
 // Re-export static joker trait system for migration infrastructure
-pub use crate::static_joker::{StaticJoker, StaticJokerAdapter, StaticContext};
+pub use crate::static_joker::{StaticContext, StaticJoker, StaticJokerAdapter};
 
 // Re-export old API types for backwards compatibility
 pub use compat::{Joker as OldJoker, Jokers};

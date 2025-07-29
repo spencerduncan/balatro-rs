@@ -6,45 +6,58 @@
 
 use balatro_rs::card::{Card, Suit, Value};
 use balatro_rs::hand::{Hand, SelectHand};
-use balatro_rs::joker::{GameContext, Joker, JokerId, JokerRarity};
+use balatro_rs::joker::{GameContext, JokerId, JokerRarity};
 use balatro_rs::joker_state::JokerStateManager;
 use balatro_rs::rank::HandRank;
-use balatro_rs::rng::{GameRng, RngMode};
+use balatro_rs::rng::GameRng;
 use balatro_rs::stage::{Blind, Stage};
 use balatro_rs::static_joker_factory::StaticJokerFactory;
 use std::collections::HashMap;
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 
-/// Helper function to create a minimal GameContext for testing
+/// Helper function to create a minimal GameContext for testing using safe static initialization
 fn create_test_context() -> GameContext<'static> {
-    // Create test data that will be leaked for 'static lifetime (test-only pattern)
-    let stage = Box::leak(Box::new(Stage::Blind(Blind::Small)));
-    let jokers: Vec<Box<dyn Joker>> = Vec::new();
-    let jokers_ref = Box::leak(jokers.into_boxed_slice());
-    let hand = Box::leak(Box::new(Hand::new(vec![])));
-    let discarded: Vec<Card> = Vec::new();
-    let discarded_ref = Box::leak(discarded.into_boxed_slice());
-    let hand_type_counts = Box::leak(Box::new(HashMap::new()));
-    let joker_state_manager = Box::leak(Box::new(Arc::new(JokerStateManager::new())));
-    let rng = Box::leak(Box::new(GameRng::for_testing(42)));
+    create_test_context_with_params(5, 0, 52, 0)
+}
+
+/// Helper function to create a GameContext with specific parameters using safe static initialization
+fn create_test_context_with_params(
+    money: i32,
+    discards_used: u32,
+    cards_in_deck: usize,
+    steel_cards_in_deck: usize,
+) -> GameContext<'static> {
+    static STAGE: Stage = Stage::Blind(Blind::Small);
+    static HAND: OnceLock<Hand> = OnceLock::new();
+    let hand = HAND.get_or_init(|| Hand::new(Vec::new()));
+
+    static HAND_TYPE_COUNTS: OnceLock<HashMap<HandRank, u32>> = OnceLock::new();
+    let hand_type_counts = HAND_TYPE_COUNTS.get_or_init(HashMap::new);
+
+    static JOKER_STATE_MANAGER: OnceLock<Arc<JokerStateManager>> = OnceLock::new();
+    let joker_state_manager =
+        JOKER_STATE_MANAGER.get_or_init(|| Arc::new(JokerStateManager::new()));
+
+    static TEST_RNG: OnceLock<GameRng> = OnceLock::new();
+    let rng = TEST_RNG.get_or_init(|| GameRng::for_testing(42));
 
     GameContext {
         chips: 10,
         mult: 1,
-        money: 5,
+        money,
         ante: 1,
         round: 1,
-        stage,
+        stage: &STAGE,
         hands_played: 0,
-        discards_used: 0,
-        jokers: jokers_ref,
+        discards_used,
+        jokers: &[],
         hand,
-        discarded: discarded_ref,
+        discarded: &[],
         joker_state_manager,
         hand_type_counts,
-        cards_in_deck: 52,
+        cards_in_deck,
         stone_cards_in_deck: 0,
-        steel_cards_in_deck: 0,
+        steel_cards_in_deck,
         rng,
     }
 }
@@ -122,34 +135,7 @@ fn test_half_joker() {
 #[test]
 fn test_half_joker_behavior_with_4_cards() {
     let joker = StaticJokerFactory::create_half_joker();
-    
-    // Create test context
-    let stage = Stage::Blind(Blind::Small);
-    let hand = Hand::new(vec![]);
-    let empty_cards = vec![];
-    let joker_state_manager = Arc::new(JokerStateManager::new());
-    let hand_type_counts = HashMap::new();
-    let rng = GameRng::for_testing(42);
-
-    let mut context = GameContext {
-        chips: 0,
-        mult: 0,
-        money: 0,
-        ante: 1,
-        round: 1,
-        stage: &stage,
-        hands_played: 0,
-        discards_used: 0,
-        jokers: &[],
-        hand: &hand,
-        discarded: &empty_cards,
-        joker_state_manager: &joker_state_manager,
-        hand_type_counts: &hand_type_counts,
-        cards_in_deck: 52,
-        stone_cards_in_deck: 0,
-        steel_cards_in_deck: 0,
-        rng: &rng,
-    };
+    let mut context = create_test_context();
 
     // Test with exactly 4 cards (should trigger)
     let four_card_hand = SelectHand::new(vec![
@@ -319,15 +305,6 @@ fn test_half_joker_behavior_edge_case_empty_hand() {
 
 #[test]
 fn test_banner_joker() {
-    use balatro_rs::card::Card;
-    use balatro_rs::hand::{Hand, SelectHand};
-    use balatro_rs::joker::GameContext;
-    use balatro_rs::joker_state::JokerStateManager;
-    use balatro_rs::rank::HandRank;
-    use balatro_rs::stage::Stage;
-    use std::collections::HashMap;
-    use std::sync::Arc;
-
     let joker = StaticJokerFactory::create_banner();
 
     // Test basic properties
@@ -338,83 +315,20 @@ fn test_banner_joker() {
     assert_eq!(joker.cost(), 3);
 
     // Test functionality with different discard counts
-    let stage = Stage::Blind(Blind::Small);
-    let hand = Hand::new(vec![]);
-    let empty_cards = vec![];
-    let joker_state_manager = Arc::new(JokerStateManager::new());
-    let hand_type_counts = HashMap::new();
-    let rng = GameRng::for_testing(42);
 
     // Test with 0 discards used (5 remaining) - should give 5 * 30 = 150 chips
-    let mut context_5_remaining = GameContext {
-        chips: 0,
-        mult: 0,
-        money: 0,
-        ante: 1,
-        round: 1,
-        stage: &stage,
-        hands_played: 0,
-        discards_used: 0, // 5 discards remaining
-        jokers: &[],
-        hand: &hand,
-        discarded: &empty_cards,
-        joker_state_manager: &joker_state_manager,
-        hand_type_counts: &hand_type_counts,
-        cards_in_deck: 52,
-        stone_cards_in_deck: 0,
-        steel_cards_in_deck: 0,
-        rng: &rng,
-    };
-
+    let mut context_5_remaining = create_test_context_with_params(0, 0, 52, 0);
     let test_hand = SelectHand::new(vec![]);
     let effect = joker.on_hand_played(&mut context_5_remaining, &test_hand);
     assert_eq!(effect.chips, 150); // 5 remaining * 30 chips per
 
     // Test with 2 discards used (3 remaining) - should give 3 * 30 = 90 chips
-    let mut context_3_remaining = GameContext {
-        chips: 0,
-        mult: 0,
-        money: 0,
-        ante: 1,
-        round: 1,
-        stage: &stage,
-        hands_played: 0,
-        discards_used: 2, // 3 discards remaining
-        jokers: &[],
-        hand: &hand,
-        discarded: &empty_cards,
-        joker_state_manager: &joker_state_manager,
-        hand_type_counts: &hand_type_counts,
-        cards_in_deck: 52,
-        stone_cards_in_deck: 0,
-        steel_cards_in_deck: 0,
-        rng: &rng,
-    };
-
+    let mut context_3_remaining = create_test_context_with_params(0, 2, 52, 0);
     let effect = joker.on_hand_played(&mut context_3_remaining, &test_hand);
     assert_eq!(effect.chips, 90); // 3 remaining * 30 chips per
 
     // Test with 5 discards used (0 remaining) - should give 0 * 30 = 0 chips
-    let mut context_0_remaining = GameContext {
-        chips: 0,
-        mult: 0,
-        money: 0,
-        ante: 1,
-        round: 1,
-        stage: &stage,
-        hands_played: 0,
-        discards_used: 5, // 0 discards remaining
-        jokers: &[],
-        hand: &hand,
-        discarded: &empty_cards,
-        joker_state_manager: &joker_state_manager,
-        hand_type_counts: &hand_type_counts,
-        cards_in_deck: 52,
-        stone_cards_in_deck: 0,
-        steel_cards_in_deck: 0,
-        rng: &rng,
-    };
-
+    let mut context_0_remaining = create_test_context_with_params(0, 5, 52, 0);
     let effect = joker.on_hand_played(&mut context_0_remaining, &test_hand);
     assert_eq!(effect.chips, 0); // 0 remaining * 30 chips per
 }
@@ -455,11 +369,11 @@ fn test_banner_implementation_uniqueness() {
 fn test_abstract_joker() {
     use balatro_rs::card::{Card, Suit, Value};
     use balatro_rs::hand::{Hand, SelectHand};
-    use balatro_rs::joker::{GameContext, Joker, JokerEffect, JokerId, JokerRarity};
+    use balatro_rs::joker::{GameContext, Joker, JokerId, JokerRarity};
     use balatro_rs::joker_factory::JokerFactory;
     use balatro_rs::joker_state::JokerStateManager;
     use balatro_rs::rank::HandRank;
-    use balatro_rs::rng::{GameRng, RngMode};
+    use balatro_rs::rng::GameRng;
     use balatro_rs::stage::Stage;
     use std::collections::HashMap;
     use std::sync::Arc;
@@ -495,7 +409,7 @@ fn test_abstract_joker() {
     let hand_type_counts: HashMap<HandRank, u32> = HashMap::new();
     let hand_type_counts_ref: &'static HashMap<HandRank, u32> =
         Box::leak(Box::new(hand_type_counts));
-    let rng = GameRng::new(RngMode::Testing(42));
+    let rng = GameRng::for_testing(42);
     let rng_ref: &'static GameRng = Box::leak(Box::new(rng));
 
     let mut context = GameContext {

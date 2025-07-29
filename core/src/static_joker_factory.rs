@@ -1,7 +1,7 @@
 use crate::card::{Suit, Value};
 use crate::joker::{Joker, JokerId, JokerRarity};
 use crate::rank::HandRank;
-use crate::static_joker::{StaticCondition, FrameworkStaticJoker};
+use crate::static_joker::{FrameworkStaticJoker, StaticCondition};
 
 /// Factory functions for creating static jokers using the framework
 pub struct StaticJokerFactory;
