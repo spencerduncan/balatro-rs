@@ -6,7 +6,8 @@ use balatro_rs::{
         ConflictResolutionStrategy, EffectPriority, JokerEffectProcessor, ProcessingContext,
     },
 };
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use std::hint::black_box;
 
 /// Benchmark suite for JokerEffectProcessor performance testing
 pub fn effect_processor_benchmarks(c: &mut Criterion) {

@@ -318,7 +318,7 @@ pub fn retrigger_benchmark(c: &mut Criterion) {
             BenchmarkId::new("retrigger_effects", retrigger_count),
             &retrigger_count,
             |b, &retrigger_count| {
-                let processor = JokerEffectProcessor::new();
+                let _processor = JokerEffectProcessor::new();
                 let joker_effects = vec![JokerEffect {
                     chips: 10,
                     mult: 2,
