@@ -815,6 +815,18 @@ pub enum ConsumableId {
     TheEmperor,
     /// The Hierophant - Enhances 2 selected cards to Bonus Cards
     TheHierophant,
+    /// The Empress - Enhances 2 selected cards to Mult Cards
+    TheEmpress,
+    /// The Lovers - Enhances 1 selected card to Wild Card
+    TheLovers,
+    /// The Chariot - Enhances 1 selected card to Steel Card
+    TheChariot,
+    /// Strength - Increases rank of up to 2 selected cards by 1
+    Strength,
+    /// The Hermit - Gain $20 money
+    TheHermit,
+    /// Wheel of Fortune - 1 in 4 chance to add Foil, Holographic, or Polychrome edition
+    WheelOfFortune,
 
     // Planet Cards
     /// Mercury - Levels up Pair
@@ -854,6 +866,12 @@ impl fmt::Display for ConsumableId {
             ConsumableId::TheHighPriestess => write!(f, "The High Priestess"),
             ConsumableId::TheEmperor => write!(f, "The Emperor"),
             ConsumableId::TheHierophant => write!(f, "The Hierophant"),
+            ConsumableId::TheEmpress => write!(f, "The Empress"),
+            ConsumableId::TheLovers => write!(f, "The Lovers"),
+            ConsumableId::TheChariot => write!(f, "The Chariot"),
+            ConsumableId::Strength => write!(f, "Strength"),
+            ConsumableId::TheHermit => write!(f, "The Hermit"),
+            ConsumableId::WheelOfFortune => write!(f, "Wheel of Fortune"),
 
             // Planet Cards
             ConsumableId::Mercury => write!(f, "Mercury"),
@@ -890,6 +908,12 @@ impl ConsumableId {
             | ConsumableId::TheHighPriestess
             | ConsumableId::TheEmperor
             | ConsumableId::TheHierophant
+            | ConsumableId::TheEmpress
+            | ConsumableId::TheLovers
+            | ConsumableId::TheChariot
+            | ConsumableId::Strength
+            | ConsumableId::TheHermit
+            | ConsumableId::WheelOfFortune
             | ConsumableId::TarotPlaceholder => ConsumableType::Tarot,
 
             // Planet Cards
@@ -914,8 +938,14 @@ impl ConsumableId {
             ConsumableId::TheFool,
             ConsumableId::TheMagician,
             ConsumableId::TheHighPriestess,
+            ConsumableId::TheEmpress,
             ConsumableId::TheEmperor,
             ConsumableId::TheHierophant,
+            ConsumableId::TheLovers,
+            ConsumableId::TheChariot,
+            ConsumableId::Strength,
+            ConsumableId::TheHermit,
+            ConsumableId::WheelOfFortune,
         ]
     }
 
@@ -1503,9 +1533,12 @@ impl<'de> Deserialize<'de> for ConsumableSlots {
 }
 
 // Re-export submodules when they are implemented
-// pub mod tarot;
+pub mod tarot;
 // pub mod planet;
 // pub mod spectral;
+
+// Re-export key tarot types for convenience
+pub use tarot::{CardEnhancement, TarotCard, TarotEffect, TarotError, TarotFactory, TarotRarity};
 
 // Test module
 #[cfg(test)]

@@ -39,6 +39,7 @@ pub mod scaling_joker;
 pub mod scaling_joker_custom;
 pub mod scaling_joker_impl;
 pub mod shop;
+pub mod skip_tags;
 pub mod space;
 pub mod special_jokers;
 pub mod stage;
