@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["boss_reroll_effect","duplication_effect","hand_upgrade_effect","money_effect","next_shop_modifier_effect","pack_effect","temporary_hand_size_effect"]};

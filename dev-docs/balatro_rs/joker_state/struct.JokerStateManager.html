@@ -76,12 +76,12 @@ Returns <code>false</code> if no state exists for the joker.</p>
 <span class="comment">// After creating state with triggers
 </span>manager.set_state(joker_id, JokerState::with_triggers(<span class="number">2</span>));
 <span class="macro">assert!</span>(manager.has_triggers(joker_id));</code></pre></div>
-</div></details><details class="toggle method-toggle" open><summary><section id="method.set_custom_data" class="method"><a class="src rightside" href="../../src/balatro_rs/joker_state.rs.html#370-381">Source</a><h4 class="code-header">pub fn <a href="#method.set_custom_data" class="fn">set_custom_data</a>&lt;T: <a class="trait" href="https://docs.rs/serde/1.0.215/serde/ser/trait.Serialize.html" title="trait serde::ser::Serialize">Serialize</a>&gt;(
+</div></details><details class="toggle method-toggle" open><summary><section id="method.set_custom_data" class="method"><a class="src rightside" href="../../src/balatro_rs/joker_state.rs.html#370-381">Source</a><h4 class="code-header">pub fn <a href="#method.set_custom_data" class="fn">set_custom_data</a>&lt;T: <a class="trait" href="https://docs.rs/serde/1.0.219/serde/ser/trait.Serialize.html" title="trait serde::ser::Serialize">Serialize</a>&gt;(
     &amp;self,
     joker_id: <a class="enum" href="../joker/enum.JokerId.html" title="enum balatro_rs::joker::JokerId">JokerId</a>,
     key: &amp;<a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.str.html">str</a>,
     value: T,
-) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.88.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.unit.html">()</a>, <a class="struct" href="https://docs.rs/serde_json/1.0.133/serde_json/error/struct.Error.html" title="struct serde_json::error::Error">Error</a>&gt;</h4></section></summary><div class="docblock"><p>Set custom data for a joker</p>
+) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.88.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.unit.html">()</a>, <a class="struct" href="https://docs.rs/serde_json/1.0.141/serde_json/error/struct.Error.html" title="struct serde_json::error::Error">Error</a>&gt;</h4></section></summary><div class="docblock"><p>Set custom data for a joker</p>
 <h5 id="examples-4"><a class="doc-anchor" href="#examples-4">§</a>Examples</h5>
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">let </span>manager = JokerStateManager::new();
 
@@ -97,11 +97,11 @@ Returns <code>false</code> if no state exists for the joker.</p>
 
 <span class="kw">let </span>combo = ComboData { count: <span class="number">5</span>, multiplier: <span class="number">1.5 </span>};
 manager.set_custom_data(JokerId::Joker, <span class="string">"combo"</span>, combo).unwrap();</code></pre></div>
-</div></details><details class="toggle method-toggle" open><summary><section id="method.get_custom_data" class="method"><a class="src rightside" href="../../src/balatro_rs/joker_state.rs.html#415-424">Source</a><h4 class="code-header">pub fn <a href="#method.get_custom_data" class="fn">get_custom_data</a>&lt;T: for&lt;'de&gt; <a class="trait" href="https://docs.rs/serde/1.0.215/serde/de/trait.Deserialize.html" title="trait serde::de::Deserialize">Deserialize</a>&lt;'de&gt;&gt;(
+</div></details><details class="toggle method-toggle" open><summary><section id="method.get_custom_data" class="method"><a class="src rightside" href="../../src/balatro_rs/joker_state.rs.html#415-424">Source</a><h4 class="code-header">pub fn <a href="#method.get_custom_data" class="fn">get_custom_data</a>&lt;T: for&lt;'de&gt; <a class="trait" href="https://docs.rs/serde/1.0.219/serde/de/trait.Deserialize.html" title="trait serde::de::Deserialize">Deserialize</a>&lt;'de&gt;&gt;(
     &amp;self,
     joker_id: <a class="enum" href="../joker/enum.JokerId.html" title="enum balatro_rs::joker::JokerId">JokerId</a>,
     key: &amp;<a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.str.html">str</a>,
-) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.88.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/1.88.0/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;T&gt;, <a class="struct" href="https://docs.rs/serde_json/1.0.133/serde_json/error/struct.Error.html" title="struct serde_json::error::Error">Error</a>&gt;</h4></section></summary><div class="docblock"><p>Get custom data for a joker</p>
+) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.88.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://doc.rust-lang.org/1.88.0/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;T&gt;, <a class="struct" href="https://docs.rs/serde_json/1.0.141/serde_json/error/struct.Error.html" title="struct serde_json::error::Error">Error</a>&gt;</h4></section></summary><div class="docblock"><p>Get custom data for a joker</p>
 <p>Returns None if the joker has no state or the key doesn’t exist.</p>
 <h5 id="examples-5"><a class="doc-anchor" href="#examples-5">§</a>Examples</h5>
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">let </span>manager = JokerStateManager::new();

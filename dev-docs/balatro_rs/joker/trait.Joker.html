@@ -49,12 +49,12 @@
         &amp;self,
         _context: &amp;<a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;,
         state: &amp;<a class="struct" href="../joker_state/struct.JokerState.html" title="struct balatro_rs::joker_state::JokerState">JokerState</a>,
-    ) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.88.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://docs.rs/serde_json/1.0.133/serde_json/value/enum.Value.html" title="enum serde_json::value::Value">Value</a>, <a class="struct" href="https://docs.rs/serde_json/1.0.133/serde_json/error/struct.Error.html" title="struct serde_json::error::Error">Error</a>&gt; { ... }
+    ) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.88.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://docs.rs/serde_json/1.0.141/serde_json/value/enum.Value.html" title="enum serde_json::value::Value">Value</a>, <a class="struct" href="https://docs.rs/serde_json/1.0.141/serde_json/error/struct.Error.html" title="struct serde_json::error::Error">Error</a>&gt; { ... }
 <span class="item-spacer"></span>    fn <a href="#method.deserialize_state" class="fn">deserialize_state</a>(
         &amp;self,
         _context: &amp;<a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;,
-        data: &amp;<a class="enum" href="https://docs.rs/serde_json/1.0.133/serde_json/value/enum.Value.html" title="enum serde_json::value::Value">Value</a>,
-    ) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.88.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="../joker_state/struct.JokerState.html" title="struct balatro_rs::joker_state::JokerState">JokerState</a>, <a class="struct" href="https://docs.rs/serde_json/1.0.133/serde_json/error/struct.Error.html" title="struct serde_json::error::Error">Error</a>&gt; { ... }
+        data: &amp;<a class="enum" href="https://docs.rs/serde_json/1.0.141/serde_json/value/enum.Value.html" title="enum serde_json::value::Value">Value</a>,
+    ) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.88.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="../joker_state/struct.JokerState.html" title="struct balatro_rs::joker_state::JokerState">JokerState</a>, <a class="struct" href="https://docs.rs/serde_json/1.0.141/serde_json/error/struct.Error.html" title="struct serde_json::error::Error">Error</a>&gt; { ... }
 <span class="item-spacer"></span>    fn <a href="#method.validate_state" class="fn">validate_state</a>(
         &amp;self,
         _context: &amp;<a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;,
@@ -64,7 +64,7 @@
 <span class="item-spacer"></span>    fn <a href="#method.migrate_state" class="fn">migrate_state</a>(
         &amp;self,
         _context: &amp;<a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;,
-        old_state: &amp;<a class="enum" href="https://docs.rs/serde_json/1.0.133/serde_json/value/enum.Value.html" title="enum serde_json::value::Value">Value</a>,
+        old_state: &amp;<a class="enum" href="https://docs.rs/serde_json/1.0.141/serde_json/value/enum.Value.html" title="enum serde_json::value::Value">Value</a>,
         _from_version: <a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.u32.html">u32</a>,
     ) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.88.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="../joker_state/struct.JokerState.html" title="struct balatro_rs::joker_state::JokerState">JokerState</a>, <a class="struct" href="https://doc.rust-lang.org/1.88.0/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>&gt; { ... }
 <span class="item-spacer"></span>    fn <a href="#method.process_scaling_event" class="fn">process_scaling_event</a>(
@@ -429,7 +429,7 @@ can use each round.</p>
     &amp;self,
     _context: &amp;<a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;,
     state: &amp;<a class="struct" href="../joker_state/struct.JokerState.html" title="struct balatro_rs::joker_state::JokerState">JokerState</a>,
-) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.88.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://docs.rs/serde_json/1.0.133/serde_json/value/enum.Value.html" title="enum serde_json::value::Value">Value</a>, <a class="struct" href="https://docs.rs/serde_json/1.0.133/serde_json/error/struct.Error.html" title="struct serde_json::error::Error">Error</a>&gt;</h4></section></summary><div class="docblock"><p>Serialize joker-specific state for persistence.</p>
+) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.88.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="enum" href="https://docs.rs/serde_json/1.0.141/serde_json/value/enum.Value.html" title="enum serde_json::value::Value">Value</a>, <a class="struct" href="https://docs.rs/serde_json/1.0.141/serde_json/error/struct.Error.html" title="struct serde_json::error::Error">Error</a>&gt;</h4></section></summary><div class="docblock"><p>Serialize joker-specific state for persistence.</p>
 <p>This hook allows jokers to define custom serialization logic for their state.
 The default implementation uses the standard JokerState serialization.</p>
 <h5 id="arguments-14"><a class="doc-anchor" href="#arguments-14">§</a>Arguments</h5>
@@ -456,8 +456,8 @@ The default implementation uses the standard JokerState serialization.</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.deserialize_state" class="method"><a class="src rightside" href="../../src/balatro_rs/joker/mod.rs.html#1121-1127">Source</a><h4 class="code-header">fn <a href="#method.deserialize_state" class="fn">deserialize_state</a>(
     &amp;self,
     _context: &amp;<a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;,
-    data: &amp;<a class="enum" href="https://docs.rs/serde_json/1.0.133/serde_json/value/enum.Value.html" title="enum serde_json::value::Value">Value</a>,
-) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.88.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="../joker_state/struct.JokerState.html" title="struct balatro_rs::joker_state::JokerState">JokerState</a>, <a class="struct" href="https://docs.rs/serde_json/1.0.133/serde_json/error/struct.Error.html" title="struct serde_json::error::Error">Error</a>&gt;</h4></section></summary><div class="docblock"><p>Deserialize joker-specific state from persistence.</p>
+    data: &amp;<a class="enum" href="https://docs.rs/serde_json/1.0.141/serde_json/value/enum.Value.html" title="enum serde_json::value::Value">Value</a>,
+) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.88.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="../joker_state/struct.JokerState.html" title="struct balatro_rs::joker_state::JokerState">JokerState</a>, <a class="struct" href="https://docs.rs/serde_json/1.0.141/serde_json/error/struct.Error.html" title="struct serde_json::error::Error">Error</a>&gt;</h4></section></summary><div class="docblock"><p>Deserialize joker-specific state from persistence.</p>
 <p>This hook allows jokers to define custom deserialization logic for their state.
 The default implementation uses the standard JokerState deserialization.</p>
 <h5 id="arguments-15"><a class="doc-anchor" href="#arguments-15">§</a>Arguments</h5>
@@ -544,7 +544,7 @@ Called when a joker is purchased or otherwise added to the game.</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.migrate_state" class="method"><a class="src rightside" href="../../src/balatro_rs/joker/mod.rs.html#1234-1241">Source</a><h4 class="code-header">fn <a href="#method.migrate_state" class="fn">migrate_state</a>(
     &amp;self,
     _context: &amp;<a class="struct" href="struct.GameContext.html" title="struct balatro_rs::joker::GameContext">GameContext</a>&lt;'_&gt;,
-    old_state: &amp;<a class="enum" href="https://docs.rs/serde_json/1.0.133/serde_json/value/enum.Value.html" title="enum serde_json::value::Value">Value</a>,
+    old_state: &amp;<a class="enum" href="https://docs.rs/serde_json/1.0.141/serde_json/value/enum.Value.html" title="enum serde_json::value::Value">Value</a>,
     _from_version: <a class="primitive" href="https://doc.rust-lang.org/1.88.0/std/primitive.u32.html">u32</a>,
 ) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.88.0/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="../joker_state/struct.JokerState.html" title="struct balatro_rs::joker_state::JokerState">JokerState</a>, <a class="struct" href="https://doc.rust-lang.org/1.88.0/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>&gt;</h4></section></summary><div class="docblock"><p>Migrate state from an older version.</p>
 <p>This hook allows jokers to handle state migration when loading save games

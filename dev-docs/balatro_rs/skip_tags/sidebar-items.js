@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["SkipTagId","TagEffectType","TagRarity"],"mod":["tag_effects","tag_registry","utility_tags"],"struct":["SkipTagContext","SkipTagInstance","SkipTagResult"],"trait":["SkipTag"]};
