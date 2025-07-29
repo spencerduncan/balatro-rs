@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt::{self, Debug};
 
 /// Enum representing all possible conditions for conditional jokers
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Hash, Serialize, Deserialize)]
 pub enum JokerCondition {
     /// Money is less than specified amount
     MoneyLessThan(i32),

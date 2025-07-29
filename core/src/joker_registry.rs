@@ -244,7 +244,7 @@ fn initialize_default_jokers(registry: &mut JokerRegistry) {
         "+30 Chips for each remaining discard",
         JokerRarity::Common,
         None,
-        create_banner,
+        create_banner_joker,
     );
 }
 
@@ -269,7 +269,7 @@ fn create_gluttonous_joker() -> Box<dyn Joker> {
     Box::new(crate::joker_impl::GluttonousJoker)
 }
 
-fn create_banner() -> Box<dyn Joker> {
+fn create_banner_joker() -> Box<dyn Joker> {
     crate::static_joker_factory::StaticJokerFactory::create_banner()
 }
 

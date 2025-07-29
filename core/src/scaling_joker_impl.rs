@@ -66,7 +66,7 @@ pub fn create_fortune_teller() -> ScalingJoker {
         JokerId::Fortune,
         "Fortune Teller".to_string(),
         "+1 Mult per Tarot card used".to_string(),
-        JokerRarity::Common,
+        JokerRarity::Rare,
         0.0,
         1.0,
         ScalingTrigger::ConsumableUsed,

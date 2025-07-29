@@ -276,7 +276,7 @@ impl fmt::Display for JokerRarity {
 /// `JokerEffect` instances are created frequently during scoring. The builder
 /// pattern methods consume and return `self` to enable efficient method chaining
 /// without additional allocations.
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "python", pyclass)]
 pub struct JokerEffect {
     /// Additional chips to add to the hand's base chips.
@@ -348,6 +348,26 @@ pub struct JokerEffect {
     ///
     /// Used for jokers with special effects, Easter eggs, or important notifications.
     pub message: Option<String>,
+}
+
+impl Default for JokerEffect {
+    fn default() -> Self {
+        Self {
+            chips: 0,
+            mult: 0,
+            money: 0,
+            interest_bonus: 0,
+            mult_multiplier: 1.0, // Default to "no change" rather than 0.0
+            retrigger: 0,
+            destroy_self: false,
+            destroy_others: Vec::new(),
+            transform_cards: Vec::new(),
+            hand_size_mod: 0,
+            discard_mod: 0,
+            sell_value_increase: 0,
+            message: None,
+        }
+    }
 }
 
 impl JokerEffect {
@@ -1313,14 +1333,31 @@ pub use traits::{
     ProcessContext, ProcessResult, Rarity,
 };
 
+// Include the advanced joker framework modules
+pub mod advanced_conditions;
+pub mod advanced_traits;
+pub mod compatibility_bridge;
+
 // Re-export old API types for backwards compatibility
 pub use compat::{Joker as OldJoker, Jokers};
+
+// Re-export advanced framework types
+pub use advanced_conditions::{
+    AdvancedCondition, AdvancedConditionBuilder, AdvancedConditionEvaluator,
+    AdvancedEvaluationContext, ConditionCache, GameHistory,
+};
+
+pub use advanced_traits::{
+    AdvancedJokerFramework, AdvancedJokerGameplay, AdvancedJokerIdentity, EnhancedJoker,
+    EnhancedJokerBuilder, EvaluationCost, GameEvent, InternalJokerState, JokerProcessor,
+};
+
+pub use compatibility_bridge::{CompatibilityBridge, LegacyJokerAdapter, MixedJokerCollection};
 
 // Re-export scaling chips joker structs (factory functions not available in current implementation)
 pub use scaling_chips_jokers::{
     ArrowheadJoker, CastleJoker, HikerJoker, OddToddJoker, ScholarJoker, StuntmanJoker, WeeJoker,
 };
-
 // Module-level trait tests
 #[cfg(test)]
 mod joker_trait_tests {
