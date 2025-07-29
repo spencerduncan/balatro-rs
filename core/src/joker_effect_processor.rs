@@ -639,6 +639,7 @@ impl JokerEffectProcessor {
             stage: &test_stage,
             hands_played: 0,
             discards_used: 0,
+            is_final_hand: false, // Test context, not final hand
             jokers: &[],
             hand: &test_hand,
             discarded: &[],
@@ -2194,6 +2195,7 @@ mod tests {
             stage: &crate::stage::Stage::PreBlind(),
             hands_played: 0,
             discards_used: 0,
+            is_final_hand: false, // Test context
             jokers: &[],
             hand: &crate::hand::Hand::new(vec![]),
             discarded: &[],
@@ -2461,6 +2463,7 @@ mod tests {
                 stage,
                 hands_played: 0,
                 discards_used: 0,
+            is_final_hand: false, // Test context
                 jokers,
                 hand,
                 discarded,
@@ -2537,6 +2540,7 @@ mod tests {
             stage: &crate::stage::Stage::PreBlind(),
             hands_played: 0,
             discards_used: 0,
+            is_final_hand: false, // Test context
             jokers: &[],
             hand: &crate::hand::Hand::new(vec![]),
             discarded: &[],
@@ -2926,6 +2930,7 @@ mod tests {
             stage: &stage,
             hands_played: 0,
             discards_used: 0,
+            is_final_hand: false, // Test context
             jokers: &[],
             hand: &crate::hand::Hand::new(vec![]),
             discarded: &[],
@@ -2971,6 +2976,7 @@ mod tests {
             stage: &crate::stage::Stage::PreBlind(),
             hands_played: 0,
             discards_used: 0,
+            is_final_hand: false, // Test context
             jokers: &[],
             hand: &crate::hand::Hand::new(vec![]),
             discarded: &[],

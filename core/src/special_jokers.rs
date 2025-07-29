@@ -977,6 +977,7 @@ mod tests {
             stage: &Stage::Blind(crate::stage::Blind::Small),
             hands_played: 0,
             discards_used: 0,
+            is_final_hand: false, // Test context
             jokers: &[],
             hand: &hand,
             discarded: &discarded,
@@ -1021,6 +1022,7 @@ mod tests {
             stage: &Stage::Blind(crate::stage::Blind::Small),
             hands_played: 0,
             discards_used: 0,
+            is_final_hand: false, // Test context
             jokers: &[],
             hand: &hand,
             discarded: &discarded,
@@ -1083,6 +1085,7 @@ mod tests {
             stage: &Stage::Blind(crate::stage::Blind::Small),
             hands_played: 0,
             discards_used: 0,
+            is_final_hand: false, // Test context
             jokers: &[],
             hand: &hand_for_context,
             discarded: &discarded,

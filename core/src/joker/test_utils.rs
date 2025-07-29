@@ -756,6 +756,7 @@ impl TestContextBuilder {
             stage: stage_ref,
             hands_played: self.hands_played,
             discards_used: self.discards_used,
+            is_final_hand: false, // Test context, override with .with_final_hand() if needed
             jokers: jokers_ref,
             hand: hand_ref,
             discarded: discarded_ref,
