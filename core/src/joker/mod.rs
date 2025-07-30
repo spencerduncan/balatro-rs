@@ -139,7 +139,8 @@ pub enum JokerId {
     Certificate,
     SmilingMask,
     FaceMask,
-    Fortune,
+    FortuneTeller,
+    MysteryJoker,
     Juggler,
     Drunkard,
     Stone,
@@ -1322,11 +1323,7 @@ pub mod scaling_additive_mult_jokers;
 pub mod scaling_chips_jokers;
 
 // Include testing utilities for the Joker trait system
-#[cfg(test)]
 pub mod test_utils;
-
-// Include comprehensive tests for the new trait system
-#[cfg(test)]
 pub mod tests;
 
 // Re-export important types

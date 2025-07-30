@@ -1621,8 +1621,8 @@ mod tests {
             "AcrobatJoker should be in Rare rarity"
         );
         assert!(
-            rare_jokers.contains(&JokerId::Fortune),
-            "Fortune Teller (JokerId::Fortune) should be in Rare rarity"
+            rare_jokers.contains(&JokerId::FortuneTeller),
+            "Fortune Teller (JokerId::FortuneTeller) should be in Rare rarity"
         );
 
         let legendary_jokers = JokerFactory::get_by_rarity(JokerRarity::Legendary);

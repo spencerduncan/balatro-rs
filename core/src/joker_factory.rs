@@ -303,7 +303,7 @@ impl JokerFactory {
             Reserved5, // RideTheBus
             Reserved6, // RedCard (pack skipping)
             RedCard,   // Red Card (direct mapping)
-            Fortune,   // Fortune Teller
+            FortuneTeller,   // Fortune Teller
             // Scaling chips jokers
             Castle,
             Wee,
@@ -381,7 +381,7 @@ mod tests {
         let steel = JokerFactory::create(JokerId::SteelJoker);
         assert!(steel.is_some());
         assert_eq!(steel.unwrap().id(), JokerId::SteelJoker);
-        
+
         let scary_face = JokerFactory::create(JokerId::ScaryFace);
         assert!(scary_face.is_some());
         assert_eq!(scary_face.unwrap().id(), JokerId::ScaryFace);
