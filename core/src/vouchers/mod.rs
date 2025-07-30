@@ -720,7 +720,7 @@ impl VoucherId {
             VoucherId::CrystalBall => vec![],
             VoucherId::Telescope => vec![],
             VoucherId::Liquidation => vec![],
-            VoucherId::RerollGlut => vec![],
+            VoucherId::RerollGlut => vec![VoucherId::RerollSurplus],
             VoucherId::OmenGlobe => vec![],
             VoucherId::Observatory => vec![],
 
@@ -729,14 +729,14 @@ impl VoucherId {
 
             // Gameplay vouchers from Issue #18 - most are base vouchers
             VoucherId::Grabber => vec![],
-            VoucherId::NachoTong => vec![],
+            VoucherId::NachoTong => vec![VoucherId::Grabber],
             VoucherId::Wasteful => vec![],
             VoucherId::SeedMoney => vec![],
             VoucherId::Hieroglyph => vec![],
-            VoucherId::Petroglyph => vec![],
-            VoucherId::Antimatter => vec![],
+            VoucherId::Petroglyph => vec![VoucherId::Hieroglyph],
+            VoucherId::Antimatter => vec![VoucherId::Blank],
             VoucherId::MagicTrick => vec![],
-            VoucherId::Illusion => vec![],
+            VoucherId::Illusion => vec![VoucherId::MagicTrick],
             VoucherId::Blank => vec![],
             VoucherId::PaintBrush => vec![],
             VoucherId::TarotMerchant => vec![],

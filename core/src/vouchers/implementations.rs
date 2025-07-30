@@ -55,15 +55,17 @@ impl Voucher for NachoTongVoucher {
     }
 
     fn tier(&self) -> VoucherTier {
-        VoucherTier::Base
+        VoucherTier::Upgraded
     }
 
     fn prerequisite(&self) -> Option<VoucherId> {
-        None
+        Some(VoucherId::Grabber)
     }
 
     fn can_purchase(&self, game_state: &GameState) -> bool {
-        game_state.can_afford(self.cost()) && !game_state.owns_voucher(self.id())
+        game_state.can_afford(self.cost())
+            && !game_state.owns_voucher(self.id())
+            && game_state.owns_voucher(VoucherId::Grabber)
     }
 
     fn apply_effect(&self, game_state: &mut GameState) {
@@ -263,15 +265,17 @@ impl Voucher for PetroglyphVoucher {
     }
 
     fn tier(&self) -> VoucherTier {
-        VoucherTier::Base
+        VoucherTier::Upgraded
     }
 
     fn prerequisite(&self) -> Option<VoucherId> {
-        None
+        Some(VoucherId::Hieroglyph)
     }
 
     fn can_purchase(&self, game_state: &GameState) -> bool {
-        game_state.can_afford(self.cost()) && !game_state.owns_voucher(self.id())
+        game_state.can_afford(self.cost())
+            && !game_state.owns_voucher(self.id())
+            && game_state.owns_voucher(VoucherId::Hieroglyph)
     }
 
     fn apply_effect(&self, game_state: &mut GameState) {
@@ -306,15 +310,17 @@ impl Voucher for AntimatterVoucher {
     }
 
     fn tier(&self) -> VoucherTier {
-        VoucherTier::Base
+        VoucherTier::Upgraded
     }
 
     fn prerequisite(&self) -> Option<VoucherId> {
-        None
+        Some(VoucherId::Blank)
     }
 
     fn can_purchase(&self, game_state: &GameState) -> bool {
-        game_state.can_afford(self.cost()) && !game_state.owns_voucher(self.id())
+        game_state.can_afford(self.cost())
+            && !game_state.owns_voucher(self.id())
+            && game_state.owns_voucher(VoucherId::Blank)
     }
 
     fn apply_effect(&self, game_state: &mut GameState) {
@@ -386,15 +392,17 @@ impl Voucher for IllusionVoucher {
     }
 
     fn tier(&self) -> VoucherTier {
-        VoucherTier::Base
+        VoucherTier::Upgraded
     }
 
     fn prerequisite(&self) -> Option<VoucherId> {
-        None
+        Some(VoucherId::MagicTrick)
     }
 
     fn can_purchase(&self, game_state: &GameState) -> bool {
-        game_state.can_afford(self.cost()) && !game_state.owns_voucher(self.id())
+        game_state.can_afford(self.cost())
+            && !game_state.owns_voucher(self.id())
+            && game_state.owns_voucher(VoucherId::MagicTrick)
     }
 
     fn apply_effect(&self, game_state: &mut GameState) {
