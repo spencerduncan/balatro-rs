@@ -95,8 +95,7 @@ impl JokerFactory {
             JokerId::Trousers => Some(Box::new(SpareTrousersJoker::new())),
             JokerId::GreenJoker => Some(Box::new(GreenJoker::new())),
             JokerId::Reserved5 => Some(Box::new(RideTheBusJoker::new())), // RideTheBus
-            JokerId::Reserved6 => Some(Box::new(RedCardJoker::new())),    // RedCard (pack skipping)
-            JokerId::RedCard => Some(Box::new(RedCardJoker::new())), // RedCard (direct mapping)
+            JokerId::RedCard => Some(Box::new(RedCardJoker::new())), // RedCard (pack skipping scaling joker)
 
             // Scaling chips jokers
             JokerId::Castle => Some(Box::new(CastleJoker::new())),
@@ -232,7 +231,7 @@ impl JokerFactory {
                 // Scaling chips jokers
                 Castle,
                 Wee,
-                Stuntman,
+                Stuntman
                 // Custom scaling jokers
                 Reserved2, // Mystic Summit
             ],
@@ -299,9 +298,8 @@ impl JokerFactory {
             // Scaling additive mult jokers
             Trousers, // Spare Trousers
             GreenJoker,
-            Reserved5,     // RideTheBus
-            Reserved6,     // RedCard (pack skipping)
-            RedCard,       // Red Card (direct mapping)
+            Reserved5, // RideTheBus
+            RedCard,   // Red Card (pack skipping scaling joker)
             FortuneTeller, // Fortune Teller
             // Scaling chips jokers
             Castle,
@@ -437,9 +435,9 @@ mod tests {
         assert!(ride_the_bus.is_some());
         assert_eq!(ride_the_bus.unwrap().id(), JokerId::Reserved5);
 
-        let red_card = JokerFactory::create(JokerId::Reserved6);
+        let red_card = JokerFactory::create(JokerId::RedCard);
         assert!(red_card.is_some());
-        assert_eq!(red_card.unwrap().id(), JokerId::Reserved6);
+        assert_eq!(red_card.unwrap().id(), JokerId::RedCard);
 
         let fortune_teller = JokerFactory::create(JokerId::FortuneTeller);
         assert!(fortune_teller.is_some());
@@ -516,7 +514,6 @@ mod tests {
         // Common scaling jokers
         assert!(common_jokers.contains(&JokerId::GreenJoker));
         assert!(common_jokers.contains(&JokerId::Reserved5)); // RideTheBus
-        assert!(common_jokers.contains(&JokerId::Reserved6)); // RedCard (pack skipping)
         assert!(common_jokers.contains(&JokerId::OddTodd));
         assert!(common_jokers.contains(&JokerId::Arrowhead));
         assert!(common_jokers.contains(&JokerId::Scholar));
@@ -525,6 +522,7 @@ mod tests {
         // Uncommon scaling jokers
         assert!(uncommon_jokers.contains(&JokerId::Trousers)); // Spare Trousers
         assert!(uncommon_jokers.contains(&JokerId::SteelJoker));
+        assert!(uncommon_jokers.contains(&JokerId::RedCard)); // RedCard (pack skipping)
         assert!(uncommon_jokers.contains(&JokerId::Hiker));
         assert!(uncommon_jokers.contains(&JokerId::Reserved)); // Throwback
         assert!(uncommon_jokers.contains(&JokerId::Ceremonial)); // Ceremonial Dagger
@@ -548,7 +546,7 @@ mod tests {
         assert!(implemented.contains(&JokerId::Trousers));
         assert!(implemented.contains(&JokerId::GreenJoker));
         assert!(implemented.contains(&JokerId::Reserved5));
-        assert!(implemented.contains(&JokerId::Reserved6));
+        assert!(implemented.contains(&JokerId::RedCard)); // RedCard instead of Reserved6
         assert!(implemented.contains(&JokerId::FortuneTeller));
 
         // Scaling chips jokers
