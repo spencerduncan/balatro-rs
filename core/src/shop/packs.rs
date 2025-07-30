@@ -364,7 +364,7 @@ impl Pack {
         let planet_cards = ConsumableId::planet_cards();
 
         for _ in 0..count {
-            // Randomly select a specific planet card for preview info
+            // Select specific planet card for preview info
             let selected_planet = game
                 .rng
                 .choose(&planet_cards)

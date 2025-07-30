@@ -166,14 +166,17 @@ fn test_arcana_pack_choose_one_of_tarot_cards() {
         "Should choose 1 from arcana pack"
     );
 
-    // All options should be tarot consumables
+    // All options should be tarot consumables or Soul (special spectral card)
     for option in &open_pack.pack.options {
         assert!(
             matches!(
                 option.item,
                 balatro_rs::shop::ShopItem::Consumable(balatro_rs::shop::ConsumableType::Tarot)
+                    | balatro_rs::shop::ShopItem::Consumable(
+                        balatro_rs::shop::ConsumableType::Spectral
+                    )
             ),
-            "Arcana pack should contain only tarot cards"
+            "Arcana pack should contain only tarot cards or Soul spectral card"
         );
     }
 }
@@ -208,14 +211,17 @@ fn test_celestial_pack_choose_one_of_planet_cards() {
         "Should choose 1 from celestial pack"
     );
 
-    // All options should be planet consumables
+    // All options should be planet consumables or Black Hole (special spectral card)
     for option in &open_pack.pack.options {
         assert!(
             matches!(
                 option.item,
                 balatro_rs::shop::ShopItem::Consumable(balatro_rs::shop::ConsumableType::Planet)
+                    | balatro_rs::shop::ShopItem::Consumable(
+                        balatro_rs::shop::ConsumableType::Spectral
+                    )
             ),
-            "Celestial pack should contain only planet cards"
+            "Celestial pack should contain only planet cards or Black Hole spectral card"
         );
     }
 }

@@ -3,7 +3,7 @@
 # Run `pre-commit install` to set up the hooks
 # Run `pre-commit run --all-files` to run hooks on all files
 
-default_stages: [commit]
+default_stages: [pre-commit]
 default_language_version:
   python: python3
 

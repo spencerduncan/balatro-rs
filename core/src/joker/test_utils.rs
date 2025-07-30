@@ -623,6 +623,7 @@ pub struct TestContextBuilder {
     stage: Stage,
     hands_played: u32,
     discards_used: u32,
+    hands_remaining: f64,
     hand: Hand,
     discarded: Vec<Card>,
     hand_type_counts: HashMap<HandRank, u32>,
@@ -642,6 +643,7 @@ impl TestContextBuilder {
             stage: Stage::Blind(Blind::Small),
             hands_played: 0,
             discards_used: 0,
+            hands_remaining: 4.0,
             hand: Hand::new(vec![]),
             discarded: Vec::new(),
             hand_type_counts: HashMap::new(),
@@ -695,6 +697,12 @@ impl TestContextBuilder {
     /// Set the number of discards used.
     pub fn with_discards_used(mut self, discards_used: u32) -> Self {
         self.discards_used = discards_used;
+        self
+    }
+
+    /// Set the number of hands remaining.
+    pub fn with_hands_remaining(mut self, hands_remaining: f64) -> Self {
+        self.hands_remaining = hands_remaining;
         self
     }
 
@@ -756,6 +764,7 @@ impl TestContextBuilder {
             stage: stage_ref,
             hands_played: self.hands_played,
             discards_used: self.discards_used,
+            hands_remaining: self.hands_remaining,
             jokers: jokers_ref,
             hand: hand_ref,
             discarded: discarded_ref,

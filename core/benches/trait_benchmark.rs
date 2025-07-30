@@ -26,6 +26,9 @@ use std::time::Instant;
 
 /// Benchmark trait method dispatch overhead
 pub fn trait_dispatch_benchmark(c: &mut Criterion) {
+    // Initialize all systems before running benchmarks to avoid factory race conditions
+    balatro_rs::initialize().expect("Failed to initialize core systems");
+
     let mut group = c.benchmark_group("trait_dispatch");
 
     // Create test jokers for benchmarking
@@ -318,7 +321,7 @@ pub fn retrigger_benchmark(c: &mut Criterion) {
             BenchmarkId::new("retrigger_effects", retrigger_count),
             &retrigger_count,
             |b, &retrigger_count| {
-                let processor = JokerEffectProcessor::new();
+                let _processor = JokerEffectProcessor::new();
                 let joker_effects = vec![JokerEffect {
                     chips: 10,
                     mult: 2,
@@ -375,6 +378,7 @@ impl TestGameData {
             stage: &self.stage,
             hands_played: 0,
             discards_used: 0,
+            hands_remaining: 4.0, // Standard hands remaining for testing
             jokers: &[],
             hand: &self.hand,
             discarded: &[],

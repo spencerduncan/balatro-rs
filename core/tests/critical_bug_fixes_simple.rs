@@ -46,13 +46,13 @@ impl Joker for SimpleTestJoker {
 #[test]
 fn test_hash_collision_fix_direct() {
     // Create two conditions with same-length strings but different content
-    let condition1 = AdvancedCondition::JokerStateEquals {
+    let _condition1 = AdvancedCondition::JokerStateEquals {
         joker_id: JokerId::Joker,
         state_key: "abc".to_string(), // Length 3
         expected_value: serde_json::json!(1),
     };
 
-    let condition2 = AdvancedCondition::JokerStateEquals {
+    let _condition2 = AdvancedCondition::JokerStateEquals {
         joker_id: JokerId::Joker,
         state_key: "xyz".to_string(), // Also length 3, different content
         expected_value: serde_json::json!(1),

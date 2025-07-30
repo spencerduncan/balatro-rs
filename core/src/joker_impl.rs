@@ -1059,7 +1059,7 @@ pub struct MysteryJoker;
 
 impl Joker for MysteryJoker {
     fn id(&self) -> JokerId {
-        JokerId::Fortune
+        JokerId::Reserved4 // Use Reserved4 to avoid conflict with Fortune Teller
     }
 
     fn name(&self) -> &str {
@@ -1352,7 +1352,7 @@ mod tests {
     #[test]
     fn test_mystery_joker_basic_properties() {
         let mystery = MysteryJoker;
-        assert_eq!(mystery.id(), JokerId::Fortune);
+        assert_eq!(mystery.id(), JokerId::Reserved4);
         assert_eq!(mystery.name(), "Mystery Joker");
         assert_eq!(mystery.description(), "Random effect each hand");
         assert_eq!(mystery.rarity(), JokerRarity::Rare);
@@ -1415,7 +1415,7 @@ mod tests {
             "AcrobatJoker should be creatable from factory"
         );
 
-        let mystery = JokerFactory::create(JokerId::Fortune);
+        let mystery = JokerFactory::create(JokerId::Reserved4);
         assert!(
             mystery.is_some(),
             "MysteryJoker should be creatable from factory"
@@ -1467,7 +1467,7 @@ mod tests {
         );
         assert!(
             rare_jokers.contains(&JokerId::Fortune),
-            "MysteryJoker should be in Rare rarity"
+            "Fortune Teller (JokerId::Fortune) should be in Rare rarity"
         );
 
         let legendary_jokers = JokerFactory::get_by_rarity(JokerRarity::Legendary);
@@ -1503,7 +1503,7 @@ mod tests {
             "AcrobatJoker should be in implemented list"
         );
         assert!(
-            all_implemented.contains(&JokerId::Fortune),
+            all_implemented.contains(&JokerId::Reserved4),
             "MysteryJoker should be in implemented list"
         );
         assert!(
@@ -1559,6 +1559,7 @@ mod tests {
             stage: &stage,
             hands_played: 0,
             discards_used: 0,
+            hands_remaining: 4.0,
             jokers: &jokers,
             hand: &hand,
             discarded: &discarded,
@@ -1605,6 +1606,7 @@ mod tests {
             stage: &stage,
             hands_played: 0,
             discards_used: 0,
+            hands_remaining: 4.0,
             jokers: &jokers,
             hand: &hand,
             discarded: &discarded,
@@ -1651,6 +1653,7 @@ mod tests {
             stage: &stage,
             hands_played: 0,
             discards_used: 0,
+            hands_remaining: 4.0,
             jokers: &jokers,
             hand: &hand,
             discarded: &discarded,
@@ -1663,7 +1666,7 @@ mod tests {
         };
 
         let effect = triboulet.on_card_scored(&mut context, &jack_card);
-        assert_eq!(effect.mult_multiplier, 0.0); // Default multiplier (no effect)
+        assert_eq!(effect.mult_multiplier, 1.0); // Default multiplier (no effect)
         assert_eq!(effect.mult, 0);
         assert_eq!(effect.chips, 0);
         assert_eq!(effect.money, 0);
@@ -1697,6 +1700,7 @@ mod tests {
             stage: &stage,
             hands_played: 0,
             discards_used: 0,
+            hands_remaining: 4.0,
             jokers: &jokers,
             hand: &hand,
             discarded: &discarded,
@@ -1709,7 +1713,7 @@ mod tests {
         };
 
         let effect = triboulet.on_card_scored(&mut context, &ace_card);
-        assert_eq!(effect.mult_multiplier, 0.0); // Default multiplier (no effect)
+        assert_eq!(effect.mult_multiplier, 1.0); // Default multiplier (no effect)
         assert_eq!(effect.mult, 0);
         assert_eq!(effect.chips, 0);
         assert_eq!(effect.money, 0);
