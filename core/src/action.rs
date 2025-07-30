@@ -3,6 +3,7 @@ use crate::consumables::ConsumableId;
 use crate::joker::JokerId;
 use crate::shop::packs::PackType;
 use crate::stage::Blind;
+use crate::vouchers::VoucherId;
 #[cfg(feature = "python")]
 use pyo3::pyclass;
 use std::fmt;
@@ -53,6 +54,9 @@ pub enum Action {
     SellConsumable {
         slot: usize,
     },
+    BuyVoucher {
+        voucher_id: VoucherId,
+    },
     BuyPack {
         pack_type: PackType,
     },
@@ -95,10 +99,12 @@ pub enum Action {
     BuyPacks(Vec<PackType>),          // Buy multiple packs
 
     // Multi-select control
-    ActivateMultiSelect(), // Enter multi-select mode
+    ActivateMultiSelect(),   // Enter multi-select mode
     DeactivateMultiSelect(), // Exit multi-select mode and clear selections
 
-                           // SkipBlind(Blind),
+    // Skip tags system
+    SkipBlind(Blind), // Skip a blind and potentially get tags
+    SelectSkipTag(crate::skip_tags::SkipTagId), // Select a skip tag for activation
 }
 
 impl fmt::Display for Action {
@@ -143,6 +149,9 @@ impl fmt::Display for Action {
             }
             Self::BuyPack { pack_type } => {
                 write!(f, "BuyPack: {pack_type}")
+            }
+            Self::BuyVoucher { voucher_id } => {
+                write!(f, "BuyVoucher: {voucher_id:?}")
             }
             Self::OpenPack { pack_id } => {
                 write!(f, "OpenPack: {pack_id}")
@@ -223,6 +232,14 @@ impl fmt::Display for Action {
             }
             Self::DeactivateMultiSelect() => {
                 write!(f, "DeactivateMultiSelect")
+            }
+
+            // Skip tags system
+            Self::SkipBlind(blind) => {
+                write!(f, "SkipBlind: {blind}")
+            }
+            Self::SelectSkipTag(tag_id) => {
+                write!(f, "SelectSkipTag: {tag_id}")
             }
         }
     }

@@ -366,7 +366,7 @@ mod input_validation_tests {
         // 4. Input sanitization (trimming) works
         let padded_input = "  5  ";
         match padded_input.trim().parse::<usize>() {
-            Ok(5) => {} // Input trimming works correctly
+            Ok(5) => { /* Input trimming works correctly */ }
             Ok(val) => panic!("Trimming failed: got {val} instead of 5"),
             Err(_) => panic!("Trimmed input should parse successfully"),
         }
