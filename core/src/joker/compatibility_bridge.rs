@@ -229,6 +229,7 @@ impl AdvancedJokerGameplay for LegacyJokerAdapter {
             cards_in_deck: context.game_context.cards_in_deck,
             stone_cards_in_deck: context.game_context.stone_cards_in_deck,
             steel_cards_in_deck: context.game_context.steel_cards_in_deck,
+            enhanced_cards_in_deck: context.game_context.enhanced_cards_in_deck,
             rng: context.game_context.rng,
         };
 

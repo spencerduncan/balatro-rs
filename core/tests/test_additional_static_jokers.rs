@@ -45,6 +45,7 @@ fn create_test_context() -> GameContext<'static> {
         cards_in_deck: 52,
         stone_cards_in_deck: 0,
         steel_cards_in_deck: 0,
+        enhanced_cards_in_deck: 0,
         rng,
     }
 }
@@ -334,6 +335,7 @@ fn test_banner_joker() {
         cards_in_deck: 52,
         stone_cards_in_deck: 0,
         steel_cards_in_deck: 0,
+        enhanced_cards_in_deck: 0,
         rng: &rng,
     };
 
@@ -359,6 +361,7 @@ fn test_banner_joker() {
         cards_in_deck: 52,
         stone_cards_in_deck: 0,
         steel_cards_in_deck: 0,
+        enhanced_cards_in_deck: 0,
         rng: &rng,
     };
 
@@ -383,6 +386,7 @@ fn test_banner_joker() {
         cards_in_deck: 52,
         stone_cards_in_deck: 0,
         steel_cards_in_deck: 0,
+        enhanced_cards_in_deck: 0,
         rng: &rng,
     };
 
@@ -485,6 +489,7 @@ fn test_abstract_joker() {
         cards_in_deck: 52,
         stone_cards_in_deck: 0,
         steel_cards_in_deck: 0,
+        enhanced_cards_in_deck: 0,
         rng: rng_ref,
     };
 

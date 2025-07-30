@@ -218,9 +218,10 @@ fn test_migration_structured_effects_type_safety() {
         discarded: &[],
         joker_state_manager: &game.joker_state_manager,
         hand_type_counts: &game.hand_type_counts,
-        cards_in_deck: 52,      // Standard deck size
-        stone_cards_in_deck: 0, // No stone cards by default
-        steel_cards_in_deck: 0, // No steel cards by default
+        cards_in_deck: 52,         // Standard deck size
+        stone_cards_in_deck: 0,    // No stone cards by default
+        steel_cards_in_deck: 0,    // No steel cards by default
+        enhanced_cards_in_deck: 0, // No enhanced cards by default
         rng: &game.rng,
     };
 

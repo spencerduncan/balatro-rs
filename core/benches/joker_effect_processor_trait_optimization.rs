@@ -57,6 +57,7 @@ impl TestGameData {
             cards_in_deck: 52,
             stone_cards_in_deck: 0, // BENCHMARK: Using standard deck composition
             steel_cards_in_deck: 0, // BENCHMARK: Using standard deck composition
+            enhanced_cards_in_deck: 0,
             rng: &self.rng,
         }
     }

@@ -549,6 +549,8 @@ pub struct GameContext<'a> {
     pub stone_cards_in_deck: usize,
     /// Number of Steel cards in deck (for Steel Joker calculations)
     pub steel_cards_in_deck: usize,
+    /// Number of Enhanced cards in deck (for condition-based jokers)
+    pub enhanced_cards_in_deck: usize,
     /// Random number generator for secure randomness
     pub rng: &'a crate::rng::GameRng,
 }

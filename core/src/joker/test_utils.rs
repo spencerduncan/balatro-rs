@@ -773,6 +773,7 @@ impl TestContextBuilder {
             cards_in_deck: self.cards_in_deck,
             stone_cards_in_deck: self.stone_cards_in_deck,
             steel_cards_in_deck: 0,
+            enhanced_cards_in_deck: 0,
             rng: rng_ref,
         }
     }

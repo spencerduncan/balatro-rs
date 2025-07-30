@@ -465,6 +465,7 @@ impl Game {
                 cards_in_deck: self.deck.len(),
                 stone_cards_in_deck: self.stone_cards_in_deck,
                 steel_cards_in_deck: self.steel_cards_in_deck,
+                enhanced_cards_in_deck: 0, // TODO: Track enhanced cards when implemented
                 rng: &self.rng,
             };
 
@@ -713,6 +714,7 @@ impl Game {
             cards_in_deck: self.deck.len(),
             stone_cards_in_deck: self.stone_cards_in_deck,
             steel_cards_in_deck: self.steel_cards_in_deck,
+            enhanced_cards_in_deck: 0, // TODO: Track enhanced cards when implemented
             rng: &self.rng,
         };
 
@@ -884,6 +886,7 @@ impl Game {
                 cards_in_deck: self.deck.len(),
                 stone_cards_in_deck: self.stone_cards_in_deck,
                 steel_cards_in_deck: self.steel_cards_in_deck,
+                enhanced_cards_in_deck: 0, // TODO: Track enhanced cards when implemented
                 rng: &self.rng,
             };
 
@@ -1221,6 +1224,7 @@ impl Game {
             cards_in_deck: self.deck.len(),
             stone_cards_in_deck: self.stone_cards_in_deck,
             steel_cards_in_deck: self.steel_cards_in_deck,
+            enhanced_cards_in_deck: 0, // TODO: Add proper Enhanced card tracking
             rng: &self.rng,
         };
 
@@ -2489,6 +2493,7 @@ impl Game {
             cards_in_deck: self.deck.len(),
             stone_cards_in_deck: self.stone_cards_in_deck,
             steel_cards_in_deck: self.steel_cards_in_deck,
+            enhanced_cards_in_deck: 0, // TODO: Track enhanced cards when implemented
             rng: &self.rng,
         };
 

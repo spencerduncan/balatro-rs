@@ -63,6 +63,7 @@ fn create_test_context_with_deck_and_stones(
         cards_in_deck,
         stone_cards_in_deck,
         steel_cards_in_deck: 0,
+        enhanced_cards_in_deck: 0,
         rng,
     }
 }
