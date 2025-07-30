@@ -2312,6 +2312,20 @@ impl Game {
         self.available = crate::available::Available::default();
         self.blind = None;
     }
+
+    /// Handle using a planet card to level up a hand
+    pub fn handle_use_planet_card(&mut self, _planet_card_id: u32, hand_rank_id: u32) -> Result<(), GameError> {
+        // Convert hand_rank_id to HandRank and level it up
+        // TODO: Implement proper planet card ID usage when planet cards are fully implemented
+        use strum::IntoEnumIterator;
+        let hand_ranks: Vec<HandRank> = HandRank::iter().collect();
+        if let Some(hand_rank) = hand_ranks.get(hand_rank_id as usize) {
+            self.level_up_hand(*hand_rank)
+                .map_err(|_| GameError::InvalidAction)
+        } else {
+            Err(GameError::InvalidAction)
+        }
+    }
 }
 
 impl fmt::Display for Game {
@@ -2458,6 +2472,7 @@ impl Game {
             mult: self.mult,
             score: self.score,
             hand_type_counts: self.hand_type_counts.clone(),
+            hand_levels: self.hand_levels.iter().map(|(k, v)| (*k, *v as u32)).collect(),
             // Extended state fields
             consumables_in_hand: self.consumables_in_hand.clone(),
             vouchers: self.vouchers.clone(),
