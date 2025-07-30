@@ -4,7 +4,8 @@
 //! and that all shop enhancement tags function as expected.
 
 use balatro_rs::game::Game;
-use balatro_rs::skip_tags::{SkipTagId, SkipTagRegistry, TagEffectType};
+use balatro_rs::skip_tags::tag_registry::global_registry;
+use balatro_rs::skip_tags::{SkipTagId, TagEffectType};
 
 /// Test fixture for creating a game with specific state
 fn create_test_game() -> Game {
@@ -15,7 +16,7 @@ fn create_test_game() -> Game {
 
 #[test]
 fn test_skip_tag_registry_creation() {
-    let registry = SkipTagRegistry::new();
+    let registry = global_registry();
 
     // Test that all shop enhancement tags are registered
     assert!(registry.get_tag(SkipTagId::Voucher).is_some());
@@ -32,7 +33,7 @@ fn test_skip_tag_registry_creation() {
 
 #[test]
 fn test_voucher_tag_basic_functionality() {
-    let registry = SkipTagRegistry::new();
+    let registry = global_registry();
     let voucher_tag = registry.get_tag(SkipTagId::Voucher).unwrap();
 
     // Test tag metadata
@@ -46,7 +47,7 @@ fn test_voucher_tag_basic_functionality() {
 #[test]
 fn test_voucher_tag_effect() {
     let game = create_test_game();
-    let registry = SkipTagRegistry::new();
+    let registry = global_registry();
     let voucher_tag = registry.get_tag(SkipTagId::Voucher).unwrap();
 
     let mut game = game;
@@ -62,7 +63,7 @@ fn test_voucher_tag_effect() {
 
 #[test]
 fn test_coupon_tag_basic_functionality() {
-    let registry = SkipTagRegistry::new();
+    let registry = global_registry();
     let coupon_tag = registry.get_tag(SkipTagId::Coupon).unwrap();
 
     // Test tag metadata
@@ -76,7 +77,7 @@ fn test_coupon_tag_basic_functionality() {
 #[test]
 fn test_coupon_tag_effect() {
     let game = create_test_game();
-    let registry = SkipTagRegistry::new();
+    let registry = global_registry();
     let coupon_tag = registry.get_tag(SkipTagId::Coupon).unwrap();
 
     let mut game = game;
@@ -92,7 +93,7 @@ fn test_coupon_tag_effect() {
 
 #[test]
 fn test_d6_tag_basic_functionality() {
-    let registry = SkipTagRegistry::new();
+    let registry = global_registry();
     let d6_tag = registry.get_tag(SkipTagId::D6).unwrap();
 
     // Test tag metadata
@@ -106,7 +107,7 @@ fn test_d6_tag_basic_functionality() {
 #[test]
 fn test_d6_tag_effect() {
     let game = create_test_game();
-    let registry = SkipTagRegistry::new();
+    let registry = global_registry();
     let d6_tag = registry.get_tag(SkipTagId::D6).unwrap();
 
     let mut game = game;
@@ -122,7 +123,7 @@ fn test_d6_tag_effect() {
 
 #[test]
 fn test_foil_tag_basic_functionality() {
-    let registry = SkipTagRegistry::new();
+    let registry = global_registry();
     let foil_tag = registry.get_tag(SkipTagId::Foil).unwrap();
 
     // Test tag metadata
@@ -136,7 +137,7 @@ fn test_foil_tag_basic_functionality() {
 #[test]
 fn test_foil_tag_effect() {
     let game = create_test_game();
-    let registry = SkipTagRegistry::new();
+    let registry = global_registry();
     let foil_tag = registry.get_tag(SkipTagId::Foil).unwrap();
 
     let mut game = game;
@@ -152,7 +153,7 @@ fn test_foil_tag_effect() {
 
 #[test]
 fn test_holographic_tag_basic_functionality() {
-    let registry = SkipTagRegistry::new();
+    let registry = global_registry();
     let holographic_tag = registry.get_tag(SkipTagId::Holographic).unwrap();
 
     // Test tag metadata
@@ -169,7 +170,7 @@ fn test_holographic_tag_basic_functionality() {
 #[test]
 fn test_holographic_tag_effect() {
     let game = create_test_game();
-    let registry = SkipTagRegistry::new();
+    let registry = global_registry();
     let holographic_tag = registry.get_tag(SkipTagId::Holographic).unwrap();
 
     let mut game = game;
@@ -185,7 +186,7 @@ fn test_holographic_tag_effect() {
 
 #[test]
 fn test_polychrome_tag_basic_functionality() {
-    let registry = SkipTagRegistry::new();
+    let registry = global_registry();
     let polychrome_tag = registry.get_tag(SkipTagId::Polychrome).unwrap();
 
     // Test tag metadata
@@ -202,7 +203,7 @@ fn test_polychrome_tag_basic_functionality() {
 #[test]
 fn test_polychrome_tag_effect() {
     let game = create_test_game();
-    let registry = SkipTagRegistry::new();
+    let registry = global_registry();
     let polychrome_tag = registry.get_tag(SkipTagId::Polychrome).unwrap();
 
     let mut game = game;
@@ -327,7 +328,7 @@ fn test_boss_blind_defeat_no_investment() {
 
 #[test]
 fn test_all_shop_enhancement_tags_are_next_shop_modifiers() {
-    let registry = SkipTagRegistry::new();
+    let registry = global_registry();
     let shop_tags = registry.get_all_shop_enhancement_tags();
 
     for tag_id in shop_tags {
@@ -339,7 +340,7 @@ fn test_all_shop_enhancement_tags_are_next_shop_modifiers() {
 
 #[test]
 fn test_all_shop_enhancement_tags_persist() {
-    let registry = SkipTagRegistry::new();
+    let registry = global_registry();
     let shop_tags = registry.get_all_shop_enhancement_tags();
 
     for tag_id in shop_tags {
