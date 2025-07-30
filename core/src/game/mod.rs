@@ -1989,12 +1989,6 @@ impl Game {
             // Skip tag system actions
             Action::SkipBlind(blind) => self.handle_skip_blind(blind),
             Action::SelectSkipTag(tag_id) => self.handle_select_skip_tag(tag_id),
-
-            // Planet card actions - temporary stub for merge compatibility
-            Action::UsePlanetCard { .. } => {
-                // TODO: Implement planet card usage when hand leveling system is ready
-                Ok(())
-            }
         }
     }
 
