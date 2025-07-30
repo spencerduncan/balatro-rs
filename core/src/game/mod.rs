@@ -206,7 +206,7 @@ pub struct Game {
 
     // hand type tracking for this game run
     pub hand_type_counts: HashMap<HandRank, u32>,
-    
+
     // hand level tracking (for planet card effects)
     pub hand_levels: HashMap<HandRank, u32>,
 
@@ -561,7 +561,10 @@ impl Game {
     ///
     /// # Returns
     /// Ok(()) if successful, Err(ConsumableError) if level up fails
-    pub fn level_up_hand(&mut self, hand_rank: HandRank) -> Result<(), crate::consumables::ConsumableError> {
+    pub fn level_up_hand(
+        &mut self,
+        hand_rank: HandRank,
+    ) -> Result<(), crate::consumables::ConsumableError> {
         let current_level = self.get_hand_level_number(hand_rank);
         self.hand_levels.insert(hand_rank, current_level + 1);
         Ok(())
@@ -1974,7 +1977,10 @@ impl Game {
             }
 
             // Planet card usage
-            Action::UsePlanetCard { planet_card_id: _, hand_rank_id: _ } => {
+            Action::UsePlanetCard {
+                planet_card_id: _,
+                hand_rank_id: _,
+            } => {
                 // TODO: Implement planet card usage through action system
                 // For now, planet cards use level_up_hand directly
                 Err(GameError::InvalidAction)

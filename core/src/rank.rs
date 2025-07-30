@@ -38,7 +38,7 @@ impl HandRank {
     pub(crate) fn level_at(&self, level: u32) -> Level {
         let base = self.level();
         let level_bonus = (level.saturating_sub(1)) as usize;
-        
+
         Level {
             level: level as usize,
             chips: base.chips + (level_bonus * 5), // +5 chips per level
