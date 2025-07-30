@@ -210,7 +210,7 @@ impl Voucher for MoneyTreeVoucher {
     }
 }
 
-/// Hieroglyph voucher - +2 Ante to win, -1 hand each round
+/// Hieroglyph voucher - -1 Ante, -1 hand each round
 #[derive(Debug, Clone)]
 pub struct HieroglyphVoucher;
 
@@ -239,7 +239,7 @@ impl Voucher for HieroglyphVoucher {
 
     fn get_effects(&self) -> Vec<VoucherEffect> {
         vec![
-            VoucherEffect::AnteWinRequirementIncrease(2),
+            VoucherEffect::AnteWinRequirementDecrease(1),
             VoucherEffect::HandSizeDecrease(1),
         ]
     }
@@ -249,11 +249,11 @@ impl Voucher for HieroglyphVoucher {
     }
 
     fn description(&self) -> &'static str {
-        "+2 Ante to win, -1 hand each round"
+        "-1 Ante, -1 hand each round"
     }
 }
 
-/// Petroglyph voucher - +3 Ante to win, -1 discard each round
+/// Petroglyph voucher - -1 Ante, -1 discard each round
 #[derive(Debug, Clone)]
 pub struct PetroglyphVoucher;
 
@@ -282,7 +282,7 @@ impl Voucher for PetroglyphVoucher {
 
     fn get_effects(&self) -> Vec<VoucherEffect> {
         vec![
-            VoucherEffect::AnteWinRequirementIncrease(3),
+            VoucherEffect::AnteWinRequirementDecrease(1),
             VoucherEffect::DiscardDecrease(1),
         ]
     }
@@ -292,7 +292,7 @@ impl Voucher for PetroglyphVoucher {
     }
 
     fn description(&self) -> &'static str {
-        "+3 Ante to win, -1 discard each round"
+        "-1 Ante, -1 discard each round"
     }
 }
 

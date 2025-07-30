@@ -78,6 +78,8 @@ pub enum VoucherEffect {
     AnteScaling(f64),
     /// Increases ante required to win by the specified amount
     AnteWinRequirementIncrease(usize),
+    /// Decreases ante required to win by the specified amount
+    AnteWinRequirementDecrease(usize),
     /// Adds extra pack options in shop
     ExtraPackOptions(usize),
     /// Reduces blind score requirements (multiplier)
@@ -245,6 +247,12 @@ impl VoucherEffect {
                 if *amount > 8 {
                     return Err(VoucherError::ExcessiveHandSize { amount: *amount });
                     // Reuse error type
+                }
+            }
+            VoucherEffect::AnteWinRequirementDecrease(amount) => {
+                if *amount > 8 {
+                    return Err(VoucherError::ExcessiveHandSize { amount: *amount });
+                    // Reuse error type - same bounds as increase
                 }
             }
             VoucherEffect::DiscardDecrease(amount) => {
@@ -450,6 +458,10 @@ impl GameState {
                 // Ante win requirement affects victory condition, not current game state
                 // This would be handled by the victory system
             }
+            VoucherEffect::AnteWinRequirementDecrease(_amount) => {
+                // Ante win requirement affects victory condition, not current game state
+                // This would be handled by the victory system
+            }
             VoucherEffect::DiscardDecrease(_amount) => {
                 // Discard decreases affect round mechanics, not persistent game state
                 // This would be handled by the round system
@@ -628,9 +640,9 @@ pub enum VoucherId {
     SeedMoney,
     /// Money Tree voucher - +$2 interest cap
     MoneyTree,
-    /// Hieroglyph voucher - +2 Ante to win, -1 hand each round
+    /// Hieroglyph voucher - -1 Ante, -1 hand each round
     Hieroglyph,
-    /// Petroglyph voucher - +3 Ante to win, -1 discard each round
+    /// Petroglyph voucher - -1 Ante, -1 discard each round
     Petroglyph,
     /// Antimatter voucher - +1 Joker slot
     Antimatter,
