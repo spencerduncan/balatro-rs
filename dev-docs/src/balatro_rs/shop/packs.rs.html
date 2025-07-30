@@ -335,154 +335,173 @@
 <a href=#335 id=335 data-nosnippet>335</a>        game: <span class="kw-2">&amp;</span>Game,
 <a href=#336 id=336 data-nosnippet>336</a>        _config: <span class="kw-2">&amp;</span>Config,
 <a href=#337 id=337 data-nosnippet>337</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), GameError&gt; {
-<a href=#338 id=338 data-nosnippet>338</a>        <span class="kw">let </span>tarot_cards = ConsumableId::tarot_cards();
-<a href=#339 id=339 data-nosnippet>339</a>
-<a href=#340 id=340 data-nosnippet>340</a>        <span class="kw">for _ in </span><span class="number">0</span>..count {
-<a href=#341 id=341 data-nosnippet>341</a>            <span class="comment">// Randomly select a specific tarot card for preview info
-<a href=#342 id=342 data-nosnippet>342</a>            </span><span class="kw">let </span>selected_tarot = game
-<a href=#343 id=343 data-nosnippet>343</a>                .rng
-<a href=#344 id=344 data-nosnippet>344</a>                .choose(<span class="kw-2">&amp;</span>tarot_cards)
-<a href=#345 id=345 data-nosnippet>345</a>                .unwrap_or(<span class="kw-2">&amp;</span>ConsumableId::TheFool);
-<a href=#346 id=346 data-nosnippet>346</a>
-<a href=#347 id=347 data-nosnippet>347</a>            <span class="kw">let </span>option = PackOption::new(
-<a href=#348 id=348 data-nosnippet>348</a>                ShopItem::Consumable(ConsumableType::Tarot),
-<a href=#349 id=349 data-nosnippet>349</a>                <span class="macro">format!</span>(<span class="string">"{selected_tarot}"</span>), <span class="comment">// Use the specific card name
-<a href=#350 id=350 data-nosnippet>350</a>            </span>);
-<a href=#351 id=351 data-nosnippet>351</a>            <span class="self">self</span>.options.push(option);
-<a href=#352 id=352 data-nosnippet>352</a>        }
-<a href=#353 id=353 data-nosnippet>353</a>
-<a href=#354 id=354 data-nosnippet>354</a>        <span class="prelude-val">Ok</span>(())
-<a href=#355 id=355 data-nosnippet>355</a>    }
-<a href=#356 id=356 data-nosnippet>356</a>
-<a href=#357 id=357 data-nosnippet>357</a>    <span class="doccomment">/// Generate celestial pack options (planet cards)
-<a href=#358 id=358 data-nosnippet>358</a>    </span><span class="kw">fn </span>generate_celestial_options(
-<a href=#359 id=359 data-nosnippet>359</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-<a href=#360 id=360 data-nosnippet>360</a>        count: usize,
-<a href=#361 id=361 data-nosnippet>361</a>        game: <span class="kw-2">&amp;</span>Game,
-<a href=#362 id=362 data-nosnippet>362</a>        _config: <span class="kw-2">&amp;</span>Config,
-<a href=#363 id=363 data-nosnippet>363</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), GameError&gt; {
-<a href=#364 id=364 data-nosnippet>364</a>        <span class="kw">let </span>planet_cards = ConsumableId::planet_cards();
+<a href=#338 id=338 data-nosnippet>338</a>        <span class="comment">// Arcana packs can contain both Tarot cards and Soul (special spectral card)
+<a href=#339 id=339 data-nosnippet>339</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>available_cards = ConsumableId::tarot_cards();
+<a href=#340 id=340 data-nosnippet>340</a>        available_cards.push(ConsumableId::TheSoul); <span class="comment">// Soul can appear in Arcana packs
+<a href=#341 id=341 data-nosnippet>341</a>
+<a href=#342 id=342 data-nosnippet>342</a>        </span><span class="kw">for _ in </span><span class="number">0</span>..count {
+<a href=#343 id=343 data-nosnippet>343</a>            <span class="comment">// Randomly select from both tarot cards and Soul
+<a href=#344 id=344 data-nosnippet>344</a>            </span><span class="kw">let </span>selected_card = game
+<a href=#345 id=345 data-nosnippet>345</a>                .rng
+<a href=#346 id=346 data-nosnippet>346</a>                .choose(<span class="kw-2">&amp;</span>available_cards)
+<a href=#347 id=347 data-nosnippet>347</a>                .unwrap_or(<span class="kw-2">&amp;</span>ConsumableId::TheFool);
+<a href=#348 id=348 data-nosnippet>348</a>
+<a href=#349 id=349 data-nosnippet>349</a>            <span class="comment">// Determine the correct consumable type based on the selected card
+<a href=#350 id=350 data-nosnippet>350</a>            </span><span class="kw">let </span>consumable_type = <span class="kw">if </span><span class="kw-2">*</span>selected_card == ConsumableId::TheSoul {
+<a href=#351 id=351 data-nosnippet>351</a>                ConsumableType::Spectral
+<a href=#352 id=352 data-nosnippet>352</a>            } <span class="kw">else </span>{
+<a href=#353 id=353 data-nosnippet>353</a>                ConsumableType::Tarot
+<a href=#354 id=354 data-nosnippet>354</a>            };
+<a href=#355 id=355 data-nosnippet>355</a>
+<a href=#356 id=356 data-nosnippet>356</a>            <span class="kw">let </span>option = PackOption::new(
+<a href=#357 id=357 data-nosnippet>357</a>                ShopItem::Consumable(consumable_type),
+<a href=#358 id=358 data-nosnippet>358</a>                <span class="macro">format!</span>(<span class="string">"{selected_card}"</span>), <span class="comment">// Use the specific card name
+<a href=#359 id=359 data-nosnippet>359</a>            </span>);
+<a href=#360 id=360 data-nosnippet>360</a>            <span class="self">self</span>.options.push(option);
+<a href=#361 id=361 data-nosnippet>361</a>        }
+<a href=#362 id=362 data-nosnippet>362</a>
+<a href=#363 id=363 data-nosnippet>363</a>        <span class="prelude-val">Ok</span>(())
+<a href=#364 id=364 data-nosnippet>364</a>    }
 <a href=#365 id=365 data-nosnippet>365</a>
-<a href=#366 id=366 data-nosnippet>366</a>        <span class="kw">for _ in </span><span class="number">0</span>..count {
-<a href=#367 id=367 data-nosnippet>367</a>            <span class="comment">// Randomly select a specific planet card for preview info
-<a href=#368 id=368 data-nosnippet>368</a>            </span><span class="kw">let </span>selected_planet = game
-<a href=#369 id=369 data-nosnippet>369</a>                .rng
-<a href=#370 id=370 data-nosnippet>370</a>                .choose(<span class="kw-2">&amp;</span>planet_cards)
-<a href=#371 id=371 data-nosnippet>371</a>                .unwrap_or(<span class="kw-2">&amp;</span>ConsumableId::Mercury);
-<a href=#372 id=372 data-nosnippet>372</a>
-<a href=#373 id=373 data-nosnippet>373</a>            <span class="kw">let </span>option = PackOption::new(
-<a href=#374 id=374 data-nosnippet>374</a>                ShopItem::Consumable(ConsumableType::Planet),
-<a href=#375 id=375 data-nosnippet>375</a>                <span class="macro">format!</span>(<span class="string">"{selected_planet}"</span>), <span class="comment">// Use the specific card name
-<a href=#376 id=376 data-nosnippet>376</a>            </span>);
-<a href=#377 id=377 data-nosnippet>377</a>            <span class="self">self</span>.options.push(option);
-<a href=#378 id=378 data-nosnippet>378</a>        }
-<a href=#379 id=379 data-nosnippet>379</a>
-<a href=#380 id=380 data-nosnippet>380</a>        <span class="prelude-val">Ok</span>(())
-<a href=#381 id=381 data-nosnippet>381</a>    }
-<a href=#382 id=382 data-nosnippet>382</a>
-<a href=#383 id=383 data-nosnippet>383</a>    <span class="doccomment">/// Generate spectral pack options (spectral cards)
-<a href=#384 id=384 data-nosnippet>384</a>    </span><span class="kw">fn </span>generate_spectral_options(
-<a href=#385 id=385 data-nosnippet>385</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-<a href=#386 id=386 data-nosnippet>386</a>        count: usize,
-<a href=#387 id=387 data-nosnippet>387</a>        game: <span class="kw-2">&amp;</span>Game,
-<a href=#388 id=388 data-nosnippet>388</a>        _config: <span class="kw-2">&amp;</span>Config,
-<a href=#389 id=389 data-nosnippet>389</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), GameError&gt; {
-<a href=#390 id=390 data-nosnippet>390</a>        <span class="kw">let </span>spectral_cards = ConsumableId::spectral_cards();
-<a href=#391 id=391 data-nosnippet>391</a>
-<a href=#392 id=392 data-nosnippet>392</a>        <span class="kw">for _ in </span><span class="number">0</span>..count {
-<a href=#393 id=393 data-nosnippet>393</a>            <span class="comment">// Randomly select a specific spectral card for preview info
-<a href=#394 id=394 data-nosnippet>394</a>            </span><span class="kw">let </span>selected_spectral = game
-<a href=#395 id=395 data-nosnippet>395</a>                .rng
-<a href=#396 id=396 data-nosnippet>396</a>                .choose(<span class="kw-2">&amp;</span>spectral_cards)
-<a href=#397 id=397 data-nosnippet>397</a>                .unwrap_or(<span class="kw-2">&amp;</span>ConsumableId::Familiar);
-<a href=#398 id=398 data-nosnippet>398</a>
-<a href=#399 id=399 data-nosnippet>399</a>            <span class="kw">let </span>option = PackOption::new(
-<a href=#400 id=400 data-nosnippet>400</a>                ShopItem::Consumable(ConsumableType::Spectral),
-<a href=#401 id=401 data-nosnippet>401</a>                <span class="macro">format!</span>(<span class="string">"{selected_spectral}"</span>), <span class="comment">// Use the specific card name
-<a href=#402 id=402 data-nosnippet>402</a>            </span>);
-<a href=#403 id=403 data-nosnippet>403</a>            <span class="self">self</span>.options.push(option);
-<a href=#404 id=404 data-nosnippet>404</a>        }
-<a href=#405 id=405 data-nosnippet>405</a>
-<a href=#406 id=406 data-nosnippet>406</a>        <span class="prelude-val">Ok</span>(())
-<a href=#407 id=407 data-nosnippet>407</a>    }
-<a href=#408 id=408 data-nosnippet>408</a>
-<a href=#409 id=409 data-nosnippet>409</a>    <span class="doccomment">/// Check if a selection index is valid for this pack
-<a href=#410 id=410 data-nosnippet>410</a>    </span><span class="kw">pub fn </span>is_valid_selection(<span class="kw-2">&amp;</span><span class="self">self</span>, option_index: usize) -&gt; bool {
-<a href=#411 id=411 data-nosnippet>411</a>        option_index &lt; <span class="self">self</span>.options.len()
-<a href=#412 id=412 data-nosnippet>412</a>    }
-<a href=#413 id=413 data-nosnippet>413</a>
-<a href=#414 id=414 data-nosnippet>414</a>    <span class="doccomment">/// Select an option from this pack
-<a href=#415 id=415 data-nosnippet>415</a>    </span><span class="kw">pub fn </span>select_option(<span class="kw-2">&amp;</span><span class="self">self</span>, option_index: usize) -&gt; <span class="prelude-ty">Result</span>&lt;ShopItem, GameError&gt; {
-<a href=#416 id=416 data-nosnippet>416</a>        <span class="kw">if </span>!<span class="self">self</span>.is_valid_selection(option_index) {
-<a href=#417 id=417 data-nosnippet>417</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(GameError::InvalidAction);
-<a href=#418 id=418 data-nosnippet>418</a>        }
-<a href=#419 id=419 data-nosnippet>419</a>
-<a href=#420 id=420 data-nosnippet>420</a>        <span class="prelude-val">Ok</span>(<span class="self">self</span>.options[option_index].item.clone())
-<a href=#421 id=421 data-nosnippet>421</a>    }
-<a href=#422 id=422 data-nosnippet>422</a>}
-<a href=#423 id=423 data-nosnippet>423</a>
-<a href=#424 id=424 data-nosnippet>424</a><span class="doccomment">/// State for an opened pack that player is currently choosing from
-<a href=#425 id=425 data-nosnippet>425</a></span><span class="attr">#[derive(Debug, Clone)]
-<a href=#426 id=426 data-nosnippet>426</a>#[cfg_attr(feature = <span class="string">"serde"</span>, derive(serde::Serialize, serde::Deserialize))]
-<a href=#427 id=427 data-nosnippet>427</a></span><span class="kw">pub struct </span>OpenPackState {
-<a href=#428 id=428 data-nosnippet>428</a>    <span class="doccomment">/// The pack being opened
-<a href=#429 id=429 data-nosnippet>429</a>    </span><span class="kw">pub </span>pack: Pack,
-<a href=#430 id=430 data-nosnippet>430</a>    <span class="doccomment">/// The pack's ID in the inventory
-<a href=#431 id=431 data-nosnippet>431</a>    </span><span class="kw">pub </span>pack_id: usize,
-<a href=#432 id=432 data-nosnippet>432</a>}
-<a href=#433 id=433 data-nosnippet>433</a>
-<a href=#434 id=434 data-nosnippet>434</a><span class="kw">impl </span>OpenPackState {
-<a href=#435 id=435 data-nosnippet>435</a>    <span class="doccomment">/// Create a new open pack state
-<a href=#436 id=436 data-nosnippet>436</a>    </span><span class="kw">pub fn </span>new(pack: Pack, pack_id: usize) -&gt; <span class="self">Self </span>{
-<a href=#437 id=437 data-nosnippet>437</a>        <span class="self">Self </span>{ pack, pack_id }
-<a href=#438 id=438 data-nosnippet>438</a>    }
-<a href=#439 id=439 data-nosnippet>439</a>}
-<a href=#440 id=440 data-nosnippet>440</a>
-<a href=#441 id=441 data-nosnippet>441</a><span class="doccomment">/// Trait for pack generation and management
-<a href=#442 id=442 data-nosnippet>442</a></span><span class="kw">pub trait </span>PackGenerator {
-<a href=#443 id=443 data-nosnippet>443</a>    <span class="doccomment">/// Generate a pack of the specified type
-<a href=#444 id=444 data-nosnippet>444</a>    </span><span class="kw">fn </span>generate_pack(<span class="kw-2">&amp;</span><span class="self">self</span>, pack_type: PackType, game: <span class="kw-2">&amp;</span>Game) -&gt; <span class="prelude-ty">Result</span>&lt;Pack, GameError&gt;;
-<a href=#445 id=445 data-nosnippet>445</a>
-<a href=#446 id=446 data-nosnippet>446</a>    <span class="doccomment">/// Check if a pack type is available for purchase
-<a href=#447 id=447 data-nosnippet>447</a>    </span><span class="kw">fn </span>is_pack_available(<span class="kw-2">&amp;</span><span class="self">self</span>, pack_type: PackType, game: <span class="kw-2">&amp;</span>Game) -&gt; bool;
-<a href=#448 id=448 data-nosnippet>448</a>
-<a href=#449 id=449 data-nosnippet>449</a>    <span class="doccomment">/// Get all available pack types for current game state
-<a href=#450 id=450 data-nosnippet>450</a>    </span><span class="kw">fn </span>available_pack_types(<span class="kw-2">&amp;</span><span class="self">self</span>, game: <span class="kw-2">&amp;</span>Game) -&gt; Vec&lt;PackType&gt;;
+<a href=#366 id=366 data-nosnippet>366</a>    <span class="doccomment">/// Generate celestial pack options (planet cards)
+<a href=#367 id=367 data-nosnippet>367</a>    </span><span class="kw">fn </span>generate_celestial_options(
+<a href=#368 id=368 data-nosnippet>368</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+<a href=#369 id=369 data-nosnippet>369</a>        count: usize,
+<a href=#370 id=370 data-nosnippet>370</a>        game: <span class="kw-2">&amp;</span>Game,
+<a href=#371 id=371 data-nosnippet>371</a>        _config: <span class="kw-2">&amp;</span>Config,
+<a href=#372 id=372 data-nosnippet>372</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), GameError&gt; {
+<a href=#373 id=373 data-nosnippet>373</a>        <span class="comment">// Celestial packs can contain both Planet cards and Black Hole (special spectral card)
+<a href=#374 id=374 data-nosnippet>374</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>available_cards = ConsumableId::planet_cards();
+<a href=#375 id=375 data-nosnippet>375</a>        available_cards.push(ConsumableId::BlackHole); <span class="comment">// Black Hole can appear in Celestial packs
+<a href=#376 id=376 data-nosnippet>376</a>
+<a href=#377 id=377 data-nosnippet>377</a>        </span><span class="kw">for _ in </span><span class="number">0</span>..count {
+<a href=#378 id=378 data-nosnippet>378</a>            <span class="comment">// Randomly select from both planet cards and Black Hole
+<a href=#379 id=379 data-nosnippet>379</a>            </span><span class="kw">let </span>selected_card = game
+<a href=#380 id=380 data-nosnippet>380</a>                .rng
+<a href=#381 id=381 data-nosnippet>381</a>                .choose(<span class="kw-2">&amp;</span>available_cards)
+<a href=#382 id=382 data-nosnippet>382</a>                .unwrap_or(<span class="kw-2">&amp;</span>ConsumableId::Mercury);
+<a href=#383 id=383 data-nosnippet>383</a>
+<a href=#384 id=384 data-nosnippet>384</a>            <span class="comment">// Determine the correct consumable type based on the selected card
+<a href=#385 id=385 data-nosnippet>385</a>            </span><span class="kw">let </span>consumable_type = <span class="kw">if </span><span class="kw-2">*</span>selected_card == ConsumableId::BlackHole {
+<a href=#386 id=386 data-nosnippet>386</a>                ConsumableType::Spectral
+<a href=#387 id=387 data-nosnippet>387</a>            } <span class="kw">else </span>{
+<a href=#388 id=388 data-nosnippet>388</a>                ConsumableType::Planet
+<a href=#389 id=389 data-nosnippet>389</a>            };
+<a href=#390 id=390 data-nosnippet>390</a>
+<a href=#391 id=391 data-nosnippet>391</a>            <span class="kw">let </span>option = PackOption::new(
+<a href=#392 id=392 data-nosnippet>392</a>                ShopItem::Consumable(consumable_type),
+<a href=#393 id=393 data-nosnippet>393</a>                <span class="macro">format!</span>(<span class="string">"{selected_card}"</span>), <span class="comment">// Use the specific card name
+<a href=#394 id=394 data-nosnippet>394</a>            </span>);
+<a href=#395 id=395 data-nosnippet>395</a>            <span class="self">self</span>.options.push(option);
+<a href=#396 id=396 data-nosnippet>396</a>        }
+<a href=#397 id=397 data-nosnippet>397</a>
+<a href=#398 id=398 data-nosnippet>398</a>        <span class="prelude-val">Ok</span>(())
+<a href=#399 id=399 data-nosnippet>399</a>    }
+<a href=#400 id=400 data-nosnippet>400</a>
+<a href=#401 id=401 data-nosnippet>401</a>    <span class="doccomment">/// Generate spectral pack options (spectral cards)
+<a href=#402 id=402 data-nosnippet>402</a>    </span><span class="kw">fn </span>generate_spectral_options(
+<a href=#403 id=403 data-nosnippet>403</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+<a href=#404 id=404 data-nosnippet>404</a>        count: usize,
+<a href=#405 id=405 data-nosnippet>405</a>        game: <span class="kw-2">&amp;</span>Game,
+<a href=#406 id=406 data-nosnippet>406</a>        _config: <span class="kw-2">&amp;</span>Config,
+<a href=#407 id=407 data-nosnippet>407</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), GameError&gt; {
+<a href=#408 id=408 data-nosnippet>408</a>        <span class="comment">// Use All pool for regular spectral packs (includes Soul and Black Hole)
+<a href=#409 id=409 data-nosnippet>409</a>        </span><span class="kw">let </span>spectral_cards = <span class="kw">crate</span>::consumables::SpectralPool::All.get_cards();
+<a href=#410 id=410 data-nosnippet>410</a>
+<a href=#411 id=411 data-nosnippet>411</a>        <span class="kw">for _ in </span><span class="number">0</span>..count {
+<a href=#412 id=412 data-nosnippet>412</a>            <span class="comment">// Randomly select a specific spectral card for preview info
+<a href=#413 id=413 data-nosnippet>413</a>            </span><span class="kw">let </span>selected_spectral = game
+<a href=#414 id=414 data-nosnippet>414</a>                .rng
+<a href=#415 id=415 data-nosnippet>415</a>                .choose(<span class="kw-2">&amp;</span>spectral_cards)
+<a href=#416 id=416 data-nosnippet>416</a>                .unwrap_or(<span class="kw-2">&amp;</span>ConsumableId::Familiar);
+<a href=#417 id=417 data-nosnippet>417</a>
+<a href=#418 id=418 data-nosnippet>418</a>            <span class="kw">let </span>option = PackOption::new(
+<a href=#419 id=419 data-nosnippet>419</a>                ShopItem::Consumable(ConsumableType::Spectral),
+<a href=#420 id=420 data-nosnippet>420</a>                <span class="macro">format!</span>(<span class="string">"{selected_spectral}"</span>), <span class="comment">// Use the specific card name
+<a href=#421 id=421 data-nosnippet>421</a>            </span>);
+<a href=#422 id=422 data-nosnippet>422</a>            <span class="self">self</span>.options.push(option);
+<a href=#423 id=423 data-nosnippet>423</a>        }
+<a href=#424 id=424 data-nosnippet>424</a>
+<a href=#425 id=425 data-nosnippet>425</a>        <span class="prelude-val">Ok</span>(())
+<a href=#426 id=426 data-nosnippet>426</a>    }
+<a href=#427 id=427 data-nosnippet>427</a>
+<a href=#428 id=428 data-nosnippet>428</a>    <span class="doccomment">/// Check if a selection index is valid for this pack
+<a href=#429 id=429 data-nosnippet>429</a>    </span><span class="kw">pub fn </span>is_valid_selection(<span class="kw-2">&amp;</span><span class="self">self</span>, option_index: usize) -&gt; bool {
+<a href=#430 id=430 data-nosnippet>430</a>        option_index &lt; <span class="self">self</span>.options.len()
+<a href=#431 id=431 data-nosnippet>431</a>    }
+<a href=#432 id=432 data-nosnippet>432</a>
+<a href=#433 id=433 data-nosnippet>433</a>    <span class="doccomment">/// Select an option from this pack
+<a href=#434 id=434 data-nosnippet>434</a>    </span><span class="kw">pub fn </span>select_option(<span class="kw-2">&amp;</span><span class="self">self</span>, option_index: usize) -&gt; <span class="prelude-ty">Result</span>&lt;ShopItem, GameError&gt; {
+<a href=#435 id=435 data-nosnippet>435</a>        <span class="kw">if </span>!<span class="self">self</span>.is_valid_selection(option_index) {
+<a href=#436 id=436 data-nosnippet>436</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(GameError::InvalidAction);
+<a href=#437 id=437 data-nosnippet>437</a>        }
+<a href=#438 id=438 data-nosnippet>438</a>
+<a href=#439 id=439 data-nosnippet>439</a>        <span class="prelude-val">Ok</span>(<span class="self">self</span>.options[option_index].item.clone())
+<a href=#440 id=440 data-nosnippet>440</a>    }
+<a href=#441 id=441 data-nosnippet>441</a>}
+<a href=#442 id=442 data-nosnippet>442</a>
+<a href=#443 id=443 data-nosnippet>443</a><span class="doccomment">/// State for an opened pack that player is currently choosing from
+<a href=#444 id=444 data-nosnippet>444</a></span><span class="attr">#[derive(Debug, Clone)]
+<a href=#445 id=445 data-nosnippet>445</a>#[cfg_attr(feature = <span class="string">"serde"</span>, derive(serde::Serialize, serde::Deserialize))]
+<a href=#446 id=446 data-nosnippet>446</a></span><span class="kw">pub struct </span>OpenPackState {
+<a href=#447 id=447 data-nosnippet>447</a>    <span class="doccomment">/// The pack being opened
+<a href=#448 id=448 data-nosnippet>448</a>    </span><span class="kw">pub </span>pack: Pack,
+<a href=#449 id=449 data-nosnippet>449</a>    <span class="doccomment">/// The pack's ID in the inventory
+<a href=#450 id=450 data-nosnippet>450</a>    </span><span class="kw">pub </span>pack_id: usize,
 <a href=#451 id=451 data-nosnippet>451</a>}
 <a href=#452 id=452 data-nosnippet>452</a>
-<a href=#453 id=453 data-nosnippet>453</a><span class="doccomment">/// Default pack generator implementation
-<a href=#454 id=454 data-nosnippet>454</a></span><span class="kw">pub struct </span>DefaultPackGenerator;
-<a href=#455 id=455 data-nosnippet>455</a>
-<a href=#456 id=456 data-nosnippet>456</a><span class="kw">impl </span>PackGenerator <span class="kw">for </span>DefaultPackGenerator {
-<a href=#457 id=457 data-nosnippet>457</a>    <span class="kw">fn </span>generate_pack(<span class="kw-2">&amp;</span><span class="self">self</span>, pack_type: PackType, game: <span class="kw-2">&amp;</span>Game) -&gt; <span class="prelude-ty">Result</span>&lt;Pack, GameError&gt; {
-<a href=#458 id=458 data-nosnippet>458</a>        <span class="kw">let </span>config = <span class="kw-2">&amp;</span>game.config;
-<a href=#459 id=459 data-nosnippet>459</a>        <span class="kw">let </span><span class="kw-2">mut </span>pack = Pack::new(pack_type, config);
-<a href=#460 id=460 data-nosnippet>460</a>        pack.generate_contents(game, config)<span class="question-mark">?</span>;
-<a href=#461 id=461 data-nosnippet>461</a>        <span class="prelude-val">Ok</span>(pack)
-<a href=#462 id=462 data-nosnippet>462</a>    }
-<a href=#463 id=463 data-nosnippet>463</a>
-<a href=#464 id=464 data-nosnippet>464</a>    <span class="kw">fn </span>is_pack_available(<span class="kw-2">&amp;</span><span class="self">self</span>, pack_type: PackType, game: <span class="kw-2">&amp;</span>Game) -&gt; bool {
-<a href=#465 id=465 data-nosnippet>465</a>        <span class="comment">// Basic availability logic - all packs available if player has money
-<a href=#466 id=466 data-nosnippet>466</a>        </span>game.money &gt;= pack_type.base_cost(<span class="kw-2">&amp;</span>game.config) <span class="kw">as </span>f64
-<a href=#467 id=467 data-nosnippet>467</a>    }
-<a href=#468 id=468 data-nosnippet>468</a>
-<a href=#469 id=469 data-nosnippet>469</a>    <span class="kw">fn </span>available_pack_types(<span class="kw-2">&amp;</span><span class="self">self</span>, game: <span class="kw-2">&amp;</span>Game) -&gt; Vec&lt;PackType&gt; {
-<a href=#470 id=470 data-nosnippet>470</a>        <span class="kw">let </span>all_pack_types = [
-<a href=#471 id=471 data-nosnippet>471</a>            PackType::Standard,
-<a href=#472 id=472 data-nosnippet>472</a>            PackType::Buffoon,
-<a href=#473 id=473 data-nosnippet>473</a>            PackType::Arcana,
-<a href=#474 id=474 data-nosnippet>474</a>            PackType::Celestial,
-<a href=#475 id=475 data-nosnippet>475</a>            PackType::Spectral,
-<a href=#476 id=476 data-nosnippet>476</a>            PackType::MegaBuffoon,
-<a href=#477 id=477 data-nosnippet>477</a>            PackType::MegaArcana,
-<a href=#478 id=478 data-nosnippet>478</a>            PackType::MegaCelestial,
-<a href=#479 id=479 data-nosnippet>479</a>            PackType::MegaSpectral,
-<a href=#480 id=480 data-nosnippet>480</a>        ];
-<a href=#481 id=481 data-nosnippet>481</a>
-<a href=#482 id=482 data-nosnippet>482</a>        all_pack_types
-<a href=#483 id=483 data-nosnippet>483</a>            .iter()
-<a href=#484 id=484 data-nosnippet>484</a>            .filter(|&amp;&amp;pack_type| <span class="self">self</span>.is_pack_available(pack_type, game))
-<a href=#485 id=485 data-nosnippet>485</a>            .copied()
-<a href=#486 id=486 data-nosnippet>486</a>            .collect()
-<a href=#487 id=487 data-nosnippet>487</a>    }
-<a href=#488 id=488 data-nosnippet>488</a>}</code></pre></div></section></main></body></html>
+<a href=#453 id=453 data-nosnippet>453</a><span class="kw">impl </span>OpenPackState {
+<a href=#454 id=454 data-nosnippet>454</a>    <span class="doccomment">/// Create a new open pack state
+<a href=#455 id=455 data-nosnippet>455</a>    </span><span class="kw">pub fn </span>new(pack: Pack, pack_id: usize) -&gt; <span class="self">Self </span>{
+<a href=#456 id=456 data-nosnippet>456</a>        <span class="self">Self </span>{ pack, pack_id }
+<a href=#457 id=457 data-nosnippet>457</a>    }
+<a href=#458 id=458 data-nosnippet>458</a>}
+<a href=#459 id=459 data-nosnippet>459</a>
+<a href=#460 id=460 data-nosnippet>460</a><span class="doccomment">/// Trait for pack generation and management
+<a href=#461 id=461 data-nosnippet>461</a></span><span class="kw">pub trait </span>PackGenerator {
+<a href=#462 id=462 data-nosnippet>462</a>    <span class="doccomment">/// Generate a pack of the specified type
+<a href=#463 id=463 data-nosnippet>463</a>    </span><span class="kw">fn </span>generate_pack(<span class="kw-2">&amp;</span><span class="self">self</span>, pack_type: PackType, game: <span class="kw-2">&amp;</span>Game) -&gt; <span class="prelude-ty">Result</span>&lt;Pack, GameError&gt;;
+<a href=#464 id=464 data-nosnippet>464</a>
+<a href=#465 id=465 data-nosnippet>465</a>    <span class="doccomment">/// Check if a pack type is available for purchase
+<a href=#466 id=466 data-nosnippet>466</a>    </span><span class="kw">fn </span>is_pack_available(<span class="kw-2">&amp;</span><span class="self">self</span>, pack_type: PackType, game: <span class="kw-2">&amp;</span>Game) -&gt; bool;
+<a href=#467 id=467 data-nosnippet>467</a>
+<a href=#468 id=468 data-nosnippet>468</a>    <span class="doccomment">/// Get all available pack types for current game state
+<a href=#469 id=469 data-nosnippet>469</a>    </span><span class="kw">fn </span>available_pack_types(<span class="kw-2">&amp;</span><span class="self">self</span>, game: <span class="kw-2">&amp;</span>Game) -&gt; Vec&lt;PackType&gt;;
+<a href=#470 id=470 data-nosnippet>470</a>}
+<a href=#471 id=471 data-nosnippet>471</a>
+<a href=#472 id=472 data-nosnippet>472</a><span class="doccomment">/// Default pack generator implementation
+<a href=#473 id=473 data-nosnippet>473</a></span><span class="kw">pub struct </span>DefaultPackGenerator;
+<a href=#474 id=474 data-nosnippet>474</a>
+<a href=#475 id=475 data-nosnippet>475</a><span class="kw">impl </span>PackGenerator <span class="kw">for </span>DefaultPackGenerator {
+<a href=#476 id=476 data-nosnippet>476</a>    <span class="kw">fn </span>generate_pack(<span class="kw-2">&amp;</span><span class="self">self</span>, pack_type: PackType, game: <span class="kw-2">&amp;</span>Game) -&gt; <span class="prelude-ty">Result</span>&lt;Pack, GameError&gt; {
+<a href=#477 id=477 data-nosnippet>477</a>        <span class="kw">let </span>config = <span class="kw-2">&amp;</span>game.config;
+<a href=#478 id=478 data-nosnippet>478</a>        <span class="kw">let </span><span class="kw-2">mut </span>pack = Pack::new(pack_type, config);
+<a href=#479 id=479 data-nosnippet>479</a>        pack.generate_contents(game, config)<span class="question-mark">?</span>;
+<a href=#480 id=480 data-nosnippet>480</a>        <span class="prelude-val">Ok</span>(pack)
+<a href=#481 id=481 data-nosnippet>481</a>    }
+<a href=#482 id=482 data-nosnippet>482</a>
+<a href=#483 id=483 data-nosnippet>483</a>    <span class="kw">fn </span>is_pack_available(<span class="kw-2">&amp;</span><span class="self">self</span>, pack_type: PackType, game: <span class="kw-2">&amp;</span>Game) -&gt; bool {
+<a href=#484 id=484 data-nosnippet>484</a>        <span class="comment">// Basic availability logic - all packs available if player has money
+<a href=#485 id=485 data-nosnippet>485</a>        </span>game.money &gt;= pack_type.base_cost(<span class="kw-2">&amp;</span>game.config) <span class="kw">as </span>f64
+<a href=#486 id=486 data-nosnippet>486</a>    }
+<a href=#487 id=487 data-nosnippet>487</a>
+<a href=#488 id=488 data-nosnippet>488</a>    <span class="kw">fn </span>available_pack_types(<span class="kw-2">&amp;</span><span class="self">self</span>, game: <span class="kw-2">&amp;</span>Game) -&gt; Vec&lt;PackType&gt; {
+<a href=#489 id=489 data-nosnippet>489</a>        <span class="kw">let </span>all_pack_types = [
+<a href=#490 id=490 data-nosnippet>490</a>            PackType::Standard,
+<a href=#491 id=491 data-nosnippet>491</a>            PackType::Buffoon,
+<a href=#492 id=492 data-nosnippet>492</a>            PackType::Arcana,
+<a href=#493 id=493 data-nosnippet>493</a>            PackType::Celestial,
+<a href=#494 id=494 data-nosnippet>494</a>            PackType::Spectral,
+<a href=#495 id=495 data-nosnippet>495</a>            PackType::MegaBuffoon,
+<a href=#496 id=496 data-nosnippet>496</a>            PackType::MegaArcana,
+<a href=#497 id=497 data-nosnippet>497</a>            PackType::MegaCelestial,
+<a href=#498 id=498 data-nosnippet>498</a>            PackType::MegaSpectral,
+<a href=#499 id=499 data-nosnippet>499</a>        ];
+<a href=#500 id=500 data-nosnippet>500</a>
+<a href=#501 id=501 data-nosnippet>501</a>        all_pack_types
+<a href=#502 id=502 data-nosnippet>502</a>            .iter()
+<a href=#503 id=503 data-nosnippet>503</a>            .filter(|&amp;&amp;pack_type| <span class="self">self</span>.is_pack_available(pack_type, game))
+<a href=#504 id=504 data-nosnippet>504</a>            .copied()
+<a href=#505 id=505 data-nosnippet>505</a>            .collect()
+<a href=#506 id=506 data-nosnippet>506</a>    }
+<a href=#507 id=507 data-nosnippet>507</a>}</code></pre></div></section></main></body></html>
