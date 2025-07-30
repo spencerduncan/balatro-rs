@@ -114,7 +114,7 @@ mod tests {
     #[test]
     fn test_voucher_trait_method_signatures() {
         let test_voucher = TestVoucher {
-            id: VoucherId::GrabBag,
+            id: VoucherId::Overstock,
             tier: VoucherTier::Base,
         };
 
@@ -124,7 +124,7 @@ mod tests {
 
         // Test required methods exist and return expected types
         let voucher_id: VoucherId = test_voucher.id();
-        assert_eq!(voucher_id, VoucherId::GrabBag);
+        assert_eq!(voucher_id, VoucherId::Overstock);
 
         let tier: VoucherTier = test_voucher.tier();
         assert_eq!(tier, VoucherTier::Base);
@@ -222,7 +222,7 @@ mod tests {
     #[test]
     fn test_serialization_support() {
         // Test VoucherId serialization
-        let voucher_id = VoucherId::GrabBag;
+        let voucher_id = VoucherId::Overstock;
         let id_json = serde_json::to_string(&voucher_id).expect("Failed to serialize VoucherId");
         let deserialized_id: VoucherId =
             serde_json::from_str(&id_json).expect("Failed to deserialize VoucherId");
@@ -253,13 +253,13 @@ mod tests {
 
         // Test VoucherCollection continues to work with new types
         let mut collection = VoucherCollection::new();
-        collection.add(VoucherId::GrabBag);
+        collection.add(VoucherId::Overstock);
         let collection_json =
             serde_json::to_string(&collection).expect("Failed to serialize VoucherCollection");
         let deserialized_collection: VoucherCollection = serde_json::from_str(&collection_json)
             .expect("Failed to deserialize VoucherCollection");
         assert_eq!(collection.count(), deserialized_collection.count());
-        assert!(deserialized_collection.owns(VoucherId::GrabBag));
+        assert!(deserialized_collection.owns(VoucherId::Overstock));
     }
 
     /// Test voucher prerequisite chains and validation
@@ -267,7 +267,7 @@ mod tests {
     fn test_voucher_prerequisite_validation() {
         // Create vouchers with prerequisite relationships
         let _base_voucher = TestVoucher {
-            id: VoucherId::GrabBag,
+            id: VoucherId::Overstock,
             tier: VoucherTier::Base,
         };
 
@@ -275,24 +275,24 @@ mod tests {
         let mut collection = VoucherCollection::new();
 
         // Initially can purchase base voucher (no prerequisites)
-        assert!(collection.can_purchase(VoucherId::GrabBag));
+        assert!(collection.can_purchase(VoucherId::Overstock));
 
         // Add base voucher
-        collection.add(VoucherId::GrabBag);
+        collection.add(VoucherId::Overstock);
 
         // Can no longer purchase same voucher (already owned)
-        assert!(!collection.can_purchase(VoucherId::GrabBag));
+        assert!(!collection.can_purchase(VoucherId::Overstock));
 
         // Verify collection state
         assert_eq!(collection.count(), 1);
-        assert!(collection.owns(VoucherId::GrabBag));
+        assert!(collection.owns(VoucherId::Overstock));
     }
 
     /// Test GameState integration for voucher effects
     #[test]
     fn test_game_state_integration() {
         let test_voucher = TestVoucher {
-            id: VoucherId::GrabBag,
+            id: VoucherId::Overstock,
             tier: VoucherTier::Base,
         };
 
@@ -361,7 +361,7 @@ mod tests {
     #[test]
     fn test_effect_query_performance() {
         let test_voucher = TestVoucher {
-            id: VoucherId::GrabBag,
+            id: VoucherId::Overstock,
             tier: VoucherTier::Base,
         };
 

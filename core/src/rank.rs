@@ -1,3 +1,4 @@
+use strum::EnumIter;
 pub struct Level {
     pub level: usize,
     pub chips: usize,
@@ -9,7 +10,7 @@ pub struct Level {
 /// the strength of the hand in comparison to others
 /// of the same rank.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, Copy)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, Copy, EnumIter)]
 pub enum HandRank {
     HighCard,
     OnePair,
@@ -27,6 +28,12 @@ pub enum HandRank {
 }
 
 impl HandRank {
+    /// Get base level information for this hand type (level 1 values)
+    #[allow(dead_code)] // Temporary allowance for merge compatibility
+    pub(crate) fn base_level(&self) -> Level {
+        self.level() // Delegate to existing method for base values
+    }
+
     pub(crate) fn level(&self) -> Level {
         match self {
             Self::HighCard => Level {

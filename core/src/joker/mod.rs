@@ -529,6 +529,8 @@ pub struct GameContext<'a> {
     pub stage: &'a Stage,
     /// Number of hands played this round
     pub hands_played: u32,
+    /// Number of hands remaining this round (for final hand detection)
+    pub hands_remaining: f64,
     /// Number of discards used this round
     pub discards_used: u32,
     /// All jokers in play
@@ -1298,6 +1300,9 @@ pub mod four_fingers;
 pub mod multiplicative_jokers;
 // Include retrigger jokers
 pub mod retrigger_jokers;
+
+// Include Steel Joker composition implementation (correct deck-scanning version)
+pub mod steel_joker_composition;
 
 // Include tests for hand composition jokers (Ride the Bus, Blackboard, DNA)
 #[cfg(test)]

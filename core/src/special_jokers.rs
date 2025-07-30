@@ -768,12 +768,8 @@ mod tests {
         JokerGameplay, JokerIdentity, JokerLifecycle, JokerModifiers,
         JokerState as JokerStateTrait, Rarity,
     };
-    #[allow(unused_imports)]
-    use crate::joker::GameContext;
     use crate::joker_state::JokerStateManager;
     use crate::stage::{Blind, Stage};
-    #[allow(unused_imports)]
-    use std::collections::HashMap;
     use std::sync::Arc;
 
     /// Helper function to create a test card

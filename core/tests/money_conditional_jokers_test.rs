@@ -39,6 +39,7 @@ fn create_test_context() -> GameContext<'static> {
         stage: &STAGE,
         hands_played: 0,
         discards_used: 0,
+        hands_remaining: 4.0, // Standard hands remaining for testing
         jokers: &[],
         hand,
         discarded: &[],

@@ -404,6 +404,85 @@ impl StaticJokerFactory {
         )
     }
 
+    /// Create Scary Face (Face cards give +30 Chips when scored)
+    pub fn create_scary_face() -> Box<dyn Joker> {
+        // Load parameter from joker.json, fallback to 30 if not found
+        let chips_bonus = Self::load_scary_face_parameter();
+
+        Box::new(
+            FrameworkStaticJoker::builder(
+                JokerId::ScaryFace,
+                "Scary Face",
+                "Played face cards give +30 Chips when scored",
+            )
+            .rarity(JokerRarity::Common)
+            .cost(3)
+            .chips(chips_bonus)
+            .condition(StaticCondition::AnyRankScored(vec![
+                Value::Jack,
+                Value::Queen,
+                Value::King,
+            ]))
+            .per_card()
+            .build()
+            .expect("Valid joker configuration"),
+        )
+    }
+
+    /// Load Scary Face parameter from joker.json, with fallback to 30
+    fn load_scary_face_parameter() -> i32 {
+        match JsonParameterResolver::new() {
+            Ok(resolver) => {
+                match resolver.get_parameters_by_id(JokerId::ScaryFace) {
+                    Ok(params) => params.first().unwrap_or(30), // #1# = chips value
+                    Err(_) => 30,                               // Fallback to original value
+                }
+            }
+            Err(_) => 30, // Fallback to original value
+        }
+    }
+
+    /// Create Fibonacci (Fibonacci sequence cards give +8 Mult when scored)
+    /// Fibonacci sequence: A, 2, 3, 5, 8
+    pub fn create_fibonacci() -> Box<dyn Joker> {
+        // Load parameter from joker.json, fallback to 8 if not found
+        let mult_bonus = Self::load_fibonacci_parameter();
+
+        Box::new(
+            FrameworkStaticJoker::builder(
+                JokerId::FibonacciJoker,
+                "Fibonacci",
+                "Each played Ace, 2, 3, 5, or 8 gives +8 Mult when scored",
+            )
+            .rarity(JokerRarity::Common)
+            .cost(4)
+            .mult(mult_bonus)
+            .condition(StaticCondition::AnyRankScored(vec![
+                Value::Ace,
+                Value::Two,
+                Value::Three,
+                Value::Five,
+                Value::Eight,
+            ]))
+            .per_card()
+            .build()
+            .expect("Valid joker configuration"),
+        )
+    }
+
+    /// Load Fibonacci parameter from joker.json, with fallback to 8
+    fn load_fibonacci_parameter() -> i32 {
+        match JsonParameterResolver::new() {
+            Ok(resolver) => {
+                match resolver.get_parameters_by_id(JokerId::FibonacciJoker) {
+                    Ok(params) => params.first().unwrap_or(8), // #1# = mult value
+                    Err(_) => 8,                               // Fallback to reasonable value
+                }
+            }
+            Err(_) => 8, // Fallback to reasonable value
+        }
+    }
+
     // Square Joker removed - now implemented as scaling joker in scaling_joker_impl.rs
 
     /// Create Walkie (+10 Chips and +4 Mult if hand contains Straight)
@@ -828,8 +907,40 @@ mod tests {
     }
 
     #[test]
+    fn test_scary_face_joker() {
+        let scary_face = StaticJokerFactory::create_scary_face();
+
+        // Test properties
+        assert_eq!(scary_face.id(), JokerId::ScaryFace);
+        assert_eq!(scary_face.name(), "Scary Face");
+        assert_eq!(scary_face.rarity(), JokerRarity::Common);
+        assert_eq!(scary_face.cost(), 3);
+
+        // Test description contains face cards and chips
+        assert!(scary_face.description().contains("Played face cards give"));
+        assert!(scary_face.description().contains("Chips when scored"));
+    }
+
+    #[test]
+    fn test_fibonacci_joker() {
+        let fibonacci = StaticJokerFactory::create_fibonacci();
+
+        // Test properties
+        assert_eq!(fibonacci.id(), JokerId::FibonacciJoker);
+        assert_eq!(fibonacci.name(), "Fibonacci");
+        assert_eq!(fibonacci.rarity(), JokerRarity::Common);
+        assert_eq!(fibonacci.cost(), 4);
+
+        // Test description contains Fibonacci sequence
+        assert!(fibonacci
+            .description()
+            .contains("Each played Ace, 2, 3, 5, or 8"));
+        assert!(fibonacci.description().contains("Mult when scored"));
+    }
+
+    #[test]
     fn test_all_factory_jokers_can_be_created() {
-        // Test that all 18 jokers can be created without panicking
+        // Test that all 20 jokers can be created without panicking
         let jokers = vec![
             StaticJokerFactory::create_joker(),
             StaticJokerFactory::create_greedy_joker(),
@@ -849,9 +960,11 @@ mod tests {
             StaticJokerFactory::create_even_steven(),
             StaticJokerFactory::create_odd_todd(),
             StaticJokerFactory::create_scholar(),
+            StaticJokerFactory::create_scary_face(),
+            StaticJokerFactory::create_fibonacci(),
         ];
 
-        assert_eq!(jokers.len(), 18);
+        assert_eq!(jokers.len(), 20);
 
         // Ensure all have valid IDs and names
         for joker in &jokers {
