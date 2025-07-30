@@ -10,11 +10,11 @@ fn test_fortune_teller_joker_correctly_created() {
     // Initialize all systems before running the test to avoid factory race conditions
     balatro_rs::initialize().expect("Failed to initialize core systems");
 
-    let fortune = JokerFactory::create(JokerId::FortuneTeller);
+    let fortune = JokerFactory::create(JokerId::Fortune);
     assert!(fortune.is_some());
 
     let joker = fortune.unwrap();
-    assert_eq!(joker.id(), JokerId::FortuneTeller);
+    assert_eq!(joker.id(), JokerId::Fortune);
     assert_eq!(joker.name(), "Fortune Teller");
     assert_eq!(joker.description(), "+1 Mult per Tarot card used");
     assert_eq!(joker.rarity(), JokerRarity::Rare);
@@ -73,7 +73,7 @@ fn test_fortune_teller_creation() {
     balatro_rs::initialize().expect("Failed to initialize core systems");
 
     // Verify we can create Fortune Teller without crashes
-    let fortune = JokerFactory::create(JokerId::FortuneTeller).unwrap();
+    let fortune = JokerFactory::create(JokerId::Fortune).unwrap();
     assert_eq!(fortune.name(), "Fortune Teller");
     assert_eq!(fortune.description(), "+1 Mult per Tarot card used");
 }
@@ -113,7 +113,7 @@ fn test_jokers_in_rarity_lists() {
 
     // Fortune should be in Rare (based on the MysteryJoker's original rarity)
     let rare_jokers = JokerFactory::get_by_rarity(JokerRarity::Rare);
-    assert!(rare_jokers.contains(&JokerId::FortuneTeller));
+    assert!(rare_jokers.contains(&JokerId::Fortune));
 
     // Red Card (Reserved6) should be in Common
     let common_jokers = JokerFactory::get_by_rarity(JokerRarity::Common);
@@ -132,7 +132,7 @@ fn test_jokers_in_implemented_list() {
 
     let implemented = JokerFactory::get_all_implemented();
 
-    assert!(implemented.contains(&JokerId::FortuneTeller));
+    assert!(implemented.contains(&JokerId::Fortune));
     assert!(implemented.contains(&JokerId::Reserved6)); // Red Card
     assert!(implemented.contains(&JokerId::SteelJoker));
 }

@@ -12,7 +12,7 @@ use crate::hand::{MadeHand, SelectHand};
 use crate::joker::{GameContext, Joker, JokerId, Jokers, OldJoker as OldJokerTrait};
 use crate::joker_effect_processor::JokerEffectProcessor;
 use crate::joker_factory::JokerFactory;
-use crate::joker_state::{JokerState, JokerStateManager};
+use crate::joker_state::JokerStateManager;
 use crate::memory_monitor::MemoryMonitor;
 use crate::rank::HandRank;
 use crate::scaling_joker::ScalingEvent;
@@ -359,6 +359,10 @@ impl Game {
             hand_levels: HashMap::new(),
 
             // Initialize enhancement tracking (will be calculated after deck is set up)
+            stone_cards_in_deck: 0,
+            steel_cards_in_deck: 0,
+
+            // Initialize card enhancement tracking (will be calculated on game start)
             stone_cards_in_deck: 0,
             steel_cards_in_deck: 0,
 
@@ -2383,6 +2387,33 @@ impl Game {
     pub fn load_state_from_json(json: &str) -> Result<Self, SaveLoadError> {
         let persistence_manager = persistence::PersistenceManager::new();
         persistence_manager.load_state_from_json(json)
+    }
+
+    /// Count Stone cards in the current deck
+    /// Following clean code principle: functions should do one thing
+    fn count_stone_cards(&self) -> usize {
+        self.deck
+            .cards()
+            .iter()
+            .filter(|card| matches!(card.enhancement, Some(crate::card::Enhancement::Stone)))
+            .count()
+    }
+
+    /// Count Steel cards in the current deck
+    /// Following clean code principle: functions should do one thing
+    fn count_steel_cards(&self) -> usize {
+        self.deck
+            .cards()
+            .iter()
+            .filter(|card| matches!(card.enhancement, Some(crate::card::Enhancement::Steel)))
+            .count()
+    }
+
+    /// Refresh enhancement counts by recalculating from deck state
+    /// Following clean code principle: separate data calculation from data usage
+    pub fn refresh_enhancement_counts(&mut self) {
+        self.stone_cards_in_deck = self.count_stone_cards();
+        self.steel_cards_in_deck = self.count_steel_cards();
     }
 
     /// Process a scaling event for all scaling jokers in the game

@@ -29,9 +29,9 @@ use crate::state_version::StateVersion;
 use crate::vouchers::VoucherCollection;
 
 // Additional imports needed for load functionality
-use crate::joker::JokerEffectProcessor;
-use crate::memory::MemoryMonitor;
-use crate::targeting::TargetContext;
+use crate::joker_effect_processor::JokerEffectProcessor;
+use crate::memory_monitor::MemoryMonitor;
+use crate::target_context::TargetContext;
 
 /// Current save format version
 const SAVE_VERSION: u32 = 1;
@@ -65,6 +65,9 @@ struct SaveableGameState {
     pub mult: f64,
     pub score: f64,
     pub hand_type_counts: HashMap<HandRank, u32>,
+    // Card enhancement tracking
+    pub stone_cards_in_deck: usize,
+    pub steel_cards_in_deck: usize,
     // Extended state fields
     pub consumables_in_hand: Vec<ConsumableId>,
     pub vouchers: VoucherCollection,
@@ -102,6 +105,7 @@ impl std::error::Error for SaveLoadError {}
 /// 
 /// Following Single Responsibility Principle - handles only save/load concerns.
 /// Extracted from Game struct to improve code organization and maintainability.
+#[derive(Debug)]
 pub struct PersistenceManager;
 
 impl PersistenceManager {
@@ -151,6 +155,9 @@ impl PersistenceManager {
             mult: game.mult,
             score: game.score,
             hand_type_counts: game.hand_type_counts.clone(),
+            // Card enhancement tracking
+            stone_cards_in_deck: game.stone_cards_in_deck,
+            steel_cards_in_deck: game.steel_cards_in_deck,
             // Extended state fields
             consumables_in_hand: game.consumables_in_hand.clone(),
             vouchers: game.vouchers.clone(),
@@ -213,6 +220,9 @@ impl PersistenceManager {
             mult: saveable_state.mult,
             score: saveable_state.score,
             hand_type_counts: saveable_state.hand_type_counts,
+            // Card enhancement tracking
+            stone_cards_in_deck: saveable_state.stone_cards_in_deck,
+            steel_cards_in_deck: saveable_state.steel_cards_in_deck,
             // Extended state fields
             consumables_in_hand: saveable_state.consumables_in_hand,
             vouchers: saveable_state.vouchers,
@@ -240,6 +250,10 @@ impl PersistenceManager {
         // Restore joker states to the state manager
         game.joker_state_manager
             .restore_from_snapshot(saveable_state.joker_states);
+
+        // Refresh enhancement counts based on loaded deck
+        let mut game = game;
+        game.refresh_enhancement_counts();
 
         Ok(game)
     }

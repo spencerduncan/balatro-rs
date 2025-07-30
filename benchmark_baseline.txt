@@ -1,0 +1,947 @@
+    Blocking waiting for file lock on build directory
+   Compiling balatro-rs v0.0.1 (/home/spduncan/balatro-rs-ws/issue-744-persistence/core)
+    Finished `bench` profile [optimized] target(s) in 47.33s
+     Running unittests src/lib.rs (target/release/deps/balatro_rs-d0b16badd094edb4)
+
+running 852 tests
+test available::tests::test_card_from_index ... ignored
+test available::tests::test_move_card ... ignored
+test available::tests::test_select_card ... ignored
+test bounded_action_history::tests::test_bounded_action_history_basic ... ignored
+test bounded_action_history::tests::test_bounded_action_history_overflow ... ignored
+test bounded_action_history::tests::test_clear ... ignored
+test bounded_action_history::tests::test_from_large_vec ... ignored
+test bounded_action_history::tests::test_from_vec ... ignored
+test bounded_action_history::tests::test_resize ... ignored
+test card::tests::test_constructor ... ignored
+test card::tests::test_even_odd ... ignored
+test card::tests::test_face ... ignored
+test card_filter::tests::test_composite_all_filter ... ignored
+test card_filter::tests::test_composite_any_filter ... ignored
+test card_filter::tests::test_composite_not_filter ... ignored
+test card_filter::tests::test_edition_filter ... ignored
+test card_filter::tests::test_enhanced_filter ... ignored
+test card_filter::tests::test_even_filter ... ignored
+test card_filter::tests::test_face_filter ... ignored
+test card_filter::tests::test_filter_context_creation ... ignored
+test card_filter::tests::test_filter_context_with_properties ... ignored
+test card_filter::tests::test_filter_descriptions ... ignored
+test card_filter::tests::test_filter_error_display ... ignored
+test card_filter::tests::test_odd_filter ... ignored
+test card_filter::tests::test_rank_filter ... ignored
+test card_filter::tests::test_red_and_black_cards_composite_filters ... ignored
+test card_filter::tests::test_registry_apply_filter ... ignored
+test card_filter::tests::test_registry_create_from_string ... ignored
+test card_filter::tests::test_registry_creation ... ignored
+test card_filter::tests::test_registry_register_and_get ... ignored
+test card_filter::tests::test_registry_with_defaults ... ignored
+test card_filter::tests::test_sealed_filter ... ignored
+test card_filter::tests::test_special_edition_filter ... ignored
+test card_filter::tests::test_suit_filter ... ignored
+test config::tests::test_ante_progression ... ignored
+test config::tests::test_config_boundary_values ... ignored
+test config::tests::test_config_clone ... ignored
+test config::tests::test_config_debug ... ignored
+test config::tests::test_config_default ... ignored
+test config::tests::test_config_interest_rate_bounds ... ignored
+test config::tests::test_config_max_values ... ignored
+test config::tests::test_config_modification ... ignored
+test config::tests::test_config_new ... ignored
+test config::tests::test_config_zero_edge_cases ... ignored
+test config::tests::test_deck_and_hand_constraints ... ignored
+test config::tests::test_default_constants ... ignored
+test config::tests::test_interest_rate_edge_cases ... ignored
+test config::tests::test_joker_slot_constraints ... ignored
+test config::tests::test_python_bindings ... ignored
+test config::tests::test_python_boundary_validation ... ignored
+test config::tests::test_serialization ... ignored
+test consumables::tarot::tests::test_emperor_rng_safety_fix ... ignored
+test consumables::tarot::tests::test_fool_improved_implementation ... ignored
+test consumables::tarot::tests::test_high_priestess_code_organization ... ignored
+test consumables::tarot::tests::test_phantom_data_removal ... ignored
+test consumables::tarot::tests::test_strength_card_functionality ... ignored
+test consumables::tarot::tests::test_tarot_card_metadata ... ignored
+test consumables::tarot::tests::test_tarot_factory_creation ... ignored
+test consumables::tarot::tests::test_the_hermit_money_gain ... ignored
+test consumables::tarot::tests::test_wheel_of_fortune_enhancement_preservation ... ignored
+test consumables::tests::test_mod::test_card_collection_display ... ignored
+test consumables::tests::test_mod::test_card_target_creation ... ignored
+test consumables::tests::test_mod::test_card_target_get_cards_discard_pile ... ignored
+test consumables::tests::test_mod::test_card_target_get_cards_hand_not_implemented ... ignored
+test consumables::tests::test_mod::test_card_target_validation_duplicate_indices ... ignored
+test consumables::tests::test_mod::test_card_target_validation_out_of_bounds ... ignored
+test consumables::tests::test_mod::test_card_target_validation_success ... ignored
+test consumables::tests::test_mod::test_consumable_slots_basic_operations ... ignored
+test consumables::tests::test_mod::test_consumable_slots_custom_capacity ... ignored
+test consumables::tests::test_mod::test_joker_target_active_joker ... ignored
+test consumables::tests::test_mod::test_joker_target_comprehensive_validation ... ignored
+test consumables::tests::test_mod::test_joker_target_debug_output ... ignored
+test consumables::tests::test_mod::test_joker_target_edge_cases ... ignored
+test consumables::tests::test_mod::test_joker_target_equality_and_clone ... ignored
+test consumables::tests::test_mod::test_joker_target_error_display ... ignored
+test consumables::tests::test_mod::test_joker_target_error_telemetry ... ignored
+test consumables::tests::test_mod::test_joker_target_failure_modes ... ignored
+test consumables::tests::test_mod::test_joker_target_get_joker_invalid ... ignored
+test consumables::tests::test_mod::test_joker_target_get_joker_valid ... ignored
+test consumables::tests::test_mod::test_joker_target_is_slot_occupied ... ignored
+test consumables::tests::test_mod::test_joker_target_joker_of_type ... ignored
+test consumables::tests::test_mod::test_joker_target_new ... ignored
+test consumables::tests::test_mod::test_joker_target_serialization ... ignored
+test consumables::tests::test_mod::test_joker_target_validate_correct_joker_type ... ignored
+test consumables::tests::test_mod::test_joker_target_validate_empty_slot ... ignored
+test consumables::tests::test_mod::test_joker_target_validate_valid_slot ... ignored
+test consumables::tests::test_mod::test_joker_target_validate_wrong_joker_type ... ignored
+test consumables::tests::test_mod::test_joker_target_with_different_game_states ... ignored
+test consumables::tests::test_mod::test_target_active_joker_at_slot ... ignored
+test consumables::tests::test_mod::test_target_as_joker_target ... ignored
+test consumables::tests::test_mod::test_target_helper_methods ... ignored
+test consumables::tests::test_mod::test_target_joker_invalid_slot ... ignored
+test consumables::tests::test_mod::test_target_joker_methods_integration ... ignored
+test consumables::tests::test_mod::test_target_type_checking ... ignored
+test consumables::tests::test_mod::test_target_validation_with_game_state ... ignored
+test deck::tests::test_deck_append ... ignored
+test deck::tests::test_deck_append_empty ... ignored
+test deck::tests::test_deck_append_to_existing ... ignored
+test deck::tests::test_deck_cards_clone ... ignored
+test deck::tests::test_deck_cards_empty ... ignored
+test deck::tests::test_deck_clone ... ignored
+test deck::tests::test_deck_debug ... ignored
+test deck::tests::test_deck_default ... ignored
+test deck::tests::test_deck_draw_exact_amount ... ignored
+test deck::tests::test_deck_draw_from_empty ... ignored
+test deck::tests::test_deck_draw_more_than_available ... ignored
+test deck::tests::test_deck_draw_normal ... ignored
+test deck::tests::test_deck_draw_order ... ignored
+test deck::tests::test_deck_draw_zero_cards ... ignored
+test deck::tests::test_deck_edge_case_boundary_draw ... ignored
+test deck::tests::test_deck_extend ... ignored
+test deck::tests::test_deck_extend_empty ... ignored
+test deck::tests::test_deck_extend_multiple ... ignored
+test deck::tests::test_deck_large_operations ... ignored
+test deck::tests::test_deck_len ... ignored
+test deck::tests::test_deck_multiple_operations ... ignored
+test deck::tests::test_deck_new ... ignored
+test deck::tests::test_deck_shuffle ... ignored
+test deck::tests::test_deck_shuffle_empty ... ignored
+test deck::tests::test_deck_shuffle_single_card ... ignored
+test deck::tests::test_deck_stress_operations ... ignored
+test display::tests::test_basic_integer_formatting ... ignored
+test display::tests::test_compact_formatting ... ignored
+test display::tests::test_convenience_functions ... ignored
+test display::tests::test_display_f64_wrapper ... ignored
+test display::tests::test_large_number_fallback ... ignored
+test display::tests::test_precision_preservation ... ignored
+test display::tests::test_scientific_notation ... ignored
+test display::tests::test_special_values ... ignored
+test display::tests::test_thousand_separators ... ignored
+test display::tests::test_very_small_values ... ignored
+test game::tests::test_accumulated_effects_accumulate_basic ... ignored
+test game::tests::test_accumulated_effects_accumulate_with_retriggers ... ignored
+test game::tests::test_accumulated_effects_accumulate_zero_multiplier ... ignored
+test game::tests::test_accumulated_effects_apply_mult_multiplier ... ignored
+test game::tests::test_accumulated_effects_apply_mult_multiplier_clamping ... ignored
+test game::tests::test_accumulated_effects_apply_mult_multiplier_negative_clamping ... ignored
+test game::tests::test_accumulated_effects_apply_mult_multiplier_one ... ignored
+test game::tests::test_accumulated_effects_apply_mult_multiplier_zero ... ignored
+test game::tests::test_accumulated_effects_default ... ignored
+test game::tests::test_accumulated_effects_equality ... ignored
+test game::tests::test_accumulated_effects_killscreen_from_multiplication ... ignored
+test game::tests::test_accumulated_effects_killscreen_infinity ... ignored
+test game::tests::test_accumulated_effects_killscreen_nan ... ignored
+test game::tests::test_accumulated_effects_merge ... ignored
+test game::tests::test_accumulated_effects_merge_saturating ... ignored
+test game::tests::test_accumulated_effects_merge_zero_multiplier ... ignored
+test game::tests::test_accumulated_effects_multiple_accumulations ... ignored
+test game::tests::test_accumulated_effects_new ... ignored
+test game::tests::test_accumulated_effects_saturating_arithmetic ... ignored
+test game::tests::test_buy_joker ... ignored
+test game::tests::test_buy_joker_expanded_slots ... ignored
+test game::tests::test_buy_joker_insert_at_position ... ignored
+test game::tests::test_buy_joker_insufficient_money ... ignored
+test game::tests::test_buy_joker_invalid_slot ... ignored
+test game::tests::test_buy_joker_not_in_shop ... ignored
+test game::tests::test_buy_joker_with_slot_specification ... ignored
+test game::tests::test_buy_joker_wrong_stage ... ignored
+test game::tests::test_cache_performance_benefit ... ignored
+test game::tests::test_calc_score ... ignored
+test game::tests::test_can_purchase_consumable_cost_validation ... ignored
+test game::tests::test_can_purchase_consumable_edge_case_exact_money ... ignored
+test game::tests::test_can_purchase_consumable_empty_hand ... ignored
+test game::tests::test_can_purchase_consumable_insufficient_money ... ignored
+test game::tests::test_can_purchase_consumable_no_available_slots ... ignored
+test game::tests::test_can_purchase_consumable_partial_hand ... ignored
+test game::tests::test_can_purchase_consumable_validation ... ignored
+test game::tests::test_can_purchase_consumable_wrong_stage ... ignored
+test game::tests::test_clear_blind ... ignored
+test game::tests::test_constructor ... ignored
+test game::tests::test_deal ... ignored
+test game::tests::test_discard ... ignored
+test game::tests::test_draw ... ignored
+test game::tests::test_handle_score ... ignored
+test game::tests::test_joker_effect_cache_integration ... ignored
+test game::tests::test_play_selected ... ignored
+test game::tests::test_reroll_cost_reset_on_new_shop_round ... ignored
+test game::tests::test_reroll_shop_action_integration ... ignored
+test game::tests::test_reroll_shop_action_invalid_stage ... ignored
+test game::tests::test_reroll_shop_basic_functionality ... ignored
+test game::tests::test_reroll_shop_cost_escalation ... ignored
+test game::tests::test_reroll_shop_insufficient_money ... ignored
+test game::tests::test_reroll_shop_invalid_stage ... ignored
+test game::tests::test_reroll_shop_multiple_rounds ... ignored
+test game::tests::test_reroll_shop_save_load_state ... ignored
+test game::tests::test_skip_blind_action_handler ... ignored
+test game::tests::test_skip_blind_action_handler_wrong_stage ... ignored
+test game::tests::test_skip_blind_basic_functionality ... ignored
+test game::tests::test_skip_blind_boss_progression ... ignored
+test game::tests::test_skip_blind_boss_win_condition ... ignored
+test game::tests::test_skip_blind_joker_effects_integration ... ignored
+test game::tests::test_skip_blind_progression_sequence ... ignored
+test game::tests::test_skip_blind_reward_calculation ... ignored
+test game::tests::test_skip_blind_validation_wrong_blind ... ignored
+test game::tests::test_skip_blind_validation_wrong_stage ... ignored
+test generator::tests::test_action_generation_boundary_conditions ... ignored
+test generator::tests::test_action_generation_stress_test ... ignored
+test generator::tests::test_action_generation_with_zero_resources ... ignored
+test generator::tests::test_action_space_skip_blind_integration ... ignored
+test generator::tests::test_action_space_skip_blind_wrong_stage ... ignored
+test generator::tests::test_gen_action_space_comprehensive ... ignored
+test generator::tests::test_gen_actions_buy_joker_edge_cases ... ignored
+test generator::tests::test_gen_actions_cash_out_edge_cases ... ignored
+test generator::tests::test_gen_actions_comprehensive ... ignored
+test generator::tests::test_gen_actions_deterministic_ordering ... ignored
+test generator::tests::test_gen_actions_discard_edge_cases ... ignored
+test generator::tests::test_gen_actions_includes_skip_blind ... ignored
+test generator::tests::test_gen_actions_move_card_edge_cases ... ignored
+test generator::tests::test_gen_actions_next_round_edge_cases ... ignored
+test generator::tests::test_gen_actions_play_edge_cases ... ignored
+test generator::tests::test_gen_actions_select_blind_edge_cases ... ignored
+test generator::tests::test_gen_actions_select_card_edge_cases ... ignored
+test generator::tests::test_gen_actions_skip_blind_basic ... ignored
+test generator::tests::test_gen_actions_skip_blind_progression ... ignored
+test generator::tests::test_gen_moves_discard ... ignored
+test generator::tests::test_gen_moves_play ... ignored
+test generator::tests::test_skip_blind_end_to_end_functionality ... ignored
+test generator::tests::test_unmask_action_space_edge_cases ... ignored
+test generator::tests::test_unmask_action_space_move_cards ... ignored
+test generator::tests::test_unmask_action_space_play_and_discard ... ignored
+test generator::tests::test_unmask_action_space_select_cards ... ignored
+test generator::tests::test_unmask_action_space_select_cards_max ... ignored
+test hand::tests::test_best_hand ... ignored
+test hand::tests::test_five_of_kind ... ignored
+test hand::tests::test_flush ... ignored
+test hand::tests::test_flush_five ... ignored
+test hand::tests::test_flush_house ... ignored
+test hand::tests::test_four_fingers_thread_safety_fixed ... ignored
+test hand::tests::test_four_of_kind ... ignored
+test hand::tests::test_fullhouse ... ignored
+test hand::tests::test_hand_analysis_comprehensive_coverage ... ignored
+test hand::tests::test_hand_analysis_performance_edge_cases ... ignored
+test hand::tests::test_hand_analysis_value_enumeration ... ignored
+test hand::tests::test_highcard ... ignored
+test hand::tests::test_optimized_hand_analysis_compatibility ... ignored
+test hand::tests::test_pair ... ignored
+test hand::tests::test_royal_flush ... ignored
+test hand::tests::test_specific_failing_case ... ignored
+test hand::tests::test_straight ... ignored
+test hand::tests::test_straight_flush ... ignored
+test hand::tests::test_suits_freq ... ignored
+test hand::tests::test_three_of_kind ... ignored
+test hand::tests::test_two_pair ... ignored
+test hand::tests::test_values ... ignored
+test hand::tests::test_values_freq ... ignored
+test joker::advanced_conditions::tests::test_advanced_condition_builder ... ignored
+test joker::advanced_conditions::tests::test_cache_performance ... ignored
+test joker::advanced_conditions::tests::test_condition_composition ... ignored
+test joker::advanced_conditions::tests::test_condition_debug_formatting ... ignored
+test joker::advanced_conditions::tests::test_condition_type_coverage ... ignored
+test joker::advanced_conditions::tests::test_game_history ... ignored
+test joker::advanced_traits::tests::test_enhanced_joker_builder ... ignored
+test joker::advanced_traits::tests::test_evaluation_cost_ordering ... ignored
+test joker::advanced_traits::tests::test_game_event_handling ... ignored
+test joker::advanced_traits::tests::test_internal_joker_state ... ignored
+test joker::basic_economy_jokers::tests::test_all_economy_jokers_creation ... ignored
+test joker::basic_economy_jokers::tests::test_delayed_gratification ... ignored
+test joker::basic_economy_jokers::tests::test_gift_card ... ignored
+test joker::basic_economy_jokers::tests::test_rocket ... ignored
+test joker::basic_economy_jokers::tests::test_rocket_payout_modification ... ignored
+test joker::basic_economy_jokers::tests::test_to_the_moon ... ignored
+test joker::basic_xmult_jokers::tests::test_bloodstone_unique_suits ... ignored
+test joker::basic_xmult_jokers::tests::test_misprint_joker ... ignored
+test joker::basic_xmult_jokers::tests::test_photograph_joker ... ignored
+test joker::basic_xmult_jokers::tests::test_polished_joker_multiplier ... ignored
+test joker::basic_xmult_jokers::tests::test_rough_gem_suit_effects ... ignored
+test joker::compat::tests::test_clever_joker ... ignored
+test joker::compat::tests::test_crafty_joker ... ignored
+test joker::compat::tests::test_crazy_joker ... ignored
+test joker::compat::tests::test_devious_joker ... ignored
+test joker::compat::tests::test_droll_joker ... ignored
+test joker::compat::tests::test_gluttonous_joker ... ignored
+test joker::compat::tests::test_greedy_joker ... ignored
+test joker::compat::tests::test_issue_85_ice_cream_decay_mechanics ... ignored
+test joker::compat::tests::test_issue_85_ice_cream_initial_state ... ignored
+test joker::compat::tests::test_issue_85_ice_cream_integration_with_other_hands ... ignored
+test joker::compat::tests::test_issue_85_ice_cream_negative_chips_protection ... ignored
+test joker::compat::tests::test_issue_85_ice_cream_scoring_with_different_chip_values ... ignored
+test joker::compat::tests::test_issue_87_basic_joker_acceptance_criteria ... ignored
+test joker::compat::tests::test_jolly_joker ... ignored
+test joker::compat::tests::test_lusty_joker ... ignored
+test joker::compat::tests::test_mad_joker ... ignored
+test joker::compat::tests::test_sly_joker ... ignored
+test joker::compat::tests::test_the_joker ... ignored
+test joker::compat::tests::test_wily_joker ... ignored
+test joker::compat::tests::test_wrathful_joker ... ignored
+test joker::compat::tests::test_zany_joker ... ignored
+test joker::compatibility_bridge::tests::test_evaluation_cost_hierarchy ... ignored
+test joker::compatibility_bridge::tests::test_mixed_collection_creation ... ignored
+test joker::compatibility_bridge::tests::test_rarity_conversion ... ignored
+test joker::conditional::tests::test_always_condition_simple ... ignored
+test joker::conditional::tests::test_card_condition_evaluation_logic ... ignored
+test joker::conditional::tests::test_card_evaluation_simple ... ignored
+test joker::conditional::tests::test_composite_conditions_evaluation_simple ... ignored
+test joker::conditional::tests::test_composite_conditions_formatting ... ignored
+test joker::conditional::tests::test_conditional_joker ... ignored
+test joker::conditional::tests::test_conditional_joker_builder_pattern ... ignored
+test joker::conditional::tests::test_conditional_joker_construction_and_builder_pattern ... ignored
+test joker::conditional::tests::test_edge_cases_and_structure ... ignored
+test joker::conditional::tests::test_hand_condition_evaluation_with_hand ... ignored
+test joker::conditional::tests::test_hand_conditions_formatting ... ignored
+test joker::conditional::tests::test_hand_properties_without_context ... ignored
+test joker::conditional::tests::test_hand_specific_conditions_behavior ... ignored
+test joker::conditional::tests::test_money_condition_evaluation_simple ... ignored
+test joker::conditional::tests::test_money_conditions ... ignored
+test joker::four_fingers::tests::test_four_fingers_allows_four_card_straight ... ignored
+test joker::four_fingers::tests::test_four_fingers_basic_properties ... ignored
+test joker::four_fingers::tests::test_four_fingers_flush_only ... ignored
+test joker::four_fingers::tests::test_four_fingers_low_ace_straight ... ignored
+test joker::four_fingers::tests::test_four_fingers_provides_consistent_config ... ignored
+test joker::four_fingers::tests::test_four_fingers_straight_flush ... ignored
+test joker::hand_composition_jokers::tests::test_create_blackboard ... ignored
+test joker::hand_composition_jokers::tests::test_create_dna ... ignored
+test joker::hand_composition_jokers::tests::test_create_ride_the_bus ... ignored
+test joker::hand_composition_jokers::tests::test_dna_joker_direct ... ignored
+test joker::hand_composition_tests::blackboard_tests::test_blackboard_hand_analysis_all_same_rank ... ignored
+test joker::hand_composition_tests::blackboard_tests::test_blackboard_hand_analysis_all_same_suit ... ignored
+test joker::hand_composition_tests::blackboard_tests::test_blackboard_hand_analysis_empty_hand ... ignored
+test joker::hand_composition_tests::blackboard_tests::test_blackboard_hand_analysis_mixed_cards ... ignored
+test joker::hand_composition_tests::blackboard_tests::test_blackboard_joker_construction ... ignored
+test joker::hand_composition_tests::dna_first_hand_tests::test_dna_different_stages ... ignored
+test joker::hand_composition_tests::dna_first_hand_tests::test_dna_empty_hand_no_effect ... ignored
+test joker::hand_composition_tests::dna_first_hand_tests::test_dna_first_hand_multiple_cards_no_effect ... ignored
+test joker::hand_composition_tests::dna_first_hand_tests::test_dna_first_hand_single_card_duplicates ... ignored
+test joker::hand_composition_tests::dna_first_hand_tests::test_dna_later_hands_single_card_no_effect ... ignored
+test joker::hand_composition_tests::dna_first_hand_tests::test_dna_second_hand_single_card_no_effect ... ignored
+test joker::hand_composition_tests::dna_tests::test_dna_card_duplication_logic ... ignored
+test joker::hand_composition_tests::dna_tests::test_dna_effect_structure ... ignored
+test joker::hand_composition_tests::dna_tests::test_dna_hand_size_condition_empty_hand ... ignored
+test joker::hand_composition_tests::dna_tests::test_dna_hand_size_condition_multiple_cards ... ignored
+test joker::hand_composition_tests::dna_tests::test_dna_hand_size_condition_single_card ... ignored
+test joker::hand_composition_tests::dna_tests::test_dna_joker_construction ... ignored
+test joker::hand_composition_tests::edge_case_tests::test_blackboard_all_same_rank_different_suits ... ignored
+test joker::hand_composition_tests::edge_case_tests::test_blackboard_all_same_suit_different_ranks ... ignored
+test joker::hand_composition_tests::edge_case_tests::test_blackboard_correct_condition_spades_and_clubs ... ignored
+test joker::hand_composition_tests::edge_case_tests::test_blackboard_joker_condition ... ignored
+test joker::hand_composition_tests::edge_case_tests::test_blackboard_with_edge_cases ... ignored
+test joker::hand_composition_tests::edge_case_tests::test_dna_joker_edge_cases ... ignored
+test joker::hand_composition_tests::edge_case_tests::test_face_card_detection_comprehensive ... ignored
+test joker::hand_composition_tests::edge_case_tests::test_large_hand_uniformity ... ignored
+test joker::hand_composition_tests::edge_case_tests::test_ride_the_bus_with_various_hand_sizes ... ignored
+test joker::hand_composition_tests::ride_the_bus_tests::test_ride_the_bus_accumulates_mult_without_face_cards ... ignored
+test joker::hand_composition_tests::ride_the_bus_tests::test_ride_the_bus_condition_all_face_cards ... ignored
+test joker::hand_composition_tests::ride_the_bus_tests::test_ride_the_bus_condition_empty_hand ... ignored
+test joker::hand_composition_tests::ride_the_bus_tests::test_ride_the_bus_condition_no_face_cards ... ignored
+test joker::hand_composition_tests::ride_the_bus_tests::test_ride_the_bus_condition_with_face_cards ... ignored
+test joker::hand_composition_tests::ride_the_bus_tests::test_ride_the_bus_does_not_increment_with_face_cards_in_hand ... ignored
+test joker::hand_composition_tests::ride_the_bus_tests::test_ride_the_bus_empty_hand_behavior ... ignored
+test joker::hand_composition_tests::ride_the_bus_tests::test_ride_the_bus_factory_compatibility ... ignored
+test joker::hand_composition_tests::ride_the_bus_tests::test_ride_the_bus_joker_construction ... ignored
+test joker::hand_composition_tests::ride_the_bus_tests::test_ride_the_bus_resets_on_any_face_card_scored ... ignored
+test joker::hand_composition_tests::ride_the_bus_tests::test_ride_the_bus_resets_when_face_card_scored ... ignored
+test joker::hand_composition_tests::ride_the_bus_tests::test_ride_the_bus_scoring_non_face_card_does_not_reset ... ignored
+test joker::hand_composition_tests::ride_the_bus_tests::test_ride_the_bus_state_persistence ... ignored
+test joker::identity_tests::boundary_tests::test_extreme_costs ... ignored
+test joker::identity_tests::boundary_tests::test_unicode_support ... ignored
+test joker::identity_tests::contract_tests::test_desc_not_empty ... ignored
+test joker::identity_tests::contract_tests::test_legendary_unique ... ignored
+test joker::identity_tests::contract_tests::test_name_not_empty ... ignored
+test joker::identity_tests::contract_tests::test_rare_cost ... ignored
+test joker::identity_tests::contract_tests::test_rarity_cost_relationship ... ignored
+test joker::identity_tests::contract_tests::test_trait_object_compatibility ... ignored
+test joker::identity_tests::contract_tests::test_type_consistency ... ignored
+test joker::identity_tests::coverage_tests::test_all_trait_methods ... ignored
+test joker::identity_tests::coverage_tests::test_send_sync_bounds ... ignored
+test joker::identity_tests::integration_tests::test_shop_display_zero_alloc ... ignored
+test joker::identity_tests::property_tests::test_rarity_ordering ... ignored
+test joker::joker_trait_tests::test_joker_effect_default_mult_multiplier ... ignored
+test joker::joker_trait_tests::test_joker_trait_bounds ... ignored
+test joker::multiplicative_jokers::tests::test_ancient_joker_suit_rotation ... ignored
+test joker::multiplicative_jokers::tests::test_baron_exponential_scaling ... ignored
+test joker::multiplicative_jokers::tests::test_baron_no_kings ... ignored
+test joker::resource_chips_jokers::tests::test_blue_joker_deck_based_chips ... ignored
+test joker::resource_chips_jokers::tests::test_bull_joker_money_scaling ... ignored
+test joker::resource_chips_jokers::tests::test_scary_face_gameplay_trait ... ignored
+test joker::resource_chips_jokers::tests::test_scary_face_joker_face_card_detection ... ignored
+test joker::resource_chips_jokers::tests::test_stone_joker_stone_cards ... ignored
+test joker::retrigger_jokers::tests::test_dusk ... ignored
+test joker::retrigger_jokers::tests::test_face_card_detection ... ignored
+test joker::retrigger_jokers::tests::test_hanging_chad ... ignored
+test joker::retrigger_jokers::tests::test_hanging_chad_first_card_only ... ignored
+test joker::retrigger_jokers::tests::test_seltzer ... ignored
+test joker::retrigger_jokers::tests::test_seltzer_countdown ... ignored
+test joker::retrigger_jokers::tests::test_sock_and_buskin ... ignored
+test joker::retrigger_jokers::tests::test_sock_and_buskin_face_cards ... ignored
+test joker::scaling_additive_mult_jokers::tests::test_fortune_teller ... ignored
+test joker::scaling_additive_mult_jokers::tests::test_green_joker ... ignored
+test joker::scaling_additive_mult_jokers::tests::test_green_joker_increment_decrement ... ignored
+test joker::scaling_additive_mult_jokers::tests::test_red_card ... ignored
+test joker::scaling_additive_mult_jokers::tests::test_red_card_pack_skipping ... ignored
+test joker::scaling_additive_mult_jokers::tests::test_ride_the_bus ... ignored
+test joker::scaling_additive_mult_jokers::tests::test_ride_the_bus_no_face_cards ... ignored
+test joker::scaling_additive_mult_jokers::tests::test_ride_the_bus_reset_on_face_card ... ignored
+test joker::scaling_additive_mult_jokers::tests::test_spare_trousers ... ignored
+test joker::scaling_additive_mult_jokers::tests::test_spare_trousers_two_pair_accumulation ... ignored
+test joker::scaling_xmult_jokers::tests::test_can_trigger ... ignored
+test joker::scaling_xmult_jokers::tests::test_ceremonial_dagger ... ignored
+test joker::scaling_xmult_jokers::tests::test_scaling_steel_joker ... ignored
+test joker::scaling_xmult_jokers::tests::test_state_serialization ... ignored
+test joker::scaling_xmult_jokers::tests::test_throwback_joker ... ignored
+test joker::test_utils::tests::test_assert_effect_empty ... ignored
+test joker::test_utils::tests::test_assertion_failure_chips - should panic ... ignored
+test joker::test_utils::tests::test_assertion_failure_money - should panic ... ignored
+test joker::test_utils::tests::test_assertion_failure_mult - should panic ... ignored
+test joker::test_utils::tests::test_assertion_helpers ... ignored
+test joker::test_utils::tests::test_complex_joker_interaction ... ignored
+test joker::test_utils::tests::test_create_test_card ... ignored
+test joker::test_utils::tests::test_create_test_hand ... ignored
+test joker::test_utils::tests::test_lifecycle_and_state_interaction ... ignored
+test joker::test_utils::tests::test_mock_gameplay_joker ... ignored
+test joker::test_utils::tests::test_mock_identity_joker ... ignored
+test joker::test_utils::tests::test_mock_identity_joker_default_cost ... ignored
+test joker::test_utils::tests::test_mock_lifecycle_joker ... ignored
+test joker::test_utils::tests::test_mock_modifier_joker ... ignored
+test joker::test_utils::tests::test_mock_state_joker_deserialization ... ignored
+test joker::test_utils::tests::test_mock_state_joker_initial_state ... ignored
+test joker::test_utils::tests::test_mock_state_joker_serialization ... ignored
+test joker::test_utils::tests::test_mock_state_joker_validation_failure ... ignored
+test joker::test_utils::tests::test_mock_state_joker_validation_success ... ignored
+test joker::test_utils::tests::test_test_context_builder ... ignored
+test joker::tests::traits::lifecycle::basic_lifecycle_tests::test_multiple_calls ... ignored
+test joker::tests::traits::lifecycle::basic_lifecycle_tests::test_on_destroy_called ... ignored
+test joker::tests::traits::lifecycle::basic_lifecycle_tests::test_on_joker_added ... ignored
+test joker::tests::traits::lifecycle::basic_lifecycle_tests::test_on_joker_removed ... ignored
+test joker::tests::traits::lifecycle::basic_lifecycle_tests::test_on_purchase_called ... ignored
+test joker::tests::traits::lifecycle::basic_lifecycle_tests::test_on_round_end_called ... ignored
+test joker::tests::traits::lifecycle::basic_lifecycle_tests::test_on_round_start_called ... ignored
+test joker::tests::traits::lifecycle::basic_lifecycle_tests::test_on_sell_called ... ignored
+test joker::tests::traits::lifecycle::concurrency_tests::test_concurrent_lifecycle_calls ... ignored
+test joker::tests::traits::lifecycle::concurrency_tests::test_send_sync_bounds ... ignored
+test joker::tests::traits::lifecycle::default_implementation_tests::test_default_implementations ... ignored
+test joker::tests::traits::lifecycle::edge_case_tests::test_empty_string_joker_type ... ignored
+test joker::tests::traits::lifecycle::edge_case_tests::test_immediate_sell_after_purchase ... ignored
+test joker::tests::traits::lifecycle::edge_case_tests::test_multiple_joker_interactions ... ignored
+test joker::tests::traits::lifecycle::edge_case_tests::test_very_long_joker_type ... ignored
+test joker::tests::traits::lifecycle::integration_tests::test_full_game_simulation ... ignored
+test joker::tests::traits::lifecycle::integration_tests::test_lifecycle_with_errors ... ignored
+test joker::tests::traits::lifecycle::lifecycle_ordering_tests::test_joker_interaction_lifecycle ... ignored
+test joker::tests::traits::lifecycle::lifecycle_ordering_tests::test_multiple_rounds_lifecycle ... ignored
+test joker::tests::traits::lifecycle::lifecycle_ordering_tests::test_purchase_destroy_lifecycle ... ignored
+test joker::tests::traits::lifecycle::lifecycle_ordering_tests::test_purchase_sell_lifecycle ... ignored
+test joker::tests::traits::lifecycle::state_invariant_tests::test_no_duplicate_sell_or_destroy ... ignored
+test joker::tests::traits::lifecycle::state_invariant_tests::test_no_events_after_terminal_state ... ignored
+test joker::tests::traits::lifecycle::state_invariant_tests::test_purchase_before_use ... ignored
+test joker::tests::traits::lifecycle::state_invariant_tests::test_round_start_end_pairing ... ignored
+test joker::tests::traits::state::basic_functionality_tests::test_debug_state_formats ... ignored
+test joker::tests::traits::state::basic_functionality_tests::test_deserialize_state_success ... ignored
+test joker::tests::traits::state::basic_functionality_tests::test_has_state_default ... ignored
+test joker::tests::traits::state::basic_functionality_tests::test_has_state_with_data ... ignored
+test joker::tests::traits::state::basic_functionality_tests::test_reset_state ... ignored
+test joker::tests::traits::state::basic_functionality_tests::test_serialize_state_none ... ignored
+test joker::tests::traits::state::basic_functionality_tests::test_serialize_state_some ... ignored
+test joker::tests::traits::state::concurrent_access_tests::test_send_sync_bounds ... ignored
+test joker::tests::traits::state::concurrent_access_tests::test_trait_object_state_management ... ignored
+test joker::tests::traits::state::coverage_completion_tests::test_all_error_paths ... ignored
+test joker::tests::traits::state::coverage_completion_tests::test_debug_state_all_variants ... ignored
+test joker::tests::traits::state::edge_case_tests::test_deeply_nested_structure ... ignored
+test joker::tests::traits::state::edge_case_tests::test_extreme_numeric_values ... ignored
+test joker::tests::traits::state::edge_case_tests::test_special_json_characters ... ignored
+test joker::tests::traits::state::error_handling_tests::test_deserialize_failure ... ignored
+test joker::tests::traits::state::error_handling_tests::test_error_recovery ... ignored
+test joker::tests::traits::state::error_handling_tests::test_serialize_failure ... ignored
+test joker::tests::traits::state::integration_tests::test_game_round_simulation ... ignored
+test joker::tests::traits::state::integration_tests::test_save_load_cycle ... ignored
+test joker::tests::traits::state::performance_tests::test_large_batch_operations ... ignored
+test joker::tests::traits::state::performance_tests::test_rapid_state_transitions ... ignored
+test joker::tests::traits::state::property_based_tests::test_reset_state_consistency ... ignored
+test joker::tests::traits::state::property_based_tests::test_serialize_deserialize_idempotence ... ignored
+test joker::tests::traits::state::property_based_tests::test_state_independence ... ignored
+test joker::tests::traits::state::serialization_tests::test_complex_serialization_roundtrip ... ignored
+test joker::tests::traits::state::serialization_tests::test_empty_state_variations ... ignored
+test joker::tests::traits::state::serialization_tests::test_large_state_handling ... ignored
+test joker::tests::traits::state::serialization_tests::test_unicode_in_state ... ignored
+test joker::tests::traits::state::state_transition_tests::test_multiple_state_updates ... ignored
+test joker::tests::traits::state::state_transition_tests::test_state_invariants ... ignored
+test joker::tests::traits::state::state_transition_tests::test_state_lifecycle ... ignored
+test joker::tests::traits::state::validation_tests::test_validation_missing_fields ... ignored
+test joker::tests::traits::state::validation_tests::test_validation_wrong_types ... ignored
+test joker::traits::tests::test_basic_process ... ignored
+test joker::traits::tests::test_card_conditions ... ignored
+test joker::traits::tests::test_edge_case_empty_hand ... ignored
+test joker::traits::tests::test_edge_case_max_cards ... ignored
+test joker::traits::tests::test_multi_joker_interactions ... ignored
+test joker::traits::tests::test_multi_joker_state_interactions ... ignored
+test joker::traits::tests::test_priority_ordering ... ignored
+test joker::traits::tests::test_scoring_invariants ... ignored
+test joker::traits::tests::test_stage_specific_behaviors ... ignored
+test joker::traits::tests::test_state_scaling ... ignored
+test joker::traits::tests::test_thread_safety ... ignored
+test joker::traits::tests::test_trigger_conditions ... ignored
+test joker_effect_processor::tests::test_cache_basic_functionality ... ignored
+test joker_effect_processor::tests::test_cache_disabled ... ignored
+test joker_effect_processor::tests::test_cache_expiration ... ignored
+test joker_effect_processor::tests::test_cache_hit_miss_metrics ... ignored
+test joker_effect_processor::tests::test_cache_integration_with_processing ... ignored
+test joker_effect_processor::tests::test_cache_key_generation ... ignored
+test joker_effect_processor::tests::test_cache_maintenance ... ignored
+test joker_effect_processor::tests::test_cache_metrics_calculation ... ignored
+test joker_effect_processor::tests::test_cache_performance_improvement ... ignored
+test joker_effect_processor::tests::test_cache_size_limits ... ignored
+test joker_effect_processor::tests::test_clear_all_caches ... ignored
+test joker_effect_processor::tests::test_complex_effect_accumulation ... ignored
+test joker_effect_processor::tests::test_comprehensive_priority_system ... ignored
+test joker_effect_processor::tests::test_configurable_priority_strategies ... ignored
+test joker_effect_processor::tests::test_conflict_resolution_strategies ... ignored
+test joker_effect_processor::tests::test_effect_validation ... ignored
+test joker_effect_processor::tests::test_effect_validation_in_processing ... ignored
+test joker_effect_processor::tests::test_empty_effect_detection ... ignored
+test joker_effect_processor::tests::test_empty_effects_handling ... ignored
+test joker_effect_processor::tests::test_enhanced_processing_with_stage ... ignored
+test joker_effect_processor::tests::test_joker_trait_profile_detection ... ignored
+test joker_effect_processor::tests::test_legacy_compatibility_maintained ... ignored
+test joker_effect_processor::tests::test_multiplicative_effects ... ignored
+test joker_effect_processor::tests::test_multiplicative_effects_combination ... ignored
+test joker_effect_processor::tests::test_performance_summary_format ... ignored
+test joker_effect_processor::tests::test_priority_assignment_logic_directly ... ignored
+test joker_effect_processor::tests::test_priority_based_effect_ordering ... ignored
+test joker_effect_processor::tests::test_priority_ordering ... ignored
+test joker_effect_processor::tests::test_priority_strategy_api_from_issue ... ignored
+test joker_effect_processor::tests::test_priority_strategy_runtime_changes ... ignored
+test joker_effect_processor::tests::test_priority_system_with_multiplicative_effects ... ignored
+test joker_effect_processor::tests::test_processing_context_builder_all_processing_modes ... ignored
+test joker_effect_processor::tests::test_processing_context_builder_all_resolution_strategies ... ignored
+test joker_effect_processor::tests::test_processing_context_builder_api ... ignored
+test joker_effect_processor::tests::test_processing_context_builder_backward_compatibility ... ignored
+test joker_effect_processor::tests::test_processing_context_builder_chaining ... ignored
+test joker_effect_processor::tests::test_processing_context_builder_clone_trait ... ignored
+test joker_effect_processor::tests::test_processing_context_builder_debug_trait ... ignored
+test joker_effect_processor::tests::test_processing_context_builder_default ... ignored
+test joker_effect_processor::tests::test_processing_context_builder_fluent_api ... ignored
+test joker_effect_processor::tests::test_processing_context_builder_from_default ... ignored
+test joker_effect_processor::tests::test_processing_context_builder_max_retriggered_effects ... ignored
+test joker_effect_processor::tests::test_processing_context_builder_partial_configuration ... ignored
+test joker_effect_processor::tests::test_processing_context_builder_validation_flags ... ignored
+test joker_effect_processor::tests::test_processing_context_modification ... ignored
+test joker_effect_processor::tests::test_processing_result_structure ... ignored
+test joker_effect_processor::tests::test_retrigger_limit_protection ... ignored
+test joker_effect_processor::tests::test_retriggering_logic ... ignored
+test joker_effect_processor::tests::test_sum_effects ... ignored
+test joker_effect_processor::tests::test_trait_cache_hit_ratio ... ignored
+test joker_effect_processor::tests::test_trait_cache_management ... ignored
+test joker_effect_processor::tests::test_trait_optimization_metrics_calculation ... ignored
+test joker_factory::tests::test_create_new_static_jokers ... ignored
+test joker_factory::tests::test_create_placeholder_jokers ... ignored
+test joker_factory::tests::test_new_jokers_in_implemented_list ... ignored
+test joker_factory::tests::test_new_jokers_in_rarity_lists ... ignored
+test joker_factory::tests::test_scaling_jokers_in_implemented_list ... ignored
+test joker_factory::tests::test_scaling_jokers_in_rarity_lists ... ignored
+test joker_factory::tests::test_scaling_jokers_integration ... ignored
+test joker_impl::tests::test_acrobat_joker_basic_properties ... ignored
+test joker_impl::tests::test_chaotic_joker_basic_properties ... ignored
+test joker_impl::tests::test_grim_joker_basic_properties ... ignored
+test joker_impl::tests::test_ice_cream_basic_properties ... ignored
+test joker_impl::tests::test_ice_cream_factory_creation ... ignored
+test joker_impl::tests::test_ice_cream_in_common_rarity ... ignored
+test joker_impl::tests::test_ice_cream_in_implemented_list ... ignored
+test joker_impl::tests::test_ice_cream_initial_chips ... ignored
+test joker_impl::tests::test_ice_cream_negative_chips_handling ... ignored
+test joker_impl::tests::test_ice_cream_zero_chips_handling ... ignored
+test joker_impl::tests::test_lucky_card_basic_properties ... ignored
+test joker_impl::tests::test_mystery_joker_basic_properties ... ignored
+test joker_impl::tests::test_oops_all_sixes_basic_properties ... ignored
+test joker_impl::tests::test_rng_jokers_factory_creation ... ignored
+test joker_impl::tests::test_rng_jokers_in_implemented_list ... ignored
+test joker_impl::tests::test_rng_jokers_in_rarity_lists ... ignored
+test joker_impl::tests::test_six_shooter_basic_properties ... ignored
+test joker_impl::tests::test_triboulet_basic_properties ... ignored
+test joker_impl::tests::test_triboulet_jack_gives_no_effect ... ignored
+test joker_impl::tests::test_triboulet_king_gives_x2_mult ... ignored
+test joker_impl::tests::test_triboulet_non_face_card_gives_no_effect ... ignored
+test joker_impl::tests::test_triboulet_queen_gives_x2_mult ... ignored
+test joker_impl::tests::test_vagabond_joker_basic_properties ... ignored
+test joker_json_parameters::tests::test_empty_parameters ... ignored
+test joker_json_parameters::tests::test_half_joker_parameter_resolution ... ignored
+test joker_json_parameters::tests::test_joker_id_enum_resolution ... ignored
+test joker_json_parameters::tests::test_missing_joker ... ignored
+test joker_json_parameters::tests::test_parameter_bounds_checking ... ignored
+test joker_json_parameters::tests::test_parameter_convenience_methods ... ignored
+test joker_json_parameters::tests::test_scholar_joker_parameters ... ignored
+test joker_json_parameters::tests::test_walkie_talkie_parameters ... ignored
+test joker_metadata::tests::test_condition_extraction ... ignored
+test joker_metadata::tests::test_effect_type_detection ... ignored
+test joker_metadata::tests::test_joker_metadata_creation ... ignored
+test joker_metadata::tests::test_priority_assignment ... ignored
+test joker_metadata::tests::test_trigger_extraction ... ignored
+test joker_migration_tool::tests::test_generate_toml_output ... ignored
+test joker_migration_tool::tests::test_migrate_basic_joker ... ignored
+test joker_migration_tool::tests::test_migrate_conditional_joker ... ignored
+test joker_registry::tests::test_create_joker ... ignored
+test joker_registry::tests::test_filter_by_rarity ... ignored
+test joker_registry::tests::test_get_definition ... ignored
+test joker_registry::tests::test_register_joker ... ignored
+test joker_registry::tests::test_registry_creation ... ignored
+test joker_registry::tests::test_thread_safety ... ignored
+test joker_registry::tests::test_unlocked_definitions ... ignored
+test joker_state::tests::test_accumulated_value ... ignored
+test joker_state::tests::test_batch_operations ... ignored
+test joker_state::tests::test_bulk_update ... ignored
+test joker_state::tests::test_compact_states ... ignored
+test joker_state::tests::test_custom_data ... ignored
+test joker_state::tests::test_joker_state_creation ... ignored
+test joker_state::tests::test_joker_state_with_triggers ... ignored
+test joker_state::tests::test_joker_state_with_value ... ignored
+test joker_state::tests::test_memory_usage_report ... ignored
+test joker_state::tests::test_snapshot_and_restore ... ignored
+test joker_state::tests::test_state_backup_and_restore ... ignored
+test joker_state::tests::test_state_manager_accumulated_value ... ignored
+test joker_state::tests::test_state_manager_active_jokers ... ignored
+test joker_state::tests::test_state_manager_basic_ops ... ignored
+test joker_state::tests::test_state_manager_clear ... ignored
+test joker_state::tests::test_state_manager_custom_data ... ignored
+test joker_state::tests::test_state_manager_remove ... ignored
+test joker_state::tests::test_state_manager_triggers ... ignored
+test joker_state::tests::test_state_manager_update ... ignored
+test joker_state::tests::test_state_validation ... ignored
+test joker_state::tests::test_versioned_save_data_serialization ... ignored
+test joker_toml_parser::tests::test_hot_reload_detection ... ignored
+test joker_toml_parser::tests::test_parse_basic_joker ... ignored
+test joker_toml_parser::tests::test_validation_duplicate_ids ... ignored
+test joker_toml_schema::tests::test_basic_scoring_joker_schema ... ignored
+test joker_toml_schema::tests::test_conditional_joker_schema ... ignored
+test joker_toml_schema::tests::test_dynamic_joker_schema ... ignored
+test math_safe::tests::test_safe_get ... ignored
+test math_safe::tests::test_safe_range ... ignored
+test math_safe::tests::test_safe_size_for_move_operations ... ignored
+test math_safe::tests::test_safe_subtract ... ignored
+test math_safe::tests::test_saturating_subtract ... ignored
+test math_safe::tests::test_validate_array_size ... ignored
+test memory_monitor::tests::test_memory_config_default ... ignored
+test memory_monitor::tests::test_memory_config_rl_training ... ignored
+test memory_monitor::tests::test_memory_monitor_check_timing ... ignored
+test memory_monitor::tests::test_memory_monitor_thresholds ... ignored
+test multi_select::tests::test_clear_operations ... ignored
+test multi_select::tests::test_inactive_operations ... ignored
+test multi_select::tests::test_multi_select_cards ... ignored
+test multi_select::tests::test_range_selection ... ignored
+test multi_select::tests::test_selection_limits ... ignored
+test priority_strategy::tests::test_context_aware_configuration ... ignored
+test priority_strategy::tests::test_context_aware_priority_strategy ... ignored
+test priority_strategy::tests::test_context_aware_with_custom_base ... ignored
+test priority_strategy::tests::test_custom_priority_strategy ... ignored
+test priority_strategy::tests::test_custom_priority_strategy_modification ... ignored
+test priority_strategy::tests::test_custom_priority_strategy_with_default_fallback ... ignored
+test priority_strategy::tests::test_default_priority_strategy ... ignored
+test priority_strategy::tests::test_effect_priority_ordering ... ignored
+test priority_strategy::tests::test_metadata_priority_strategy ... ignored
+test rng::tests::test_audit_log_structure ... ignored
+test rng::tests::test_audit_logging ... ignored
+test rng::tests::test_deterministic_rng_reproducibility ... ignored
+test rng::tests::test_rng_fork ... ignored
+test rng::tests::test_rng_modes ... ignored
+test rng::tests::test_rng_operations ... ignored
+test rng::tests::test_secure_rng_unpredictability ... ignored
+test rng::tests::test_thread_local_rng ... ignored
+test rng::tests::test_weighted_choice ... ignored
+test scaling_joker::tests::test_reset_condition_display ... ignored
+test scaling_joker::tests::test_scaling_joker_creation ... ignored
+test scaling_joker::tests::test_scaling_joker_with_options ... ignored
+test scaling_joker::tests::test_scaling_trigger_display ... ignored
+test scaling_joker_custom::tests::test_all_custom_jokers_created ... ignored
+test scaling_joker_custom::tests::test_ceremonial_dagger_creation ... ignored
+test scaling_joker_custom::tests::test_get_custom_scaling_joker_by_id ... ignored
+test scaling_joker_custom::tests::test_green_joker_creation ... ignored
+test scaling_joker_impl::tests::test_all_scaling_jokers_created ... ignored
+test scaling_joker_impl::tests::test_castle_with_max_value ... ignored
+test scaling_joker_impl::tests::test_ceremonial_dagger ... ignored
+test scaling_joker_impl::tests::test_get_scaling_joker_by_id ... ignored
+test scaling_joker_impl::tests::test_joker_descriptions ... ignored
+test scaling_joker_impl::tests::test_spare_trousers ... ignored
+test shop::generation::tests::test_ante_based_weight_scaling ... ignored
+test shop::generation::tests::test_cache_key_creation ... ignored
+test shop::generation::tests::test_calculate_weights_high_ante_scaling ... ignored
+test shop::generation::tests::test_calculate_weights_high_money_adjustment ... ignored
+test shop::generation::tests::test_calculate_weights_low_money_adjustment ... ignored
+test shop::generation::tests::test_generate_pack_mega_buffoon ... ignored
+test shop::generation::tests::test_generate_pack_spectral ... ignored
+test shop::generation::tests::test_generate_pack_standard ... ignored
+test shop::generation::tests::test_generate_pack_standard_content_count ... ignored
+test shop::generation::tests::test_generate_shop_full_functionality ... ignored
+test shop::generation::tests::test_joker_rarity_base_weights ... ignored
+test shop::generation::tests::test_jokers_by_rarity ... ignored
+test shop::generation::tests::test_multiple_voucher_effects ... ignored
+test shop::generation::tests::test_reroll_shop_basic_functionality ... ignored
+test shop::generation::tests::test_standard_reroll_mechanics_apply_voucher_effects_liquidation ... ignored
+test shop::generation::tests::test_standard_reroll_mechanics_apply_voucher_effects_multiple ... ignored
+test shop::generation::tests::test_standard_reroll_mechanics_apply_voucher_effects_none ... ignored
+test shop::generation::tests::test_standard_reroll_mechanics_apply_voucher_effects_other_vouchers ... ignored
+test shop::generation::tests::test_standard_reroll_mechanics_apply_voucher_effects_reroll ... ignored
+test shop::generation::tests::test_standard_reroll_mechanics_can_reroll_insufficient_money ... ignored
+test shop::generation::tests::test_standard_reroll_mechanics_can_reroll_no_rerolls_remaining ... ignored
+test shop::generation::tests::test_standard_reroll_mechanics_can_reroll_sufficient_money ... ignored
+test shop::generation::tests::test_standard_reroll_mechanics_cost_calculation ... ignored
+test shop::generation::tests::test_standard_reroll_mechanics_creation ... ignored
+test shop::generation::tests::test_statistical_distribution_common_jokers ... ignored
+test shop::generation::tests::test_voucher_effect_clearance_sale ... ignored
+test shop::generation::tests::test_voucher_effect_hone ... ignored
+test shop::generation::tests::test_voucher_effect_overstock ... ignored
+test shop::generation::tests::test_weighted_generator_creation ... ignored
+test shop::generation::tests::test_weighted_generator_reroll_shop_insufficient_money ... ignored
+test shop::generation::tests::test_weighted_generator_reroll_shop_no_rerolls_remaining ... ignored
+test shop::generation::tests::test_weighted_generator_reroll_shop_with_mechanics ... ignored
+test shop::generation::tests::test_weighted_joker_generation ... ignored
+test shop::legacy::tests::test_joker_generator_gen_joker ... ignored
+test shop::legacy::tests::test_joker_generator_gen_rarity ... ignored
+test shop::legacy::tests::test_shop_buy_joker ... ignored
+test shop::legacy::tests::test_shop_buy_joker_not_found ... ignored
+test shop::legacy::tests::test_shop_buy_joker_success ... ignored
+test shop::legacy::tests::test_shop_buy_multiple_jokers ... ignored
+test shop::legacy::tests::test_shop_buy_same_joker_twice ... ignored
+test shop::legacy::tests::test_shop_clone ... ignored
+test shop::legacy::tests::test_shop_debug ... ignored
+test shop::legacy::tests::test_shop_default ... ignored
+test shop::legacy::tests::test_shop_edge_case_index_boundaries ... ignored
+test shop::legacy::tests::test_shop_gen_moves_buy_joker_empty_shop ... ignored
+test shop::legacy::tests::test_shop_gen_moves_buy_joker_insufficient_funds ... ignored
+test shop::legacy::tests::test_shop_gen_moves_buy_joker_max_slots_reached ... ignored
+test shop::legacy::tests::test_shop_gen_moves_buy_joker_partial_affordability ... ignored
+test shop::legacy::tests::test_shop_gen_moves_buy_joker_valid ... ignored
+test shop::legacy::tests::test_shop_has_joker ... ignored
+test shop::legacy::tests::test_shop_has_joker_not_present ... ignored
+test shop::legacy::tests::test_shop_joker_from_index_empty_shop - should panic ... ignored
+test shop::legacy::tests::test_shop_joker_from_index_invalid - should panic ... ignored
+test shop::legacy::tests::test_shop_joker_from_index_valid ... ignored
+test shop::legacy::tests::test_shop_new ... ignored
+test shop::legacy::tests::test_shop_refresh ... ignored
+test shop::legacy::tests::test_shop_refresh_multiple_times ... ignored
+test shop::legacy::tests::test_shop_stress_operations ... ignored
+test shop::tests::test_consumable_type_costs ... ignored
+test shop::tests::test_enhanced_shop_creation ... ignored
+test shop::tests::test_enhanced_shop_get_item_cost ... ignored
+test shop::tests::test_enhanced_shop_has_item ... ignored
+test shop::tests::test_enhanced_shop_purchase_item ... ignored
+test shop::tests::test_item_weights_default ... ignored
+test shop::tests::test_pack_generation ... ignored
+test shop::tests::test_pack_type_costs ... ignored
+test shop::tests::test_pack_type_enum ... ignored
+test shop::tests::test_shop_generator_trait ... ignored
+test shop::tests::test_shop_item_base_cost ... ignored
+test shop::tests::test_shop_item_display_name ... ignored
+test shop::tests::test_shop_item_enum ... ignored
+test shop::tests::test_shop_item_voucher_effects ... ignored
+test shop::tests::test_shop_slot_structure ... ignored
+test shop::tests::test_slot_modifiers ... ignored
+test skip_tags::integration_tests::tests::test_boss_tag_activation ... ignored
+test skip_tags::integration_tests::tests::test_comprehensive_tag_properties ... ignored
+test skip_tags::integration_tests::tests::test_double_tag_duplication ... ignored
+test skip_tags::integration_tests::tests::test_invalid_tag_selection ... ignored
+test skip_tags::integration_tests::tests::test_juggle_tag_stacking ... ignored
+test skip_tags::integration_tests::tests::test_orbital_tag_activation ... ignored
+test skip_tags::integration_tests::tests::test_skip_blind_generates_tags ... ignored
+test skip_tags::integration_tests::tests::test_skip_blind_wrong_stage ... ignored
+test skip_tags::integration_tests::tests::test_skip_tag_selection_workflow ... ignored
+test skip_tags::integration_tests::tests::test_tag_rarity_weights ... ignored
+test skip_tags::integration_tests::tests::test_tag_registry_initialization ... ignored
+test skip_tags::tag_effects::tests::test_duplication_effect_double_rejection ... ignored
+test skip_tags::tag_effects::tests::test_duplication_effect_success ... ignored
+test skip_tags::tag_effects::tests::test_hand_upgrade_effect ... ignored
+test skip_tags::tag_effects::tests::test_money_effect ... ignored
+test skip_tags::tag_effects::tests::test_temporary_hand_size_effect ... ignored
+test skip_tags::tag_registry::tests::test_rarity_filtering ... ignored
+test skip_tags::tag_registry::tests::test_registry_creation ... ignored
+test skip_tags::tag_registry::tests::test_tag_registration ... ignored
+test skip_tags::tag_registry::tests::test_tag_retrieval ... ignored
+test skip_tags::tag_registry::tests::test_weighted_tags ... ignored
+test skip_tags::tests::test_skip_tag_id_display ... ignored
+test skip_tags::tests::test_skip_tag_instance_creation ... ignored
+test skip_tags::tests::test_tag_rarity_weights ... ignored
+test skip_tags::utility_tags::tests::test_all_tags_can_activate ... ignored
+test skip_tags::utility_tags::tests::test_boss_tag_activation ... ignored
+test skip_tags::utility_tags::tests::test_boss_tag_properties ... ignored
+test skip_tags::utility_tags::tests::test_double_tag_activation ... ignored
+test skip_tags::utility_tags::tests::test_double_tag_can_activate ... ignored
+test skip_tags::utility_tags::tests::test_double_tag_properties ... ignored
+test skip_tags::utility_tags::tests::test_juggle_tag_activation ... ignored
+test skip_tags::utility_tags::tests::test_juggle_tag_properties ... ignored
+test skip_tags::utility_tags::tests::test_orbital_tag_activation ... ignored
+test skip_tags::utility_tags::tests::test_orbital_tag_properties ... ignored
+test space::tests::test_index_to_action ... ignored
+test space::tests::test_unmask ... ignored
+test space::tests::test_unmask_max_index ... ignored
+test special_jokers::tests::test_photograph_can_trigger_checks_state ... ignored
+test special_jokers::tests::test_photograph_does_not_trigger_twice ... ignored
+test special_jokers::tests::test_photograph_no_face_cards ... ignored
+test special_jokers::tests::test_photograph_round_reset ... ignored
+test special_jokers::tests::test_photograph_triggers_on_first_face_card ... ignored
+test state_version::tests::test_current_version ... ignored
+test state_version::tests::test_default_version ... ignored
+test state_version::tests::test_migration_support ... ignored
+test state_version::tests::test_version_descriptions ... ignored
+test state_version::tests::test_version_display ... ignored
+test state_version::tests::test_version_ordering ... ignored
+test state_version::tests::test_version_serialization ... ignored
+test static_joker::tests::test_any_rank_condition ... ignored
+test static_joker::tests::test_any_suit_condition ... ignored
+test static_joker::tests::test_builder_validation ... ignored
+test static_joker::tests::test_condition_always ... ignored
+test static_joker::tests::test_cost_override ... ignored
+test static_joker::tests::test_default_costs ... ignored
+test static_joker::tests::test_five_of_a_kind_condition ... ignored
+test static_joker::tests::test_flush_condition_contains ... ignored
+test static_joker::tests::test_flush_five_condition ... ignored
+test static_joker::tests::test_flush_house_condition ... ignored
+test static_joker::tests::test_four_of_a_kind_condition ... ignored
+test static_joker::tests::test_full_house_condition ... ignored
+test static_joker::tests::test_hand_size_at_most_builder_validation ... ignored
+test static_joker::tests::test_hand_size_at_most_condition ... ignored
+test static_joker::tests::test_hand_size_at_most_edge_cases ... ignored
+test static_joker::tests::test_hand_size_at_most_with_card_condition ... ignored
+test static_joker::tests::test_hand_type_condition ... ignored
+test static_joker::tests::test_high_card_condition ... ignored
+test static_joker::tests::test_multiple_bonuses ... ignored
+test static_joker::tests::test_rank_condition ... ignored
+test static_joker::tests::test_royal_flush_condition ... ignored
+test static_joker::tests::test_static_context_creation ... ignored
+test static_joker::tests::test_static_context_from_game_context ... ignored
+test static_joker::tests::test_static_context_zero_copy_guarantees ... ignored
+test static_joker::tests::test_static_joker_adapter_creation ... ignored
+test static_joker::tests::test_static_joker_adapter_inner_access ... ignored
+test static_joker::tests::test_static_joker_adapter_per_card_behavior ... ignored
+test static_joker::tests::test_static_joker_adapter_per_hand_behavior ... ignored
+test static_joker::tests::test_static_joker_builder ... ignored
+test static_joker::tests::test_static_joker_cost_override ... ignored
+test static_joker::tests::test_static_joker_migration_pattern ... ignored
+test static_joker::tests::test_static_joker_performance_characteristics ... ignored
+test static_joker::tests::test_static_joker_to_dynamic_conversion ... ignored
+test static_joker::tests::test_static_joker_trait_bounds ... ignored
+test static_joker::tests::test_static_joker_trait_constants ... ignored
+test static_joker::tests::test_static_joker_trait_constants_with_overrides ... ignored
+test static_joker::tests::test_straight_condition ... ignored
+test static_joker::tests::test_straight_flush_condition ... ignored
+test static_joker::tests::test_suit_condition ... ignored
+test static_joker::tests::test_suit_jokers_gluttonous ... ignored
+test static_joker::tests::test_suit_jokers_greedy ... ignored
+test static_joker::tests::test_suit_jokers_isolation ... ignored
+test static_joker::tests::test_suit_jokers_lusty ... ignored
+test static_joker::tests::test_suit_jokers_wrathful ... ignored
+test static_joker::tests::test_three_of_a_kind_condition ... ignored
+test static_joker::tests::test_two_pair_condition ... ignored
+test static_joker_factory::tests::test_all_factory_jokers_can_be_created ... ignored
+test static_joker_factory::tests::test_all_hand_type_chip_jokers ... ignored
+test static_joker_factory::tests::test_all_hand_type_mult_jokers ... ignored
+test static_joker_factory::tests::test_all_suit_jokers ... ignored
+test static_joker_factory::tests::test_basic_joker_creation ... ignored
+test static_joker_factory::tests::test_joker_cost_distribution ... ignored
+test static_joker_factory::tests::test_joker_rarity_distribution ... ignored
+test static_joker_factory::tests::test_rank_based_jokers ... ignored
+test target_context::tests::test_multi_select_targeting ... ignored
+test target_context::tests::test_selection_counts ... ignored
+test target_context::tests::test_single_targeting ... ignored
+test target_context::tests::test_target_collection ... ignored
+test tests::test_game_action_space ... ignored
+test tests::test_game_gen_actions ... ignored
+
+test result: ok. 0 passed; 0 failed; 852 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running benches/actionspace_benchmark.rs (target/release/deps/actionspace_benchmark-fe9843f89767fc08)
+Gnuplot not found, using plotters backend
+Benchmarking actionspace_creation
+Benchmarking actionspace_creation: Warming up for 3.0000 s
+Benchmarking actionspace_creation: Collecting 100 samples in estimated 5.0008 s (27M iterations)
+Benchmarking actionspace_creation: Analyzing
+actionspace_creation    time:   [172.37 ns 182.93 ns 196.42 ns]
+                        change: [−28.957% −12.125% +10.205%] (p = 0.26 > 0.05)
+                        No change in performance detected.
+Found 18 outliers among 100 measurements (18.00%)
+  1 (1.00%) high mild
+  17 (17.00%) high severe
+
+Benchmarking actionspace_to_vec_original
+Benchmarking actionspace_to_vec_original: Warming up for 3.0000 s
+Benchmarking actionspace_to_vec_original: Collecting 100 samples in estimated 5.0007 s (34M iterations)
+Benchmarking actionspace_to_vec_original: Analyzing
+actionspace_to_vec_original
+                        time:   [141.69 ns 145.57 ns 150.33 ns]
+                        change: [−61.379% −53.959% −46.270%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 18 outliers among 100 measurements (18.00%)
+  3 (3.00%) high mild
+  15 (15.00%) high severe
+
+Benchmarking actionspace_to_vec_cached
+Benchmarking actionspace_to_vec_cached: Warming up for 3.0000 s
+Benchmarking actionspace_to_vec_cached: Collecting 100 samples in estimated 5.0000 s (348M iterations)
+Benchmarking actionspace_to_vec_cached: Analyzing
+actionspace_to_vec_cached
+                        time:   [12.767 ns 13.113 ns 13.536 ns]
+                        change: [−24.724% −15.312% −5.4160%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 8 outliers among 100 measurements (8.00%)
+  3 (3.00%) high mild
+  5 (5.00%) high severe
+
+Benchmarking actionspace_iter
+Benchmarking actionspace_iter: Warming up for 3.0000 s
+Benchmarking actionspace_iter: Collecting 100 samples in estimated 5.0000 s (114M iterations)
+Benchmarking actionspace_iter: Analyzing
+actionspace_iter        time:   [42.199 ns 43.100 ns 44.251 ns]
+                        change: [−14.370% −9.0337% −3.7001%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 14 outliers among 100 measurements (14.00%)
+  5 (5.00%) high mild
+  9 (9.00%) high severe
+
+Benchmarking actionspace_iter_sum
+Benchmarking actionspace_iter_sum: Warming up for 3.0000 s
+Benchmarking actionspace_iter_sum: Collecting 100 samples in estimated 5.0000 s (309M iterations)
+Benchmarking actionspace_iter_sum: Analyzing
+actionspace_iter_sum    time:   [16.499 ns 16.759 ns 17.057 ns]
+                        change: [−8.0552% −3.2524% +1.7334%] (p = 0.21 > 0.05)
+                        No change in performance detected.
+Found 11 outliers among 100 measurements (11.00%)
+  1 (1.00%) low mild
+  5 (5.00%) high mild
+  5 (5.00%) high severe
+
+Benchmarking actionspace_is_empty
+Benchmarking actionspace_is_empty: Warming up for 3.0000 s
+Benchmarking actionspace_is_empty: Collecting 100 samples in estimated 5.0001 s (128M iterations)
+Benchmarking actionspace_is_empty: Analyzing
+actionspace_is_empty    time:   [39.193 ns 39.654 ns 40.125 ns]
+                        change: [+6.1779% +9.8514% +13.099%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 12 outliers among 100 measurements (12.00%)
+  1 (1.00%) low mild
+  6 (6.00%) high mild
+  5 (5.00%) high severe
+
+Benchmarking actionspace_repeated_to_vec
+Benchmarking actionspace_repeated_to_vec: Warming up for 3.0000 s
+Benchmarking actionspace_repeated_to_vec: Collecting 100 samples in estimated 5.0201 s (364k iterations)
+Benchmarking actionspace_repeated_to_vec: Analyzing
+actionspace_repeated_to_vec
+                        time:   [13.147 µs 13.366 µs 13.628 µs]
+                        change: [−13.429% −10.660% −8.0614%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 12 outliers among 100 measurements (12.00%)
+  5 (5.00%) high mild
+  7 (7.00%) high severe
+
+Benchmarking actionspace_repeated_to_vec_cached
+Benchmarking actionspace_repeated_to_vec_cached: Warming up for 3.0000 s

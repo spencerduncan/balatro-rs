@@ -63,7 +63,7 @@ pub fn create_bootstraps() -> ScalingJoker {
 /// Fortune Teller: +1 mult per Tarot used
 pub fn create_fortune_teller() -> ScalingJoker {
     ScalingJoker::new(
-        JokerId::FortuneTeller,
+        JokerId::Fortune,
         "Fortune Teller".to_string(),
         "+1 Mult per Tarot card used".to_string(),
         JokerRarity::Rare,
@@ -233,7 +233,7 @@ pub fn get_scaling_joker_by_id(id: JokerId) -> Option<ScalingJoker> {
         JokerId::Square => Some(create_square_joker()),
         JokerId::BullMarket => Some(create_bull_joker()),
         JokerId::Bootstraps => Some(create_bootstraps()),
-        JokerId::FortuneTeller => Some(create_fortune_teller()),
+        JokerId::Fortune => Some(create_fortune_teller()),
         JokerId::Ceremonial => Some(create_ceremonial_dagger()),
         JokerId::Reserved => Some(create_throwback()),
         JokerId::GreenJoker => Some(create_green_joker()),
