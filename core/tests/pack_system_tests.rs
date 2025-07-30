@@ -49,7 +49,10 @@ fn test_standard_pack_choose_one_of_three_cards() {
 
     // Player should now have a pack in inventory
     assert_eq!(game.pack_manager.pack_inventory().len(), 1);
-    assert_eq!(game.pack_manager.pack_inventory()[0].pack_type, PackType::Standard);
+    assert_eq!(
+        game.pack_manager.pack_inventory()[0].pack_type,
+        PackType::Standard
+    );
 
     // Open the pack
     let open_action = Action::OpenPack { pack_id: 0 };
@@ -57,7 +60,11 @@ fn test_standard_pack_choose_one_of_three_cards() {
     assert!(result.is_ok(), "Should be able to open standard pack");
 
     // Pack should have 3 options (playing cards)
-    let open_pack = game.pack_manager.open_pack_state().as_ref().expect("Pack should be opened");
+    let open_pack = game
+        .pack_manager
+        .open_pack_state()
+        .as_ref()
+        .expect("Pack should be opened");
     assert_eq!(
         open_pack.pack.options.len(),
         3,
@@ -116,7 +123,11 @@ fn test_buffoon_pack_choose_one_of_two_jokers() {
     assert!(result.is_ok(), "Should be able to open buffoon pack");
 
     // Pack should have 2 options (jokers)
-    let open_pack = game.pack_manager.open_pack_state().as_ref().expect("Pack should be opened");
+    let open_pack = game
+        .pack_manager
+        .open_pack_state()
+        .as_ref()
+        .expect("Pack should be opened");
     assert_eq!(
         open_pack.pack.options.len(),
         2,
@@ -156,7 +167,11 @@ fn test_arcana_pack_choose_one_of_tarot_cards() {
     assert!(result.is_ok(), "Should be able to open arcana pack");
 
     // Pack should have 2-3 options (tarot cards)
-    let open_pack = game.pack_manager.open_pack_state().as_ref().expect("Pack should be opened");
+    let open_pack = game
+        .pack_manager
+        .open_pack_state()
+        .as_ref()
+        .expect("Pack should be opened");
     assert!(
         open_pack.pack.options.len() >= 2 && open_pack.pack.options.len() <= 3,
         "Arcana pack should have 2-3 options"
@@ -198,7 +213,11 @@ fn test_celestial_pack_choose_one_of_planet_cards() {
     assert!(result.is_ok(), "Should be able to open celestial pack");
 
     // Pack should have 2-3 options (planet cards)
-    let open_pack = game.pack_manager.open_pack_state().as_ref().expect("Pack should be opened");
+    let open_pack = game
+        .pack_manager
+        .open_pack_state()
+        .as_ref()
+        .expect("Pack should be opened");
     assert!(
         open_pack.pack.options.len() >= 2 && open_pack.pack.options.len() <= 3,
         "Celestial pack should have 2-3 options"
@@ -240,7 +259,11 @@ fn test_spectral_pack_choose_one_of_spectral_cards() {
     assert!(result.is_ok(), "Should be able to open spectral pack");
 
     // Pack should have 2-3 options (spectral cards)
-    let open_pack = game.pack_manager.open_pack_state().as_ref().expect("Pack should be opened");
+    let open_pack = game
+        .pack_manager
+        .open_pack_state()
+        .as_ref()
+        .expect("Pack should be opened");
     assert!(
         open_pack.pack.options.len() >= 2 && open_pack.pack.options.len() <= 3,
         "Spectral pack should have 2-3 options"
@@ -281,7 +304,11 @@ fn test_mega_pack_variants_double_options() {
         let result = game.handle_action(open_action);
         assert!(result.is_ok(), "Should be able to open mega buffoon pack");
 
-        let open_pack = game.pack_manager.open_pack_state().as_ref().expect("Pack should be opened");
+        let open_pack = game
+            .pack_manager
+            .open_pack_state()
+            .as_ref()
+            .expect("Pack should be opened");
         assert_eq!(
             open_pack.pack.options.len(),
             4,
@@ -310,7 +337,11 @@ fn test_mega_pack_variants_double_options() {
         let result = game.handle_action(open_action);
         assert!(result.is_ok(), "Should be able to open mega arcana pack");
 
-        let open_pack = game.pack_manager.open_pack_state().as_ref().expect("Pack should be opened");
+        let open_pack = game
+            .pack_manager
+            .open_pack_state()
+            .as_ref()
+            .expect("Pack should be opened");
         assert!(
             open_pack.pack.options.len() >= 4 && open_pack.pack.options.len() <= 6,
             "Mega arcana pack should have 4-6 options"
@@ -335,7 +366,11 @@ fn test_pack_skip_mechanics() {
     assert!(result.is_ok(), "Should be able to open pack");
 
     // Pack should be skippable
-    let open_pack = game.pack_manager.open_pack_state().as_ref().expect("Pack should be opened");
+    let open_pack = game
+        .pack_manager
+        .open_pack_state()
+        .as_ref()
+        .expect("Pack should be opened");
     assert!(open_pack.pack.can_skip, "Pack should be skippable");
 
     // Skip the pack
@@ -408,7 +443,11 @@ fn test_insufficient_funds_pack_purchase() {
     );
 
     // Pack inventory should remain empty
-    assert_eq!(game.pack_manager.pack_inventory().len(), 0, "No pack should be purchased");
+    assert_eq!(
+        game.pack_manager.pack_inventory().len(),
+        0,
+        "No pack should be purchased"
+    );
 }
 
 #[test]
@@ -466,7 +505,11 @@ fn test_grab_bag_voucher_adds_option() {
     assert!(result.is_ok(), "Should be able to open pack");
 
     // With Grab Bag voucher, pack should have +1 option
-    let open_pack = game.pack_manager.open_pack_state().as_ref().expect("Pack should be opened");
+    let open_pack = game
+        .pack_manager
+        .open_pack_state()
+        .as_ref()
+        .expect("Pack should be opened");
     assert_eq!(
         open_pack.pack.options.len(),
         4,
