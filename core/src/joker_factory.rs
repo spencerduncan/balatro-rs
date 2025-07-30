@@ -176,9 +176,9 @@ impl JokerFactory {
                 Banner,
                 AbstractJoker,
                 // RNG-based jokers (Issue #442)
-                Reserved7,  // SixShooterJoker
-                LuckyCharm, // LuckyCardJoker
-                FortuneTeller,    // Fortune Teller
+                Reserved7,     // SixShooterJoker
+                LuckyCharm,    // LuckyCardJoker
+                FortuneTeller, // Fortune Teller
                 // Special mechanic jokers
                 Erosion,
                 Photograph,
@@ -299,10 +299,10 @@ impl JokerFactory {
             // Scaling additive mult jokers
             Trousers, // Spare Trousers
             GreenJoker,
-            Reserved5, // RideTheBus
-            Reserved6, // RedCard (pack skipping)
-            RedCard,   // Red Card (direct mapping)
-            FortuneTeller,   // Fortune Teller
+            Reserved5,     // RideTheBus
+            Reserved6,     // RedCard (pack skipping)
+            RedCard,       // Red Card (direct mapping)
+            FortuneTeller, // Fortune Teller
             // Scaling chips jokers
             Castle,
             Wee,
