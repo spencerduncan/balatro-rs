@@ -268,7 +268,10 @@ pub struct Game {
     pub pending_tag_selection: bool,
 
     /// Persistence manager for save/load operations
-    #[cfg_attr(feature = "serde", serde(skip, default = "persistence::PersistenceManager::new"))]
+    #[cfg_attr(
+        feature = "serde",
+        serde(skip, default = "persistence::PersistenceManager::new")
+    )]
     pub persistence_manager: persistence::PersistenceManager,
 }
 
@@ -2350,14 +2353,14 @@ pub use persistence::SaveLoadError;
 
 impl Game {
     /// Save the current game state to JSON string
-    /// 
+    ///
     /// Delegates to the persistence manager following Single Responsibility Principle.
     pub fn save_state_to_json(&self) -> Result<String, SaveLoadError> {
         self.persistence_manager.save_state_to_json(self)
     }
 
     /// Load game state from JSON string
-    /// 
+    ///
     /// Delegates to the persistence manager following Single Responsibility Principle.
     pub fn load_state_from_json(json: &str) -> Result<Self, SaveLoadError> {
         let persistence_manager = persistence::PersistenceManager::new();

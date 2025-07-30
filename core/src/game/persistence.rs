@@ -102,7 +102,7 @@ impl fmt::Display for SaveLoadError {
 impl std::error::Error for SaveLoadError {}
 
 /// Manages game state persistence operations
-/// 
+///
 /// Following Single Responsibility Principle - handles only save/load concerns.
 /// Extracted from Game struct to improve code organization and maintainability.
 #[derive(Debug)]
@@ -115,7 +115,7 @@ impl PersistenceManager {
     }
 
     /// Save the current game state to JSON string
-    /// 
+    ///
     /// Extracts serializable state from the game and converts it to JSON.
     /// Non-serializable fields like RNG and debug info are excluded.
     pub fn save_state_to_json(&self, game: &super::Game) -> Result<String, SaveLoadError> {
@@ -171,7 +171,7 @@ impl PersistenceManager {
     }
 
     /// Load game state from JSON string
-    /// 
+    ///
     /// Deserializes JSON data and reconstructs a complete Game instance.
     /// Handles version validation and joker recreation.
     pub fn load_state_from_json(&self, json: &str) -> Result<super::Game, SaveLoadError> {
