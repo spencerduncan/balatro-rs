@@ -25,6 +25,10 @@ use thiserror::Error;
 // Module for individual voucher implementations
 pub mod implementations;
 
+// Test modules
+#[cfg(test)]
+mod test_shop_vouchers;
+
 /// Errors that can occur during voucher operations
 #[derive(Error, Debug, Clone)]
 pub enum VoucherError {
@@ -100,6 +104,18 @@ pub enum VoucherEffect {
     ShopEnhancementsEnabled,
     /// Multiplies Tarot card appearance frequency
     TarotFrequencyMultiplier(f64),
+    /// Provides percentage discount on all shop items
+    ShopDiscountPercent(f64),
+    /// Multiplies polychrome card appearance frequency
+    PolychromeFrequencyMultiplier(f64),
+    /// Reduces reroll cost by specified amount
+    RerollCostReduction(usize),
+    /// Increases consumable slots
+    ConsumableSlotIncrease(usize),
+    /// Adds extra planet cards to celestial packs
+    CelestialPackBonus(usize),
+    /// Adds chance for spectral packs to contain planet cards
+    SpectralPackPlanetChance(f64),
     /// No effect (flavor voucher)
     NoEffect,
 }
@@ -114,7 +130,6 @@ impl VoucherEffect {
     }
 
     /// Check if this effect affects shop mechanics
-    /// Check if this effect affects shop mechanics
     pub fn affects_shop(&self) -> bool {
         matches!(
             self,
@@ -124,6 +139,9 @@ impl VoucherEffect {
                 | VoucherEffect::JokerSlotDecrease(_)
                 | VoucherEffect::ShopPlayingCardsEnabled
                 | VoucherEffect::ShopEnhancementsEnabled
+                | VoucherEffect::ShopDiscountPercent(_)
+                | VoucherEffect::RerollCostReduction(_)
+                | VoucherEffect::ConsumableSlotIncrease(_)
         )
     }
 
@@ -264,6 +282,42 @@ impl VoucherEffect {
                 if !multiplier.is_finite() || *multiplier <= 0.0 || *multiplier > 10.0 {
                     return Err(VoucherError::InvalidScaling {
                         multiplier: *multiplier,
+                    });
+                }
+            }
+            VoucherEffect::ShopDiscountPercent(discount) => {
+                if !discount.is_finite() || *discount <= 0.0 || *discount > 100.0 {
+                    return Err(VoucherError::InvalidScaling {
+                        multiplier: *discount,
+                    });
+                }
+            }
+            VoucherEffect::PolychromeFrequencyMultiplier(multiplier) => {
+                if !multiplier.is_finite() || *multiplier <= 0.0 || *multiplier > 10.0 {
+                    return Err(VoucherError::InvalidScaling {
+                        multiplier: *multiplier,
+                    });
+                }
+            }
+            VoucherEffect::RerollCostReduction(amount) => {
+                if *amount > 10 {
+                    return Err(VoucherError::ExcessiveMoneyGain { amount: *amount });
+                }
+            }
+            VoucherEffect::ConsumableSlotIncrease(amount) => {
+                if *amount > 10 {
+                    return Err(VoucherError::ExcessiveJokerSlots { amount: *amount });
+                }
+            }
+            VoucherEffect::CelestialPackBonus(amount) => {
+                if *amount > 5 {
+                    return Err(VoucherError::ExcessivePackOptions { amount: *amount });
+                }
+            }
+            VoucherEffect::SpectralPackPlanetChance(chance) => {
+                if !chance.is_finite() || *chance < 0.0 || *chance > 1.0 {
+                    return Err(VoucherError::InvalidScaling {
+                        multiplier: *chance,
                     });
                 }
             }
@@ -469,6 +523,30 @@ impl GameState {
             VoucherEffect::TarotFrequencyMultiplier(_multiplier) => {
                 // Tarot frequency affects shop/pack generation, not game state directly
                 // This would be handled by the shop system
+            }
+            VoucherEffect::ShopDiscountPercent(_discount) => {
+                // Shop discount affects item pricing, not game state directly
+                // This would be handled by the shop system
+            }
+            VoucherEffect::PolychromeFrequencyMultiplier(_multiplier) => {
+                // Polychrome frequency affects card generation, not game state directly
+                // This would be handled by the card generation system
+            }
+            VoucherEffect::RerollCostReduction(_amount) => {
+                // Reroll cost reduction affects shop reroll pricing, not game state directly
+                // This would be handled by the shop system
+            }
+            VoucherEffect::ConsumableSlotIncrease(_amount) => {
+                // Consumable slots affect inventory capacity, not current game state
+                // This would be handled by the inventory system
+            }
+            VoucherEffect::CelestialPackBonus(_amount) => {
+                // Celestial pack bonus affects pack generation, not game state directly
+                // This would be handled by the pack system
+            }
+            VoucherEffect::SpectralPackPlanetChance(_chance) => {
+                // Spectral pack planet chance affects pack generation, not game state directly
+                // This would be handled by the pack system
             }
             VoucherEffect::ShopPlayingCardsEnabled => {
                 // Shop playing cards enable affects shop generation, not game state directly
@@ -720,8 +798,8 @@ impl VoucherId {
             VoucherId::CrystalBall => vec![],
             VoucherId::Telescope => vec![],
             VoucherId::Liquidation => vec![],
-            VoucherId::RerollGlut => vec![],
-            VoucherId::OmenGlobe => vec![],
+            VoucherId::RerollGlut => vec![VoucherId::RerollSurplus],
+            VoucherId::OmenGlobe => vec![VoucherId::CrystalBall],
             VoucherId::Observatory => vec![],
 
             // Upgraded versions require base versions
@@ -729,14 +807,14 @@ impl VoucherId {
 
             // Gameplay vouchers from Issue #18 - most are base vouchers
             VoucherId::Grabber => vec![],
-            VoucherId::NachoTong => vec![],
+            VoucherId::NachoTong => vec![VoucherId::Grabber],
             VoucherId::Wasteful => vec![],
             VoucherId::SeedMoney => vec![],
             VoucherId::Hieroglyph => vec![],
-            VoucherId::Petroglyph => vec![],
-            VoucherId::Antimatter => vec![],
+            VoucherId::Petroglyph => vec![VoucherId::Hieroglyph],
+            VoucherId::Antimatter => vec![VoucherId::Blank],
             VoucherId::MagicTrick => vec![],
-            VoucherId::Illusion => vec![],
+            VoucherId::Illusion => vec![VoucherId::MagicTrick],
             VoucherId::Blank => vec![],
             VoucherId::PaintBrush => vec![],
             VoucherId::TarotMerchant => vec![],

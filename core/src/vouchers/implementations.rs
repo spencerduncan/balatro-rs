@@ -55,15 +55,17 @@ impl Voucher for NachoTongVoucher {
     }
 
     fn tier(&self) -> VoucherTier {
-        VoucherTier::Base
+        VoucherTier::Upgraded
     }
 
     fn prerequisite(&self) -> Option<VoucherId> {
-        None
+        Some(VoucherId::Grabber)
     }
 
     fn can_purchase(&self, game_state: &GameState) -> bool {
-        game_state.can_afford(self.cost()) && !game_state.owns_voucher(self.id())
+        game_state.can_afford(self.cost())
+            && !game_state.owns_voucher(self.id())
+            && game_state.owns_voucher(VoucherId::Grabber)
     }
 
     fn apply_effect(&self, game_state: &mut GameState) {
@@ -263,15 +265,17 @@ impl Voucher for PetroglyphVoucher {
     }
 
     fn tier(&self) -> VoucherTier {
-        VoucherTier::Base
+        VoucherTier::Upgraded
     }
 
     fn prerequisite(&self) -> Option<VoucherId> {
-        None
+        Some(VoucherId::Hieroglyph)
     }
 
     fn can_purchase(&self, game_state: &GameState) -> bool {
-        game_state.can_afford(self.cost()) && !game_state.owns_voucher(self.id())
+        game_state.can_afford(self.cost())
+            && !game_state.owns_voucher(self.id())
+            && game_state.owns_voucher(VoucherId::Hieroglyph)
     }
 
     fn apply_effect(&self, game_state: &mut GameState) {
@@ -306,15 +310,17 @@ impl Voucher for AntimatterVoucher {
     }
 
     fn tier(&self) -> VoucherTier {
-        VoucherTier::Base
+        VoucherTier::Upgraded
     }
 
     fn prerequisite(&self) -> Option<VoucherId> {
-        None
+        Some(VoucherId::Blank)
     }
 
     fn can_purchase(&self, game_state: &GameState) -> bool {
-        game_state.can_afford(self.cost()) && !game_state.owns_voucher(self.id())
+        game_state.can_afford(self.cost())
+            && !game_state.owns_voucher(self.id())
+            && game_state.owns_voucher(VoucherId::Blank)
     }
 
     fn apply_effect(&self, game_state: &mut GameState) {
@@ -386,15 +392,17 @@ impl Voucher for IllusionVoucher {
     }
 
     fn tier(&self) -> VoucherTier {
-        VoucherTier::Base
+        VoucherTier::Upgraded
     }
 
     fn prerequisite(&self) -> Option<VoucherId> {
-        None
+        Some(VoucherId::MagicTrick)
     }
 
     fn can_purchase(&self, game_state: &GameState) -> bool {
-        game_state.can_afford(self.cost()) && !game_state.owns_voucher(self.id())
+        game_state.can_afford(self.cost())
+            && !game_state.owns_voucher(self.id())
+            && game_state.owns_voucher(VoucherId::MagicTrick)
     }
 
     fn apply_effect(&self, game_state: &mut GameState) {
@@ -578,5 +586,371 @@ impl Voucher for TarotTycoonVoucher {
 
     fn description(&self) -> &'static str {
         "Tarot cards appear 4X more"
+    }
+}
+
+/// Overstock voucher - +1 card slot in shop
+#[derive(Debug, Clone)]
+pub struct OverstockVoucher;
+
+impl Voucher for OverstockVoucher {
+    fn id(&self) -> VoucherId {
+        VoucherId::Overstock
+    }
+
+    fn tier(&self) -> VoucherTier {
+        VoucherTier::Base
+    }
+
+    fn prerequisite(&self) -> Option<VoucherId> {
+        None
+    }
+
+    fn can_purchase(&self, game_state: &GameState) -> bool {
+        game_state.can_afford(self.cost()) && !game_state.owns_voucher(self.id())
+    }
+
+    fn apply_effect(&self, game_state: &mut GameState) {
+        for effect in self.get_effects() {
+            let _ = game_state.apply_voucher_effect(&effect);
+        }
+    }
+
+    fn get_effects(&self) -> Vec<VoucherEffect> {
+        vec![VoucherEffect::ShopSlotIncrease(1)]
+    }
+
+    fn name(&self) -> &'static str {
+        "Overstock"
+    }
+
+    fn description(&self) -> &'static str {
+        "+1 card slot in shop"
+    }
+}
+
+/// Overstock Plus voucher - +2 card slots in shop (upgraded from Overstock)
+#[derive(Debug, Clone)]
+pub struct OverstockPlusVoucher;
+
+impl Voucher for OverstockPlusVoucher {
+    fn id(&self) -> VoucherId {
+        VoucherId::OverstockPlus
+    }
+
+    fn tier(&self) -> VoucherTier {
+        VoucherTier::Upgraded
+    }
+
+    fn prerequisite(&self) -> Option<VoucherId> {
+        Some(VoucherId::Overstock)
+    }
+
+    fn can_purchase(&self, game_state: &GameState) -> bool {
+        game_state.can_afford(self.cost())
+            && !game_state.owns_voucher(self.id())
+            && game_state.owns_voucher(VoucherId::Overstock)
+    }
+
+    fn apply_effect(&self, game_state: &mut GameState) {
+        for effect in self.get_effects() {
+            let _ = game_state.apply_voucher_effect(&effect);
+        }
+    }
+
+    fn get_effects(&self) -> Vec<VoucherEffect> {
+        vec![VoucherEffect::ShopSlotIncrease(2)]
+    }
+
+    fn name(&self) -> &'static str {
+        "Overstock Plus"
+    }
+
+    fn description(&self) -> &'static str {
+        "+2 card slots in shop"
+    }
+}
+
+/// Clearance Sale voucher - All items in shop 50% off
+#[derive(Debug, Clone)]
+pub struct ClearanceSaleVoucher;
+
+impl Voucher for ClearanceSaleVoucher {
+    fn id(&self) -> VoucherId {
+        VoucherId::ClearanceSale
+    }
+
+    fn tier(&self) -> VoucherTier {
+        VoucherTier::Base
+    }
+
+    fn prerequisite(&self) -> Option<VoucherId> {
+        None
+    }
+
+    fn can_purchase(&self, game_state: &GameState) -> bool {
+        game_state.can_afford(self.cost()) && !game_state.owns_voucher(self.id())
+    }
+
+    fn apply_effect(&self, game_state: &mut GameState) {
+        for effect in self.get_effects() {
+            let _ = game_state.apply_voucher_effect(&effect);
+        }
+    }
+
+    fn get_effects(&self) -> Vec<VoucherEffect> {
+        vec![VoucherEffect::ShopDiscountPercent(50.0)]
+    }
+
+    fn name(&self) -> &'static str {
+        "Clearance Sale"
+    }
+
+    fn description(&self) -> &'static str {
+        "All items in shop 50% off"
+    }
+}
+
+/// Hone voucher - Foil/Holo/Polychrome cards appear 2X more
+#[derive(Debug, Clone)]
+pub struct HoneVoucher;
+
+impl Voucher for HoneVoucher {
+    fn id(&self) -> VoucherId {
+        VoucherId::Hone
+    }
+
+    fn tier(&self) -> VoucherTier {
+        VoucherTier::Base
+    }
+
+    fn prerequisite(&self) -> Option<VoucherId> {
+        None
+    }
+
+    fn can_purchase(&self, game_state: &GameState) -> bool {
+        game_state.can_afford(self.cost()) && !game_state.owns_voucher(self.id())
+    }
+
+    fn apply_effect(&self, game_state: &mut GameState) {
+        for effect in self.get_effects() {
+            let _ = game_state.apply_voucher_effect(&effect);
+        }
+    }
+
+    fn get_effects(&self) -> Vec<VoucherEffect> {
+        vec![VoucherEffect::PolychromeFrequencyMultiplier(2.0)]
+    }
+
+    fn name(&self) -> &'static str {
+        "Hone"
+    }
+
+    fn description(&self) -> &'static str {
+        "Foil/Holo/Polychrome cards appear 2X more"
+    }
+}
+
+/// Reroll Surplus voucher - Rerolls cost $1 less
+#[derive(Debug, Clone)]
+pub struct RerollSurplusVoucher;
+
+impl Voucher for RerollSurplusVoucher {
+    fn id(&self) -> VoucherId {
+        VoucherId::RerollSurplus
+    }
+
+    fn tier(&self) -> VoucherTier {
+        VoucherTier::Base
+    }
+
+    fn prerequisite(&self) -> Option<VoucherId> {
+        None
+    }
+
+    fn can_purchase(&self, game_state: &GameState) -> bool {
+        game_state.can_afford(self.cost()) && !game_state.owns_voucher(self.id())
+    }
+
+    fn apply_effect(&self, game_state: &mut GameState) {
+        for effect in self.get_effects() {
+            let _ = game_state.apply_voucher_effect(&effect);
+        }
+    }
+
+    fn get_effects(&self) -> Vec<VoucherEffect> {
+        vec![VoucherEffect::RerollCostReduction(1)]
+    }
+
+    fn name(&self) -> &'static str {
+        "Reroll Surplus"
+    }
+
+    fn description(&self) -> &'static str {
+        "Rerolls cost $1 less"
+    }
+}
+
+/// Crystal Ball voucher - +1 consumable slot
+#[derive(Debug, Clone)]
+pub struct CrystalBallVoucher;
+
+impl Voucher for CrystalBallVoucher {
+    fn id(&self) -> VoucherId {
+        VoucherId::CrystalBall
+    }
+
+    fn tier(&self) -> VoucherTier {
+        VoucherTier::Base
+    }
+
+    fn prerequisite(&self) -> Option<VoucherId> {
+        None
+    }
+
+    fn can_purchase(&self, game_state: &GameState) -> bool {
+        game_state.can_afford(self.cost()) && !game_state.owns_voucher(self.id())
+    }
+
+    fn apply_effect(&self, game_state: &mut GameState) {
+        for effect in self.get_effects() {
+            let _ = game_state.apply_voucher_effect(&effect);
+        }
+    }
+
+    fn get_effects(&self) -> Vec<VoucherEffect> {
+        vec![VoucherEffect::ConsumableSlotIncrease(1)]
+    }
+
+    fn name(&self) -> &'static str {
+        "Crystal Ball"
+    }
+
+    fn description(&self) -> &'static str {
+        "+1 consumable slot"
+    }
+}
+
+/// Telescope voucher - Celestial packs have 1 more planet card
+#[derive(Debug, Clone)]
+pub struct TelescopeVoucher;
+
+impl Voucher for TelescopeVoucher {
+    fn id(&self) -> VoucherId {
+        VoucherId::Telescope
+    }
+
+    fn tier(&self) -> VoucherTier {
+        VoucherTier::Base
+    }
+
+    fn prerequisite(&self) -> Option<VoucherId> {
+        None
+    }
+
+    fn can_purchase(&self, game_state: &GameState) -> bool {
+        game_state.can_afford(self.cost()) && !game_state.owns_voucher(self.id())
+    }
+
+    fn apply_effect(&self, game_state: &mut GameState) {
+        for effect in self.get_effects() {
+            let _ = game_state.apply_voucher_effect(&effect);
+        }
+    }
+
+    fn get_effects(&self) -> Vec<VoucherEffect> {
+        vec![VoucherEffect::CelestialPackBonus(1)]
+    }
+
+    fn name(&self) -> &'static str {
+        "Telescope"
+    }
+
+    fn description(&self) -> &'static str {
+        "Celestial packs have 1 more planet card"
+    }
+}
+
+/// Reroll Glut voucher - Rerolls cost $2 less (upgraded from Reroll Surplus)
+#[derive(Debug, Clone)]
+pub struct RerollGlutVoucher;
+
+impl Voucher for RerollGlutVoucher {
+    fn id(&self) -> VoucherId {
+        VoucherId::RerollGlut
+    }
+
+    fn tier(&self) -> VoucherTier {
+        VoucherTier::Upgraded
+    }
+
+    fn prerequisite(&self) -> Option<VoucherId> {
+        Some(VoucherId::RerollSurplus)
+    }
+
+    fn can_purchase(&self, game_state: &GameState) -> bool {
+        game_state.can_afford(self.cost())
+            && !game_state.owns_voucher(self.id())
+            && game_state.owns_voucher(VoucherId::RerollSurplus)
+    }
+
+    fn apply_effect(&self, game_state: &mut GameState) {
+        for effect in self.get_effects() {
+            let _ = game_state.apply_voucher_effect(&effect);
+        }
+    }
+
+    fn get_effects(&self) -> Vec<VoucherEffect> {
+        vec![VoucherEffect::RerollCostReduction(2)]
+    }
+
+    fn name(&self) -> &'static str {
+        "Reroll Glut"
+    }
+
+    fn description(&self) -> &'static str {
+        "Rerolls cost $2 less"
+    }
+}
+
+/// Omen Globe voucher - Spectral packs may contain Planet cards (upgraded from Crystal Ball)
+#[derive(Debug, Clone)]
+pub struct OmenGlobeVoucher;
+
+impl Voucher for OmenGlobeVoucher {
+    fn id(&self) -> VoucherId {
+        VoucherId::OmenGlobe
+    }
+
+    fn tier(&self) -> VoucherTier {
+        VoucherTier::Upgraded
+    }
+
+    fn prerequisite(&self) -> Option<VoucherId> {
+        Some(VoucherId::CrystalBall)
+    }
+
+    fn can_purchase(&self, game_state: &GameState) -> bool {
+        game_state.can_afford(self.cost())
+            && !game_state.owns_voucher(self.id())
+            && game_state.owns_voucher(VoucherId::CrystalBall)
+    }
+
+    fn apply_effect(&self, game_state: &mut GameState) {
+        for effect in self.get_effects() {
+            let _ = game_state.apply_voucher_effect(&effect);
+        }
+    }
+
+    fn get_effects(&self) -> Vec<VoucherEffect> {
+        vec![VoucherEffect::SpectralPackPlanetChance(0.25)]
+    }
+
+    fn name(&self) -> &'static str {
+        "Omen Globe"
+    }
+
+    fn description(&self) -> &'static str {
+        "Spectral packs may contain Planet cards"
     }
 }
