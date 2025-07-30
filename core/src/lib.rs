@@ -49,6 +49,10 @@ pub mod static_joker_factory;
 pub mod target_context;
 pub mod vouchers;
 
+// Infrastructure Foundation - Sprint 1
+#[cfg(feature = "infrastructure")]
+pub mod infrastructure;
+
 /// Initialize all core library systems
 ///
 /// This function should be called once during application startup to ensure
