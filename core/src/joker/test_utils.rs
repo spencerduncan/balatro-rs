@@ -18,6 +18,7 @@
 //! use balatro_rs::joker::test_utils::*;
 //! use balatro_rs::joker::{Joker, JokerEffect, JokerId, JokerRarity};
 //! use balatro_rs::card::{Suit, Value};
+//! use balatro_rs::hand::SelectHand;
 //!
 //! // Create a test context
 //! let mut context = TestContextBuilder::new()
@@ -31,7 +32,7 @@
 //!     create_test_card(Value::Ace, Suit::Spade),
 //!     create_test_card(Value::King, Suit::Heart),
 //! ];
-//! let hand = create_test_hand(cards);
+//! let hand = SelectHand::new(cards);
 //!
 //! // Use a mock joker for testing
 //! let joker = MockGameplayJoker::new()
