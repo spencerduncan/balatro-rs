@@ -248,10 +248,6 @@ pub struct Game {
     #[cfg_attr(feature = "serde", serde(skip, default = "default_game_rng"))]
     pub rng: crate::rng::GameRng,
 
-    /// Debug manager for handling debug logging and memory monitoring functionality
-    #[cfg_attr(feature = "serde", serde(skip))]
-    pub debug_manager: DebugManager,
-
     /// Active skip tag state for persistent tag effects (unified approach)
     pub active_skip_tags: crate::skip_tags::ActiveSkipTags,
     /// Available skip tags for selection
@@ -369,9 +365,6 @@ impl Game {
 
             // Initialize secure RNG
             rng: crate::rng::GameRng::secure(),
-
-            // Initialize debug manager
-            debug_manager: DebugManager::default(),
 
             // Initialize skip tags system (unified approach)
             active_skip_tags: crate::skip_tags::ActiveSkipTags::new(),
@@ -2506,8 +2499,6 @@ impl Game {
             target_context: TargetContext::new(),
             // Initialize secure RNG (not serialized)
             rng: crate::rng::GameRng::secure(),
-            // Initialize debug manager (not serialized)
-            debug_manager: DebugManager::default(),
             // Initialize skip tags system (not serialized, unified approach)
             active_skip_tags: crate::skip_tags::ActiveSkipTags::new(),
             available_skip_tags: Vec::new(),
