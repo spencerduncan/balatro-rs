@@ -5,7 +5,7 @@
 //! - Coupon: Makes initial items free in next shop
 //! - D6: Makes first reroll free in next shop
 //! - Foil: Makes next base edition joker Foil and free
-//! - Holographic: Makes next base edition joker Holographic and free  
+//! - Holographic: Makes next base edition joker Holographic and free
 //! - Polychrome: Makes next base edition joker Polychrome and free
 
 use super::{SkipTag, SkipTagContext, SkipTagId, SkipTagResult, TagEffectType, TagRarity};
@@ -335,26 +335,24 @@ mod tests {
         assert!(!tag.stackable());
     }
 
-    #[test]    
+    #[test]
     fn test_all_shop_tags_activation() {
-        let context = create_test_context();
-
-        let voucher_result = VoucherTag.activate(context.clone());
+        let voucher_result = VoucherTag.activate(create_test_context());
         assert!(voucher_result.success);
 
-        let coupon_result = CouponTag.activate(context.clone());
+        let coupon_result = CouponTag.activate(create_test_context());
         assert!(coupon_result.success);
 
-        let d6_result = D6Tag.activate(context.clone());
+        let d6_result = D6Tag.activate(create_test_context());
         assert!(d6_result.success);
 
-        let foil_result = FoilTag.activate(context.clone());
+        let foil_result = FoilTag.activate(create_test_context());
         assert!(foil_result.success);
 
-        let holographic_result = HolographicTag.activate(context.clone());
+        let holographic_result = HolographicTag.activate(create_test_context());
         assert!(holographic_result.success);
 
-        let polychrome_result = PolychromeTag.activate(context);
+        let polychrome_result = PolychromeTag.activate(create_test_context());
         assert!(polychrome_result.success);
     }
 }
