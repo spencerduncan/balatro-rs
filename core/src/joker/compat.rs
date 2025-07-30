@@ -121,105 +121,25 @@ impl_joker_wrapper!(
     }
 );
 
-impl_joker_wrapper!(
-    JollyJoker,
-    Categories::MultPlus,
-    |g: &mut Game, hand: MadeHand| {
-        if hand.hand.is_pair().is_some() {
-            g.mult += 8.0
-        }
-    }
-);
+// JollyJoker migrated to StaticJoker framework
 
-impl_joker_wrapper!(
-    ZanyJoker,
-    Categories::MultPlus,
-    |g: &mut Game, hand: MadeHand| {
-        if hand.hand.is_three_of_kind().is_some() {
-            g.mult += 12.0
-        }
-    }
-);
+// ZanyJoker migrated to StaticJoker framework
 
-impl_joker_wrapper!(
-    MadJoker,
-    Categories::MultPlus,
-    |g: &mut Game, hand: MadeHand| {
-        if hand.hand.is_two_pair().is_some() {
-            g.mult += 10.0
-        }
-    }
-);
+// MadJoker migrated to StaticJoker framework
 
-impl_joker_wrapper!(
-    CrazyJoker,
-    Categories::MultPlus,
-    |g: &mut Game, hand: MadeHand| {
-        if hand.hand.is_straight().is_some() {
-            g.mult += 12.0
-        }
-    }
-);
+// CrazyJoker migrated to StaticJoker framework
 
-impl_joker_wrapper!(
-    DrollJoker,
-    Categories::MultPlus,
-    |g: &mut Game, hand: MadeHand| {
-        if hand.hand.is_flush().is_some() {
-            g.mult += 10.0
-        }
-    }
-);
+// DrollJoker migrated to StaticJoker framework
 
-impl_joker_wrapper!(
-    SlyJoker,
-    Categories::Chips,
-    |g: &mut Game, hand: MadeHand| {
-        if hand.hand.is_pair().is_some() {
-            g.chips += 50.0
-        }
-    }
-);
+// SlyJoker migrated to StaticJoker framework
 
-impl_joker_wrapper!(
-    WilyJoker,
-    Categories::Chips,
-    |g: &mut Game, hand: MadeHand| {
-        if hand.hand.is_three_of_kind().is_some() {
-            g.chips += 100.0
-        }
-    }
-);
+// WilyJoker migrated to StaticJoker framework
 
-impl_joker_wrapper!(
-    CleverJoker,
-    Categories::Chips,
-    |g: &mut Game, hand: MadeHand| {
-        if hand.hand.is_two_pair().is_some() {
-            g.chips += 80.0
-        }
-    }
-);
+// CleverJoker migrated to StaticJoker framework
 
-impl_joker_wrapper!(
-    DeviousJoker,
-    Categories::Chips,
-    |g: &mut Game, hand: MadeHand| {
-        if hand.hand.is_straight().is_some() {
-            g.chips += 100.0
-        }
-    }
-);
+// DeviousJoker migrated to StaticJoker framework
 
-impl_joker_wrapper!(
-    CraftyJoker,
-    Categories::Chips,
-    |g: &mut Game, hand: MadeHand| {
-        if hand.hand.is_flush().is_some() {
-            g.chips += 80.0
-        }
-    }
-);
+// CraftyJoker migrated to StaticJoker framework
 
 // Ice Cream Joker - special implementation with state management
 #[derive(Debug, Clone, Default, Eq, PartialEq, Hash, Serialize, Deserialize)]
@@ -333,23 +253,13 @@ macro_rules! make_jokers {
     }
 }
 
-// Create the Jokers enum
+// Create the Jokers enum - hand-type jokers migrated to StaticJoker framework
 make_jokers!(
     TheJoker,
     GreedyJoker,
     LustyJoker,
     WrathfulJoker,
     GluttonousJoker,
-    JollyJoker,
-    ZanyJoker,
-    MadJoker,
-    CrazyJoker,
-    DrollJoker,
-    SlyJoker,
-    WilyJoker,
-    CleverJoker,
-    DeviousJoker,
-    CraftyJoker,
     IceCreamJoker
 );
 
@@ -367,16 +277,6 @@ impl Jokers {
             Jokers::LustyJoker(_) => JokerId::LustyJoker,
             Jokers::WrathfulJoker(_) => JokerId::WrathfulJoker,
             Jokers::GluttonousJoker(_) => JokerId::GluttonousJoker,
-            Jokers::JollyJoker(_) => JokerId::JollyJoker,
-            Jokers::ZanyJoker(_) => JokerId::ZanyJoker,
-            Jokers::MadJoker(_) => JokerId::MadJoker,
-            Jokers::CrazyJoker(_) => JokerId::CrazyJoker,
-            Jokers::DrollJoker(_) => JokerId::DrollJoker,
-            Jokers::SlyJoker(_) => JokerId::SlyJoker,
-            Jokers::WilyJoker(_) => JokerId::WilyJoker,
-            Jokers::CleverJoker(_) => JokerId::CleverJoker,
-            Jokers::DeviousJoker(_) => JokerId::DeviousJoker,
-            Jokers::CraftyJoker(_) => JokerId::CraftyJoker,
             Jokers::IceCreamJoker(_) => JokerId::IceCream,
         }
     }
@@ -391,16 +291,6 @@ impl Jokers {
                 | (Jokers::LustyJoker(_), JokerId::LustyJoker)
                 | (Jokers::WrathfulJoker(_), JokerId::WrathfulJoker)
                 | (Jokers::GluttonousJoker(_), JokerId::GluttonousJoker)
-                | (Jokers::JollyJoker(_), JokerId::JollyJoker)
-                | (Jokers::ZanyJoker(_), JokerId::ZanyJoker)
-                | (Jokers::MadJoker(_), JokerId::MadJoker)
-                | (Jokers::CrazyJoker(_), JokerId::CrazyJoker)
-                | (Jokers::DrollJoker(_), JokerId::DrollJoker)
-                | (Jokers::SlyJoker(_), JokerId::SlyJoker)
-                | (Jokers::WilyJoker(_), JokerId::WilyJoker)
-                | (Jokers::CleverJoker(_), JokerId::CleverJoker)
-                | (Jokers::DeviousJoker(_), JokerId::DeviousJoker)
-                | (Jokers::CraftyJoker(_), JokerId::CraftyJoker)
                 | (Jokers::IceCreamJoker(_), JokerId::IceCream)
         )
     }
@@ -597,232 +487,25 @@ mod tests {
         score_before_after_joker(j, hand, before, after)
     }
 
-    #[test]
-    fn test_jolly_joker() {
-        let ac = Card::new(Value::Ace, Suit::Club);
-        let hand = SelectHand::new(vec![ac, ac, ac, ac]);
+    // test_jolly_joker removed - migrated to StaticJoker framework
 
-        // Score 4ok without joker
-        // 4ok (level 1) -> 60 chips, 7 mult
-        // Played cards (4 ace) -> 44 chips
-        // (60 + 44) * (7) = 728
-        let before = 728.0;
-        // Score 4ok with joker
-        // 4ok (level 1) -> 60 chips, 7 mult
-        // Played cards (4 ace) -> 44 chips
-        // joker w/ pair = +8 mult
-        // (60 + 44) * (7 + 8) = 1560
-        let after = 1560.0;
+    // test_zany_joker removed - migrated to StaticJoker framework
 
-        let j = Jokers::JollyJoker(JollyJoker {});
-        score_before_after_joker(j, hand, before, after)
-    }
+    // test_mad_joker removed - migrated to StaticJoker framework
 
-    #[test]
-    fn test_zany_joker() {
-        let ac = Card::new(Value::Ace, Suit::Club);
-        let hand = SelectHand::new(vec![ac, ac, ac, ac]);
+    // test_crazy_joker removed - migrated to StaticJoker framework
 
-        // Score 4ok without joker
-        // 4ok (level 1) -> 60 chips, 7 mult
-        // Played cards (4 ace) -> 44 chips
-        // (60 + 44) * (7) = 728
-        let before = 728.0;
-        // Score 4ok with joker
-        // 4ok (level 1) -> 60 chips, 7 mult
-        // Played cards (4 ace) -> 44 chips
-        // joker w/ 3ok = +12 mult
-        // (60 + 44) * (7 + 12) = 1976
-        let after = 1976.0;
+    // test_droll_joker removed - migrated to StaticJoker framework
 
-        let j = Jokers::ZanyJoker(ZanyJoker {});
-        score_before_after_joker(j, hand, before, after)
-    }
+    // test_sly_joker removed - migrated to StaticJoker framework
 
-    #[test]
-    fn test_mad_joker() {
-        let ac = Card::new(Value::Ace, Suit::Club);
-        let kc = Card::new(Value::King, Suit::Club);
-        let hand = SelectHand::new(vec![ac, ac, kc, kc]);
+    // test_wily_joker removed - migrated to StaticJoker framework
 
-        // Score two pair without joker
-        // two pair (level 1) -> 20 chips, 2 mult
-        // Played cards (2 ace, 2 king) -> 42 chips
-        // (20 + 42) * (2) = 124
-        let before = 124.0;
-        let j = Jokers::MadJoker(MadJoker {});
-        // Score two pair with joker
-        // two pair (level 1) -> 20 chips, 2 mult
-        // Played cards (2 ace, 2 king) -> 42 chips
-        // joker w/ two pair = +10 mult
-        // (20 + 42) * (2 + 10) = 744
-        let after = 744.0;
+    // test_clever_joker removed - migrated to StaticJoker framework
 
-        score_before_after_joker(j, hand, before, after);
-    }
+    // test_devious_joker removed - migrated to StaticJoker framework
 
-    #[test]
-    fn test_crazy_joker() {
-        let two = Card::new(Value::Two, Suit::Club);
-        let three = Card::new(Value::Three, Suit::Club);
-        let four = Card::new(Value::Four, Suit::Club);
-        let five = Card::new(Value::Five, Suit::Club);
-        let six = Card::new(Value::Six, Suit::Heart);
-        let hand = SelectHand::new(vec![two, three, four, five, six]);
-
-        // Score straight without joker
-        // straight (level 1) -> 30 chips, 4 mult
-        // Played cards (2, 3, 4, 5, 6) -> 15 chips
-        // (15 + 30) * (4) = 180
-        let before = 180.0;
-        // Score straight with joker
-        // straight (level 1) -> 30 chips, 4 mult
-        // Played cards (2, 3, 4, 5, 6) -> 15 chips
-        // joker w/ straight = +12 mult
-        // (15+ 30) * (4 + 12) = 720
-        let after = 720.0;
-
-        let j = Jokers::CrazyJoker(CrazyJoker {});
-        score_before_after_joker(j, hand, before, after);
-    }
-
-    #[test]
-    fn test_droll_joker() {
-        let two = Card::new(Value::Two, Suit::Club);
-        let three = Card::new(Value::Three, Suit::Club);
-        let four = Card::new(Value::Four, Suit::Club);
-        let five = Card::new(Value::Five, Suit::Club);
-        let ten = Card::new(Value::Ten, Suit::Club);
-        let hand = SelectHand::new(vec![two, three, four, five, ten]);
-
-        // Score flush without joker
-        // flush (level 1) -> 35 chips, 4 mult
-        // Played cards (2, 3, 4, 5, 10) -> 19 chips
-        // (19 + 35) * (4) = 216
-        let before = 216.0;
-        // Score flush with joker
-        // flush (level 1) -> 35 chips, 4 mult
-        // Played cards (2, 3, 4, 5, 10) -> 19 chips
-        // joker w/ flush = +10 mult
-        // (19 + 35) * (4 + 10) = 756
-        let after = 756.0;
-
-        let j = Jokers::DrollJoker(DrollJoker {});
-        score_before_after_joker(j, hand, before, after);
-    }
-
-    #[test]
-    fn test_sly_joker() {
-        let ac = Card::new(Value::Ace, Suit::Club);
-        let hand = SelectHand::new(vec![ac, ac, ac, ac]);
-
-        // Score 4ok without joker
-        // 4ok (level 1) -> 60 chips, 7 mult
-        // Played cards (4 ace) -> 44 chips
-        // (60 + 44) * (7) = 728
-        let before = 728.0;
-        // Score 4ok with joker
-        // 4ok (level 1) -> 60 chips, 7 mult
-        // Played cards (4 ace) -> 44 chips
-        // joker w/ pair = +50 chips
-        // (60 + 44 + 50) * (7) = 1078
-        let after = 1078.0;
-
-        let j = Jokers::SlyJoker(SlyJoker {});
-        score_before_after_joker(j, hand, before, after);
-    }
-
-    #[test]
-    fn test_wily_joker() {
-        let ac = Card::new(Value::Ace, Suit::Club);
-        let hand = SelectHand::new(vec![ac, ac, ac, ac]);
-
-        // Score 4ok without joker
-        // 4ok (level 1) -> 60 chips, 7 mult
-        // Played cards (4 ace) -> 44 chips
-        // (60 + 44) * (7) = 728
-        let before = 728.0;
-        // Score 4ok with joker
-        // 4ok (level 1) -> 60 chips, 7 mult
-        // Played cards (4 ace) -> 44 chips
-        // joker w/ 3ok = +100 chips
-        // (60 + 44 + 100) * (7) = 1428
-        let after = 1428.0;
-
-        let j = Jokers::WilyJoker(WilyJoker {});
-        score_before_after_joker(j, hand, before, after);
-    }
-
-    #[test]
-    fn test_clever_joker() {
-        let ac = Card::new(Value::Ace, Suit::Club);
-        let kc = Card::new(Value::King, Suit::Club);
-        let hand = SelectHand::new(vec![ac, ac, kc, kc]);
-
-        // Score two pair without joker
-        // two pair (level 1) -> 20 chips, 2 mult
-        // Played cards (2 ace, 2 king) -> 42 chips
-        // (20 + 42) * (2) = 124
-        let before = 124.0;
-        // Score two pair with joker
-        // two pair (level 1) -> 20 chips, 2 mult
-        // Played cards (2 ace, 2 king) -> 42 chips
-        // joker w/ two pair = +80 chips
-        // (20 + 42 + 80) * (2) = 284
-        let after = 284.0;
-
-        let j = Jokers::CleverJoker(CleverJoker {});
-        score_before_after_joker(j, hand, before, after);
-    }
-
-    #[test]
-    fn test_devious_joker() {
-        let two = Card::new(Value::Two, Suit::Club);
-        let three = Card::new(Value::Three, Suit::Club);
-        let four = Card::new(Value::Four, Suit::Club);
-        let five = Card::new(Value::Five, Suit::Club);
-        let six = Card::new(Value::Six, Suit::Heart);
-        let hand = SelectHand::new(vec![two, three, four, five, six]);
-
-        // Score straight without joker
-        // straight (level 1) -> 30 chips, 4 mult
-        // Played cards (2, 3, 4, 5, 6) -> 15 chips
-        // (15 + 30) * (4) = 180
-        let before = 180.0;
-        // Score straight with joker
-        // straight (level 1) -> 30 chips, 4 mult
-        // Played cards (2, 3, 4, 5, 6) -> 15 chips
-        // joker w/ straight = +100 chips
-        // (15+ 30 + 100) * (4) = 580
-        let after = 580.0;
-
-        let j = Jokers::DeviousJoker(DeviousJoker {});
-        score_before_after_joker(j, hand, before, after);
-    }
-
-    #[test]
-    fn test_crafty_joker() {
-        let two = Card::new(Value::Two, Suit::Club);
-        let three = Card::new(Value::Three, Suit::Club);
-        let four = Card::new(Value::Four, Suit::Club);
-        let five = Card::new(Value::Five, Suit::Club);
-        let ten = Card::new(Value::Ten, Suit::Club);
-        let hand = SelectHand::new(vec![two, three, four, five, ten]);
-
-        // Score flush without joker
-        // flush (level 1) -> 35 chips, 4 mult
-        // Played cards (2, 3, 4, 5, 10) -> 19 chips
-        // (19 + 35) * (4) = 216
-        let before = 216.0;
-        // Score flush with joker
-        // flush (level 1) -> 35 chips, 4 mult
-        // Played cards (2, 3, 4, 5, 10) -> 19 chips
-        // joker w/ flush = +80 chips
-        // (19 + 35 + 80) * (4) = 536
-        let after = 536.0;
-        let j = Jokers::CraftyJoker(CraftyJoker {});
-        score_before_after_joker(j, hand, before, after);
-    }
+    // test_crafty_joker removed - migrated to StaticJoker framework
 
     /// Test for Issue #85: Ice Cream Special Mechanics Joker
     /// Validates all acceptance criteria:
