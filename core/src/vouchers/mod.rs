@@ -25,10 +25,6 @@ use thiserror::Error;
 // Module for individual voucher implementations
 pub mod implementations;
 
-// Test modules
-#[cfg(test)]
-mod test_shop_vouchers;
-
 /// Errors that can occur during voucher operations
 #[derive(Error, Debug, Clone)]
 pub enum VoucherError {
@@ -112,10 +108,6 @@ pub enum VoucherEffect {
     RerollCostReduction(usize),
     /// Increases consumable slots
     ConsumableSlotIncrease(usize),
-    /// Adds extra planet cards to celestial packs
-    CelestialPackBonus(usize),
-    /// Adds chance for spectral packs to contain planet cards
-    SpectralPackPlanetChance(f64),
     /// No effect (flavor voucher)
     NoEffect,
 }
@@ -307,18 +299,6 @@ impl VoucherEffect {
             VoucherEffect::ConsumableSlotIncrease(amount) => {
                 if *amount > 10 {
                     return Err(VoucherError::ExcessiveJokerSlots { amount: *amount });
-                }
-            }
-            VoucherEffect::CelestialPackBonus(amount) => {
-                if *amount > 5 {
-                    return Err(VoucherError::ExcessivePackOptions { amount: *amount });
-                }
-            }
-            VoucherEffect::SpectralPackPlanetChance(chance) => {
-                if !chance.is_finite() || *chance < 0.0 || *chance > 1.0 {
-                    return Err(VoucherError::InvalidScaling {
-                        multiplier: *chance,
-                    });
                 }
             }
             VoucherEffect::ShopPlayingCardsEnabled => {}
@@ -540,14 +520,6 @@ impl GameState {
                 // Consumable slots affect inventory capacity, not current game state
                 // This would be handled by the inventory system
             }
-            VoucherEffect::CelestialPackBonus(_amount) => {
-                // Celestial pack bonus affects pack generation, not game state directly
-                // This would be handled by the pack system
-            }
-            VoucherEffect::SpectralPackPlanetChance(_chance) => {
-                // Spectral pack planet chance affects pack generation, not game state directly
-                // This would be handled by the pack system
-            }
             VoucherEffect::ShopPlayingCardsEnabled => {
                 // Shop playing cards enable affects shop generation, not game state directly
                 // This would be handled by the shop system
@@ -696,16 +668,10 @@ pub enum VoucherId {
     RerollSurplus,
     /// Crystal Ball voucher - +1 consumable slot
     CrystalBall,
-    /// Telescope voucher - Celestial packs have 1 more planet card
-    Telescope,
     /// Liquidation voucher - All items 25% off, rerolls 25% off
     Liquidation,
     /// Reroll Glut voucher - Rerolls cost $2 less
     RerollGlut,
-    /// Omen Globe voucher - Spectral packs may contain Planet cards
-    OmenGlobe,
-    /// Observatory voucher - Planet cards in shop give x1.5 mult
-    Observatory,
 
     // Gameplay vouchers from Issue #18
     /// Grabber voucher - +1 hand size permanently
@@ -751,11 +717,8 @@ impl fmt::Display for VoucherId {
             VoucherId::Hone => write!(f, "Hone"),
             VoucherId::RerollSurplus => write!(f, "Reroll Surplus"),
             VoucherId::CrystalBall => write!(f, "Crystal Ball"),
-            VoucherId::Telescope => write!(f, "Telescope"),
             VoucherId::Liquidation => write!(f, "Liquidation"),
             VoucherId::RerollGlut => write!(f, "Reroll Glut"),
-            VoucherId::OmenGlobe => write!(f, "Omen Globe"),
-            VoucherId::Observatory => write!(f, "Observatory"),
             VoucherId::Grabber => write!(f, "Grabber"),
             VoucherId::NachoTong => write!(f, "Nacho Tong"),
             VoucherId::Wasteful => write!(f, "Wasteful"),
@@ -796,11 +759,8 @@ impl VoucherId {
             VoucherId::Hone => vec![],
             VoucherId::RerollSurplus => vec![],
             VoucherId::CrystalBall => vec![],
-            VoucherId::Telescope => vec![],
             VoucherId::Liquidation => vec![],
             VoucherId::RerollGlut => vec![VoucherId::RerollSurplus],
-            VoucherId::OmenGlobe => vec![VoucherId::CrystalBall],
-            VoucherId::Observatory => vec![],
 
             // Upgraded versions require base versions
             VoucherId::OverstockPlus => vec![VoucherId::Overstock],
@@ -837,11 +797,8 @@ impl VoucherId {
             VoucherId::Hone => 10,
             VoucherId::RerollSurplus => 10,
             VoucherId::CrystalBall => 10,
-            VoucherId::Telescope => 10,
             VoucherId::Liquidation => 10,
             VoucherId::RerollGlut => 10,
-            VoucherId::OmenGlobe => 10,
-            VoucherId::Observatory => 10,
             VoucherId::VoucherPlaceholder => 10,
 
             // Gameplay vouchers from Issue #18

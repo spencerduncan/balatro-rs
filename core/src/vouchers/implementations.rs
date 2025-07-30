@@ -831,46 +831,6 @@ impl Voucher for CrystalBallVoucher {
     }
 }
 
-/// Telescope voucher - Celestial packs have 1 more planet card
-#[derive(Debug, Clone)]
-pub struct TelescopeVoucher;
-
-impl Voucher for TelescopeVoucher {
-    fn id(&self) -> VoucherId {
-        VoucherId::Telescope
-    }
-
-    fn tier(&self) -> VoucherTier {
-        VoucherTier::Base
-    }
-
-    fn prerequisite(&self) -> Option<VoucherId> {
-        None
-    }
-
-    fn can_purchase(&self, game_state: &GameState) -> bool {
-        game_state.can_afford(self.cost()) && !game_state.owns_voucher(self.id())
-    }
-
-    fn apply_effect(&self, game_state: &mut GameState) {
-        for effect in self.get_effects() {
-            let _ = game_state.apply_voucher_effect(&effect);
-        }
-    }
-
-    fn get_effects(&self) -> Vec<VoucherEffect> {
-        vec![VoucherEffect::CelestialPackBonus(1)]
-    }
-
-    fn name(&self) -> &'static str {
-        "Telescope"
-    }
-
-    fn description(&self) -> &'static str {
-        "Celestial packs have 1 more planet card"
-    }
-}
-
 /// Reroll Glut voucher - Rerolls cost $2 less (upgraded from Reroll Surplus)
 #[derive(Debug, Clone)]
 pub struct RerollGlutVoucher;
@@ -910,47 +870,5 @@ impl Voucher for RerollGlutVoucher {
 
     fn description(&self) -> &'static str {
         "Rerolls cost $2 less"
-    }
-}
-
-/// Omen Globe voucher - Spectral packs may contain Planet cards (upgraded from Crystal Ball)
-#[derive(Debug, Clone)]
-pub struct OmenGlobeVoucher;
-
-impl Voucher for OmenGlobeVoucher {
-    fn id(&self) -> VoucherId {
-        VoucherId::OmenGlobe
-    }
-
-    fn tier(&self) -> VoucherTier {
-        VoucherTier::Upgraded
-    }
-
-    fn prerequisite(&self) -> Option<VoucherId> {
-        Some(VoucherId::CrystalBall)
-    }
-
-    fn can_purchase(&self, game_state: &GameState) -> bool {
-        game_state.can_afford(self.cost())
-            && !game_state.owns_voucher(self.id())
-            && game_state.owns_voucher(VoucherId::CrystalBall)
-    }
-
-    fn apply_effect(&self, game_state: &mut GameState) {
-        for effect in self.get_effects() {
-            let _ = game_state.apply_voucher_effect(&effect);
-        }
-    }
-
-    fn get_effects(&self) -> Vec<VoucherEffect> {
-        vec![VoucherEffect::SpectralPackPlanetChance(0.25)]
-    }
-
-    fn name(&self) -> &'static str {
-        "Omen Globe"
-    }
-
-    fn description(&self) -> &'static str {
-        "Spectral packs may contain Planet cards"
     }
 }
