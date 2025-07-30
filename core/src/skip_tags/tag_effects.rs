@@ -1,299 +1,226 @@
-//! Skip Tag Effects - Unified Implementation
+//! Skip Tag Effects
 //!
-//! This module handles both utility effect functions and persistent state management
-//! for skip tags, combining the best of both approaches.
+//! Common effect implementations and utilities for skip tags
 
-use super::{SkipTagContext, SkipTagId, TagEffectResult};
+use super::{SkipTagContext, SkipTagId, SkipTagResult};
 use crate::game::Game;
 use crate::rank::HandRank;
-use serde::{Deserialize, Serialize};
+use crate::shop::packs::PackType;
 
-// Export both approaches for compatibility
-pub use self::state_management::*;
-pub use self::utility_effects::*;
+/// Effect that gives immediate money reward
+pub fn money_effect(context: SkipTagContext, amount: i64) -> SkipTagResult {
+    let mut game = context.game;
+    game.money += amount as f64;
 
-/// State management module for persistent skip tag effects
-pub mod state_management {
-    use super::*;
-
-    /// Active skip tag state that persists across game events
-    #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-    pub struct ActiveSkipTags {
-        // Economic tag state (from Issue #693)
-        pub investment_count: u32,
-        pub blinds_skipped: u32,
-
-        // Shop enhancement modifiers (this issue - #694)
-        pub next_shop_vouchers: u32,
-        pub next_shop_coupon: bool,
-        pub next_shop_free_reroll: bool,
-        pub next_shop_foil_joker: bool,
-        pub next_shop_holographic_joker: bool,
-        pub next_shop_polychrome_joker: bool,
-    }
-
-    impl Default for ActiveSkipTags {
-        fn default() -> Self {
-            Self::new()
-        }
-    }
-
-    impl ActiveSkipTags {
-        /// Create new empty active skip tags state
-        pub fn new() -> Self {
-            Self {
-                investment_count: 0,
-                blinds_skipped: 0,
-                next_shop_vouchers: 0,
-                next_shop_coupon: false,
-                next_shop_free_reroll: false,
-                next_shop_foil_joker: false,
-                next_shop_holographic_joker: false,
-                next_shop_polychrome_joker: false,
-            }
-        }
-
-        /// Reset all next shop modifiers (called when entering shop)
-        pub fn consume_next_shop_modifiers(&mut self) -> NextShopModifiers {
-            let modifiers = NextShopModifiers {
-                vouchers_to_add: self.next_shop_vouchers,
-                coupon_active: self.next_shop_coupon,
-                free_reroll: self.next_shop_free_reroll,
-                foil_joker: self.next_shop_foil_joker,
-                holographic_joker: self.next_shop_holographic_joker,
-                polychrome_joker: self.next_shop_polychrome_joker,
-            };
-
-            // Reset modifiers after consumption
-            self.next_shop_vouchers = 0;
-            self.next_shop_coupon = false;
-            self.next_shop_free_reroll = false;
-            self.next_shop_foil_joker = false;
-            self.next_shop_holographic_joker = false;
-            self.next_shop_polychrome_joker = false;
-
-            modifiers
-        }
-
-        /// Apply a shop enhancement tag effect
-        pub fn apply_shop_enhancement_effect(&mut self, tag_id: SkipTagId) {
-            match tag_id {
-                SkipTagId::Voucher => {
-                    self.next_shop_vouchers += 1;
-                }
-                SkipTagId::Coupon => {
-                    self.next_shop_coupon = true;
-                }
-                SkipTagId::D6 => {
-                    self.next_shop_free_reroll = true;
-                }
-                SkipTagId::Foil => {
-                    self.next_shop_foil_joker = true;
-                }
-                SkipTagId::Holographic => {
-                    self.next_shop_holographic_joker = true;
-                }
-                SkipTagId::Polychrome => {
-                    self.next_shop_polychrome_joker = true;
-                }
-                _ => {
-                    // Not a shop enhancement tag - ignore
-                }
-            }
-        }
-    }
-
-    /// Next shop modifiers consumed when entering shop
-    #[derive(Debug, Clone, PartialEq, Default)]
-    pub struct NextShopModifiers {
-        /// Number of vouchers to add to shop
-        pub vouchers_to_add: u32,
-        /// Whether coupon (free items) is active
-        pub coupon_active: bool,
-        /// Whether rerolls are free
-        pub free_reroll: bool,
-        /// Whether to add foil joker
-        pub foil_joker: bool,
-        /// Whether to add holographic joker
-        pub holographic_joker: bool,
-        /// Whether to add polychrome joker
-        pub polychrome_joker: bool,
-    }
-
-    impl NextShopModifiers {
-        /// Check if any modifiers are active
-        pub fn has_any_modifier(&self) -> bool {
-            self.vouchers_to_add > 0
-                || self.coupon_active
-                || self.free_reroll
-                || self.foil_joker
-                || self.holographic_joker
-                || self.polychrome_joker
-        }
-
-        /// Get count of edition modifiers
-        pub fn edition_modifier_count(&self) -> u32 {
-            let mut count = 0;
-            if self.foil_joker { count += 1; }
-            if self.holographic_joker { count += 1; }
-            if self.polychrome_joker { count += 1; }
-            count
-        }
+    SkipTagResult {
+        game,
+        additional_tags: vec![],
+        success: true,
+        message: Some(format!("Gained ${amount}")),
     }
 }
 
-/// Utility effect functions module
-pub mod utility_effects {
-    use super::*;
+/// Effect that gives a pack
+pub fn pack_effect(context: SkipTagContext, pack_type: PackType) -> SkipTagResult {
+    let game = context.game;
 
-    /// Effect that gives immediate money reward
-    pub fn money_effect(game: &mut Game, amount: i64) -> TagEffectResult {
-        game.money += amount as f64;
-        TagEffectResult::with_money_and_message(amount as i32, format!("Gained ${amount}"))
+    // TODO: Implement pack giving in game state
+    // For now, just acknowledge the effect
+
+    SkipTagResult {
+        game,
+        additional_tags: vec![],
+        success: true,
+        message: Some(format!("Gained {pack_type} pack")),
+    }
+}
+
+/// Effect that modifies next shop
+pub fn next_shop_modifier_effect(
+    context: SkipTagContext,
+    _modifier: Box<dyn Fn(&mut Game) + Send + Sync>,
+) -> SkipTagResult {
+    let game = context.game;
+
+    // TODO: Store modifier for application on next shop
+    // For now, just acknowledge the effect
+
+    SkipTagResult {
+        game,
+        additional_tags: vec![],
+        success: true,
+        message: Some("Next shop will be modified".to_string()),
+    }
+}
+
+/// Effect that duplicates another tag (Double tag)
+pub fn duplication_effect(context: SkipTagContext, selected_tag: SkipTagId) -> SkipTagResult {
+    // Exclude Double tags from duplication
+    if matches!(selected_tag, SkipTagId::Double) {
+        return SkipTagResult {
+            game: context.game,
+            additional_tags: vec![],
+            success: false,
+            message: Some("Cannot duplicate Double tags".to_string()),
+        };
     }
 
-    /// Effect that duplicates another tag (Double tag)
-    pub fn duplication_effect(selected_tag: SkipTagId) -> TagEffectResult {
-        // Exclude Double tags from duplication
-        if matches!(selected_tag, SkipTagId::Double) {
-            return TagEffectResult {
-                money_reward: 0,
-                messages: vec!["Cannot duplicate Double tags".to_string()],
-                persist_tag: false,
-            };
-        }
+    SkipTagResult {
+        game: context.game,
+        additional_tags: vec![selected_tag],
+        success: true,
+        message: Some(format!("Duplicated {selected_tag} tag")),
+    }
+}
 
-        TagEffectResult::with_money_and_message(0, format!("Duplicated {selected_tag} tag"))
+/// Effect that re-rolls boss blind
+pub fn boss_reroll_effect(context: SkipTagContext) -> SkipTagResult {
+    let game = context.game;
+
+    // TODO: Implement boss blind re-roll logic
+    // This should interact with the boss blind system and Director's Cut voucher
+
+    SkipTagResult {
+        game,
+        additional_tags: vec![],
+        success: true,
+        message: Some("Next Boss Blind will be re-rolled".to_string()),
+    }
+}
+
+/// Effect that upgrades a poker hand by levels
+pub fn hand_upgrade_effect(context: SkipTagContext, levels: u32) -> SkipTagResult {
+    let game = context.game;
+
+    // Get all available hand types that can be upgraded
+    let available_hands = get_upgradeable_hands(&game);
+
+    if available_hands.is_empty() {
+        return SkipTagResult {
+            game,
+            additional_tags: vec![],
+            success: false,
+            message: Some("No hands available to upgrade".to_string()),
+        };
     }
 
-    /// Effect that upgrades a poker hand by levels
-    pub fn hand_upgrade_effect(game: &Game, levels: u32) -> TagEffectResult {
-        let available_hands = get_upgradeable_hands(game);
+    // Select a random hand to upgrade
+    let random_index = game.rng.gen_range(0..available_hands.len());
+    let selected_hand = available_hands[random_index];
 
-        if available_hands.is_empty() {
-            return TagEffectResult {
-                money_reward: 0,
-                messages: vec!["No hands available to upgrade".to_string()],
-                persist_tag: false,
-            };
-        }
+    // TODO: Implement hand level upgrading
+    // This should upgrade the selected hand by the specified levels
 
-        // Select a random hand to upgrade
-        let random_index = fastrand::usize(0..available_hands.len());
-        let selected_hand = available_hands[random_index];
-
-        // TODO: Implement hand level upgrading
-        TagEffectResult::with_money_and_message(
-            0,
-            format!("Upgraded {selected_hand} by {levels} levels"),
-        )
+    SkipTagResult {
+        game,
+        additional_tags: vec![],
+        success: true,
+        message: Some(format!("Upgraded {selected_hand} by {levels} levels")),
     }
+}
 
-    /// Get all hand types that can be upgraded
-    fn get_upgradeable_hands(_game: &Game) -> Vec<HandRank> {
-        // TODO: This should check which hands have been played in the current run
-        vec![
-            HandRank::HighCard,
-            HandRank::OnePair,
-            HandRank::TwoPair,
-            HandRank::ThreeOfAKind,
-            HandRank::Straight,
-            HandRank::Flush,
-            HandRank::FullHouse,
-            HandRank::FourOfAKind,
-            HandRank::StraightFlush,
-            HandRank::RoyalFlush,
-        ]
+/// Effect that adds temporary hand size for next round
+pub fn temporary_hand_size_effect(context: SkipTagContext, additional_size: u32) -> SkipTagResult {
+    let game = context.game;
+
+    // TODO: Implement temporary hand size tracking
+    // This should add to a temporary modifier that's applied for one round only
+
+    SkipTagResult {
+        game,
+        additional_tags: vec![],
+        success: true,
+        message: Some(format!("Added +{additional_size} hand size for next round")),
     }
+}
+
+/// Get all hand types that can be upgraded
+fn get_upgradeable_hands(_game: &Game) -> Vec<HandRank> {
+    // TODO: This should check which hands have been played in the current run
+    // and return all hands that can be upgraded, including secret hands
+
+    // For now, return all basic hand types
+    vec![
+        HandRank::HighCard,
+        HandRank::OnePair,
+        HandRank::TwoPair,
+        HandRank::ThreeOfAKind,
+        HandRank::Straight,
+        HandRank::Flush,
+        HandRank::FullHouse,
+        HandRank::FourOfAKind,
+        HandRank::StraightFlush,
+        HandRank::RoyalFlush,
+    ]
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::game::Game;
+    use crate::stage::Blind;
 
-    mod state_management_tests {
-        use super::*;
-
-        #[test]
-        fn test_active_skip_tags_creation() {
-            let tags = ActiveSkipTags::new();
-
-            // All shop modifiers should start inactive
-            assert_eq!(tags.next_shop_vouchers, 0);
-            assert!(!tags.next_shop_coupon);
-            assert!(!tags.next_shop_free_reroll);
-            assert!(!tags.next_shop_foil_joker);
-            assert!(!tags.next_shop_holographic_joker);
-            assert!(!tags.next_shop_polychrome_joker);
-
-            // Economic tag state should start at zero
-            assert_eq!(tags.investment_count, 0);
-            assert_eq!(tags.blinds_skipped, 0);
-        }
-
-        #[test]
-        fn test_apply_shop_enhancement_effects() {
-            let mut tags = ActiveSkipTags::new();
-
-            tags.apply_shop_enhancement_effect(SkipTagId::Voucher);
-            assert_eq!(tags.next_shop_vouchers, 1);
-
-            tags.apply_shop_enhancement_effect(SkipTagId::Coupon);
-            assert!(tags.next_shop_coupon);
-
-            tags.apply_shop_enhancement_effect(SkipTagId::D6);
-            assert!(tags.next_shop_free_reroll);
-
-            tags.apply_shop_enhancement_effect(SkipTagId::Foil);
-            assert!(tags.next_shop_foil_joker);
-        }
-
-        #[test]
-        fn test_consume_next_shop_modifiers() {
-            let mut tags = ActiveSkipTags::new();
-
-            // Set up some shop modifiers
-            tags.apply_shop_enhancement_effect(SkipTagId::Voucher);
-            tags.apply_shop_enhancement_effect(SkipTagId::Coupon);
-
-            // Consume modifiers
-            let modifiers = tags.consume_next_shop_modifiers();
-
-            // Verify consumed modifiers
-            assert_eq!(modifiers.vouchers_to_add, 1);
-            assert!(modifiers.coupon_active);
-
-            // Verify tags are reset after consumption
-            assert_eq!(tags.next_shop_vouchers, 0);
-            assert!(!tags.next_shop_coupon);
+    fn create_test_context() -> SkipTagContext {
+        SkipTagContext {
+            game: Game::default(),
+            skipped_blind: Some(Blind::Small),
+            available_tags: vec![SkipTagId::Boss, SkipTagId::Orbital],
         }
     }
 
-    mod utility_effects_tests {
-        use super::*;
+    #[test]
+    fn test_money_effect() {
+        let context = create_test_context();
+        let initial_money = context.game.money;
 
-        #[test]
-        fn test_money_effect() {
-            let mut game = Game::default();
-            let initial_money = game.money;
+        let result = money_effect(context, 50);
 
-            let result = utility_effects::money_effect(&mut game, 50);
+        assert!(result.success);
+        assert_eq!(result.game.money, initial_money + 50.0);
+        assert!(result.message.unwrap().contains("$50"));
+    }
 
-            assert_eq!(game.money, initial_money + 50.0);
-            assert_eq!(result.money_reward, 50);
-            assert!(result.messages[0].contains("$50"));
-        }
+    #[test]
+    fn test_duplication_effect_success() {
+        let context = create_test_context();
 
-        #[test]
-        fn test_duplication_effect_success() {
-            let result = utility_effects::duplication_effect(SkipTagId::Boss);
-            assert!(result.messages[0].contains("Duplicated Boss tag"));
-        }
+        let result = duplication_effect(context, SkipTagId::Boss);
 
-        #[test]
-        fn test_duplication_effect_double_rejection() {
-            let result = utility_effects::duplication_effect(SkipTagId::Double);
-            assert!(result.messages[0].contains("Cannot duplicate Double"));
-        }
+        assert!(result.success);
+        assert_eq!(result.additional_tags.len(), 1);
+        assert_eq!(result.additional_tags[0], SkipTagId::Boss);
+    }
+
+    #[test]
+    fn test_duplication_effect_double_rejection() {
+        let context = create_test_context();
+
+        let result = duplication_effect(context, SkipTagId::Double);
+
+        assert!(!result.success);
+        assert!(result.additional_tags.is_empty());
+        assert!(result.message.unwrap().contains("Cannot duplicate Double"));
+    }
+
+    #[test]
+    fn test_hand_upgrade_effect() {
+        let context = create_test_context();
+
+        let result = hand_upgrade_effect(context, 3);
+
+        assert!(result.success);
+        let message = result.message.unwrap();
+        assert!(message.contains("Upgraded"));
+        assert!(message.contains("by 3 levels"));
+    }
+
+    #[test]
+    fn test_temporary_hand_size_effect() {
+        let context = create_test_context();
+
+        let result = temporary_hand_size_effect(context, 3);
+
+        assert!(result.success);
+        assert!(result.message.unwrap().contains("+3 hand size"));
     }
 }

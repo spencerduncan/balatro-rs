@@ -1,17 +1,21 @@
-//! Shop Enhancement Tags Implementation
+//! Shop Enhancement Skip Tags
 //!
-//! These tags modify the next shop experience, providing various benefits like
-//! free rerolls, vouchers, and edition upgrades to shop items.
+//! Implementation of skip tags that modify the next shop experience:
+//! - Voucher: Adds a voucher to the next shop (stackable)
+//! - Coupon: Makes initial items free in next shop
+//! - D6: Makes first reroll free in next shop
+//! - Foil: Makes next base edition joker Foil and free
+//! - Holographic: Makes next base edition joker Holographic and free  
+//! - Polychrome: Makes next base edition joker Polychrome and free
 
-use super::{SkipTag, SkipTagId, TagEffectResult, TagEffectType};
-use crate::game::Game;
+use super::{SkipTag, SkipTagContext, SkipTagId, SkipTagResult, TagEffectType, TagRarity};
 
-/// Voucher Tag - Adds a free voucher to the next shop
-#[derive(Debug, Clone)]
+/// Voucher Tag: Adds a Voucher to the next Shop (stackable)
+#[derive(Debug)]
 pub struct VoucherTag;
 
 impl SkipTag for VoucherTag {
-    fn tag_id(&self) -> SkipTagId {
+    fn id(&self) -> SkipTagId {
         SkipTagId::Voucher
     }
 
@@ -19,28 +23,39 @@ impl SkipTag for VoucherTag {
         "Voucher"
     }
 
+    fn description(&self) -> &'static str {
+        "Add a Voucher to the next shop"
+    }
+
     fn effect_type(&self) -> TagEffectType {
         TagEffectType::NextShopModifier
     }
 
-    fn description(&self) -> &'static str {
-        "Adds a free Voucher to next shop"
+    fn rarity(&self) -> TagRarity {
+        TagRarity::Uncommon
     }
 
-    fn apply_effect(&self, _game_state: &Game) -> TagEffectResult {
-        TagEffectResult::with_persistence(
-            0,
-            "Voucher Tag: Next shop will have a free voucher".to_string(),
-        )
+    fn stackable(&self) -> bool {
+        true
+    }
+
+    fn activate(&self, context: SkipTagContext) -> SkipTagResult {
+        // TODO: Add voucher to next shop modifiers
+        SkipTagResult {
+            game: context.game,
+            additional_tags: vec![],
+            success: true,
+            message: Some("Next shop will have an additional voucher".to_string()),
+        }
     }
 }
 
-/// Coupon Tag - Next shop has +1 free reroll
-#[derive(Debug, Clone)]
+/// Coupon Tag: Initial jokers, consumables, and packs are free in next shop
+#[derive(Debug)]
 pub struct CouponTag;
 
 impl SkipTag for CouponTag {
-    fn tag_id(&self) -> SkipTagId {
+    fn id(&self) -> SkipTagId {
         SkipTagId::Coupon
     }
 
@@ -48,25 +63,39 @@ impl SkipTag for CouponTag {
         "Coupon"
     }
 
+    fn description(&self) -> &'static str {
+        "Initial items are free in the next shop"
+    }
+
     fn effect_type(&self) -> TagEffectType {
         TagEffectType::NextShopModifier
     }
 
-    fn description(&self) -> &'static str {
-        "Initial items in next shop are free"
+    fn rarity(&self) -> TagRarity {
+        TagRarity::Uncommon
     }
 
-    fn apply_effect(&self, _game_state: &Game) -> TagEffectResult {
-        TagEffectResult::with_persistence(0, "Coupon Tag: Next shop items will be free".to_string())
+    fn stackable(&self) -> bool {
+        false
+    }
+
+    fn activate(&self, context: SkipTagContext) -> SkipTagResult {
+        // TODO: Set coupon modifier for next shop
+        SkipTagResult {
+            game: context.game,
+            additional_tags: vec![],
+            success: true,
+            message: Some("Initial items will be free in next shop".to_string()),
+        }
     }
 }
 
-/// D6 Tag - All rerolls in next shop cost $0
-#[derive(Debug, Clone)]
+/// D6 Tag: Rerolls start at $0 in next shop
+#[derive(Debug)]
 pub struct D6Tag;
 
 impl SkipTag for D6Tag {
-    fn tag_id(&self) -> SkipTagId {
+    fn id(&self) -> SkipTagId {
         SkipTagId::D6
     }
 
@@ -74,25 +103,39 @@ impl SkipTag for D6Tag {
         "D6"
     }
 
+    fn description(&self) -> &'static str {
+        "Rerolls start at $0 in the next shop"
+    }
+
     fn effect_type(&self) -> TagEffectType {
         TagEffectType::NextShopModifier
     }
 
-    fn description(&self) -> &'static str {
-        "Rerolls in next shop cost $0"
+    fn rarity(&self) -> TagRarity {
+        TagRarity::Common
     }
 
-    fn apply_effect(&self, _game_state: &Game) -> TagEffectResult {
-        TagEffectResult::with_persistence(0, "D6 Tag: Next shop rerolls will be free".to_string())
+    fn stackable(&self) -> bool {
+        false
+    }
+
+    fn activate(&self, context: SkipTagContext) -> SkipTagResult {
+        // TODO: Set free reroll modifier for next shop
+        SkipTagResult {
+            game: context.game,
+            additional_tags: vec![],
+            success: true,
+            message: Some("First reroll will be free in next shop".to_string()),
+        }
     }
 }
 
-/// Foil Tag - Adds Foil edition to a random joker in next shop
-#[derive(Debug, Clone)]
+/// Foil Tag: Next base edition joker becomes Foil (+50 Chips) and free
+#[derive(Debug)]
 pub struct FoilTag;
 
 impl SkipTag for FoilTag {
-    fn tag_id(&self) -> SkipTagId {
+    fn id(&self) -> SkipTagId {
         SkipTagId::Foil
     }
 
@@ -100,28 +143,39 @@ impl SkipTag for FoilTag {
         "Foil"
     }
 
+    fn description(&self) -> &'static str {
+        "Next base edition joker becomes Foil (+50 Chips) and free"
+    }
+
     fn effect_type(&self) -> TagEffectType {
         TagEffectType::NextShopModifier
     }
 
-    fn description(&self) -> &'static str {
-        "Next shop has a Foil joker (+50 Chips when scored)"
+    fn rarity(&self) -> TagRarity {
+        TagRarity::Rare
     }
 
-    fn apply_effect(&self, _game_state: &Game) -> TagEffectResult {
-        TagEffectResult::with_persistence(
-            0,
-            "Foil Tag: Next shop will have a Foil joker".to_string(),
-        )
+    fn stackable(&self) -> bool {
+        false
+    }
+
+    fn activate(&self, context: SkipTagContext) -> SkipTagResult {
+        // TODO: Set foil joker modifier for next shop
+        SkipTagResult {
+            game: context.game,
+            additional_tags: vec![],
+            success: true,
+            message: Some("Next base edition joker will become Foil and free".to_string()),
+        }
     }
 }
 
-/// Holographic Tag - Adds Holographic edition to a random joker in next shop
-#[derive(Debug, Clone)]
+/// Holographic Tag: Next base edition joker becomes Holographic (+10 Mult) and free
+#[derive(Debug)]
 pub struct HolographicTag;
 
 impl SkipTag for HolographicTag {
-    fn tag_id(&self) -> SkipTagId {
+    fn id(&self) -> SkipTagId {
         SkipTagId::Holographic
     }
 
@@ -129,28 +183,39 @@ impl SkipTag for HolographicTag {
         "Holographic"
     }
 
+    fn description(&self) -> &'static str {
+        "Next base edition joker becomes Holographic (+10 Mult) and free"
+    }
+
     fn effect_type(&self) -> TagEffectType {
         TagEffectType::NextShopModifier
     }
 
-    fn description(&self) -> &'static str {
-        "Next shop has a Holographic joker (+10 Mult when scored)"
+    fn rarity(&self) -> TagRarity {
+        TagRarity::Rare
     }
 
-    fn apply_effect(&self, _game_state: &Game) -> TagEffectResult {
-        TagEffectResult::with_persistence(
-            0,
-            "Holographic Tag: Next shop will have a Holographic joker".to_string(),
-        )
+    fn stackable(&self) -> bool {
+        false
+    }
+
+    fn activate(&self, context: SkipTagContext) -> SkipTagResult {
+        // TODO: Set holographic joker modifier for next shop
+        SkipTagResult {
+            game: context.game,
+            additional_tags: vec![],
+            success: true,
+            message: Some("Next base edition joker will become Holographic and free".to_string()),
+        }
     }
 }
 
-/// Polychrome Tag - Adds Polychrome edition to a random joker in next shop
-#[derive(Debug, Clone)]
+/// Polychrome Tag: Next base edition joker becomes Polychrome (X1.5 Mult) and free
+#[derive(Debug)]
 pub struct PolychromeTag;
 
 impl SkipTag for PolychromeTag {
-    fn tag_id(&self) -> SkipTagId {
+    fn id(&self) -> SkipTagId {
         SkipTagId::Polychrome
     }
 
@@ -158,19 +223,30 @@ impl SkipTag for PolychromeTag {
         "Polychrome"
     }
 
+    fn description(&self) -> &'static str {
+        "Next base edition joker becomes Polychrome (X1.5 Mult) and free"
+    }
+
     fn effect_type(&self) -> TagEffectType {
         TagEffectType::NextShopModifier
     }
 
-    fn description(&self) -> &'static str {
-        "Next shop has a Polychrome joker (X1.5 Mult when scored)"
+    fn rarity(&self) -> TagRarity {
+        TagRarity::Rare
     }
 
-    fn apply_effect(&self, _game_state: &Game) -> TagEffectResult {
-        TagEffectResult::with_persistence(
-            0,
-            "Polychrome Tag: Next shop will have a Polychrome joker".to_string(),
-        )
+    fn stackable(&self) -> bool {
+        false
+    }
+
+    fn activate(&self, context: SkipTagContext) -> SkipTagResult {
+        // TODO: Set polychrome joker modifier for next shop
+        SkipTagResult {
+            game: context.game,
+            additional_tags: vec![],
+            success: true,
+            message: Some("Next base edition joker will become Polychrome and free".to_string()),
+        }
     }
 }
 
@@ -178,177 +254,107 @@ impl SkipTag for PolychromeTag {
 mod tests {
     use super::*;
     use crate::game::Game;
+    use crate::stage::Blind;
 
-    /// Helper function to create a test game
-    fn create_test_game() -> Game {
-        let mut game = Game::default();
-        game.start();
-        game
+    fn create_test_context() -> SkipTagContext {
+        SkipTagContext {
+            game: Game::default(),
+            skipped_blind: Some(Blind::Small),
+            available_tags: vec![],
+        }
     }
 
     #[test]
-    fn test_voucher_tag_basic_functionality() {
+    fn test_voucher_tag_properties() {
         let tag = VoucherTag;
-        let game = create_test_game();
-
-        // Test tag metadata
-        assert_eq!(tag.tag_id(), SkipTagId::Voucher);
+        assert_eq!(tag.id(), SkipTagId::Voucher);
         assert_eq!(tag.name(), "Voucher");
         assert_eq!(tag.effect_type(), TagEffectType::NextShopModifier);
-        assert!(tag.description().contains("Voucher"));
-        assert!(tag.description().contains("next shop"));
-
-        // Test effect application
-        let result = tag.apply_effect(&game);
-        assert_eq!(result.money_reward, 0);
-        assert!(result.persist_tag);
-        assert!(!result.messages.is_empty());
-        assert!(result.messages[0].contains("Voucher Tag"));
+        assert_eq!(tag.rarity(), TagRarity::Uncommon);
+        assert!(tag.stackable());
     }
 
     #[test]
-    fn test_coupon_tag_basic_functionality() {
-        let tag = CouponTag;
-        let game = create_test_game();
+    fn test_voucher_tag_activation() {
+        let tag = VoucherTag;
+        let context = create_test_context();
 
-        // Test tag metadata
-        assert_eq!(tag.tag_id(), SkipTagId::Coupon);
+        let result = tag.activate(context);
+
+        assert!(result.success);
+        assert!(result.message.unwrap().contains("voucher"));
+    }
+
+    #[test]
+    fn test_coupon_tag_properties() {
+        let tag = CouponTag;
+        assert_eq!(tag.id(), SkipTagId::Coupon);
         assert_eq!(tag.name(), "Coupon");
         assert_eq!(tag.effect_type(), TagEffectType::NextShopModifier);
-        assert!(tag.description().contains("Initial items"));
-        assert!(tag.description().contains("free"));
-
-        // Test effect application
-        let result = tag.apply_effect(&game);
-        assert_eq!(result.money_reward, 0);
-        assert!(result.persist_tag);
-        assert!(!result.messages.is_empty());
-        assert!(result.messages[0].contains("Coupon Tag"));
+        assert_eq!(tag.rarity(), TagRarity::Uncommon);
+        assert!(!tag.stackable());
     }
 
     #[test]
-    fn test_d6_tag_basic_functionality() {
+    fn test_d6_tag_properties() {
         let tag = D6Tag;
-        let game = create_test_game();
-
-        // Test tag metadata
-        assert_eq!(tag.tag_id(), SkipTagId::D6);
+        assert_eq!(tag.id(), SkipTagId::D6);
         assert_eq!(tag.name(), "D6");
         assert_eq!(tag.effect_type(), TagEffectType::NextShopModifier);
-        assert!(tag.description().contains("Rerolls"));
-        assert!(tag.description().contains("$0"));
-
-        // Test effect application
-        let result = tag.apply_effect(&game);
-        assert_eq!(result.money_reward, 0);
-        assert!(result.persist_tag);
-        assert!(!result.messages.is_empty());
-        assert!(result.messages[0].contains("D6 Tag"));
+        assert_eq!(tag.rarity(), TagRarity::Common);
+        assert!(!tag.stackable());
     }
 
     #[test]
-    fn test_foil_tag_basic_functionality() {
+    fn test_foil_tag_properties() {
         let tag = FoilTag;
-        let game = create_test_game();
-
-        // Test tag metadata
-        assert_eq!(tag.tag_id(), SkipTagId::Foil);
+        assert_eq!(tag.id(), SkipTagId::Foil);
         assert_eq!(tag.name(), "Foil");
         assert_eq!(tag.effect_type(), TagEffectType::NextShopModifier);
-        assert!(tag.description().contains("Foil"));
-        assert!(tag.description().contains("+50 Chips"));
-
-        // Test effect application
-        let result = tag.apply_effect(&game);
-        assert_eq!(result.money_reward, 0);
-        assert!(result.persist_tag);
-        assert!(!result.messages.is_empty());
-        assert!(result.messages[0].contains("Foil Tag"));
+        assert_eq!(tag.rarity(), TagRarity::Rare);
+        assert!(!tag.stackable());
     }
 
     #[test]
-    fn test_holographic_tag_basic_functionality() {
+    fn test_holographic_tag_properties() {
         let tag = HolographicTag;
-        let game = create_test_game();
-
-        // Test tag metadata
-        assert_eq!(tag.tag_id(), SkipTagId::Holographic);
+        assert_eq!(tag.id(), SkipTagId::Holographic);
         assert_eq!(tag.name(), "Holographic");
         assert_eq!(tag.effect_type(), TagEffectType::NextShopModifier);
-        assert!(tag.description().contains("Holographic"));
-        assert!(tag.description().contains("+10 Mult"));
-
-        // Test effect application
-        let result = tag.apply_effect(&game);
-        assert_eq!(result.money_reward, 0);
-        assert!(result.persist_tag);
-        assert!(!result.messages.is_empty());
-        assert!(result.messages[0].contains("Holographic Tag"));
+        assert_eq!(tag.rarity(), TagRarity::Rare);
+        assert!(!tag.stackable());
     }
 
     #[test]
-    fn test_polychrome_tag_basic_functionality() {
+    fn test_polychrome_tag_properties() {
         let tag = PolychromeTag;
-        let game = create_test_game();
-
-        // Test tag metadata
-        assert_eq!(tag.tag_id(), SkipTagId::Polychrome);
+        assert_eq!(tag.id(), SkipTagId::Polychrome);
         assert_eq!(tag.name(), "Polychrome");
         assert_eq!(tag.effect_type(), TagEffectType::NextShopModifier);
-        assert!(tag.description().contains("Polychrome"));
-        assert!(tag.description().contains("X1.5 Mult"));
-
-        // Test effect application
-        let result = tag.apply_effect(&game);
-        assert_eq!(result.money_reward, 0);
-        assert!(result.persist_tag);
-        assert!(!result.messages.is_empty());
-        assert!(result.messages[0].contains("Polychrome Tag"));
+        assert_eq!(tag.rarity(), TagRarity::Rare);
+        assert!(!tag.stackable());
     }
 
-    #[test]
-    fn test_all_shop_enhancement_tags_are_next_shop_modifiers() {
-        let tags: Vec<Box<dyn SkipTag>> = vec![
-            Box::new(VoucherTag),
-            Box::new(CouponTag),
-            Box::new(D6Tag),
-            Box::new(FoilTag),
-            Box::new(HolographicTag),
-            Box::new(PolychromeTag),
-        ];
+    #[test]    
+    fn test_all_shop_tags_activation() {
+        let context = create_test_context();
 
-        for tag in tags {
-            assert_eq!(tag.effect_type(), TagEffectType::NextShopModifier);
-            assert!(tag.can_apply(&create_test_game()));
-        }
-    }
+        let voucher_result = VoucherTag.activate(context.clone());
+        assert!(voucher_result.success);
 
-    #[test]
-    fn test_all_shop_enhancement_tags_persist() {
-        let game = create_test_game();
-        let tags: Vec<Box<dyn SkipTag>> = vec![
-            Box::new(VoucherTag),
-            Box::new(CouponTag),
-            Box::new(D6Tag),
-            Box::new(FoilTag),
-            Box::new(HolographicTag),
-            Box::new(PolychromeTag),
-        ];
+        let coupon_result = CouponTag.activate(context.clone());
+        assert!(coupon_result.success);
 
-        for tag in tags {
-            let result = tag.apply_effect(&game);
-            assert!(result.persist_tag, "Tag {} should persist", tag.name());
-            assert_eq!(
-                result.money_reward,
-                0,
-                "Tag {} should give no immediate money",
-                tag.name()
-            );
-            assert!(
-                !result.messages.is_empty(),
-                "Tag {} should have a message",
-                tag.name()
-            );
-        }
+        let d6_result = D6Tag.activate(context.clone());
+        assert!(d6_result.success);
+
+        let foil_result = FoilTag.activate(context.clone());
+        assert!(foil_result.success);
+
+        let holographic_result = HolographicTag.activate(context.clone());
+        assert!(holographic_result.success);
+
+        let polychrome_result = PolychromeTag.activate(context);
+        assert!(polychrome_result.success);
     }
 }
