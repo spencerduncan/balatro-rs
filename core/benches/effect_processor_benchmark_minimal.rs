@@ -254,14 +254,15 @@ fn create_test_game_context() -> GameContext<'static> {
         stage,
         hands_played: 0,
         discards_used: 0,
+        hands_remaining: 4.0, // Standard hands remaining for testing
         jokers,
         hand,
         discarded,
         joker_state_manager,
         hand_type_counts,
         cards_in_deck: 52,
-        stone_cards_in_deck: 0,
-        steel_cards_in_deck: 0,
+        stone_cards_in_deck: 0, // BENCHMARK: Using standard deck composition
+        steel_cards_in_deck: 0, // BENCHMARK: Using standard deck composition
         rng,
     }
 }

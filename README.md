@@ -137,3 +137,4 @@ If you're upgrading from the previous "dual framework" design where both `GameSt
 The new unified API provides better performance and clearer semantics. The old API still works with deprecation warnings for backwards compatibility.
 
 For more details on the python work and reinforcement learning applications, check the [/pylatro](https://github.com/spencerduncan/balatro-rs/tree/main/pylatro) directory.
+# Trigger CI

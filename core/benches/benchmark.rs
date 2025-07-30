@@ -265,6 +265,7 @@ fn benchmark_joker_processing(processor: &mut JokerEffectProcessor, iterations: 
         stage: &stage,
         hands_played: 0,
         discards_used: 0,
+        hands_remaining: 4.0, // Standard hands remaining for testing
         jokers: &[],
         hand: &hand,
         discarded: &[],

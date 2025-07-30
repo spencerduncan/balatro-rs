@@ -48,14 +48,15 @@ impl TestGameData {
             stage: &self.stage,
             hands_played: 0,
             discards_used: 0,
+            hands_remaining: 4.0, // Standard hands remaining for testing
             jokers: &[],
             hand: &self.hand,
             discarded: &[],
             joker_state_manager: &self.joker_state_manager,
             hand_type_counts: &self.hand_type_counts,
             cards_in_deck: 52,
-            stone_cards_in_deck: 0,
-            steel_cards_in_deck: 0,
+            stone_cards_in_deck: 0, // BENCHMARK: Using standard deck composition
+            steel_cards_in_deck: 0, // BENCHMARK: Using standard deck composition
             rng: &self.rng,
         }
     }
@@ -200,7 +201,7 @@ fn bench_trait_detection_caching(c: &mut Criterion) {
 
     group.bench_function("cold_trait_detection", |b| {
         b.iter(|| {
-            let processor = JokerEffectProcessor::new();
+            let _processor = JokerEffectProcessor::new();
 
             // Cold cache - first detection of each joker
             for _joker in &jokers {
@@ -211,7 +212,7 @@ fn bench_trait_detection_caching(c: &mut Criterion) {
     });
 
     group.bench_function("warm_trait_detection", |b| {
-        let processor = JokerEffectProcessor::new();
+        let _processor = JokerEffectProcessor::new();
 
         // Pre-warm the cache
         // TODO: Fix - detect_joker_traits is now private

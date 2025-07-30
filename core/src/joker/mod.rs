@@ -139,7 +139,8 @@ pub enum JokerId {
     Certificate,
     SmilingMask,
     FaceMask,
-    Fortune,
+    FortuneTeller,
+    MysteryJoker,
     Juggler,
     Drunkard,
     Stone,
@@ -547,6 +548,8 @@ pub struct GameContext<'a> {
     pub stage: &'a Stage,
     /// Number of hands played this round
     pub hands_played: u32,
+    /// Number of hands remaining this round (for final hand detection)
+    pub hands_remaining: f64,
     /// Number of discards used this round
     pub discards_used: u32,
     /// All jokers in play
@@ -1317,6 +1320,9 @@ pub mod multiplicative_jokers;
 // Include retrigger jokers
 pub mod retrigger_jokers;
 
+// Include Steel Joker composition implementation (correct deck-scanning version)
+pub mod steel_joker_composition;
+
 // Include tests for hand composition jokers (Ride the Bus, Blackboard, DNA)
 #[cfg(test)]
 mod hand_composition_tests;
@@ -1335,7 +1341,6 @@ pub mod scaling_additive_mult_jokers;
 pub mod scaling_chips_jokers;
 
 // Include testing utilities for the Joker trait system
-#[cfg(test)]
 pub mod test_utils;
 
 // Include comprehensive TestJoker mock implementations for effect-based testing
@@ -1358,6 +1363,9 @@ pub use traits::{
 pub mod advanced_conditions;
 pub mod advanced_traits;
 pub mod compatibility_bridge;
+
+// Re-export static joker trait system for migration infrastructure
+pub use crate::static_joker::{StaticContext, StaticJoker, StaticJokerAdapter};
 
 // Re-export old API types for backwards compatibility
 pub use compat::{Joker as OldJoker, Jokers};
@@ -1389,5 +1397,20 @@ mod joker_trait_tests {
         // This won't compile if Joker doesn't have Send + Sync bounds
         fn assert_send_sync<T: Send + Sync>() {}
         assert_send_sync::<Box<dyn Joker>>();
+    }
+
+    #[test]
+    fn test_joker_effect_default_mult_multiplier() {
+        let effect = JokerEffect::new();
+        assert_eq!(
+            effect.mult_multiplier, 1.0,
+            "Default mult_multiplier should be 1.0"
+        );
+
+        let effect2 = JokerEffect::default();
+        assert_eq!(
+            effect2.mult_multiplier, 1.0,
+            "Default mult_multiplier should be 1.0"
+        );
     }
 }

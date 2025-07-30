@@ -515,9 +515,10 @@ pub fn create_throwback_joker() -> Box<dyn Joker> {
     Box::new(ThrowbackJoker::new())
 }
 
-pub fn create_scaling_steel_joker() -> Box<dyn Joker> {
-    Box::new(ScalingSteelJoker::new())
-}
+// DEPRECATED: Replaced by steel_joker_composition::SteelJoker
+// pub fn create_scaling_steel_joker() -> Box<dyn Joker> {
+//     Box::new(ScalingSteelJoker::new())
+// }
 
 pub fn create_ceremonial_dagger_joker() -> Box<dyn Joker> {
     Box::new(CeremonialDaggerJoker::new())

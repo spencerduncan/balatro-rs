@@ -16,6 +16,9 @@ use std::time::Instant;
 
 /// Benchmark trait method dispatch overhead - targeting < 1ms for typical operations
 pub fn trait_dispatch_benchmark(c: &mut Criterion) {
+    // Initialize all systems before running benchmarks to avoid factory race conditions
+    balatro_rs::initialize().expect("Failed to initialize core systems");
+
     let mut group = c.benchmark_group("trait_dispatch");
 
     // Test different joker types

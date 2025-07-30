@@ -1,3 +1,4 @@
+use strum::EnumIter;
 pub struct Level {
     pub level: usize,
     pub chips: usize,
@@ -9,7 +10,7 @@ pub struct Level {
 /// the strength of the hand in comparison to others
 /// of the same rank.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, Copy)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Hash, Copy, EnumIter)]
 pub enum HandRank {
     HighCard,
     OnePair,
@@ -27,6 +28,24 @@ pub enum HandRank {
 }
 
 impl HandRank {
+    /// Get level information for this hand type at a specific level.
+    ///
+    /// # Arguments
+    /// * `level` - The level of the hand type (1 = base level)
+    ///
+    /// # Returns
+    /// Level information with chips and mult adjusted for the given level
+    pub(crate) fn level_at(&self, level: u32) -> Level {
+        let base = self.level();
+        let level_bonus = (level.saturating_sub(1)) as usize;
+
+        Level {
+            level: level as usize,
+            chips: base.chips + (level_bonus * 5), // +5 chips per level
+            mult: base.mult + level_bonus,         // +1 mult per level
+        }
+    }
+
     pub(crate) fn level(&self) -> Level {
         match self {
             Self::HighCard => Level {

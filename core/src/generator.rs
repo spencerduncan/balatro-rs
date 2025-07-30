@@ -192,6 +192,33 @@ impl Game {
         )
     }
 
+    // Get skip blind actions
+    fn gen_actions_skip_blind(&self) -> Option<impl Iterator<Item = Action>> {
+        // Can only skip blind during PreBlind stage
+        if self.stage != Stage::PreBlind() {
+            return None;
+        }
+
+        // Determine which blind can be skipped based on current game state
+        let skip_blind = if let Some(current) = self.blind {
+            // If a blind has been completed, can skip the next one
+            current.next()
+        } else {
+            // If no blind has been played yet, can only skip Small blind
+            Blind::Small
+        };
+
+        Some(vec![Action::SkipBlind(skip_blind)].into_iter())
+    }
+
+    // Get select skip tag actions
+    fn gen_actions_select_skip_tag(&self) -> Option<impl Iterator<Item = Action>> {
+        // TODO: Implement skip tag selection functionality
+        // This will be implemented when the skip tag selection system is fully ready
+        // For now, return None as skip tag selection is not yet available
+        None::<std::iter::Empty<Action>>
+    }
+
     // Get all legal actions that can be executed given current state
     pub fn gen_actions(&self) -> impl Iterator<Item = Action> + use<'_> {
         let select_cards = self.gen_actions_select_card();
@@ -206,6 +233,8 @@ impl Game {
         let open_packs = self.gen_actions_open_pack();
         let select_from_packs = self.gen_actions_select_from_pack();
         let skip_packs = self.gen_actions_skip_pack();
+        let skip_blinds = self.gen_actions_skip_blind();
+        let select_skip_tags = self.gen_actions_select_skip_tag();
 
         select_cards
             .into_iter()
@@ -221,6 +250,8 @@ impl Game {
             .chain(open_packs.into_iter().flatten())
             .chain(select_from_packs.into_iter().flatten())
             .chain(skip_packs.into_iter().flatten())
+            .chain(skip_blinds.into_iter().flatten())
+            .chain(select_skip_tags.into_iter().flatten())
     }
 
     fn unmask_action_space_select_cards(&self, space: &mut ActionSpace) {
@@ -321,6 +352,19 @@ impl Game {
             });
     }
 
+    fn unmask_action_space_skip_blind(&self, space: &mut ActionSpace) {
+        if self.stage != Stage::PreBlind() {
+            return;
+        }
+        space.unmask_skip_blind();
+    }
+
+    fn unmask_action_space_select_skip_tag(&self, _space: &mut ActionSpace) {
+        // TODO: Implement skip tag selection unmasking
+        // This will be implemented when the skip tag selection system is fully ready
+        // For now, do nothing as skip tag selection is not yet available
+    }
+
     // Get an action space, masked for legal actions only
     pub fn gen_action_space(&self) -> ActionSpace {
         let mut space = ActionSpace::from(self.config.clone());
@@ -331,6 +375,8 @@ impl Game {
         self.unmask_action_space_next_round(&mut space);
         self.unmask_action_space_select_blind(&mut space);
         self.unmask_action_space_buy_joker(&mut space);
+        self.unmask_action_space_skip_blind(&mut space);
+        self.unmask_action_space_select_skip_tag(&mut space);
         space
     }
 }
@@ -931,6 +977,123 @@ mod tests {
     }
 
     #[test]
+    fn test_gen_actions_skip_blind_basic() {
+        let mut g = Game::default();
+
+        // Test skip blind is NOT available in wrong stages
+        g.stage = Stage::Shop();
+        assert!(g.gen_actions_skip_blind().is_none());
+
+        g.stage = Stage::Blind(Blind::Small);
+        assert!(g.gen_actions_skip_blind().is_none());
+
+        g.stage = Stage::PostBlind();
+        assert!(g.gen_actions_skip_blind().is_none());
+
+        // Test skip blind IS available in PreBlind stage
+        g.stage = Stage::PreBlind();
+        let skip_actions: Vec<Action> = g
+            .gen_actions_skip_blind()
+            .expect("Should have skip actions")
+            .collect();
+        assert_eq!(skip_actions.len(), 1);
+
+        // At game start (no blind completed), should skip Small blind
+        assert!(matches!(skip_actions[0], Action::SkipBlind(Blind::Small)));
+    }
+
+    #[test]
+    fn test_gen_actions_skip_blind_progression() {
+        let mut g = Game::default();
+        g.stage = Stage::PreBlind();
+
+        // After Small blind completed, should skip Big blind
+        g.blind = Some(Blind::Small);
+        let skip_actions: Vec<Action> = g
+            .gen_actions_skip_blind()
+            .expect("Should have skip actions")
+            .collect();
+        assert_eq!(skip_actions.len(), 1);
+        assert!(matches!(skip_actions[0], Action::SkipBlind(Blind::Big)));
+
+        // After Big blind completed, should skip Boss blind
+        g.blind = Some(Blind::Big);
+        let skip_actions: Vec<Action> = g
+            .gen_actions_skip_blind()
+            .expect("Should have skip actions")
+            .collect();
+        assert_eq!(skip_actions.len(), 1);
+        assert!(matches!(skip_actions[0], Action::SkipBlind(Blind::Boss)));
+    }
+
+    #[test]
+    fn test_gen_actions_includes_skip_blind() {
+        let mut g = Game::default();
+        g.stage = Stage::PreBlind();
+
+        // Test that skip blind actions are included in main gen_actions()
+        let all_actions: Vec<Action> = g.gen_actions().collect();
+
+        // Should contain skip blind action
+        let skip_actions: Vec<&Action> = all_actions
+            .iter()
+            .filter(|a| matches!(a, Action::SkipBlind(_)))
+            .collect();
+        assert_eq!(skip_actions.len(), 1);
+        assert!(matches!(skip_actions[0], Action::SkipBlind(Blind::Small)));
+
+        // Should also contain select blind action (both options available)
+        let select_actions: Vec<&Action> = all_actions
+            .iter()
+            .filter(|a| matches!(a, Action::SelectBlind(_)))
+            .collect();
+        assert_eq!(select_actions.len(), 1);
+        assert!(matches!(
+            select_actions[0],
+            Action::SelectBlind(Blind::Small)
+        ));
+    }
+
+    #[test]
+    fn test_action_space_skip_blind_integration() {
+        let mut g = Game::default();
+        g.stage = Stage::PreBlind();
+
+        // Test that skip blind actions are properly unmasked in action space
+        let space = g.gen_action_space();
+
+        // Skip blind should be unmasked
+        assert_eq!(space.skip_blind[0], 1);
+
+        // Select blind should also be unmasked (both options available)
+        assert_eq!(space.select_blind[0], 1);
+
+        // Test converting skip blind action from space back to action
+        let skip_blind_index = space.skip_blind_min();
+        let action = space
+            .to_action(skip_blind_index, &g)
+            .expect("Should convert to action");
+        assert!(matches!(action, Action::SkipBlind(Blind::Small)));
+    }
+
+    #[test]
+    fn test_action_space_skip_blind_wrong_stage() {
+        let mut g = Game::default();
+        g.stage = Stage::Shop(); // Wrong stage
+
+        // Test that skip blind actions are masked in wrong stage
+        let space = g.gen_action_space();
+
+        // Skip blind should be masked
+        assert_eq!(space.skip_blind[0], 0);
+
+        // Test that trying to convert masked action fails
+        let skip_blind_index = space.skip_blind_min();
+        let result = space.to_action(skip_blind_index, &g);
+        assert!(result.is_err());
+    }
+
+    #[test]
     fn test_action_generation_with_zero_resources() {
         let mut g = Game::default();
         g.stage = Stage::Blind(Blind::Small);
@@ -974,6 +1137,64 @@ mod tests {
         g.unmask_action_space_play_and_discard(&mut space);
         assert_eq!(space.play[0], 0);
         assert_eq!(space.discard[0], 0);
+    }
+
+    #[test]
+    fn test_skip_blind_end_to_end_functionality() {
+        let mut g = Game::default();
+
+        // Start in PreBlind stage - both select and skip should be available
+        assert_eq!(g.stage, Stage::PreBlind());
+
+        // Generate all available actions
+        let actions: Vec<Action> = g.gen_actions().collect();
+
+        // Should have both select blind and skip blind actions
+        let select_blind_actions: Vec<&Action> = actions
+            .iter()
+            .filter(|a| matches!(a, Action::SelectBlind(_)))
+            .collect();
+        let skip_blind_actions: Vec<&Action> = actions
+            .iter()
+            .filter(|a| matches!(a, Action::SkipBlind(_)))
+            .collect();
+
+        assert_eq!(select_blind_actions.len(), 1);
+        assert_eq!(skip_blind_actions.len(), 1);
+        assert!(matches!(
+            select_blind_actions[0],
+            Action::SelectBlind(Blind::Small)
+        ));
+        assert!(matches!(
+            skip_blind_actions[0],
+            Action::SkipBlind(Blind::Small)
+        ));
+
+        // Test that we can execute the skip blind action
+        let skip_action = skip_blind_actions[0].clone();
+        let result = g.handle_action(skip_action);
+        assert!(
+            result.is_ok(),
+            "Skip blind action should execute successfully"
+        );
+
+        // After skipping, we should be in PostBlind stage
+        assert_eq!(g.stage, Stage::PostBlind());
+
+        // Should have earned some reward (half of blind reward)
+        assert!(g.reward > 0.0, "Should have earned skip reward");
+
+        // Skip blind actions should no longer be available in PostBlind
+        let post_actions: Vec<Action> = g.gen_actions().collect();
+        let post_skip_actions: Vec<&Action> = post_actions
+            .iter()
+            .filter(|a| matches!(a, Action::SkipBlind(_)))
+            .collect();
+        assert_eq!(
+            post_skip_actions.len(),
+            0,
+            "Skip blind should not be available in PostBlind stage"
+        );
     }
 
     #[test]
