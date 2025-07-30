@@ -1210,3 +1210,81 @@ impl Voucher for PaletteVoucher {
         "+1 hand size"
     }
 }
+
+/// Factory function to create voucher instances from their IDs
+/// This enables the shop system to instantiate vouchers at runtime
+pub fn create_voucher(voucher_id: VoucherId) -> Option<Box<dyn Voucher>> {
+    match voucher_id {
+        // Gameplay vouchers
+        VoucherId::Grabber => Some(Box::new(GrabberVoucher)),
+        VoucherId::NachoTong => Some(Box::new(NachoTongVoucher)),
+        VoucherId::Wasteful => Some(Box::new(WastefulVoucher)),
+        VoucherId::SeedMoney => Some(Box::new(SeedMoneyVoucher)),
+        VoucherId::MoneyTree => Some(Box::new(MoneyTreeVoucher)),
+        VoucherId::Hieroglyph => Some(Box::new(HieroglyphVoucher)),
+        VoucherId::Petroglyph => Some(Box::new(PetroglyphVoucher)),
+        VoucherId::Antimatter => Some(Box::new(AntimatterVoucher)),
+        VoucherId::MagicTrick => Some(Box::new(MagicTrickVoucher)),
+        VoucherId::Illusion => Some(Box::new(IllusionVoucher)),
+        VoucherId::Blank => Some(Box::new(BlankVoucher)),
+        VoucherId::PaintBrush => Some(Box::new(PaintBrushVoucher)),
+        VoucherId::TarotMerchant => Some(Box::new(TarotMerchantVoucher)),
+        VoucherId::TarotTycoon => Some(Box::new(TarotTycoonVoucher)),
+
+        // Shop vouchers
+        VoucherId::Overstock => Some(Box::new(OverstockVoucher)),
+        VoucherId::OverstockPlus => Some(Box::new(OverstockPlusVoucher)),
+        VoucherId::ClearanceSale => Some(Box::new(ClearanceSaleVoucher)),
+        VoucherId::Hone => Some(Box::new(HoneVoucher)),
+        VoucherId::RerollSurplus => Some(Box::new(RerollSurplusVoucher)),
+        VoucherId::CrystalBall => Some(Box::new(CrystalBallVoucher)),
+        VoucherId::RerollGlut => Some(Box::new(RerollGlutVoucher)),
+
+        // New upgrade vouchers from Issue #727
+        VoucherId::GlowUp => Some(Box::new(GlowUpVoucher)),
+        VoucherId::Liquidation => Some(Box::new(LiquidationVoucher)),
+        VoucherId::Recyclomancy => Some(Box::new(RecyclomancyVoucher)),
+        VoucherId::PlanetMerchant => Some(Box::new(PlanetMerchantVoucher)),
+        VoucherId::PlanetTycoon => Some(Box::new(PlanetTycoonVoucher)),
+        VoucherId::DirectorsCut => Some(Box::new(DirectorsCutVoucher)),
+        VoucherId::Retcon => Some(Box::new(RetconVoucher)),
+        VoucherId::Palette => Some(Box::new(PaletteVoucher)),
+
+        // Not yet implemented or placeholder vouchers
+        VoucherId::GrabBag => None,
+        VoucherId::VoucherPlaceholder => None,
+    }
+}
+
+/// Get all available voucher instances
+/// This is useful for shop generation and testing
+pub fn get_all_vouchers() -> Vec<Box<dyn Voucher>> {
+    VoucherId::all()
+        .into_iter()
+        .filter_map(create_voucher)
+        .collect()
+}
+
+/// Get vouchers by tier
+pub fn get_vouchers_by_tier(tier: VoucherTier) -> Vec<Box<dyn Voucher>> {
+    get_all_vouchers()
+        .into_iter()
+        .filter(|voucher| voucher.tier() == tier)
+        .collect()
+}
+
+/// Get base vouchers (no prerequisites)
+pub fn get_base_vouchers() -> Vec<Box<dyn Voucher>> {
+    get_all_vouchers()
+        .into_iter()
+        .filter(|voucher| voucher.prerequisite().is_none())
+        .collect()
+}
+
+/// Get upgrade vouchers (have prerequisites)
+pub fn get_upgrade_vouchers() -> Vec<Box<dyn Voucher>> {
+    get_all_vouchers()
+        .into_iter()
+        .filter(|voucher| voucher.prerequisite().is_some())
+        .collect()
+}
