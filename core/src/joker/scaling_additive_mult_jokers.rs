@@ -201,7 +201,7 @@ impl FortuneTellerJoker {
             id: JokerId::FortuneTeller,
             name: "Fortune Teller".to_string(),
             description: "+1 Mult per Tarot card used".to_string(),
-            rarity: JokerRarity::Rare,
+            rarity: JokerRarity::Common,
             cost: 8,
             // Removed: tarots_used initialization (dual state eliminated)
         }

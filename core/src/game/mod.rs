@@ -221,6 +221,9 @@ pub struct Game {
     /// Consumable cards currently in the player's hand
     pub consumables_in_hand: Vec<ConsumableId>,
 
+    /// Consumable card slots for managing consumable inventory
+    pub consumable_slots: crate::consumables::ConsumableSlots,
+
     /// Collection of owned vouchers with purchase tracking
     pub vouchers: VoucherCollection,
 
@@ -2050,6 +2053,12 @@ impl Game {
             // Skip tag system actions
             Action::SkipBlind(blind) => self.handle_skip_blind(blind),
             Action::SelectSkipTag(tag_id) => self.handle_select_skip_tag(tag_id),
+
+            // Planet card actions
+            Action::UsePlanetCard {
+                planet_card_id,
+                hand_rank_id,
+            } => self.handle_use_planet_card(planet_card_id, hand_rank_id),
         }
     }
 
@@ -2314,7 +2323,11 @@ impl Game {
     }
 
     /// Handle using a planet card to level up a hand
-    pub fn handle_use_planet_card(&mut self, _planet_card_id: u32, hand_rank_id: u32) -> Result<(), GameError> {
+    pub fn handle_use_planet_card(
+        &mut self,
+        _planet_card_id: u32,
+        hand_rank_id: u32,
+    ) -> Result<(), GameError> {
         // Convert hand_rank_id to HandRank and level it up
         // TODO: Implement proper planet card ID usage when planet cards are fully implemented
         use strum::IntoEnumIterator;
@@ -2472,7 +2485,11 @@ impl Game {
             mult: self.mult,
             score: self.score,
             hand_type_counts: self.hand_type_counts.clone(),
-            hand_levels: self.hand_levels.iter().map(|(k, v)| (*k, *v as u32)).collect(),
+            hand_levels: self
+                .hand_levels
+                .iter()
+                .map(|(k, v)| (*k, *v as u32))
+                .collect(),
             // Extended state fields
             consumables_in_hand: self.consumables_in_hand.clone(),
             vouchers: self.vouchers.clone(),

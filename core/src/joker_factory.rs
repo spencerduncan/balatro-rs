@@ -229,8 +229,6 @@ impl JokerFactory {
                 FortuneTeller, // Fortune Teller scaling joker
                 // Special mechanic jokers
                 Blueprint,
-                // Scaling mult jokers
-                FortuneTeller, // Fortune Teller
                 // Scaling chips jokers
                 Castle,
                 Wee,
@@ -534,6 +532,7 @@ mod tests {
         let rare_jokers = JokerFactory::get_by_rarity(JokerRarity::Rare);
         // Rare scaling jokers
         assert!(rare_jokers.contains(&JokerId::FortuneTeller)); // Fortune Teller
+        assert!(rare_jokers.contains(&JokerId::MysteryJoker)); // Mystery Joker
         assert!(rare_jokers.contains(&JokerId::Castle));
         assert!(rare_jokers.contains(&JokerId::Wee));
         assert!(rare_jokers.contains(&JokerId::Stuntman));
