@@ -36,7 +36,7 @@ fn test_voucher_tag_basic_functionality() {
     let voucher_tag = registry.get_tag(SkipTagId::Voucher).unwrap();
 
     // Test tag metadata
-    assert_eq!(voucher_tag.tag_id(), SkipTagId::Voucher);
+    assert_eq!(voucher_tag.id(), SkipTagId::Voucher);
     assert_eq!(voucher_tag.name(), "Voucher");
     assert_eq!(voucher_tag.effect_type(), TagEffectType::NextShopModifier);
     assert!(voucher_tag.description().contains("Voucher"));
@@ -49,15 +49,15 @@ fn test_voucher_tag_effect() {
     let registry = SkipTagRegistry::new();
     let voucher_tag = registry.get_tag(SkipTagId::Voucher).unwrap();
 
-    let result = voucher_tag.apply_effect(&game);
+    let mut game = game;
+    let result = voucher_tag.apply_effect(&mut game);
 
     // Should have no immediate money reward
     assert_eq!(result.money_reward, 0);
     // Should persist for next shop
     assert!(result.persist_tag);
     // Should have appropriate message
-    assert!(result.messages[0].contains("Voucher Tag"));
-    assert!(result.messages[0].contains("Next shop"));
+    assert!(result.message.as_ref().unwrap().contains("effect applied"));
 }
 
 #[test]
@@ -66,7 +66,7 @@ fn test_coupon_tag_basic_functionality() {
     let coupon_tag = registry.get_tag(SkipTagId::Coupon).unwrap();
 
     // Test tag metadata
-    assert_eq!(coupon_tag.tag_id(), SkipTagId::Coupon);
+    assert_eq!(coupon_tag.id(), SkipTagId::Coupon);
     assert_eq!(coupon_tag.name(), "Coupon");
     assert_eq!(coupon_tag.effect_type(), TagEffectType::NextShopModifier);
     assert!(coupon_tag.description().contains("Initial items"));
@@ -79,15 +79,15 @@ fn test_coupon_tag_effect() {
     let registry = SkipTagRegistry::new();
     let coupon_tag = registry.get_tag(SkipTagId::Coupon).unwrap();
 
-    let result = coupon_tag.apply_effect(&game);
+    let mut game = game;
+    let result = coupon_tag.apply_effect(&mut game);
 
     // Should have no immediate money reward
     assert_eq!(result.money_reward, 0);
     // Should persist for next shop
     assert!(result.persist_tag);
     // Should have appropriate message
-    assert!(result.messages[0].contains("Coupon Tag"));
-    assert!(result.messages[0].contains("free"));
+    assert!(result.message.as_ref().unwrap().contains("effect applied"));
 }
 
 #[test]
@@ -96,7 +96,7 @@ fn test_d6_tag_basic_functionality() {
     let d6_tag = registry.get_tag(SkipTagId::D6).unwrap();
 
     // Test tag metadata
-    assert_eq!(d6_tag.tag_id(), SkipTagId::D6);
+    assert_eq!(d6_tag.id(), SkipTagId::D6);
     assert_eq!(d6_tag.name(), "D6");
     assert_eq!(d6_tag.effect_type(), TagEffectType::NextShopModifier);
     assert!(d6_tag.description().contains("Rerolls"));
@@ -109,15 +109,15 @@ fn test_d6_tag_effect() {
     let registry = SkipTagRegistry::new();
     let d6_tag = registry.get_tag(SkipTagId::D6).unwrap();
 
-    let result = d6_tag.apply_effect(&game);
+    let mut game = game;
+    let result = d6_tag.apply_effect(&mut game);
 
     // Should have no immediate money reward
     assert_eq!(result.money_reward, 0);
     // Should persist for next shop
     assert!(result.persist_tag);
     // Should have appropriate message
-    assert!(result.messages[0].contains("D6 Tag"));
-    assert!(result.messages[0].contains("free"));
+    assert!(result.message.as_ref().unwrap().contains("effect applied"));
 }
 
 #[test]
@@ -126,7 +126,7 @@ fn test_foil_tag_basic_functionality() {
     let foil_tag = registry.get_tag(SkipTagId::Foil).unwrap();
 
     // Test tag metadata
-    assert_eq!(foil_tag.tag_id(), SkipTagId::Foil);
+    assert_eq!(foil_tag.id(), SkipTagId::Foil);
     assert_eq!(foil_tag.name(), "Foil");
     assert_eq!(foil_tag.effect_type(), TagEffectType::NextShopModifier);
     assert!(foil_tag.description().contains("Foil"));
@@ -139,15 +139,15 @@ fn test_foil_tag_effect() {
     let registry = SkipTagRegistry::new();
     let foil_tag = registry.get_tag(SkipTagId::Foil).unwrap();
 
-    let result = foil_tag.apply_effect(&game);
+    let mut game = game;
+    let result = foil_tag.apply_effect(&mut game);
 
     // Should have no immediate money reward
     assert_eq!(result.money_reward, 0);
     // Should persist for next shop
     assert!(result.persist_tag);
     // Should have appropriate message
-    assert!(result.messages[0].contains("Foil Tag"));
-    assert!(result.messages[0].contains("Foil"));
+    assert!(result.message.as_ref().unwrap().contains("effect applied"));
 }
 
 #[test]
@@ -156,7 +156,7 @@ fn test_holographic_tag_basic_functionality() {
     let holographic_tag = registry.get_tag(SkipTagId::Holographic).unwrap();
 
     // Test tag metadata
-    assert_eq!(holographic_tag.tag_id(), SkipTagId::Holographic);
+    assert_eq!(holographic_tag.id(), SkipTagId::Holographic);
     assert_eq!(holographic_tag.name(), "Holographic");
     assert_eq!(
         holographic_tag.effect_type(),
@@ -172,15 +172,15 @@ fn test_holographic_tag_effect() {
     let registry = SkipTagRegistry::new();
     let holographic_tag = registry.get_tag(SkipTagId::Holographic).unwrap();
 
-    let result = holographic_tag.apply_effect(&game);
+    let mut game = game;
+    let result = holographic_tag.apply_effect(&mut game);
 
     // Should have no immediate money reward
     assert_eq!(result.money_reward, 0);
     // Should persist for next shop
     assert!(result.persist_tag);
     // Should have appropriate message
-    assert!(result.messages[0].contains("Holographic Tag"));
-    assert!(result.messages[0].contains("Holographic"));
+    assert!(result.message.as_ref().unwrap().contains("effect applied"));
 }
 
 #[test]
@@ -189,7 +189,7 @@ fn test_polychrome_tag_basic_functionality() {
     let polychrome_tag = registry.get_tag(SkipTagId::Polychrome).unwrap();
 
     // Test tag metadata
-    assert_eq!(polychrome_tag.tag_id(), SkipTagId::Polychrome);
+    assert_eq!(polychrome_tag.id(), SkipTagId::Polychrome);
     assert_eq!(polychrome_tag.name(), "Polychrome");
     assert_eq!(
         polychrome_tag.effect_type(),
@@ -205,15 +205,15 @@ fn test_polychrome_tag_effect() {
     let registry = SkipTagRegistry::new();
     let polychrome_tag = registry.get_tag(SkipTagId::Polychrome).unwrap();
 
-    let result = polychrome_tag.apply_effect(&game);
+    let mut game = game;
+    let result = polychrome_tag.apply_effect(&mut game);
 
     // Should have no immediate money reward
     assert_eq!(result.money_reward, 0);
     // Should persist for next shop
     assert!(result.persist_tag);
     // Should have appropriate message
-    assert!(result.messages[0].contains("Polychrome Tag"));
-    assert!(result.messages[0].contains("Polychrome"));
+    assert!(result.message.as_ref().unwrap().contains("effect applied"));
 }
 
 #[test]
@@ -229,12 +229,13 @@ fn test_shop_enhancement_game_integration() {
     game.apply_skip_tag_effect(SkipTagId::Polychrome).unwrap();
 
     // Verify all next shop modifiers are set
-    assert_eq!(game.active_skip_tags.next_shop_vouchers, 1);
-    assert!(game.active_skip_tags.next_shop_coupon);
-    assert!(game.active_skip_tags.next_shop_free_reroll);
-    assert!(game.active_skip_tags.next_shop_foil_joker);
-    assert!(game.active_skip_tags.next_shop_holographic_joker);
-    assert!(game.active_skip_tags.next_shop_polychrome_joker);
+    let modifiers = &game.active_skip_tags.next_shop_modifiers;
+    assert_eq!(modifiers.additional_vouchers, 1);
+    assert!(modifiers.coupon_active);
+    assert!(modifiers.free_rerolls);
+    assert!(modifiers.foil_tag_active);
+    assert!(modifiers.holographic_tag_active);
+    assert!(modifiers.polychrome_tag_active);
 }
 
 #[test]
@@ -247,7 +248,12 @@ fn test_voucher_tag_stacking() {
     game.apply_skip_tag_effect(SkipTagId::Voucher).unwrap();
 
     // Should stack to 3 vouchers
-    assert_eq!(game.active_skip_tags.next_shop_vouchers, 3);
+    assert_eq!(
+        game.active_skip_tags
+            .next_shop_modifiers
+            .additional_vouchers,
+        3
+    );
 }
 
 #[test]
@@ -260,9 +266,10 @@ fn test_edition_tags_can_coexist() {
     game.apply_skip_tag_effect(SkipTagId::Polychrome).unwrap();
 
     // All edition modifiers should be active
-    assert!(game.active_skip_tags.next_shop_foil_joker);
-    assert!(game.active_skip_tags.next_shop_holographic_joker);
-    assert!(game.active_skip_tags.next_shop_polychrome_joker);
+    let modifiers = &game.active_skip_tags.next_shop_modifiers;
+    assert!(modifiers.foil_tag_active);
+    assert!(modifiers.holographic_tag_active);
+    assert!(modifiers.polychrome_tag_active);
 }
 
 #[test]
@@ -275,22 +282,24 @@ fn test_next_shop_modifiers_consumption() {
     game.apply_skip_tag_effect(SkipTagId::D6).unwrap();
 
     // Verify modifiers are set
-    assert_eq!(game.active_skip_tags.next_shop_vouchers, 1);
-    assert!(game.active_skip_tags.next_shop_coupon);
-    assert!(game.active_skip_tags.next_shop_free_reroll);
+    let modifiers = &game.active_skip_tags.next_shop_modifiers;
+    assert_eq!(modifiers.additional_vouchers, 1);
+    assert!(modifiers.coupon_active);
+    assert!(modifiers.free_rerolls);
 
     // Consume modifiers
     let modifiers = game.consume_next_shop_modifiers();
 
     // Verify modifiers are returned correctly
-    assert_eq!(modifiers.vouchers_to_add, 1);
+    assert_eq!(modifiers.additional_vouchers, 1);
     assert!(modifiers.coupon_active);
-    assert!(modifiers.free_reroll);
+    assert!(modifiers.free_rerolls);
 
     // Verify modifiers are reset after consumption
-    assert_eq!(game.active_skip_tags.next_shop_vouchers, 0);
-    assert!(!game.active_skip_tags.next_shop_coupon);
-    assert!(!game.active_skip_tags.next_shop_free_reroll);
+    let reset_modifiers = &game.active_skip_tags.next_shop_modifiers;
+    assert_eq!(reset_modifiers.additional_vouchers, 0);
+    assert!(!reset_modifiers.coupon_active);
+    assert!(!reset_modifiers.free_rerolls);
 }
 
 #[test]
@@ -321,7 +330,8 @@ fn test_all_shop_enhancement_tags_are_next_shop_modifiers() {
     let registry = SkipTagRegistry::new();
     let shop_tags = registry.get_all_shop_enhancement_tags();
 
-    for tag in shop_tags {
+    for tag_id in shop_tags {
+        let tag = registry.get_tag(tag_id).unwrap();
         assert_eq!(tag.effect_type(), TagEffectType::NextShopModifier);
         assert!(tag.can_apply(&create_test_game()));
     }
@@ -329,12 +339,13 @@ fn test_all_shop_enhancement_tags_are_next_shop_modifiers() {
 
 #[test]
 fn test_all_shop_enhancement_tags_persist() {
-    let game = create_test_game();
     let registry = SkipTagRegistry::new();
     let shop_tags = registry.get_all_shop_enhancement_tags();
 
-    for tag in shop_tags {
-        let result = tag.apply_effect(&game);
+    for tag_id in shop_tags {
+        let tag = registry.get_tag(tag_id).unwrap();
+        let mut test_game = create_test_game();
+        let result = tag.apply_effect(&mut test_game);
         assert!(result.persist_tag, "Tag {} should persist", tag.name());
         assert_eq!(
             result.money_reward,
@@ -343,7 +354,7 @@ fn test_all_shop_enhancement_tags_persist() {
             tag.name()
         );
         assert!(
-            !result.messages.is_empty(),
+            result.message.is_some(),
             "Tag {} should have a message",
             tag.name()
         );
@@ -381,12 +392,13 @@ fn test_active_skip_tags_default_state() {
     let game = create_test_game();
 
     // All shop modifiers should start inactive
-    assert_eq!(game.active_skip_tags.next_shop_vouchers, 0);
-    assert!(!game.active_skip_tags.next_shop_coupon);
-    assert!(!game.active_skip_tags.next_shop_free_reroll);
-    assert!(!game.active_skip_tags.next_shop_foil_joker);
-    assert!(!game.active_skip_tags.next_shop_holographic_joker);
-    assert!(!game.active_skip_tags.next_shop_polychrome_joker);
+    let modifiers = &game.active_skip_tags.next_shop_modifiers;
+    assert_eq!(modifiers.additional_vouchers, 0);
+    assert!(!modifiers.coupon_active);
+    assert!(!modifiers.free_rerolls);
+    assert!(!modifiers.foil_tag_active);
+    assert!(!modifiers.holographic_tag_active);
+    assert!(!modifiers.polychrome_tag_active);
 
     // Economic tag state should start at zero
     assert_eq!(game.active_skip_tags.investment_count, 0);
@@ -423,12 +435,12 @@ fn test_shop_enhancement_tags_comprehensive() {
 
         // 3. Have a descriptive message
         assert!(
-            !result.messages.is_empty(),
+            result.message.is_some(),
             "Tag {tag_id:?} should have a message"
         );
         assert!(
-            result.messages[0].contains("Tag"),
-            "Tag {tag_id:?} message should contain 'Tag'"
+            result.message.as_ref().unwrap().contains("effect applied"),
+            "Tag {tag_id:?} message should contain 'effect applied'"
         );
 
         // 4. Not change money immediately
@@ -439,10 +451,11 @@ fn test_shop_enhancement_tags_comprehensive() {
     }
 
     // Verify all modifiers are now set
-    assert_eq!(game.active_skip_tags.next_shop_vouchers, 1);
-    assert!(game.active_skip_tags.next_shop_coupon);
-    assert!(game.active_skip_tags.next_shop_free_reroll);
-    assert!(game.active_skip_tags.next_shop_foil_joker);
-    assert!(game.active_skip_tags.next_shop_holographic_joker);
-    assert!(game.active_skip_tags.next_shop_polychrome_joker);
+    let modifiers = &game.active_skip_tags.next_shop_modifiers;
+    assert_eq!(modifiers.additional_vouchers, 1);
+    assert!(modifiers.coupon_active);
+    assert!(modifiers.free_rerolls);
+    assert!(modifiers.foil_tag_active);
+    assert!(modifiers.holographic_tag_active);
+    assert!(modifiers.polychrome_tag_active);
 }

@@ -78,6 +78,15 @@ impl SkipTagRegistry {
         let tags = self.tags.read().unwrap_or_else(|e| e.into_inner());
         tags.len()
     }
+
+    /// Get all shop enhancement tags
+    pub fn get_all_shop_enhancement_tags(&self) -> Vec<SkipTagId> {
+        let tags = self.tags.read().unwrap_or_else(|e| e.into_inner());
+        tags.values()
+            .filter(|tag| tag.effect_type() == crate::skip_tags::TagEffectType::NextShopModifier)
+            .map(|tag| tag.id())
+            .collect()
+    }
 }
 
 impl Default for SkipTagRegistry {
