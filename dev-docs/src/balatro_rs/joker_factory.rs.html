@@ -96,7 +96,7 @@
 <a href=#96 id=96 data-nosnippet>96</a>            JokerId::GreenJoker =&gt; <span class="prelude-val">Some</span>(Box::new(GreenJoker::new())),
 <a href=#97 id=97 data-nosnippet>97</a>            JokerId::Reserved5 =&gt; <span class="prelude-val">Some</span>(Box::new(RideTheBusJoker::new())), <span class="comment">// RideTheBus
 <a href=#98 id=98 data-nosnippet>98</a>            </span>JokerId::Reserved6 =&gt; <span class="prelude-val">Some</span>(Box::new(RedCardJoker::new())),    <span class="comment">// RedCard (pack skipping)
-<a href=#99 id=99 data-nosnippet>99</a>            </span>JokerId::RedCard =&gt; <span class="prelude-val">Some</span>(Box::new(RedCardJoker::new())), <span class="comment">// RedCard (direct mapping)
+<a href=#99 id=99 data-nosnippet>99</a>            </span>JokerId::RedCard =&gt; <span class="prelude-val">Some</span>(Box::new(RedCardJoker::new())),      <span class="comment">// RedCard (pack skipping)
 <a href=#100 id=100 data-nosnippet>100</a>
 <a href=#101 id=101 data-nosnippet>101</a>            // Scaling chips jokers
 <a href=#102 id=102 data-nosnippet>102</a>            </span>JokerId::Castle =&gt; <span class="prelude-val">Some</span>(Box::new(CastleJoker::new())),
@@ -179,40 +179,40 @@
 <a href=#179 id=179 data-nosnippet>179</a>                <span class="comment">// RNG-based jokers (Issue #442)
 <a href=#180 id=180 data-nosnippet>180</a>                </span>Reserved7,     <span class="comment">// SixShooterJoker
 <a href=#181 id=181 data-nosnippet>181</a>                </span>LuckyCharm,    <span class="comment">// LuckyCardJoker
-<a href=#182 id=182 data-nosnippet>182</a>                </span>FortuneTeller, <span class="comment">// Fortune Teller
-<a href=#183 id=183 data-nosnippet>183</a>                // Special mechanic jokers
-<a href=#184 id=184 data-nosnippet>184</a>                </span>Erosion,
-<a href=#185 id=185 data-nosnippet>185</a>                Photograph,
-<a href=#186 id=186 data-nosnippet>186</a>                <span class="comment">// Scaling additive mult jokers
-<a href=#187 id=187 data-nosnippet>187</a>                </span>GreenJoker,
-<a href=#188 id=188 data-nosnippet>188</a>                Reserved5, <span class="comment">// RideTheBus
-<a href=#189 id=189 data-nosnippet>189</a>                </span>Reserved6, <span class="comment">// RedCard (pack skipping)
-<a href=#190 id=190 data-nosnippet>190</a>                </span>RedCard,   <span class="comment">// Red Card (direct mapping)
-<a href=#191 id=191 data-nosnippet>191</a>                // Scaling chips jokers
-<a href=#192 id=192 data-nosnippet>192</a>                </span>OddTodd,
-<a href=#193 id=193 data-nosnippet>193</a>                Arrowhead,
-<a href=#194 id=194 data-nosnippet>194</a>                Scholar,
-<a href=#195 id=195 data-nosnippet>195</a>                <span class="comment">// Resource chips jokers
-<a href=#196 id=196 data-nosnippet>196</a>                </span>ScaryFace, <span class="comment">// ScaryFace Joker
-<a href=#197 id=197 data-nosnippet>197</a>                // Scaling xmult jokers (none in common)
-<a href=#198 id=198 data-nosnippet>198</a>                // Retrigger jokers
-<a href=#199 id=199 data-nosnippet>199</a>                </span>Hanging, <span class="comment">// HangingChadJoker
-<a href=#200 id=200 data-nosnippet>200</a>            </span>],
-<a href=#201 id=201 data-nosnippet>201</a>            JokerRarity::Uncommon =&gt; <span class="macro">vec!</span>[
-<a href=#202 id=202 data-nosnippet>202</a>                <span class="comment">// Money-based conditional jokers
-<a href=#203 id=203 data-nosnippet>203</a>                </span>Burglar,    <span class="comment">// Hand type conditional jokers
-<a href=#204 id=204 data-nosnippet>204</a>                </span>SpaceJoker, <span class="comment">// New static jokers
-<a href=#205 id=205 data-nosnippet>205</a>                </span>BlueJoker,
-<a href=#206 id=206 data-nosnippet>206</a>                SteelJoker, <span class="comment">// Scaling Steel Joker
-<a href=#207 id=207 data-nosnippet>207</a>                // RNG-based jokers (Issue #442)
-<a href=#208 id=208 data-nosnippet>208</a>                </span>Oops,      <span class="comment">// OopsAllSixesJoker
-<a href=#209 id=209 data-nosnippet>209</a>                </span>Reserved8, <span class="comment">// GrimJoker
-<a href=#210 id=210 data-nosnippet>210</a>                </span>VagabondJoker,
-<a href=#211 id=211 data-nosnippet>211</a>                <span class="comment">// Special mechanic jokers
-<a href=#212 id=212 data-nosnippet>212</a>                </span>TheOrder,
-<a href=#213 id=213 data-nosnippet>213</a>                FourFingers,
-<a href=#214 id=214 data-nosnippet>214</a>                <span class="comment">// Scaling additive mult jokers
-<a href=#215 id=215 data-nosnippet>215</a>                </span>Trousers, <span class="comment">// Spare Trousers
+<a href=#182 id=182 data-nosnippet>182</a>                // Special mechanic jokers
+<a href=#183 id=183 data-nosnippet>183</a>                </span>Erosion,
+<a href=#184 id=184 data-nosnippet>184</a>                Photograph,
+<a href=#185 id=185 data-nosnippet>185</a>                <span class="comment">// Scaling additive mult jokers
+<a href=#186 id=186 data-nosnippet>186</a>                </span>GreenJoker,
+<a href=#187 id=187 data-nosnippet>187</a>                Reserved5, <span class="comment">// RideTheBus
+<a href=#188 id=188 data-nosnippet>188</a>                </span>Reserved6, <span class="comment">// RedCard (pack skipping)
+<a href=#189 id=189 data-nosnippet>189</a>                </span>RedCard,   <span class="comment">// Red Card (direct mapping)
+<a href=#190 id=190 data-nosnippet>190</a>                // Scaling chips jokers
+<a href=#191 id=191 data-nosnippet>191</a>                </span>OddTodd,
+<a href=#192 id=192 data-nosnippet>192</a>                Arrowhead,
+<a href=#193 id=193 data-nosnippet>193</a>                Scholar,
+<a href=#194 id=194 data-nosnippet>194</a>                <span class="comment">// Resource chips jokers
+<a href=#195 id=195 data-nosnippet>195</a>                </span>ScaryFace, <span class="comment">// ScaryFace Joker
+<a href=#196 id=196 data-nosnippet>196</a>                // Scaling xmult jokers (none in common)
+<a href=#197 id=197 data-nosnippet>197</a>                // Retrigger jokers
+<a href=#198 id=198 data-nosnippet>198</a>                </span>Hanging, <span class="comment">// HangingChadJoker
+<a href=#199 id=199 data-nosnippet>199</a>            </span>],
+<a href=#200 id=200 data-nosnippet>200</a>            JokerRarity::Uncommon =&gt; <span class="macro">vec!</span>[
+<a href=#201 id=201 data-nosnippet>201</a>                <span class="comment">// Money-based conditional jokers
+<a href=#202 id=202 data-nosnippet>202</a>                </span>Burglar,    <span class="comment">// Hand type conditional jokers
+<a href=#203 id=203 data-nosnippet>203</a>                </span>SpaceJoker, <span class="comment">// New static jokers
+<a href=#204 id=204 data-nosnippet>204</a>                </span>BlueJoker,
+<a href=#205 id=205 data-nosnippet>205</a>                SteelJoker, <span class="comment">// Scaling Steel Joker
+<a href=#206 id=206 data-nosnippet>206</a>                // RNG-based jokers (Issue #442)
+<a href=#207 id=207 data-nosnippet>207</a>                </span>Oops,      <span class="comment">// OopsAllSixesJoker
+<a href=#208 id=208 data-nosnippet>208</a>                </span>Reserved8, <span class="comment">// GrimJoker
+<a href=#209 id=209 data-nosnippet>209</a>                </span>VagabondJoker,
+<a href=#210 id=210 data-nosnippet>210</a>                <span class="comment">// Special mechanic jokers
+<a href=#211 id=211 data-nosnippet>211</a>                </span>TheOrder,
+<a href=#212 id=212 data-nosnippet>212</a>                FourFingers,
+<a href=#213 id=213 data-nosnippet>213</a>                <span class="comment">// Scaling additive mult jokers
+<a href=#214 id=214 data-nosnippet>214</a>                </span>Trousers, <span class="comment">// Spare Trousers
+<a href=#215 id=215 data-nosnippet>215</a>                </span>RedCard,  <span class="comment">// RedCard (pack skipping)
 <a href=#216 id=216 data-nosnippet>216</a>                // Scaling chips jokers
 <a href=#217 id=217 data-nosnippet>217</a>                </span>Hiker,
 <a href=#218 id=218 data-nosnippet>218</a>                <span class="comment">// Scaling xmult jokers
@@ -440,9 +440,9 @@
 <a href=#440 id=440 data-nosnippet>440</a>
 <a href=#441 id=441 data-nosnippet>441</a>        <span class="kw">let </span>red_card = JokerFactory::create(JokerId::Reserved6);
 <a href=#442 id=442 data-nosnippet>442</a>        <span class="macro">assert!</span>(red_card.is_some());
-<a href=#443 id=443 data-nosnippet>443</a>        <span class="macro">assert_eq!</span>(red_card.unwrap().id(), JokerId::Reserved6);
+<a href=#443 id=443 data-nosnippet>443</a>        <span class="macro">assert_eq!</span>(red_card.unwrap().id(), JokerId::RedCard); <span class="comment">// RedCardJoker now uses RedCard ID
 <a href=#444 id=444 data-nosnippet>444</a>
-<a href=#445 id=445 data-nosnippet>445</a>        <span class="kw">let </span>fortune_teller = JokerFactory::create(JokerId::FortuneTeller);
+<a href=#445 id=445 data-nosnippet>445</a>        </span><span class="kw">let </span>fortune_teller = JokerFactory::create(JokerId::FortuneTeller);
 <a href=#446 id=446 data-nosnippet>446</a>        <span class="macro">assert!</span>(fortune_teller.is_some());
 <a href=#447 id=447 data-nosnippet>447</a>        <span class="macro">assert_eq!</span>(fortune_teller.unwrap().id(), JokerId::FortuneTeller);
 <a href=#448 id=448 data-nosnippet>448</a>
@@ -530,48 +530,52 @@
 <a href=#530 id=530 data-nosnippet>530</a>        <span class="macro">assert!</span>(uncommon_jokers.contains(<span class="kw-2">&amp;</span>JokerId::Reserved)); <span class="comment">// Throwback
 <a href=#531 id=531 data-nosnippet>531</a>        </span><span class="macro">assert!</span>(uncommon_jokers.contains(<span class="kw-2">&amp;</span>JokerId::Ceremonial)); <span class="comment">// Ceremonial Dagger
 <a href=#532 id=532 data-nosnippet>532</a>
-<a href=#533 id=533 data-nosnippet>533</a>        </span><span class="kw">let </span>rare_jokers = JokerFactory::get_by_rarity(JokerRarity::Rare);
-<a href=#534 id=534 data-nosnippet>534</a>        <span class="comment">// Rare scaling jokers
-<a href=#535 id=535 data-nosnippet>535</a>        </span><span class="macro">assert!</span>(rare_jokers.contains(<span class="kw-2">&amp;</span>JokerId::FortuneTeller)); <span class="comment">// Fortune Teller
-<a href=#536 id=536 data-nosnippet>536</a>        </span><span class="macro">assert!</span>(rare_jokers.contains(<span class="kw-2">&amp;</span>JokerId::Castle));
-<a href=#537 id=537 data-nosnippet>537</a>        <span class="macro">assert!</span>(rare_jokers.contains(<span class="kw-2">&amp;</span>JokerId::Wee));
-<a href=#538 id=538 data-nosnippet>538</a>        <span class="macro">assert!</span>(rare_jokers.contains(<span class="kw-2">&amp;</span>JokerId::Stuntman));
-<a href=#539 id=539 data-nosnippet>539</a>        <span class="macro">assert!</span>(rare_jokers.contains(<span class="kw-2">&amp;</span>JokerId::Reserved2)); <span class="comment">// Mystic Summit
-<a href=#540 id=540 data-nosnippet>540</a>    </span>}
-<a href=#541 id=541 data-nosnippet>541</a>
-<a href=#542 id=542 data-nosnippet>542</a>    <span class="attr">#[test]
-<a href=#543 id=543 data-nosnippet>543</a>    </span><span class="kw">fn </span>test_scaling_jokers_in_implemented_list() {
-<a href=#544 id=544 data-nosnippet>544</a>        <span class="kw">let </span>implemented = JokerFactory::get_all_implemented();
+<a href=#533 id=533 data-nosnippet>533</a>        </span><span class="kw">let </span>common_jokers = JokerFactory::get_by_rarity(JokerRarity::Common);
+<a href=#534 id=534 data-nosnippet>534</a>        <span class="comment">// Fortune Teller moved to Common
+<a href=#535 id=535 data-nosnippet>535</a>        </span><span class="macro">assert!</span>(common_jokers.contains(<span class="kw-2">&amp;</span>JokerId::Fortune)); <span class="comment">// Fortune Teller
+<a href=#536 id=536 data-nosnippet>536</a>        
+<a href=#537 id=537 data-nosnippet>537</a>        </span><span class="kw">let </span>rare_jokers = JokerFactory::get_by_rarity(JokerRarity::Rare);
+<a href=#538 id=538 data-nosnippet>538</a>        <span class="comment">// Rare scaling jokers
+<a href=#539 id=539 data-nosnippet>539</a>        </span><span class="macro">assert!</span>(rare_jokers.contains(<span class="kw-2">&amp;</span>JokerId::FortuneTeller)); <span class="comment">// Fortune Teller
+<a href=#540 id=540 data-nosnippet>540</a>        </span><span class="macro">assert!</span>(rare_jokers.contains(<span class="kw-2">&amp;</span>JokerId::Castle));
+<a href=#541 id=541 data-nosnippet>541</a>        <span class="macro">assert!</span>(rare_jokers.contains(<span class="kw-2">&amp;</span>JokerId::Wee));
+<a href=#542 id=542 data-nosnippet>542</a>        <span class="macro">assert!</span>(rare_jokers.contains(<span class="kw-2">&amp;</span>JokerId::Stuntman));
+<a href=#543 id=543 data-nosnippet>543</a>        <span class="macro">assert!</span>(rare_jokers.contains(<span class="kw-2">&amp;</span>JokerId::Reserved2)); <span class="comment">// Mystic Summit
+<a href=#544 id=544 data-nosnippet>544</a>    </span>}
 <a href=#545 id=545 data-nosnippet>545</a>
-<a href=#546 id=546 data-nosnippet>546</a>        <span class="comment">// All integrated scaling jokers should be in implemented list
-<a href=#547 id=547 data-nosnippet>547</a>        // Scaling additive mult jokers
-<a href=#548 id=548 data-nosnippet>548</a>        </span><span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::Trousers));
-<a href=#549 id=549 data-nosnippet>549</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::GreenJoker));
-<a href=#550 id=550 data-nosnippet>550</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::Reserved5));
-<a href=#551 id=551 data-nosnippet>551</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::Reserved6));
-<a href=#552 id=552 data-nosnippet>552</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::FortuneTeller));
-<a href=#553 id=553 data-nosnippet>553</a>
-<a href=#554 id=554 data-nosnippet>554</a>        <span class="comment">// Scaling chips jokers
-<a href=#555 id=555 data-nosnippet>555</a>        </span><span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::Castle));
-<a href=#556 id=556 data-nosnippet>556</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::Wee));
-<a href=#557 id=557 data-nosnippet>557</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::Stuntman));
-<a href=#558 id=558 data-nosnippet>558</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::Hiker));
-<a href=#559 id=559 data-nosnippet>559</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::OddTodd));
-<a href=#560 id=560 data-nosnippet>560</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::Arrowhead));
-<a href=#561 id=561 data-nosnippet>561</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::Scholar));
-<a href=#562 id=562 data-nosnippet>562</a>
-<a href=#563 id=563 data-nosnippet>563</a>        <span class="comment">// Scaling xmult jokers
-<a href=#564 id=564 data-nosnippet>564</a>        </span><span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::SteelJoker));
-<a href=#565 id=565 data-nosnippet>565</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::Reserved));
-<a href=#566 id=566 data-nosnippet>566</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::Ceremonial));
-<a href=#567 id=567 data-nosnippet>567</a>
-<a href=#568 id=568 data-nosnippet>568</a>        <span class="comment">// Custom scaling jokers
-<a href=#569 id=569 data-nosnippet>569</a>        </span><span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::BullMarket));
-<a href=#570 id=570 data-nosnippet>570</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::Bootstraps));
-<a href=#571 id=571 data-nosnippet>571</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::Reserved2));
-<a href=#572 id=572 data-nosnippet>572</a>
-<a href=#573 id=573 data-nosnippet>573</a>        <span class="comment">// Legacy scaling jokers
-<a href=#574 id=574 data-nosnippet>574</a>        </span><span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::MarbleJoker));
-<a href=#575 id=575 data-nosnippet>575</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::Loyalty));
-<a href=#576 id=576 data-nosnippet>576</a>    }
-<a href=#577 id=577 data-nosnippet>577</a>}</code></pre></div></section></main></body></html>
+<a href=#546 id=546 data-nosnippet>546</a>    <span class="attr">#[test]
+<a href=#547 id=547 data-nosnippet>547</a>    </span><span class="kw">fn </span>test_scaling_jokers_in_implemented_list() {
+<a href=#548 id=548 data-nosnippet>548</a>        <span class="kw">let </span>implemented = JokerFactory::get_all_implemented();
+<a href=#549 id=549 data-nosnippet>549</a>
+<a href=#550 id=550 data-nosnippet>550</a>        <span class="comment">// All integrated scaling jokers should be in implemented list
+<a href=#551 id=551 data-nosnippet>551</a>        // Scaling additive mult jokers
+<a href=#552 id=552 data-nosnippet>552</a>        </span><span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::Trousers));
+<a href=#553 id=553 data-nosnippet>553</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::GreenJoker));
+<a href=#554 id=554 data-nosnippet>554</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::Reserved5));
+<a href=#555 id=555 data-nosnippet>555</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::Reserved6));
+<a href=#556 id=556 data-nosnippet>556</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::FortuneTeller));
+<a href=#557 id=557 data-nosnippet>557</a>
+<a href=#558 id=558 data-nosnippet>558</a>        <span class="comment">// Scaling chips jokers
+<a href=#559 id=559 data-nosnippet>559</a>        </span><span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::Castle));
+<a href=#560 id=560 data-nosnippet>560</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::Wee));
+<a href=#561 id=561 data-nosnippet>561</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::Stuntman));
+<a href=#562 id=562 data-nosnippet>562</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::Hiker));
+<a href=#563 id=563 data-nosnippet>563</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::OddTodd));
+<a href=#564 id=564 data-nosnippet>564</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::Arrowhead));
+<a href=#565 id=565 data-nosnippet>565</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::Scholar));
+<a href=#566 id=566 data-nosnippet>566</a>
+<a href=#567 id=567 data-nosnippet>567</a>        <span class="comment">// Scaling xmult jokers
+<a href=#568 id=568 data-nosnippet>568</a>        </span><span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::SteelJoker));
+<a href=#569 id=569 data-nosnippet>569</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::Reserved));
+<a href=#570 id=570 data-nosnippet>570</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::Ceremonial));
+<a href=#571 id=571 data-nosnippet>571</a>
+<a href=#572 id=572 data-nosnippet>572</a>        <span class="comment">// Custom scaling jokers
+<a href=#573 id=573 data-nosnippet>573</a>        </span><span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::BullMarket));
+<a href=#574 id=574 data-nosnippet>574</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::Bootstraps));
+<a href=#575 id=575 data-nosnippet>575</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::Reserved2));
+<a href=#576 id=576 data-nosnippet>576</a>
+<a href=#577 id=577 data-nosnippet>577</a>        <span class="comment">// Legacy scaling jokers
+<a href=#578 id=578 data-nosnippet>578</a>        </span><span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::MarbleJoker));
+<a href=#579 id=579 data-nosnippet>579</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::Loyalty));
+<a href=#580 id=580 data-nosnippet>580</a>    }
+<a href=#581 id=581 data-nosnippet>581</a>}</code></pre></div></section></main></body></html>

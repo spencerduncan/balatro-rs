@@ -201,7 +201,7 @@
 <a href=#201 id=201 data-nosnippet>201</a>            id: JokerId::FortuneTeller,
 <a href=#202 id=202 data-nosnippet>202</a>            name: <span class="string">"Fortune Teller"</span>.to_string(),
 <a href=#203 id=203 data-nosnippet>203</a>            description: <span class="string">"+1 Mult per Tarot card used"</span>.to_string(),
-<a href=#204 id=204 data-nosnippet>204</a>            rarity: JokerRarity::Rare,
+<a href=#204 id=204 data-nosnippet>204</a>            rarity: JokerRarity::Common,
 <a href=#205 id=205 data-nosnippet>205</a>            cost: <span class="number">8</span>,
 <a href=#206 id=206 data-nosnippet>206</a>            <span class="comment">// Removed: tarots_used initialization (dual state eliminated)
 <a href=#207 id=207 data-nosnippet>207</a>        </span>}
@@ -679,10 +679,10 @@
 <a href=#679 id=679 data-nosnippet>679</a><span class="kw">impl </span>RedCardJoker {
 <a href=#680 id=680 data-nosnippet>680</a>    <span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
 <a href=#681 id=681 data-nosnippet>681</a>        <span class="self">Self </span>{
-<a href=#682 id=682 data-nosnippet>682</a>            id: JokerId::Reserved6, <span class="comment">// Use Reserved6 as expected by factory tests
+<a href=#682 id=682 data-nosnippet>682</a>            id: JokerId::RedCard, <span class="comment">// RedCard (pack skipping version)
 <a href=#683 id=683 data-nosnippet>683</a>            </span>name: <span class="string">"Red Card"</span>.to_string(),
 <a href=#684 id=684 data-nosnippet>684</a>            description: <span class="string">"+3 Mult per pack skipped"</span>.to_string(),
-<a href=#685 id=685 data-nosnippet>685</a>            rarity: JokerRarity::Common,
+<a href=#685 id=685 data-nosnippet>685</a>            rarity: JokerRarity::Uncommon,
 <a href=#686 id=686 data-nosnippet>686</a>            cost: <span class="number">4</span>,
 <a href=#687 id=687 data-nosnippet>687</a>            <span class="comment">// Removed: packs_skipped initialization (dual state eliminated)
 <a href=#688 id=688 data-nosnippet>688</a>        </span>}
@@ -989,7 +989,7 @@
 <a href=#989 id=989 data-nosnippet>989</a>        </span><span class="macro">assert_eq!</span>(joker.joker_type(), <span class="string">"fortune_teller"</span>);
 <a href=#990 id=990 data-nosnippet>990</a>        <span class="macro">assert_eq!</span>(JokerIdentity::name(<span class="kw-2">&amp;</span>joker), <span class="string">"Fortune Teller"</span>);
 <a href=#991 id=991 data-nosnippet>991</a>        <span class="macro">assert_eq!</span>(joker.base_cost(), <span class="number">8</span>);
-<a href=#992 id=992 data-nosnippet>992</a>        <span class="macro">assert_eq!</span>(joker.rarity, JokerRarity::Rare);
+<a href=#992 id=992 data-nosnippet>992</a>        <span class="macro">assert_eq!</span>(joker.rarity, JokerRarity::Common);
 <a href=#993 id=993 data-nosnippet>993</a>    }
 <a href=#994 id=994 data-nosnippet>994</a>
 <a href=#995 id=995 data-nosnippet>995</a>    <span class="attr">#[test]
@@ -1000,7 +1000,7 @@
 <a href=#1000 id=1000 data-nosnippet>1000</a>        </span><span class="macro">assert_eq!</span>(joker.joker_type(), <span class="string">"red_card"</span>);
 <a href=#1001 id=1001 data-nosnippet>1001</a>        <span class="macro">assert_eq!</span>(JokerIdentity::name(<span class="kw-2">&amp;</span>joker), <span class="string">"Red Card"</span>);
 <a href=#1002 id=1002 data-nosnippet>1002</a>        <span class="macro">assert_eq!</span>(joker.base_cost(), <span class="number">4</span>);
-<a href=#1003 id=1003 data-nosnippet>1003</a>        <span class="macro">assert_eq!</span>(joker.rarity, JokerRarity::Common);
+<a href=#1003 id=1003 data-nosnippet>1003</a>        <span class="macro">assert_eq!</span>(joker.rarity, JokerRarity::Uncommon);
 <a href=#1004 id=1004 data-nosnippet>1004</a>    }
 <a href=#1005 id=1005 data-nosnippet>1005</a>
 <a href=#1006 id=1006 data-nosnippet>1006</a>    <span class="attr">#[test]
