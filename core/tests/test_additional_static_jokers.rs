@@ -11,6 +11,7 @@ use balatro_rs::hand::{Hand, SelectHand};
 use balatro_rs::joker::{GameContext, Joker, JokerId, JokerRarity};
 use balatro_rs::joker_registry::registry::create_joker;
 use balatro_rs::joker_state::JokerStateManager;
+use balatro_rs::rank::HandRank;
 use balatro_rs::rng::GameRng;
 use balatro_rs::stage::{Blind, Stage};
 use balatro_rs::static_joker_factory::StaticJokerFactory;
@@ -291,10 +292,10 @@ fn test_half_joker_behavior_edge_case_empty_hand() {
 
 #[test]
 fn test_banner_joker() {
-        use balatro_rs::hand::{Hand, SelectHand};
+    use balatro_rs::hand::{Hand, SelectHand};
     use balatro_rs::joker::GameContext;
     use balatro_rs::joker_state::JokerStateManager;
-        use balatro_rs::stage::Stage;
+    use balatro_rs::stage::Stage;
     use std::collections::HashMap;
     use std::sync::Arc;
 
@@ -428,7 +429,7 @@ fn test_abstract_joker() {
     use balatro_rs::joker::{GameContext, Joker, JokerId, JokerRarity};
     use balatro_rs::joker_factory::JokerFactory;
     use balatro_rs::joker_state::JokerStateManager;
-        use balatro_rs::rng::{GameRng, RngMode};
+    use balatro_rs::rng::{GameRng, RngMode};
     use balatro_rs::stage::Stage;
     use std::collections::HashMap;
     use std::sync::Arc;
