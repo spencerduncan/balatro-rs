@@ -91,7 +91,7 @@
 <a href=#91 id=91 data-nosnippet>91</a>        <span class="comment">// Check if player used no discards
 <a href=#92 id=92 data-nosnippet>92</a>        </span><span class="kw">if </span>context.discards_used == <span class="number">0 </span>{
 <a href=#93 id=93 data-nosnippet>93</a>            <span class="comment">// Award $2 per discard using proper config constant
-<a href=#94 id=94 data-nosnippet>94</a>            </span><span class="kw">let </span>base_discards = Config::new().discards; <span class="comment">// Use proper config value
+<a href=#94 id=94 data-nosnippet>94</a>            </span><span class="kw">let </span>base_discards = Config::default().discards; <span class="comment">// Use proper config value
 <a href=#95 id=95 data-nosnippet>95</a>            </span><span class="kw">let </span>money_earned = (base_discards * <span class="number">2</span>) <span class="kw">as </span>i32;
 <a href=#96 id=96 data-nosnippet>96</a>            JokerEffect::new()
 <a href=#97 id=97 data-nosnippet>97</a>                .with_money(money_earned)
