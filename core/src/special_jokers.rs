@@ -762,6 +762,7 @@ mod tests {
     use super::*;
     use crate::card::{Card, Suit as CardSuit, Value};
     use crate::hand::SelectHand;
+    use std::collections::HashMap;
     // Note: These imports are used throughout the tests despite CI warnings
     #[allow(unused_imports)]
     use crate::joker::traits::{
@@ -979,6 +980,7 @@ mod tests {
             stage: &Stage::Blind(crate::stage::Blind::Small),
             hands_played: 0,
             discards_used: 0,
+            hands_remaining: 4.0,
             is_final_hand: false, // Test context
             jokers: &[],
             hand: &hand,
@@ -1024,6 +1026,7 @@ mod tests {
             stage: &Stage::Blind(crate::stage::Blind::Small),
             hands_played: 0,
             discards_used: 0,
+            hands_remaining: 4.0,
             is_final_hand: false, // Test context
             jokers: &[],
             hand: &hand,
@@ -1087,6 +1090,7 @@ mod tests {
             stage: &Stage::Blind(crate::stage::Blind::Small),
             hands_played: 0,
             discards_used: 0,
+            hands_remaining: 4.0,
             is_final_hand: false, // Test context
             jokers: &[],
             hand: &hand_for_context,
