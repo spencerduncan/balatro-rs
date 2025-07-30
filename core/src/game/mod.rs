@@ -2257,25 +2257,6 @@ impl Game {
         self.available = crate::available::Available::default();
         self.blind = None;
     }
-
-    /// Temporary stub for planet card functionality - levels up a poker hand
-    /// TODO: Implement proper hand leveling system when planet cards are fully developed
-    pub fn level_up_hand(
-        &mut self,
-        _hand_rank: crate::rank::HandRank,
-    ) -> Result<(), crate::consumables::ConsumableError> {
-        // Placeholder implementation - just return success for now
-        // In the future, this should increase the hand's level and associated chips/mult
-        Ok(())
-    }
-
-    /// Temporary stub for planet card functionality - gets current level of a poker hand
-    /// TODO: Implement proper hand level tracking system when planet cards are fully developed
-    pub fn get_hand_level(&self, hand_rank: crate::rank::HandRank) -> crate::rank::Level {
-        // Placeholder implementation - return base level for all hands
-        // In the future, this should return the actual level from hand level tracking
-        hand_rank.level()
-    }
 }
 
 impl fmt::Display for Game {
