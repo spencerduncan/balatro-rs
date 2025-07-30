@@ -191,7 +191,7 @@ fn get_registry() -> &'static Arc<RwLock<JokerRegistry>> {
 
 /// Initializes the registry with default joker implementations
 fn initialize_default_jokers(registry: &mut JokerRegistry) {
-    // Register basic jokers
+    // Register basic jokers from joker_impl
     register_joker(
         registry,
         JokerId::Joker,
@@ -237,6 +237,7 @@ fn initialize_default_jokers(registry: &mut JokerRegistry) {
         None,
         create_gluttonous_joker,
     );
+
     register_joker(
         registry,
         JokerId::Banner,
@@ -246,6 +247,9 @@ fn initialize_default_jokers(registry: &mut JokerRegistry) {
         None,
         create_banner_joker,
     );
+
+    // Register all static jokers from StaticJokerFactory
+    register_static_jokers(registry);
 }
 
 // Factory functions for creating joker instances
@@ -294,6 +298,214 @@ fn register_joker(
     if let Err(e) = registry.register(definition, factory) {
         eprintln!("Failed to register joker {id:?}: {e}");
     }
+}
+
+/// Register all static jokers from StaticJokerFactory
+fn register_static_jokers(registry: &mut JokerRegistry) {
+    use crate::static_joker_factory::StaticJokerFactory;
+
+    // Banner joker - the one causing test failures
+    register_joker(
+        registry,
+        JokerId::Banner,
+        "Banner",
+        "+30 Chips for each remaining discard",
+        JokerRarity::Common,
+        None,
+        || StaticJokerFactory::create_banner(),
+    );
+
+    // Other hand type jokers
+    register_joker(
+        registry,
+        JokerId::JollyJoker,
+        "Jolly Joker",
+        "+8 Mult if played hand contains Pair",
+        JokerRarity::Common,
+        None,
+        || StaticJokerFactory::create_jolly_joker(),
+    );
+    register_joker(
+        registry,
+        JokerId::ZanyJoker,
+        "Zany Joker",
+        "+12 Mult if played hand contains Three of a Kind",
+        JokerRarity::Common,
+        None,
+        || StaticJokerFactory::create_zany_joker(),
+    );
+    register_joker(
+        registry,
+        JokerId::MadJoker,
+        "Mad Joker",
+        "+10 Mult if played hand contains Two Pair",
+        JokerRarity::Common,
+        None,
+        || StaticJokerFactory::create_mad_joker(),
+    );
+    register_joker(
+        registry,
+        JokerId::CrazyJoker,
+        "Crazy Joker",
+        "+12 Mult if played hand contains Straight",
+        JokerRarity::Common,
+        None,
+        || StaticJokerFactory::create_crazy_joker(),
+    );
+    register_joker(
+        registry,
+        JokerId::DrollJoker,
+        "Droll Joker",
+        "+10 Mult if played hand contains Flush",
+        JokerRarity::Common,
+        None,
+        || StaticJokerFactory::create_droll_joker(),
+    );
+
+    // Chip-based jokers
+    register_joker(
+        registry,
+        JokerId::SlyJoker,
+        "Sly Joker",
+        "+50 Chips if played hand contains Pair",
+        JokerRarity::Common,
+        None,
+        || StaticJokerFactory::create_sly_joker(),
+    );
+    register_joker(
+        registry,
+        JokerId::WilyJoker,
+        "Wily Joker",
+        "+100 Chips if played hand contains Three of a Kind",
+        JokerRarity::Common,
+        None,
+        || StaticJokerFactory::create_wily_joker(),
+    );
+    register_joker(
+        registry,
+        JokerId::CleverJoker,
+        "Clever Joker",
+        "+80 Chips if played hand contains Two Pair",
+        JokerRarity::Common,
+        None,
+        || StaticJokerFactory::create_clever_joker(),
+    );
+    register_joker(
+        registry,
+        JokerId::DeviousJoker,
+        "Devious Joker",
+        "+100 Chips if played hand contains Straight",
+        JokerRarity::Common,
+        None,
+        || StaticJokerFactory::create_devious_joker(),
+    );
+    register_joker(
+        registry,
+        JokerId::CraftyJoker,
+        "Crafty Joker",
+        "+80 Chips if played hand contains Flush",
+        JokerRarity::Common,
+        None,
+        || StaticJokerFactory::create_crafty_joker(),
+    );
+
+    // Rank-based jokers
+    register_joker(
+        registry,
+        JokerId::EvenSteven,
+        "Even Steven",
+        "Played cards with even rank (2, 4, 6, 8, 10) give +4 Mult when scored",
+        JokerRarity::Common,
+        None,
+        || StaticJokerFactory::create_even_steven(),
+    );
+    register_joker(
+        registry,
+        JokerId::OddTodd,
+        "Odd Todd",
+        "Played cards with odd rank (3, 5, 7, 9, A) give +31 Chips when scored",
+        JokerRarity::Common,
+        None,
+        || StaticJokerFactory::create_odd_todd(),
+    );
+    register_joker(
+        registry,
+        JokerId::Scholar,
+        "Scholar",
+        "Played Aces give +20 Chips and +4 Mult when scored",
+        JokerRarity::Common,
+        None,
+        || StaticJokerFactory::create_scholar(),
+    );
+
+    // Color-based jokers
+    register_joker(
+        registry,
+        JokerId::RedCard,
+        "Red Card",
+        "Red cards (Hearts and Diamonds) give +3 Mult when scored",
+        JokerRarity::Uncommon,
+        None,
+        || StaticJokerFactory::create_red_card(),
+    );
+    register_joker(
+        registry,
+        JokerId::BlueJoker,
+        "Blue Joker",
+        "Black cards (Clubs and Spades) give +3 Mult when scored",
+        JokerRarity::Uncommon,
+        None,
+        || StaticJokerFactory::create_blue_joker(),
+    );
+    register_joker(
+        registry,
+        JokerId::FacelessJoker,
+        "Faceless Joker",
+        "Face cards (Jack, Queen, King) give +5 Mult when scored",
+        JokerRarity::Common,
+        None,
+        || StaticJokerFactory::create_faceless_joker(),
+    );
+
+    // Special condition jokers
+    register_joker(
+        registry,
+        JokerId::Walkie,
+        "Walkie",
+        "+10 Chips and +4 Mult if played hand contains a Straight",
+        JokerRarity::Common,
+        None,
+        || StaticJokerFactory::create_walkie(),
+    );
+    register_joker(
+        registry,
+        JokerId::HalfJoker,
+        "Half Joker",
+        "+20 Mult if played hand has 4 or fewer cards",
+        JokerRarity::Common,
+        None,
+        || StaticJokerFactory::create_half_joker(),
+    );
+
+    // Placeholder jokers (may need framework extensions)
+    register_joker(
+        registry,
+        JokerId::AbstractJoker,
+        "Abstract Joker",
+        "All Jokers give X0.25 more Mult",
+        JokerRarity::Common,
+        None,
+        || StaticJokerFactory::create_abstract_joker(),
+    );
+    register_joker(
+        registry,
+        JokerId::SteelJoker,
+        "Steel Joker",
+        "This Joker gains X0.25 Mult for each Steel Card in your full deck",
+        JokerRarity::Uncommon,
+        None,
+        || StaticJokerFactory::create_steel_joker(),
+    );
 }
 
 /// Convenience functions for working with the global registry

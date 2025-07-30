@@ -1,7 +1,9 @@
 use crate::card::Card;
+use crate::consumables::ConsumableId;
 use crate::error::GameError;
 use crate::game::Game;
 use crate::joker::JokerId;
+use crate::vouchers::VoucherId;
 
 // Re-export legacy shop for backward compatibility
 pub use legacy::*;
@@ -147,6 +149,12 @@ pub enum ShopItem {
     /// in the process. They offer powerful but limited-use benefits.
     Consumable(ConsumableType),
 
+    /// A specific consumable card identified by its ID.
+    ///
+    /// This provides access to individual consumable implementations rather
+    /// than generic placeholder types. Used by the tarot card system.
+    SpecificConsumable(ConsumableId),
+
     /// A voucher that provides permanent upgrades.
     ///
     /// Vouchers modify game rules permanently, such as increasing shop
@@ -185,6 +193,21 @@ impl ShopItem {
                 ConsumableType::Planet => 3,
                 ConsumableType::Spectral => 4,
             },
+            ShopItem::SpecificConsumable(consumable_id) => {
+                // Get base cost from tarot factory if it's a tarot card
+                use crate::consumables::tarot::get_tarot_factory;
+                if consumable_id.consumable_type() == crate::consumables::ConsumableType::Tarot {
+                    if let Ok(Some(metadata)) = get_tarot_factory().get_metadata(*consumable_id) {
+                        return metadata.rarity as usize + 2; // Common=2+2=4, Uncommon=3+2=5, etc.
+                    }
+                }
+                // Fallback to default consumable cost by type
+                match consumable_id.consumable_type() {
+                    crate::consumables::ConsumableType::Tarot => 3,
+                    crate::consumables::ConsumableType::Planet => 3,
+                    crate::consumables::ConsumableType::Spectral => 4,
+                }
+            }
             ShopItem::Voucher(_) => 10, // Standard voucher cost
             ShopItem::Pack(pack_type) => pack_type.base_cost(config),
             ShopItem::PlayingCard(_) => 2, // Standard playing card cost
@@ -196,6 +219,7 @@ impl ShopItem {
         match self {
             ShopItem::Joker(joker_id) => format!("{joker_id:?} Joker"),
             ShopItem::Consumable(consumable_type) => format!("{consumable_type:?} Card"),
+            ShopItem::SpecificConsumable(consumable_id) => format!("{consumable_id}"),
             ShopItem::Voucher(voucher_id) => format!("{voucher_id:?} Voucher"),
             ShopItem::Pack(pack_type) => format!("{pack_type:?} Pack"),
             ShopItem::PlayingCard(card) => format!("{card}"),
@@ -205,9 +229,9 @@ impl ShopItem {
     /// Check if this item type is affected by specific voucher effects.
     pub fn is_affected_by_voucher(&self, voucher: VoucherId) -> bool {
         match voucher {
-            VoucherId::Overstock => true, // Affects all shop items
-            VoucherId::ClearancePackage => matches!(self, ShopItem::Pack(_)),
-            VoucherId::Coupon => matches!(self, ShopItem::Joker(_)),
+            VoucherId::Overstock => true,     // Affects all shop items
+            VoucherId::ClearanceSale => true, // 50% off all items in shop
+            VoucherId::Liquidation => true,   // 25% off all items in shop
             _ => false,
         }
     }
@@ -221,21 +245,6 @@ pub enum ConsumableType {
     Tarot,
     Planet,
     Spectral,
-}
-
-/// Voucher identifiers for shop vouchers
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum VoucherId {
-    Overstock,
-    ClearancePackage,
-    Liquidation,
-    Coupon,
-    Poll,
-    Hone,
-    Glow,
-    Reroll,
-    // ... more vouchers to be added
 }
 
 /// Individual slot in the enhanced shop
@@ -576,15 +585,15 @@ mod tests {
         assert!(pack_item.is_affected_by_voucher(VoucherId::Overstock));
         assert!(card_item.is_affected_by_voucher(VoucherId::Overstock));
 
-        // ClearancePackage only affects packs
-        assert!(!joker_item.is_affected_by_voucher(VoucherId::ClearancePackage));
-        assert!(pack_item.is_affected_by_voucher(VoucherId::ClearancePackage));
-        assert!(!card_item.is_affected_by_voucher(VoucherId::ClearancePackage));
+        // ClearanceSale affects all items (50% off all items in shop)
+        assert!(joker_item.is_affected_by_voucher(VoucherId::ClearanceSale));
+        assert!(pack_item.is_affected_by_voucher(VoucherId::ClearanceSale));
+        assert!(card_item.is_affected_by_voucher(VoucherId::ClearanceSale));
 
-        // Coupon only affects jokers
-        assert!(joker_item.is_affected_by_voucher(VoucherId::Coupon));
-        assert!(!pack_item.is_affected_by_voucher(VoucherId::Coupon));
-        assert!(!card_item.is_affected_by_voucher(VoucherId::Coupon));
+        // Liquidation affects all items (25% off all items in shop)
+        assert!(joker_item.is_affected_by_voucher(VoucherId::Liquidation));
+        assert!(pack_item.is_affected_by_voucher(VoucherId::Liquidation));
+        assert!(card_item.is_affected_by_voucher(VoucherId::Liquidation));
     }
 
     #[test]

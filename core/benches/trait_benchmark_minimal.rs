@@ -12,6 +12,9 @@ use std::hint::black_box;
 
 /// Minimal benchmark to test trait method dispatch
 pub fn minimal_trait_benchmark(c: &mut Criterion) {
+    // Initialize all systems before running benchmarks to avoid factory race conditions
+    balatro_rs::initialize().expect("Failed to initialize core systems");
+
     c.bench_function("trait_method_dispatch", |b| {
         // Test basic trait method calls
         let test_card = Card::new(Value::Ace, Suit::Spade);

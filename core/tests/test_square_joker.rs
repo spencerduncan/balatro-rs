@@ -7,6 +7,9 @@ mod square_joker_tests {
 
     #[test]
     fn test_square_joker_basic_properties() {
+        // Initialize all systems before running the test to avoid factory race conditions
+        balatro_rs::initialize().expect("Failed to initialize core systems");
+
         let joker = JokerFactory::create(JokerId::Square).expect("Square joker should exist");
         assert_eq!(joker.id(), JokerId::Square);
         assert_eq!(joker.name(), "Square Joker");
@@ -16,6 +19,9 @@ mod square_joker_tests {
 
     #[test]
     fn test_square_joker_is_scaling() {
+        // Initialize all systems before running the test to avoid factory race conditions
+        balatro_rs::initialize().expect("Failed to initialize core systems");
+
         // Verify that Square joker is now using the scaling implementation
         let joker = JokerFactory::create(JokerId::Square).expect("Square joker should exist");
 

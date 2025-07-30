@@ -136,6 +136,9 @@ mod save_load_integration_tests {
 
     #[test]
     fn test_full_game_save_load_roundtrip() {
+        // Initialize all systems before running the test to avoid factory race conditions
+        balatro_rs::initialize().expect("Failed to initialize core systems");
+
         // Create a game with some state
         let mut game = Game::new(Config::default());
         game.money = 500.0;
@@ -170,6 +173,9 @@ mod save_load_integration_tests {
 
     #[test]
     fn test_save_load_with_multiple_jokers() {
+        // Initialize all systems before running the test to avoid factory race conditions
+        balatro_rs::initialize().expect("Failed to initialize core systems");
+
         let mut game = Game::new(Config::default());
 
         // Add multiple jokers with different states
@@ -201,6 +207,9 @@ mod save_load_integration_tests {
 
     #[test]
     fn test_save_load_preserves_jokers() {
+        // Initialize all systems before running the test to avoid factory race conditions
+        balatro_rs::initialize().expect("Failed to initialize core systems");
+
         let mut game = Game::new(Config::default());
 
         // Add a joker directly for testing

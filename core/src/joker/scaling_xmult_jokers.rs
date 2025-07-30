@@ -211,7 +211,7 @@ impl ScalingSteelJoker {
         Self {
             id: JokerId::SteelJoker,
             name: "Steel Joker".to_string(),
-            description: "Gains X0.2 Mult per round".to_string(),
+            description: "+0.2x Mult per card destroyed".to_string(),
             rarity: JokerRarity::Uncommon,
             cost: 7,
             rounds_accumulated: 0,
