@@ -31,6 +31,9 @@ fn test_base_multipliers_use_f64() {
 /// This ensures compound multiplication maintains precision
 #[test]
 fn test_multiplier_stacking_f64_arithmetic() {
+    // Initialize all systems before running the test to avoid factory race conditions
+    balatro_rs::initialize().expect("Failed to initialize core systems");
+
     let mut game = Game::default();
     game.start();
     game.stage = Stage::Blind(Blind::Small);
@@ -86,6 +89,9 @@ fn test_planet_card_effects_f64() {
 /// Ensures order of operations is consistent with Balatro
 #[test]
 fn test_multiplication_order_matches_lua() {
+    // Initialize all systems before running the test to avoid factory race conditions
+    balatro_rs::initialize().expect("Failed to initialize core systems");
+
     let mut game = Game::default();
     game.start();
     game.stage = Stage::Blind(Blind::Small);

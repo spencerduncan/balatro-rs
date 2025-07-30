@@ -1017,6 +1017,16 @@ impl Joker for GrimJoker {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct AcrobatJokerImpl;
 
+impl AcrobatJokerImpl {
+    /// Get the multiplier parameter for Acrobat joker from joker.json
+    /// TODO: Replace with proper JsonParameterResolver when available
+    fn get_multiplier_parameter() -> f64 {
+        // From joker.json: "X#1# Mult on final hand"
+        // Based on original implementation and joker.json pattern, #1# = 3
+        3.0
+    }
+}
+
 impl Joker for AcrobatJokerImpl {
     fn id(&self) -> JokerId {
         JokerId::AcrobatJoker
@@ -1040,13 +1050,16 @@ impl Joker for AcrobatJokerImpl {
 
     fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
         // Check if this is the final hand of the round
-        // This would need to be tracked by the game engine
-        // For now, we'll use a simple heuristic based on hands remaining
-        if context.hands_played >= 3 {
-            // Assuming typical 4-hand rounds
+        // Use the definitive hands_remaining count from the game engine
+        if context.hands_remaining <= 1.0 {
+            // This is the final hand - apply the multiplier from joker.json parameter
+            let multiplier = Self::get_multiplier_parameter();
             JokerEffect::new()
-                .with_mult_multiplier(3.0)
-                .with_message("Acrobat final hand bonus! X3 Mult!".to_string())
+                .with_mult_multiplier(multiplier)
+                .with_message(format!(
+                    "Acrobat final hand bonus! X{} Mult!",
+                    multiplier as i32
+                ))
         } else {
             JokerEffect::new()
         }
@@ -1059,7 +1072,7 @@ pub struct MysteryJoker;
 
 impl Joker for MysteryJoker {
     fn id(&self) -> JokerId {
-        JokerId::Fortune
+        JokerId::Reserved4 // Use Reserved4 to avoid conflict with Fortune Teller
     }
 
     fn name(&self) -> &str {
@@ -1226,8 +1239,13 @@ impl Joker for TribouletJoker {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::joker::{JokerId, JokerRarity};
+    use crate::hand::{Hand, SelectHand};
+    use crate::joker::{GameContext, JokerId, JokerRarity};
     use crate::joker_factory::JokerFactory;
+    use crate::joker_state::JokerStateManager;
+    use crate::stage::{Blind, Stage};
+    use std::collections::HashMap;
+    use std::sync::Arc;
 
     #[test]
     fn test_ice_cream_basic_properties() {
@@ -1350,9 +1368,146 @@ mod tests {
     }
 
     #[test]
+    fn test_acrobat_joker_final_hand_detection() {
+        let acrobat = AcrobatJokerImpl;
+        let stage = Stage::Blind(Blind::Small);
+        let jokers: Vec<Box<dyn Joker>> = vec![];
+        let hand = Hand::new(vec![]);
+        let discarded: Vec<Card> = vec![];
+        let joker_state_manager = Arc::new(JokerStateManager::new());
+        let hand_type_counts = HashMap::new();
+        let rng = crate::rng::GameRng::secure();
+
+        // Test final hand (hands_remaining = 1.0)
+        let mut context = GameContext {
+            chips: 0,
+            mult: 1,
+            money: 0,
+            ante: 1,
+            round: 1,
+            stage: &stage,
+            hands_played: 3,
+            hands_remaining: 1.0, // Final hand
+            discards_used: 0,
+            jokers: &jokers,
+            hand: &hand,
+            discarded: &discarded,
+            joker_state_manager: &joker_state_manager,
+            hand_type_counts: &hand_type_counts,
+            cards_in_deck: 52,
+            stone_cards_in_deck: 0,
+            steel_cards_in_deck: 0,
+            rng: &rng,
+        };
+
+        let select_hand = SelectHand::new(vec![]);
+        let effect = acrobat.on_hand_played(&mut context, &select_hand);
+
+        // Should apply multiplier on final hand
+        assert_eq!(effect.mult_multiplier, 3.0);
+        assert!(effect.message.is_some());
+        assert!(effect.message.unwrap().contains("X3 Mult"));
+    }
+
+    #[test]
+    fn test_acrobat_joker_non_final_hand() {
+        let acrobat = AcrobatJokerImpl;
+        let stage = Stage::Blind(Blind::Small);
+        let jokers: Vec<Box<dyn Joker>> = vec![];
+        let hand = Hand::new(vec![]);
+        let discarded: Vec<Card> = vec![];
+        let joker_state_manager = Arc::new(JokerStateManager::new());
+        let hand_type_counts = HashMap::new();
+        let rng = crate::rng::GameRng::secure();
+
+        // Test non-final hand (hands_remaining > 1.0)
+        let mut context = GameContext {
+            chips: 0,
+            mult: 1,
+            money: 0,
+            ante: 1,
+            round: 1,
+            stage: &stage,
+            hands_played: 1,
+            hands_remaining: 3.0, // Not final hand
+            discards_used: 0,
+            jokers: &jokers,
+            hand: &hand,
+            discarded: &discarded,
+            joker_state_manager: &joker_state_manager,
+            hand_type_counts: &hand_type_counts,
+            cards_in_deck: 52,
+            stone_cards_in_deck: 0,
+            steel_cards_in_deck: 0,
+            rng: &rng,
+        };
+
+        let select_hand = SelectHand::new(vec![]);
+        let effect = acrobat.on_hand_played(&mut context, &select_hand);
+
+        // Should NOT apply multiplier on non-final hand
+        assert_eq!(effect.mult_multiplier, 1.0);
+        assert!(effect.message.is_none());
+    }
+
+    #[test]
+    fn test_acrobat_joker_edge_cases() {
+        let acrobat = AcrobatJokerImpl;
+        let stage = Stage::Blind(Blind::Small);
+        let jokers: Vec<Box<dyn Joker>> = vec![];
+        let hand = Hand::new(vec![]);
+        let discarded: Vec<Card> = vec![];
+        let joker_state_manager = Arc::new(JokerStateManager::new());
+        let hand_type_counts = HashMap::new();
+        let rng = crate::rng::GameRng::secure();
+        let select_hand = SelectHand::new(vec![]);
+
+        // Test edge case: hands_remaining = 0.5 (should be final)
+        let mut context = GameContext {
+            chips: 0,
+            mult: 1,
+            money: 0,
+            ante: 1,
+            round: 1,
+            stage: &stage,
+            hands_played: 3,
+            hands_remaining: 0.5,
+            discards_used: 0,
+            jokers: &jokers,
+            hand: &hand,
+            discarded: &discarded,
+            joker_state_manager: &joker_state_manager,
+            hand_type_counts: &hand_type_counts,
+            cards_in_deck: 52,
+            stone_cards_in_deck: 0,
+            steel_cards_in_deck: 0,
+            rng: &rng,
+        };
+        let effect = acrobat.on_hand_played(&mut context, &select_hand);
+        assert_eq!(effect.mult_multiplier, 3.0); // Should trigger
+
+        // Test edge case: hands_remaining = 0.0 (should be final)
+        context.hands_remaining = 0.0;
+        let effect = acrobat.on_hand_played(&mut context, &select_hand);
+        assert_eq!(effect.mult_multiplier, 3.0); // Should trigger
+
+        // Test edge case: hands_remaining = 1.1 (should NOT be final)
+        context.hands_remaining = 1.1;
+        let effect = acrobat.on_hand_played(&mut context, &select_hand);
+        assert_eq!(effect.mult_multiplier, 1.0); // Should NOT trigger
+    }
+
+    #[test]
+    fn test_acrobat_joker_parameter_function() {
+        // Test that the parameter function returns the expected value
+        let multiplier = AcrobatJokerImpl::get_multiplier_parameter();
+        assert_eq!(multiplier, 3.0);
+    }
+
+    #[test]
     fn test_mystery_joker_basic_properties() {
         let mystery = MysteryJoker;
-        assert_eq!(mystery.id(), JokerId::Fortune);
+        assert_eq!(mystery.id(), JokerId::Reserved4);
         assert_eq!(mystery.name(), "Mystery Joker");
         assert_eq!(mystery.description(), "Random effect each hand");
         assert_eq!(mystery.rarity(), JokerRarity::Rare);
@@ -1415,7 +1570,7 @@ mod tests {
             "AcrobatJoker should be creatable from factory"
         );
 
-        let mystery = JokerFactory::create(JokerId::Fortune);
+        let mystery = JokerFactory::create(JokerId::Reserved4);
         assert!(
             mystery.is_some(),
             "MysteryJoker should be creatable from factory"
@@ -1466,8 +1621,8 @@ mod tests {
             "AcrobatJoker should be in Rare rarity"
         );
         assert!(
-            rare_jokers.contains(&JokerId::Fortune),
-            "MysteryJoker should be in Rare rarity"
+            rare_jokers.contains(&JokerId::FortuneTeller),
+            "Fortune Teller (JokerId::FortuneTeller) should be in Rare rarity"
         );
 
         let legendary_jokers = JokerFactory::get_by_rarity(JokerRarity::Legendary);
@@ -1503,7 +1658,7 @@ mod tests {
             "AcrobatJoker should be in implemented list"
         );
         assert!(
-            all_implemented.contains(&JokerId::Fortune),
+            all_implemented.contains(&JokerId::Reserved4),
             "MysteryJoker should be in implemented list"
         );
         assert!(
@@ -1558,6 +1713,7 @@ mod tests {
             round: 1,
             stage: &stage,
             hands_played: 0,
+            hands_remaining: 4.0,
             discards_used: 0,
             jokers: &jokers,
             hand: &hand,
@@ -1604,6 +1760,7 @@ mod tests {
             round: 1,
             stage: &stage,
             hands_played: 0,
+            hands_remaining: 4.0,
             discards_used: 0,
             jokers: &jokers,
             hand: &hand,
@@ -1650,6 +1807,7 @@ mod tests {
             round: 1,
             stage: &stage,
             hands_played: 0,
+            hands_remaining: 4.0,
             discards_used: 0,
             jokers: &jokers,
             hand: &hand,
@@ -1663,7 +1821,7 @@ mod tests {
         };
 
         let effect = triboulet.on_card_scored(&mut context, &jack_card);
-        assert_eq!(effect.mult_multiplier, 0.0); // Default multiplier (no effect)
+        assert_eq!(effect.mult_multiplier, 1.0); // Default multiplier (no effect)
         assert_eq!(effect.mult, 0);
         assert_eq!(effect.chips, 0);
         assert_eq!(effect.money, 0);
@@ -1696,6 +1854,7 @@ mod tests {
             round: 1,
             stage: &stage,
             hands_played: 0,
+            hands_remaining: 4.0,
             discards_used: 0,
             jokers: &jokers,
             hand: &hand,
@@ -1709,7 +1868,7 @@ mod tests {
         };
 
         let effect = triboulet.on_card_scored(&mut context, &ace_card);
-        assert_eq!(effect.mult_multiplier, 0.0); // Default multiplier (no effect)
+        assert_eq!(effect.mult_multiplier, 1.0); // Default multiplier (no effect)
         assert_eq!(effect.mult, 0);
         assert_eq!(effect.chips, 0);
         assert_eq!(effect.money, 0);

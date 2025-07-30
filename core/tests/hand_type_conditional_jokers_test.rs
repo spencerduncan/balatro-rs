@@ -68,6 +68,9 @@ fn test_hand_type_tracking_accessibility() {
 
 #[test]
 fn test_joker_factory_integration() {
+    // Initialize all systems before running the test to avoid factory race conditions
+    balatro_rs::initialize().expect("Failed to initialize core systems");
+
     // Test that all three jokers can be created via factory
     let supernova = JokerFactory::create(JokerId::Supernova);
     assert!(supernova.is_some());
@@ -84,6 +87,9 @@ fn test_joker_factory_integration() {
 
 #[test]
 fn test_joker_rarity_lists() {
+    // Initialize all systems before running the test to avoid factory race conditions
+    balatro_rs::initialize().expect("Failed to initialize core systems");
+
     use balatro_rs::joker::JokerRarity;
 
     // Test that jokers are in correct rarity lists
@@ -103,6 +109,9 @@ fn test_joker_rarity_lists() {
 
 #[test]
 fn test_joker_properties() {
+    // Initialize all systems before running the test to avoid factory race conditions
+    balatro_rs::initialize().expect("Failed to initialize core systems");
+
     let supernova = JokerFactory::create(JokerId::Supernova).unwrap();
     assert_eq!(supernova.name(), "Supernova");
     assert_eq!(

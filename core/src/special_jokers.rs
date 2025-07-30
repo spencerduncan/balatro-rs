@@ -771,7 +771,6 @@ mod tests {
 
     use crate::joker_state::JokerStateManager;
     use crate::stage::{Blind, Stage};
-
     use std::sync::Arc;
 
     /// Helper function to create a test card

@@ -35,7 +35,7 @@ mod tests {
         // Test that basic types can be instantiated
         let _consumable_id = ConsumableId::TarotPlaceholder;
         let _consumable_type = ConsumableType::Tarot;
-        let _voucher_id = VoucherId::VoucherPlaceholder;
+        let _voucher_id = VoucherId::Overstock;
         let _voucher_collection = VoucherCollection::new();
         let _boss_blind_id = BossBlindId::BossBlindPlaceholder;
         let _boss_blind_state = BossBlindState::new();

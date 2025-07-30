@@ -31,13 +31,13 @@ use balatro_rs::vouchers::{VoucherId, VoucherCollection};
 let mut vouchers = VoucherCollection::new();
 
 // Add a voucher
-vouchers.add(VoucherId::VoucherPlaceholder);
+vouchers.add(VoucherId::Overstock);
 
 // Check ownership
-assert!(vouchers.owns(VoucherId::VoucherPlaceholder));
+assert!(vouchers.owns(VoucherId::Overstock));
 
 // Check if voucher can be purchased (prerequisites met)
-assert!(!vouchers.can_purchase(VoucherId::VoucherPlaceholder)); // Already owned
+assert!(!vouchers.can_purchase(VoucherId::Overstock)); // Already owned
 ```
 
 ## Integration Points

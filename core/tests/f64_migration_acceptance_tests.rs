@@ -233,13 +233,12 @@ mod f64_migration_acceptance_tests {
     /// Acceptance Test 10: Display formatting maintains integer appearance where appropriate
     #[test]
     fn test_display_formatting() {
-        let game = Game {
-            score: 12345.0,
-            chips: 1000.5,
-            mult: 25.25,
-            money: 100.0,
-            ..Game::new(Config::default())
-        };
+        let mut base_game = Game::new(Config::default());
+        base_game.score = 12345.0;
+        base_game.chips = 1000.5;
+        base_game.mult = 25.25;
+        base_game.money = 100.0;
+        let game = base_game;
 
         // Score should display as integer even though stored as f64
         let score_display = format!("{}", game.score as u64);
