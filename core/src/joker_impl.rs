@@ -1639,17 +1639,29 @@ mod tests {
         // Scenario 1: Player has exactly $4 (threshold) - should trigger
         let mut context = TestContextBuilder::new().with_money(4).build();
         let effect = vagabond.on_hand_played(&mut context, &select_hand);
-        
+
         // Verify effect has appropriate message
         let message = effect.message.expect("Should have message when triggered");
-        assert!(message.contains("Vagabond would create"), "Message should mention Vagabond creating something");
-        assert!(message.contains("Money: $4"), "Message should show current money amount");
-        
+        assert!(
+            message.contains("Vagabond would create"),
+            "Message should mention Vagabond creating something"
+        );
+        assert!(
+            message.contains("Money: $4"),
+            "Message should show current money amount"
+        );
+
         // Verify Tarot card integration
         let tarot_cards = ConsumableId::tarot_cards();
-        assert!(!tarot_cards.is_empty(), "Tarot cards should be available for selection");
+        assert!(
+            !tarot_cards.is_empty(),
+            "Tarot cards should be available for selection"
+        );
         if let Some(first_tarot) = tarot_cards.first() {
-            assert!(message.contains(&first_tarot.to_string()), "Message should reference actual Tarot card");
+            assert!(
+                message.contains(&first_tarot.to_string()),
+                "Message should reference actual Tarot card"
+            );
         }
 
         // Scenario 2: Player has $0 (edge case) - should trigger
@@ -1660,17 +1672,26 @@ mod tests {
         // Scenario 3: Player has $3 (below threshold) - should trigger
         let mut context = TestContextBuilder::new().with_money(3).build();
         let effect = vagabond.on_hand_played(&mut context, &select_hand);
-        assert!(effect.message.is_some(), "Should trigger effect below threshold");
+        assert!(
+            effect.message.is_some(),
+            "Should trigger effect below threshold"
+        );
 
         // Scenario 4: Player has $5 (above threshold) - should NOT trigger
         let mut context = TestContextBuilder::new().with_money(5).build();
         let effect = vagabond.on_hand_played(&mut context, &select_hand);
-        assert!(effect.message.is_none(), "Should NOT trigger effect above threshold");
+        assert!(
+            effect.message.is_none(),
+            "Should NOT trigger effect above threshold"
+        );
 
         // Scenario 5: Player has $10 (well above threshold) - should NOT trigger
         let mut context = TestContextBuilder::new().with_money(10).build();
         let effect = vagabond.on_hand_played(&mut context, &select_hand);
-        assert!(effect.message.is_none(), "Should NOT trigger effect well above threshold");
+        assert!(
+            effect.message.is_none(),
+            "Should NOT trigger effect well above threshold"
+        );
 
         // Test joker properties remain consistent
         assert_eq!(vagabond.id(), JokerId::VagabondJoker);
@@ -1678,9 +1699,12 @@ mod tests {
         assert!(vagabond.description().contains("$4 or less"));
         assert_eq!(vagabond.rarity(), JokerRarity::Uncommon);
         assert_eq!(vagabond.cost(), 7);
-        
+
         // Test constant usage is consistent
-        assert_eq!(VAGABOND_MONEY_THRESHOLD, 4, "Constant should match implementation");
+        assert_eq!(
+            VAGABOND_MONEY_THRESHOLD, 4,
+            "Constant should match implementation"
+        );
     }
 
     #[test]
