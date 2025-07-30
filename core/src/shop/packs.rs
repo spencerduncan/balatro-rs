@@ -6,8 +6,6 @@ use crate::game::Game;
 use crate::joker::JokerId;
 use crate::shop::{ConsumableType, ShopItem};
 
-// Trigger CI rerun after network issues resolved
-
 /// Types of booster packs available in the shop
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
