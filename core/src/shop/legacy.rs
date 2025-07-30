@@ -25,9 +25,26 @@ impl Shop {
     }
 
     pub(crate) fn refresh(&mut self, rng: &crate::rng::GameRng) {
-        let j1 = self.joker_gen.gen_joker(rng);
-        let j2 = self.joker_gen.gen_joker(rng);
-        self.jokers = vec![j1, j2]
+        let mut generated_jokers = Vec::new();
+        let mut attempts = 0;
+        const MAX_ATTEMPTS: usize = 100; // Prevent infinite loops
+
+        while generated_jokers.len() < 2 && attempts < MAX_ATTEMPTS {
+            let joker = self.joker_gen.gen_joker(rng);
+            // Only add if we haven't generated this joker already
+            if !generated_jokers.contains(&joker) {
+                generated_jokers.push(joker);
+            }
+            attempts += 1;
+        }
+
+        // Fall back to allowing duplicates if we can't find unique jokers
+        // (this handles edge cases where there are fewer joker types than slots)
+        while generated_jokers.len() < 2 {
+            generated_jokers.push(self.joker_gen.gen_joker(rng));
+        }
+
+        self.jokers = generated_jokers;
     }
 
     pub(crate) fn joker_from_index(&self, i: usize) -> Option<Jokers> {
