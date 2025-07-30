@@ -160,7 +160,7 @@ impl SteelJoker {
         Self {
             id: JokerId::SteelJoker,
             name: "Steel Joker".to_string(),
-            description: "Gains X0.2 Mult for each Steel Card in your full deck".to_string(),
+            description: "Gives X0.25 Mult for each Steel Card in your full deck".to_string(),
             rarity: JokerRarity::Uncommon,
             cost: 6,
         }
