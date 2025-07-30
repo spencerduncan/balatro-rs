@@ -9,6 +9,7 @@ keywords = ["balatro", "game-engine", "move-generator"]
 
 [dependencies]
 anyhow = "~1.0"
+async-trait = "0.1"
 colored = {version = "2.2.0", optional = true}
 indexmap = "2.6.0"
 itertools = "0.13.0"
@@ -23,19 +24,22 @@ toml = { version = "~0.8.12", optional = true }
 strum = { version = "0.26", features = ["derive"] }
 thiserror = "~1.0.61"
 tracing = { version = "~0.1.40", optional = true}
-uuid  = {version = "~1.9.1", optional = true, features = ["v7"]}
+uuid  = {version = "~1.9.1", optional = true, features = ["v4", "serde"]}
 
 [dev-dependencies]
 criterion = "0.6.0"
+tokio = { version = "1.0", features = ["full"] }
+futures = "0.3"
 
 [features]
-default = ["serde", "python"]
+default = ["serde", "python", "uuid"]
 python = ["dep:pyo3"]
 statistical_tests = []  # Enable slow/flaky statistical tests (disabled in CI)
 integration_tests = []  # Enable slow integration tests (disabled in CI)
 disabled-for-emergency = []  # Temporarily disabled tests with API mismatches
 serde = ["dep:serde", "dep:serde_json", "dep:toml", "dep:regex", "uuid?/serde"]
 colored = ["dep:colored"]
+uuid = ["dep:uuid"]
 
 [[bench]]
 name = "benchmark"
