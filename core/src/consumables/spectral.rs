@@ -23,6 +23,7 @@ use crate::card::{Card, Edition, Enhancement, Suit, Value};
 use crate::consumables::{
     Consumable, ConsumableEffect, ConsumableError, ConsumableId, ConsumableType, Target, TargetType,
 };
+// Removed rand::prelude::SliceRandom - using GameRng::choose instead
 use crate::game::Game;
 use crate::joker::JokerId;
 
@@ -61,32 +62,32 @@ impl Consumable for Familiar {
         // Destroy 1 random card from hand
         let hand_size = game_state.available.cards().len();
         let destroy_index = game_state.rng.gen_range(0..hand_size);
-        
+
         // Remove the card (in production, this would need proper hand management)
         // For now, we'll record the destruction in the game log
-        eprintln!("Familiar: Destroyed card at index {}", destroy_index);
+        eprintln!("Familiar: Destroyed card at index {destroy_index}");
 
         // Add 3 random enhanced face cards to deck
         let face_values = [Value::Jack, Value::Queen, Value::King];
         let suits = [Suit::Heart, Suit::Diamond, Suit::Club, Suit::Spade];
         let enhancements = [
             Enhancement::Bonus,
-            Enhancement::Mult, 
+            Enhancement::Mult,
             Enhancement::Wild,
             Enhancement::Glass,
             Enhancement::Steel,
         ];
 
         for _ in 0..3 {
-            let value = *face_values.choose(&mut game_state.rng).unwrap();
-            let suit = *suits.choose(&mut game_state.rng).unwrap();
-            let enhancement = *enhancements.choose(&mut game_state.rng).unwrap();
-            
+            let value = *game_state.rng.choose(&face_values).unwrap();
+            let suit = *game_state.rng.choose(&suits).unwrap();
+            let enhancement = *game_state.rng.choose(&enhancements).unwrap();
+
             let mut card = Card::new(value, suit);
             card.enhancement = Some(enhancement);
-            
+
             // Add to deck (in production, this would use proper deck management)
-            game_state.deck.push(card);
+            game_state.deck.extend(vec![card]);
         }
 
         Ok(())
@@ -143,7 +144,7 @@ impl Consumable for Grim {
         // Destroy 1 random card from hand
         let hand_size = game_state.available.cards().len();
         let destroy_index = game_state.rng.gen_range(0..hand_size);
-        eprintln!("Grim: Destroyed card at index {}", destroy_index);
+        eprintln!("Grim: Destroyed card at index {destroy_index}");
 
         // Add 2 random enhanced Aces to deck
         let suits = [Suit::Heart, Suit::Diamond, Suit::Club, Suit::Spade];
@@ -156,13 +157,13 @@ impl Consumable for Grim {
         ];
 
         for _ in 0..2 {
-            let suit = *suits.choose(&mut game_state.rng).unwrap();
-            let enhancement = *enhancements.choose(&mut game_state.rng).unwrap();
-            
+            let suit = *game_state.rng.choose(&suits).unwrap();
+            let enhancement = *game_state.rng.choose(&enhancements).unwrap();
+
             let mut card = Card::new(Value::Ace, suit);
             card.enhancement = Some(enhancement);
-            
-            game_state.deck.push(card);
+
+            game_state.deck.extend(vec![card]);
         }
 
         Ok(())
@@ -219,12 +220,19 @@ impl Consumable for Incantation {
         // Destroy 1 random card from hand
         let hand_size = game_state.available.cards().len();
         let destroy_index = game_state.rng.gen_range(0..hand_size);
-        eprintln!("Incantation: Destroyed card at index {}", destroy_index);
+        eprintln!("Incantation: Destroyed card at index {destroy_index}");
 
         // Add 4 random enhanced numbered cards to deck
         let numbered_values = [
-            Value::Two, Value::Three, Value::Four, Value::Five, Value::Six,
-            Value::Seven, Value::Eight, Value::Nine, Value::Ten,
+            Value::Two,
+            Value::Three,
+            Value::Four,
+            Value::Five,
+            Value::Six,
+            Value::Seven,
+            Value::Eight,
+            Value::Nine,
+            Value::Ten,
         ];
         let suits = [Suit::Heart, Suit::Diamond, Suit::Club, Suit::Spade];
         let enhancements = [
@@ -236,14 +244,14 @@ impl Consumable for Incantation {
         ];
 
         for _ in 0..4 {
-            let value = *numbered_values.choose(&mut game_state.rng).unwrap();
-            let suit = *suits.choose(&mut game_state.rng).unwrap();
-            let enhancement = *enhancements.choose(&mut game_state.rng).unwrap();
-            
+            let value = *game_state.rng.choose(&numbered_values).unwrap();
+            let suit = *game_state.rng.choose(&suits).unwrap();
+            let enhancement = *game_state.rng.choose(&enhancements).unwrap();
+
             let mut card = Card::new(value, suit);
             card.enhancement = Some(enhancement);
-            
-            game_state.deck.push(card);
+
+            game_state.deck.extend(vec![card]);
         }
 
         Ok(())
@@ -294,8 +302,9 @@ impl Consumable for Talisman {
     fn use_effect(&self, game_state: &mut Game, target: Target) -> Result<(), ConsumableError> {
         if let Target::Cards(card_target) = target {
             // Validate the target
-            card_target.validate(game_state)
-                .map_err(|e| ConsumableError::InvalidTarget(format!("Card validation failed: {}", e)))?;
+            card_target.validate(game_state).map_err(|e| {
+                ConsumableError::InvalidTarget(format!("Card validation failed: {e}"))
+            })?;
 
             if card_target.indices.len() != 1 {
                 return Err(ConsumableError::InvalidTarget(
@@ -306,11 +315,11 @@ impl Consumable for Talisman {
             // Add Gold Seal to the selected card
             // Note: In production, this would need proper card access methods
             let card_index = card_target.indices[0];
-            eprintln!("Talisman: Added Gold Seal to card at index {}", card_index);
-            
+            eprintln!("Talisman: Added Gold Seal to card at index {card_index}");
+
             // In a full implementation, we would:
             // game_state.available.get_card_mut(card_index).seal = Some(Seal::Gold);
-            
+
             Ok(())
         } else {
             Err(ConsumableError::InvalidTarget(
@@ -362,8 +371,9 @@ impl Consumable for Aura {
 
     fn use_effect(&self, game_state: &mut Game, target: Target) -> Result<(), ConsumableError> {
         if let Target::Cards(card_target) = target {
-            card_target.validate(game_state)
-                .map_err(|e| ConsumableError::InvalidTarget(format!("Card validation failed: {}", e)))?;
+            card_target.validate(game_state).map_err(|e| {
+                ConsumableError::InvalidTarget(format!("Card validation failed: {e}"))
+            })?;
 
             if card_target.indices.len() != 1 {
                 return Err(ConsumableError::InvalidTarget(
@@ -373,14 +383,14 @@ impl Consumable for Aura {
 
             // Choose random special edition
             let editions = [Edition::Foil, Edition::Holographic, Edition::Polychrome];
-            let chosen_edition = *editions.choose(&mut game_state.rng).unwrap();
-            
+            let chosen_edition = *game_state.rng.choose(&editions).unwrap();
+
             let card_index = card_target.indices[0];
-            eprintln!("Aura: Added {:?} edition to card at index {}", chosen_edition, card_index);
-            
+            eprintln!("Aura: Added {chosen_edition:?} edition to card at index {card_index}");
+
             // In a full implementation:
             // game_state.available.get_card_mut(card_index).edition = chosen_edition;
-            
+
             Ok(())
         } else {
             Err(ConsumableError::InvalidTarget(
@@ -446,10 +456,10 @@ impl Consumable for Wraith {
             JokerId::CleverJoker,
             JokerId::DeviousJoker,
         ];
-        
-        let chosen_joker = *rare_jokers.choose(&mut game_state.rng).unwrap();
-        eprintln!("Wraith: Created {:?} joker", chosen_joker);
-        
+
+        let chosen_joker = *game_state.rng.choose(&rare_jokers).unwrap();
+        eprintln!("Wraith: Created {chosen_joker:?} joker");
+
         // In a full implementation, we would add the joker to the game state:
         // let joker = JokerFactory::create(chosen_joker);
         // game_state.jokers.push(joker);
@@ -511,10 +521,10 @@ impl Consumable for Sigil {
 
         // Choose a random suit
         let suits = [Suit::Heart, Suit::Diamond, Suit::Club, Suit::Spade];
-        let chosen_suit = *suits.choose(&mut game_state.rng).unwrap();
-        
-        eprintln!("Sigil: Converting all cards in hand to {:?}", chosen_suit);
-        
+        let chosen_suit = *game_state.rng.choose(&suits).unwrap();
+
+        eprintln!("Sigil: Converting all cards in hand to {chosen_suit:?}");
+
         // In a full implementation, we would convert all cards:
         // for card in game_state.available.cards_mut() {
         //     card.suit = chosen_suit;
@@ -572,11 +582,11 @@ impl Consumable for Ouija {
         }
 
         // Choose a random rank
-        let ranks = Value::values();
-        let chosen_rank = *ranks.choose(&mut game_state.rng).unwrap();
-        
-        eprintln!("Ouija: Converting all cards in hand to {:?}", chosen_rank);
-        
+        let ranks = &Value::values();
+        let chosen_rank = *game_state.rng.choose(ranks).unwrap();
+
+        eprintln!("Ouija: Converting all cards in hand to {chosen_rank:?}");
+
         // In a full implementation, we would convert all cards:
         // for card in game_state.available.cards_mut() {
         //     card.value = chosen_rank;
@@ -585,7 +595,9 @@ impl Consumable for Ouija {
         // Reduce hand size by 1 (permanent negative effect)
         // TODO: Find correct field for hand size modification
         // game_state.hand_size_mod -= 1;
-        eprintln!("Ouija: Would reduce hand size by 1 (hand size modification not yet implemented)");
+        eprintln!(
+            "Ouija: Would reduce hand size by 1 (hand size modification not yet implemented)"
+        );
 
         Ok(())
     }
@@ -640,15 +652,17 @@ impl Consumable for Ectoplasm {
 
         // Choose a random joker
         let joker_index = game_state.rng.gen_range(0..game_state.jokers.len());
-        eprintln!("Ectoplasm: Adding Negative edition to joker at index {}", joker_index);
-        
+        eprintln!("Ectoplasm: Adding Negative edition to joker at index {joker_index}");
+
         // In a full implementation, we would add negative edition:
         // game_state.jokers[joker_index].set_edition(Edition::Negative);
 
         // Reduce hand size by 1 (the cost)
         // TODO: Find correct field for hand size modification
         // game_state.hand_size_mod -= 1;
-        eprintln!("Ectoplasm: Would reduce hand size by 1 (hand size modification not yet implemented)");
+        eprintln!(
+            "Ectoplasm: Would reduce hand size by 1 (hand size modification not yet implemented)"
+        );
 
         Ok(())
     }
@@ -694,8 +708,7 @@ pub fn create_spectral_card(id: ConsumableId) -> Result<Box<dyn Consumable>, Con
         ConsumableId::Ouija => Ok(Box::new(Ouija)),
         ConsumableId::Ectoplasm => Ok(Box::new(Ectoplasm)),
         _ => Err(ConsumableError::EffectFailed(format!(
-            "Unknown spectral card ID: {:?}",
-            id
+            "Unknown spectral card ID: {id:?}"
         ))),
     }
 }
@@ -703,14 +716,17 @@ pub fn create_spectral_card(id: ConsumableId) -> Result<Box<dyn Consumable>, Con
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::Config;
     use crate::game::Game;
     use crate::rng::GameRng;
 
     fn create_test_game() -> Game {
-        let mut game = Game::new();
+        let config = Config::default();
+        let mut game = Game::new(config);
         game.rng = GameRng::for_testing(42); // Deterministic for testing
-        
+
         // Add some test cards to hand
+        let mut cards = Vec::new();
         for i in 0..5 {
             let card = Card::new(
                 match i {
@@ -727,19 +743,21 @@ mod tests {
                     _ => Suit::Spade,
                 },
             );
-            // In a full implementation, we would add cards to available
-            // game.available.add_card(card);
+            cards.push(card);
         }
-        
+
+        // Add cards to available hand
+        game.available.extend(cards);
+
         game
     }
 
     #[test]
     fn test_familiar_can_use() {
-        let game = create_test_game();
-        let familiar = Familiar;
-        let target = Target::None;
-        
+        let _game = create_test_game();
+        let _familiar = Familiar;
+        let _target = Target::None;
+
         // Should be able to use if hand is not empty
         // Note: This test assumes game.available.cards() returns non-empty
         // In a full implementation, we would set up the test game properly
@@ -749,10 +767,13 @@ mod tests {
     #[test]
     fn test_familiar_properties() {
         let familiar = Familiar;
-        
+
         assert_eq!(familiar.consumable_type(), ConsumableType::Spectral);
         assert_eq!(familiar.get_target_type(), TargetType::None);
-        assert_eq!(familiar.get_effect_category(), ConsumableEffect::Destruction);
+        assert_eq!(
+            familiar.get_effect_category(),
+            ConsumableEffect::Destruction
+        );
         assert_eq!(familiar.name(), "Familiar");
         assert_eq!(familiar.cost(), 4);
     }
@@ -760,7 +781,7 @@ mod tests {
     #[test]
     fn test_grim_properties() {
         let grim = Grim;
-        
+
         assert_eq!(grim.consumable_type(), ConsumableType::Spectral);
         assert_eq!(grim.get_target_type(), TargetType::None);
         assert_eq!(grim.get_effect_category(), ConsumableEffect::Destruction);
@@ -771,10 +792,13 @@ mod tests {
     #[test]
     fn test_incantation_properties() {
         let incantation = Incantation;
-        
+
         assert_eq!(incantation.consumable_type(), ConsumableType::Spectral);
         assert_eq!(incantation.get_target_type(), TargetType::None);
-        assert_eq!(incantation.get_effect_category(), ConsumableEffect::Destruction);
+        assert_eq!(
+            incantation.get_effect_category(),
+            ConsumableEffect::Destruction
+        );
         assert_eq!(incantation.name(), "Incantation");
         assert_eq!(incantation.cost(), 4);
     }
@@ -782,10 +806,13 @@ mod tests {
     #[test]
     fn test_talisman_properties() {
         let talisman = Talisman;
-        
+
         assert_eq!(talisman.consumable_type(), ConsumableType::Spectral);
         assert_eq!(talisman.get_target_type(), TargetType::Cards(1));
-        assert_eq!(talisman.get_effect_category(), ConsumableEffect::Enhancement);
+        assert_eq!(
+            talisman.get_effect_category(),
+            ConsumableEffect::Enhancement
+        );
         assert_eq!(talisman.name(), "Talisman");
         assert_eq!(talisman.cost(), 4);
     }
@@ -793,7 +820,7 @@ mod tests {
     #[test]
     fn test_aura_properties() {
         let aura = Aura;
-        
+
         assert_eq!(aura.consumable_type(), ConsumableType::Spectral);
         assert_eq!(aura.get_target_type(), TargetType::Cards(1));
         assert_eq!(aura.get_effect_category(), ConsumableEffect::Enhancement);
@@ -804,7 +831,7 @@ mod tests {
     #[test]
     fn test_wraith_properties() {
         let wraith = Wraith;
-        
+
         assert_eq!(wraith.consumable_type(), ConsumableType::Spectral);
         assert_eq!(wraith.get_target_type(), TargetType::None);
         assert_eq!(wraith.get_effect_category(), ConsumableEffect::Generation);
@@ -815,7 +842,7 @@ mod tests {
     #[test]
     fn test_sigil_properties() {
         let sigil = Sigil;
-        
+
         assert_eq!(sigil.consumable_type(), ConsumableType::Spectral);
         assert_eq!(sigil.get_target_type(), TargetType::None);
         assert_eq!(sigil.get_effect_category(), ConsumableEffect::Modification);
@@ -826,7 +853,7 @@ mod tests {
     #[test]
     fn test_ouija_properties() {
         let ouija = Ouija;
-        
+
         assert_eq!(ouija.consumable_type(), ConsumableType::Spectral);
         assert_eq!(ouija.get_target_type(), TargetType::None);
         assert_eq!(ouija.get_effect_category(), ConsumableEffect::Modification);
@@ -837,10 +864,13 @@ mod tests {
     #[test]
     fn test_ectoplasm_properties() {
         let ectoplasm = Ectoplasm;
-        
+
         assert_eq!(ectoplasm.consumable_type(), ConsumableType::Spectral);
         assert_eq!(ectoplasm.get_target_type(), TargetType::None);
-        assert_eq!(ectoplasm.get_effect_category(), ConsumableEffect::Modification);
+        assert_eq!(
+            ectoplasm.get_effect_category(),
+            ConsumableEffect::Modification
+        );
         assert_eq!(ectoplasm.name(), "Ectoplasm");
         assert_eq!(ectoplasm.cost(), 4);
     }
@@ -871,25 +901,25 @@ mod tests {
     #[test]
     fn test_wraith_money_effect() {
         let mut game = create_test_game();
-        game.money = 100; // Set some initial money
-        
+        game.money = 100.0; // Set some initial money
+
         let wraith = Wraith;
         let target = Target::None;
-        
+
         // Should not fail even with money
         let result = wraith.use_effect(&mut game, target);
         assert!(result.is_ok());
-        assert_eq!(game.money, 0); // Money should be set to 0
+        assert_eq!(game.money, 0.0); // Money should be set to 0
     }
 
     #[test]
     fn test_ouija_hand_size_reduction() {
         let mut game = create_test_game();
         // let initial_hand_size_mod = game.hand_size_mod;
-        
+
         let ouija = Ouija;
         let target = Target::None;
-        
+
         // Should reduce hand size by 1 (when implemented)
         let result = ouija.use_effect(&mut game, target);
         assert!(result.is_ok());
@@ -899,15 +929,15 @@ mod tests {
 
     #[test]
     fn test_ectoplasm_hand_size_reduction() {
-        let mut game = create_test_game();
+        let _game = create_test_game();
         // let initial_hand_size_mod = game.hand_size_mod;
-        
+
         // Add a joker for the effect to work on
         // In a full implementation: game.jokers.push(test_joker);
-        
-        let ectoplasm = Ectoplasm;
-        let target = Target::None;
-        
+
+        let _ectoplasm = Ectoplasm;
+        let _target = Target::None;
+
         // Should reduce hand size by 1 (when implemented)
         // Note: This test will fail without proper joker setup
         // let result = ectoplasm.use_effect(&mut game, target);
