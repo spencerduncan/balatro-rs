@@ -67,14 +67,14 @@ fn test_voucher_collection_integration() {
     let mut game = Game::default();
 
     // Test voucher operations
-    assert!(!game.vouchers.owns(VoucherId::VoucherPlaceholder));
+    assert!(!game.vouchers.owns(VoucherId::Overstock));
 
-    game.vouchers.add(VoucherId::VoucherPlaceholder);
-    assert!(game.vouchers.owns(VoucherId::VoucherPlaceholder));
+    game.vouchers.add(VoucherId::Overstock);
+    assert!(game.vouchers.owns(VoucherId::Overstock));
     assert_eq!(game.vouchers.count(), 1);
 
     let owned = game.vouchers.owned_vouchers();
-    assert!(owned.contains(&VoucherId::VoucherPlaceholder));
+    assert!(owned.contains(&VoucherId::Overstock));
 }
 
 #[test]
@@ -126,7 +126,7 @@ fn test_game_serialization_with_extended_state() {
     // Set up extended state
     game.consumables_in_hand
         .push(ConsumableId::TarotPlaceholder);
-    game.vouchers.add(VoucherId::VoucherPlaceholder);
+    game.vouchers.add(VoucherId::Overstock);
     game.boss_blind_state.active_boss = Some(BossBlindId::BossBlindPlaceholder);
     game.state_version = StateVersion::V2;
 
@@ -142,7 +142,7 @@ fn test_game_serialization_with_extended_state() {
     assert!(deserialized
         .consumables_in_hand
         .contains(&ConsumableId::TarotPlaceholder));
-    assert!(deserialized.vouchers.owns(VoucherId::VoucherPlaceholder));
+    assert!(deserialized.vouchers.owns(VoucherId::Overstock));
     assert_eq!(
         deserialized.boss_blind_state.active_boss,
         Some(BossBlindId::BossBlindPlaceholder)
@@ -219,7 +219,7 @@ fn test_state_validation_with_extended_fields() {
     // Add some extended state
     game.consumables_in_hand
         .push(ConsumableId::TarotPlaceholder);
-    game.vouchers.add(VoucherId::VoucherPlaceholder);
+    game.vouchers.add(VoucherId::Overstock);
 
     // Verify state is still valid
     assert!(!game.consumables_in_hand.is_empty());

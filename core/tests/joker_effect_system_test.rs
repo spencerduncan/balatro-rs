@@ -9,6 +9,9 @@ use balatro_rs::stage::{Blind, Stage};
 /// This replaces the old callback-based Effects enum processing
 #[test]
 fn test_game_engine_processes_joker_effects() {
+    // Initialize all systems before running the test to avoid factory race conditions
+    balatro_rs::initialize().expect("Failed to initialize core systems");
+
     let mut game = Game::default();
     game.start();
     game.stage = Stage::Blind(Blind::Small);
@@ -49,6 +52,9 @@ fn test_game_engine_processes_joker_effects() {
 /// Test that multiple jokers accumulate their effects properly
 #[test]
 fn test_multiple_joker_effects_accumulate() {
+    // Initialize all systems before running the test to avoid factory race conditions
+    balatro_rs::initialize().expect("Failed to initialize core systems");
+
     let mut game = Game::default();
     game.start();
     game.stage = Stage::Blind(Blind::Small);
@@ -82,6 +88,9 @@ fn test_multiple_joker_effects_accumulate() {
 /// Test that joker lifecycle events are called appropriately
 #[test]
 fn test_joker_lifecycle_events() {
+    // Initialize all systems before running the test to avoid factory race conditions
+    balatro_rs::initialize().expect("Failed to initialize core systems");
+
     let mut game = Game::default();
     game.start();
 
@@ -103,6 +112,9 @@ fn test_joker_lifecycle_events() {
 /// Test that joker effects handle special modifiers correctly
 #[test]
 fn test_joker_effect_modifiers() {
+    // Initialize all systems before running the test to avoid factory race conditions
+    balatro_rs::initialize().expect("Failed to initialize core systems");
+
     let mut game = Game::default();
     game.start();
     game.stage = Stage::Blind(Blind::Small);
@@ -132,6 +144,9 @@ fn test_joker_effect_modifiers() {
 /// Test that the old Effects enum system is completely removed
 #[test]
 fn test_old_effects_enum_removed() {
+    // Initialize all systems before running the test to avoid factory race conditions
+    balatro_rs::initialize().expect("Failed to initialize core systems");
+
     // This test ensures we can only use the new structured JokerEffect system
     let joker = JokerFactory::create(JokerId::Joker).expect("Can create joker");
     assert!(joker.id() == JokerId::Joker);

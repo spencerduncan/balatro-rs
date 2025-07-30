@@ -18,10 +18,11 @@ use crate::rank::HandRank;
 use crate::scaling_joker::ScalingEvent;
 use crate::shop::packs::{OpenPackState, Pack};
 use crate::shop::Shop;
+use crate::skip_tags::SkipTagId;
 use crate::stage::{Blind, End, Stage};
 use crate::state_version::StateVersion;
 use crate::target_context::TargetContext;
-use crate::vouchers::VoucherCollection;
+use crate::vouchers::{VoucherCollection, VoucherId};
 
 // Re-export GameState for external use with qualified name to avoid Python bindings conflict
 pub use crate::vouchers::GameState as VoucherGameState;
@@ -206,6 +207,16 @@ pub struct Game {
     // hand type tracking for this game run
     pub hand_type_counts: HashMap<HandRank, u32>,
 
+    // hand level tracking (for planet card effects)
+    pub hand_levels: HashMap<HandRank, u32>,
+
+    // Card enhancement tracking for this game run
+    /// Count of Stone cards currently in deck (cached for performance)
+    pub stone_cards_in_deck: usize,
+
+    /// Count of Steel cards currently in deck (cached for performance)
+    pub steel_cards_in_deck: usize,
+
     // Extended state for consumables, vouchers, and boss blinds
     /// Consumable cards currently in the player's hand
     pub consumables_in_hand: Vec<ConsumableId>,
@@ -245,6 +256,13 @@ pub struct Game {
     /// Memory monitor for tracking and controlling memory usage
     #[cfg_attr(feature = "serde", serde(skip))]
     pub memory_monitor: MemoryMonitor,
+
+    /// Active skip tag state for persistent tag effects (unified approach)
+    pub active_skip_tags: crate::skip_tags::ActiveSkipTags,
+    /// Available skip tags for selection
+    pub available_skip_tags: Vec<crate::skip_tags::SkipTagInstance>,
+    /// Pending skip tag selection (after skipping a blind)
+    pub pending_tag_selection: bool,
 }
 
 #[cfg(feature = "serde")]
@@ -331,6 +349,11 @@ impl Game {
             mult: config.base_mult as f64,
             score: config.base_score as f64,
             hand_type_counts: HashMap::new(),
+            hand_levels: HashMap::new(),
+
+            // Initialize enhancement tracking (will be calculated after deck is set up)
+            stone_cards_in_deck: 0,
+            steel_cards_in_deck: 0,
 
             // Initialize extended state fields
             consumables_in_hand: Vec::new(),
@@ -356,14 +379,126 @@ impl Game {
             // Initialize memory monitor with default configuration
             memory_monitor: MemoryMonitor::default(),
 
+            // Initialize skip tags system (unified approach)
+            active_skip_tags: crate::skip_tags::ActiveSkipTags::new(),
+            available_skip_tags: Vec::new(),
+            pending_tag_selection: false,
+
             config,
         }
+    }
+
+    /// Count Stone cards in the current deck
+    /// Following clean code principle: functions should do one thing
+    fn count_stone_cards(&self) -> usize {
+        self.deck
+            .cards()
+            .iter()
+            .filter(|card| matches!(card.enhancement, Some(crate::card::Enhancement::Stone)))
+            .count()
+    }
+
+    /// Count Steel cards in the current deck
+    /// Following clean code principle: functions should do one thing
+    fn count_steel_cards(&self) -> usize {
+        self.deck
+            .cards()
+            .iter()
+            .filter(|card| matches!(card.enhancement, Some(crate::card::Enhancement::Steel)))
+            .count()
+    }
+
+    /// Refresh enhancement card counts based on current deck state
+    /// Call this whenever the deck composition changes
+    pub fn refresh_enhancement_counts(&mut self) {
+        self.stone_cards_in_deck = self.count_stone_cards();
+        self.steel_cards_in_deck = self.count_steel_cards();
+    }
+
+    /// Add cards to deck for testing purposes
+    /// Following clean code: separate testing concerns from production logic
+    #[cfg(test)]
+    pub fn add_cards_to_deck_for_testing(&mut self, cards: Vec<crate::card::Card>) {
+        self.deck.extend(cards);
+    }
+
+    /// Get deck size for testing purposes
+    /// Following clean code: provide necessary test access without exposing internals
+    #[cfg(test)]
+    pub fn deck_size_for_testing(&self) -> usize {
+        self.deck.len()
     }
 
     pub fn start(&mut self) {
         // for now just move state to small blind
         self.stage = Stage::PreBlind();
+
+        // Refresh enhancement counts after deck is set up
+        self.refresh_enhancement_counts();
+
         self.deal();
+    }
+
+    /// Apply a skip tag effect to the game state
+    pub fn apply_skip_tag_effect(
+        &mut self,
+        tag_id: crate::skip_tags::SkipTagId,
+    ) -> Result<crate::skip_tags::TagEffectResult, crate::skip_tags::TagError> {
+        use crate::skip_tags::{get_registry, TagError};
+
+        let registry = get_registry();
+        let tag = registry
+            .get_tag(tag_id)
+            .ok_or(TagError::InvalidTagId(tag_id))?;
+
+        if !tag.can_apply(self) {
+            return Err(TagError::CannotApply(format!(
+                "Tag {} cannot be applied in current game state",
+                tag.name()
+            )));
+        }
+
+        let result = tag.apply_effect(self);
+
+        // Apply immediate money reward
+        if result.money_reward > 0 {
+            self.money += result.money_reward as f64;
+        }
+
+        // Apply shop enhancement effects if this is a shop enhancement tag
+        if result.persist_tag {
+            self.active_skip_tags.apply_shop_enhancement_effect(tag_id);
+        }
+
+        Ok(result)
+    }
+
+    /// Consume next shop modifiers and return them for shop generation
+    pub fn consume_next_shop_modifiers(&mut self) -> crate::skip_tags::NextShopModifiers {
+        self.active_skip_tags.consume_next_shop_modifiers()
+    }
+
+    /// Get the count of blinds skipped (for economic tags)
+    pub fn get_blinds_skipped_count(&self) -> u32 {
+        self.active_skip_tags.blinds_skipped
+    }
+
+    /// Increment the count of blinds skipped
+    pub fn increment_blinds_skipped(&mut self) {
+        self.active_skip_tags.blinds_skipped += 1;
+    }
+
+    /// Handle boss blind defeat (for Investment tag)
+    pub fn handle_boss_blind_defeat(&mut self) -> i32 {
+        let investment_count = self.active_skip_tags.investment_count;
+        if investment_count > 0 {
+            let reward = investment_count as i32 * 25; // $25 per Investment tag
+            self.money += reward as f64;
+            self.active_skip_tags.investment_count = 0; // Reset after payout
+            reward
+        } else {
+            0
+        }
     }
 
     /// Start a new blind and trigger joker lifecycle events
@@ -385,6 +520,7 @@ impl Game {
                 round: self.round as u32,
                 stage: &self.stage,
                 hands_played: 0,
+                hands_remaining: self.plays,
                 discards_used: 0,
                 jokers: &self.jokers,
                 hand: &temp_hand,
@@ -392,8 +528,8 @@ impl Game {
                 joker_state_manager: &self.joker_state_manager,
                 hand_type_counts: &self.hand_type_counts,
                 cards_in_deck: self.deck.len(),
-                stone_cards_in_deck: 0, // TODO: Track stone cards when implemented
-                steel_cards_in_deck: 0, // TODO: Track steel cards when implemented
+                stone_cards_in_deck: self.stone_cards_in_deck,
+                steel_cards_in_deck: self.steel_cards_in_deck,
                 rng: &self.rng,
             };
 
@@ -454,6 +590,45 @@ impl Game {
     /// * `hand_rank` - The hand rank to increment
     pub fn increment_hand_type_count(&mut self, hand_rank: HandRank) {
         *self.hand_type_counts.entry(hand_rank).or_insert(0) += 1;
+    }
+
+    /// Gets the current level number for a specific hand type.
+    ///
+    /// # Arguments
+    /// * `hand_rank` - The hand rank to get the level for
+    ///
+    /// # Returns
+    /// The current level number of the hand type (defaults to 1 if not leveled up)
+    pub fn get_hand_level_number(&self, hand_rank: HandRank) -> u32 {
+        self.hand_levels.get(&hand_rank).copied().unwrap_or(1)
+    }
+
+    /// Gets the full level information for a specific hand type at its current level.
+    ///
+    /// # Arguments
+    /// * `hand_rank` - The hand rank to get the level info for
+    ///
+    /// # Returns
+    /// Level struct with chips, mult, and level information for the current level
+    pub fn get_hand_level(&self, hand_rank: HandRank) -> crate::rank::Level {
+        let current_level = self.get_hand_level_number(hand_rank);
+        hand_rank.level_at(current_level)
+    }
+
+    /// Levels up a specific hand type (used by Planet cards).
+    ///
+    /// # Arguments
+    /// * `hand_rank` - The hand rank to level up
+    ///
+    /// # Returns
+    /// Ok(()) if successful, Err(ConsumableError) if level up fails
+    pub fn level_up_hand(
+        &mut self,
+        hand_rank: HandRank,
+    ) -> Result<(), crate::consumables::ConsumableError> {
+        let current_level = self.get_hand_level_number(hand_rank);
+        self.hand_levels.insert(hand_rank, current_level + 1);
+        Ok(())
     }
 
     fn clear_blind(&mut self) {
@@ -569,9 +744,10 @@ impl Game {
     }
 
     pub fn calc_score(&mut self, hand: MadeHand) -> f64 {
-        // compute chips and mult from hand level
-        self.chips += hand.rank.level().chips as f64;
-        self.mult += hand.rank.level().mult as f64;
+        // compute chips and mult from hand level (considering planet card upgrades)
+        let level_info = self.get_hand_level(hand.rank);
+        self.chips += level_info.chips as f64;
+        self.mult += level_info.mult as f64;
 
         // add chips for each played card
         let card_chips: f64 = hand.hand.cards().iter().map(|c| c.chips() as f64).sum();
@@ -631,7 +807,8 @@ impl Game {
             ante: self.ante_current as u8,
             round: self.round as u32,
             stage: &self.stage,
-            hands_played: 0,  // TODO: track this properly
+            hands_played: 0, // TODO: track this properly
+            hands_remaining: self.plays,
             discards_used: 0, // TODO: track this properly
             jokers: &self.jokers,
             hand: &Hand::new(hand.hand.cards().to_vec()),
@@ -639,8 +816,8 @@ impl Game {
             joker_state_manager: &self.joker_state_manager,
             hand_type_counts: &self.hand_type_counts,
             cards_in_deck: self.deck.len(),
-            stone_cards_in_deck: 0, // TODO: Track stone cards when implemented
-            steel_cards_in_deck: 0, // TODO: Track steel cards when implemented
+            stone_cards_in_deck: self.stone_cards_in_deck,
+            steel_cards_in_deck: self.steel_cards_in_deck,
             rng: &self.rng,
         };
 
@@ -779,9 +956,10 @@ impl Game {
         let _initial_chips = self.chips;
         let _initial_mult = self.mult;
 
-        // Calculate base values from hand level
-        let base_chips = hand.rank.level().chips as f64;
-        let base_mult = hand.rank.level().mult as f64;
+        // Calculate base values from hand level (considering planet card upgrades)
+        let level_info = self.get_hand_level(hand.rank);
+        let base_chips = level_info.chips as f64;
+        let base_mult = level_info.mult as f64;
         self.chips += base_chips;
         self.mult += base_mult;
 
@@ -801,7 +979,8 @@ impl Game {
                 ante: self.ante_current as u8,
                 round: self.round as u32,
                 stage: &self.stage,
-                hands_played: 0,  // TODO: track this properly
+                hands_played: 0, // TODO: track this properly
+                hands_remaining: self.plays,
                 discards_used: 0, // TODO: track this properly
                 jokers: &self.jokers,
                 hand: &Hand::new(hand.hand.cards().to_vec()),
@@ -809,8 +988,8 @@ impl Game {
                 joker_state_manager: &self.joker_state_manager,
                 hand_type_counts: &self.hand_type_counts,
                 cards_in_deck: self.deck.len(),
-                stone_cards_in_deck: 0, // TODO: Track stone cards when implemented
-                steel_cards_in_deck: 0, // TODO: Track steel cards when implemented
+                stone_cards_in_deck: self.stone_cards_in_deck,
+                steel_cards_in_deck: self.steel_cards_in_deck,
                 rng: &self.rng,
             };
 
@@ -1138,6 +1317,7 @@ impl Game {
             round: self.round as u32,
             stage: &self.stage,
             hands_played: (self.config.plays as f64 - self.plays) as u32,
+            hands_remaining: self.plays,
             discards_used: (self.config.discards as f64 - self.discards) as u32,
             jokers: &self.jokers,
             hand: &current_hand,
@@ -1145,8 +1325,8 @@ impl Game {
             joker_state_manager: &self.joker_state_manager,
             hand_type_counts: &self.hand_type_counts,
             cards_in_deck: self.deck.len(),
-            stone_cards_in_deck: 0, // TODO: Add proper Stone card tracking
-            steel_cards_in_deck: 0, // TODO: Add proper Steel card tracking
+            stone_cards_in_deck: self.stone_cards_in_deck,
+            steel_cards_in_deck: self.steel_cards_in_deck,
             rng: &self.rng,
         };
 
@@ -1288,6 +1468,56 @@ impl Game {
         } else {
             self.jokers.insert(slot, new_joker);
         }
+
+        Ok(())
+    }
+
+    /// Purchase a voucher by ID
+    ///
+    /// Validates game state, checks prerequisites, verifies cost, and adds voucher to collection.
+    /// Vouchers provide permanent upgrades that persist for the entire run.
+    ///
+    /// # Arguments
+    /// * `voucher_id` - The voucher to purchase
+    ///
+    /// # Returns
+    /// * `Ok(())` - Voucher purchased successfully
+    /// * `InvalidStage` - Not in shop stage
+    /// * `InvalidBalance` - Insufficient funds
+    /// * `InvalidOperation` - Voucher already owned or prerequisites not met
+    pub(crate) fn buy_voucher(&mut self, voucher_id: VoucherId) -> Result<(), GameError> {
+        // Validate stage
+        if self.stage != Stage::Shop() {
+            return Err(GameError::InvalidStage);
+        }
+
+        // Check if voucher is already owned
+        if self.vouchers.owns(voucher_id) {
+            return Err(GameError::InvalidOperation(format!(
+                "Voucher {voucher_id:?} already owned"
+            )));
+        }
+
+        // Check prerequisites
+        if !self.vouchers.can_purchase(voucher_id) {
+            return Err(GameError::InvalidOperation(format!(
+                "Prerequisites not met for voucher {voucher_id:?}"
+            )));
+        }
+
+        // Get voucher cost
+        let cost = voucher_id.base_cost();
+
+        // Check if player has enough money
+        if (self.money as usize) < cost {
+            return Err(GameError::InvalidBalance);
+        }
+
+        // Deduct money
+        self.money -= cost as f64;
+
+        // Add voucher to collection
+        self.vouchers.add(voucher_id);
 
         Ok(())
     }
@@ -1555,6 +1785,60 @@ impl Game {
         Ok(())
     }
 
+    #[allow(dead_code)]
+    fn skip_blind(&mut self, blind: Blind) -> Result<(), GameError> {
+        // can only skip blind if stage is pre blind
+        if self.stage != Stage::PreBlind() {
+            return Err(GameError::InvalidStage);
+        }
+        // provided blind must be expected next blind (same validation as select_blind)
+        if let Some(current) = self.blind {
+            if blind != current.next() {
+                return Err(GameError::InvalidBlind);
+            }
+        } else {
+            // if game just started, blind will be None, in which case
+            // we can only skip small blind.
+            if blind != Blind::Small {
+                return Err(GameError::InvalidBlind);
+            }
+        }
+
+        // Set blind but don't transition to Blind stage - skip straight to PostBlind
+        self.blind = Some(blind);
+
+        // Calculate skip reward (half of normal blind reward)
+        let base_reward = blind.reward() as f64;
+        let skip_reward = base_reward / 2.0;
+
+        // Apply skip reward directly (no interest bonus for skipped blinds)
+        self.reward = skip_reward;
+
+        // Process joker round end effects (some jokers may trigger on blind skip)
+        let joker_effects = self.process_joker_round_end_effects();
+
+        // Apply joker money effects
+        self.money += joker_effects.money as f64;
+
+        // Handle boss blind progression (same as normal blind completion)
+        if blind == Blind::Boss {
+            if let Some(ante_next) = self.ante_current.next(self.ante_end) {
+                self.ante_current = ante_next;
+            } else {
+                self.stage = Stage::End(End::Win);
+                return Ok(());
+            }
+        }
+
+        // Transition directly to PostBlind stage (skipping the blind play)
+        self.stage = Stage::PostBlind();
+
+        // TODO: Integrate skip tag selection system once fully implemented
+        // For now, skip blind gives reward but no tag selection
+
+        Ok(())
+    }
+
     fn next_round(&mut self) -> Result<(), GameError> {
         self.stage = Stage::PreBlind();
         self.round += 1.0;
@@ -1635,6 +1919,10 @@ impl Game {
             },
             Action::BuyJoker { joker_id, slot } => match self.stage {
                 Stage::Shop() => self.buy_joker_with_slot(joker_id, slot),
+                _ => Err(GameError::InvalidStage),
+            },
+            Action::BuyVoucher { voucher_id } => match self.stage {
+                Stage::Shop() => self.buy_voucher(voucher_id),
                 _ => Err(GameError::InvalidStage),
             },
             Action::NextRound() => match self.stage {
@@ -1729,6 +2017,39 @@ impl Game {
                 // TODO: Implement multi-select deactivation
                 Err(GameError::InvalidAction)
             }
+            // Consumable actions - infrastructure ready for implementation
+            Action::BuyConsumable {
+                consumable_id: _,
+                slot: _,
+            } => {
+                // TODO: Implement consumable buying when shop integration is complete
+                Err(GameError::InvalidAction)
+            }
+            Action::UseConsumable {
+                slot: _,
+                target_description: _,
+            } => {
+                // TODO: Implement consumable usage with tarot factory
+                Err(GameError::InvalidAction)
+            }
+            Action::SellConsumable { slot: _ } => {
+                // TODO: Implement consumable selling
+                Err(GameError::InvalidAction)
+            }
+
+            // Planet card usage
+            Action::UsePlanetCard {
+                planet_card_id: _,
+                hand_rank_id: _,
+            } => {
+                // TODO: Implement planet card usage through action system
+                // For now, planet cards use level_up_hand directly
+                Err(GameError::InvalidAction)
+            }
+
+            // Skip tag system actions
+            Action::SkipBlind(blind) => self.handle_skip_blind(blind),
+            Action::SelectSkipTag(tag_id) => self.handle_select_skip_tag(tag_id),
         }
     }
 
@@ -1736,6 +2057,120 @@ impl Game {
         let space = self.gen_action_space();
         let action = space.to_action(index, self)?;
         self.handle_action(action)
+    }
+
+    /// Handle skipping a blind and potentially getting skip tags
+    fn handle_skip_blind(&mut self, blind: Blind) -> Result<(), GameError> {
+        use crate::skip_tags::tag_registry::global_registry;
+        use crate::skip_tags::SkipTagInstance;
+
+        // First, call the original skip_blind method to set up the basic skip mechanics
+        self.skip_blind(blind)?;
+
+        // Generate potential skip tags based on rarity weights
+        let registry = global_registry();
+        let weighted_tags = registry.get_weighted_tags();
+
+        if !weighted_tags.is_empty() {
+            // For utility tags, generate one tag with some probability
+            let tag_chance = 0.5; // 50% chance to get a tag when skipping
+
+            if self.rng.gen_range(0.0..1.0) < tag_chance {
+                // Select a weighted random tag
+                let total_weight: f64 = weighted_tags.iter().map(|(_, weight)| weight).sum();
+                let mut random_value = self.rng.gen_range(0.0..total_weight);
+
+                for (tag_id, weight) in weighted_tags {
+                    random_value -= weight;
+                    if random_value <= 0.0 {
+                        self.available_skip_tags.push(SkipTagInstance::new(tag_id));
+                        self.pending_tag_selection = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Skip to the next stage
+        self.stage = Stage::PostBlind();
+        Ok(())
+    }
+
+    /// Handle selecting and activating a skip tag
+    fn handle_select_skip_tag(&mut self, tag_id: SkipTagId) -> Result<(), GameError> {
+        use crate::skip_tags::tag_registry::global_registry;
+        use crate::skip_tags::{SkipTagContext, SkipTagInstance};
+
+        if !self.pending_tag_selection {
+            return Err(GameError::InvalidAction);
+        }
+
+        // Find the tag in available tags
+        let tag_index = self
+            .available_skip_tags
+            .iter()
+            .position(|tag| tag.id == tag_id)
+            .ok_or(GameError::InvalidAction)?;
+
+        let selected_tag = self.available_skip_tags.remove(tag_index);
+
+        // Get the tag implementation
+        let registry = global_registry();
+        let tag_impl = registry.get_tag(tag_id).ok_or(GameError::InvalidAction)?;
+
+        // Create context for tag activation
+        let available_tag_ids: Vec<_> = self.available_skip_tags.iter().map(|t| t.id).collect();
+
+        let context = SkipTagContext {
+            game: std::mem::take(self),
+            skipped_blind: self.blind,
+            available_tags: available_tag_ids,
+        };
+
+        // Activate the tag
+        let result = tag_impl.activate(context);
+
+        if result.success {
+            // Update game state with result
+            *self = result.game;
+
+            // Handle additional tags (from Double tag)
+            for additional_tag_id in result.additional_tags {
+                let tag_instance = SkipTagInstance::new(additional_tag_id);
+
+                // Check if this tag can be stacked with existing active tags
+                if let Some(existing) = self
+                    .active_skip_tags
+                    .iter_mut()
+                    .find(|t| t.id == additional_tag_id)
+                {
+                    if existing.add_stack(registry) {
+                        continue; // Successfully stacked
+                    }
+                }
+
+                // Add as new active tag
+                self.active_skip_tags.push(tag_instance);
+            }
+
+            // Handle tag stacking for the original tag
+            if tag_impl.stackable() {
+                if let Some(existing) = self.active_skip_tags.iter_mut().find(|t| t.id == tag_id) {
+                    existing.add_stack(registry);
+                } else {
+                    self.active_skip_tags.push(selected_tag);
+                }
+            } else {
+                self.active_skip_tags.push(selected_tag);
+            }
+        }
+
+        // Clear pending selection if no more tags available
+        if self.available_skip_tags.is_empty() {
+            self.pending_tag_selection = false;
+        }
+
+        Ok(())
     }
 
     /// Remove a joker from the specified slot and clean up its state.
@@ -2082,6 +2517,12 @@ impl Game {
             mult: saveable_state.mult,
             score: saveable_state.score,
             hand_type_counts: saveable_state.hand_type_counts,
+            hand_levels: HashMap::new(), // Initialize with empty levels (default level 1)
+
+            // Enhancement tracking (will be calculated after loading)
+            stone_cards_in_deck: 0,
+            steel_cards_in_deck: 0,
+
             // Extended state fields
             consumables_in_hand: saveable_state.consumables_in_hand,
             vouchers: saveable_state.vouchers,
@@ -2098,11 +2539,19 @@ impl Game {
             rng: crate::rng::GameRng::secure(),
             // Initialize memory monitor (not serialized)
             memory_monitor: MemoryMonitor::default(),
+            // Initialize skip tags system (not serialized, unified approach)
+            active_skip_tags: crate::skip_tags::ActiveSkipTags::new(),
+            available_skip_tags: Vec::new(),
+            pending_tag_selection: false,
         };
 
         // Restore joker states to the state manager
         game.joker_state_manager
             .restore_from_snapshot(saveable_state.joker_states);
+
+        // Refresh enhancement counts based on loaded deck
+        let mut game = game;
+        game.refresh_enhancement_counts();
 
         Ok(game)
     }
@@ -2121,7 +2570,8 @@ impl Game {
             ante: self.ante_current as u8,
             round: self.round as u32,
             stage: &self.stage,
-            hands_played: 0,  // TODO: track this properly
+            hands_played: 0, // TODO: track this properly
+            hands_remaining: self.plays,
             discards_used: 0, // TODO: track this properly
             jokers: &self.jokers,
             hand: &crate::hand::Hand::new(vec![]),
@@ -2129,8 +2579,8 @@ impl Game {
             joker_state_manager: &self.joker_state_manager,
             hand_type_counts: &self.hand_type_counts,
             cards_in_deck: self.deck.len(),
-            stone_cards_in_deck: 0, // TODO: Track stone cards when implemented
-            steel_cards_in_deck: 0, // TODO: Track steel cards when implemented
+            stone_cards_in_deck: self.stone_cards_in_deck,
+            steel_cards_in_deck: self.steel_cards_in_deck,
             rng: &self.rng,
         };
 
@@ -3539,5 +3989,382 @@ mod tests {
         assert_eq!(game.money, 100.0);
         assert_eq!(game.shop_reroll_cost, 10.0);
         assert_eq!(game.shop_rerolls_this_round, 1);
+    }
+
+    // Skip Blind Functionality Tests
+    #[test]
+    fn test_skip_blind_basic_functionality() {
+        let mut game = Game::default();
+        game.start();
+
+        // Start with PreBlind stage and first small blind
+        game.stage = Stage::PreBlind();
+        game.blind = None;
+        game.money = 10.0;
+
+        // Skip the small blind
+        let result = game.skip_blind(Blind::Small);
+        assert!(result.is_ok());
+
+        // Should transition directly to PostBlind
+        assert_eq!(game.stage, Stage::PostBlind());
+
+        // Should have half the normal small blind reward (3/2 = 1.5)
+        assert_eq!(game.reward, 1.5);
+
+        // Blind should be set
+        assert_eq!(game.blind, Some(Blind::Small));
+    }
+
+    #[test]
+    fn test_skip_blind_reward_calculation() {
+        let mut game = Game::default();
+        game.start();
+        game.stage = Stage::PreBlind();
+        game.blind = None;
+
+        // Test all blind types give half reward
+
+        // Small blind: normal 3, skip 1.5
+        game.skip_blind(Blind::Small).unwrap();
+        assert_eq!(game.reward, 1.5);
+
+        // Reset for big blind
+        game.stage = Stage::PreBlind();
+        game.blind = Some(Blind::Small);
+
+        // Big blind: normal 4, skip 2.0
+        game.skip_blind(Blind::Big).unwrap();
+        assert_eq!(game.reward, 2.0);
+
+        // Reset for boss blind
+        game.stage = Stage::PreBlind();
+        game.blind = Some(Blind::Big);
+
+        // Boss blind: normal 5, skip 2.5
+        game.skip_blind(Blind::Boss).unwrap();
+        assert_eq!(game.reward, 2.5);
+    }
+
+    #[test]
+    fn test_skip_blind_validation_wrong_stage() {
+        let mut game = Game::default();
+        game.start();
+
+        // Test invalid stages
+        let invalid_stages = vec![
+            Stage::Blind(Blind::Small),
+            Stage::PostBlind(),
+            Stage::Shop(),
+            Stage::End(crate::stage::End::Win),
+        ];
+
+        for stage in invalid_stages {
+            game.stage = stage;
+            let result = game.skip_blind(Blind::Small);
+            assert!(result.is_err());
+        }
+    }
+
+    #[test]
+    fn test_skip_blind_validation_wrong_blind() {
+        let mut game = Game::default();
+        game.start();
+        game.stage = Stage::PreBlind();
+
+        // Game just started, can only skip small blind
+        game.blind = None;
+        let result = game.skip_blind(Blind::Big);
+        assert!(result.is_err());
+
+        let result = game.skip_blind(Blind::Boss);
+        assert!(result.is_err());
+
+        // After small blind, can only skip big
+        game.blind = Some(Blind::Small);
+        let result = game.skip_blind(Blind::Small);
+        assert!(result.is_err());
+
+        let result = game.skip_blind(Blind::Boss);
+        assert!(result.is_err());
+
+        // After big blind, can only skip boss
+        game.blind = Some(Blind::Big);
+        let result = game.skip_blind(Blind::Small);
+        assert!(result.is_err());
+
+        let result = game.skip_blind(Blind::Big);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_skip_blind_boss_progression() {
+        let mut game = Game::default();
+        game.start();
+        game.stage = Stage::PreBlind();
+        game.blind = Some(Blind::Big);
+        game.ante_current = crate::ante::Ante::One;
+        game.ante_end = crate::ante::Ante::Two;
+
+        // Skip boss blind should progress ante
+        let result = game.skip_blind(Blind::Boss);
+        assert!(result.is_ok());
+
+        // Should advance to next ante
+        assert_eq!(game.ante_current, crate::ante::Ante::Two);
+        assert_eq!(game.stage, Stage::PostBlind());
+    }
+
+    #[test]
+    fn test_skip_blind_boss_win_condition() {
+        let mut game = Game::default();
+        game.start();
+        game.stage = Stage::PreBlind();
+        game.blind = Some(Blind::Big);
+        game.ante_current = game.ante_end; // Final ante
+
+        // Skip boss blind on final ante should win
+        let result = game.skip_blind(Blind::Boss);
+        assert!(result.is_ok());
+
+        // Should end the game with win
+        assert_eq!(game.stage, Stage::End(crate::stage::End::Win));
+    }
+
+    #[test]
+    fn test_skip_blind_action_handler() {
+        let mut game = Game::default();
+        game.start();
+        game.stage = Stage::PreBlind();
+        game.blind = None;
+
+        // Test Action::SkipBlind through handle_action
+        let action = Action::SkipBlind(Blind::Small);
+        let result = game.handle_action(action);
+        assert!(result.is_ok());
+
+        // Should have same effect as direct skip_blind call
+        assert_eq!(game.stage, Stage::PostBlind());
+        assert_eq!(game.reward, 1.5);
+        assert_eq!(game.blind, Some(Blind::Small));
+    }
+
+    #[test]
+    fn test_skip_blind_action_handler_wrong_stage() {
+        let mut game = Game::default();
+        game.start();
+        game.stage = Stage::Shop(); // Wrong stage
+
+        // Action should be invalid in wrong stage
+        let action = Action::SkipBlind(Blind::Small);
+        let result = game.handle_action(action);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_skip_blind_joker_effects_integration() {
+        let mut game = Game::default();
+        game.start();
+        game.stage = Stage::PreBlind();
+        game.blind = None;
+        game.money = 10.0;
+
+        // Add some money to test joker effect integration
+        // (The process_joker_round_end_effects is called in skip_blind)
+
+        let result = game.skip_blind(Blind::Small);
+        assert!(result.is_ok());
+
+        // Money should include any joker effects that trigger on round end
+        // (Base 10.0 + potential joker money effects)
+        assert!(game.money >= 10.0);
+
+        // Core skip functionality still works
+        assert_eq!(game.stage, Stage::PostBlind());
+        assert_eq!(game.reward, 1.5);
+    }
+
+    #[test]
+    fn test_skip_blind_progression_sequence() {
+        let mut game = Game::default();
+        game.start();
+
+        // Test complete skip sequence: Small -> Big -> Boss
+
+        // Skip Small Blind
+        game.stage = Stage::PreBlind();
+        game.blind = None;
+        game.skip_blind(Blind::Small).unwrap();
+        assert_eq!(game.reward, 1.5);
+        assert_eq!(game.stage, Stage::PostBlind());
+
+        // Simulate cashout and shop
+        game.cashout().unwrap();
+        game.stage = Stage::Shop();
+        game.next_round().unwrap();
+
+        // Skip Big Blind
+        assert_eq!(game.stage, Stage::PreBlind());
+        game.skip_blind(Blind::Big).unwrap();
+        assert_eq!(game.reward, 2.0);
+        assert_eq!(game.stage, Stage::PostBlind());
+
+        // Simulate cashout and shop
+        game.cashout().unwrap();
+        game.stage = Stage::Shop();
+        game.next_round().unwrap();
+
+        // Skip Boss Blind
+        assert_eq!(game.stage, Stage::PreBlind());
+        game.skip_blind(Blind::Boss).unwrap();
+        assert_eq!(game.reward, 2.5);
+        assert_eq!(game.stage, Stage::PostBlind());
+    }
+}
+
+/// Unit tests for Stone/Steel card tracking implementation
+/// Following Uncle Bob's testing principles: F.I.R.S.T. (Fast, Independent, Repeatable, Self-validating, Timely)
+#[cfg(test)]
+mod stone_steel_tracking_tests {
+    use super::*;
+    use crate::card::{Card, Edition, Enhancement, Suit, Value};
+    use crate::config::Config;
+
+    /// Test helper to create a card with specific enhancement
+    fn create_card_with_enhancement(enhancement: Option<Enhancement>) -> Card {
+        Card {
+            value: Value::Ace,
+            suit: Suit::Heart,
+            id: 1,
+            edition: Edition::Base,
+            enhancement,
+            seal: None,
+        }
+    }
+
+    #[test]
+    fn should_count_zero_stone_cards_in_empty_deck() {
+        let mut game = Game::new(Config::default());
+        game.refresh_enhancement_counts();
+
+        assert_eq!(game.stone_cards_in_deck, 0);
+    }
+
+    #[test]
+    fn should_count_one_stone_card_in_deck() {
+        let mut game = Game::new(Config::default());
+
+        let stone_card = create_card_with_enhancement(Some(Enhancement::Stone));
+        game.add_cards_to_deck_for_testing(vec![stone_card]);
+
+        game.refresh_enhancement_counts();
+
+        assert_eq!(game.stone_cards_in_deck, 1);
+    }
+
+    #[test]
+    fn should_count_multiple_stone_cards_in_deck() {
+        let mut game = Game::new(Config::default());
+
+        let stone_cards = vec![
+            create_card_with_enhancement(Some(Enhancement::Stone)),
+            create_card_with_enhancement(Some(Enhancement::Stone)),
+            create_card_with_enhancement(Some(Enhancement::Stone)),
+        ];
+        game.add_cards_to_deck_for_testing(stone_cards);
+
+        game.refresh_enhancement_counts();
+
+        assert_eq!(game.stone_cards_in_deck, 3);
+    }
+
+    #[test]
+    fn should_count_zero_steel_cards_in_empty_deck() {
+        let mut game = Game::new(Config::default());
+        game.refresh_enhancement_counts();
+
+        assert_eq!(game.steel_cards_in_deck, 0);
+    }
+
+    #[test]
+    fn should_count_multiple_steel_cards_in_deck() {
+        let mut game = Game::new(Config::default());
+
+        let steel_cards = vec![
+            create_card_with_enhancement(Some(Enhancement::Steel)),
+            create_card_with_enhancement(Some(Enhancement::Steel)),
+            create_card_with_enhancement(Some(Enhancement::Steel)),
+            create_card_with_enhancement(Some(Enhancement::Steel)),
+        ];
+        game.add_cards_to_deck_for_testing(steel_cards);
+
+        game.refresh_enhancement_counts();
+
+        assert_eq!(game.steel_cards_in_deck, 4);
+    }
+
+    #[test]
+    fn should_count_both_stone_and_steel_cards_independently() {
+        let mut game = Game::new(Config::default());
+
+        let mixed_cards = vec![
+            create_card_with_enhancement(Some(Enhancement::Stone)),
+            create_card_with_enhancement(Some(Enhancement::Steel)),
+            create_card_with_enhancement(Some(Enhancement::Stone)),
+            create_card_with_enhancement(Some(Enhancement::Steel)),
+            create_card_with_enhancement(Some(Enhancement::Steel)),
+            create_card_with_enhancement(Some(Enhancement::Bonus)), // Should be ignored
+        ];
+        game.add_cards_to_deck_for_testing(mixed_cards);
+
+        game.refresh_enhancement_counts();
+
+        assert_eq!(game.stone_cards_in_deck, 2);
+        assert_eq!(game.steel_cards_in_deck, 3);
+    }
+
+    #[test]
+    fn should_refresh_enhancement_counts_on_game_start() {
+        let mut game = Game::new(Config::default());
+
+        let enhanced_cards = vec![
+            create_card_with_enhancement(Some(Enhancement::Stone)),
+            create_card_with_enhancement(Some(Enhancement::Steel)),
+        ];
+        game.add_cards_to_deck_for_testing(enhanced_cards);
+
+        // Counts should be 0 before start (not yet calculated)
+        assert_eq!(game.stone_cards_in_deck, 0);
+        assert_eq!(game.steel_cards_in_deck, 0);
+
+        // Start the game (this should refresh counts)
+        game.start();
+
+        // Counts should now be accurate
+        assert_eq!(game.stone_cards_in_deck, 1);
+        assert_eq!(game.steel_cards_in_deck, 1);
+    }
+
+    #[test]
+    fn should_handle_deck_size_calculation_correctly() {
+        let mut game = Game::new(Config::default());
+
+        let initial_deck_size = game.deck_size_for_testing();
+
+        let cards = vec![
+            create_card_with_enhancement(Some(Enhancement::Stone)),
+            create_card_with_enhancement(Some(Enhancement::Stone)),
+            create_card_with_enhancement(Some(Enhancement::Steel)),
+            create_card_with_enhancement(None),
+            create_card_with_enhancement(Some(Enhancement::Bonus)),
+        ];
+        game.add_cards_to_deck_for_testing(cards);
+        game.refresh_enhancement_counts();
+
+        // Total deck size should be initial size + 5 added cards
+        assert_eq!(game.deck_size_for_testing(), initial_deck_size + 5);
+        // Enhancement counts should be accurate (only counting the added enhanced cards)
+        assert_eq!(game.stone_cards_in_deck, 2);
+        assert_eq!(game.steel_cards_in_deck, 1);
     }
 }
