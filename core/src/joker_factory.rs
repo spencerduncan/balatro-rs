@@ -179,7 +179,6 @@ impl JokerFactory {
                 // RNG-based jokers (Issue #442)
                 Reserved7,     // SixShooterJoker
                 LuckyCharm,    // LuckyCardJoker
-                FortuneTeller, // Fortune Teller scaling joker
                 // Special mechanic jokers
                 Erosion,
                 Photograph,
@@ -187,7 +186,6 @@ impl JokerFactory {
                 GreenJoker,
                 Reserved5, // RideTheBus
                 Reserved6, // RedCard (pack skipping)
-                RedCard,   // Red Card (direct mapping)
                 // Scaling chips jokers
                 OddTodd,
                 Arrowhead,
@@ -203,6 +201,7 @@ impl JokerFactory {
                 Burglar,    // Hand type conditional jokers
                 SpaceJoker, // New static jokers
                 BlueJoker,
+                RedCard,   // Red Card (scaling version)
                 SteelJoker, // Scaling Steel Joker
                 // RNG-based jokers (Issue #442)
                 Oops,      // OopsAllSixesJoker
@@ -227,6 +226,7 @@ impl JokerFactory {
                 // RNG-based jokers (Issue #442)
                 AcrobatJoker,
                 MysteryJoker, // MysteryJoker
+                FortuneTeller, // Fortune Teller scaling joker
                 // Special mechanic jokers
                 Blueprint,
                 // Scaling mult jokers

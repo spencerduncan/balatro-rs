@@ -124,7 +124,7 @@ pub fn create_red_card() -> ScalingJoker {
         JokerId::RedCard,
         "Red Card".to_string(),
         "+3 Mult per pack skipped".to_string(),
-        JokerRarity::Common,
+        JokerRarity::Uncommon,
         0.0,
         3.0,
         ScalingTrigger::ShopReroll, // Will need custom logic for pack skipping
