@@ -300,10 +300,10 @@ impl JokerFactory {
             // Scaling additive mult jokers
             Trousers, // Spare Trousers
             GreenJoker,
-            Reserved5, // RideTheBus
-            Reserved6, // RedCard (pack skipping)
-            RedCard,   // Red Card (direct mapping)
-            FortuneTeller,   // Fortune Teller
+            Reserved5,     // RideTheBus
+            Reserved6,     // RedCard (pack skipping)
+            RedCard,       // Red Card (direct mapping)
+            Fortune, // Fortune Teller
             // Scaling chips jokers
             Castle,
             Wee,
