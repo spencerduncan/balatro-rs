@@ -1,0 +1,32 @@
+[package]
+name = "balatro-domain"
+version = "0.1.0"
+edition = "2021"
+authors = ["Spencer Duncan <spencerduncan@example.com>"]
+description = "Domain layer for Balatro Web Debug UI - Pure business logic following Clean Architecture"
+license = "MIT"
+
+[dependencies]
+# Domain layer dependencies - keep minimal for clean architecture
+thiserror = "1.0"  # For domain errors
+uuid = { version = "1.0", features = ["v4", "serde"] }  # For SessionId generation
+serde = { version = "1.0", features = ["derive"], optional = true }  # Optional serialization
+
+# Import balatro-rs core for game types - temporarily disabled due to compilation issues
+# balatro-rs = { path = "../core" }
+
+[features]
+default = []
+serde = ["dep:serde"]
+
+[dev-dependencies]
+# Testing dependencies
+tokio = { version = "1.0", features = ["rt", "macros"] }
+criterion = { version = "0.5", features = ["html_reports"] }
+proptest = "1.0"  # Property-based testing for business rules
+mockall = "0.12"  # Mocking for unit tests
+
+# Benchmarks will be added later
+# [[bench]]
+# name = "domain_benchmarks"
+# harness = false
