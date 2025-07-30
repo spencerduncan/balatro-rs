@@ -1,0 +1,86 @@
+[package]
+name = "web-debug-ui"
+version = "0.1.0"
+edition = "2021"
+authors = ["Spencer Duncan <spencerduncan@example.com>"]
+description = "Sprint 1 Integration - Web Debug UI for Balatro RS following Clean Architecture"
+license = "MIT"
+repository = "https://github.com/spencerduncan/balatro-rs"
+keywords = ["balatro", "web-ui", "debug", "game-engine"]
+
+[[bin]]
+name = "web-debug-ui"
+path = "src/main.rs"
+
+[dependencies]
+# Core Dependencies
+anyhow = "1.0"
+async-trait = "0.1"
+thiserror = "1.0"
+uuid = { version = "1.9", features = ["v4", "serde"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+indexmap = "2.6.0"
+itertools = "0.13.0"
+once_cell = "1.20"
+
+# HTTP Server and WebSocket Infrastructure
+axum = { version = "0.8", features = ["ws", "tokio"] }
+tokio = { version = "1.40", features = ["full"] }
+tokio-tungstenite = "0.21"
+futures-util = "0.3"
+
+# Serialization and Data Structures
+bincode = "1.3"
+dashmap = "6.1"
+bytes = "1.8"
+serde_bytes = "0.11"
+
+# Performance Monitoring and Metrics
+metrics = "0.23"
+metrics-exporter-prometheus = "0.15"
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Memory Management Optimizations
+arc-swap = "1.7"
+
+# Additional Infrastructure Dependencies
+chrono = { version = "0.4", features = ["serde"] }
+socket2 = "0.5"
+
+# Core balatro-rs dependency (path dependency to local core)
+balatro-rs = { path = "../core" }
+
+[dev-dependencies]
+# Testing Framework Dependencies
+criterion = { version = "0.6.0", features = ["html_reports"] }
+mockall = "0.13"
+proptest = "1.4"
+assert_matches = "1.5"
+rstest = "0.23"
+fake = "2.10"
+serial_test = "3.1"
+tokio-test = "0.4"
+# axum-test = "18.0.0-rc3"  # Removed due to uuid version conflict with core balatro-rs
+
+[features]
+default = ["full", "infrastructure"]
+full = ["http-server", "websockets", "testing"]
+# monitoring temporarily disabled for integration
+infrastructure = []
+
+# Infrastructure Features
+http-server = []
+websockets = []
+monitoring = []
+testing = []
+
+# Development Features
+integration_tests = []
+performance_tests = []
+
+# Benchmarks will be added in future iterations
+# [[bench]]
+# name = "integration_benchmarks"
+# harness = false

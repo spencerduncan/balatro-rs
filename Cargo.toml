@@ -1,4 +1,4 @@
 [workspace]
 resolver = "2"
-members = ["core", "pylatro", "cli"]
+members = ["core", "pylatro", "cli", "web-debug-ui"]
 
