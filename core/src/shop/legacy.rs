@@ -473,6 +473,7 @@ mod tests {
         for _ in 0..10 {
             let joker = generator.gen_joker(&rng);
             // All generated jokers should be valid Jokers enum variants
+            // Note: Hand-type jokers (JollyJoker, ZanyJoker, etc.) migrated to StaticJoker framework
             assert!(matches!(
                 joker,
                 Jokers::TheJoker(_)
@@ -480,16 +481,6 @@ mod tests {
                     | Jokers::LustyJoker(_)
                     | Jokers::WrathfulJoker(_)
                     | Jokers::GluttonousJoker(_)
-                    | Jokers::JollyJoker(_)
-                    | Jokers::ZanyJoker(_)
-                    | Jokers::MadJoker(_)
-                    | Jokers::CrazyJoker(_)
-                    | Jokers::DrollJoker(_)
-                    | Jokers::SlyJoker(_)
-                    | Jokers::WilyJoker(_)
-                    | Jokers::CleverJoker(_)
-                    | Jokers::DeviousJoker(_)
-                    | Jokers::CraftyJoker(_)
                     | Jokers::IceCreamJoker(_)
             ));
         }
