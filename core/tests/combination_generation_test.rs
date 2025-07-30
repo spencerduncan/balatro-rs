@@ -66,13 +66,16 @@ fn test_combination_edge_cases() {
     let game = create_game_with_cards(3);
 
     // Test requesting 0 cards
-    let targets = Target::get_available_targets(TargetType::Cards(0), &game);
-    assert!(targets.is_empty(), "Requesting 0 cards should return empty");
+    let _targets = Target::get_available_targets(TargetType::Cards(0), &game);
+    assert!(
+        _targets.is_empty(),
+        "Requesting 0 cards should return empty"
+    );
 
     // Test requesting more cards than available
-    let targets = Target::get_available_targets(TargetType::Cards(5), &game);
+    let _targets = Target::get_available_targets(TargetType::Cards(5), &game);
     assert!(
-        targets.is_empty(),
+        _targets.is_empty(),
         "Requesting more cards than available should return empty"
     );
 
@@ -80,7 +83,7 @@ fn test_combination_edge_cases() {
     let _targets = Target::get_available_targets(TargetType::Cards(3), &game);
     // Should return one combination: all cards
     // Note: Actual behavior depends on game implementation
-    let _ = targets; // Suppress unused variable warning
+    let _ = _targets; // Suppress unused variable warning
 }
 
 #[test]
@@ -89,9 +92,9 @@ fn test_performance_limits() {
 
     // Test that we limit combinations for performance
     // Requesting too many cards should return empty due to performance limits
-    let targets = Target::get_available_targets(TargetType::Cards(6), &game);
+    let _targets = Target::get_available_targets(TargetType::Cards(6), &game);
     assert!(
-        targets.is_empty(),
+        _targets.is_empty(),
         "Should limit combinations for performance (> 5 cards)"
     );
 

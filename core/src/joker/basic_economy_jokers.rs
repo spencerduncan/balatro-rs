@@ -91,7 +91,7 @@ impl Joker for DelayedGratificationJoker {
         // Check if player used no discards
         if context.discards_used == 0 {
             // Award $2 per discard using proper config constant
-            let base_discards = Config::new().discards; // Use proper config value
+            let base_discards = Config::default().discards; // Use proper config value
             let money_earned = (base_discards * 2) as i32;
             JokerEffect::new()
                 .with_money(money_earned)

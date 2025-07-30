@@ -44,7 +44,7 @@ fn test_red_card_joker_correctly_created() {
 }
 
 /// Test that Steel Joker is correctly created as a scaling joker
-/// that gains +0.2x Mult per card destroyed
+/// that gives X0.25 Mult for each Steel Card in your full deck
 #[test]
 fn test_steel_joker_correctly_created() {
     // Initialize all systems before running the test to avoid factory race conditions
@@ -56,14 +56,14 @@ fn test_steel_joker_correctly_created() {
     let joker = steel.unwrap();
     assert_eq!(joker.id(), JokerId::SteelJoker);
     assert_eq!(joker.name(), "Steel Joker");
-    assert_eq!(joker.description(), "+0.2x Mult per card destroyed");
+    assert_eq!(
+        joker.description(),
+        "Gives X0.25 Mult for each Steel Card in your full deck"
+    );
     assert_eq!(joker.rarity(), JokerRarity::Uncommon);
 
-    // Verify it's not the placeholder that gives X1.0 Mult (does nothing)
-    assert_ne!(
-        joker.description(),
-        "This Joker gains X0.25 Mult for each Steel Card in your full deck"
-    );
+    // Verify it's not the old incorrect description
+    assert_ne!(joker.description(), "+0.2x Mult per card destroyed");
 }
 
 /// Integration test: Verify Fortune Teller can be created
@@ -99,7 +99,10 @@ fn test_steel_joker_creation() {
     // Verify Steel Joker can be created and used without crashes
     let steel = JokerFactory::create(JokerId::SteelJoker).unwrap();
     assert_eq!(steel.name(), "Steel Joker");
-    assert_eq!(steel.description(), "+0.2x Mult per card destroyed");
+    assert_eq!(
+        steel.description(),
+        "Gives X0.25 Mult for each Steel Card in your full deck"
+    );
 }
 
 /// Test that all three jokers appear in the correct rarity lists

@@ -2,10 +2,12 @@ use crate::joker::basic_economy_jokers::{
     DelayedGratificationJoker, GiftCardJoker, RocketJoker, ToTheMoonJoker,
 };
 use crate::joker::four_fingers::FourFingersJoker;
+use crate::joker::multiplicative_jokers::AcrobatJoker;
 use crate::joker::retrigger_jokers::*;
 use crate::joker::scaling_additive_mult_jokers::*;
 use crate::joker::scaling_chips_jokers::*;
 use crate::joker::scaling_xmult_jokers::*;
+use crate::joker::steel_joker_composition::SteelJoker;
 use crate::joker::{Joker, JokerId, JokerRarity};
 use crate::joker_impl::*;
 use crate::scaling_joker_custom;
@@ -60,14 +62,14 @@ impl JokerFactory {
             JokerId::HalfJoker => Some(StaticJokerFactory::create_half_joker()),
             JokerId::Banner => Some(StaticJokerFactory::create_banner()),
             JokerId::AbstractJoker => Some(Box::new(AbstractJoker)),
-            JokerId::SteelJoker => Some(Box::new(ScalingSteelJoker::new())),
+            JokerId::SteelJoker => Some(Box::new(SteelJoker::new())),
 
             // RNG-based jokers (Issue #442)
             JokerId::Oops => Some(Box::new(OopsAllSixesJoker)),
             JokerId::Reserved7 => Some(Box::new(SixShooterJoker)),
             JokerId::LuckyCharm => Some(Box::new(LuckyCardJoker)),
             JokerId::Reserved8 => Some(Box::new(GrimJoker)),
-            JokerId::AcrobatJoker => Some(Box::new(AcrobatJokerImpl)),
+            JokerId::AcrobatJoker => Some(Box::new(AcrobatJoker::new())),
             JokerId::FortuneTeller => Some(Box::new(FortuneTellerJoker::new())),
             JokerId::Reserved4 => Some(Box::new(MysteryJoker)),
             JokerId::VagabondJoker => Some(Box::new(VagabondJokerImpl)),
