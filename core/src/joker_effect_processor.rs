@@ -1330,8 +1330,8 @@ impl JokerEffectProcessor {
             result.sell_value_increase += effect.sell_value_increase;
 
             // Multiplicative effects are multiplied together
-            // Only multiply if the effect has a non-default multiplier
-            if effect.mult_multiplier != 0.0 {
+            // Only multiply if the effect has a non-identity multiplier
+            if effect.mult_multiplier != 1.0 {
                 result.mult_multiplier *= effect.mult_multiplier;
             }
 
@@ -1348,10 +1348,7 @@ impl JokerEffectProcessor {
             }
         }
 
-        // If no multiplicative effects were applied, set back to default (0.0)
-        if result.mult_multiplier == 1.0 {
-            result.mult_multiplier = 0.0;
-        }
+        // Leave mult_multiplier at 1.0 if no multiplicative effects were applied (identity)
 
         result
     }
@@ -1395,7 +1392,7 @@ impl JokerEffectProcessor {
         effect.chips == 0
             && effect.mult == 0
             && effect.money == 0
-            && effect.mult_multiplier == 0.0  // Default trait gives 0.0 for f64
+            && effect.mult_multiplier == 1.0  // 1.0 is identity (no effect) for multipliers
             && effect.retrigger == 0
             && !effect.destroy_self
             && effect.destroy_others.is_empty()

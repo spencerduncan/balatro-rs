@@ -541,7 +541,9 @@ impl Joker for TestRetriggerJoker {
     }
 
     fn name(&self) -> &str {
-        self.name_override.as_deref().unwrap_or("Test Retrigger Joker")
+        self.name_override
+            .as_deref()
+            .unwrap_or("Test Retrigger Joker")
     }
 
     fn description(&self) -> &str {
@@ -680,7 +682,9 @@ impl Joker for TestSpecialJoker {
     }
 
     fn name(&self) -> &str {
-        self.name_override.as_deref().unwrap_or("Test Special Joker")
+        self.name_override
+            .as_deref()
+            .unwrap_or("Test Special Joker")
     }
 
     fn description(&self) -> &str {
@@ -861,7 +865,9 @@ impl Joker for TestScalingJoker {
     }
 
     fn name(&self) -> &str {
-        self.name_override.as_deref().unwrap_or("Test Scaling Joker")
+        self.name_override
+            .as_deref()
+            .unwrap_or("Test Scaling Joker")
     }
 
     fn description(&self) -> &str {
@@ -930,8 +936,9 @@ impl Joker for TestScalingChipsJoker {
     fn on_hand_played(&self, _context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
         let mut scaled_joker = self.clone();
         scaled_joker.activations += 1;
-        scaled_joker.current_chips =
-            (scaled_joker.base_chips as f64 * (1.0 + scaled_joker.activations as f64 * scaled_joker.scaling_factor)).round() as i32;
+        scaled_joker.current_chips = (scaled_joker.base_chips as f64
+            * (1.0 + scaled_joker.activations as f64 * scaled_joker.scaling_factor))
+            .round() as i32;
 
         JokerEffect::new().with_chips(scaled_joker.current_chips)
     }
@@ -967,7 +974,8 @@ impl TestJokerBuilder {
 
     /// Add an xmult joker to the collection.
     pub fn add_xmult_joker(mut self, mult_multiplier: f64) -> Self {
-        self.jokers.push(Box::new(TestXMultJoker::new(mult_multiplier)));
+        self.jokers
+            .push(Box::new(TestXMultJoker::new(mult_multiplier)));
         self
     }
 
@@ -979,7 +987,8 @@ impl TestJokerBuilder {
 
     /// Add a retrigger joker to the collection.
     pub fn add_retrigger_joker(mut self, retriggers: u32) -> Self {
-        self.jokers.push(Box::new(TestRetriggerJoker::new(retriggers)));
+        self.jokers
+            .push(Box::new(TestRetriggerJoker::new(retriggers)));
         self
     }
 
@@ -988,7 +997,7 @@ impl TestJokerBuilder {
         self.jokers.push(Box::new(
             TestScalingJoker::new()
                 .with_base_chips(base_chips)
-                .with_scaling_factor(scaling_factor)
+                .with_scaling_factor(scaling_factor),
         ));
         self
     }
@@ -1153,7 +1162,7 @@ mod tests {
                 "Test Chips Joker" => chip_jokers += 1,
                 "Test Mult Joker" => mult_jokers += 1,
                 "Test XMult Joker" => xmult_jokers += 1,
-                _ => {},
+                _ => {}
             }
         }
 
