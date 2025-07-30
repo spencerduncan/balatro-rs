@@ -292,8 +292,6 @@ pub enum DeveloperPackError {
     // Voucher Integration Errors
     #[error("Voucher effect calculation failed for {voucher_id}: {reason}")]
     VoucherEffectFailed { voucher_id: String, reason: String },
-    #[error("Grab Bag voucher processing failed: {reason}")]
-    GrabBagProcessingFailed { reason: String },
 
     // Pack Item Processing Errors
     #[error("Failed to process selected pack item: {reason}")]

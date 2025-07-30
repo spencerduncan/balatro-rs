@@ -157,17 +157,14 @@ impl Pack {
     /// Generate pack contents based on pack type, game state, and configuration
     pub fn generate_contents(&mut self, game: &Game, config: &Config) -> Result<(), GameError> {
         let (min_options, max_options) = self.pack_type.option_count(config);
-        let mut option_count = if min_options == max_options {
+        let option_count = if min_options == max_options {
             min_options
         } else {
             // Use proper randomization for variable option counts
             game.rng.gen_range(min_options..=max_options)
         };
 
-        // Check for Grab Bag voucher - adds +1 option to all packs
-        if game.vouchers.owns(crate::vouchers::VoucherId::GrabBag) {
-            option_count += 1;
-        }
+        // Pack option modifiers would be checked here in future implementations
 
         self.options.clear();
 

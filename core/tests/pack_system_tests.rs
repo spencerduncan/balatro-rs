@@ -2,7 +2,6 @@ use balatro_rs::action::Action;
 use balatro_rs::config::Config;
 use balatro_rs::game::Game;
 use balatro_rs::shop::packs::{Pack, PackType};
-use balatro_rs::vouchers::VoucherId;
 
 /// Test helper to create a game in shop stage with sufficient money
 fn create_shop_game() -> Game {
@@ -449,36 +448,8 @@ fn test_pack_move_generation_for_ai() {
     );
 }
 
-#[test]
-fn test_grab_bag_voucher_adds_option() {
-    // This test will be implemented when voucher system is integrated
-    // For now, create placeholder test structure
-
-    let mut game = create_shop_game();
-
-    // Add Grab Bag voucher to player inventory
-    game.vouchers.add(VoucherId::GrabBag);
-
-    // Buy a pack
-    let buy_action = Action::BuyPack {
-        pack_type: PackType::Standard,
-    };
-    let result = game.handle_action(buy_action);
-    assert!(result.is_ok(), "Should be able to buy pack");
-
-    // Open the pack
-    let open_action = Action::OpenPack { pack_id: 0 };
-    let result = game.handle_action(open_action);
-    assert!(result.is_ok(), "Should be able to open pack");
-
-    // With Grab Bag voucher, pack should have +1 option
-    let open_pack = game.open_pack.as_ref().expect("Pack should be opened");
-    assert_eq!(
-        open_pack.pack.options.len(),
-        4,
-        "Standard pack with Grab Bag should have 4 options"
-    );
-}
+// Test for Grab Bag voucher removed - voucher doesn't exist in actual Balatro
+// This was confirmed via balatrowiki.org verification in Issue #729
 
 #[test]
 fn test_pack_costs_use_config_values() {

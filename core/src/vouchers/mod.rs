@@ -699,9 +699,7 @@ pub trait Voucher: Send + Sync + std::fmt::Debug {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, EnumIter)]
 #[cfg_attr(feature = "python", pyo3::pyclass(eq))]
 pub enum VoucherId {
-    // Existing vouchers
-    /// Grab Bag voucher - +1 pack option for all booster packs
-    GrabBag,
+    // Shop vouchers from Issue #17
 
     // Shop vouchers from Issue #17
     /// Overstock voucher - +1 card slot in shop
@@ -766,15 +764,11 @@ pub enum VoucherId {
     Retcon,
     /// Palette voucher - +1 hand size (upgrade of Paint Brush)
     Palette,
-
-    /// Placeholder for future voucher implementations
-    VoucherPlaceholder,
 }
 
 impl fmt::Display for VoucherId {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            VoucherId::GrabBag => write!(f, "Grab Bag"),
             VoucherId::Overstock => write!(f, "Overstock"),
             VoucherId::OverstockPlus => write!(f, "Overstock Plus"),
             VoucherId::ClearanceSale => write!(f, "Clearance Sale"),
@@ -804,7 +798,6 @@ impl fmt::Display for VoucherId {
             VoucherId::DirectorsCut => write!(f, "Director's Cut"),
             VoucherId::Retcon => write!(f, "Retcon"),
             VoucherId::Palette => write!(f, "Palette"),
-            VoucherId::VoucherPlaceholder => write!(f, "Voucher Placeholder"),
         }
     }
 }
@@ -824,7 +817,6 @@ impl VoucherId {
     pub fn prerequisites(&self) -> Vec<VoucherId> {
         match self {
             // Base vouchers have no prerequisites
-            VoucherId::GrabBag => vec![],
             VoucherId::Overstock => vec![],
             VoucherId::ClearanceSale => vec![],
             VoucherId::Hone => vec![],
@@ -862,15 +854,12 @@ impl VoucherId {
             VoucherId::DirectorsCut => vec![],
             VoucherId::Retcon => vec![VoucherId::DirectorsCut],
             VoucherId::Palette => vec![VoucherId::PaintBrush],
-
-            VoucherId::VoucherPlaceholder => vec![],
         }
     }
 
     /// Get the base cost of this voucher
     pub fn base_cost(&self) -> usize {
         match self {
-            VoucherId::GrabBag => 10,
             VoucherId::Overstock => 10,
             VoucherId::OverstockPlus => 10,
             VoucherId::ClearanceSale => 10,
@@ -879,7 +868,6 @@ impl VoucherId {
             VoucherId::CrystalBall => 10,
             VoucherId::Liquidation => 10,
             VoucherId::RerollGlut => 10,
-            VoucherId::VoucherPlaceholder => 10,
 
             // Gameplay vouchers from Issue #18
             VoucherId::Grabber => 10,
