@@ -365,10 +365,6 @@ impl Game {
             stone_cards_in_deck: 0,
             steel_cards_in_deck: 0,
 
-            // Initialize card enhancement tracking (will be calculated on game start)
-            stone_cards_in_deck: 0,
-            steel_cards_in_deck: 0,
-
             // Initialize extended state fields
             consumables_in_hand: Vec::new(),
             vouchers: VoucherCollection::new(),

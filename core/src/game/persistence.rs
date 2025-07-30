@@ -220,6 +220,7 @@ impl PersistenceManager {
             mult: saveable_state.mult,
             score: saveable_state.score,
             hand_type_counts: saveable_state.hand_type_counts,
+            hand_levels: std::collections::HashMap::new(), // Initialize with empty levels (default level 1)
             // Card enhancement tracking
             stone_cards_in_deck: saveable_state.stone_cards_in_deck,
             steel_cards_in_deck: saveable_state.steel_cards_in_deck,
@@ -241,7 +242,7 @@ impl PersistenceManager {
             memory_monitor: MemoryMonitor::default(),
             // Initialize skip tags system (not serialized)
             available_skip_tags: Vec::new(),
-            active_skip_tags: Vec::new(),
+            active_skip_tags: crate::skip_tags::ActiveSkipTags::new(),
             pending_tag_selection: false,
             // Initialize persistence manager
             persistence_manager: PersistenceManager::new(),
