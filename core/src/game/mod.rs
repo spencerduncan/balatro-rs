@@ -402,32 +402,7 @@ impl Game {
         }
     }
 
-    /// Count Stone cards in the current deck
-    /// Following clean code principle: functions should do one thing
-    fn count_stone_cards(&self) -> usize {
-        self.deck
-            .cards()
-            .iter()
-            .filter(|card| matches!(card.enhancement, Some(crate::card::Enhancement::Stone)))
-            .count()
-    }
-
-    /// Count Steel cards in the current deck
-    /// Following clean code principle: functions should do one thing
-    fn count_steel_cards(&self) -> usize {
-        self.deck
-            .cards()
-            .iter()
-            .filter(|card| matches!(card.enhancement, Some(crate::card::Enhancement::Steel)))
-            .count()
-    }
-
-    /// Refresh enhancement card counts based on current deck state
-    /// Call this whenever the deck composition changes
-    pub fn refresh_enhancement_counts(&mut self) {
-        self.stone_cards_in_deck = self.count_stone_cards();
-        self.steel_cards_in_deck = self.count_steel_cards();
-    }
+    // Removed duplicate methods - using the implementations later in the file
 
     /// Add cards to deck for testing purposes
     /// Following clean code: separate testing concerns from production logic
@@ -2415,6 +2390,9 @@ impl Game {
         self.stone_cards_in_deck = self.count_stone_cards();
         self.steel_cards_in_deck = self.count_steel_cards();
     }
+
+    // Removed problematic from_saveable_state method that was causing compilation errors
+    // Persistence functionality is handled by the persistence module
 
     /// Process a scaling event for all scaling jokers in the game
     pub fn process_scaling_event(&mut self, event: ScalingEvent) {
