@@ -231,7 +231,7 @@ impl JokerFactory {
                 // Scaling chips jokers
                 Castle,
                 Wee,
-                Stuntman
+                Stuntman,
                 // Custom scaling jokers
                 Reserved2, // Mystic Summit
             ],
