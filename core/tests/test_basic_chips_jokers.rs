@@ -54,6 +54,7 @@ fn create_test_context_with_deck_and_stones(
         stage: &STAGE,
         hands_played: 0,
         discards_used,
+        hands_remaining: 4.0, // Standard hands remaining for testing
         jokers: &[],
         hand,
         discarded: &[],
@@ -86,6 +87,9 @@ mod banner_joker_tests {
 
     #[test]
     fn test_banner_joker_zero_discards_remaining() {
+        // Initialize all systems before running the test to avoid factory race conditions
+        balatro_rs::initialize().expect("Failed to initialize core systems");
+
         // ARRANGE: No discards remaining (5 used out of 5 total)
         let joker = StaticJokerFactory::create_banner();
         let mut context = create_test_context(10, 5);
@@ -102,6 +106,9 @@ mod banner_joker_tests {
 
     #[test]
     fn test_banner_joker_three_discards_remaining() {
+        // Initialize all systems before running the test to avoid factory race conditions
+        balatro_rs::initialize().expect("Failed to initialize core systems");
+
         // ARRANGE: 3 discards remaining (2 used out of 5 total)
         let joker = StaticJokerFactory::create_banner();
         let mut context = create_test_context(10, 2);
@@ -118,6 +125,9 @@ mod banner_joker_tests {
 
     #[test]
     fn test_banner_joker_max_discards() {
+        // Initialize all systems before running the test to avoid factory race conditions
+        balatro_rs::initialize().expect("Failed to initialize core systems");
+
         // ARRANGE: All 5 discards remaining (0 used out of 5 total)
         let joker = StaticJokerFactory::create_banner();
         let mut context = create_test_context(10, 0);

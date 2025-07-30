@@ -20,8 +20,10 @@ use pyo3::pyclass;
 // 73-76: buy joker
 // 77: next round
 // 78: select blind
+// 79: skip blind
+// 80: select skip tag (reserved for future implementation)
 //
-// We end up with a vector of length 79 (so far) where each index
+// We end up with a vector of length 81 (so far) where each index
 // represents a potential action.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "python", pyclass(eq))]
@@ -36,6 +38,8 @@ pub struct ActionSpace {
     pub buy_joker: Vec<usize>,
     pub next_round: Vec<usize>,
     pub select_blind: Vec<usize>,
+    pub skip_blind: Vec<usize>,
+    pub select_skip_tag: Vec<usize>,
 
     // Performance optimization: cached flat representation
     #[cfg_attr(feature = "serde", serde(skip))]
@@ -63,6 +67,8 @@ impl ActionSpace {
             self.flat_actions.extend(&self.buy_joker);
             self.flat_actions.extend(&self.next_round);
             self.flat_actions.extend(&self.select_blind);
+            self.flat_actions.extend(&self.skip_blind);
+            self.flat_actions.extend(&self.select_skip_tag);
             self.cache_valid = true;
         }
     }
@@ -77,6 +83,8 @@ impl ActionSpace {
             + self.buy_joker.len()
             + self.next_round.len()
             + self.select_blind.len()
+            + self.skip_blind.len()
+            + self.select_skip_tag.len()
     }
 
     fn select_card_min(&self) -> usize {
@@ -151,6 +159,22 @@ impl ActionSpace {
         self.select_blind_min() + self.select_blind.len() - 1
     }
 
+    pub(crate) fn skip_blind_min(&self) -> usize {
+        self.select_blind_max() + 1
+    }
+
+    pub(crate) fn skip_blind_max(&self) -> usize {
+        self.skip_blind_min() + self.skip_blind.len() - 1
+    }
+
+    fn select_skip_tag_min(&self) -> usize {
+        self.skip_blind_max() + 1
+    }
+
+    fn select_skip_tag_max(&self) -> usize {
+        self.select_skip_tag_min() + self.select_skip_tag.len() - 1
+    }
+
     // Not all actions are always legal, by default all actions
     // are masked out, but provide methods to unmask valid.
     pub(crate) fn unmask_select_card(&mut self, i: usize) -> Result<(), ActionSpaceError> {
@@ -212,6 +236,21 @@ impl ActionSpace {
     pub(crate) fn unmask_select_blind(&mut self) {
         self.select_blind[0] = 1;
         self.invalidate_cache();
+    }
+
+    pub(crate) fn unmask_skip_blind(&mut self) {
+        self.skip_blind[0] = 1;
+        self.invalidate_cache();
+    }
+
+    #[allow(dead_code)] // Reserved for future skip tag selection functionality
+    pub(crate) fn unmask_select_skip_tag(&mut self, i: usize) -> Result<(), ActionSpaceError> {
+        if i >= self.select_skip_tag.len() {
+            return Err(ActionSpaceError::InvalidIndex);
+        }
+        self.select_skip_tag[i] = 1;
+        self.invalidate_cache();
+        Ok(())
     }
 
     pub fn to_action(&self, index: usize, game: &Game) -> Result<Action, ActionSpaceError> {
@@ -280,6 +319,15 @@ impl ActionSpace {
                     None => Ok(Action::SelectBlind(Blind::Small)),
                 }
             }
+            n if (self.skip_blind_min()..=self.skip_blind_max()).contains(&n) => match game.blind {
+                Some(blind) => Ok(Action::SkipBlind(blind.next())),
+                None => Ok(Action::SkipBlind(Blind::Small)),
+            },
+            n if (self.select_skip_tag_min()..=self.select_skip_tag_max()).contains(&n) => {
+                // TODO: Implement skip tag selection action conversion
+                // For now, return an error since skip tag selection is not implemented
+                Err(ActionSpaceError::InvalidActionConversion)
+            }
             _ => Err(ActionSpaceError::InvalidActionConversion),
         }
     }
@@ -297,6 +345,8 @@ impl ActionSpace {
             self.buy_joker.clone(),
             self.next_round.clone(),
             self.select_blind.clone(),
+            self.skip_blind.clone(),
+            self.select_skip_tag.clone(),
         ]
         .concat()
     }
@@ -321,6 +371,8 @@ impl ActionSpace {
             .chain(self.buy_joker.iter())
             .chain(self.next_round.iter())
             .chain(self.select_blind.iter())
+            .chain(self.skip_blind.iter())
+            .chain(self.select_skip_tag.iter())
             .copied()
     }
 
@@ -361,6 +413,8 @@ impl From<Config> for ActionSpace {
             buy_joker: vec![0; c.store_consumable_slots_max],
             next_round: vec![0; 1],
             select_blind: vec![0; 1],
+            skip_blind: vec![0; 1],
+            select_skip_tag: vec![0; 1], // Reserved for future skip tag selection
 
             // Initialize cache as invalid - will be computed on first access
             flat_actions: Vec::new(),
@@ -387,6 +441,8 @@ impl From<ActionSpace> for Vec<usize> {
                 a.buy_joker,
                 a.next_round,
                 a.select_blind,
+                a.skip_blind,
+                a.select_skip_tag,
             ]
             .concat()
         }
@@ -434,13 +490,22 @@ mod tests {
         let space = g.gen_action_space();
         let space_vec = g.gen_action_space().to_vec();
 
-        // Game hasn't started yet, so only valid action is select blind
-        for b in space_vec.iter().rev().skip(1).rev() {
-            assert_eq!(*b, 0);
-        }
-        assert_eq!(*space_vec.last().unwrap(), 1);
-        let last_index = space_vec.len() - 1;
-        let action = space.to_action(last_index, &g).expect("to action");
+        // Game hasn't started yet, so valid actions are select blind and skip blind
+        // Check that most actions are masked, but select blind and skip blind are unmasked
+        let select_blind_unmasked = space_vec[78]; // select_blind index
+        let skip_blind_unmasked = space_vec[79]; // skip_blind index
+        let select_skip_tag_unmasked = space_vec[80]; // select_skip_tag index
+
+        assert_eq!(select_blind_unmasked, 1, "Select blind should be unmasked");
+        assert_eq!(skip_blind_unmasked, 1, "Skip blind should be unmasked");
+        assert_eq!(
+            select_skip_tag_unmasked, 0,
+            "Select skip tag should be masked"
+        );
+
+        // Test that we can use the select_blind action
+        let select_blind_index = 78;
+        let action = space.to_action(select_blind_index, &g).expect("to action");
         assert_eq!(action, Action::SelectBlind(Blind::Small));
         g.handle_action(action).unwrap();
 

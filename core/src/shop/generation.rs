@@ -83,13 +83,13 @@ impl RerollMechanics for StandardRerollMechanics {
 
         for &voucher in vouchers {
             match voucher {
-                VoucherId::Reroll => {
+                VoucherId::RerollSurplus => {
                     // Reroll voucher provides free rerolls or reduces cost
                     final_cost = 0.0; // Makes rerolls free
                 }
                 VoucherId::Liquidation => {
-                    // Liquidation gives 20% discount on all shop operations
-                    final_cost *= 0.8;
+                    // Liquidation gives 25% discount on all shop operations
+                    final_cost *= 0.75;
                 }
                 _ => {} // Other vouchers don't affect reroll costs
             }
@@ -200,11 +200,11 @@ impl WeightedGenerator {
                     weights.pack_weight *= 1.2;
                     weights.playing_card_weight *= 1.2;
                 }
-                VoucherId::ClearancePackage => {
-                    // Increases pack weight by 50%
-                    weights.pack_weight *= 1.5;
+                VoucherId::ClearanceSale => {
+                    // ClearanceSale provides 50% cost discount, doesn't affect generation weights
+                    // Cost effects are handled in calculate_final_cost method
                 }
-                VoucherId::Coupon => {
+                VoucherId::Hone => {
                     // Increases joker weight by 30%
                     weights.joker_weight *= 1.3;
                 }
@@ -295,20 +295,42 @@ impl WeightedGenerator {
         ];
 
         let random_type = self.rng.choose(&consumable_types).unwrap().clone();
+
+        // If it's a tarot card, try to generate a specific one
+        if random_type == ConsumableType::Tarot {
+            if let Some(specific_tarot) = self.generate_specific_tarot() {
+                return Some(specific_tarot);
+            }
+        }
+
+        // Fallback to generic consumable type
         Some(ShopItem::Consumable(random_type))
+    }
+
+    /// Generate a specific tarot card using the tarot factory
+    fn generate_specific_tarot(&self) -> Option<ShopItem> {
+        use crate::consumables::tarot::get_tarot_factory;
+        use crate::shop::ShopItem;
+
+        let factory = get_tarot_factory();
+        let available_cards = factory.available_cards().ok()?;
+
+        if available_cards.is_empty() {
+            return None;
+        }
+
+        let random_card = self.rng.choose(&available_cards)?;
+        Some(ShopItem::SpecificConsumable(*random_card))
     }
 
     /// Generate a random voucher
     fn generate_random_voucher(&self) -> Option<ShopItem> {
         let vouchers = [
             VoucherId::Overstock,
-            VoucherId::ClearancePackage,
+            VoucherId::ClearanceSale,
             VoucherId::Liquidation,
-            VoucherId::Coupon,
-            VoucherId::Poll,
             VoucherId::Hone,
-            VoucherId::Glow,
-            VoucherId::Reroll,
+            VoucherId::RerollSurplus,
         ];
 
         let random_voucher = *self.rng.choose(&vouchers).unwrap();
@@ -366,9 +388,9 @@ impl WeightedGenerator {
 
         for &voucher in vouchers {
             match voucher {
-                VoucherId::Liquidation => final_cost *= 0.8, // 20% discount on all items
-                VoucherId::Coupon => final_cost *= 0.9, // 10% discount (applies to jokers specifically)
-                _ => {}                                 // Other vouchers don't affect cost directly
+                VoucherId::Liquidation => final_cost *= 0.75, // 25% discount on all items
+                VoucherId::ClearanceSale => final_cost *= 0.5, // 50% discount on all items
+                _ => {} // Other vouchers don't affect cost directly
             }
         }
 
@@ -460,7 +482,13 @@ impl ShopGenerator for WeightedGenerator {
                 };
                 let num_items = self.rng.gen_range(min..=max);
                 for _ in 0..num_items {
-                    contents.push(ShopItem::Consumable(crate::shop::ConsumableType::Tarot));
+                    // Try to generate specific tarot cards for arcana packs
+                    if let Some(specific_tarot) = self.generate_specific_tarot() {
+                        contents.push(specific_tarot);
+                    } else {
+                        // Fallback to generic tarot type
+                        contents.push(ShopItem::Consumable(crate::shop::ConsumableType::Tarot));
+                    }
                 }
             }
             PackType::Enhanced => {
@@ -695,15 +723,15 @@ mod tests {
     }
 
     #[test]
-    fn test_voucher_effect_clearance_package() {
+    fn test_voucher_effect_clearance_sale() {
         let generator = WeightedGenerator::new();
         let base_weights = ItemWeights::default();
-        let vouchers = vec![VoucherId::ClearancePackage];
+        let vouchers = vec![VoucherId::ClearanceSale];
 
         let modified_weights = generator.apply_voucher_effects(base_weights.clone(), &vouchers);
 
-        // Only pack weight should increase by 50%
-        assert_eq!(modified_weights.pack_weight, base_weights.pack_weight * 1.5);
+        // ClearanceSale provides cost discount only, doesn't affect generation weights
+        assert_eq!(modified_weights.pack_weight, base_weights.pack_weight);
         assert_eq!(modified_weights.joker_weight, base_weights.joker_weight);
         assert_eq!(
             modified_weights.consumable_weight,
@@ -712,14 +740,14 @@ mod tests {
     }
 
     #[test]
-    fn test_voucher_effect_coupon() {
+    fn test_voucher_effect_hone() {
         let generator = WeightedGenerator::new();
         let base_weights = ItemWeights::default();
-        let vouchers = vec![VoucherId::Coupon];
+        let vouchers = vec![VoucherId::Hone];
 
         let modified_weights = generator.apply_voucher_effects(base_weights.clone(), &vouchers);
 
-        // Only joker weight should increase by 30%
+        // Hone increases joker weight by 30%
         assert_eq!(
             modified_weights.joker_weight,
             base_weights.joker_weight * 1.3
@@ -735,11 +763,11 @@ mod tests {
     fn test_multiple_voucher_effects() {
         let generator = WeightedGenerator::new();
         let base_weights = ItemWeights::default();
-        let vouchers = vec![VoucherId::Overstock, VoucherId::Coupon];
+        let vouchers = vec![VoucherId::Overstock, VoucherId::Hone];
 
         let modified_weights = generator.apply_voucher_effects(base_weights.clone(), &vouchers);
 
-        // Should apply both effects: 20% increase from Overstock, then 30% increase from Coupon
+        // Should apply both effects: 20% increase from Overstock, then 30% increase from Hone
         let expected_joker_weight = base_weights.joker_weight * 1.2 * 1.3;
         assert_eq!(modified_weights.joker_weight, expected_joker_weight);
     }
@@ -883,6 +911,7 @@ mod tests {
             .map(|slot| match &slot.item {
                 ShopItem::Joker(_) => "joker",
                 ShopItem::Consumable(_) => "consumable",
+                ShopItem::SpecificConsumable(_) => "specific_consumable",
                 ShopItem::Voucher(_) => "voucher",
                 ShopItem::Pack(_) => "pack",
                 ShopItem::PlayingCard(_) => "playing_card",
@@ -1127,7 +1156,7 @@ mod tests {
     #[test]
     fn test_standard_reroll_mechanics_apply_voucher_effects_reroll() {
         let mechanics = StandardRerollMechanics::new();
-        let vouchers = vec![VoucherId::Reroll];
+        let vouchers = vec![VoucherId::RerollSurplus];
 
         // Reroll voucher should make rerolls free
         assert_eq!(mechanics.apply_voucher_effects(10, &vouchers), 0);
@@ -1139,15 +1168,15 @@ mod tests {
         let mechanics = StandardRerollMechanics::new();
         let vouchers = vec![VoucherId::Liquidation];
 
-        // Liquidation gives 20% discount
-        assert_eq!(mechanics.apply_voucher_effects(10, &vouchers), 8); // 10 * 0.8 = 8
-        assert_eq!(mechanics.apply_voucher_effects(25, &vouchers), 20); // 25 * 0.8 = 20
+        // Liquidation gives 25% discount
+        assert_eq!(mechanics.apply_voucher_effects(10, &vouchers), 8); // 10 * 0.75 = 7.5, rounded up to 8
+        assert_eq!(mechanics.apply_voucher_effects(20, &vouchers), 15); // 20 * 0.75 = 15
     }
 
     #[test]
     fn test_standard_reroll_mechanics_apply_voucher_effects_multiple() {
         let mechanics = StandardRerollMechanics::new();
-        let vouchers = vec![VoucherId::Liquidation, VoucherId::Reroll];
+        let vouchers = vec![VoucherId::Liquidation, VoucherId::RerollSurplus];
 
         // Reroll should override liquidation, making it free
         assert_eq!(mechanics.apply_voucher_effects(10, &vouchers), 0);
@@ -1157,7 +1186,7 @@ mod tests {
     #[test]
     fn test_standard_reroll_mechanics_apply_voucher_effects_other_vouchers() {
         let mechanics = StandardRerollMechanics::new();
-        let vouchers = vec![VoucherId::Overstock, VoucherId::Coupon];
+        let vouchers = vec![VoucherId::Overstock, VoucherId::ClearanceSale];
 
         // Other vouchers should not affect reroll cost
         assert_eq!(mechanics.apply_voucher_effects(10, &vouchers), 10);

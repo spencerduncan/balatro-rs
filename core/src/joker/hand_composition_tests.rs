@@ -256,6 +256,7 @@ mod ride_the_bus_tests {
             stage: &STAGE,
             hands_played: 0,
             discards_used: 0,
+            hands_remaining: 4.0,
             jokers: &[],
             hand,
             discarded: &[],

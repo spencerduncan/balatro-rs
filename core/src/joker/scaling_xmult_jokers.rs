@@ -211,7 +211,7 @@ impl ScalingSteelJoker {
         Self {
             id: JokerId::SteelJoker,
             name: "Steel Joker".to_string(),
-            description: "Gains X0.2 Mult per round".to_string(),
+            description: "+0.2x Mult per card destroyed".to_string(),
             rarity: JokerRarity::Uncommon,
             cost: 7,
             rounds_accumulated: 0,
@@ -515,9 +515,10 @@ pub fn create_throwback_joker() -> Box<dyn Joker> {
     Box::new(ThrowbackJoker::new())
 }
 
-pub fn create_scaling_steel_joker() -> Box<dyn Joker> {
-    Box::new(ScalingSteelJoker::new())
-}
+// DEPRECATED: Replaced by steel_joker_composition::SteelJoker
+// pub fn create_scaling_steel_joker() -> Box<dyn Joker> {
+//     Box::new(ScalingSteelJoker::new())
+// }
 
 pub fn create_ceremonial_dagger_joker() -> Box<dyn Joker> {
     Box::new(CeremonialDaggerJoker::new())

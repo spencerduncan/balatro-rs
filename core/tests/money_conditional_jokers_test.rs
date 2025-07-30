@@ -39,6 +39,7 @@ fn create_test_context() -> GameContext<'static> {
         stage: &STAGE,
         hands_played: 0,
         discards_used: 0,
+        hands_remaining: 4.0, // Standard hands remaining for testing
         jokers: &[],
         hand,
         discarded: &[],
@@ -120,7 +121,7 @@ mod business_card_tests {
         // Should only give money, no other effects
         assert_eq!(effect.chips, 0);
         assert_eq!(effect.mult, 0);
-        assert_eq!(effect.mult_multiplier, 0.0);
+        assert_eq!(effect.mult_multiplier, 1.0);
         assert_eq!(effect.retrigger, 0);
         assert!(!effect.destroy_self);
         assert!(effect.destroy_others.is_empty());
@@ -257,7 +258,7 @@ mod burglar_tests {
         assert_eq!(effect.money, 0);
         assert_eq!(effect.chips, 0);
         assert_eq!(effect.mult, 0);
-        assert_eq!(effect.mult_multiplier, 0.0);
+        assert_eq!(effect.mult_multiplier, 1.0);
         assert_eq!(effect.retrigger, 0);
         assert!(!effect.destroy_self);
         assert!(effect.destroy_others.is_empty());
