@@ -68,7 +68,7 @@ impl JokerFactory {
             JokerId::LuckyCharm => Some(Box::new(LuckyCardJoker)),
             JokerId::Reserved8 => Some(Box::new(GrimJoker)),
             JokerId::AcrobatJoker => Some(Box::new(AcrobatJokerImpl)),
-            JokerId::Fortune => Some(Box::new(FortuneTellerJoker::new())),
+            JokerId::FortuneTeller => Some(Box::new(FortuneTellerJoker::new())),
             JokerId::Reserved4 => Some(Box::new(MysteryJoker)),
             JokerId::VagabondJoker => Some(Box::new(VagabondJokerImpl)),
             JokerId::Reserved9 => Some(Box::new(ChaoticJoker)),
@@ -92,7 +92,6 @@ impl JokerFactory {
             JokerId::GreenJoker => Some(Box::new(GreenJoker::new())),
             JokerId::Reserved5 => Some(Box::new(RideTheBusJoker::new())), // RideTheBus
             JokerId::Reserved6 => Some(Box::new(RedCardJoker::new())),    // RedCard (pack skipping)
-            JokerId::RedCard => Some(Box::new(RedCardJoker::new())), // RedCard (direct mapping)
 
             // Scaling chips jokers
             JokerId::Castle => Some(Box::new(CastleJoker::new())),
@@ -175,7 +174,7 @@ impl JokerFactory {
                 // RNG-based jokers (Issue #442)
                 Reserved7,  // SixShooterJoker
                 LuckyCharm, // LuckyCardJoker
-                Fortune,    // Fortune Teller
+                FortuneTeller,    // Fortune Teller
                 // Special mechanic jokers
                 Erosion,
                 Photograph,
@@ -224,7 +223,7 @@ impl JokerFactory {
                 // Special mechanic jokers
                 Blueprint,
                 // Scaling mult jokers
-                Fortune, // Fortune Teller
+                FortuneTeller, // Fortune Teller
                 // Scaling chips jokers
                 Castle,
                 Wee,
@@ -297,7 +296,7 @@ impl JokerFactory {
             Reserved5, // RideTheBus
             Reserved6, // RedCard (pack skipping)
             RedCard,   // Red Card (direct mapping)
-            Fortune,   // Fortune Teller
+            FortuneTeller,   // Fortune Teller
             // Scaling chips jokers
             Castle,
             Wee,
@@ -428,9 +427,9 @@ mod tests {
         assert!(red_card.is_some());
         assert_eq!(red_card.unwrap().id(), JokerId::Reserved6);
 
-        let fortune_teller = JokerFactory::create(JokerId::Fortune);
+        let fortune_teller = JokerFactory::create(JokerId::FortuneTeller);
         assert!(fortune_teller.is_some());
-        assert_eq!(fortune_teller.unwrap().id(), JokerId::Fortune);
+        assert_eq!(fortune_teller.unwrap().id(), JokerId::FortuneTeller);
 
         // Test scaling chips jokers
         let castle = JokerFactory::create(JokerId::Castle);
@@ -518,7 +517,7 @@ mod tests {
 
         let rare_jokers = JokerFactory::get_by_rarity(JokerRarity::Rare);
         // Rare scaling jokers
-        assert!(rare_jokers.contains(&JokerId::Fortune)); // Fortune Teller
+        assert!(rare_jokers.contains(&JokerId::FortuneTeller)); // Fortune Teller
         assert!(rare_jokers.contains(&JokerId::Castle));
         assert!(rare_jokers.contains(&JokerId::Wee));
         assert!(rare_jokers.contains(&JokerId::Stuntman));
@@ -535,7 +534,7 @@ mod tests {
         assert!(implemented.contains(&JokerId::GreenJoker));
         assert!(implemented.contains(&JokerId::Reserved5));
         assert!(implemented.contains(&JokerId::Reserved6));
-        assert!(implemented.contains(&JokerId::Fortune));
+        assert!(implemented.contains(&JokerId::FortuneTeller));
 
         // Scaling chips jokers
         assert!(implemented.contains(&JokerId::Castle));
