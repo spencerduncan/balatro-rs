@@ -645,9 +645,9 @@
 <a href=#645 id=645 data-nosnippet>645</a>            joker_state_manager: <span class="kw-2">&amp;</span>test_joker_state_manager,
 <a href=#646 id=646 data-nosnippet>646</a>            hand_type_counts: <span class="kw-2">&amp;</span>test_hand_type_counts,
 <a href=#647 id=647 data-nosnippet>647</a>            cards_in_deck: <span class="number">52</span>,
-<a href=#648 id=648 data-nosnippet>648</a>            stone_cards_in_deck: <span class="number">0</span>,
-<a href=#649 id=649 data-nosnippet>649</a>            steel_cards_in_deck: <span class="number">0</span>,
-<a href=#650 id=650 data-nosnippet>650</a>            rng: <span class="kw-2">&amp;</span>test_rng,
+<a href=#648 id=648 data-nosnippet>648</a>            stone_cards_in_deck: <span class="number">0</span>, <span class="comment">// TEST: Should use proper test deck composition
+<a href=#649 id=649 data-nosnippet>649</a>            </span>steel_cards_in_deck: <span class="number">0</span>, <span class="comment">// TEST: Should use proper test deck composition
+<a href=#650 id=650 data-nosnippet>650</a>            </span>rng: <span class="kw-2">&amp;</span>test_rng,
 <a href=#651 id=651 data-nosnippet>651</a>        };
 <a href=#652 id=652 data-nosnippet>652</a>
 <a href=#653 id=653 data-nosnippet>653</a>        <span class="comment">// Test card scoring
@@ -2205,9 +2205,9 @@
 <a href=#2205 id=2205 data-nosnippet>2205</a>            joker_state_manager: <span class="kw-2">&amp;</span>std::sync::Arc::new(<span class="kw">crate</span>::joker_state::JokerStateManager::new()),
 <a href=#2206 id=2206 data-nosnippet>2206</a>            hand_type_counts: <span class="kw-2">&amp;</span>HashMap::new(),
 <a href=#2207 id=2207 data-nosnippet>2207</a>            cards_in_deck: <span class="number">52</span>,
-<a href=#2208 id=2208 data-nosnippet>2208</a>            stone_cards_in_deck: <span class="number">0</span>,
-<a href=#2209 id=2209 data-nosnippet>2209</a>            steel_cards_in_deck: <span class="number">0</span>,
-<a href=#2210 id=2210 data-nosnippet>2210</a>            rng: <span class="kw-2">&amp;</span><span class="kw">crate</span>::rng::GameRng::secure(),
+<a href=#2208 id=2208 data-nosnippet>2208</a>            stone_cards_in_deck: <span class="number">0</span>, <span class="comment">// TEST: Should use proper test deck composition
+<a href=#2209 id=2209 data-nosnippet>2209</a>            </span>steel_cards_in_deck: <span class="number">0</span>, <span class="comment">// TEST: Should use proper test deck composition
+<a href=#2210 id=2210 data-nosnippet>2210</a>            </span>rng: <span class="kw-2">&amp;</span><span class="kw">crate</span>::rng::GameRng::secure(),
 <a href=#2211 id=2211 data-nosnippet>2211</a>        };
 <a href=#2212 id=2212 data-nosnippet>2212</a>
 <a href=#2213 id=2213 data-nosnippet>2213</a>        <span class="kw">let </span>hand = SelectHand::new(<span class="macro">vec!</span>[
@@ -2548,9 +2548,9 @@
 <a href=#2548 id=2548 data-nosnippet>2548</a>            joker_state_manager: <span class="kw-2">&amp;</span>std::sync::Arc::new(<span class="kw">crate</span>::joker_state::JokerStateManager::new()),
 <a href=#2549 id=2549 data-nosnippet>2549</a>            hand_type_counts: <span class="kw-2">&amp;</span>HashMap::new(),
 <a href=#2550 id=2550 data-nosnippet>2550</a>            cards_in_deck: <span class="number">52</span>,
-<a href=#2551 id=2551 data-nosnippet>2551</a>            stone_cards_in_deck: <span class="number">0</span>,
-<a href=#2552 id=2552 data-nosnippet>2552</a>            steel_cards_in_deck: <span class="number">0</span>,
-<a href=#2553 id=2553 data-nosnippet>2553</a>            rng: <span class="kw-2">&amp;</span><span class="kw">crate</span>::rng::GameRng::secure(),
+<a href=#2551 id=2551 data-nosnippet>2551</a>            stone_cards_in_deck: <span class="number">0</span>, <span class="comment">// TEST: Should use proper test deck composition
+<a href=#2552 id=2552 data-nosnippet>2552</a>            </span>steel_cards_in_deck: <span class="number">0</span>, <span class="comment">// TEST: Should use proper test deck composition
+<a href=#2553 id=2553 data-nosnippet>2553</a>            </span>rng: <span class="kw-2">&amp;</span><span class="kw">crate</span>::rng::GameRng::secure(),
 <a href=#2554 id=2554 data-nosnippet>2554</a>        };
 <a href=#2555 id=2555 data-nosnippet>2555</a>
 <a href=#2556 id=2556 data-nosnippet>2556</a>        <span class="kw">let </span>hand = SelectHand::new(<span class="macro">vec!</span>[
@@ -2937,9 +2937,9 @@
 <a href=#2937 id=2937 data-nosnippet>2937</a>            joker_state_manager: <span class="kw-2">&amp;</span>std::sync::Arc::new(<span class="kw">crate</span>::joker_state::JokerStateManager::new()),
 <a href=#2938 id=2938 data-nosnippet>2938</a>            hand_type_counts: <span class="kw-2">&amp;</span>HashMap::new(),
 <a href=#2939 id=2939 data-nosnippet>2939</a>            cards_in_deck: <span class="number">52</span>,
-<a href=#2940 id=2940 data-nosnippet>2940</a>            stone_cards_in_deck: <span class="number">0</span>,
-<a href=#2941 id=2941 data-nosnippet>2941</a>            steel_cards_in_deck: <span class="number">0</span>,
-<a href=#2942 id=2942 data-nosnippet>2942</a>            rng: <span class="kw-2">&amp;</span><span class="kw">crate</span>::rng::GameRng::secure(),
+<a href=#2940 id=2940 data-nosnippet>2940</a>            stone_cards_in_deck: <span class="number">0</span>, <span class="comment">// TEST: Should use proper test deck composition
+<a href=#2941 id=2941 data-nosnippet>2941</a>            </span>steel_cards_in_deck: <span class="number">0</span>, <span class="comment">// TEST: Should use proper test deck composition
+<a href=#2942 id=2942 data-nosnippet>2942</a>            </span>rng: <span class="kw-2">&amp;</span><span class="kw">crate</span>::rng::GameRng::secure(),
 <a href=#2943 id=2943 data-nosnippet>2943</a>        };
 <a href=#2944 id=2944 data-nosnippet>2944</a>
 <a href=#2945 id=2945 data-nosnippet>2945</a>        <span class="kw">let </span>hand = SelectHand::new(<span class="macro">vec!</span>[
@@ -2982,9 +2982,9 @@
 <a href=#2982 id=2982 data-nosnippet>2982</a>            joker_state_manager: <span class="kw-2">&amp;</span>std::sync::Arc::new(<span class="kw">crate</span>::joker_state::JokerStateManager::new()),
 <a href=#2983 id=2983 data-nosnippet>2983</a>            hand_type_counts: <span class="kw-2">&amp;</span>HashMap::new(),
 <a href=#2984 id=2984 data-nosnippet>2984</a>            cards_in_deck: <span class="number">52</span>,
-<a href=#2985 id=2985 data-nosnippet>2985</a>            stone_cards_in_deck: <span class="number">0</span>,
-<a href=#2986 id=2986 data-nosnippet>2986</a>            steel_cards_in_deck: <span class="number">0</span>,
-<a href=#2987 id=2987 data-nosnippet>2987</a>            rng: <span class="kw-2">&amp;</span><span class="kw">crate</span>::rng::GameRng::secure(),
+<a href=#2985 id=2985 data-nosnippet>2985</a>            stone_cards_in_deck: <span class="number">0</span>, <span class="comment">// TEST: Should use proper test deck composition
+<a href=#2986 id=2986 data-nosnippet>2986</a>            </span>steel_cards_in_deck: <span class="number">0</span>, <span class="comment">// TEST: Should use proper test deck composition
+<a href=#2987 id=2987 data-nosnippet>2987</a>            </span>rng: <span class="kw-2">&amp;</span><span class="kw">crate</span>::rng::GameRng::secure(),
 <a href=#2988 id=2988 data-nosnippet>2988</a>        };
 <a href=#2989 id=2989 data-nosnippet>2989</a>
 <a href=#2990 id=2990 data-nosnippet>2990</a>        <span class="kw">let </span>hand = SelectHand::new(<span class="macro">vec!</span>[
