@@ -5,8 +5,8 @@ mod test_mod {
     use crate::card::{Card, Suit, Value};
     use crate::config::Config;
     use crate::consumables::{
-        CardCollection, CardTarget, ConsumableSlots, JokerTarget, JokerTargetError, Target,
-        TargetType, TargetValidationError,
+        CardCollection, CardTarget, ConsumableId, ConsumableSlots, ConsumableType, JokerTarget,
+        JokerTargetError, SpectralPool, Target, TargetType, TargetValidationError,
     };
     use crate::game::Game;
     use crate::joker::{Joker, JokerId, JokerRarity};
@@ -656,5 +656,363 @@ mod test_mod {
             assert!(!error_string.is_empty());
             assert!(error_string.contains("slot") || error_string.contains("type"));
         }
+    }
+
+    // SpectralPool system tests for Issue #219
+
+    #[test]
+    fn test_spectral_pool_regular_cards() {
+        let regular_cards = SpectralPool::Regular.get_cards();
+
+        // Should contain current regular spectral cards
+        assert!(regular_cards.contains(&ConsumableId::Familiar));
+        assert!(regular_cards.contains(&ConsumableId::Grim));
+        assert!(regular_cards.contains(&ConsumableId::Incantation));
+        assert!(regular_cards.contains(&ConsumableId::Immolate));
+        assert!(regular_cards.contains(&ConsumableId::Ankh));
+        assert!(regular_cards.contains(&ConsumableId::DejaVu));
+        assert!(regular_cards.contains(&ConsumableId::Hex));
+        assert!(regular_cards.contains(&ConsumableId::Trance));
+        assert!(regular_cards.contains(&ConsumableId::Medium));
+        assert!(regular_cards.contains(&ConsumableId::Cryptid));
+
+        // Should NOT contain special cards
+        assert!(!regular_cards.contains(&ConsumableId::TheSoul));
+        assert!(!regular_cards.contains(&ConsumableId::BlackHole));
+
+        // Should have 10 cards currently (16 in full implementation)
+        assert_eq!(regular_cards.len(), 10);
+    }
+
+    #[test]
+    fn test_spectral_pool_special_cards() {
+        let special_cards = SpectralPool::Special.get_cards();
+
+        // Should contain only Soul and Black Hole
+        assert!(special_cards.contains(&ConsumableId::TheSoul));
+        assert!(special_cards.contains(&ConsumableId::BlackHole));
+
+        // Should NOT contain regular cards
+        assert!(!special_cards.contains(&ConsumableId::Familiar));
+        assert!(!special_cards.contains(&ConsumableId::Grim));
+        assert!(!special_cards.contains(&ConsumableId::Incantation));
+
+        // Should have exactly 2 cards
+        assert_eq!(special_cards.len(), 2);
+    }
+
+    #[test]
+    fn test_spectral_pool_all_cards() {
+        let all_cards = SpectralPool::All.get_cards();
+        let regular_cards = SpectralPool::Regular.get_cards();
+        let special_cards = SpectralPool::Special.get_cards();
+
+        // Should contain all regular cards
+        for card in &regular_cards {
+            assert!(
+                all_cards.contains(card),
+                "All pool missing regular card: {card}"
+            );
+        }
+
+        // Should contain all special cards
+        for card in &special_cards {
+            assert!(
+                all_cards.contains(card),
+                "All pool missing special card: {card}"
+            );
+        }
+
+        // Should have combined length
+        assert_eq!(all_cards.len(), regular_cards.len() + special_cards.len());
+        assert_eq!(all_cards.len(), 12); // 10 regular + 2 special
+    }
+
+    #[test]
+    fn test_spectral_pool_contains() {
+        // Test Regular pool
+        assert!(SpectralPool::Regular.contains(ConsumableId::Familiar));
+        assert!(SpectralPool::Regular.contains(ConsumableId::Grim));
+        assert!(SpectralPool::Regular.contains(ConsumableId::Incantation));
+        assert!(!SpectralPool::Regular.contains(ConsumableId::TheSoul));
+        assert!(!SpectralPool::Regular.contains(ConsumableId::BlackHole));
+
+        // Test Special pool
+        assert!(!SpectralPool::Special.contains(ConsumableId::Familiar));
+        assert!(!SpectralPool::Special.contains(ConsumableId::Grim));
+        assert!(!SpectralPool::Special.contains(ConsumableId::Incantation));
+        assert!(SpectralPool::Special.contains(ConsumableId::TheSoul));
+        assert!(SpectralPool::Special.contains(ConsumableId::BlackHole));
+
+        // Test All pool
+        assert!(SpectralPool::All.contains(ConsumableId::Familiar));
+        assert!(SpectralPool::All.contains(ConsumableId::Grim));
+        assert!(SpectralPool::All.contains(ConsumableId::Incantation));
+        assert!(SpectralPool::All.contains(ConsumableId::TheSoul));
+        assert!(SpectralPool::All.contains(ConsumableId::BlackHole));
+    }
+
+    #[test]
+    fn test_spectral_pool_is_special_card() {
+        // Special cards
+        assert!(SpectralPool::is_special_card(ConsumableId::TheSoul));
+        assert!(SpectralPool::is_special_card(ConsumableId::BlackHole));
+
+        // Regular spectral cards
+        assert!(!SpectralPool::is_special_card(ConsumableId::Familiar));
+        assert!(!SpectralPool::is_special_card(ConsumableId::Grim));
+        assert!(!SpectralPool::is_special_card(ConsumableId::Incantation));
+
+        // Non-spectral cards
+        assert!(!SpectralPool::is_special_card(ConsumableId::TheFool)); // Tarot
+        assert!(!SpectralPool::is_special_card(ConsumableId::Mercury)); // Planet
+    }
+
+    #[test]
+    fn test_spectral_pool_is_regular_card() {
+        // Regular spectral cards
+        assert!(SpectralPool::is_regular_card(ConsumableId::Familiar));
+        assert!(SpectralPool::is_regular_card(ConsumableId::Grim));
+        assert!(SpectralPool::is_regular_card(ConsumableId::Incantation));
+
+        // Special spectral cards
+        assert!(!SpectralPool::is_regular_card(ConsumableId::TheSoul));
+        assert!(!SpectralPool::is_regular_card(ConsumableId::BlackHole));
+
+        // Non-spectral cards
+        assert!(!SpectralPool::is_regular_card(ConsumableId::TheFool)); // Tarot
+        assert!(!SpectralPool::is_regular_card(ConsumableId::Mercury)); // Planet
+    }
+
+    #[test]
+    fn test_spectral_pool_pool_containing() {
+        // Regular spectral cards should be in Regular pool
+        assert_eq!(
+            SpectralPool::pool_containing(ConsumableId::Familiar),
+            Some(SpectralPool::Regular)
+        );
+        assert_eq!(
+            SpectralPool::pool_containing(ConsumableId::Grim),
+            Some(SpectralPool::Regular)
+        );
+        assert_eq!(
+            SpectralPool::pool_containing(ConsumableId::Incantation),
+            Some(SpectralPool::Regular)
+        );
+
+        // Special spectral cards should be in Special pool
+        assert_eq!(
+            SpectralPool::pool_containing(ConsumableId::TheSoul),
+            Some(SpectralPool::Special)
+        );
+        assert_eq!(
+            SpectralPool::pool_containing(ConsumableId::BlackHole),
+            Some(SpectralPool::Special)
+        );
+
+        // Non-spectral cards should return None
+        assert_eq!(SpectralPool::pool_containing(ConsumableId::TheFool), None); // Tarot
+        assert_eq!(SpectralPool::pool_containing(ConsumableId::Mercury), None); // Planet
+    }
+
+    #[test]
+    fn test_spectral_pool_display() {
+        assert_eq!(SpectralPool::Regular.to_string(), "Regular");
+        assert_eq!(SpectralPool::Special.to_string(), "Special");
+        assert_eq!(SpectralPool::All.to_string(), "All");
+    }
+
+    #[test]
+    fn test_spectral_pool_descriptions() {
+        assert_eq!(
+            SpectralPool::Regular.description(),
+            "Regular spectral cards (excludes Soul and Black Hole)"
+        );
+        assert_eq!(
+            SpectralPool::Special.description(),
+            "Special spectral cards (Soul and Black Hole only)"
+        );
+        assert_eq!(
+            SpectralPool::All.description(),
+            "All spectral cards (complete set)"
+        );
+    }
+
+    #[test]
+    fn test_spectral_pool_serialization() {
+        use serde_json;
+
+        let pools = [
+            SpectralPool::Regular,
+            SpectralPool::Special,
+            SpectralPool::All,
+        ];
+
+        for pool in &pools {
+            // Test serialization
+            let serialized = serde_json::to_string(pool);
+            assert!(serialized.is_ok(), "Failed to serialize {pool}");
+
+            // Test deserialization
+            let json = serialized.unwrap();
+            let deserialized: Result<SpectralPool, _> = serde_json::from_str(&json);
+            assert!(deserialized.is_ok(), "Failed to deserialize {pool}");
+
+            let restored = deserialized.unwrap();
+            assert_eq!(pool, &restored, "Serialization roundtrip failed for {pool}");
+        }
+    }
+
+    #[test]
+    fn test_new_consumable_ids_in_enum() {
+        // Verify that the new spectral cards are in the ConsumableId enum
+        let soul_display = format!("{}", ConsumableId::TheSoul);
+        let black_hole_display = format!("{}", ConsumableId::BlackHole);
+
+        assert_eq!(soul_display, "The Soul");
+        assert_eq!(black_hole_display, "Black Hole");
+    }
+
+    #[test]
+    fn test_new_spectral_cards_have_correct_type() {
+        // Verify the new cards are properly classified as Spectral
+        assert_eq!(
+            ConsumableId::TheSoul.consumable_type(),
+            ConsumableType::Spectral
+        );
+        assert_eq!(
+            ConsumableId::BlackHole.consumable_type(),
+            ConsumableType::Spectral
+        );
+    }
+
+    #[test]
+    fn test_spectral_cards_list_includes_new_cards() {
+        let all_spectral = ConsumableId::spectral_cards();
+
+        // Should include all implemented spectral cards
+        assert!(all_spectral.contains(&ConsumableId::Familiar));
+        assert!(all_spectral.contains(&ConsumableId::Grim));
+        assert!(all_spectral.contains(&ConsumableId::Incantation));
+        assert!(all_spectral.contains(&ConsumableId::Immolate));
+        assert!(all_spectral.contains(&ConsumableId::Ankh));
+        assert!(all_spectral.contains(&ConsumableId::DejaVu));
+        assert!(all_spectral.contains(&ConsumableId::Hex));
+        assert!(all_spectral.contains(&ConsumableId::Trance));
+        assert!(all_spectral.contains(&ConsumableId::Medium));
+        assert!(all_spectral.contains(&ConsumableId::Cryptid));
+        assert!(all_spectral.contains(&ConsumableId::TheSoul));
+        assert!(all_spectral.contains(&ConsumableId::BlackHole));
+
+        // Should have exactly 12 cards
+        assert_eq!(all_spectral.len(), 12);
+    }
+
+    // Integration tests for the restriction requirements
+
+    #[test]
+    fn test_joker_effect_restrictions() {
+        // This test validates that joker effects (Sixth Sense, Seance) would use Regular pool
+        // When those jokers are implemented, they should use SpectralPool::Regular.get_cards()
+        let regular_pool = SpectralPool::Regular.get_cards();
+
+        // Joker effects should NOT be able to generate these special cards
+        assert!(!regular_pool.contains(&ConsumableId::TheSoul));
+        assert!(!regular_pool.contains(&ConsumableId::BlackHole));
+
+        // But should be able to generate regular spectral cards
+        assert!(regular_pool.contains(&ConsumableId::Familiar));
+        assert!(regular_pool.contains(&ConsumableId::Grim));
+        assert!(regular_pool.contains(&ConsumableId::Incantation));
+    }
+
+    #[test]
+    fn test_ghost_deck_restrictions() {
+        // This test validates that Ghost Deck would exclude special cards from purchase
+        // When Ghost Deck is implemented, it should use SpectralPool::Regular for spectral purchases
+        let ghost_deck_allowed = SpectralPool::Regular.get_cards();
+
+        // Ghost Deck should NOT allow purchase of special cards
+        assert!(!ghost_deck_allowed.contains(&ConsumableId::TheSoul));
+        assert!(!ghost_deck_allowed.contains(&ConsumableId::BlackHole));
+
+        // But should allow regular spectral cards
+        assert!(ghost_deck_allowed.contains(&ConsumableId::Familiar));
+        assert!(ghost_deck_allowed.contains(&ConsumableId::Grim));
+        assert!(ghost_deck_allowed.contains(&ConsumableId::Incantation));
+    }
+
+    #[test]
+    fn test_pack_distribution_rules() {
+        // Test that Soul can appear in Arcana packs (validated by the pack generation code)
+        // Test that Black Hole can appear in Celestial packs (validated by the pack generation code)
+
+        // Soul should be considered special
+        assert!(SpectralPool::is_special_card(ConsumableId::TheSoul));
+        assert_eq!(
+            SpectralPool::pool_containing(ConsumableId::TheSoul),
+            Some(SpectralPool::Special)
+        );
+
+        // Black Hole should be considered special
+        assert!(SpectralPool::is_special_card(ConsumableId::BlackHole));
+        assert_eq!(
+            SpectralPool::pool_containing(ConsumableId::BlackHole),
+            Some(SpectralPool::Special)
+        );
+
+        // All pool should include both for regular spectral packs
+        let all_spectral = SpectralPool::All.get_cards();
+        assert!(all_spectral.contains(&ConsumableId::TheSoul));
+        assert!(all_spectral.contains(&ConsumableId::BlackHole));
+    }
+
+    #[test]
+    fn test_spectral_pool_boundary_conditions() {
+        // Test edge cases and boundary conditions
+
+        // Empty pools should be handled gracefully
+        let regular_cards = SpectralPool::Regular.get_cards();
+        let special_cards = SpectralPool::Special.get_cards();
+        let all_cards = SpectralPool::All.get_cards();
+
+        // None should be empty
+        assert!(!regular_cards.is_empty());
+        assert!(!special_cards.is_empty());
+        assert!(!all_cards.is_empty());
+
+        // All should have expected minimum counts
+        assert!(regular_cards.len() >= 3); // At least the current regular cards
+        assert_eq!(special_cards.len(), 2); // Exactly Soul and Black Hole
+        assert_eq!(all_cards.len(), regular_cards.len() + special_cards.len());
+    }
+
+    #[test]
+    fn test_spectral_pool_consistency() {
+        // Test that pools are consistent with each other
+        let regular_cards = SpectralPool::Regular.get_cards();
+        let special_cards = SpectralPool::Special.get_cards();
+        let all_cards = SpectralPool::All.get_cards();
+
+        // No overlap between regular and special
+        for card in &regular_cards {
+            assert!(
+                !special_cards.contains(card),
+                "Card {card} should not be in both regular and special pools"
+            );
+        }
+
+        // All cards should be union of regular and special
+        let mut expected_all = regular_cards.clone();
+        expected_all.extend(special_cards.clone());
+        expected_all.sort();
+
+        let mut actual_all = all_cards.clone();
+        actual_all.sort();
+
+        assert_eq!(
+            expected_all, actual_all,
+            "All pool should be union of regular and special pools"
+        );
     }
 }

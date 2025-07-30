@@ -77,7 +77,7 @@ fn test_combination_edge_cases() {
     );
 
     // Test requesting exactly the number of cards available
-    let targets = Target::get_available_targets(TargetType::Cards(3), &game);
+    let _targets = Target::get_available_targets(TargetType::Cards(3), &game);
     // Should return one combination: all cards
     // Note: Actual behavior depends on game implementation
     let _ = targets; // Suppress unused variable warning

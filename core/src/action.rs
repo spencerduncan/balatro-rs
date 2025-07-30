@@ -2,6 +2,7 @@ use crate::card::Card;
 use crate::consumables::ConsumableId;
 use crate::joker::JokerId;
 use crate::shop::packs::PackType;
+use crate::skip_tags::SkipTagId;
 use crate::stage::Blind;
 use crate::vouchers::VoucherId;
 #[cfg(feature = "python")]
@@ -102,9 +103,15 @@ pub enum Action {
     ActivateMultiSelect(),   // Enter multi-select mode
     DeactivateMultiSelect(), // Exit multi-select mode and clear selections
 
+    // Planet card actions (simplified for now to avoid Python binding issues)
+    UsePlanetCard {
+        planet_card_id: u32,
+        hand_rank_id: u32,
+    },
+
     // Skip tags system
-    SkipBlind(Blind), // Skip a blind and potentially get tags
-    SelectSkipTag(crate::skip_tags::SkipTagId), // Select a skip tag for activation
+    SkipBlind(Blind),         // Skip a blind and potentially get tags
+    SelectSkipTag(SkipTagId), // Select a skip tag for activation
 }
 
 impl fmt::Display for Action {
@@ -232,6 +239,16 @@ impl fmt::Display for Action {
             }
             Self::DeactivateMultiSelect() => {
                 write!(f, "DeactivateMultiSelect")
+            }
+            // Planet card actions
+            Self::UsePlanetCard {
+                planet_card_id,
+                hand_rank_id,
+            } => {
+                write!(
+                    f,
+                    "UsePlanetCard: card {planet_card_id} on hand {hand_rank_id}"
+                )
             }
 
             // Skip tags system
