@@ -1842,7 +1842,7 @@ mod tests {
             "AcrobatJoker should be in implemented list"
         );
         assert!(
-            all_implemented.contains(&JokerId::FortuneTeller),
+            all_implemented.contains(&JokerId::Fortune),
             "FortuneTeller should be in implemented list"
         );
         assert!(
