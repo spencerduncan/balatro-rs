@@ -47,6 +47,7 @@ impl TestData {
             stage: &self.stage,
             hands_played: 0,
             discards_used: 0,
+            hands_remaining: 4.0, // Standard hands remaining for testing
             jokers: &self.jokers,
             hand: &self.hand,
             discarded: &self.discarded,
@@ -1144,6 +1145,7 @@ fn test_performance_with_many_scaling_jokers() {
         stage: &stage,
         hands_played: 0,
         discards_used: 0,
+        hands_remaining: 4.0, // Standard hands remaining for testing
         jokers: &jokers,
         hand: &hand,
         discarded: &discarded,
