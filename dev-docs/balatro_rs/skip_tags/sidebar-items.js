@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["SkipTagId","TagEffectType","TagRarity"],"mod":["tag_effects","tag_registry","utility_tags"],"struct":["SkipTagContext","SkipTagInstance","SkipTagResult"],"trait":["SkipTag"]};
+window.SIDEBAR_ITEMS = {"enum":["SkipTagId","TagEffectData","TagEffectType","TagError","TagRarity"],"fn":["get_registry"],"mod":["shop_tags","tag_effects","tag_registry"],"struct":["ActiveSkipTags","NextShopModifiers","SkipTagContext","SkipTagInstance","SkipTagResult","TagEffectResult"],"trait":["SkipTag"]};

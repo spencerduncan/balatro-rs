@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CouponTag","D6Tag","FoilTag","HolographicTag","PolychromeTag","VoucherTag"]};
