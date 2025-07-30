@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["HandRank"],"struct":["Level"]};
+window.SIDEBAR_ITEMS = {"enum":["HandRank"],"struct":["HandRankIter","Level"]};
