@@ -139,7 +139,7 @@ impl OperationTimer {
                 self.performance_violations.fetch_add(1, Ordering::Relaxed);
 
                 metrics::counter!("slow_actions_total", 1);
-                metrics::counter!("performance_violations_total", 1, "operation" => "action_execution");
+                metrics::counter!("performance_violations_total").increment(1);
 
                 tracing::warn!("CRITICAL: Slow action execution: {:.2}ms (threshold: 10ms)", duration_ms);
             }
@@ -170,7 +170,7 @@ impl OperationTimer {
                 self.performance_violations.fetch_add(1, Ordering::Relaxed);
 
                 metrics::counter!("websocket_slow_updates", 1);
-                metrics::counter!("performance_violations_total", 1, "operation" => "websocket_update");
+                metrics::counter!("performance_violations_total").increment(1);
 
                 tracing::warn!("CRITICAL: Slow WebSocket update: {:.2}ms (threshold: 5ms)", duration_ms);
             }
@@ -194,12 +194,12 @@ impl OperationTimer {
 
         #[cfg(feature = "monitoring")]
         {
-            metrics::histogram!("storage_operation_duration_ms", duration_ms, "operation" => operation.to_string());
+            metrics::histogram!("storage_operation_duration_ms", duration_ms);
 
             if duration_ms > 1.0 {
                 self.slow_operations.fetch_add(1, Ordering::Relaxed);
 
-                metrics::counter!("storage_slow_operations", 1, "operation" => operation.to_string());
+                metrics::counter!("storage_slow_operations").increment(1);
 
                 tracing::debug!("Slow storage operation {}: {:.2}ms", operation, duration_ms);
             }
@@ -226,24 +226,15 @@ impl OperationTimer {
 
         #[cfg(feature = "monitoring")]
         {
-            metrics::histogram!(
-                format!("{}_duration_ms", operation),
-                duration_ms
-            );
+            metrics::histogram!(format!("{}_duration_ms", operation), duration_ms);
 
             if is_slow {
                 self.slow_operations.fetch_add(1, Ordering::Relaxed);
-                metrics::counter!(
-                    format!("{}_slow_operations", operation), 1
-                );
+                metrics::counter!(format!("{}_slow_operations", operation)).increment(1);
 
                 if is_violation {
                     self.performance_violations.fetch_add(1, Ordering::Relaxed);
-                    metrics::counter!(
-                        "performance_violations_total", 1,
-                        "operation" => operation.to_string(),
-                        "threshold_ms" => threshold_ms.to_string()
-                    );
+                    metrics::counter!("performance_violations_total").increment(1);
 
                     tracing::warn!("Performance violation in {}: {:.2}ms (threshold: {:.2}ms)",
                         operation, duration_ms, threshold_ms);
@@ -297,20 +288,12 @@ impl Drop for CriticalOperationTimer {
 
         #[cfg(feature = "monitoring")]
         {
-            metrics::histogram!(
-                format!("{}_duration_ms", self.operation_name),
-                duration_ms as f64
-            );
+            metrics::histogram!(format!("{}_duration_ms", self.operation_name), duration_ms as f64);
 
             if duration_ms > self.threshold_ms {
                 self.performance_violations.fetch_add(1, Ordering::Relaxed);
 
-                metrics::counter!(
-                    "performance_violations_total", 1,
-                    "operation" => self.operation_name.clone(),
-                    "threshold_ms" => self.threshold_ms.to_string(),
-                    "actual_ms" => duration_ms.to_string()
-                );
+                metrics::counter!("performance_violations_total").increment(1);
 
                 tracing::error!(
                     "CRITICAL PERFORMANCE VIOLATION: {} took {}ms (threshold: {}ms)",

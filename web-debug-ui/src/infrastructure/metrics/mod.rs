@@ -182,7 +182,7 @@ impl Drop for MetricsHandle {
 
         #[cfg(feature = "monitoring")]
         {
-            metrics::gauge!("infrastructure_uptime_seconds", uptime);
+            metrics::gauge!("infrastructure_uptime_seconds").set(uptime);
         }
     }
 }

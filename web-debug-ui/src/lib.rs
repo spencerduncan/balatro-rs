@@ -138,10 +138,10 @@ pub mod integration {
             Ok(())
         }
         
-        async fn load_game(&self, _session_id: &SessionId) -> Result<Option<Game>, ApplicationError> {
-            // Stub implementation - return None for now
+        async fn load_game(&self, _session_id: &SessionId) -> Result<Game, ApplicationError> {
+            // Stub implementation - return default game for now
             tracing::debug!("DefaultGameRepository::load_game called (stub)");
-            Ok(None)
+            Ok(Game::default())
         }
         
         async fn delete_game(&self, _session_id: &SessionId) -> Result<(), ApplicationError> {

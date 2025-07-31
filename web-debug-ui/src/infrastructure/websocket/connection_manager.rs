@@ -293,7 +293,7 @@ impl WebSocketConnection {
         }
 
         let mut sender = self.sender.lock().await;
-        sender.send(Message::Binary(message_bytes.to_vec())).await
+        sender.send(Message::Binary(message_bytes.to_vec().into())).await
             .map_err(|e| WebSocketError::MessageSendFailed {
                 message: e.to_string(),
             })?;

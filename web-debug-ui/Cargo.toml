@@ -65,14 +65,14 @@ tokio-test = "0.4"
 # axum-test = "18.0.0-rc3"  # Removed due to uuid version conflict with core balatro-rs
 
 [features]
-default = ["full", "infrastructure"]
+default = ["full", "infrastructure", "concurrent", "monitoring"]
 full = ["http-server", "websockets", "testing"]
-# monitoring temporarily disabled for integration
 infrastructure = []
 
 # Infrastructure Features
 http-server = []
 websockets = []
+concurrent = []
 monitoring = []
 testing = []
 
