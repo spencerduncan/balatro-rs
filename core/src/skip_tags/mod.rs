@@ -238,7 +238,6 @@ pub enum SkipTagId {
     Boss,
     Orbital,
     Juggle,
-
 }
 
 impl SkipTagId {

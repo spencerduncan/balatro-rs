@@ -135,7 +135,9 @@ impl SkipTag for GarbageTag {
         let unused_discards = (total_discards_available - discards_used).max(0);
 
         let mut result = money_effect(context, unused_discards);
-        result.message = Some(format!("Garbage Tag: +${unused_discards} from {unused_discards} unused discards"));
+        result.message = Some(format!(
+            "Garbage Tag: +${unused_discards} from {unused_discards} unused discards"
+        ));
         result
     }
 }
@@ -175,7 +177,9 @@ impl SkipTag for SpeedTag {
         let reward = (blinds_skipped * 5).max(5); // Minimum $5
 
         let mut result = money_effect(context, reward);
-        result.message = Some(format!("Speed Tag: +${reward} from {blinds_skipped} blind(s) skipped (min $5)"));
+        result.message = Some(format!(
+            "Speed Tag: +${reward} from {blinds_skipped} blind(s) skipped (min $5)"
+        ));
         result
     }
 }
@@ -213,7 +217,10 @@ impl SkipTag for HandyTag {
         let hands_played = context.game.plays as i64;
 
         let mut result = money_effect(context, hands_played);
-        result.message = Some(format!("Handy Tag: +${hands_played} from {hands_played} hands played"));
+        result.message = Some(format!(
+            "Handy Tag: +${hands_played} from {hands_played} hands played"
+        ));
         result
     }
 }
+
