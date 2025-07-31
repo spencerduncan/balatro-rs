@@ -95,7 +95,7 @@ impl JokerFactory {
             JokerId::GreenJoker => Some(Box::new(GreenJoker::new())),
             JokerId::Reserved5 => Some(Box::new(RideTheBusJoker::new())), // RideTheBus
             JokerId::Reserved6 => Some(Box::new(RedCardJoker::new())),    // RedCard (pack skipping)
-            JokerId::RedCard => Some(Box::new(RedCardJoker::new())),      // RedCard (pack skipping)
+            JokerId::RedCard => Some(Box::new(RedCardJoker::new())), // Map RedCard ID to RedCardJoker
 
             // Scaling chips jokers
             JokerId::Castle => Some(Box::new(CastleJoker::new())),
@@ -184,7 +184,7 @@ impl JokerFactory {
                 // Scaling additive mult jokers
                 GreenJoker,
                 Reserved5, // RideTheBus
-                Reserved6, // RedCard (pack skipping)
+                RedCard,   // RedCard (pack skipping) - moved from Reserved6
                 // Scaling chips jokers
                 OddTodd,
                 Arrowhead,
@@ -200,7 +200,6 @@ impl JokerFactory {
                 Burglar,    // Hand type conditional jokers
                 SpaceJoker, // New static jokers
                 BlueJoker,
-                RedCard,    // Red Card (scaling version)
                 SteelJoker, // Scaling Steel Joker
                 // RNG-based jokers (Issue #442)
                 Oops,      // OopsAllSixesJoker
@@ -211,7 +210,6 @@ impl JokerFactory {
                 FourFingers,
                 // Scaling additive mult jokers
                 Trousers, // Spare Trousers
-                RedCard,  // RedCard (pack skipping)
                 // Scaling chips jokers
                 Hiker,
                 // Scaling xmult jokers
@@ -300,7 +298,7 @@ impl JokerFactory {
             Trousers, // Spare Trousers
             GreenJoker,
             Reserved5, // RideTheBus
-            RedCard,   // Red Card (pack skipping scaling joker)
+            RedCard,   // RedCard (pack skipping)
             Fortune,   // Fortune Teller
             // Scaling chips jokers
             Castle,
@@ -438,7 +436,7 @@ mod tests {
 
         let red_card = JokerFactory::create(JokerId::RedCard);
         assert!(red_card.is_some());
-        assert_eq!(red_card.unwrap().id(), JokerId::RedCard); // RedCardJoker now uses RedCard ID
+        assert_eq!(red_card.unwrap().id(), JokerId::RedCard);
 
         let fortune_teller = JokerFactory::create(JokerId::Fortune);
         assert!(fortune_teller.is_some());
@@ -515,6 +513,7 @@ mod tests {
         // Common scaling jokers
         assert!(common_jokers.contains(&JokerId::GreenJoker));
         assert!(common_jokers.contains(&JokerId::Reserved5)); // RideTheBus
+        assert!(common_jokers.contains(&JokerId::RedCard)); // RedCard (pack skipping)
         assert!(common_jokers.contains(&JokerId::OddTodd));
         assert!(common_jokers.contains(&JokerId::Arrowhead));
         assert!(common_jokers.contains(&JokerId::Scholar));
@@ -523,7 +522,6 @@ mod tests {
         // Uncommon scaling jokers
         assert!(uncommon_jokers.contains(&JokerId::Trousers)); // Spare Trousers
         assert!(uncommon_jokers.contains(&JokerId::SteelJoker));
-        assert!(uncommon_jokers.contains(&JokerId::RedCard)); // RedCard (pack skipping)
         assert!(uncommon_jokers.contains(&JokerId::Hiker));
         assert!(uncommon_jokers.contains(&JokerId::Reserved)); // Throwback
         assert!(uncommon_jokers.contains(&JokerId::Ceremonial)); // Ceremonial Dagger

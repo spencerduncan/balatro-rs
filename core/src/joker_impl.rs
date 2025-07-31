@@ -1122,7 +1122,6 @@ impl Joker for MysteryJoker {
 // Vagabond Joker implementation - Create Tarot if hand played with low money
 // Threshold is configurable for proper game balance
 const VAGABOND_MONEY_THRESHOLD: i32 = 4;
-
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct VagabondJokerImpl;
 
@@ -1148,23 +1147,26 @@ impl Joker for VagabondJokerImpl {
     }
 
     fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
-        use crate::consumables::ConsumableId;
-
         // Check if player has threshold or less money
         if context.money <= VAGABOND_MONEY_THRESHOLD {
             // Get available Tarot cards for selection
-            let tarot_cards = ConsumableId::tarot_cards();
+            let tarot_cards = crate::consumables::ConsumableId::tarot_cards();
 
             // Select the first available Tarot card (deterministic for now)
             // In the future, this should be random and actually add to player's consumables
             if let Some(tarot_card) = tarot_cards.first() {
-                JokerEffect::new().with_message(format!(
-                    "Vagabond would create {}! (Money: ${})",
-                    tarot_card, context.money
-                ))
+                JokerEffect::new()
+                    .with_mult(14) // +14 Mult as per specification
+                    .with_consumable_created(*tarot_card)
+                    .with_message(format!(
+                        "Vagabond would create {}! (Money: ${})",
+                        tarot_card, context.money
+                    ))
             } else {
                 // Fallback if no Tarot cards available (shouldn't happen)
-                JokerEffect::new().with_message("Vagabond: No Tarot cards available!".to_string())
+                JokerEffect::new()
+                    .with_mult(14)
+                    .with_message("Vagabond: No Tarot cards available!".to_string())
             }
         } else {
             JokerEffect::new()

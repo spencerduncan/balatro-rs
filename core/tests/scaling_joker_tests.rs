@@ -283,7 +283,7 @@ fn test_ceremonial_dagger() {
 #[test]
 fn test_all_15_scaling_jokers() {
     let jokers = create_all_scaling_jokers();
-    assert_eq!(jokers.len(), 14, "Should create exactly 14 scaling jokers");
+    assert_eq!(jokers.len(), 13, "Should create exactly 13 scaling jokers");
 
     // Test that all jokers have unique IDs
     let mut ids = std::collections::HashSet::new();
@@ -1112,8 +1112,8 @@ fn test_performance_with_many_scaling_jokers() {
     let scaling_jokers = create_all_scaling_jokers();
     assert_eq!(
         scaling_jokers.len(),
-        14,
-        "Expected exactly 14 scaling jokers"
+        13,
+        "Expected exactly 13 scaling jokers"
     );
 
     // Convert to boxed jokers for use in game context

@@ -682,7 +682,7 @@ impl RedCardJoker {
             id: JokerId::RedCard, // RedCard (pack skipping version)
             name: "Red Card".to_string(),
             description: "+3 Mult per pack skipped".to_string(),
-            rarity: JokerRarity::Uncommon,
+            rarity: JokerRarity::Common,
             cost: 4,
             // Removed: packs_skipped initialization (dual state eliminated)
         }
@@ -1000,7 +1000,7 @@ mod tests {
         assert_eq!(joker.joker_type(), "red_card");
         assert_eq!(JokerIdentity::name(&joker), "Red Card");
         assert_eq!(joker.base_cost(), 4);
-        assert_eq!(joker.rarity, JokerRarity::Uncommon);
+        assert_eq!(joker.rarity, JokerRarity::Common);
     }
 
     #[test]

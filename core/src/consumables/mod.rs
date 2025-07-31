@@ -50,6 +50,8 @@ pub enum ConsumableError {
     InvalidGameState(String),
     #[error("Effect failed to apply: {0}")]
     EffectFailed(String),
+    #[error("Target validation failed: {0}")]
+    TargetValidation(#[from] TargetValidationError),
 }
 
 /// Error types for slot operations
@@ -809,7 +811,7 @@ impl fmt::Display for ConsumableType {
 )]
 #[cfg_attr(feature = "python", pyo3::pyclass)]
 pub enum ConsumableId {
-    // Tarot Cards
+    // Tarot Cards - Major Arcana (Wave 1: 0-5)
     /// The Fool - Creates last Joker used this round if possible
     TheFool,
     /// The Magician - Enhances 2 selected cards to Lucky Cards
@@ -832,6 +834,30 @@ pub enum ConsumableId {
     TheHermit,
     /// Wheel of Fortune - 1 in 4 chance to add Foil, Holographic, or Polychrome edition
     WheelOfFortune,
+
+    // Tarot Cards - Major Arcana (Wave 2: 11-21)
+    /// Justice (XI) - Enhances 1 selected card to Glass Card
+    Justice,
+    /// The Hanged Man (XII) - Destroys up to 2 selected cards
+    TheHangedMan,
+    /// Death (XIII) - Select 2 cards, convert left card to right card
+    Death,
+    /// Temperance (XIV) - Gives total sell value of all Jokers as money
+    Temperance,
+    /// The Devil (XV) - Enhances 1 selected card to Gold Card
+    TheDevil,
+    /// The Tower (XVI) - Enhances 1 selected card to Stone Card
+    TheTower,
+    /// The Star (XVII) - Converts up to 3 selected cards to Diamonds
+    TheStar,
+    /// The Moon (XVIII) - Converts up to 3 selected cards to Clubs
+    TheMoon,
+    /// The Sun (XIX) - Converts up to 3 selected cards to Hearts
+    TheSun,
+    /// Judgement (XX) - Creates a random Joker card
+    Judgement,
+    /// The World (XXI) - Converts up to 3 selected cards to Spades
+    TheWorld,
 
     // Planet Cards
     /// Mercury - Levels up Pair
@@ -859,13 +885,27 @@ pub enum ConsumableId {
     /// Eris - Levels up Flush Five
     Eris,
 
-    // Spectral Cards
+    // Spectral Cards - Original PR Implementation (Issue #11)
     /// Familiar - Destroys 1 random card, add 3 random Enhanced face cards to deck
     Familiar,
     /// Grim - Destroys 1 random card, add 2 random Enhanced Aces to deck
     Grim,
     /// Incantation - Destroys 1 random card, add 4 random Enhanced numbered cards to deck
     Incantation,
+    /// Talisman - Add Gold Seal to 1 selected card
+    Talisman,
+    /// Aura - Add effect (Foil, Holo, Polychrome) to 1 selected card
+    Aura,
+    /// Wraith - Creates a random Rare Joker, sets money to $0
+    Wraith,
+    /// Sigil - Converts all cards in hand to single random suit
+    Sigil,
+    /// Ouija - Converts all cards in hand to single random rank (-1 hand size)
+    Ouija,
+    /// Ectoplasm - Add negative to a random Joker, -1 hand size
+    Ectoplasm,
+
+    // Spectral Cards - Modern Main Branch Implementation
     /// Immolate - Destroys 5 random cards in hand, gain $20
     Immolate,
     /// Ankh - Create copy of random Joker, destroy all other Jokers
@@ -897,7 +937,7 @@ pub enum ConsumableId {
 impl fmt::Display for ConsumableId {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            // Tarot Cards
+            // Tarot Cards - Wave 1
             ConsumableId::TheFool => write!(f, "The Fool"),
             ConsumableId::TheMagician => write!(f, "The Magician"),
             ConsumableId::TheHighPriestess => write!(f, "The High Priestess"),
@@ -909,6 +949,19 @@ impl fmt::Display for ConsumableId {
             ConsumableId::Strength => write!(f, "Strength"),
             ConsumableId::TheHermit => write!(f, "The Hermit"),
             ConsumableId::WheelOfFortune => write!(f, "Wheel of Fortune"),
+
+            // Tarot Cards - Wave 2
+            ConsumableId::Justice => write!(f, "Justice"),
+            ConsumableId::TheHangedMan => write!(f, "The Hanged Man"),
+            ConsumableId::Death => write!(f, "Death"),
+            ConsumableId::Temperance => write!(f, "Temperance"),
+            ConsumableId::TheDevil => write!(f, "The Devil"),
+            ConsumableId::TheTower => write!(f, "The Tower"),
+            ConsumableId::TheStar => write!(f, "The Star"),
+            ConsumableId::TheMoon => write!(f, "The Moon"),
+            ConsumableId::TheSun => write!(f, "The Sun"),
+            ConsumableId::Judgement => write!(f, "Judgement"),
+            ConsumableId::TheWorld => write!(f, "The World"),
 
             // Planet Cards
             ConsumableId::Mercury => write!(f, "Mercury"),
@@ -924,10 +977,18 @@ impl fmt::Display for ConsumableId {
             ConsumableId::Ceres => write!(f, "Ceres"),
             ConsumableId::Eris => write!(f, "Eris"),
 
-            // Spectral Cards
+            // Spectral Cards - Original PR Implementation
             ConsumableId::Familiar => write!(f, "Familiar"),
             ConsumableId::Grim => write!(f, "Grim"),
             ConsumableId::Incantation => write!(f, "Incantation"),
+            ConsumableId::Talisman => write!(f, "Talisman"),
+            ConsumableId::Aura => write!(f, "Aura"),
+            ConsumableId::Wraith => write!(f, "Wraith"),
+            ConsumableId::Sigil => write!(f, "Sigil"),
+            ConsumableId::Ouija => write!(f, "Ouija"),
+            ConsumableId::Ectoplasm => write!(f, "Ectoplasm"),
+
+            // Spectral Cards - Modern Main Branch
             ConsumableId::Immolate => write!(f, "Immolate"),
             ConsumableId::Ankh => write!(f, "Ankh"),
             ConsumableId::DejaVu => write!(f, "Deja Vu"),
@@ -960,13 +1021,24 @@ impl ConsumableId {
             | ConsumableId::TheMagician
             | ConsumableId::TheHighPriestess
             | ConsumableId::TheEmperor
-            | ConsumableId::TheHierophant
             | ConsumableId::TheEmpress
+            | ConsumableId::TheHierophant
             | ConsumableId::TheLovers
             | ConsumableId::TheChariot
             | ConsumableId::Strength
             | ConsumableId::TheHermit
             | ConsumableId::WheelOfFortune
+            | ConsumableId::Justice
+            | ConsumableId::TheHangedMan
+            | ConsumableId::Death
+            | ConsumableId::Temperance
+            | ConsumableId::TheDevil
+            | ConsumableId::TheTower
+            | ConsumableId::TheStar
+            | ConsumableId::TheMoon
+            | ConsumableId::TheSun
+            | ConsumableId::Judgement
+            | ConsumableId::TheWorld
             | ConsumableId::TarotPlaceholder => ConsumableType::Tarot,
 
             // Planet Cards
@@ -988,6 +1060,12 @@ impl ConsumableId {
             ConsumableId::Familiar
             | ConsumableId::Grim
             | ConsumableId::Incantation
+            | ConsumableId::Talisman
+            | ConsumableId::Aura
+            | ConsumableId::Wraith
+            | ConsumableId::Sigil
+            | ConsumableId::Ouija
+            | ConsumableId::Ectoplasm
             | ConsumableId::Immolate
             | ConsumableId::Ankh
             | ConsumableId::DejaVu
@@ -1004,6 +1082,7 @@ impl ConsumableId {
     /// Get all Tarot cards
     pub fn tarot_cards() -> Vec<ConsumableId> {
         vec![
+            // Wave 1 (Major Arcana 0-5)
             ConsumableId::TheFool,
             ConsumableId::TheMagician,
             ConsumableId::TheHighPriestess,
@@ -1015,6 +1094,18 @@ impl ConsumableId {
             ConsumableId::Strength,
             ConsumableId::TheHermit,
             ConsumableId::WheelOfFortune,
+            // Wave 2 (Major Arcana 11-21)
+            ConsumableId::Justice,
+            ConsumableId::TheHangedMan,
+            ConsumableId::Death,
+            ConsumableId::Temperance,
+            ConsumableId::TheDevil,
+            ConsumableId::TheTower,
+            ConsumableId::TheStar,
+            ConsumableId::TheMoon,
+            ConsumableId::TheSun,
+            ConsumableId::Judgement,
+            ConsumableId::TheWorld,
         ]
     }
 
@@ -1039,9 +1130,17 @@ impl ConsumableId {
     /// Get all Spectral cards
     pub fn spectral_cards() -> Vec<ConsumableId> {
         vec![
+            // Original PR Implementation (Issue #11)
             ConsumableId::Familiar,
             ConsumableId::Grim,
             ConsumableId::Incantation,
+            ConsumableId::Talisman,
+            ConsumableId::Aura,
+            ConsumableId::Wraith,
+            ConsumableId::Sigil,
+            ConsumableId::Ouija,
+            ConsumableId::Ectoplasm,
+            // Modern Main Branch Implementation
             ConsumableId::Immolate,
             ConsumableId::Ankh,
             ConsumableId::DejaVu,
@@ -1709,9 +1808,9 @@ impl<'de> Deserialize<'de> for ConsumableSlots {
 }
 
 // Re-export submodules when they are implemented
-// pub mod planet; // Disabled in main until planet card system is ready
 pub mod spectral;
 pub mod tarot;
+// pub mod planet; // Disabled in main until planet card system is ready
 
 // Re-export key tarot types for convenience
 pub use tarot::{CardEnhancement, TarotCard, TarotEffect, TarotError, TarotFactory, TarotRarity};
