@@ -768,168 +768,169 @@
 <a href=#768 id=768 data-nosnippet>768</a>        JokerGameplay, JokerIdentity, JokerLifecycle, JokerModifiers,
 <a href=#769 id=769 data-nosnippet>769</a>        JokerState <span class="kw">as </span>JokerStateTrait, Rarity,
 <a href=#770 id=770 data-nosnippet>770</a>    };
-<a href=#771 id=771 data-nosnippet>771</a>    <span class="kw">use </span><span class="kw">crate</span>::joker_state::JokerStateManager;
-<a href=#772 id=772 data-nosnippet>772</a>    <span class="kw">use </span><span class="kw">crate</span>::stage::{Blind, Stage};
-<a href=#773 id=773 data-nosnippet>773</a>    <span class="kw">use </span>std::sync::Arc;
-<a href=#774 id=774 data-nosnippet>774</a>
-<a href=#775 id=775 data-nosnippet>775</a>    <span class="doccomment">/// Helper function to create a test card
-<a href=#776 id=776 data-nosnippet>776</a>    </span><span class="kw">fn </span>create_card(suit: CardSuit, value: Value) -&gt; Card {
-<a href=#777 id=777 data-nosnippet>777</a>        Card::new(value, suit)
-<a href=#778 id=778 data-nosnippet>778</a>    }
-<a href=#779 id=779 data-nosnippet>779</a>
-<a href=#780 id=780 data-nosnippet>780</a>    <span class="doccomment">/// Helper function to create a test blind stage
-<a href=#781 id=781 data-nosnippet>781</a>    </span><span class="kw">fn </span>create_blind_stage() -&gt; Stage {
-<a href=#782 id=782 data-nosnippet>782</a>        Stage::Blind(Blind::Small)
-<a href=#783 id=783 data-nosnippet>783</a>    }
-<a href=#784 id=784 data-nosnippet>784</a>
-<a href=#785 id=785 data-nosnippet>785</a>    <span class="attr">#[test]
-<a href=#786 id=786 data-nosnippet>786</a>    </span><span class="kw">fn </span>test_photograph_triggers_on_first_face_card() {
-<a href=#787 id=787 data-nosnippet>787</a>        <span class="kw">let </span><span class="kw-2">mut </span>joker = PhotographJoker::new();
-<a href=#788 id=788 data-nosnippet>788</a>        <span class="kw">let </span>state_manager = Arc::new(JokerStateManager::new());
-<a href=#789 id=789 data-nosnippet>789</a>
-<a href=#790 id=790 data-nosnippet>790</a>        <span class="kw">let </span><span class="kw-2">mut </span>hand_score = <span class="kw">crate</span>::joker::traits::HandScore {
-<a href=#791 id=791 data-nosnippet>791</a>            chips: <span class="number">100</span>,
-<a href=#792 id=792 data-nosnippet>792</a>            mult: <span class="number">5.0</span>,
-<a href=#793 id=793 data-nosnippet>793</a>        };
-<a href=#794 id=794 data-nosnippet>794</a>        <span class="kw">let </span>played_cards = <span class="macro">vec!</span>[
-<a href=#795 id=795 data-nosnippet>795</a>            create_card(CardSuit::Heart, Value::Jack),
-<a href=#796 id=796 data-nosnippet>796</a>            create_card(CardSuit::Spade, Value::Ten),
-<a href=#797 id=797 data-nosnippet>797</a>        ];
-<a href=#798 id=798 data-nosnippet>798</a>        <span class="kw">let </span>held_cards = <span class="macro">vec!</span>[];
-<a href=#799 id=799 data-nosnippet>799</a>        <span class="kw">let </span><span class="kw-2">mut </span>events = <span class="macro">vec!</span>[];
-<a href=#800 id=800 data-nosnippet>800</a>        <span class="kw">let </span>test_hand = SelectHand::new(played_cards.clone());
-<a href=#801 id=801 data-nosnippet>801</a>
-<a href=#802 id=802 data-nosnippet>802</a>        <span class="kw">let </span><span class="kw-2">mut </span>context = <span class="kw">crate</span>::joker::traits::ProcessContext {
-<a href=#803 id=803 data-nosnippet>803</a>            hand_score: <span class="kw-2">&amp;mut </span>hand_score,
-<a href=#804 id=804 data-nosnippet>804</a>            played_cards: <span class="kw-2">&amp;</span>played_cards,
-<a href=#805 id=805 data-nosnippet>805</a>            held_cards: <span class="kw-2">&amp;</span>held_cards,
-<a href=#806 id=806 data-nosnippet>806</a>            events: <span class="kw-2">&amp;mut </span>events,
-<a href=#807 id=807 data-nosnippet>807</a>            hand: <span class="kw-2">&amp;</span>test_hand,
-<a href=#808 id=808 data-nosnippet>808</a>            joker_state_manager: <span class="kw-2">&amp;</span>state_manager,
-<a href=#809 id=809 data-nosnippet>809</a>        };
-<a href=#810 id=810 data-nosnippet>810</a>
-<a href=#811 id=811 data-nosnippet>811</a>        <span class="comment">// First face card should trigger
-<a href=#812 id=812 data-nosnippet>812</a>        </span><span class="kw">let </span>blind_stage = create_blind_stage();
-<a href=#813 id=813 data-nosnippet>813</a>        <span class="kw">let </span>result = joker.process(<span class="kw-2">&amp;</span>blind_stage, <span class="kw-2">&amp;mut </span>context);
-<a href=#814 id=814 data-nosnippet>814</a>        <span class="macro">assert_eq!</span>(result.mult_added, <span class="number">5.0</span>); <span class="comment">// Should double the current mult
-<a href=#815 id=815 data-nosnippet>815</a>
-<a href=#816 id=816 data-nosnippet>816</a>        // Verify state was updated internally
-<a href=#817 id=817 data-nosnippet>817</a>        </span><span class="macro">assert!</span>(joker.face_card_triggered);
-<a href=#818 id=818 data-nosnippet>818</a>    }
-<a href=#819 id=819 data-nosnippet>819</a>
-<a href=#820 id=820 data-nosnippet>820</a>    <span class="attr">#[test]
-<a href=#821 id=821 data-nosnippet>821</a>    </span><span class="kw">fn </span>test_photograph_does_not_trigger_twice() {
-<a href=#822 id=822 data-nosnippet>822</a>        <span class="kw">let </span><span class="kw-2">mut </span>joker = PhotographJoker::new();
-<a href=#823 id=823 data-nosnippet>823</a>        <span class="comment">// Pre-set the triggered state using internal state
-<a href=#824 id=824 data-nosnippet>824</a>        </span>joker.face_card_triggered = <span class="bool-val">true</span>;
-<a href=#825 id=825 data-nosnippet>825</a>
-<a href=#826 id=826 data-nosnippet>826</a>        <span class="kw">let </span>state_manager = Arc::new(JokerStateManager::new());
-<a href=#827 id=827 data-nosnippet>827</a>
-<a href=#828 id=828 data-nosnippet>828</a>        <span class="kw">let </span><span class="kw-2">mut </span>hand_score = <span class="kw">crate</span>::joker::traits::HandScore {
-<a href=#829 id=829 data-nosnippet>829</a>            chips: <span class="number">100</span>,
-<a href=#830 id=830 data-nosnippet>830</a>            mult: <span class="number">5.0</span>,
-<a href=#831 id=831 data-nosnippet>831</a>        };
-<a href=#832 id=832 data-nosnippet>832</a>        <span class="kw">let </span>played_cards = <span class="macro">vec!</span>[create_card(CardSuit::Heart, Value::King)];
-<a href=#833 id=833 data-nosnippet>833</a>        <span class="kw">let </span>held_cards = <span class="macro">vec!</span>[];
-<a href=#834 id=834 data-nosnippet>834</a>        <span class="kw">let </span><span class="kw-2">mut </span>events = <span class="macro">vec!</span>[];
-<a href=#835 id=835 data-nosnippet>835</a>        <span class="kw">let </span>test_hand = SelectHand::new(played_cards.clone());
-<a href=#836 id=836 data-nosnippet>836</a>
-<a href=#837 id=837 data-nosnippet>837</a>        <span class="kw">let </span><span class="kw-2">mut </span>context = <span class="kw">crate</span>::joker::traits::ProcessContext {
-<a href=#838 id=838 data-nosnippet>838</a>            hand_score: <span class="kw-2">&amp;mut </span>hand_score,
-<a href=#839 id=839 data-nosnippet>839</a>            played_cards: <span class="kw-2">&amp;</span>played_cards,
-<a href=#840 id=840 data-nosnippet>840</a>            held_cards: <span class="kw-2">&amp;</span>held_cards,
-<a href=#841 id=841 data-nosnippet>841</a>            events: <span class="kw-2">&amp;mut </span>events,
-<a href=#842 id=842 data-nosnippet>842</a>            hand: <span class="kw-2">&amp;</span>test_hand,
-<a href=#843 id=843 data-nosnippet>843</a>            joker_state_manager: <span class="kw-2">&amp;</span>state_manager,
-<a href=#844 id=844 data-nosnippet>844</a>        };
-<a href=#845 id=845 data-nosnippet>845</a>
-<a href=#846 id=846 data-nosnippet>846</a>        <span class="comment">// Should not trigger again
-<a href=#847 id=847 data-nosnippet>847</a>        </span><span class="kw">let </span>blind_stage = create_blind_stage();
-<a href=#848 id=848 data-nosnippet>848</a>        <span class="kw">let </span>result = joker.process(<span class="kw-2">&amp;</span>blind_stage, <span class="kw-2">&amp;mut </span>context);
-<a href=#849 id=849 data-nosnippet>849</a>        <span class="macro">assert_eq!</span>(result.mult_added, <span class="number">0.0</span>);
-<a href=#850 id=850 data-nosnippet>850</a>    }
-<a href=#851 id=851 data-nosnippet>851</a>
-<a href=#852 id=852 data-nosnippet>852</a>    <span class="attr">#[test]
-<a href=#853 id=853 data-nosnippet>853</a>    </span><span class="kw">fn </span>test_photograph_can_trigger_checks_state() {
-<a href=#854 id=854 data-nosnippet>854</a>        <span class="kw">let </span><span class="kw-2">mut </span>joker = PhotographJoker::new();
-<a href=#855 id=855 data-nosnippet>855</a>        <span class="kw">let </span>state_manager = Arc::new(JokerStateManager::new());
-<a href=#856 id=856 data-nosnippet>856</a>
-<a href=#857 id=857 data-nosnippet>857</a>        <span class="kw">let </span><span class="kw-2">mut </span>hand_score = <span class="kw">crate</span>::joker::traits::HandScore {
-<a href=#858 id=858 data-nosnippet>858</a>            chips: <span class="number">100</span>,
-<a href=#859 id=859 data-nosnippet>859</a>            mult: <span class="number">5.0</span>,
-<a href=#860 id=860 data-nosnippet>860</a>        };
-<a href=#861 id=861 data-nosnippet>861</a>        <span class="kw">let </span>played_cards = <span class="macro">vec!</span>[create_card(CardSuit::Heart, Value::Queen)];
-<a href=#862 id=862 data-nosnippet>862</a>        <span class="kw">let </span>held_cards = <span class="macro">vec!</span>[];
-<a href=#863 id=863 data-nosnippet>863</a>        <span class="kw">let </span><span class="kw-2">mut </span>events = <span class="macro">vec!</span>[];
-<a href=#864 id=864 data-nosnippet>864</a>        <span class="kw">let </span>test_hand = SelectHand::new(played_cards.clone());
-<a href=#865 id=865 data-nosnippet>865</a>
-<a href=#866 id=866 data-nosnippet>866</a>        <span class="kw">let </span>context = <span class="kw">crate</span>::joker::traits::ProcessContext {
-<a href=#867 id=867 data-nosnippet>867</a>            hand_score: <span class="kw-2">&amp;mut </span>hand_score,
-<a href=#868 id=868 data-nosnippet>868</a>            played_cards: <span class="kw-2">&amp;</span>played_cards,
-<a href=#869 id=869 data-nosnippet>869</a>            held_cards: <span class="kw-2">&amp;</span>held_cards,
-<a href=#870 id=870 data-nosnippet>870</a>            events: <span class="kw-2">&amp;mut </span>events,
-<a href=#871 id=871 data-nosnippet>871</a>            hand: <span class="kw-2">&amp;</span>test_hand,
-<a href=#872 id=872 data-nosnippet>872</a>            joker_state_manager: <span class="kw-2">&amp;</span>state_manager,
-<a href=#873 id=873 data-nosnippet>873</a>        };
-<a href=#874 id=874 data-nosnippet>874</a>
-<a href=#875 id=875 data-nosnippet>875</a>        <span class="comment">// Should be able to trigger initially
-<a href=#876 id=876 data-nosnippet>876</a>        </span><span class="kw">let </span>blind_stage = create_blind_stage();
-<a href=#877 id=877 data-nosnippet>877</a>        <span class="macro">assert!</span>(joker.can_trigger(<span class="kw-2">&amp;</span>blind_stage, <span class="kw-2">&amp;</span>context));
-<a href=#878 id=878 data-nosnippet>878</a>
-<a href=#879 id=879 data-nosnippet>879</a>        <span class="comment">// Set triggered state using internal state
-<a href=#880 id=880 data-nosnippet>880</a>        </span>joker.face_card_triggered = <span class="bool-val">true</span>;
-<a href=#881 id=881 data-nosnippet>881</a>
-<a href=#882 id=882 data-nosnippet>882</a>        <span class="comment">// Should not be able to trigger after state is set
-<a href=#883 id=883 data-nosnippet>883</a>        </span><span class="macro">assert!</span>(!joker.can_trigger(<span class="kw-2">&amp;</span>blind_stage, <span class="kw-2">&amp;</span>context));
-<a href=#884 id=884 data-nosnippet>884</a>    }
-<a href=#885 id=885 data-nosnippet>885</a>
-<a href=#886 id=886 data-nosnippet>886</a>    <span class="attr">#[test]
-<a href=#887 id=887 data-nosnippet>887</a>    </span><span class="kw">fn </span>test_photograph_no_face_cards() {
-<a href=#888 id=888 data-nosnippet>888</a>        <span class="kw">let </span><span class="kw-2">mut </span>joker = PhotographJoker::new();
-<a href=#889 id=889 data-nosnippet>889</a>        <span class="kw">let </span>state_manager = Arc::new(JokerStateManager::new());
-<a href=#890 id=890 data-nosnippet>890</a>
-<a href=#891 id=891 data-nosnippet>891</a>        <span class="kw">let </span><span class="kw-2">mut </span>hand_score = <span class="kw">crate</span>::joker::traits::HandScore {
-<a href=#892 id=892 data-nosnippet>892</a>            chips: <span class="number">100</span>,
-<a href=#893 id=893 data-nosnippet>893</a>            mult: <span class="number">5.0</span>,
-<a href=#894 id=894 data-nosnippet>894</a>        };
-<a href=#895 id=895 data-nosnippet>895</a>        <span class="kw">let </span>played_cards = <span class="macro">vec!</span>[
-<a href=#896 id=896 data-nosnippet>896</a>            create_card(CardSuit::Heart, Value::Ten),
-<a href=#897 id=897 data-nosnippet>897</a>            create_card(CardSuit::Spade, Value::Nine),
-<a href=#898 id=898 data-nosnippet>898</a>        ];
-<a href=#899 id=899 data-nosnippet>899</a>        <span class="kw">let </span>held_cards = <span class="macro">vec!</span>[];
-<a href=#900 id=900 data-nosnippet>900</a>        <span class="kw">let </span><span class="kw-2">mut </span>events = <span class="macro">vec!</span>[];
-<a href=#901 id=901 data-nosnippet>901</a>        <span class="kw">let </span>test_hand = SelectHand::new(played_cards.clone());
-<a href=#902 id=902 data-nosnippet>902</a>
-<a href=#903 id=903 data-nosnippet>903</a>        <span class="kw">let </span><span class="kw-2">mut </span>context = <span class="kw">crate</span>::joker::traits::ProcessContext {
-<a href=#904 id=904 data-nosnippet>904</a>            hand_score: <span class="kw-2">&amp;mut </span>hand_score,
-<a href=#905 id=905 data-nosnippet>905</a>            played_cards: <span class="kw-2">&amp;</span>played_cards,
-<a href=#906 id=906 data-nosnippet>906</a>            held_cards: <span class="kw-2">&amp;</span>held_cards,
-<a href=#907 id=907 data-nosnippet>907</a>            events: <span class="kw-2">&amp;mut </span>events,
-<a href=#908 id=908 data-nosnippet>908</a>            hand: <span class="kw-2">&amp;</span>test_hand,
-<a href=#909 id=909 data-nosnippet>909</a>            joker_state_manager: <span class="kw-2">&amp;</span>state_manager,
-<a href=#910 id=910 data-nosnippet>910</a>        };
-<a href=#911 id=911 data-nosnippet>911</a>
-<a href=#912 id=912 data-nosnippet>912</a>        <span class="comment">// Should not trigger without face cards
-<a href=#913 id=913 data-nosnippet>913</a>        </span><span class="kw">let </span>blind_stage = create_blind_stage();
-<a href=#914 id=914 data-nosnippet>914</a>        <span class="kw">let </span>result = joker.process(<span class="kw-2">&amp;</span>blind_stage, <span class="kw-2">&amp;mut </span>context);
-<a href=#915 id=915 data-nosnippet>915</a>        <span class="macro">assert_eq!</span>(result.mult_added, <span class="number">0.0</span>);
-<a href=#916 id=916 data-nosnippet>916</a>
-<a href=#917 id=917 data-nosnippet>917</a>        <span class="comment">// State should remain untriggered
-<a href=#918 id=918 data-nosnippet>918</a>        </span><span class="macro">assert!</span>(!joker.face_card_triggered);
-<a href=#919 id=919 data-nosnippet>919</a>    }
-<a href=#920 id=920 data-nosnippet>920</a>
-<a href=#921 id=921 data-nosnippet>921</a>    <span class="attr">#[test]
-<a href=#922 id=922 data-nosnippet>922</a>    </span><span class="kw">fn </span>test_photograph_round_reset() {
-<a href=#923 id=923 data-nosnippet>923</a>        <span class="kw">let </span><span class="kw-2">mut </span>joker = PhotographJoker::new();
-<a href=#924 id=924 data-nosnippet>924</a>
-<a href=#925 id=925 data-nosnippet>925</a>        <span class="comment">// Simulate being triggered
-<a href=#926 id=926 data-nosnippet>926</a>        </span>joker.face_card_triggered = <span class="bool-val">true</span>;
-<a href=#927 id=927 data-nosnippet>927</a>
-<a href=#928 id=928 data-nosnippet>928</a>        <span class="comment">// Round reset should clear the flag
-<a href=#929 id=929 data-nosnippet>929</a>        </span>joker.on_round_start();
-<a href=#930 id=930 data-nosnippet>930</a>        <span class="macro">assert!</span>(!joker.face_card_triggered);
-<a href=#931 id=931 data-nosnippet>931</a>
-<a href=#932 id=932 data-nosnippet>932</a>        <span class="comment">// NOTE: In actual game flow, the Game engine should also reset
-<a href=#933 id=933 data-nosnippet>933</a>        // the state in JokerStateManager by calling reset methods
-<a href=#934 id=934 data-nosnippet>934</a>    </span>}
-<a href=#935 id=935 data-nosnippet>935</a>}</code></pre></div></section></main></body></html>
+<a href=#771 id=771 data-nosnippet>771</a>
+<a href=#772 id=772 data-nosnippet>772</a>    <span class="kw">use </span><span class="kw">crate</span>::joker_state::JokerStateManager;
+<a href=#773 id=773 data-nosnippet>773</a>    <span class="kw">use </span><span class="kw">crate</span>::stage::{Blind, Stage};
+<a href=#774 id=774 data-nosnippet>774</a>    <span class="kw">use </span>std::sync::Arc;
+<a href=#775 id=775 data-nosnippet>775</a>
+<a href=#776 id=776 data-nosnippet>776</a>    <span class="doccomment">/// Helper function to create a test card
+<a href=#777 id=777 data-nosnippet>777</a>    </span><span class="kw">fn </span>create_card(suit: CardSuit, value: Value) -&gt; Card {
+<a href=#778 id=778 data-nosnippet>778</a>        Card::new(value, suit)
+<a href=#779 id=779 data-nosnippet>779</a>    }
+<a href=#780 id=780 data-nosnippet>780</a>
+<a href=#781 id=781 data-nosnippet>781</a>    <span class="doccomment">/// Helper function to create a test blind stage
+<a href=#782 id=782 data-nosnippet>782</a>    </span><span class="kw">fn </span>create_blind_stage() -&gt; Stage {
+<a href=#783 id=783 data-nosnippet>783</a>        Stage::Blind(Blind::Small)
+<a href=#784 id=784 data-nosnippet>784</a>    }
+<a href=#785 id=785 data-nosnippet>785</a>
+<a href=#786 id=786 data-nosnippet>786</a>    <span class="attr">#[test]
+<a href=#787 id=787 data-nosnippet>787</a>    </span><span class="kw">fn </span>test_photograph_triggers_on_first_face_card() {
+<a href=#788 id=788 data-nosnippet>788</a>        <span class="kw">let </span><span class="kw-2">mut </span>joker = PhotographJoker::new();
+<a href=#789 id=789 data-nosnippet>789</a>        <span class="kw">let </span>state_manager = Arc::new(JokerStateManager::new());
+<a href=#790 id=790 data-nosnippet>790</a>
+<a href=#791 id=791 data-nosnippet>791</a>        <span class="kw">let </span><span class="kw-2">mut </span>hand_score = <span class="kw">crate</span>::joker::traits::HandScore {
+<a href=#792 id=792 data-nosnippet>792</a>            chips: <span class="number">100</span>,
+<a href=#793 id=793 data-nosnippet>793</a>            mult: <span class="number">5.0</span>,
+<a href=#794 id=794 data-nosnippet>794</a>        };
+<a href=#795 id=795 data-nosnippet>795</a>        <span class="kw">let </span>played_cards = <span class="macro">vec!</span>[
+<a href=#796 id=796 data-nosnippet>796</a>            create_card(CardSuit::Heart, Value::Jack),
+<a href=#797 id=797 data-nosnippet>797</a>            create_card(CardSuit::Spade, Value::Ten),
+<a href=#798 id=798 data-nosnippet>798</a>        ];
+<a href=#799 id=799 data-nosnippet>799</a>        <span class="kw">let </span>held_cards = <span class="macro">vec!</span>[];
+<a href=#800 id=800 data-nosnippet>800</a>        <span class="kw">let </span><span class="kw-2">mut </span>events = <span class="macro">vec!</span>[];
+<a href=#801 id=801 data-nosnippet>801</a>        <span class="kw">let </span>test_hand = SelectHand::new(played_cards.clone());
+<a href=#802 id=802 data-nosnippet>802</a>
+<a href=#803 id=803 data-nosnippet>803</a>        <span class="kw">let </span><span class="kw-2">mut </span>context = <span class="kw">crate</span>::joker::traits::ProcessContext {
+<a href=#804 id=804 data-nosnippet>804</a>            hand_score: <span class="kw-2">&amp;mut </span>hand_score,
+<a href=#805 id=805 data-nosnippet>805</a>            played_cards: <span class="kw-2">&amp;</span>played_cards,
+<a href=#806 id=806 data-nosnippet>806</a>            held_cards: <span class="kw-2">&amp;</span>held_cards,
+<a href=#807 id=807 data-nosnippet>807</a>            events: <span class="kw-2">&amp;mut </span>events,
+<a href=#808 id=808 data-nosnippet>808</a>            hand: <span class="kw-2">&amp;</span>test_hand,
+<a href=#809 id=809 data-nosnippet>809</a>            joker_state_manager: <span class="kw-2">&amp;</span>state_manager,
+<a href=#810 id=810 data-nosnippet>810</a>        };
+<a href=#811 id=811 data-nosnippet>811</a>
+<a href=#812 id=812 data-nosnippet>812</a>        <span class="comment">// First face card should trigger
+<a href=#813 id=813 data-nosnippet>813</a>        </span><span class="kw">let </span>blind_stage = create_blind_stage();
+<a href=#814 id=814 data-nosnippet>814</a>        <span class="kw">let </span>result = joker.process(<span class="kw-2">&amp;</span>blind_stage, <span class="kw-2">&amp;mut </span>context);
+<a href=#815 id=815 data-nosnippet>815</a>        <span class="macro">assert_eq!</span>(result.mult_added, <span class="number">5.0</span>); <span class="comment">// Should double the current mult
+<a href=#816 id=816 data-nosnippet>816</a>
+<a href=#817 id=817 data-nosnippet>817</a>        // Verify state was updated internally
+<a href=#818 id=818 data-nosnippet>818</a>        </span><span class="macro">assert!</span>(joker.face_card_triggered);
+<a href=#819 id=819 data-nosnippet>819</a>    }
+<a href=#820 id=820 data-nosnippet>820</a>
+<a href=#821 id=821 data-nosnippet>821</a>    <span class="attr">#[test]
+<a href=#822 id=822 data-nosnippet>822</a>    </span><span class="kw">fn </span>test_photograph_does_not_trigger_twice() {
+<a href=#823 id=823 data-nosnippet>823</a>        <span class="kw">let </span><span class="kw-2">mut </span>joker = PhotographJoker::new();
+<a href=#824 id=824 data-nosnippet>824</a>        <span class="comment">// Pre-set the triggered state using internal state
+<a href=#825 id=825 data-nosnippet>825</a>        </span>joker.face_card_triggered = <span class="bool-val">true</span>;
+<a href=#826 id=826 data-nosnippet>826</a>
+<a href=#827 id=827 data-nosnippet>827</a>        <span class="kw">let </span>state_manager = Arc::new(JokerStateManager::new());
+<a href=#828 id=828 data-nosnippet>828</a>
+<a href=#829 id=829 data-nosnippet>829</a>        <span class="kw">let </span><span class="kw-2">mut </span>hand_score = <span class="kw">crate</span>::joker::traits::HandScore {
+<a href=#830 id=830 data-nosnippet>830</a>            chips: <span class="number">100</span>,
+<a href=#831 id=831 data-nosnippet>831</a>            mult: <span class="number">5.0</span>,
+<a href=#832 id=832 data-nosnippet>832</a>        };
+<a href=#833 id=833 data-nosnippet>833</a>        <span class="kw">let </span>played_cards = <span class="macro">vec!</span>[create_card(CardSuit::Heart, Value::King)];
+<a href=#834 id=834 data-nosnippet>834</a>        <span class="kw">let </span>held_cards = <span class="macro">vec!</span>[];
+<a href=#835 id=835 data-nosnippet>835</a>        <span class="kw">let </span><span class="kw-2">mut </span>events = <span class="macro">vec!</span>[];
+<a href=#836 id=836 data-nosnippet>836</a>        <span class="kw">let </span>test_hand = SelectHand::new(played_cards.clone());
+<a href=#837 id=837 data-nosnippet>837</a>
+<a href=#838 id=838 data-nosnippet>838</a>        <span class="kw">let </span><span class="kw-2">mut </span>context = <span class="kw">crate</span>::joker::traits::ProcessContext {
+<a href=#839 id=839 data-nosnippet>839</a>            hand_score: <span class="kw-2">&amp;mut </span>hand_score,
+<a href=#840 id=840 data-nosnippet>840</a>            played_cards: <span class="kw-2">&amp;</span>played_cards,
+<a href=#841 id=841 data-nosnippet>841</a>            held_cards: <span class="kw-2">&amp;</span>held_cards,
+<a href=#842 id=842 data-nosnippet>842</a>            events: <span class="kw-2">&amp;mut </span>events,
+<a href=#843 id=843 data-nosnippet>843</a>            hand: <span class="kw-2">&amp;</span>test_hand,
+<a href=#844 id=844 data-nosnippet>844</a>            joker_state_manager: <span class="kw-2">&amp;</span>state_manager,
+<a href=#845 id=845 data-nosnippet>845</a>        };
+<a href=#846 id=846 data-nosnippet>846</a>
+<a href=#847 id=847 data-nosnippet>847</a>        <span class="comment">// Should not trigger again
+<a href=#848 id=848 data-nosnippet>848</a>        </span><span class="kw">let </span>blind_stage = create_blind_stage();
+<a href=#849 id=849 data-nosnippet>849</a>        <span class="kw">let </span>result = joker.process(<span class="kw-2">&amp;</span>blind_stage, <span class="kw-2">&amp;mut </span>context);
+<a href=#850 id=850 data-nosnippet>850</a>        <span class="macro">assert_eq!</span>(result.mult_added, <span class="number">0.0</span>);
+<a href=#851 id=851 data-nosnippet>851</a>    }
+<a href=#852 id=852 data-nosnippet>852</a>
+<a href=#853 id=853 data-nosnippet>853</a>    <span class="attr">#[test]
+<a href=#854 id=854 data-nosnippet>854</a>    </span><span class="kw">fn </span>test_photograph_can_trigger_checks_state() {
+<a href=#855 id=855 data-nosnippet>855</a>        <span class="kw">let </span><span class="kw-2">mut </span>joker = PhotographJoker::new();
+<a href=#856 id=856 data-nosnippet>856</a>        <span class="kw">let </span>state_manager = Arc::new(JokerStateManager::new());
+<a href=#857 id=857 data-nosnippet>857</a>
+<a href=#858 id=858 data-nosnippet>858</a>        <span class="kw">let </span><span class="kw-2">mut </span>hand_score = <span class="kw">crate</span>::joker::traits::HandScore {
+<a href=#859 id=859 data-nosnippet>859</a>            chips: <span class="number">100</span>,
+<a href=#860 id=860 data-nosnippet>860</a>            mult: <span class="number">5.0</span>,
+<a href=#861 id=861 data-nosnippet>861</a>        };
+<a href=#862 id=862 data-nosnippet>862</a>        <span class="kw">let </span>played_cards = <span class="macro">vec!</span>[create_card(CardSuit::Heart, Value::Queen)];
+<a href=#863 id=863 data-nosnippet>863</a>        <span class="kw">let </span>held_cards = <span class="macro">vec!</span>[];
+<a href=#864 id=864 data-nosnippet>864</a>        <span class="kw">let </span><span class="kw-2">mut </span>events = <span class="macro">vec!</span>[];
+<a href=#865 id=865 data-nosnippet>865</a>        <span class="kw">let </span>test_hand = SelectHand::new(played_cards.clone());
+<a href=#866 id=866 data-nosnippet>866</a>
+<a href=#867 id=867 data-nosnippet>867</a>        <span class="kw">let </span>context = <span class="kw">crate</span>::joker::traits::ProcessContext {
+<a href=#868 id=868 data-nosnippet>868</a>            hand_score: <span class="kw-2">&amp;mut </span>hand_score,
+<a href=#869 id=869 data-nosnippet>869</a>            played_cards: <span class="kw-2">&amp;</span>played_cards,
+<a href=#870 id=870 data-nosnippet>870</a>            held_cards: <span class="kw-2">&amp;</span>held_cards,
+<a href=#871 id=871 data-nosnippet>871</a>            events: <span class="kw-2">&amp;mut </span>events,
+<a href=#872 id=872 data-nosnippet>872</a>            hand: <span class="kw-2">&amp;</span>test_hand,
+<a href=#873 id=873 data-nosnippet>873</a>            joker_state_manager: <span class="kw-2">&amp;</span>state_manager,
+<a href=#874 id=874 data-nosnippet>874</a>        };
+<a href=#875 id=875 data-nosnippet>875</a>
+<a href=#876 id=876 data-nosnippet>876</a>        <span class="comment">// Should be able to trigger initially
+<a href=#877 id=877 data-nosnippet>877</a>        </span><span class="kw">let </span>blind_stage = create_blind_stage();
+<a href=#878 id=878 data-nosnippet>878</a>        <span class="macro">assert!</span>(joker.can_trigger(<span class="kw-2">&amp;</span>blind_stage, <span class="kw-2">&amp;</span>context));
+<a href=#879 id=879 data-nosnippet>879</a>
+<a href=#880 id=880 data-nosnippet>880</a>        <span class="comment">// Set triggered state using internal state
+<a href=#881 id=881 data-nosnippet>881</a>        </span>joker.face_card_triggered = <span class="bool-val">true</span>;
+<a href=#882 id=882 data-nosnippet>882</a>
+<a href=#883 id=883 data-nosnippet>883</a>        <span class="comment">// Should not be able to trigger after state is set
+<a href=#884 id=884 data-nosnippet>884</a>        </span><span class="macro">assert!</span>(!joker.can_trigger(<span class="kw-2">&amp;</span>blind_stage, <span class="kw-2">&amp;</span>context));
+<a href=#885 id=885 data-nosnippet>885</a>    }
+<a href=#886 id=886 data-nosnippet>886</a>
+<a href=#887 id=887 data-nosnippet>887</a>    <span class="attr">#[test]
+<a href=#888 id=888 data-nosnippet>888</a>    </span><span class="kw">fn </span>test_photograph_no_face_cards() {
+<a href=#889 id=889 data-nosnippet>889</a>        <span class="kw">let </span><span class="kw-2">mut </span>joker = PhotographJoker::new();
+<a href=#890 id=890 data-nosnippet>890</a>        <span class="kw">let </span>state_manager = Arc::new(JokerStateManager::new());
+<a href=#891 id=891 data-nosnippet>891</a>
+<a href=#892 id=892 data-nosnippet>892</a>        <span class="kw">let </span><span class="kw-2">mut </span>hand_score = <span class="kw">crate</span>::joker::traits::HandScore {
+<a href=#893 id=893 data-nosnippet>893</a>            chips: <span class="number">100</span>,
+<a href=#894 id=894 data-nosnippet>894</a>            mult: <span class="number">5.0</span>,
+<a href=#895 id=895 data-nosnippet>895</a>        };
+<a href=#896 id=896 data-nosnippet>896</a>        <span class="kw">let </span>played_cards = <span class="macro">vec!</span>[
+<a href=#897 id=897 data-nosnippet>897</a>            create_card(CardSuit::Heart, Value::Ten),
+<a href=#898 id=898 data-nosnippet>898</a>            create_card(CardSuit::Spade, Value::Nine),
+<a href=#899 id=899 data-nosnippet>899</a>        ];
+<a href=#900 id=900 data-nosnippet>900</a>        <span class="kw">let </span>held_cards = <span class="macro">vec!</span>[];
+<a href=#901 id=901 data-nosnippet>901</a>        <span class="kw">let </span><span class="kw-2">mut </span>events = <span class="macro">vec!</span>[];
+<a href=#902 id=902 data-nosnippet>902</a>        <span class="kw">let </span>test_hand = SelectHand::new(played_cards.clone());
+<a href=#903 id=903 data-nosnippet>903</a>
+<a href=#904 id=904 data-nosnippet>904</a>        <span class="kw">let </span><span class="kw-2">mut </span>context = <span class="kw">crate</span>::joker::traits::ProcessContext {
+<a href=#905 id=905 data-nosnippet>905</a>            hand_score: <span class="kw-2">&amp;mut </span>hand_score,
+<a href=#906 id=906 data-nosnippet>906</a>            played_cards: <span class="kw-2">&amp;</span>played_cards,
+<a href=#907 id=907 data-nosnippet>907</a>            held_cards: <span class="kw-2">&amp;</span>held_cards,
+<a href=#908 id=908 data-nosnippet>908</a>            events: <span class="kw-2">&amp;mut </span>events,
+<a href=#909 id=909 data-nosnippet>909</a>            hand: <span class="kw-2">&amp;</span>test_hand,
+<a href=#910 id=910 data-nosnippet>910</a>            joker_state_manager: <span class="kw-2">&amp;</span>state_manager,
+<a href=#911 id=911 data-nosnippet>911</a>        };
+<a href=#912 id=912 data-nosnippet>912</a>
+<a href=#913 id=913 data-nosnippet>913</a>        <span class="comment">// Should not trigger without face cards
+<a href=#914 id=914 data-nosnippet>914</a>        </span><span class="kw">let </span>blind_stage = create_blind_stage();
+<a href=#915 id=915 data-nosnippet>915</a>        <span class="kw">let </span>result = joker.process(<span class="kw-2">&amp;</span>blind_stage, <span class="kw-2">&amp;mut </span>context);
+<a href=#916 id=916 data-nosnippet>916</a>        <span class="macro">assert_eq!</span>(result.mult_added, <span class="number">0.0</span>);
+<a href=#917 id=917 data-nosnippet>917</a>
+<a href=#918 id=918 data-nosnippet>918</a>        <span class="comment">// State should remain untriggered
+<a href=#919 id=919 data-nosnippet>919</a>        </span><span class="macro">assert!</span>(!joker.face_card_triggered);
+<a href=#920 id=920 data-nosnippet>920</a>    }
+<a href=#921 id=921 data-nosnippet>921</a>
+<a href=#922 id=922 data-nosnippet>922</a>    <span class="attr">#[test]
+<a href=#923 id=923 data-nosnippet>923</a>    </span><span class="kw">fn </span>test_photograph_round_reset() {
+<a href=#924 id=924 data-nosnippet>924</a>        <span class="kw">let </span><span class="kw-2">mut </span>joker = PhotographJoker::new();
+<a href=#925 id=925 data-nosnippet>925</a>
+<a href=#926 id=926 data-nosnippet>926</a>        <span class="comment">// Simulate being triggered
+<a href=#927 id=927 data-nosnippet>927</a>        </span>joker.face_card_triggered = <span class="bool-val">true</span>;
+<a href=#928 id=928 data-nosnippet>928</a>
+<a href=#929 id=929 data-nosnippet>929</a>        <span class="comment">// Round reset should clear the flag
+<a href=#930 id=930 data-nosnippet>930</a>        </span>joker.on_round_start();
+<a href=#931 id=931 data-nosnippet>931</a>        <span class="macro">assert!</span>(!joker.face_card_triggered);
+<a href=#932 id=932 data-nosnippet>932</a>
+<a href=#933 id=933 data-nosnippet>933</a>        <span class="comment">// NOTE: In actual game flow, the Game engine should also reset
+<a href=#934 id=934 data-nosnippet>934</a>        // the state in JokerStateManager by calling reset methods
+<a href=#935 id=935 data-nosnippet>935</a>    </span>}
+<a href=#936 id=936 data-nosnippet>936</a>}</code></pre></div></section></main></body></html>

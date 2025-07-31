@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["create_spectral_card","get_implemented_spectral_cards"],"struct":["Ankh","BlackHole","Cryptid","DejaVu","Hex","Immolate","Medium","TheSoul","Trance"]};
+window.SIDEBAR_ITEMS = {"fn":["create_spectral_card"],"struct":["Ankh","Aura","BlackHole","Cryptid","DejaVu","Ectoplasm","Familiar","Grim","Hex","Immolate","Incantation","Medium","Ouija","Sigil","Talisman","TheSoul","Trance","Wraith"]};
