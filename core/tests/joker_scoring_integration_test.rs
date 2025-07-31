@@ -133,11 +133,23 @@ fn test_debug_logging_for_joker_contributions() {
 
     // Check that debug messages were logged
     let debug_messages = game.get_debug_messages();
-    assert!(!debug_messages.is_empty(), "Should have debug messages");
-    assert!(
-        debug_messages.iter().any(|msg| msg.contains("joker")),
-        "Should log joker effects"
-    );
+
+    // Debug messages are only generated in debug builds
+    #[cfg(debug_assertions)]
+    {
+        assert!(!debug_messages.is_empty(), "Should have debug messages");
+        assert!(
+            debug_messages.iter().any(|msg| msg.contains("joker")),
+            "Should log joker effects"
+        );
+    }
+
+    // In release builds, debug messages may be empty due to conditional compilation
+    #[cfg(not(debug_assertions))]
+    {
+        // Just verify the function doesn't crash - messages may be empty in release mode
+        let _ = debug_messages;
+    }
 }
 
 #[test]

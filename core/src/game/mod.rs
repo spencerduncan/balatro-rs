@@ -12,13 +12,13 @@ use crate::hand::{MadeHand, SelectHand};
 use crate::joker::{GameContext, Joker, JokerId, Jokers, OldJoker as OldJokerTrait};
 use crate::joker_effect_processor::JokerEffectProcessor;
 use crate::joker_factory::JokerFactory;
-use crate::joker_state::{JokerState, JokerStateManager};
+use crate::joker_state::JokerStateManager;
+use crate::memory_monitor::MemoryMonitor;
 use crate::rank::HandRank;
 
 // Import debug functionality
 mod debug;
 use crate::scaling_joker::ScalingEvent;
-use crate::shop::packs::{OpenPackState, Pack};
 use crate::shop::Shop;
 use crate::skip_tags::SkipTagId;
 use crate::stage::{Blind, End, Stage};
@@ -26,6 +26,10 @@ use crate::state_version::StateVersion;
 use crate::target_context::TargetContext;
 use crate::vouchers::{VoucherCollection, VoucherId};
 use debug::DebugManager;
+
+// Pack management module
+pub mod packs;
+pub use packs::PackManager;
 
 // Re-export GameState for external use with qualified name to avoid Python bindings conflict
 pub use crate::vouchers::GameState as VoucherGameState;
@@ -35,6 +39,13 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
+
+// Submodules
+pub mod persistence;
+
+/// Maximum debug messages to keep in memory (for practical memory management)
+#[cfg(any(debug_assertions, test))]
+const MAX_DEBUG_MESSAGES: usize = 10000;
 
 /// Score breakdown for debugging and analysis
 #[derive(Debug, Clone)]
@@ -226,12 +237,8 @@ pub struct Game {
     /// Current boss blind state and effects
     pub boss_blind_state: BossBlindState,
 
-    /// Pack system state
-    /// Packs currently in the player's inventory
-    pub pack_inventory: Vec<Pack>,
-
-    /// Currently opened pack that player is choosing from
-    pub open_pack: Option<OpenPackState>,
+    /// Pack system management
+    pub pack_manager: PackManager,
 
     /// Version of the game state for serialization compatibility
     pub state_version: StateVersion,
@@ -254,6 +261,13 @@ pub struct Game {
     pub available_skip_tags: Vec<crate::skip_tags::SkipTagInstance>,
     /// Pending skip tag selection (after skipping a blind)
     pub pending_tag_selection: bool,
+
+    /// Persistence manager for save/load operations
+    #[cfg_attr(
+        feature = "serde",
+        serde(skip, default = "persistence::PersistenceManager::new")
+    )]
+    pub persistence_manager: persistence::PersistenceManager,
 }
 
 #[cfg(feature = "serde")]
@@ -352,8 +366,7 @@ impl Game {
             boss_blind_state: BossBlindState::new(),
 
             // Initialize pack system fields
-            pack_inventory: Vec::new(),
-            open_pack: None,
+            pack_manager: PackManager::new(),
 
             state_version: StateVersion::current(),
 
@@ -371,36 +384,14 @@ impl Game {
             available_skip_tags: Vec::new(),
             pending_tag_selection: false,
 
+            // Initialize persistence manager
+            persistence_manager: persistence::PersistenceManager::new(),
+
             config,
         }
     }
 
-    /// Count Stone cards in the current deck
-    /// Following clean code principle: functions should do one thing
-    fn count_stone_cards(&self) -> usize {
-        self.deck
-            .cards()
-            .iter()
-            .filter(|card| matches!(card.enhancement, Some(crate::card::Enhancement::Stone)))
-            .count()
-    }
-
-    /// Count Steel cards in the current deck
-    /// Following clean code principle: functions should do one thing
-    fn count_steel_cards(&self) -> usize {
-        self.deck
-            .cards()
-            .iter()
-            .filter(|card| matches!(card.enhancement, Some(crate::card::Enhancement::Steel)))
-            .count()
-    }
-
-    /// Refresh enhancement card counts based on current deck state
-    /// Call this whenever the deck composition changes
-    pub fn refresh_enhancement_counts(&mut self) {
-        self.stone_cards_in_deck = self.count_stone_cards();
-        self.steel_cards_in_deck = self.count_steel_cards();
-    }
+    // Removed duplicate methods - using the implementations later in the file
 
     /// Add cards to deck for testing purposes
     /// Following clean code: separate testing concerns from production logic
@@ -666,7 +657,8 @@ impl Game {
 
         // Update available packs (if any)
         let pack_ids: Vec<usize> = self
-            .pack_inventory
+            .pack_manager
+            .pack_inventory()
             .iter()
             .enumerate()
             .map(|(i, _)| i)
@@ -1600,28 +1592,14 @@ impl Game {
         self.money -= cost as f64;
 
         // Add pack to inventory
-        self.pack_inventory.push(pack);
+        self.pack_manager.add_pack(pack);
 
         Ok(())
     }
 
     /// Open a pack from inventory
     pub(crate) fn open_pack(&mut self, pack_id: usize) -> Result<(), GameError> {
-        // Check if pack exists in inventory
-        if pack_id >= self.pack_inventory.len() {
-            return Err(GameError::InvalidAction);
-        }
-
-        // Check if another pack is already open
-        if self.open_pack.is_some() {
-            return Err(GameError::InvalidAction);
-        }
-
-        // Remove pack from inventory and open it
-        let pack = self.pack_inventory.remove(pack_id);
-        self.open_pack = Some(OpenPackState::new(pack, pack_id));
-
-        Ok(())
+        self.pack_manager.open_pack(pack_id)
     }
 
     /// Select an option from the currently opened pack
@@ -1630,16 +1608,8 @@ impl Game {
         pack_id: usize,
         option_index: usize,
     ) -> Result<(), GameError> {
-        // Check if a pack is open
-        let open_pack_state = self.open_pack.take().ok_or(GameError::InvalidAction)?;
-
-        // Verify pack ID matches
-        if open_pack_state.pack_id != pack_id {
-            return Err(GameError::InvalidAction);
-        }
-
-        // Select the option
-        let selected_item = open_pack_state.pack.select_option(option_index)?;
+        // Get the selected item from PackManager
+        let selected_item = self.pack_manager.select_from_pack(pack_id, option_index)?;
 
         // Process the selected item based on its type
         self.process_pack_item(selected_item)?;
@@ -1649,21 +1619,7 @@ impl Game {
 
     /// Skip the currently opened pack
     pub(crate) fn skip_pack(&mut self, pack_id: usize) -> Result<(), GameError> {
-        // Check if a pack is open
-        let open_pack_state = self.open_pack.take().ok_or(GameError::InvalidAction)?;
-
-        // Verify pack ID matches
-        if open_pack_state.pack_id != pack_id {
-            return Err(GameError::InvalidAction);
-        }
-
-        // Check if pack can be skipped
-        if !open_pack_state.pack.can_skip {
-            return Err(GameError::InvalidAction);
-        }
-
-        // Pack is simply consumed (no further action needed)
-        Ok(())
+        self.pack_manager.skip_pack(pack_id)
     }
 
     /// Process an item selected from a pack
@@ -2318,203 +2274,55 @@ impl Default for Game {
     }
 }
 
-/// Serializable representation of game state, excluding non-serializable fields
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct SaveableGameState {
-    pub version: u32,
-    pub timestamp: u64,
-    pub config: Config,
-    pub shop: Shop,
-    pub deck: Deck,
-    pub available: Available,
-    pub discarded: Vec<Card>,
-    pub blind: Option<Blind>,
-    pub stage: Stage,
-    pub ante_start: Ante,
-    pub ante_end: Ante,
-    pub ante_current: Ante,
-    pub action_history: BoundedActionHistory,
-    pub round: f64,
-    pub joker_ids: Vec<JokerId>, // Changed from jokers: Vec<Jokers> to support new system
-    pub joker_states: HashMap<JokerId, JokerState>,
-    pub plays: f64,
-    pub discards: f64,
-    pub reward: f64,
-    pub money: f64,
-    pub shop_reroll_cost: f64,
-    pub shop_rerolls_this_round: u32,
-    pub chips: f64,
-    pub mult: f64,
-    pub score: f64,
-    pub hand_type_counts: HashMap<HandRank, u32>,
-    // Extended state fields
-    pub consumables_in_hand: Vec<ConsumableId>,
-    pub vouchers: VoucherCollection,
-    pub boss_blind_state: BossBlindState,
-    pub pack_inventory: Vec<Pack>,
-    pub open_pack: Option<OpenPackState>,
-    pub state_version: StateVersion,
-}
-
-const SAVE_VERSION: u32 = 1;
-
-/// Errors that can occur during save/load operations
-#[derive(Debug)]
-pub enum SaveLoadError {
-    SerializationError(serde_json::Error),
-    DeserializationError(serde_json::Error),
-    InvalidVersion(u32),
-    MissingField(String),
-    ValidationError(String),
-}
-
-impl fmt::Display for SaveLoadError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            SaveLoadError::SerializationError(e) => write!(f, "Serialization error: {e}"),
-            SaveLoadError::DeserializationError(e) => write!(f, "Deserialization error: {e}"),
-            SaveLoadError::InvalidVersion(v) => write!(f, "Unsupported save version: {v}"),
-            SaveLoadError::MissingField(field) => write!(f, "Missing required field: {field}"),
-            SaveLoadError::ValidationError(msg) => write!(f, "Validation error: {msg}"),
-        }
-    }
-}
-
-impl std::error::Error for SaveLoadError {}
+// Persistence functionality moved to persistence.rs module
+// Re-export SaveLoadError for backward compatibility
+pub use persistence::SaveLoadError;
 
 impl Game {
     /// Save the current game state to JSON string
+    ///
+    /// Delegates to the persistence manager following Single Responsibility Principle.
     pub fn save_state_to_json(&self) -> Result<String, SaveLoadError> {
-        // Extract joker states from the state manager
-        let joker_states = self.joker_state_manager.snapshot_all();
-
-        // Extract joker IDs from the new joker system
-        let joker_ids: Vec<JokerId> = self.jokers.iter().map(|j| j.id()).collect();
-
-        let saveable_state = SaveableGameState {
-            version: SAVE_VERSION,
-            timestamp: std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_secs(),
-            config: self.config.clone(),
-            shop: self.shop.clone(),
-            deck: self.deck.clone(),
-            available: self.available.clone(),
-            discarded: self.discarded.clone(),
-            blind: self.blind,
-            stage: self.stage,
-            ante_start: self.ante_start,
-            ante_end: self.ante_end,
-            ante_current: self.ante_current,
-            action_history: self.action_history.clone(),
-            round: self.round,
-            joker_ids,
-            joker_states,
-            plays: self.plays,
-            discards: self.discards,
-            reward: self.reward,
-            money: self.money,
-            shop_reroll_cost: self.shop_reroll_cost,
-            shop_rerolls_this_round: self.shop_rerolls_this_round,
-            chips: self.chips,
-            mult: self.mult,
-            score: self.score,
-            hand_type_counts: self.hand_type_counts.clone(),
-            // Extended state fields
-            consumables_in_hand: self.consumables_in_hand.clone(),
-            vouchers: self.vouchers.clone(),
-            boss_blind_state: self.boss_blind_state.clone(),
-            pack_inventory: self.pack_inventory.clone(),
-            open_pack: self.open_pack.clone(),
-            state_version: self.state_version,
-        };
-
-        serde_json::to_string_pretty(&saveable_state).map_err(SaveLoadError::SerializationError)
+        self.persistence_manager.save_state_to_json(self)
     }
 
     /// Load game state from JSON string
+    ///
+    /// Delegates to the persistence manager following Single Responsibility Principle.
     pub fn load_state_from_json(json: &str) -> Result<Self, SaveLoadError> {
-        let saveable_state: SaveableGameState =
-            serde_json::from_str(json).map_err(SaveLoadError::DeserializationError)?;
-
-        // Validate version
-        if saveable_state.version > SAVE_VERSION {
-            return Err(SaveLoadError::InvalidVersion(saveable_state.version));
-        }
-
-        // Recreate jokers using JokerFactory
-        let jokers: Vec<Box<dyn Joker>> = saveable_state
-            .joker_ids
-            .into_iter()
-            .filter_map(|id| JokerFactory::create(id))
-            .collect();
-
-        // Create joker state manager
-        let joker_state_manager = Arc::new(JokerStateManager::new());
-
-        // Create new game instance with reconstructed state
-        let game = Game {
-            config: saveable_state.config,
-            shop: saveable_state.shop,
-            deck: saveable_state.deck,
-            available: saveable_state.available,
-            discarded: saveable_state.discarded,
-            blind: saveable_state.blind,
-            stage: saveable_state.stage,
-            ante_start: saveable_state.ante_start,
-            ante_end: saveable_state.ante_end,
-            ante_current: saveable_state.ante_current,
-            action_history: saveable_state.action_history,
-            round: saveable_state.round,
-            jokers,
-            joker_effect_processor: JokerEffectProcessor::new(),
-            joker_state_manager: joker_state_manager.clone(),
-            plays: saveable_state.plays,
-            discards: saveable_state.discards,
-            reward: saveable_state.reward,
-            money: saveable_state.money,
-            shop_reroll_cost: saveable_state.shop_reroll_cost,
-            shop_rerolls_this_round: saveable_state.shop_rerolls_this_round,
-            chips: saveable_state.chips,
-            mult: saveable_state.mult,
-            score: saveable_state.score,
-            hand_type_counts: saveable_state.hand_type_counts,
-            hand_levels: HashMap::new(), // Initialize with empty levels (default level 1)
-
-            // Enhancement tracking (will be calculated after loading)
-            stone_cards_in_deck: 0,
-            steel_cards_in_deck: 0,
-
-            // Extended state fields
-            consumables_in_hand: saveable_state.consumables_in_hand,
-            vouchers: saveable_state.vouchers,
-            boss_blind_state: saveable_state.boss_blind_state,
-            pack_inventory: saveable_state.pack_inventory,
-            open_pack: saveable_state.open_pack,
-            state_version: saveable_state.state_version,
-            // Initialize debug manager (not serialized)
-            debug_manager: DebugManager::new(),
-            // Initialize target context (not serialized)
-            target_context: TargetContext::new(),
-            // Initialize secure RNG (not serialized)
-            rng: crate::rng::GameRng::secure(),
-            // Initialize skip tags system (not serialized, unified approach)
-            active_skip_tags: crate::skip_tags::ActiveSkipTags::new(),
-            available_skip_tags: Vec::new(),
-            pending_tag_selection: false,
-        };
-
-        // Restore joker states to the state manager
-        game.joker_state_manager
-            .restore_from_snapshot(saveable_state.joker_states);
-
-        // Refresh enhancement counts based on loaded deck
-        let mut game = game;
-        game.refresh_enhancement_counts();
-
-        Ok(game)
+        let persistence_manager = persistence::PersistenceManager::new();
+        persistence_manager.load_state_from_json(json)
     }
+
+    /// Count Stone cards in the current deck
+    /// Following clean code principle: functions should do one thing
+    fn count_stone_cards(&self) -> usize {
+        self.deck
+            .cards()
+            .iter()
+            .filter(|card| matches!(card.enhancement, Some(crate::card::Enhancement::Stone)))
+            .count()
+    }
+
+    /// Count Steel cards in the current deck
+    /// Following clean code principle: functions should do one thing
+    fn count_steel_cards(&self) -> usize {
+        self.deck
+            .cards()
+            .iter()
+            .filter(|card| matches!(card.enhancement, Some(crate::card::Enhancement::Steel)))
+            .count()
+    }
+
+    /// Refresh enhancement counts by recalculating from deck state
+    /// Following clean code principle: separate data calculation from data usage
+    pub fn refresh_enhancement_counts(&mut self) {
+        self.stone_cards_in_deck = self.count_stone_cards();
+        self.steel_cards_in_deck = self.count_steel_cards();
+    }
+
+    // Removed problematic from_saveable_state method that was causing compilation errors
+    // Persistence functionality is handled by the persistence module
 
     /// Process a scaling event for all scaling jokers in the game
     pub fn process_scaling_event(&mut self, event: ScalingEvent) {
