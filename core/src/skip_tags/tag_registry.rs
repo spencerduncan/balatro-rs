@@ -78,6 +78,15 @@ impl SkipTagRegistry {
         let tags = self.tags.read().unwrap_or_else(|e| e.into_inner());
         tags.len()
     }
+
+    /// Get all shop enhancement tags
+    pub fn get_all_shop_enhancement_tags(&self) -> Vec<SkipTagId> {
+        let tags = self.tags.read().unwrap_or_else(|e| e.into_inner());
+        tags.values()
+            .filter(|tag| tag.effect_type() == crate::skip_tags::TagEffectType::NextShopModifier)
+            .map(|tag| tag.id())
+            .collect()
+    }
 }
 
 impl Default for SkipTagRegistry {
@@ -94,19 +103,39 @@ pub fn global_registry() -> &'static SkipTagRegistry {
     GLOBAL_REGISTRY.get_or_init(|| {
         let registry = SkipTagRegistry::new();
 
-        // Register all utility tags
-        if let Err(e) = registry.register(crate::skip_tags::utility_tags::DoubleTag) {
-            eprintln!("Failed to register Double tag: {e}");
+        // Register all shop enhancement tags (currently implemented)
+        if let Err(e) = registry.register(crate::skip_tags::shop_tags::VoucherTag) {
+            eprintln!("Failed to register Voucher tag: {e}");
         }
-        if let Err(e) = registry.register(crate::skip_tags::utility_tags::BossTag) {
-            eprintln!("Failed to register Boss tag: {e}");
+        if let Err(e) = registry.register(crate::skip_tags::shop_tags::CouponTag) {
+            eprintln!("Failed to register Coupon tag: {e}");
         }
-        if let Err(e) = registry.register(crate::skip_tags::utility_tags::OrbitalTag) {
-            eprintln!("Failed to register Orbital tag: {e}");
+        if let Err(e) = registry.register(crate::skip_tags::shop_tags::D6Tag) {
+            eprintln!("Failed to register D6 tag: {e}");
         }
-        if let Err(e) = registry.register(crate::skip_tags::utility_tags::JuggleTag) {
-            eprintln!("Failed to register Juggle tag: {e}");
+        if let Err(e) = registry.register(crate::skip_tags::shop_tags::FoilTag) {
+            eprintln!("Failed to register Foil tag: {e}");
         }
+        if let Err(e) = registry.register(crate::skip_tags::shop_tags::HolographicTag) {
+            eprintln!("Failed to register Holographic tag: {e}");
+        }
+        if let Err(e) = registry.register(crate::skip_tags::shop_tags::PolychromeTag) {
+            eprintln!("Failed to register Polychrome tag: {e}");
+        }
+
+        // TODO: Register utility tags when they're re-enabled
+        // if let Err(e) = registry.register(crate::skip_tags::utility_tags::DoubleTag) {
+        //     eprintln!("Failed to register Double tag: {e}");
+        // }
+        // if let Err(e) = registry.register(crate::skip_tags::utility_tags::BossTag) {
+        //     eprintln!("Failed to register Boss tag: {e}");
+        // }
+        // if let Err(e) = registry.register(crate::skip_tags::utility_tags::OrbitalTag) {
+        //     eprintln!("Failed to register Orbital tag: {e}");
+        // }
+        // if let Err(e) = registry.register(crate::skip_tags::utility_tags::JuggleTag) {
+        //     eprintln!("Failed to register Juggle tag: {e}");
+        // }
 
         registry
     })

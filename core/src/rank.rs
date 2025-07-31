@@ -28,10 +28,22 @@ pub enum HandRank {
 }
 
 impl HandRank {
-    /// Get base level information for this hand type (level 1 values)
-    #[allow(dead_code)] // Temporary allowance for merge compatibility
-    pub(crate) fn base_level(&self) -> Level {
-        self.level() // Delegate to existing method for base values
+    /// Get level information for this hand type at a specific level.
+    ///
+    /// # Arguments
+    /// * `level` - The level of the hand type (1 = base level)
+    ///
+    /// # Returns
+    /// Level information with chips and mult adjusted for the given level
+    pub(crate) fn level_at(&self, level: u32) -> Level {
+        let base = self.level();
+        let level_bonus = (level.saturating_sub(1)) as usize;
+
+        Level {
+            level: level as usize,
+            chips: base.chips + (level_bonus * 5), // +5 chips per level
+            mult: base.mult + level_bonus,         // +1 mult per level
+        }
     }
 
     pub(crate) fn level(&self) -> Level {
