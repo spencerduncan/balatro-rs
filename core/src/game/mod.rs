@@ -206,6 +206,9 @@ pub struct Game {
 
     // hand type tracking for this game run
     pub hand_type_counts: HashMap<HandRank, u32>,
+    
+    // hand type levels (planet card system)
+    pub hand_type_levels: HashMap<HandRank, u32>,
 
     // Card enhancement tracking for this game run
     /// Count of Stone cards currently in deck (cached for performance)
@@ -347,6 +350,7 @@ impl Game {
             mult: config.base_mult as f64,
             score: config.base_score as f64,
             hand_type_counts: HashMap::new(),
+            hand_type_levels: HashMap::new(),
 
             // Initialize enhancement tracking (will be calculated after deck is set up)
             stone_cards_in_deck: 0,
@@ -525,6 +529,37 @@ impl Game {
     /// * `hand_rank` - The hand rank to increment
     pub fn increment_hand_type_count(&mut self, hand_rank: HandRank) {
         *self.hand_type_counts.entry(hand_rank).or_insert(0) += 1;
+    }
+
+    /// Returns the current level of a specific hand type (planet card system).
+    ///
+    /// # Arguments
+    /// * `hand_rank` - The hand rank to check the level for
+    ///
+    /// # Returns
+    /// The current level of this hand type (1 if never leveled up)
+    pub fn get_hand_level(&self, hand_rank: HandRank) -> u32 {
+        self.hand_type_levels.get(&hand_rank).copied().unwrap_or(1)
+    }
+
+    /// Levels up a specific hand type (planet card effect).
+    ///
+    /// # Arguments
+    /// * `hand_rank` - The hand rank to level up
+    ///
+    /// # Returns
+    /// Result indicating success or failure
+    pub fn level_up_hand(&mut self, hand_rank: HandRank) -> Result<(), GameError> {
+        let current_level = self.get_hand_level(hand_rank);
+        let new_level = current_level + 1;
+        
+        // Prevent integer overflow and set reasonable maximum level
+        if new_level > 100 {
+            return Err(GameError::InvalidAction("Hand level would exceed maximum".to_string()));
+        }
+        
+        self.hand_type_levels.insert(hand_rank, new_level);
+        Ok(())
     }
 
     fn clear_blind(&mut self) {
@@ -1931,6 +1966,13 @@ impl Game {
                 Err(GameError::InvalidAction)
             }
 
+            // Planet card actions  
+            Action::UsePlanetCard { consumable_id: _, slot: _ } => {
+                // TODO: Implement planet card usage with proper target selection
+                // For now, return InvalidAction to prevent crashes
+                Err(GameError::InvalidAction)
+            }
+
             // Skip tag system actions
             Action::SkipBlind(blind) => self.handle_skip_blind(blind),
             Action::SelectSkipTag(tag_id) => self.handle_select_skip_tag(tag_id),
@@ -2188,6 +2230,7 @@ impl Game {
         self.ante_current = self.ante_start;
         self.stage = Stage::PreBlind();
         self.hand_type_counts.clear();
+        self.hand_type_levels.clear();
         self.action_history.clear();
         self.discarded.clear();
 
@@ -2268,6 +2311,7 @@ struct SaveableGameState {
     pub mult: f64,
     pub score: f64,
     pub hand_type_counts: HashMap<HandRank, u32>,
+    pub hand_type_levels: HashMap<HandRank, u32>,
     // Extended state fields
     pub consumables_in_hand: Vec<ConsumableId>,
     pub vouchers: VoucherCollection,
@@ -2342,6 +2386,7 @@ impl Game {
             mult: self.mult,
             score: self.score,
             hand_type_counts: self.hand_type_counts.clone(),
+            hand_type_levels: self.hand_type_levels.clone(),
             // Extended state fields
             consumables_in_hand: self.consumables_in_hand.clone(),
             vouchers: self.vouchers.clone(),
@@ -2401,6 +2446,7 @@ impl Game {
             mult: saveable_state.mult,
             score: saveable_state.score,
             hand_type_counts: saveable_state.hand_type_counts,
+            hand_type_levels: saveable_state.hand_type_levels,
 
             // Enhancement tracking (will be calculated after loading)
             stone_cards_in_deck: 0,
