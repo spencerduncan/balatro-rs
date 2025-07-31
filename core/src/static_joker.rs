@@ -328,6 +328,7 @@ struct StaticJokerConfig {
     chips_bonus: Option<i32>,
     mult_bonus: Option<i32>,
     mult_multiplier: Option<f64>,
+    money_bonus: Option<i32>,
 }
 
 impl StaticJokerConfig {
@@ -335,11 +336,13 @@ impl StaticJokerConfig {
         chips_bonus: Option<i32>,
         mult_bonus: Option<i32>,
         mult_multiplier: Option<f64>,
+        money_bonus: Option<i32>,
     ) -> Self {
         Self {
             chips_bonus,
             mult_bonus,
             mult_multiplier,
+            money_bonus,
         }
     }
 
@@ -357,6 +360,10 @@ impl StaticJokerConfig {
 
         if let Some(multiplier) = self.mult_multiplier {
             effect = effect.with_mult_multiplier(multiplier);
+        }
+
+        if let Some(money) = self.money_bonus {
+            effect = effect.with_money(money);
         }
 
         effect
@@ -627,6 +634,133 @@ impl ConditionEvaluator for DiscardCountEvaluator {
     }
 }
 
+/// Rank held in hand condition evaluator (for Baron-style jokers)
+struct RankHeldInHandEvaluator {
+    target_value: Value,
+}
+
+impl RankHeldInHandEvaluator {
+    fn new(value: Value) -> Self {
+        Self {
+            target_value: value,
+        }
+    }
+}
+
+impl ConditionEvaluator for RankHeldInHandEvaluator {
+    fn check_card(&self, _card: &Card) -> bool {
+        // This condition doesn't apply to individual cards
+        false
+    }
+
+    fn check_hand(&self, _hand: &SelectHand) -> bool {
+        true // Always applies, but effect is calculated dynamically based on count
+    }
+
+    fn calculate_effect(
+        &self,
+        context: &GameContext,
+        base_config: &StaticJokerConfig,
+    ) -> JokerEffect {
+        // Count how many cards of target value are held in hand
+        let count = context
+            .hand
+            .cards()
+            .iter()
+            .filter(|card| card.value == self.target_value)
+            .count() as i32;
+
+        let mut effect = JokerEffect::new();
+
+        if let Some(chips_base) = base_config.chips_bonus {
+            let chips_bonus = chips_base * count;
+            effect = effect.with_chips(chips_bonus);
+        }
+
+        if let Some(mult_base) = base_config.mult_bonus {
+            let mult_bonus = mult_base * count;
+            effect = effect.with_mult(mult_bonus);
+        }
+
+        if let Some(multiplier_base) = base_config.mult_multiplier {
+            // For multiplicative effects like Baron: 1.5^count
+            let multiplier = multiplier_base.powi(count);
+            effect = effect.with_mult_multiplier(multiplier);
+        }
+
+        effect
+    }
+}
+
+/// Lowest rank in hand condition evaluator (for Raised Fist-style jokers)
+struct LowestRankInHandEvaluator;
+
+impl ConditionEvaluator for LowestRankInHandEvaluator {
+    fn check_card(&self, _card: &Card) -> bool {
+        // This condition doesn't apply to individual cards
+        false
+    }
+
+    fn check_hand(&self, _hand: &SelectHand) -> bool {
+        true // Always applies, but effect is calculated dynamically based on lowest rank
+    }
+
+    fn calculate_effect(
+        &self,
+        context: &GameContext,
+        base_config: &StaticJokerConfig,
+    ) -> JokerEffect {
+        // Find the lowest ranked card in hand
+        let lowest_rank_value = context
+            .hand
+            .cards()
+            .iter()
+            .map(|card| Self::rank_value(card.value))
+            .min()
+            .unwrap_or(0);
+
+        let mut effect = JokerEffect::new();
+
+        if let Some(chips_base) = base_config.chips_bonus {
+            let chips_bonus = chips_base * lowest_rank_value;
+            effect = effect.with_chips(chips_bonus);
+        }
+
+        if let Some(mult_base) = base_config.mult_bonus {
+            let mult_bonus = mult_base * lowest_rank_value;
+            effect = effect.with_mult(mult_bonus);
+        }
+
+        if let Some(multiplier) = base_config.mult_multiplier {
+            effect = effect.with_mult_multiplier(multiplier);
+        }
+
+        effect
+    }
+}
+
+impl LowestRankInHandEvaluator {
+    /// Convert card value to numeric rank for comparison
+    /// Ace = 1, Two = 2, ..., Ten = 10, Jack = 11, Queen = 12, King = 13
+    fn rank_value(value: Value) -> i32 {
+        match value {
+            Value::Ace => 1,
+            Value::Two => 2,
+            Value::Three => 3,
+            Value::Four => 4,
+            Value::Five => 5,
+            Value::Six => 6,
+            Value::Seven => 7,
+            Value::Eight => 8,
+            Value::Nine => 9,
+            Value::Ten => 10,
+            Value::Jack => 11,
+            Value::Queen => 12,
+            Value::King => 13,
+        }
+    }
+}
+
 /// Factory for creating condition evaluators based on StaticCondition
 impl StaticCondition {
     /// Create the appropriate evaluator for this condition
@@ -644,6 +778,10 @@ impl StaticCondition {
                 Box::new(HandSizeAtMostEvaluator::new(*max_size))
             }
             StaticCondition::DiscardCount => Box::new(DiscardCountEvaluator),
+            StaticCondition::RankHeldInHand(value) => {
+                Box::new(RankHeldInHandEvaluator::new(*value))
+            }
+            StaticCondition::LowestRankInHand => Box::new(LowestRankInHandEvaluator),
         }
     }
 }
@@ -668,6 +806,12 @@ pub enum StaticCondition {
     HandSizeAtMost(usize),
     /// Apply based on remaining discards (multiplies bonus by remaining discard count)
     DiscardCount,
+    /// Apply based on specific rank held in hand (multiplies effect by count)
+    /// Used for jokers like Baron (Kings in hand)
+    RankHeldInHand(Value),
+    /// Apply with calculation based on lowest ranked card held in hand
+    /// Used for jokers like Raised Fist
+    LowestRankInHand,
 }
 
 /// A framework-based static joker that provides consistent bonuses based on conditions.
@@ -693,6 +837,8 @@ pub struct FrameworkStaticJoker {
     pub mult_bonus: Option<i32>,
     /// Multiplier to apply to mult
     pub mult_multiplier: Option<f64>,
+    /// Money bonus to add
+    pub money_bonus: Option<i32>,
     /// Condition for when to apply the effect
     pub condition: StaticCondition,
     /// Whether the effect applies per card or per hand
@@ -715,6 +861,7 @@ impl FrameworkStaticJoker {
             chips_bonus: None,
             mult_bonus: None,
             mult_multiplier: None,
+            money_bonus: None,
             condition: StaticCondition::Always,
             per_card: false,
         }
@@ -790,8 +937,12 @@ impl FrameworkStaticJoker {
     /// Create the effect based on configured bonuses using strategy pattern
     fn create_effect_with_context(&self, context: &GameContext) -> JokerEffect {
         let evaluator = self.condition.create_evaluator();
-        let config =
-            StaticJokerConfig::new(self.chips_bonus, self.mult_bonus, self.mult_multiplier);
+        let config = StaticJokerConfig::new(
+            self.chips_bonus,
+            self.mult_bonus,
+            self.mult_multiplier,
+            self.money_bonus,
+        );
         evaluator.calculate_effect(context, &config)
     }
 }
@@ -806,6 +957,7 @@ pub struct StaticJokerBuilder {
     chips_bonus: Option<i32>,
     mult_bonus: Option<i32>,
     mult_multiplier: Option<f64>,
+    money_bonus: Option<i32>,
     condition: StaticCondition,
     per_card: bool,
 }
@@ -833,6 +985,11 @@ impl StaticJokerBuilder {
 
     pub fn mult_multiplier(mut self, multiplier: f64) -> Self {
         self.mult_multiplier = Some(multiplier);
+        self
+    }
+
+    pub fn money(mut self, money: i32) -> Self {
+        self.money_bonus = Some(money);
         self
     }
 
@@ -865,6 +1022,16 @@ impl StaticJokerBuilder {
             (StaticCondition::DiscardCount, true) => {
                 return Err("DiscardCount conditions should be per_hand, not per_card".to_string());
             }
+            (StaticCondition::RankHeldInHand(_), true) => {
+                return Err(
+                    "RankHeldInHand conditions should be per_hand, not per_card".to_string()
+                );
+            }
+            (StaticCondition::LowestRankInHand, true) => {
+                return Err(
+                    "LowestRankInHand conditions should be per_hand, not per_card".to_string(),
+                );
+            }
             (StaticCondition::SuitScored(_), false) => {
                 return Err("SuitScored conditions should be per_card, not per_hand".to_string());
             }
@@ -881,10 +1048,13 @@ impl StaticJokerBuilder {
         }
 
         // Validate that at least one bonus is specified
-        if self.chips_bonus.is_none() && self.mult_bonus.is_none() && self.mult_multiplier.is_none()
+        if self.chips_bonus.is_none()
+            && self.mult_bonus.is_none()
+            && self.mult_multiplier.is_none()
+            && self.money_bonus.is_none()
         {
             return Err(
-                "At least one bonus (chips, mult, or mult_multiplier) must be specified"
+                "At least one bonus (chips, mult, mult_multiplier, or money) must be specified"
                     .to_string(),
             );
         }
@@ -898,6 +1068,7 @@ impl StaticJokerBuilder {
             chips_bonus: self.chips_bonus,
             mult_bonus: self.mult_bonus,
             mult_multiplier: self.mult_multiplier,
+            money_bonus: self.money_bonus,
             condition: self.condition,
             per_card: self.per_card,
         })

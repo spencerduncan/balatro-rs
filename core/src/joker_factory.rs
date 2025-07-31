@@ -59,6 +59,12 @@ impl JokerFactory {
             }
             JokerId::Walkie => Some(StaticJokerFactory::create_walkie()),
 
+            // Simple Static Jokers (Issue #364)
+            JokerId::Smiley => Some(StaticJokerFactory::create_smiley_face()),
+            JokerId::BaronJoker => Some(StaticJokerFactory::create_baron()),
+            JokerId::RaisedFist => Some(StaticJokerFactory::create_raised_fist()),
+            JokerId::RoughGem => Some(StaticJokerFactory::create_rough_gem()),
+
             // Placeholder jokers with TODO comments
             JokerId::HalfJoker => Some(StaticJokerFactory::create_half_joker()),
             JokerId::Banner => Some(StaticJokerFactory::create_banner()),
