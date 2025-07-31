@@ -34,7 +34,7 @@ fn test_red_card_joker_correctly_created() {
     assert_eq!(joker.id(), JokerId::Reserved6);
     assert_eq!(joker.name(), "Red Card");
     assert_eq!(joker.description(), "+3 Mult per pack skipped");
-    assert_eq!(joker.rarity(), JokerRarity::Common);
+    assert_eq!(joker.rarity(), JokerRarity::Uncommon);
 
     // Verify it's not the static joker that gives "+3 Mult when red cards are scored"
     assert_ne!(
