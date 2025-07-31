@@ -1159,7 +1159,7 @@ mod tests {
     fn test_acrobat_joker_correct_final_hand_behavior() {
         // This test demonstrates the correct behavior with proper final hand detection
         let acrobat = AcrobatJokerImpl;
-        
+
         use crate::hand::{Hand, SelectHand};
         use crate::joker_state::JokerStateManager;
         use crate::stage::{Blind, Stage};
@@ -1185,6 +1185,7 @@ mod tests {
             stage: &stage,
             hands_played: 2, // 3rd hand
             discards_used: 0,
+            hands_remaining: 1.0,
             is_final_hand: true, // This IS the final hand
             jokers: &jokers,
             hand: &hand,
@@ -1198,12 +1199,16 @@ mod tests {
         };
 
         let effect_3rd_final = acrobat.on_hand_played(&mut context_3rd_final, &select_hand);
-        
+
         // Correctly triggers on final hand regardless of hand number
         assert_eq!(effect_3rd_final.mult_multiplier, 3.0);
-        assert!(effect_3rd_final.message.as_ref().unwrap().contains("Acrobat final hand bonus"));
+        assert!(effect_3rd_final
+            .message
+            .as_ref()
+            .unwrap()
+            .contains("Acrobat final hand bonus"));
 
-        // Test case 2: 6th hand but marked as final - should trigger  
+        // Test case 2: 6th hand but marked as final - should trigger
         let mut context_6th_final = crate::joker::GameContext {
             chips: 0,
             mult: 0,
@@ -1213,6 +1218,7 @@ mod tests {
             stage: &stage,
             hands_played: 5, // 6th hand
             discards_used: 0,
+            hands_remaining: 1.0,
             is_final_hand: true, // This IS the final hand
             jokers: &jokers,
             hand: &hand,
@@ -1226,10 +1232,14 @@ mod tests {
         };
 
         let effect_6th_final = acrobat.on_hand_played(&mut context_6th_final, &select_hand);
-        
+
         // Correctly triggers on final hand even if it's the 6th hand
         assert_eq!(effect_6th_final.mult_multiplier, 3.0);
-        assert!(effect_6th_final.message.as_ref().unwrap().contains("Acrobat final hand bonus"));
+        assert!(effect_6th_final
+            .message
+            .as_ref()
+            .unwrap()
+            .contains("Acrobat final hand bonus"));
 
         // Test case 3: 1st hand marked as final - should trigger (edge case)
         let mut context_1st_final = crate::joker::GameContext {
@@ -1241,6 +1251,7 @@ mod tests {
             stage: &stage,
             hands_played: 0, // 1st hand
             discards_used: 0,
+            hands_remaining: 1.0,
             is_final_hand: true, // Unusual but possible - only one hand available
             jokers: &jokers,
             hand: &hand,
@@ -1254,10 +1265,14 @@ mod tests {
         };
 
         let effect_1st_final = acrobat.on_hand_played(&mut context_1st_final, &select_hand);
-        
+
         // Correctly triggers even on 1st hand if it's marked as final
         assert_eq!(effect_1st_final.mult_multiplier, 3.0);
-        assert!(effect_1st_final.message.as_ref().unwrap().contains("Acrobat final hand bonus"));
+        assert!(effect_1st_final
+            .message
+            .as_ref()
+            .unwrap()
+            .contains("Acrobat final hand bonus"));
     }
 
     #[test]
@@ -1795,7 +1810,5 @@ mod tests {
         assert_eq!(effect.mult, 0);
         assert_eq!(effect.chips, 0);
         assert_eq!(effect.money, 0);
-=======
->>>>>>> e6e81ef (Complete merge conflict resolution for Acrobat joker detection)
     }
 }
