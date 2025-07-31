@@ -26,15 +26,15 @@
 //! - **Observability**: Comprehensive metrics and tracing
 //! - **Performance**: Sub-10ms latency targets for all operations
 
-pub mod container;
 pub mod config;
+pub mod container;
 pub mod errors;
 pub mod services;
 pub mod use_cases;
 
 // Re-export key types for easier consumption
-pub use container::ServiceContainer;
 pub use config::ApplicationConfig;
+pub use container::ServiceContainer;
 pub use errors::{ApplicationError, ErrorRecoveryStrategy};
 pub use services::{GameApplicationService, SessionManagementService};
 pub use use_cases::{CreateGameSessionUseCase, ExecuteGameActionUseCase};

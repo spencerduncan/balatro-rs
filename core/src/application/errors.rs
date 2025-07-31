@@ -41,16 +41,11 @@ pub enum ApplicationError {
 
     /// Concurrent session limit exceeded - backpressure protection
     #[error("Concurrent session limit exceeded: {current}/{limit} (consider horizontal scaling)")]
-    SessionLimitExceeded {
-        current: usize,
-        limit: usize,
-    },
+    SessionLimitExceeded { current: usize, limit: usize },
 
     /// Session already exists - prevents duplicate creation
     #[error("Session already exists: {session_id} (use existing or delete first)")]
-    SessionAlreadyExists {
-        session_id: String,
-    },
+    SessionAlreadyExists { session_id: String },
 
     /// Infrastructure layer errors - external system failures
     #[error("Infrastructure error: {component} - {message}")]
@@ -72,10 +67,7 @@ pub enum ApplicationError {
 
     /// Configuration errors - deployment/startup issues
     #[error("Configuration error: {parameter} - {message}")]
-    Configuration {
-        parameter: String,
-        message: String,
-    },
+    Configuration { parameter: String, message: String },
 
     /// Timeout errors - SLA violations
     #[error("Operation timeout: {operation} exceeded {timeout:?} (consider increasing limits)")]
@@ -86,17 +78,11 @@ pub enum ApplicationError {
 
     /// Resource exhaustion - capacity planning indicators
     #[error("Resource exhausted: {resource} at {utilization}% (scale up required)")]
-    ResourceExhausted {
-        resource: String,
-        utilization: u8,
-    },
+    ResourceExhausted { resource: String, utilization: u8 },
 
     /// Concurrent access conflicts - consistency violations
     #[error("Concurrent access conflict: {resource} - {message}")]
-    ConcurrentAccess {
-        resource: String,
-        message: String,
-    },
+    ConcurrentAccess { resource: String, message: String },
 
     /// Service unavailable - dependency failures
     #[error("Service unavailable: {service} - {reason}")]
@@ -111,7 +97,7 @@ impl ApplicationError {
     /// Create a domain error from any domain layer error
     pub fn domain<E>(error: E) -> Self
     where
-        E: std::error::Error + Send + Sync + 'static
+        E: std::error::Error + Send + Sync + 'static,
     {
         Self::Domain {
             message: error.to_string(),
@@ -122,7 +108,7 @@ impl ApplicationError {
     /// Create an infrastructure error with retry information
     pub fn infrastructure<E>(component: &str, retryable: bool, error: E) -> Self
     where
-        E: std::error::Error + Send + Sync + 'static
+        E: std::error::Error + Send + Sync + 'static,
     {
         Self::Infrastructure {
             component: component.to_string(),
@@ -154,7 +140,13 @@ impl ApplicationError {
 
     /// Check if this error should trigger an alert
     pub fn is_alertable(&self) -> bool {
-        matches!(self, Self::SessionLimitExceeded { .. } | Self::ResourceExhausted { .. } | Self::ServiceUnavailable { .. } | Self::Configuration { .. })
+        matches!(
+            self,
+            Self::SessionLimitExceeded { .. }
+                | Self::ResourceExhausted { .. }
+                | Self::ServiceUnavailable { .. }
+                | Self::Configuration { .. }
+        )
     }
 
     /// Get the recommended retry delay for retryable errors
@@ -246,10 +238,10 @@ impl ExponentialBackoffRecovery {
     /// Create a default production-ready exponential backoff strategy
     pub fn production_default() -> Self {
         Self::new(
-            3,                                  // 3 attempts max
-            Duration::from_millis(100),         // 100ms initial delay
-            Duration::from_secs(30),            // 30s max delay
-            0.1,                                // 10% jitter
+            3,                          // 3 attempts max
+            Duration::from_millis(100), // 100ms initial delay
+            Duration::from_secs(30),    // 30s max delay
+            0.1,                        // 10% jitter
         )
     }
 }
@@ -299,9 +291,9 @@ impl CircuitBreakerRecovery {
     /// Create a default production-ready circuit breaker strategy
     pub fn production_default() -> Self {
         Self::new(
-            0.5,                              // 50% failure threshold
-            Duration::from_secs(30),          // 30s recovery timeout
-            10,                               // 10 min requests before opening
+            0.5,                     // 50% failure threshold
+            Duration::from_secs(30), // 30s recovery timeout
+            10,                      // 10 min requests before opening
         )
     }
 }
@@ -359,7 +351,9 @@ impl CompositeRecoveryStrategy {
 
 impl ErrorRecoveryStrategy for CompositeRecoveryStrategy {
     fn can_recover(&self, error: &ApplicationError) -> bool {
-        self.strategies.iter().any(|strategy| strategy.can_recover(error))
+        self.strategies
+            .iter()
+            .any(|strategy| strategy.can_recover(error))
     }
 
     fn recover(&self, error: &ApplicationError) -> Result<(), ApplicationError> {
@@ -379,11 +373,19 @@ impl ErrorRecoveryStrategy for CompositeRecoveryStrategy {
     }
 
     fn max_attempts(&self) -> usize {
-        self.strategies.iter().map(|s| s.max_attempts()).max().unwrap_or(1)
+        self.strategies
+            .iter()
+            .map(|s| s.max_attempts())
+            .max()
+            .unwrap_or(1)
     }
 
     fn recovery_delay(&self) -> Duration {
-        self.strategies.iter().map(|s| s.recovery_delay()).min().unwrap_or(Duration::from_millis(100))
+        self.strategies
+            .iter()
+            .map(|s| s.recovery_delay())
+            .min()
+            .unwrap_or(Duration::from_millis(100))
     }
 }
 
@@ -414,8 +416,12 @@ mod tests {
         assert!(matches!(domain_error, ApplicationError::Domain { .. }));
         assert_eq!(domain_error.category(), "domain");
 
-        let infra_error = ApplicationError::infrastructure("test-service", true, io::Error::other("test"));
-        assert!(matches!(infra_error, ApplicationError::Infrastructure { .. }));
+        let infra_error =
+            ApplicationError::infrastructure("test-service", true, io::Error::other("test"));
+        assert!(matches!(
+            infra_error,
+            ApplicationError::Infrastructure { .. }
+        ));
         assert!(infra_error.is_retryable());
         assert_eq!(infra_error.category(), "infrastructure");
     }

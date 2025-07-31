@@ -3,13 +3,11 @@
 //! Encapsulates the complete workflow for executing a game action,
 //! including validation, state updates, and result processing.
 
-use crate::application::{
-    config::SessionId,
-    errors::ApplicationError,
-    services::GameApplicationService,
-    container::ActionResult,
-};
 use crate::action::Action;
+use crate::application::{
+    config::SessionId, container::ActionResult, errors::ApplicationError,
+    services::GameApplicationService,
+};
 use std::sync::Arc;
 
 /// Request for executing a game action
@@ -48,10 +46,16 @@ impl ExecuteGameActionUseCase {
     /// # Returns
     /// * `Ok(ExecuteActionResponse)` - Successful action execution
     /// * `Err(ApplicationError)` - Execution failure
-    pub async fn execute(&self, request: ExecuteActionRequest) -> Result<ExecuteActionResponse, ApplicationError> {
+    pub async fn execute(
+        &self,
+        request: ExecuteActionRequest,
+    ) -> Result<ExecuteActionResponse, ApplicationError> {
         // Delegate to game application service
-        let result = self.game_service.execute_action(&request.session_id, request.action).await?;
-        
+        let result = self
+            .game_service
+            .execute_action(&request.session_id, request.action)
+            .await?;
+
         Ok(ExecuteActionResponse {
             result,
             executed: true,

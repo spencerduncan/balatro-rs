@@ -14,15 +14,15 @@
 //! - Liskov Substitution: Implementations are safely interchangeable
 
 use crate::action::Action;
-use crate::game::Game;
 use crate::application::{
-    config::{SessionId, GameConfig, ApplicationConfig},
+    config::{ApplicationConfig, GameConfig, SessionId},
     errors::ApplicationError,
 };
+use crate::game::Game;
+use async_trait::async_trait;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use async_trait::async_trait;
 
 /// Action validation trait for business rule enforcement
 ///
@@ -46,7 +46,11 @@ pub trait ActionValidator: Send + Sync {
     ///
     /// Useful for optimizing action space generation and reducing
     /// validation overhead in high-throughput scenarios.
-    async fn validate_actions(&self, actions: &[Action], game: &Game) -> Result<Vec<bool>, ApplicationError> {
+    async fn validate_actions(
+        &self,
+        actions: &[Action],
+        game: &Game,
+    ) -> Result<Vec<bool>, ApplicationError> {
         let mut results = Vec::with_capacity(actions.len());
         for action in actions {
             results.push(self.validate_action(action, game).await.is_ok());
@@ -122,12 +126,19 @@ pub trait StateNotifier: Send + Sync {
     /// # Arguments
     /// * `session_id` - Session that changed
     /// * `event` - Type of state change that occurred
-    async fn notify_state_change(&self, session_id: &SessionId, event: StateChangeEvent) -> Result<(), ApplicationError>;
+    async fn notify_state_change(
+        &self,
+        session_id: &SessionId,
+        event: StateChangeEvent,
+    ) -> Result<(), ApplicationError>;
 
     /// Register a callback for state change events
     ///
     /// Enables pub/sub patterns for reactive architectures.
-    async fn register_callback(&self, callback: Arc<dyn StateChangeCallback>) -> Result<(), ApplicationError>;
+    async fn register_callback(
+        &self,
+        callback: Arc<dyn StateChangeCallback>,
+    ) -> Result<(), ApplicationError>;
 
     /// Get notification system health
     async fn health_check(&self) -> Result<NotificationHealth, ApplicationError>;
@@ -136,10 +147,19 @@ pub trait StateNotifier: Send + Sync {
 /// Types of state change events for notification
 #[derive(Debug, Clone)]
 pub enum StateChangeEvent {
-    SessionCreated { config: GameConfig },
-    ActionExecuted { action: Action, result: ActionResult },
-    SessionEnded { reason: String },
-    ErrorOccurred { error: String },
+    SessionCreated {
+        config: GameConfig,
+    },
+    ActionExecuted {
+        action: Action,
+        result: ActionResult,
+    },
+    SessionEnded {
+        reason: String,
+    },
+    ErrorOccurred {
+        error: String,
+    },
 }
 
 /// Result of action execution for notifications
@@ -154,7 +174,11 @@ pub struct ActionResult {
 /// Callback trait for state change notifications
 #[async_trait]
 pub trait StateChangeCallback: Send + Sync {
-    async fn on_state_change(&self, session_id: &SessionId, event: StateChangeEvent) -> Result<(), ApplicationError>;
+    async fn on_state_change(
+        &self,
+        session_id: &SessionId,
+        event: StateChangeEvent,
+    ) -> Result<(), ApplicationError>;
 }
 
 /// Notification system health information
@@ -299,20 +323,28 @@ impl ServiceContainer {
     pub async fn health_check(&self) -> ContainerHealth {
         let start_time = Instant::now();
 
-        let storage_health = self.repository.health_check().await.unwrap_or(StorageHealth {
-            is_healthy: false,
-            latency_ms: 0,
-            storage_size_mb: 0,
-            active_connections: 0,
-            error_rate: 1.0,
-        });
+        let storage_health = self
+            .repository
+            .health_check()
+            .await
+            .unwrap_or(StorageHealth {
+                is_healthy: false,
+                latency_ms: 0,
+                storage_size_mb: 0,
+                active_connections: 0,
+                error_rate: 1.0,
+            });
 
-        let notification_health = self.notifier.health_check().await.unwrap_or(NotificationHealth {
-            is_healthy: false,
-            active_subscriptions: 0,
-            message_queue_depth: 0,
-            error_rate: 1.0,
-        });
+        let notification_health =
+            self.notifier
+                .health_check()
+                .await
+                .unwrap_or(NotificationHealth {
+                    is_healthy: false,
+                    active_subscriptions: 0,
+                    message_queue_depth: 0,
+                    error_rate: 1.0,
+                });
 
         let metrics_health = self.metrics.health_check().await.unwrap_or(MetricsHealth {
             is_healthy: false,
@@ -324,7 +356,9 @@ impl ServiceContainer {
         let health_check_duration = start_time.elapsed();
 
         ContainerHealth {
-            is_healthy: storage_health.is_healthy && notification_health.is_healthy && metrics_health.is_healthy,
+            is_healthy: storage_health.is_healthy
+                && notification_health.is_healthy
+                && metrics_health.is_healthy,
             health_check_duration_ms: health_check_duration.as_millis() as u64,
             storage: storage_health,
             notifications: notification_health,
@@ -403,37 +437,39 @@ impl ServiceContainerBuilder {
     /// * `Ok(ServiceContainer)` if all dependencies are provided
     /// * `Err(ApplicationError)` if any required dependency is missing
     pub fn build(self) -> Result<ServiceContainer, ApplicationError> {
-        let validator = self.validator.ok_or_else(|| {
-            ApplicationError::Configuration {
+        let validator = self
+            .validator
+            .ok_or_else(|| ApplicationError::Configuration {
                 parameter: "validator".to_string(),
                 message: "ActionValidator implementation required".to_string(),
-            }
-        })?;
+            })?;
 
-        let repository = self.repository.ok_or_else(|| {
-            ApplicationError::Configuration {
+        let repository = self
+            .repository
+            .ok_or_else(|| ApplicationError::Configuration {
                 parameter: "repository".to_string(),
                 message: "GameRepository implementation required".to_string(),
-            }
-        })?;
+            })?;
 
-        let notifier = self.notifier.ok_or_else(|| {
-            ApplicationError::Configuration {
+        let notifier = self
+            .notifier
+            .ok_or_else(|| ApplicationError::Configuration {
                 parameter: "notifier".to_string(),
                 message: "StateNotifier implementation required".to_string(),
-            }
-        })?;
+            })?;
 
-        let metrics = self.metrics.ok_or_else(|| {
-            ApplicationError::Configuration {
+        let metrics = self
+            .metrics
+            .ok_or_else(|| ApplicationError::Configuration {
                 parameter: "metrics".to_string(),
                 message: "MetricsCollector implementation required".to_string(),
-            }
-        })?;
+            })?;
 
         let config = self.config.unwrap_or_default();
 
-        Ok(ServiceContainer::new(validator, repository, notifier, metrics, config))
+        Ok(ServiceContainer::new(
+            validator, repository, notifier, metrics, config,
+        ))
     }
 }
 
@@ -453,7 +489,11 @@ mod tests {
 
     #[async_trait]
     impl ActionValidator for MockActionValidator {
-        async fn validate_action(&self, _action: &Action, _game: &Game) -> Result<(), ApplicationError> {
+        async fn validate_action(
+            &self,
+            _action: &Action,
+            _game: &Game,
+        ) -> Result<(), ApplicationError> {
             Ok(())
         }
 
@@ -466,7 +506,11 @@ mod tests {
 
     #[async_trait]
     impl GameRepository for MockGameRepository {
-        async fn save_game(&self, _session_id: &SessionId, _game: &Game) -> Result<(), ApplicationError> {
+        async fn save_game(
+            &self,
+            _session_id: &SessionId,
+            _game: &Game,
+        ) -> Result<(), ApplicationError> {
             Ok(())
         }
 
@@ -497,11 +541,18 @@ mod tests {
 
     #[async_trait]
     impl StateNotifier for MockStateNotifier {
-        async fn notify_state_change(&self, _session_id: &SessionId, _event: StateChangeEvent) -> Result<(), ApplicationError> {
+        async fn notify_state_change(
+            &self,
+            _session_id: &SessionId,
+            _event: StateChangeEvent,
+        ) -> Result<(), ApplicationError> {
             Ok(())
         }
 
-        async fn register_callback(&self, _callback: Arc<dyn StateChangeCallback>) -> Result<(), ApplicationError> {
+        async fn register_callback(
+            &self,
+            _callback: Arc<dyn StateChangeCallback>,
+        ) -> Result<(), ApplicationError> {
             Ok(())
         }
 

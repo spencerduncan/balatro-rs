@@ -4,10 +4,10 @@
 //! and runtime parameters for the application layer. Designed for production
 //! scalability with proper resource limits and monitoring.
 
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::{Duration, SystemTime};
 use uuid::Uuid;
-use serde::{Deserialize, Serialize};
 
 /// Unique identifier for game sessions
 ///
@@ -165,11 +165,11 @@ pub struct GameLimits {
 impl Default for GameLimits {
     fn default() -> Self {
         Self {
-            max_actions: 10_000,                    // ~1000 rounds max
-            max_duration: Duration::from_hours(2),  // 2 hour max session
-            max_memory_mb: 50,                      // 50MB memory limit
-            max_jokers: 25,                         // Balatro's natural limit
-            max_deck_size: 200,                     // Reasonable deck limit
+            max_actions: 10_000,                                    // ~1000 rounds max
+            max_duration: <Duration as DurationExt>::from_hours(2), // 2 hour max session
+            max_memory_mb: 50,                                      // 50MB memory limit
+            max_jokers: 25,                                         // Balatro's natural limit
+            max_deck_size: 200,                                     // Reasonable deck limit
         }
     }
 }
@@ -314,7 +314,6 @@ pub struct ApplicationConfig {
     pub features: ApplicationFeatures,
 }
 
-
 /// Session management configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SessionConfig {
@@ -334,9 +333,9 @@ pub struct SessionConfig {
 impl Default for SessionConfig {
     fn default() -> Self {
         Self {
-            ttl: Duration::from_hours(1),           // 1 hour TTL
-            cleanup_interval: Duration::from_mins(5), // 5 minute cleanup
-            max_concurrent_sessions: 1000,          // 1000 concurrent sessions
+            ttl: <Duration as DurationExt>::from_hours(1), // 1 hour TTL
+            cleanup_interval: <Duration as DurationExt>::from_mins(5), // 5 minute cleanup
+            max_concurrent_sessions: 1000,                 // 1000 concurrent sessions
             cleanup_strategy: CleanupStrategy::LeastRecentlyUsed,
         }
     }
@@ -377,10 +376,10 @@ pub struct ApplicationLimits {
 impl Default for ApplicationLimits {
     fn default() -> Self {
         Self {
-            max_total_memory_mb: 2048,          // 2GB total memory limit
-            max_cpu_usage_percent: 80,          // 80% CPU threshold
-            max_requests_per_second: 1000,      // 1000 RPS limit
-            max_concurrent_operations: 500,     // 500 concurrent ops
+            max_total_memory_mb: 2048,      // 2GB total memory limit
+            max_cpu_usage_percent: 80,      // 80% CPU threshold
+            max_requests_per_second: 1000,  // 1000 RPS limit
+            max_concurrent_operations: 500, // 500 concurrent ops
         }
     }
 }
@@ -527,7 +526,13 @@ mod tests {
         let deserialized: ApplicationConfig = serde_json::from_str(&serialized).unwrap();
 
         // Compare some key fields
-        assert_eq!(config.session.max_concurrent_sessions, deserialized.session.max_concurrent_sessions);
-        assert_eq!(config.limits.max_requests_per_second, deserialized.limits.max_requests_per_second);
+        assert_eq!(
+            config.session.max_concurrent_sessions,
+            deserialized.session.max_concurrent_sessions
+        );
+        assert_eq!(
+            config.limits.max_requests_per_second,
+            deserialized.limits.max_requests_per_second
+        );
     }
 }
