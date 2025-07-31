@@ -453,7 +453,7 @@ mod integration_tests {
         for i in 0..jokers.len() {
             for j in 0..jokers.len() {
                 if i != j {
-                    jokers[i].on_joker_added(&format!("joker_{}", j));
+                    jokers[i].on_joker_added(&format!("joker_{j}"));
                 }
             }
         }

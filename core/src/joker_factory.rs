@@ -528,10 +528,6 @@ mod tests {
         assert!(uncommon_jokers.contains(&JokerId::Reserved)); // Throwback
         assert!(uncommon_jokers.contains(&JokerId::Ceremonial)); // Ceremonial Dagger
 
-        let common_jokers = JokerFactory::get_by_rarity(JokerRarity::Common);
-        // Fortune Teller moved to Common
-        assert!(common_jokers.contains(&JokerId::Fortune)); // Fortune Teller
-
         let rare_jokers = JokerFactory::get_by_rarity(JokerRarity::Rare);
         // Rare scaling jokers
         assert!(rare_jokers.contains(&JokerId::Fortune)); // Fortune Teller

@@ -2,7 +2,7 @@ use crate::joker::{JokerId, JokerRarity};
 use crate::rank::HandRank;
 use crate::scaling_joker::{ResetCondition, ScalingEffectType, ScalingJoker, ScalingTrigger};
 
-/// Factory functions for creating the 15 scaling jokers specified in the requirements
+/// Factory functions for creating scaling jokers specified in the requirements
 /// Spare Trousers: +2 mult per hand with Two Pair
 pub fn create_spare_trousers() -> ScalingJoker {
     ScalingJoker::new(
@@ -56,20 +56,6 @@ pub fn create_bootstraps() -> ScalingJoker {
         0.0,
         2.0,
         ScalingTrigger::MoneyGained, // Will need custom logic for $5 increments
-        ScalingEffectType::Mult,
-    )
-}
-
-/// Fortune Teller: +1 mult per Tarot used
-pub fn create_fortune_teller() -> ScalingJoker {
-    ScalingJoker::new(
-        JokerId::Fortune,
-        "Fortune Teller".to_string(),
-        "+1 Mult per Tarot card used".to_string(),
-        JokerRarity::Rare,
-        0.0,
-        1.0,
-        ScalingTrigger::ConsumableUsed,
         ScalingEffectType::Mult,
     )
 }
@@ -213,7 +199,6 @@ pub fn create_all_scaling_jokers() -> Vec<ScalingJoker> {
         create_square_joker(),
         create_bull_joker(),
         create_bootstraps(),
-        create_fortune_teller(),
         create_ceremonial_dagger(),
         create_throwback(),
         create_green_joker(),
@@ -233,7 +218,6 @@ pub fn get_scaling_joker_by_id(id: JokerId) -> Option<ScalingJoker> {
         JokerId::Square => Some(create_square_joker()),
         JokerId::BullMarket => Some(create_bull_joker()),
         JokerId::Bootstraps => Some(create_bootstraps()),
-        JokerId::Fortune => Some(create_fortune_teller()),
         JokerId::Ceremonial => Some(create_ceremonial_dagger()),
         JokerId::Reserved => Some(create_throwback()),
         JokerId::GreenJoker => Some(create_green_joker()),
@@ -254,7 +238,7 @@ mod tests {
     #[test]
     fn test_all_scaling_jokers_created() {
         let jokers = create_all_scaling_jokers();
-        assert_eq!(jokers.len(), 14, "Should create exactly 14 scaling jokers");
+        assert_eq!(jokers.len(), 13, "Should create exactly 13 scaling jokers");
 
         // Test that all jokers have unique IDs
         let mut ids = std::collections::HashSet::new();
