@@ -220,344 +220,345 @@
 <a href=#220 id=220 data-nosnippet>220</a>            stage: context.stage,
 <a href=#221 id=221 data-nosnippet>221</a>            hands_played: context.game_context.hands_played,
 <a href=#222 id=222 data-nosnippet>222</a>            hands_remaining: context.game_context.hands_remaining,
-<a href=#223 id=223 data-nosnippet>223</a>            discards_used: context.game_context.discards_used,
-<a href=#224 id=224 data-nosnippet>224</a>            jokers: context.game_context.jokers,
-<a href=#225 id=225 data-nosnippet>225</a>            hand: context.game_context.hand,
-<a href=#226 id=226 data-nosnippet>226</a>            discarded: context.game_context.discarded,
-<a href=#227 id=227 data-nosnippet>227</a>            joker_state_manager: context.game_context.joker_state_manager,
-<a href=#228 id=228 data-nosnippet>228</a>            hand_type_counts: context.game_context.hand_type_counts,
-<a href=#229 id=229 data-nosnippet>229</a>            cards_in_deck: context.game_context.cards_in_deck,
-<a href=#230 id=230 data-nosnippet>230</a>            stone_cards_in_deck: context.game_context.stone_cards_in_deck,
-<a href=#231 id=231 data-nosnippet>231</a>            steel_cards_in_deck: context.game_context.steel_cards_in_deck,
-<a href=#232 id=232 data-nosnippet>232</a>            rng: context.game_context.rng,
-<a href=#233 id=233 data-nosnippet>233</a>        };
-<a href=#234 id=234 data-nosnippet>234</a>
-<a href=#235 id=235 data-nosnippet>235</a>        <span class="comment">// Call the appropriate legacy method based on context
-<a href=#236 id=236 data-nosnippet>236</a>        </span><span class="kw">let </span>legacy_effect = <span class="kw">if let </span><span class="prelude-val">Some</span>(hand) = context.hand {
-<a href=#237 id=237 data-nosnippet>237</a>            <span class="self">self</span>.legacy_joker.on_hand_played(<span class="kw-2">&amp;mut </span>legacy_context, hand)
-<a href=#238 id=238 data-nosnippet>238</a>        } <span class="kw">else if let </span><span class="prelude-val">Some</span>(card) = context.card {
-<a href=#239 id=239 data-nosnippet>239</a>            <span class="self">self</span>.legacy_joker.on_card_scored(<span class="kw-2">&amp;mut </span>legacy_context, card)
-<a href=#240 id=240 data-nosnippet>240</a>        } <span class="kw">else </span>{
-<a href=#241 id=241 data-nosnippet>241</a>            <span class="comment">// For other contexts, try the most appropriate method
-<a href=#242 id=242 data-nosnippet>242</a>            </span><span class="kw">match </span>context.stage {
-<a href=#243 id=243 data-nosnippet>243</a>                Stage::Shop() =&gt; <span class="self">self</span>.legacy_joker.on_shop_open(<span class="kw-2">&amp;mut </span>legacy_context),
-<a href=#244 id=244 data-nosnippet>244</a>                <span class="kw">_ </span>=&gt; <span class="self">self</span>.legacy_joker.on_blind_start(<span class="kw-2">&amp;mut </span>legacy_context),
-<a href=#245 id=245 data-nosnippet>245</a>            }
-<a href=#246 id=246 data-nosnippet>246</a>        };
-<a href=#247 id=247 data-nosnippet>247</a>
-<a href=#248 id=248 data-nosnippet>248</a>        <span class="comment">// Update adapter state
-<a href=#249 id=249 data-nosnippet>249</a>        </span><span class="self">self</span>.adapter_state.increment_counter(<span class="string">"activations"</span>);
-<a href=#250 id=250 data-nosnippet>250</a>
-<a href=#251 id=251 data-nosnippet>251</a>        <span class="comment">// Convert legacy JokerEffect to ProcessResult
-<a href=#252 id=252 data-nosnippet>252</a>        </span>ProcessResult {
-<a href=#253 id=253 data-nosnippet>253</a>            chips_added: legacy_effect.chips.max(<span class="number">0</span>) <span class="kw">as </span>u64, <span class="comment">// Ensure non-negative
-<a href=#254 id=254 data-nosnippet>254</a>            </span>mult_added: legacy_effect.mult <span class="kw">as </span>f64,
-<a href=#255 id=255 data-nosnippet>255</a>            mult_multiplier: legacy_effect.mult_multiplier,
-<a href=#256 id=256 data-nosnippet>256</a>            retriggered: legacy_effect.retrigger &gt; <span class="number">0</span>,
-<a href=#257 id=257 data-nosnippet>257</a>            message: legacy_effect.message,
-<a href=#258 id=258 data-nosnippet>258</a>        }
-<a href=#259 id=259 data-nosnippet>259</a>    }
-<a href=#260 id=260 data-nosnippet>260</a>
-<a href=#261 id=261 data-nosnippet>261</a>    <span class="kw">fn </span>update_internal_state(<span class="kw-2">&amp;mut </span><span class="self">self</span>, event: <span class="kw-2">&amp;</span>GameEvent) {
-<a href=#262 id=262 data-nosnippet>262</a>        <span class="comment">// Convert advanced events to legacy joker method calls
-<a href=#263 id=263 data-nosnippet>263</a>        </span><span class="kw">match </span>event {
-<a href=#264 id=264 data-nosnippet>264</a>            GameEvent::HandPlayed { .. } =&gt; {
-<a href=#265 id=265 data-nosnippet>265</a>                <span class="comment">// Legacy jokers don't have explicit event handling
-<a href=#266 id=266 data-nosnippet>266</a>                // We track this in adapter state for potential condition use
-<a href=#267 id=267 data-nosnippet>267</a>                </span><span class="self">self</span>.adapter_state.increment_counter(<span class="string">"hands_played"</span>);
-<a href=#268 id=268 data-nosnippet>268</a>            }
-<a href=#269 id=269 data-nosnippet>269</a>            GameEvent::CardsDiscarded { cards } =&gt; {
-<a href=#270 id=270 data-nosnippet>270</a>                <span class="self">self</span>.adapter_state.increment_counter(<span class="string">"cards_discarded"</span>);
-<a href=#271 id=271 data-nosnippet>271</a>                <span class="self">self</span>.adapter_state
-<a href=#272 id=272 data-nosnippet>272</a>                    .set_data(<span class="string">"last_discard_count"</span>, <span class="macro">serde_json::json!</span>(cards.len()));
-<a href=#273 id=273 data-nosnippet>273</a>            }
-<a href=#274 id=274 data-nosnippet>274</a>            GameEvent::RoundStarted { round_number } =&gt; {
-<a href=#275 id=275 data-nosnippet>275</a>                <span class="self">self</span>.adapter_state
-<a href=#276 id=276 data-nosnippet>276</a>                    .set_data(<span class="string">"current_round"</span>, <span class="macro">serde_json::json!</span>(round_number));
-<a href=#277 id=277 data-nosnippet>277</a>            }
-<a href=#278 id=278 data-nosnippet>278</a>            <span class="kw">_ </span>=&gt; {} <span class="comment">// Other events don't need tracking for legacy jokers
-<a href=#279 id=279 data-nosnippet>279</a>        </span>}
-<a href=#280 id=280 data-nosnippet>280</a>    }
-<a href=#281 id=281 data-nosnippet>281</a>
-<a href=#282 id=282 data-nosnippet>282</a>    <span class="kw">fn </span>state_hash(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u64 {
-<a href=#283 id=283 data-nosnippet>283</a>        <span class="comment">// Include adapter state version and legacy joker ID
-<a href=#284 id=284 data-nosnippet>284</a>        </span><span class="kw">let </span>legacy_id_hash = <span class="self">self</span>.legacy_joker.id() <span class="kw">as </span>u64;
-<a href=#285 id=285 data-nosnippet>285</a>        legacy_id_hash ^ <span class="self">self</span>.adapter_state.version
-<a href=#286 id=286 data-nosnippet>286</a>    }
-<a href=#287 id=287 data-nosnippet>287</a>}
-<a href=#288 id=288 data-nosnippet>288</a>
-<a href=#289 id=289 data-nosnippet>289</a><span class="comment">// DummyJoker removed - no longer needed since we fixed the ownership issue
-<a href=#290 id=290 data-nosnippet>290</a>
-<a href=#291 id=291 data-nosnippet>291</a></span><span class="doccomment">/// Compatibility utilities for framework integration
-<a href=#292 id=292 data-nosnippet>292</a></span><span class="kw">pub struct </span>CompatibilityBridge;
-<a href=#293 id=293 data-nosnippet>293</a>
-<a href=#294 id=294 data-nosnippet>294</a><span class="kw">impl </span>CompatibilityBridge {
-<a href=#295 id=295 data-nosnippet>295</a>    <span class="doccomment">/// Convert a legacy conditional joker to use advanced conditions
-<a href=#296 id=296 data-nosnippet>296</a>    ///
-<a href=#297 id=297 data-nosnippet>297</a>    /// This provides a migration path for conditional jokers to benefit
-<a href=#298 id=298 data-nosnippet>298</a>    /// from the advanced condition system's performance and capabilities.
-<a href=#299 id=299 data-nosnippet>299</a>    </span><span class="kw">pub fn </span>upgrade_conditional_joker(
-<a href=#300 id=300 data-nosnippet>300</a>        conditional_joker: ConditionalJoker,
-<a href=#301 id=301 data-nosnippet>301</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;EnhancedJoker, <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt; {
-<a href=#302 id=302 data-nosnippet>302</a>        <span class="comment">// Convert the legacy condition to an advanced condition
-<a href=#303 id=303 data-nosnippet>303</a>        </span><span class="kw">let </span>advanced_condition = AdvancedCondition::Legacy(conditional_joker.condition.clone());
-<a href=#304 id=304 data-nosnippet>304</a>
-<a href=#305 id=305 data-nosnippet>305</a>        <span class="comment">// Create identity from conditional joker properties
-<a href=#306 id=306 data-nosnippet>306</a>        </span><span class="kw">let </span>identity = Box::new(ConditionalJokerIdentity {
-<a href=#307 id=307 data-nosnippet>307</a>            id: conditional_joker.id,
-<a href=#308 id=308 data-nosnippet>308</a>            name: conditional_joker.name.clone(),
-<a href=#309 id=309 data-nosnippet>309</a>            description: conditional_joker.description.clone(),
-<a href=#310 id=310 data-nosnippet>310</a>            rarity: <span class="self">Self</span>::convert_rarity(conditional_joker.rarity),
-<a href=#311 id=311 data-nosnippet>311</a>            cost: conditional_joker.cost <span class="kw">as </span>u64,
-<a href=#312 id=312 data-nosnippet>312</a>        });
-<a href=#313 id=313 data-nosnippet>313</a>
-<a href=#314 id=314 data-nosnippet>314</a>        <span class="comment">// Create processor from conditional joker effect
-<a href=#315 id=315 data-nosnippet>315</a>        </span><span class="kw">let </span>processor = Box::new(ConditionalJokerProcessor {
-<a href=#316 id=316 data-nosnippet>316</a>            base_effect: conditional_joker.effect.clone(),
-<a href=#317 id=317 data-nosnippet>317</a>            card_effect: conditional_joker.card_effect.clone(),
-<a href=#318 id=318 data-nosnippet>318</a>        });
-<a href=#319 id=319 data-nosnippet>319</a>
-<a href=#320 id=320 data-nosnippet>320</a>        <span class="comment">// Build the enhanced joker
-<a href=#321 id=321 data-nosnippet>321</a>        </span>EnhancedJoker::builder()
-<a href=#322 id=322 data-nosnippet>322</a>            .identity(identity)
-<a href=#323 id=323 data-nosnippet>323</a>            .condition(advanced_condition)
-<a href=#324 id=324 data-nosnippet>324</a>            .processor(processor)
-<a href=#325 id=325 data-nosnippet>325</a>            .build()
-<a href=#326 id=326 data-nosnippet>326</a>    }
-<a href=#327 id=327 data-nosnippet>327</a>
-<a href=#328 id=328 data-nosnippet>328</a>    <span class="doccomment">/// Convert legacy rarity to new rarity system
-<a href=#329 id=329 data-nosnippet>329</a>    </span><span class="kw">fn </span>convert_rarity(legacy_rarity: <span class="kw">crate</span>::joker::JokerRarity) -&gt; Rarity {
-<a href=#330 id=330 data-nosnippet>330</a>        <span class="kw">match </span>legacy_rarity {
-<a href=#331 id=331 data-nosnippet>331</a>            <span class="kw">crate</span>::joker::JokerRarity::Common =&gt; Rarity::Common,
-<a href=#332 id=332 data-nosnippet>332</a>            <span class="kw">crate</span>::joker::JokerRarity::Uncommon =&gt; Rarity::Uncommon,
-<a href=#333 id=333 data-nosnippet>333</a>            <span class="kw">crate</span>::joker::JokerRarity::Rare =&gt; Rarity::Rare,
-<a href=#334 id=334 data-nosnippet>334</a>            <span class="kw">crate</span>::joker::JokerRarity::Legendary =&gt; Rarity::Legendary,
-<a href=#335 id=335 data-nosnippet>335</a>        }
-<a href=#336 id=336 data-nosnippet>336</a>    }
-<a href=#337 id=337 data-nosnippet>337</a>
-<a href=#338 id=338 data-nosnippet>338</a>    <span class="doccomment">/// Create a mixed collection that can handle both legacy and advanced jokers
-<a href=#339 id=339 data-nosnippet>339</a>    </span><span class="kw">pub fn </span>create_mixed_collection(
-<a href=#340 id=340 data-nosnippet>340</a>        legacy_jokers: Vec&lt;Box&lt;<span class="kw">dyn </span>Joker&gt;&gt;,
-<a href=#341 id=341 data-nosnippet>341</a>        advanced_jokers: Vec&lt;Box&lt;<span class="kw">dyn </span>AdvancedJokerGameplay&gt;&gt;,
-<a href=#342 id=342 data-nosnippet>342</a>    ) -&gt; MixedJokerCollection {
-<a href=#343 id=343 data-nosnippet>343</a>        MixedJokerCollection {
-<a href=#344 id=344 data-nosnippet>344</a>            legacy_adapters: legacy_jokers
-<a href=#345 id=345 data-nosnippet>345</a>                .into_iter()
-<a href=#346 id=346 data-nosnippet>346</a>                .map(LegacyJokerAdapter::new)
-<a href=#347 id=347 data-nosnippet>347</a>                .collect(),
-<a href=#348 id=348 data-nosnippet>348</a>            advanced_jokers,
-<a href=#349 id=349 data-nosnippet>349</a>        }
-<a href=#350 id=350 data-nosnippet>350</a>    }
-<a href=#351 id=351 data-nosnippet>351</a>}
-<a href=#352 id=352 data-nosnippet>352</a>
-<a href=#353 id=353 data-nosnippet>353</a><span class="doccomment">/// Identity adapter for conditional jokers
-<a href=#354 id=354 data-nosnippet>354</a></span><span class="attr">#[derive(Debug)]
-<a href=#355 id=355 data-nosnippet>355</a></span><span class="kw">struct </span>ConditionalJokerIdentity {
-<a href=#356 id=356 data-nosnippet>356</a>    <span class="attr">#[allow(dead_code)]
-<a href=#357 id=357 data-nosnippet>357</a>    </span>id: JokerId,
-<a href=#358 id=358 data-nosnippet>358</a>    name: String,
-<a href=#359 id=359 data-nosnippet>359</a>    description: String,
-<a href=#360 id=360 data-nosnippet>360</a>    rarity: Rarity,
-<a href=#361 id=361 data-nosnippet>361</a>    cost: u64,
-<a href=#362 id=362 data-nosnippet>362</a>}
-<a href=#363 id=363 data-nosnippet>363</a>
-<a href=#364 id=364 data-nosnippet>364</a><span class="kw">impl </span>AdvancedJokerIdentity <span class="kw">for </span>ConditionalJokerIdentity {
-<a href=#365 id=365 data-nosnippet>365</a>    <span class="kw">fn </span>joker_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str {
-<a href=#366 id=366 data-nosnippet>366</a>        <span class="comment">// Convert JokerId to string - simplified implementation
-<a href=#367 id=367 data-nosnippet>367</a>        </span><span class="string">"conditional_joker"
-<a href=#368 id=368 data-nosnippet>368</a>    </span>}
-<a href=#369 id=369 data-nosnippet>369</a>
-<a href=#370 id=370 data-nosnippet>370</a>    <span class="kw">fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
-<a href=#371 id=371 data-nosnippet>371</a>        <span class="kw-2">&amp;</span><span class="self">self</span>.name
-<a href=#372 id=372 data-nosnippet>372</a>    }
-<a href=#373 id=373 data-nosnippet>373</a>    <span class="kw">fn </span>description(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
-<a href=#374 id=374 data-nosnippet>374</a>        <span class="kw-2">&amp;</span><span class="self">self</span>.description
-<a href=#375 id=375 data-nosnippet>375</a>    }
-<a href=#376 id=376 data-nosnippet>376</a>    <span class="kw">fn </span>rarity(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Rarity {
-<a href=#377 id=377 data-nosnippet>377</a>        <span class="self">self</span>.rarity
-<a href=#378 id=378 data-nosnippet>378</a>    }
-<a href=#379 id=379 data-nosnippet>379</a>    <span class="kw">fn </span>base_cost(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u64 {
-<a href=#380 id=380 data-nosnippet>380</a>        <span class="self">self</span>.cost
-<a href=#381 id=381 data-nosnippet>381</a>    }
-<a href=#382 id=382 data-nosnippet>382</a>
-<a href=#383 id=383 data-nosnippet>383</a>    <span class="kw">fn </span>evaluation_cost_estimate(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; EvaluationCost {
-<a href=#384 id=384 data-nosnippet>384</a>        EvaluationCost::Moderate
-<a href=#385 id=385 data-nosnippet>385</a>    }
-<a href=#386 id=386 data-nosnippet>386</a>}
-<a href=#387 id=387 data-nosnippet>387</a>
-<a href=#388 id=388 data-nosnippet>388</a><span class="doccomment">/// Processor adapter for conditional jokers
-<a href=#389 id=389 data-nosnippet>389</a></span><span class="attr">#[derive(Debug)]
-<a href=#390 id=390 data-nosnippet>390</a></span><span class="kw">struct </span>ConditionalJokerProcessor {
-<a href=#391 id=391 data-nosnippet>391</a>    base_effect: <span class="kw">crate</span>::joker::JokerEffect,
-<a href=#392 id=392 data-nosnippet>392</a>    card_effect: <span class="prelude-ty">Option</span>&lt;<span class="kw">crate</span>::joker::JokerEffect&gt;,
-<a href=#393 id=393 data-nosnippet>393</a>}
-<a href=#394 id=394 data-nosnippet>394</a>
-<a href=#395 id=395 data-nosnippet>395</a><span class="kw">impl </span>JokerProcessor <span class="kw">for </span>ConditionalJokerProcessor {
-<a href=#396 id=396 data-nosnippet>396</a>    <span class="kw">fn </span>process(
-<a href=#397 id=397 data-nosnippet>397</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
-<a href=#398 id=398 data-nosnippet>398</a>        context: <span class="kw-2">&amp;mut </span>AdvancedEvaluationContext,
-<a href=#399 id=399 data-nosnippet>399</a>        _state: <span class="kw-2">&amp;mut </span>InternalJokerState,
-<a href=#400 id=400 data-nosnippet>400</a>    ) -&gt; ProcessResult {
-<a href=#401 id=401 data-nosnippet>401</a>        <span class="comment">// Use card effect if available and we're processing a card
-<a href=#402 id=402 data-nosnippet>402</a>        </span><span class="kw">let </span>effect = <span class="kw">if </span>context.card.is_some() &amp;&amp; <span class="self">self</span>.card_effect.is_some() {
-<a href=#403 id=403 data-nosnippet>403</a>            <span class="self">self</span>.card_effect.as_ref().unwrap()
-<a href=#404 id=404 data-nosnippet>404</a>        } <span class="kw">else </span>{
-<a href=#405 id=405 data-nosnippet>405</a>            <span class="kw-2">&amp;</span><span class="self">self</span>.base_effect
-<a href=#406 id=406 data-nosnippet>406</a>        };
-<a href=#407 id=407 data-nosnippet>407</a>
-<a href=#408 id=408 data-nosnippet>408</a>        ProcessResult {
-<a href=#409 id=409 data-nosnippet>409</a>            chips_added: effect.chips <span class="kw">as </span>u64,
-<a href=#410 id=410 data-nosnippet>410</a>            mult_added: effect.mult <span class="kw">as </span>f64,
-<a href=#411 id=411 data-nosnippet>411</a>            mult_multiplier: effect.mult_multiplier,
-<a href=#412 id=412 data-nosnippet>412</a>            retriggered: effect.retrigger &gt; <span class="number">0</span>,
-<a href=#413 id=413 data-nosnippet>413</a>            message: effect.message.clone(),
-<a href=#414 id=414 data-nosnippet>414</a>        }
-<a href=#415 id=415 data-nosnippet>415</a>    }
-<a href=#416 id=416 data-nosnippet>416</a>}
-<a href=#417 id=417 data-nosnippet>417</a>
-<a href=#418 id=418 data-nosnippet>418</a><span class="doccomment">/// Collection that can hold both legacy and advanced jokers
-<a href=#419 id=419 data-nosnippet>419</a></span><span class="kw">pub struct </span>MixedJokerCollection {
-<a href=#420 id=420 data-nosnippet>420</a>    legacy_adapters: Vec&lt;LegacyJokerAdapter&gt;,
-<a href=#421 id=421 data-nosnippet>421</a>    advanced_jokers: Vec&lt;Box&lt;<span class="kw">dyn </span>AdvancedJokerGameplay&gt;&gt;,
-<a href=#422 id=422 data-nosnippet>422</a>}
-<a href=#423 id=423 data-nosnippet>423</a>
-<a href=#424 id=424 data-nosnippet>424</a><span class="kw">impl </span>MixedJokerCollection {
-<a href=#425 id=425 data-nosnippet>425</a>    <span class="doccomment">/// Process all jokers in the collection with proper ordering
-<a href=#426 id=426 data-nosnippet>426</a>    </span><span class="kw">pub fn </span>process_all(<span class="kw-2">&amp;mut </span><span class="self">self</span>, context: <span class="kw-2">&amp;mut </span>AdvancedEvaluationContext) -&gt; Vec&lt;ProcessResult&gt; {
-<a href=#427 id=427 data-nosnippet>427</a>        <span class="kw">let </span><span class="kw-2">mut </span>results = Vec::new();
-<a href=#428 id=428 data-nosnippet>428</a>
-<a href=#429 id=429 data-nosnippet>429</a>        <span class="comment">// Collect all jokers with their priorities for sorting
-<a href=#430 id=430 data-nosnippet>430</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>all_jokers: Vec&lt;(usize, bool, i32)&gt; = Vec::new();
-<a href=#431 id=431 data-nosnippet>431</a>
-<a href=#432 id=432 data-nosnippet>432</a>        <span class="comment">// Add legacy jokers (false = legacy)
-<a href=#433 id=433 data-nosnippet>433</a>        </span><span class="kw">for </span>(i, joker) <span class="kw">in </span><span class="self">self</span>.legacy_adapters.iter().enumerate() {
-<a href=#434 id=434 data-nosnippet>434</a>            <span class="kw">let </span>priority = joker.get_processing_priority(context.stage);
-<a href=#435 id=435 data-nosnippet>435</a>            all_jokers.push((i, <span class="bool-val">false</span>, priority));
-<a href=#436 id=436 data-nosnippet>436</a>        }
-<a href=#437 id=437 data-nosnippet>437</a>
-<a href=#438 id=438 data-nosnippet>438</a>        <span class="comment">// Add advanced jokers (true = advanced)
-<a href=#439 id=439 data-nosnippet>439</a>        </span><span class="kw">for </span>(i, joker) <span class="kw">in </span><span class="self">self</span>.advanced_jokers.iter().enumerate() {
-<a href=#440 id=440 data-nosnippet>440</a>            <span class="kw">let </span>priority = joker.get_processing_priority(context.stage);
-<a href=#441 id=441 data-nosnippet>441</a>            all_jokers.push((i, <span class="bool-val">true</span>, priority));
-<a href=#442 id=442 data-nosnippet>442</a>        }
-<a href=#443 id=443 data-nosnippet>443</a>
-<a href=#444 id=444 data-nosnippet>444</a>        <span class="comment">// Sort by priority (higher first)
-<a href=#445 id=445 data-nosnippet>445</a>        </span>all_jokers.sort_by(|a, b| b.<span class="number">2</span>.cmp(<span class="kw-2">&amp;</span>a.<span class="number">2</span>));
-<a href=#446 id=446 data-nosnippet>446</a>
-<a href=#447 id=447 data-nosnippet>447</a>        <span class="comment">// Process in priority order
-<a href=#448 id=448 data-nosnippet>448</a>        </span><span class="kw">for </span>(index, is_advanced, _priority) <span class="kw">in </span>all_jokers {
-<a href=#449 id=449 data-nosnippet>449</a>            <span class="kw">if </span>is_advanced {
-<a href=#450 id=450 data-nosnippet>450</a>                <span class="kw">let </span>joker = <span class="kw-2">&amp;mut </span><span class="self">self</span>.advanced_jokers[index];
-<a href=#451 id=451 data-nosnippet>451</a>                <span class="kw">if </span>joker.should_process(context) {
-<a href=#452 id=452 data-nosnippet>452</a>                    <span class="kw">let </span>result = joker.process_advanced(context);
-<a href=#453 id=453 data-nosnippet>453</a>                    results.push(result);
-<a href=#454 id=454 data-nosnippet>454</a>                }
-<a href=#455 id=455 data-nosnippet>455</a>            } <span class="kw">else </span>{
-<a href=#456 id=456 data-nosnippet>456</a>                <span class="kw">let </span>joker = <span class="kw-2">&amp;mut </span><span class="self">self</span>.legacy_adapters[index];
-<a href=#457 id=457 data-nosnippet>457</a>                <span class="kw">if </span>joker.should_process(context) {
-<a href=#458 id=458 data-nosnippet>458</a>                    <span class="kw">let </span>result = joker.process_advanced(context);
-<a href=#459 id=459 data-nosnippet>459</a>                    results.push(result);
-<a href=#460 id=460 data-nosnippet>460</a>                }
-<a href=#461 id=461 data-nosnippet>461</a>            }
-<a href=#462 id=462 data-nosnippet>462</a>        }
-<a href=#463 id=463 data-nosnippet>463</a>
-<a href=#464 id=464 data-nosnippet>464</a>        results
-<a href=#465 id=465 data-nosnippet>465</a>    }
-<a href=#466 id=466 data-nosnippet>466</a>
-<a href=#467 id=467 data-nosnippet>467</a>    <span class="doccomment">/// Broadcast an event to all jokers in the collection
-<a href=#468 id=468 data-nosnippet>468</a>    </span><span class="kw">pub fn </span>broadcast_event(<span class="kw-2">&amp;mut </span><span class="self">self</span>, event: <span class="kw-2">&amp;</span>GameEvent) {
-<a href=#469 id=469 data-nosnippet>469</a>        <span class="comment">// Update legacy adapters
-<a href=#470 id=470 data-nosnippet>470</a>        </span><span class="kw">for </span>adapter <span class="kw">in </span><span class="kw-2">&amp;mut </span><span class="self">self</span>.legacy_adapters {
-<a href=#471 id=471 data-nosnippet>471</a>            adapter.update_internal_state(event);
-<a href=#472 id=472 data-nosnippet>472</a>        }
-<a href=#473 id=473 data-nosnippet>473</a>
-<a href=#474 id=474 data-nosnippet>474</a>        <span class="comment">// Update advanced jokers
-<a href=#475 id=475 data-nosnippet>475</a>        </span><span class="kw">for </span>joker <span class="kw">in </span><span class="kw-2">&amp;mut </span><span class="self">self</span>.advanced_jokers {
-<a href=#476 id=476 data-nosnippet>476</a>            joker.update_internal_state(event);
-<a href=#477 id=477 data-nosnippet>477</a>        }
-<a href=#478 id=478 data-nosnippet>478</a>    }
-<a href=#479 id=479 data-nosnippet>479</a>
-<a href=#480 id=480 data-nosnippet>480</a>    <span class="doccomment">/// Get total count of jokers in the collection
-<a href=#481 id=481 data-nosnippet>481</a>    </span><span class="kw">pub fn </span>total_count(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-<a href=#482 id=482 data-nosnippet>482</a>        <span class="self">self</span>.legacy_adapters.len() + <span class="self">self</span>.advanced_jokers.len()
-<a href=#483 id=483 data-nosnippet>483</a>    }
-<a href=#484 id=484 data-nosnippet>484</a>
-<a href=#485 id=485 data-nosnippet>485</a>    <span class="doccomment">/// Check if collection contains any jokers
-<a href=#486 id=486 data-nosnippet>486</a>    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-<a href=#487 id=487 data-nosnippet>487</a>        <span class="self">self</span>.legacy_adapters.is_empty() &amp;&amp; <span class="self">self</span>.advanced_jokers.is_empty()
-<a href=#488 id=488 data-nosnippet>488</a>    }
-<a href=#489 id=489 data-nosnippet>489</a>}
-<a href=#490 id=490 data-nosnippet>490</a>
-<a href=#491 id=491 data-nosnippet>491</a><span class="kw">impl </span>Debug <span class="kw">for </span>MixedJokerCollection {
-<a href=#492 id=492 data-nosnippet>492</a>    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
-<a href=#493 id=493 data-nosnippet>493</a>        f.debug_struct(<span class="string">"MixedJokerCollection"</span>)
-<a href=#494 id=494 data-nosnippet>494</a>            .field(<span class="string">"legacy_count"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.legacy_adapters.len())
-<a href=#495 id=495 data-nosnippet>495</a>            .field(<span class="string">"advanced_count"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.advanced_jokers.len())
-<a href=#496 id=496 data-nosnippet>496</a>            .finish()
-<a href=#497 id=497 data-nosnippet>497</a>    }
-<a href=#498 id=498 data-nosnippet>498</a>}
-<a href=#499 id=499 data-nosnippet>499</a>
-<a href=#500 id=500 data-nosnippet>500</a><span class="doccomment">/// Extension trait for enhanced joker builder to support legacy conversions
-<a href=#501 id=501 data-nosnippet>501</a></span><span class="kw">pub trait </span>EnhancedJokerBuilderExt {
-<a href=#502 id=502 data-nosnippet>502</a>    <span class="doccomment">/// Create an enhanced joker from a legacy joker
-<a href=#503 id=503 data-nosnippet>503</a>    </span><span class="kw">fn </span>from_legacy(legacy_joker: Box&lt;<span class="kw">dyn </span>Joker&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;EnhancedJoker, <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt;;
-<a href=#504 id=504 data-nosnippet>504</a>
-<a href=#505 id=505 data-nosnippet>505</a>    <span class="doccomment">/// Create an enhanced joker from a conditional joker
-<a href=#506 id=506 data-nosnippet>506</a>    </span><span class="kw">fn </span>from_conditional(conditional_joker: ConditionalJoker)
-<a href=#507 id=507 data-nosnippet>507</a>        -&gt; <span class="prelude-ty">Result</span>&lt;EnhancedJoker, <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt;;
-<a href=#508 id=508 data-nosnippet>508</a>}
-<a href=#509 id=509 data-nosnippet>509</a>
-<a href=#510 id=510 data-nosnippet>510</a><span class="kw">impl </span>EnhancedJokerBuilderExt <span class="kw">for </span><span class="kw">crate</span>::joker::advanced_traits::EnhancedJokerBuilder {
-<a href=#511 id=511 data-nosnippet>511</a>    <span class="kw">fn </span>from_legacy(_legacy_joker: Box&lt;<span class="kw">dyn </span>Joker&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;EnhancedJoker, <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt; {
-<a href=#512 id=512 data-nosnippet>512</a>        <span class="comment">// This would need proper implementation with correct lifetime management
-<a href=#513 id=513 data-nosnippet>513</a>        // For now, return an error indicating this needs to be implemented
-<a href=#514 id=514 data-nosnippet>514</a>        </span><span class="prelude-val">Err</span>(<span class="string">"Legacy joker conversion not yet fully implemented"</span>)
-<a href=#515 id=515 data-nosnippet>515</a>    }
-<a href=#516 id=516 data-nosnippet>516</a>
-<a href=#517 id=517 data-nosnippet>517</a>    <span class="kw">fn </span>from_conditional(
-<a href=#518 id=518 data-nosnippet>518</a>        conditional_joker: ConditionalJoker,
-<a href=#519 id=519 data-nosnippet>519</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;EnhancedJoker, <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt; {
-<a href=#520 id=520 data-nosnippet>520</a>        CompatibilityBridge::upgrade_conditional_joker(conditional_joker)
-<a href=#521 id=521 data-nosnippet>521</a>    }
-<a href=#522 id=522 data-nosnippet>522</a>}
-<a href=#523 id=523 data-nosnippet>523</a>
-<a href=#524 id=524 data-nosnippet>524</a><span class="attr">#[cfg(test)]
-<a href=#525 id=525 data-nosnippet>525</a></span><span class="kw">mod </span>tests {
-<a href=#526 id=526 data-nosnippet>526</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#527 id=527 data-nosnippet>527</a>    <span class="kw">use </span><span class="kw">crate</span>::joker::traits::Rarity;
-<a href=#528 id=528 data-nosnippet>528</a>
-<a href=#529 id=529 data-nosnippet>529</a>    <span class="attr">#[test]
-<a href=#530 id=530 data-nosnippet>530</a>    </span><span class="kw">fn </span>test_rarity_conversion() {
-<a href=#531 id=531 data-nosnippet>531</a>        <span class="macro">assert_eq!</span>(
-<a href=#532 id=532 data-nosnippet>532</a>            CompatibilityBridge::convert_rarity(<span class="kw">crate</span>::joker::JokerRarity::Common),
-<a href=#533 id=533 data-nosnippet>533</a>            Rarity::Common
-<a href=#534 id=534 data-nosnippet>534</a>        );
-<a href=#535 id=535 data-nosnippet>535</a>        <span class="macro">assert_eq!</span>(
-<a href=#536 id=536 data-nosnippet>536</a>            CompatibilityBridge::convert_rarity(<span class="kw">crate</span>::joker::JokerRarity::Legendary),
-<a href=#537 id=537 data-nosnippet>537</a>            Rarity::Legendary
-<a href=#538 id=538 data-nosnippet>538</a>        );
-<a href=#539 id=539 data-nosnippet>539</a>    }
-<a href=#540 id=540 data-nosnippet>540</a>
-<a href=#541 id=541 data-nosnippet>541</a>    <span class="attr">#[test]
-<a href=#542 id=542 data-nosnippet>542</a>    </span><span class="kw">fn </span>test_mixed_collection_creation() {
-<a href=#543 id=543 data-nosnippet>543</a>        <span class="kw">let </span>legacy_jokers: Vec&lt;Box&lt;<span class="kw">dyn </span>Joker&gt;&gt; = <span class="macro">vec!</span>[];
-<a href=#544 id=544 data-nosnippet>544</a>        <span class="kw">let </span>advanced_jokers: Vec&lt;Box&lt;<span class="kw">dyn </span>AdvancedJokerGameplay&gt;&gt; = <span class="macro">vec!</span>[];
-<a href=#545 id=545 data-nosnippet>545</a>
-<a href=#546 id=546 data-nosnippet>546</a>        <span class="kw">let </span>collection =
-<a href=#547 id=547 data-nosnippet>547</a>            CompatibilityBridge::create_mixed_collection(legacy_jokers, advanced_jokers);
-<a href=#548 id=548 data-nosnippet>548</a>
-<a href=#549 id=549 data-nosnippet>549</a>        <span class="macro">assert!</span>(collection.is_empty());
-<a href=#550 id=550 data-nosnippet>550</a>        <span class="macro">assert_eq!</span>(collection.total_count(), <span class="number">0</span>);
-<a href=#551 id=551 data-nosnippet>551</a>    }
-<a href=#552 id=552 data-nosnippet>552</a>
-<a href=#553 id=553 data-nosnippet>553</a>    <span class="attr">#[test]
-<a href=#554 id=554 data-nosnippet>554</a>    </span><span class="kw">fn </span>test_evaluation_cost_hierarchy() {
-<a href=#555 id=555 data-nosnippet>555</a>        <span class="kw">use </span>EvaluationCost::<span class="kw-2">*</span>;
-<a href=#556 id=556 data-nosnippet>556</a>
-<a href=#557 id=557 data-nosnippet>557</a>        <span class="comment">// Test that costs are properly ordered
-<a href=#558 id=558 data-nosnippet>558</a>        </span><span class="kw">let </span>costs = [Cheap, Moderate, Expensive, VeryExpensive];
-<a href=#559 id=559 data-nosnippet>559</a>        <span class="kw">for </span>window <span class="kw">in </span>costs.windows(<span class="number">2</span>) {
-<a href=#560 id=560 data-nosnippet>560</a>            <span class="macro">assert!</span>(window[<span class="number">0</span>] &lt; window[<span class="number">1</span>]);
-<a href=#561 id=561 data-nosnippet>561</a>        }
-<a href=#562 id=562 data-nosnippet>562</a>    }
-<a href=#563 id=563 data-nosnippet>563</a>}</code></pre></div></section></main></body></html>
+<a href=#223 id=223 data-nosnippet>223</a>            is_final_hand: context.game_context.hands_remaining &lt;= <span class="number">1.0</span>,
+<a href=#224 id=224 data-nosnippet>224</a>            discards_used: context.game_context.discards_used,
+<a href=#225 id=225 data-nosnippet>225</a>            jokers: context.game_context.jokers,
+<a href=#226 id=226 data-nosnippet>226</a>            hand: context.game_context.hand,
+<a href=#227 id=227 data-nosnippet>227</a>            discarded: context.game_context.discarded,
+<a href=#228 id=228 data-nosnippet>228</a>            joker_state_manager: context.game_context.joker_state_manager,
+<a href=#229 id=229 data-nosnippet>229</a>            hand_type_counts: context.game_context.hand_type_counts,
+<a href=#230 id=230 data-nosnippet>230</a>            cards_in_deck: context.game_context.cards_in_deck,
+<a href=#231 id=231 data-nosnippet>231</a>            stone_cards_in_deck: context.game_context.stone_cards_in_deck,
+<a href=#232 id=232 data-nosnippet>232</a>            steel_cards_in_deck: context.game_context.steel_cards_in_deck,
+<a href=#233 id=233 data-nosnippet>233</a>            rng: context.game_context.rng,
+<a href=#234 id=234 data-nosnippet>234</a>        };
+<a href=#235 id=235 data-nosnippet>235</a>
+<a href=#236 id=236 data-nosnippet>236</a>        <span class="comment">// Call the appropriate legacy method based on context
+<a href=#237 id=237 data-nosnippet>237</a>        </span><span class="kw">let </span>legacy_effect = <span class="kw">if let </span><span class="prelude-val">Some</span>(hand) = context.hand {
+<a href=#238 id=238 data-nosnippet>238</a>            <span class="self">self</span>.legacy_joker.on_hand_played(<span class="kw-2">&amp;mut </span>legacy_context, hand)
+<a href=#239 id=239 data-nosnippet>239</a>        } <span class="kw">else if let </span><span class="prelude-val">Some</span>(card) = context.card {
+<a href=#240 id=240 data-nosnippet>240</a>            <span class="self">self</span>.legacy_joker.on_card_scored(<span class="kw-2">&amp;mut </span>legacy_context, card)
+<a href=#241 id=241 data-nosnippet>241</a>        } <span class="kw">else </span>{
+<a href=#242 id=242 data-nosnippet>242</a>            <span class="comment">// For other contexts, try the most appropriate method
+<a href=#243 id=243 data-nosnippet>243</a>            </span><span class="kw">match </span>context.stage {
+<a href=#244 id=244 data-nosnippet>244</a>                Stage::Shop() =&gt; <span class="self">self</span>.legacy_joker.on_shop_open(<span class="kw-2">&amp;mut </span>legacy_context),
+<a href=#245 id=245 data-nosnippet>245</a>                <span class="kw">_ </span>=&gt; <span class="self">self</span>.legacy_joker.on_blind_start(<span class="kw-2">&amp;mut </span>legacy_context),
+<a href=#246 id=246 data-nosnippet>246</a>            }
+<a href=#247 id=247 data-nosnippet>247</a>        };
+<a href=#248 id=248 data-nosnippet>248</a>
+<a href=#249 id=249 data-nosnippet>249</a>        <span class="comment">// Update adapter state
+<a href=#250 id=250 data-nosnippet>250</a>        </span><span class="self">self</span>.adapter_state.increment_counter(<span class="string">"activations"</span>);
+<a href=#251 id=251 data-nosnippet>251</a>
+<a href=#252 id=252 data-nosnippet>252</a>        <span class="comment">// Convert legacy JokerEffect to ProcessResult
+<a href=#253 id=253 data-nosnippet>253</a>        </span>ProcessResult {
+<a href=#254 id=254 data-nosnippet>254</a>            chips_added: legacy_effect.chips.max(<span class="number">0</span>) <span class="kw">as </span>u64, <span class="comment">// Ensure non-negative
+<a href=#255 id=255 data-nosnippet>255</a>            </span>mult_added: legacy_effect.mult <span class="kw">as </span>f64,
+<a href=#256 id=256 data-nosnippet>256</a>            mult_multiplier: legacy_effect.mult_multiplier,
+<a href=#257 id=257 data-nosnippet>257</a>            retriggered: legacy_effect.retrigger &gt; <span class="number">0</span>,
+<a href=#258 id=258 data-nosnippet>258</a>            message: legacy_effect.message,
+<a href=#259 id=259 data-nosnippet>259</a>        }
+<a href=#260 id=260 data-nosnippet>260</a>    }
+<a href=#261 id=261 data-nosnippet>261</a>
+<a href=#262 id=262 data-nosnippet>262</a>    <span class="kw">fn </span>update_internal_state(<span class="kw-2">&amp;mut </span><span class="self">self</span>, event: <span class="kw-2">&amp;</span>GameEvent) {
+<a href=#263 id=263 data-nosnippet>263</a>        <span class="comment">// Convert advanced events to legacy joker method calls
+<a href=#264 id=264 data-nosnippet>264</a>        </span><span class="kw">match </span>event {
+<a href=#265 id=265 data-nosnippet>265</a>            GameEvent::HandPlayed { .. } =&gt; {
+<a href=#266 id=266 data-nosnippet>266</a>                <span class="comment">// Legacy jokers don't have explicit event handling
+<a href=#267 id=267 data-nosnippet>267</a>                // We track this in adapter state for potential condition use
+<a href=#268 id=268 data-nosnippet>268</a>                </span><span class="self">self</span>.adapter_state.increment_counter(<span class="string">"hands_played"</span>);
+<a href=#269 id=269 data-nosnippet>269</a>            }
+<a href=#270 id=270 data-nosnippet>270</a>            GameEvent::CardsDiscarded { cards } =&gt; {
+<a href=#271 id=271 data-nosnippet>271</a>                <span class="self">self</span>.adapter_state.increment_counter(<span class="string">"cards_discarded"</span>);
+<a href=#272 id=272 data-nosnippet>272</a>                <span class="self">self</span>.adapter_state
+<a href=#273 id=273 data-nosnippet>273</a>                    .set_data(<span class="string">"last_discard_count"</span>, <span class="macro">serde_json::json!</span>(cards.len()));
+<a href=#274 id=274 data-nosnippet>274</a>            }
+<a href=#275 id=275 data-nosnippet>275</a>            GameEvent::RoundStarted { round_number } =&gt; {
+<a href=#276 id=276 data-nosnippet>276</a>                <span class="self">self</span>.adapter_state
+<a href=#277 id=277 data-nosnippet>277</a>                    .set_data(<span class="string">"current_round"</span>, <span class="macro">serde_json::json!</span>(round_number));
+<a href=#278 id=278 data-nosnippet>278</a>            }
+<a href=#279 id=279 data-nosnippet>279</a>            <span class="kw">_ </span>=&gt; {} <span class="comment">// Other events don't need tracking for legacy jokers
+<a href=#280 id=280 data-nosnippet>280</a>        </span>}
+<a href=#281 id=281 data-nosnippet>281</a>    }
+<a href=#282 id=282 data-nosnippet>282</a>
+<a href=#283 id=283 data-nosnippet>283</a>    <span class="kw">fn </span>state_hash(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u64 {
+<a href=#284 id=284 data-nosnippet>284</a>        <span class="comment">// Include adapter state version and legacy joker ID
+<a href=#285 id=285 data-nosnippet>285</a>        </span><span class="kw">let </span>legacy_id_hash = <span class="self">self</span>.legacy_joker.id() <span class="kw">as </span>u64;
+<a href=#286 id=286 data-nosnippet>286</a>        legacy_id_hash ^ <span class="self">self</span>.adapter_state.version
+<a href=#287 id=287 data-nosnippet>287</a>    }
+<a href=#288 id=288 data-nosnippet>288</a>}
+<a href=#289 id=289 data-nosnippet>289</a>
+<a href=#290 id=290 data-nosnippet>290</a><span class="comment">// DummyJoker removed - no longer needed since we fixed the ownership issue
+<a href=#291 id=291 data-nosnippet>291</a>
+<a href=#292 id=292 data-nosnippet>292</a></span><span class="doccomment">/// Compatibility utilities for framework integration
+<a href=#293 id=293 data-nosnippet>293</a></span><span class="kw">pub struct </span>CompatibilityBridge;
+<a href=#294 id=294 data-nosnippet>294</a>
+<a href=#295 id=295 data-nosnippet>295</a><span class="kw">impl </span>CompatibilityBridge {
+<a href=#296 id=296 data-nosnippet>296</a>    <span class="doccomment">/// Convert a legacy conditional joker to use advanced conditions
+<a href=#297 id=297 data-nosnippet>297</a>    ///
+<a href=#298 id=298 data-nosnippet>298</a>    /// This provides a migration path for conditional jokers to benefit
+<a href=#299 id=299 data-nosnippet>299</a>    /// from the advanced condition system's performance and capabilities.
+<a href=#300 id=300 data-nosnippet>300</a>    </span><span class="kw">pub fn </span>upgrade_conditional_joker(
+<a href=#301 id=301 data-nosnippet>301</a>        conditional_joker: ConditionalJoker,
+<a href=#302 id=302 data-nosnippet>302</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;EnhancedJoker, <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt; {
+<a href=#303 id=303 data-nosnippet>303</a>        <span class="comment">// Convert the legacy condition to an advanced condition
+<a href=#304 id=304 data-nosnippet>304</a>        </span><span class="kw">let </span>advanced_condition = AdvancedCondition::Legacy(conditional_joker.condition.clone());
+<a href=#305 id=305 data-nosnippet>305</a>
+<a href=#306 id=306 data-nosnippet>306</a>        <span class="comment">// Create identity from conditional joker properties
+<a href=#307 id=307 data-nosnippet>307</a>        </span><span class="kw">let </span>identity = Box::new(ConditionalJokerIdentity {
+<a href=#308 id=308 data-nosnippet>308</a>            id: conditional_joker.id,
+<a href=#309 id=309 data-nosnippet>309</a>            name: conditional_joker.name.clone(),
+<a href=#310 id=310 data-nosnippet>310</a>            description: conditional_joker.description.clone(),
+<a href=#311 id=311 data-nosnippet>311</a>            rarity: <span class="self">Self</span>::convert_rarity(conditional_joker.rarity),
+<a href=#312 id=312 data-nosnippet>312</a>            cost: conditional_joker.cost <span class="kw">as </span>u64,
+<a href=#313 id=313 data-nosnippet>313</a>        });
+<a href=#314 id=314 data-nosnippet>314</a>
+<a href=#315 id=315 data-nosnippet>315</a>        <span class="comment">// Create processor from conditional joker effect
+<a href=#316 id=316 data-nosnippet>316</a>        </span><span class="kw">let </span>processor = Box::new(ConditionalJokerProcessor {
+<a href=#317 id=317 data-nosnippet>317</a>            base_effect: conditional_joker.effect.clone(),
+<a href=#318 id=318 data-nosnippet>318</a>            card_effect: conditional_joker.card_effect.clone(),
+<a href=#319 id=319 data-nosnippet>319</a>        });
+<a href=#320 id=320 data-nosnippet>320</a>
+<a href=#321 id=321 data-nosnippet>321</a>        <span class="comment">// Build the enhanced joker
+<a href=#322 id=322 data-nosnippet>322</a>        </span>EnhancedJoker::builder()
+<a href=#323 id=323 data-nosnippet>323</a>            .identity(identity)
+<a href=#324 id=324 data-nosnippet>324</a>            .condition(advanced_condition)
+<a href=#325 id=325 data-nosnippet>325</a>            .processor(processor)
+<a href=#326 id=326 data-nosnippet>326</a>            .build()
+<a href=#327 id=327 data-nosnippet>327</a>    }
+<a href=#328 id=328 data-nosnippet>328</a>
+<a href=#329 id=329 data-nosnippet>329</a>    <span class="doccomment">/// Convert legacy rarity to new rarity system
+<a href=#330 id=330 data-nosnippet>330</a>    </span><span class="kw">fn </span>convert_rarity(legacy_rarity: <span class="kw">crate</span>::joker::JokerRarity) -&gt; Rarity {
+<a href=#331 id=331 data-nosnippet>331</a>        <span class="kw">match </span>legacy_rarity {
+<a href=#332 id=332 data-nosnippet>332</a>            <span class="kw">crate</span>::joker::JokerRarity::Common =&gt; Rarity::Common,
+<a href=#333 id=333 data-nosnippet>333</a>            <span class="kw">crate</span>::joker::JokerRarity::Uncommon =&gt; Rarity::Uncommon,
+<a href=#334 id=334 data-nosnippet>334</a>            <span class="kw">crate</span>::joker::JokerRarity::Rare =&gt; Rarity::Rare,
+<a href=#335 id=335 data-nosnippet>335</a>            <span class="kw">crate</span>::joker::JokerRarity::Legendary =&gt; Rarity::Legendary,
+<a href=#336 id=336 data-nosnippet>336</a>        }
+<a href=#337 id=337 data-nosnippet>337</a>    }
+<a href=#338 id=338 data-nosnippet>338</a>
+<a href=#339 id=339 data-nosnippet>339</a>    <span class="doccomment">/// Create a mixed collection that can handle both legacy and advanced jokers
+<a href=#340 id=340 data-nosnippet>340</a>    </span><span class="kw">pub fn </span>create_mixed_collection(
+<a href=#341 id=341 data-nosnippet>341</a>        legacy_jokers: Vec&lt;Box&lt;<span class="kw">dyn </span>Joker&gt;&gt;,
+<a href=#342 id=342 data-nosnippet>342</a>        advanced_jokers: Vec&lt;Box&lt;<span class="kw">dyn </span>AdvancedJokerGameplay&gt;&gt;,
+<a href=#343 id=343 data-nosnippet>343</a>    ) -&gt; MixedJokerCollection {
+<a href=#344 id=344 data-nosnippet>344</a>        MixedJokerCollection {
+<a href=#345 id=345 data-nosnippet>345</a>            legacy_adapters: legacy_jokers
+<a href=#346 id=346 data-nosnippet>346</a>                .into_iter()
+<a href=#347 id=347 data-nosnippet>347</a>                .map(LegacyJokerAdapter::new)
+<a href=#348 id=348 data-nosnippet>348</a>                .collect(),
+<a href=#349 id=349 data-nosnippet>349</a>            advanced_jokers,
+<a href=#350 id=350 data-nosnippet>350</a>        }
+<a href=#351 id=351 data-nosnippet>351</a>    }
+<a href=#352 id=352 data-nosnippet>352</a>}
+<a href=#353 id=353 data-nosnippet>353</a>
+<a href=#354 id=354 data-nosnippet>354</a><span class="doccomment">/// Identity adapter for conditional jokers
+<a href=#355 id=355 data-nosnippet>355</a></span><span class="attr">#[derive(Debug)]
+<a href=#356 id=356 data-nosnippet>356</a></span><span class="kw">struct </span>ConditionalJokerIdentity {
+<a href=#357 id=357 data-nosnippet>357</a>    <span class="attr">#[allow(dead_code)]
+<a href=#358 id=358 data-nosnippet>358</a>    </span>id: JokerId,
+<a href=#359 id=359 data-nosnippet>359</a>    name: String,
+<a href=#360 id=360 data-nosnippet>360</a>    description: String,
+<a href=#361 id=361 data-nosnippet>361</a>    rarity: Rarity,
+<a href=#362 id=362 data-nosnippet>362</a>    cost: u64,
+<a href=#363 id=363 data-nosnippet>363</a>}
+<a href=#364 id=364 data-nosnippet>364</a>
+<a href=#365 id=365 data-nosnippet>365</a><span class="kw">impl </span>AdvancedJokerIdentity <span class="kw">for </span>ConditionalJokerIdentity {
+<a href=#366 id=366 data-nosnippet>366</a>    <span class="kw">fn </span>joker_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str {
+<a href=#367 id=367 data-nosnippet>367</a>        <span class="comment">// Convert JokerId to string - simplified implementation
+<a href=#368 id=368 data-nosnippet>368</a>        </span><span class="string">"conditional_joker"
+<a href=#369 id=369 data-nosnippet>369</a>    </span>}
+<a href=#370 id=370 data-nosnippet>370</a>
+<a href=#371 id=371 data-nosnippet>371</a>    <span class="kw">fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
+<a href=#372 id=372 data-nosnippet>372</a>        <span class="kw-2">&amp;</span><span class="self">self</span>.name
+<a href=#373 id=373 data-nosnippet>373</a>    }
+<a href=#374 id=374 data-nosnippet>374</a>    <span class="kw">fn </span>description(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
+<a href=#375 id=375 data-nosnippet>375</a>        <span class="kw-2">&amp;</span><span class="self">self</span>.description
+<a href=#376 id=376 data-nosnippet>376</a>    }
+<a href=#377 id=377 data-nosnippet>377</a>    <span class="kw">fn </span>rarity(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Rarity {
+<a href=#378 id=378 data-nosnippet>378</a>        <span class="self">self</span>.rarity
+<a href=#379 id=379 data-nosnippet>379</a>    }
+<a href=#380 id=380 data-nosnippet>380</a>    <span class="kw">fn </span>base_cost(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u64 {
+<a href=#381 id=381 data-nosnippet>381</a>        <span class="self">self</span>.cost
+<a href=#382 id=382 data-nosnippet>382</a>    }
+<a href=#383 id=383 data-nosnippet>383</a>
+<a href=#384 id=384 data-nosnippet>384</a>    <span class="kw">fn </span>evaluation_cost_estimate(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; EvaluationCost {
+<a href=#385 id=385 data-nosnippet>385</a>        EvaluationCost::Moderate
+<a href=#386 id=386 data-nosnippet>386</a>    }
+<a href=#387 id=387 data-nosnippet>387</a>}
+<a href=#388 id=388 data-nosnippet>388</a>
+<a href=#389 id=389 data-nosnippet>389</a><span class="doccomment">/// Processor adapter for conditional jokers
+<a href=#390 id=390 data-nosnippet>390</a></span><span class="attr">#[derive(Debug)]
+<a href=#391 id=391 data-nosnippet>391</a></span><span class="kw">struct </span>ConditionalJokerProcessor {
+<a href=#392 id=392 data-nosnippet>392</a>    base_effect: <span class="kw">crate</span>::joker::JokerEffect,
+<a href=#393 id=393 data-nosnippet>393</a>    card_effect: <span class="prelude-ty">Option</span>&lt;<span class="kw">crate</span>::joker::JokerEffect&gt;,
+<a href=#394 id=394 data-nosnippet>394</a>}
+<a href=#395 id=395 data-nosnippet>395</a>
+<a href=#396 id=396 data-nosnippet>396</a><span class="kw">impl </span>JokerProcessor <span class="kw">for </span>ConditionalJokerProcessor {
+<a href=#397 id=397 data-nosnippet>397</a>    <span class="kw">fn </span>process(
+<a href=#398 id=398 data-nosnippet>398</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
+<a href=#399 id=399 data-nosnippet>399</a>        context: <span class="kw-2">&amp;mut </span>AdvancedEvaluationContext,
+<a href=#400 id=400 data-nosnippet>400</a>        _state: <span class="kw-2">&amp;mut </span>InternalJokerState,
+<a href=#401 id=401 data-nosnippet>401</a>    ) -&gt; ProcessResult {
+<a href=#402 id=402 data-nosnippet>402</a>        <span class="comment">// Use card effect if available and we're processing a card
+<a href=#403 id=403 data-nosnippet>403</a>        </span><span class="kw">let </span>effect = <span class="kw">if </span>context.card.is_some() &amp;&amp; <span class="self">self</span>.card_effect.is_some() {
+<a href=#404 id=404 data-nosnippet>404</a>            <span class="self">self</span>.card_effect.as_ref().unwrap()
+<a href=#405 id=405 data-nosnippet>405</a>        } <span class="kw">else </span>{
+<a href=#406 id=406 data-nosnippet>406</a>            <span class="kw-2">&amp;</span><span class="self">self</span>.base_effect
+<a href=#407 id=407 data-nosnippet>407</a>        };
+<a href=#408 id=408 data-nosnippet>408</a>
+<a href=#409 id=409 data-nosnippet>409</a>        ProcessResult {
+<a href=#410 id=410 data-nosnippet>410</a>            chips_added: effect.chips <span class="kw">as </span>u64,
+<a href=#411 id=411 data-nosnippet>411</a>            mult_added: effect.mult <span class="kw">as </span>f64,
+<a href=#412 id=412 data-nosnippet>412</a>            mult_multiplier: effect.mult_multiplier,
+<a href=#413 id=413 data-nosnippet>413</a>            retriggered: effect.retrigger &gt; <span class="number">0</span>,
+<a href=#414 id=414 data-nosnippet>414</a>            message: effect.message.clone(),
+<a href=#415 id=415 data-nosnippet>415</a>        }
+<a href=#416 id=416 data-nosnippet>416</a>    }
+<a href=#417 id=417 data-nosnippet>417</a>}
+<a href=#418 id=418 data-nosnippet>418</a>
+<a href=#419 id=419 data-nosnippet>419</a><span class="doccomment">/// Collection that can hold both legacy and advanced jokers
+<a href=#420 id=420 data-nosnippet>420</a></span><span class="kw">pub struct </span>MixedJokerCollection {
+<a href=#421 id=421 data-nosnippet>421</a>    legacy_adapters: Vec&lt;LegacyJokerAdapter&gt;,
+<a href=#422 id=422 data-nosnippet>422</a>    advanced_jokers: Vec&lt;Box&lt;<span class="kw">dyn </span>AdvancedJokerGameplay&gt;&gt;,
+<a href=#423 id=423 data-nosnippet>423</a>}
+<a href=#424 id=424 data-nosnippet>424</a>
+<a href=#425 id=425 data-nosnippet>425</a><span class="kw">impl </span>MixedJokerCollection {
+<a href=#426 id=426 data-nosnippet>426</a>    <span class="doccomment">/// Process all jokers in the collection with proper ordering
+<a href=#427 id=427 data-nosnippet>427</a>    </span><span class="kw">pub fn </span>process_all(<span class="kw-2">&amp;mut </span><span class="self">self</span>, context: <span class="kw-2">&amp;mut </span>AdvancedEvaluationContext) -&gt; Vec&lt;ProcessResult&gt; {
+<a href=#428 id=428 data-nosnippet>428</a>        <span class="kw">let </span><span class="kw-2">mut </span>results = Vec::new();
+<a href=#429 id=429 data-nosnippet>429</a>
+<a href=#430 id=430 data-nosnippet>430</a>        <span class="comment">// Collect all jokers with their priorities for sorting
+<a href=#431 id=431 data-nosnippet>431</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>all_jokers: Vec&lt;(usize, bool, i32)&gt; = Vec::new();
+<a href=#432 id=432 data-nosnippet>432</a>
+<a href=#433 id=433 data-nosnippet>433</a>        <span class="comment">// Add legacy jokers (false = legacy)
+<a href=#434 id=434 data-nosnippet>434</a>        </span><span class="kw">for </span>(i, joker) <span class="kw">in </span><span class="self">self</span>.legacy_adapters.iter().enumerate() {
+<a href=#435 id=435 data-nosnippet>435</a>            <span class="kw">let </span>priority = joker.get_processing_priority(context.stage);
+<a href=#436 id=436 data-nosnippet>436</a>            all_jokers.push((i, <span class="bool-val">false</span>, priority));
+<a href=#437 id=437 data-nosnippet>437</a>        }
+<a href=#438 id=438 data-nosnippet>438</a>
+<a href=#439 id=439 data-nosnippet>439</a>        <span class="comment">// Add advanced jokers (true = advanced)
+<a href=#440 id=440 data-nosnippet>440</a>        </span><span class="kw">for </span>(i, joker) <span class="kw">in </span><span class="self">self</span>.advanced_jokers.iter().enumerate() {
+<a href=#441 id=441 data-nosnippet>441</a>            <span class="kw">let </span>priority = joker.get_processing_priority(context.stage);
+<a href=#442 id=442 data-nosnippet>442</a>            all_jokers.push((i, <span class="bool-val">true</span>, priority));
+<a href=#443 id=443 data-nosnippet>443</a>        }
+<a href=#444 id=444 data-nosnippet>444</a>
+<a href=#445 id=445 data-nosnippet>445</a>        <span class="comment">// Sort by priority (higher first)
+<a href=#446 id=446 data-nosnippet>446</a>        </span>all_jokers.sort_by(|a, b| b.<span class="number">2</span>.cmp(<span class="kw-2">&amp;</span>a.<span class="number">2</span>));
+<a href=#447 id=447 data-nosnippet>447</a>
+<a href=#448 id=448 data-nosnippet>448</a>        <span class="comment">// Process in priority order
+<a href=#449 id=449 data-nosnippet>449</a>        </span><span class="kw">for </span>(index, is_advanced, _priority) <span class="kw">in </span>all_jokers {
+<a href=#450 id=450 data-nosnippet>450</a>            <span class="kw">if </span>is_advanced {
+<a href=#451 id=451 data-nosnippet>451</a>                <span class="kw">let </span>joker = <span class="kw-2">&amp;mut </span><span class="self">self</span>.advanced_jokers[index];
+<a href=#452 id=452 data-nosnippet>452</a>                <span class="kw">if </span>joker.should_process(context) {
+<a href=#453 id=453 data-nosnippet>453</a>                    <span class="kw">let </span>result = joker.process_advanced(context);
+<a href=#454 id=454 data-nosnippet>454</a>                    results.push(result);
+<a href=#455 id=455 data-nosnippet>455</a>                }
+<a href=#456 id=456 data-nosnippet>456</a>            } <span class="kw">else </span>{
+<a href=#457 id=457 data-nosnippet>457</a>                <span class="kw">let </span>joker = <span class="kw-2">&amp;mut </span><span class="self">self</span>.legacy_adapters[index];
+<a href=#458 id=458 data-nosnippet>458</a>                <span class="kw">if </span>joker.should_process(context) {
+<a href=#459 id=459 data-nosnippet>459</a>                    <span class="kw">let </span>result = joker.process_advanced(context);
+<a href=#460 id=460 data-nosnippet>460</a>                    results.push(result);
+<a href=#461 id=461 data-nosnippet>461</a>                }
+<a href=#462 id=462 data-nosnippet>462</a>            }
+<a href=#463 id=463 data-nosnippet>463</a>        }
+<a href=#464 id=464 data-nosnippet>464</a>
+<a href=#465 id=465 data-nosnippet>465</a>        results
+<a href=#466 id=466 data-nosnippet>466</a>    }
+<a href=#467 id=467 data-nosnippet>467</a>
+<a href=#468 id=468 data-nosnippet>468</a>    <span class="doccomment">/// Broadcast an event to all jokers in the collection
+<a href=#469 id=469 data-nosnippet>469</a>    </span><span class="kw">pub fn </span>broadcast_event(<span class="kw-2">&amp;mut </span><span class="self">self</span>, event: <span class="kw-2">&amp;</span>GameEvent) {
+<a href=#470 id=470 data-nosnippet>470</a>        <span class="comment">// Update legacy adapters
+<a href=#471 id=471 data-nosnippet>471</a>        </span><span class="kw">for </span>adapter <span class="kw">in </span><span class="kw-2">&amp;mut </span><span class="self">self</span>.legacy_adapters {
+<a href=#472 id=472 data-nosnippet>472</a>            adapter.update_internal_state(event);
+<a href=#473 id=473 data-nosnippet>473</a>        }
+<a href=#474 id=474 data-nosnippet>474</a>
+<a href=#475 id=475 data-nosnippet>475</a>        <span class="comment">// Update advanced jokers
+<a href=#476 id=476 data-nosnippet>476</a>        </span><span class="kw">for </span>joker <span class="kw">in </span><span class="kw-2">&amp;mut </span><span class="self">self</span>.advanced_jokers {
+<a href=#477 id=477 data-nosnippet>477</a>            joker.update_internal_state(event);
+<a href=#478 id=478 data-nosnippet>478</a>        }
+<a href=#479 id=479 data-nosnippet>479</a>    }
+<a href=#480 id=480 data-nosnippet>480</a>
+<a href=#481 id=481 data-nosnippet>481</a>    <span class="doccomment">/// Get total count of jokers in the collection
+<a href=#482 id=482 data-nosnippet>482</a>    </span><span class="kw">pub fn </span>total_count(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+<a href=#483 id=483 data-nosnippet>483</a>        <span class="self">self</span>.legacy_adapters.len() + <span class="self">self</span>.advanced_jokers.len()
+<a href=#484 id=484 data-nosnippet>484</a>    }
+<a href=#485 id=485 data-nosnippet>485</a>
+<a href=#486 id=486 data-nosnippet>486</a>    <span class="doccomment">/// Check if collection contains any jokers
+<a href=#487 id=487 data-nosnippet>487</a>    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+<a href=#488 id=488 data-nosnippet>488</a>        <span class="self">self</span>.legacy_adapters.is_empty() &amp;&amp; <span class="self">self</span>.advanced_jokers.is_empty()
+<a href=#489 id=489 data-nosnippet>489</a>    }
+<a href=#490 id=490 data-nosnippet>490</a>}
+<a href=#491 id=491 data-nosnippet>491</a>
+<a href=#492 id=492 data-nosnippet>492</a><span class="kw">impl </span>Debug <span class="kw">for </span>MixedJokerCollection {
+<a href=#493 id=493 data-nosnippet>493</a>    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
+<a href=#494 id=494 data-nosnippet>494</a>        f.debug_struct(<span class="string">"MixedJokerCollection"</span>)
+<a href=#495 id=495 data-nosnippet>495</a>            .field(<span class="string">"legacy_count"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.legacy_adapters.len())
+<a href=#496 id=496 data-nosnippet>496</a>            .field(<span class="string">"advanced_count"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.advanced_jokers.len())
+<a href=#497 id=497 data-nosnippet>497</a>            .finish()
+<a href=#498 id=498 data-nosnippet>498</a>    }
+<a href=#499 id=499 data-nosnippet>499</a>}
+<a href=#500 id=500 data-nosnippet>500</a>
+<a href=#501 id=501 data-nosnippet>501</a><span class="doccomment">/// Extension trait for enhanced joker builder to support legacy conversions
+<a href=#502 id=502 data-nosnippet>502</a></span><span class="kw">pub trait </span>EnhancedJokerBuilderExt {
+<a href=#503 id=503 data-nosnippet>503</a>    <span class="doccomment">/// Create an enhanced joker from a legacy joker
+<a href=#504 id=504 data-nosnippet>504</a>    </span><span class="kw">fn </span>from_legacy(legacy_joker: Box&lt;<span class="kw">dyn </span>Joker&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;EnhancedJoker, <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt;;
+<a href=#505 id=505 data-nosnippet>505</a>
+<a href=#506 id=506 data-nosnippet>506</a>    <span class="doccomment">/// Create an enhanced joker from a conditional joker
+<a href=#507 id=507 data-nosnippet>507</a>    </span><span class="kw">fn </span>from_conditional(conditional_joker: ConditionalJoker)
+<a href=#508 id=508 data-nosnippet>508</a>        -&gt; <span class="prelude-ty">Result</span>&lt;EnhancedJoker, <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt;;
+<a href=#509 id=509 data-nosnippet>509</a>}
+<a href=#510 id=510 data-nosnippet>510</a>
+<a href=#511 id=511 data-nosnippet>511</a><span class="kw">impl </span>EnhancedJokerBuilderExt <span class="kw">for </span><span class="kw">crate</span>::joker::advanced_traits::EnhancedJokerBuilder {
+<a href=#512 id=512 data-nosnippet>512</a>    <span class="kw">fn </span>from_legacy(_legacy_joker: Box&lt;<span class="kw">dyn </span>Joker&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;EnhancedJoker, <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt; {
+<a href=#513 id=513 data-nosnippet>513</a>        <span class="comment">// This would need proper implementation with correct lifetime management
+<a href=#514 id=514 data-nosnippet>514</a>        // For now, return an error indicating this needs to be implemented
+<a href=#515 id=515 data-nosnippet>515</a>        </span><span class="prelude-val">Err</span>(<span class="string">"Legacy joker conversion not yet fully implemented"</span>)
+<a href=#516 id=516 data-nosnippet>516</a>    }
+<a href=#517 id=517 data-nosnippet>517</a>
+<a href=#518 id=518 data-nosnippet>518</a>    <span class="kw">fn </span>from_conditional(
+<a href=#519 id=519 data-nosnippet>519</a>        conditional_joker: ConditionalJoker,
+<a href=#520 id=520 data-nosnippet>520</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;EnhancedJoker, <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt; {
+<a href=#521 id=521 data-nosnippet>521</a>        CompatibilityBridge::upgrade_conditional_joker(conditional_joker)
+<a href=#522 id=522 data-nosnippet>522</a>    }
+<a href=#523 id=523 data-nosnippet>523</a>}
+<a href=#524 id=524 data-nosnippet>524</a>
+<a href=#525 id=525 data-nosnippet>525</a><span class="attr">#[cfg(test)]
+<a href=#526 id=526 data-nosnippet>526</a></span><span class="kw">mod </span>tests {
+<a href=#527 id=527 data-nosnippet>527</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#528 id=528 data-nosnippet>528</a>    <span class="kw">use </span><span class="kw">crate</span>::joker::traits::Rarity;
+<a href=#529 id=529 data-nosnippet>529</a>
+<a href=#530 id=530 data-nosnippet>530</a>    <span class="attr">#[test]
+<a href=#531 id=531 data-nosnippet>531</a>    </span><span class="kw">fn </span>test_rarity_conversion() {
+<a href=#532 id=532 data-nosnippet>532</a>        <span class="macro">assert_eq!</span>(
+<a href=#533 id=533 data-nosnippet>533</a>            CompatibilityBridge::convert_rarity(<span class="kw">crate</span>::joker::JokerRarity::Common),
+<a href=#534 id=534 data-nosnippet>534</a>            Rarity::Common
+<a href=#535 id=535 data-nosnippet>535</a>        );
+<a href=#536 id=536 data-nosnippet>536</a>        <span class="macro">assert_eq!</span>(
+<a href=#537 id=537 data-nosnippet>537</a>            CompatibilityBridge::convert_rarity(<span class="kw">crate</span>::joker::JokerRarity::Legendary),
+<a href=#538 id=538 data-nosnippet>538</a>            Rarity::Legendary
+<a href=#539 id=539 data-nosnippet>539</a>        );
+<a href=#540 id=540 data-nosnippet>540</a>    }
+<a href=#541 id=541 data-nosnippet>541</a>
+<a href=#542 id=542 data-nosnippet>542</a>    <span class="attr">#[test]
+<a href=#543 id=543 data-nosnippet>543</a>    </span><span class="kw">fn </span>test_mixed_collection_creation() {
+<a href=#544 id=544 data-nosnippet>544</a>        <span class="kw">let </span>legacy_jokers: Vec&lt;Box&lt;<span class="kw">dyn </span>Joker&gt;&gt; = <span class="macro">vec!</span>[];
+<a href=#545 id=545 data-nosnippet>545</a>        <span class="kw">let </span>advanced_jokers: Vec&lt;Box&lt;<span class="kw">dyn </span>AdvancedJokerGameplay&gt;&gt; = <span class="macro">vec!</span>[];
+<a href=#546 id=546 data-nosnippet>546</a>
+<a href=#547 id=547 data-nosnippet>547</a>        <span class="kw">let </span>collection =
+<a href=#548 id=548 data-nosnippet>548</a>            CompatibilityBridge::create_mixed_collection(legacy_jokers, advanced_jokers);
+<a href=#549 id=549 data-nosnippet>549</a>
+<a href=#550 id=550 data-nosnippet>550</a>        <span class="macro">assert!</span>(collection.is_empty());
+<a href=#551 id=551 data-nosnippet>551</a>        <span class="macro">assert_eq!</span>(collection.total_count(), <span class="number">0</span>);
+<a href=#552 id=552 data-nosnippet>552</a>    }
+<a href=#553 id=553 data-nosnippet>553</a>
+<a href=#554 id=554 data-nosnippet>554</a>    <span class="attr">#[test]
+<a href=#555 id=555 data-nosnippet>555</a>    </span><span class="kw">fn </span>test_evaluation_cost_hierarchy() {
+<a href=#556 id=556 data-nosnippet>556</a>        <span class="kw">use </span>EvaluationCost::<span class="kw-2">*</span>;
+<a href=#557 id=557 data-nosnippet>557</a>
+<a href=#558 id=558 data-nosnippet>558</a>        <span class="comment">// Test that costs are properly ordered
+<a href=#559 id=559 data-nosnippet>559</a>        </span><span class="kw">let </span>costs = [Cheap, Moderate, Expensive, VeryExpensive];
+<a href=#560 id=560 data-nosnippet>560</a>        <span class="kw">for </span>window <span class="kw">in </span>costs.windows(<span class="number">2</span>) {
+<a href=#561 id=561 data-nosnippet>561</a>            <span class="macro">assert!</span>(window[<span class="number">0</span>] &lt; window[<span class="number">1</span>]);
+<a href=#562 id=562 data-nosnippet>562</a>        }
+<a href=#563 id=563 data-nosnippet>563</a>    }
+<a href=#564 id=564 data-nosnippet>564</a>}</code></pre></div></section></main></body></html>
