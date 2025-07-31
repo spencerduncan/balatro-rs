@@ -360,6 +360,7 @@ impl Game {
 
             // Initialize extended state fields
             consumables_in_hand: Vec::new(),
+            consumable_slots: crate::consumables::ConsumableSlots::new(),
             vouchers: VoucherCollection::new(),
             boss_blind_state: BossBlindState::new(),
 
@@ -2040,15 +2041,6 @@ impl Game {
                 Err(GameError::InvalidAction)
             }
 
-            // Planet card usage
-            Action::UsePlanetCard {
-                planet_card_id: _,
-                hand_rank_id: _,
-            } => {
-                // TODO: Implement planet card usage through action system
-                // For now, planet cards use level_up_hand directly
-                Err(GameError::InvalidAction)
-            }
 
             // Skip tag system actions
             Action::SkipBlind(blind) => self.handle_skip_blind(blind),
@@ -2485,11 +2477,6 @@ impl Game {
             mult: self.mult,
             score: self.score,
             hand_type_counts: self.hand_type_counts.clone(),
-            hand_levels: self
-                .hand_levels
-                .iter()
-                .map(|(k, v)| (*k, *v as u32))
-                .collect(),
             // Extended state fields
             consumables_in_hand: self.consumables_in_hand.clone(),
             vouchers: self.vouchers.clone(),
@@ -2557,6 +2544,7 @@ impl Game {
 
             // Extended state fields
             consumables_in_hand: saveable_state.consumables_in_hand,
+            consumable_slots: crate::consumables::ConsumableSlots::new(), // Initialize with default slots
             vouchers: saveable_state.vouchers,
             boss_blind_state: saveable_state.boss_blind_state,
             pack_inventory: saveable_state.pack_inventory,

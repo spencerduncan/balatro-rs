@@ -72,7 +72,7 @@ impl JokerFactory {
             JokerId::LuckyCharm => Some(Box::new(LuckyCardJoker)),
             JokerId::Reserved8 => Some(Box::new(GrimJoker)),
             JokerId::AcrobatJoker => Some(Box::new(AcrobatJokerImpl)),
-            JokerId::FortuneTeller => Some(Box::new(create_fortune_teller())),
+            JokerId::FortuneTeller => Some(create_fortune_teller()),
             JokerId::MysteryJoker => Some(Box::new(MysteryJoker)),
             JokerId::VagabondJoker => Some(Box::new(VagabondJokerImpl)),
             JokerId::Reserved9 => Some(Box::new(ChaoticJoker)),

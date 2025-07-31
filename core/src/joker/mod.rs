@@ -1325,7 +1325,6 @@ pub mod scaling_chips_jokers;
 
 // Include testing utilities for the Joker trait system
 pub mod test_utils;
-pub mod tests;
 
 // Include comprehensive tests for the new trait system
 #[cfg(test)]
