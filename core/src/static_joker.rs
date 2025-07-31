@@ -307,6 +307,7 @@ impl<T: StaticJoker> Joker for StaticJokerAdapter<T> {
 
 /// Trait for evaluating StaticJoker conditions
 /// This replaces the large match statements with modular, extensible logic
+#[allow(dead_code)]
 trait ConditionEvaluator {
     /// Check if condition is met for a specific card
     fn check_card(&self, card: &Card) -> bool;
@@ -324,6 +325,7 @@ trait ConditionEvaluator {
 
 /// Configuration for static joker bonuses
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 struct StaticJokerConfig {
     chips_bonus: Option<i32>,
     mult_bonus: Option<i32>,
@@ -331,6 +333,7 @@ struct StaticJokerConfig {
 }
 
 impl StaticJokerConfig {
+    #[allow(dead_code)]
     fn new(
         chips_bonus: Option<i32>,
         mult_bonus: Option<i32>,
@@ -344,6 +347,7 @@ impl StaticJokerConfig {
     }
 
     /// Create a standard effect from the base configuration
+    #[allow(dead_code)]
     fn create_standard_effect(&self) -> JokerEffect {
         let mut effect = JokerEffect::new();
 
@@ -368,6 +372,7 @@ impl StaticJokerConfig {
 // =============================================================================
 
 /// Always-true condition evaluator
+#[allow(dead_code)]
 struct AlwaysEvaluator;
 
 impl ConditionEvaluator for AlwaysEvaluator {
@@ -389,6 +394,7 @@ impl ConditionEvaluator for AlwaysEvaluator {
 }
 
 /// Suit-based condition evaluator
+#[allow(dead_code)]
 struct SuitEvaluator {
     target_suit: Suit,
 }
@@ -418,6 +424,7 @@ impl ConditionEvaluator for SuitEvaluator {
 }
 
 /// Rank/Value-based condition evaluator
+#[allow(dead_code)]
 struct RankEvaluator {
     target_value: Value,
 }
@@ -449,6 +456,7 @@ impl ConditionEvaluator for RankEvaluator {
 }
 
 /// Hand type condition evaluator
+#[allow(dead_code)]
 struct HandTypeEvaluator {
     required_rank: HandRank,
 }
@@ -495,6 +503,7 @@ impl ConditionEvaluator for HandTypeEvaluator {
 }
 
 /// Multiple suits condition evaluator
+#[allow(dead_code)]
 struct AnySuitEvaluator {
     target_suits: Vec<Suit>,
 }
@@ -526,6 +535,7 @@ impl ConditionEvaluator for AnySuitEvaluator {
 }
 
 /// Multiple ranks condition evaluator
+#[allow(dead_code)]
 struct AnyRankEvaluator {
     target_values: Vec<Value>,
 }
@@ -557,6 +567,7 @@ impl ConditionEvaluator for AnyRankEvaluator {
 }
 
 /// Hand size condition evaluator
+#[allow(dead_code)]
 struct HandSizeAtMostEvaluator {
     max_size: usize,
 }
@@ -587,6 +598,7 @@ impl ConditionEvaluator for HandSizeAtMostEvaluator {
 }
 
 /// Discard count condition evaluator (special case with dynamic calculation)
+#[allow(dead_code)]
 struct DiscardCountEvaluator;
 
 impl ConditionEvaluator for DiscardCountEvaluator {
@@ -628,9 +640,13 @@ impl ConditionEvaluator for DiscardCountEvaluator {
 }
 
 /// Factory for creating condition evaluators based on StaticCondition
+/// NOTE: This strategy pattern implementation is incomplete for new condition types
+/// and is currently unused in favor of the direct match-based approach in FrameworkStaticJoker
 impl StaticCondition {
     /// Create the appropriate evaluator for this condition
-    fn create_evaluator(&self) -> Box<dyn ConditionEvaluator> {
+    /// Currently disabled due to incomplete implementation for new condition types
+    #[allow(dead_code)]
+    fn _create_evaluator_unused(&self) -> Box<dyn ConditionEvaluator> {
         match self {
             StaticCondition::Always => Box::new(AlwaysEvaluator),
             StaticCondition::SuitScored(suit) => Box::new(SuitEvaluator::new(*suit)),
@@ -644,6 +660,8 @@ impl StaticCondition {
                 Box::new(HandSizeAtMostEvaluator::new(*max_size))
             }
             StaticCondition::DiscardCount => Box::new(DiscardCountEvaluator),
+            // New condition types not yet implemented in strategy pattern
+            _ => panic!("Strategy pattern evaluator not implemented for this condition type"),
         }
     }
 }
@@ -853,7 +871,6 @@ impl FrameworkStaticJoker {
                 false
             }
         }
->>>>>>> 5632758 (feat(jokers): implement condition-based jokers migration to StaticJoker framework (issue #676))
     }
 
     /// Create the effect based on configured bonuses using strategy pattern
@@ -985,7 +1002,6 @@ impl FrameworkStaticJoker {
         }
 
         effect
->>>>>>> 5632758 (feat(jokers): implement condition-based jokers migration to StaticJoker framework (issue #676))
     }
 }
 

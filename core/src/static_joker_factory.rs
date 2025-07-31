@@ -573,7 +573,7 @@ impl StaticJokerFactory {
     /// Create Bull joker (+2 Chips per $1 owned)
     pub fn create_bull_joker() -> Box<dyn Joker> {
         Box::new(
-            StaticJoker::builder(JokerId::BullMarket, "Bull", "+2 Chips per $1 owned")
+            FrameworkStaticJoker::builder(JokerId::BullMarket, "Bull", "+2 Chips per $1 owned")
                 .rarity(JokerRarity::Common)
                 .cost(3)
                 .chips(2) // Base value, multiplied by money in create_effect_with_context
@@ -587,7 +587,7 @@ impl StaticJokerFactory {
     /// Create Stone Joker (+25 Chips per Stone card in deck)
     pub fn create_stone_joker() -> Box<dyn Joker> {
         Box::new(
-            StaticJoker::builder(
+            FrameworkStaticJoker::builder(
                 JokerId::Stone,
                 "Stone Joker",
                 "+25 Chips per Stone card in deck",

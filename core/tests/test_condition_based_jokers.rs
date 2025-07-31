@@ -31,6 +31,7 @@ fn create_test_context() -> GameContext<'static> {
         round: 1,
         stage,
         hands_played: 0,
+        hands_remaining: 4.0,
         discards_used: 0,
         jokers,
         hand,
@@ -516,7 +517,7 @@ fn test_migrated_jokers_match_original_behavior() {
         "Bull joker should not provide mult multiplier"
     );
     assert!(
-        !effect.message.is_some() || effect.message.as_ref().unwrap().contains("Bull"),
+        effect.message.is_none() || effect.message.as_ref().unwrap().contains("Bull"),
         "Bull joker should have appropriate message"
     );
 }

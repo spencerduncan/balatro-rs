@@ -154,6 +154,7 @@ fn create_test_game_context() -> balatro_rs::joker::GameContext<'static> {
         cards_in_deck: 52,
         stone_cards_in_deck: 0,
         steel_cards_in_deck: 0,
+        enhanced_cards_in_deck: 0,
         rng,
     }
 }
