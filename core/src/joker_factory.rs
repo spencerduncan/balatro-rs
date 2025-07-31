@@ -225,8 +225,8 @@ impl JokerFactory {
             JokerRarity::Rare => vec![
                 // RNG-based jokers (Issue #442)
                 AcrobatJoker,
-                MysteryJoker,  // MysteryJoker
-                Fortune, // Fortune Teller scaling joker
+                MysteryJoker, // MysteryJoker
+                Fortune,      // Fortune Teller scaling joker
                 // Special mechanic jokers
                 Blueprint,
                 // Scaling chips jokers
@@ -285,8 +285,8 @@ impl JokerFactory {
             LuckyCharm, // LuckyCardJoker
             Reserved8,  // GrimJoker
             AcrobatJoker,
-            Fortune, // Fortune Teller scaling joker
-            MysteryJoker,  // MysteryJoker
+            Fortune,      // Fortune Teller scaling joker
+            MysteryJoker, // MysteryJoker
             VagabondJoker,
             Reserved9, // ChaoticJoker
             // Special mechanic jokers using new trait system
@@ -299,9 +299,9 @@ impl JokerFactory {
             // Scaling additive mult jokers
             Trousers, // Spare Trousers
             GreenJoker,
-            Reserved5,     // RideTheBus
-            RedCard,       // Red Card (pack skipping scaling joker)
-            Fortune, // Fortune Teller
+            Reserved5, // RideTheBus
+            RedCard,   // Red Card (pack skipping scaling joker)
+            Fortune,   // Fortune Teller
             // Scaling chips jokers
             Castle,
             Wee,

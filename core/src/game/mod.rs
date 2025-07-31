@@ -42,10 +42,6 @@ use std::sync::Arc;
 // Submodules
 pub mod persistence;
 
-/// Maximum debug messages to keep in memory (for practical memory management)
-#[cfg(any(debug_assertions, test))]
-const MAX_DEBUG_MESSAGES: usize = 10000;
-
 /// Score breakdown for debugging and analysis
 #[derive(Debug, Clone)]
 pub struct ScoreBreakdown {
