@@ -263,7 +263,7 @@ fn test_invalid_planet_card_usage() {
 }
 
 #[test]
-#[ignore] // Temporarily disabled until consumable slots are added to Game struct
+#[ignore] // TODO: Implement consumable_slots system - test expects field that doesn't exist yet
 fn test_consumable_slots_basic_functionality() {
     let _game = Game::new(Config::default());
 

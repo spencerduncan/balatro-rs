@@ -153,17 +153,22 @@ impl Game {
     // Get open pack actions
     fn gen_actions_open_pack(&self) -> Option<impl Iterator<Item = Action> + use<'_>> {
         // Can only open packs if there are packs in inventory and no pack is currently open
-        if self.pack_inventory.is_empty() || self.open_pack.is_some() {
+        if self.pack_manager.pack_inventory().is_empty()
+            || self.pack_manager.open_pack_state().is_some()
+        {
             return None;
         }
 
-        Some((0..self.pack_inventory.len()).map(|pack_id| Action::OpenPack { pack_id }))
+        Some(
+            (0..self.pack_manager.pack_inventory().len())
+                .map(|pack_id| Action::OpenPack { pack_id }),
+        )
     }
 
     // Get select from pack actions
     fn gen_actions_select_from_pack(&self) -> Option<impl Iterator<Item = Action> + use<'_>> {
         // Can only select if a pack is currently open
-        let open_pack_state = self.open_pack.as_ref()?;
+        let open_pack_state = self.pack_manager.open_pack_state().as_ref()?;
 
         Some(
             (0..open_pack_state.pack.options.len()).map(move |option_index| {
@@ -178,7 +183,7 @@ impl Game {
     // Get skip pack actions
     fn gen_actions_skip_pack(&self) -> Option<impl Iterator<Item = Action> + use<'_>> {
         // Can only skip if a pack is currently open and skippable
-        let open_pack_state = self.open_pack.as_ref()?;
+        let open_pack_state = self.pack_manager.open_pack_state().as_ref()?;
 
         if !open_pack_state.pack.can_skip {
             return None;

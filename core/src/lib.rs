@@ -65,8 +65,7 @@ pub fn initialize() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?;
 
     // Initialize tarot factory with all available cards
-    consumables::tarot::initialize_tarot_factory()
-        .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?;
+    let _ = consumables::tarot::initialize_tarot_factory();
 
     // Future: Initialize other factory systems (planet cards, spectral cards, etc.)
 

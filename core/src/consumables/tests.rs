@@ -890,10 +890,19 @@ mod test_mod {
     fn test_spectral_cards_list_includes_new_cards() {
         let all_spectral = ConsumableId::spectral_cards();
 
-        // Should include all implemented spectral cards
+        // Should include all implemented spectral cards from both branches
+        // Original PR Implementation (Issue #11)
         assert!(all_spectral.contains(&ConsumableId::Familiar));
         assert!(all_spectral.contains(&ConsumableId::Grim));
         assert!(all_spectral.contains(&ConsumableId::Incantation));
+        assert!(all_spectral.contains(&ConsumableId::Talisman));
+        assert!(all_spectral.contains(&ConsumableId::Aura));
+        assert!(all_spectral.contains(&ConsumableId::Wraith));
+        assert!(all_spectral.contains(&ConsumableId::Sigil));
+        assert!(all_spectral.contains(&ConsumableId::Ouija));
+        assert!(all_spectral.contains(&ConsumableId::Ectoplasm));
+
+        // Modern Main Branch Implementation
         assert!(all_spectral.contains(&ConsumableId::Immolate));
         assert!(all_spectral.contains(&ConsumableId::Ankh));
         assert!(all_spectral.contains(&ConsumableId::DejaVu));
@@ -904,8 +913,8 @@ mod test_mod {
         assert!(all_spectral.contains(&ConsumableId::TheSoul));
         assert!(all_spectral.contains(&ConsumableId::BlackHole));
 
-        // Should have exactly 12 cards
-        assert_eq!(all_spectral.len(), 12);
+        // Should have exactly 18 cards (9 from original PR + 9 from modern main)
+        assert_eq!(all_spectral.len(), 18);
     }
 
     // Integration tests for the restriction requirements

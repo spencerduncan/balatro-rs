@@ -49,6 +49,7 @@ impl TestGameData {
             hands_played: 0,
             discards_used: 0,
             hands_remaining: 4.0, // Standard hands remaining for testing
+            is_final_hand: false,
             jokers: &[],
             hand: &self.hand,
             discarded: &[],

@@ -425,7 +425,8 @@ fn test_lucky_card_joker_probability() {
             stage: &stage,
             hands_played: 0,
             discards_used: 0,
-            hands_remaining: 4.0, // Standard hands remaining for testing
+            hands_remaining: 4.0,
+            is_final_hand: false, // Standard hands remaining for testing
             jokers: &jokers,
             hand: &hand,
             discarded: &discarded,
@@ -464,8 +465,8 @@ fn test_lucky_card_joker_probability() {
 fn test_rng_jokers_deterministic_behavior() {
     use balatro_rs::hand::Hand;
     use balatro_rs::hand::SelectHand;
-    use balatro_rs::joker::{GameContext, Joker};
-    use balatro_rs::joker_impl::{ChaoticJoker, LuckyCardJoker, MysteryJoker};
+    use balatro_rs::joker::{GameContext, Joker, JokerId};
+    use balatro_rs::joker_impl::{ChaoticJoker, LuckyCardJoker};
     use balatro_rs::joker_state::JokerStateManager;
     use balatro_rs::stage::Stage;
     use std::sync::Arc;
@@ -474,9 +475,11 @@ fn test_rng_jokers_deterministic_behavior() {
     let test_iterations = 100;
 
     // Test each RNG joker with the same seed
+    use balatro_rs::joker_factory::JokerFactory;
+
     let jokers: Vec<Box<dyn Joker>> = vec![
         Box::new(LuckyCardJoker),
-        Box::new(MysteryJoker),
+        JokerFactory::create(JokerId::FortuneTeller).unwrap(),
         Box::new(ChaoticJoker),
     ];
 
@@ -504,7 +507,8 @@ fn test_rng_jokers_deterministic_behavior() {
                 stage: &stage,
                 hands_played: 0,
                 discards_used: 0,
-                hands_remaining: 4.0, // Standard hands remaining for testing
+                hands_remaining: 4.0,
+                is_final_hand: false,
                 jokers: &jokers_vec,
                 hand: &hand,
                 discarded: &discarded,
@@ -541,7 +545,8 @@ fn test_rng_jokers_deterministic_behavior() {
                 stage: &stage,
                 hands_played: 0,
                 discards_used: 0,
-                hands_remaining: 4.0, // Standard hands remaining for testing
+                hands_remaining: 4.0,
+                is_final_hand: false,
                 jokers: &jokers_vec,
                 hand: &hand,
                 discarded: &discarded,

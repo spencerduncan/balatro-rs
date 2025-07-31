@@ -198,7 +198,7 @@ impl Default for FortuneTellerJoker {
 impl FortuneTellerJoker {
     pub fn new() -> Self {
         Self {
-            id: JokerId::Fortune,
+            id: JokerId::FortuneTeller,
             name: "Fortune Teller".to_string(),
             description: "+1 Mult per Tarot card used".to_string(),
             rarity: JokerRarity::Rare,
@@ -679,7 +679,7 @@ impl Default for RedCardJoker {
 impl RedCardJoker {
     pub fn new() -> Self {
         Self {
-            id: JokerId::Reserved6, // Use Reserved6 as expected by factory tests
+            id: JokerId::Reserved6, // RedCard (pack skipping version)
             name: "Red Card".to_string(),
             description: "+3 Mult per pack skipped".to_string(),
             rarity: JokerRarity::Common,

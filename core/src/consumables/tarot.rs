@@ -143,6 +143,7 @@ impl TarotFactory {
     /// Create a tarot card by its ConsumableId
     pub fn create_tarot(&self, id: ConsumableId) -> Result<Box<dyn TarotCard>, TarotError> {
         match id {
+            // Wave 1 Tarot Cards (Major Arcana 0-X)
             ConsumableId::TheFool => Ok(Box::new(TheFool::new())),
             ConsumableId::TheMagician => Ok(Box::new(TheMagician::new())),
             ConsumableId::TheHighPriestess => Ok(Box::new(TheHighPriestess::new())),
@@ -154,6 +155,20 @@ impl TarotFactory {
             ConsumableId::Strength => Ok(Box::new(StrengthCard::new())),
             ConsumableId::TheHermit => Ok(Box::new(TheHermit::new())),
             ConsumableId::WheelOfFortune => Ok(Box::new(WheelOfFortune::new())),
+
+            // Wave 2 Tarot Cards (Major Arcana XI-XXI)
+            ConsumableId::Justice => Ok(Box::new(Justice::new())),
+            ConsumableId::TheHangedMan => Ok(Box::new(TheHangedMan::new())),
+            ConsumableId::Death => Ok(Box::new(Death::new())),
+            ConsumableId::Temperance => Ok(Box::new(Temperance::new())),
+            ConsumableId::TheDevil => Ok(Box::new(TheDevil::new())),
+            ConsumableId::TheTower => Ok(Box::new(TheTower::new())),
+            ConsumableId::TheStar => Ok(Box::new(TheStar::new())),
+            ConsumableId::TheMoon => Ok(Box::new(TheMoon::new())),
+            ConsumableId::TheSun => Ok(Box::new(TheSun::new())),
+            ConsumableId::Judgement => Ok(Box::new(Judgement::new())),
+            ConsumableId::TheWorld => Ok(Box::new(TheWorld::new())),
+
             _ => Err(TarotError::ConsumableCreationFailed {
                 reason: format!("Unknown tarot card ID: {id:?}"),
             }),
@@ -1254,6 +1269,1136 @@ impl Consumable for WheelOfFortune {
     fn description(&self) -> &'static str {
         "1 in 4 chance to add Foil, Holographic, or Polychrome edition"
     }
+    fn cost(&self) -> usize {
+        3
+    }
+}
+
+// Wave 2 Major Arcana implementations (XI-XXI)
+
+/// Justice (XI) - Enhances 1 selected card to Glass Card
+///
+/// Glass Cards are fragile but provide powerful benefits.
+/// This is a single-target enhancement card.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Justice;
+
+impl Default for Justice {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Justice {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl TarotCard for Justice {
+    fn card_id(&self) -> ConsumableId {
+        ConsumableId::Justice
+    }
+
+    fn arcana_number(&self) -> u8 {
+        11
+    }
+
+    fn arcana_name(&self) -> &'static str {
+        "Justice"
+    }
+
+    fn flavor_text(&self) -> &'static str {
+        "Balance through transparency and truth."
+    }
+
+    fn activate(&self, _game: &mut Game, target: Target) -> Result<TarotEffect, TarotError> {
+        let card_target = target
+            .as_card_target()
+            .ok_or_else(|| TarotError::EnhancementFailed {
+                reason: "Invalid target for Justice".to_string(),
+            })?;
+
+        if card_target.indices.len() != 1 {
+            return Err(TarotError::InsufficientCards {
+                needed: 1,
+                available: card_target.indices.len(),
+            });
+        }
+
+        let mut effect = TarotEffect::default();
+
+        // Apply Glass enhancement to the target card
+        effect.enhanced_cards.push(CardEnhancement {
+            card_index: card_target.indices[0],
+            collection: card_target.collection,
+            enhancement: Enhancement::Glass,
+            edition: None,
+        });
+
+        effect.description = "Enhanced 1 card to Glass Card".to_string();
+        Ok(effect)
+    }
+}
+
+impl Consumable for Justice {
+    fn consumable_type(&self) -> ConsumableType {
+        ConsumableType::Tarot
+    }
+
+    fn can_use(&self, game_state: &Game, target: &Target) -> bool {
+        target.is_valid_type(self.get_target_type()) && target.validate(game_state).is_ok()
+    }
+
+    fn use_effect(&self, game_state: &mut Game, target: Target) -> Result<(), ConsumableError> {
+        match self.activate(game_state, target) {
+            Ok(_effect) => Ok(()),
+            Err(e) => Err(ConsumableError::EffectFailed(e.to_string())),
+        }
+    }
+
+    fn get_description(&self) -> String {
+        "Enhances 1 selected card to Glass Card".to_string()
+    }
+
+    fn get_effect_category(&self) -> ConsumableEffect {
+        ConsumableEffect::Enhancement
+    }
+
+    fn get_target_type(&self) -> TargetType {
+        TargetType::Cards(1)
+    }
+
+    fn name(&self) -> &'static str {
+        "Justice"
+    }
+
+    fn description(&self) -> &'static str {
+        "Enhances 1 selected card to Glass Card"
+    }
+
+    fn cost(&self) -> usize {
+        3
+    }
+}
+
+/// The Hanged Man (XII) - Destroys up to 2 selected cards
+///
+/// This is a destructive card that removes cards from the game.
+/// Useful for removing unwanted cards from hand or deck.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TheHangedMan;
+
+impl Default for TheHangedMan {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl TheHangedMan {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl TarotCard for TheHangedMan {
+    fn card_id(&self) -> ConsumableId {
+        ConsumableId::TheHangedMan
+    }
+
+    fn arcana_number(&self) -> u8 {
+        12
+    }
+
+    fn arcana_name(&self) -> &'static str {
+        "The Hanged Man"
+    }
+
+    fn flavor_text(&self) -> &'static str {
+        "Sacrifice leads to enlightenment."
+    }
+
+    fn activate(&self, _game: &mut Game, target: Target) -> Result<TarotEffect, TarotError> {
+        let card_target = target
+            .as_card_target()
+            .ok_or_else(|| TarotError::EnhancementFailed {
+                reason: "Invalid target for The Hanged Man".to_string(),
+            })?;
+
+        let count = card_target.indices.len();
+        if count == 0 || count > 2 {
+            return Err(TarotError::InsufficientCards {
+                needed: 1, // At least 1, up to 2
+                available: count,
+            });
+        }
+
+        let effect = TarotEffect {
+            cards_removed: card_target.indices.clone(),
+            description: format!("Destroyed {count} card(s)"),
+            ..Default::default()
+        };
+
+        Ok(effect)
+    }
+}
+
+impl Consumable for TheHangedMan {
+    fn consumable_type(&self) -> ConsumableType {
+        ConsumableType::Tarot
+    }
+
+    fn can_use(&self, game_state: &Game, target: &Target) -> bool {
+        target.is_valid_type(self.get_target_type()) && target.validate(game_state).is_ok()
+    }
+
+    fn use_effect(&self, game_state: &mut Game, target: Target) -> Result<(), ConsumableError> {
+        match self.activate(game_state, target) {
+            Ok(_effect) => Ok(()),
+            Err(e) => Err(ConsumableError::EffectFailed(e.to_string())),
+        }
+    }
+
+    fn get_description(&self) -> String {
+        "Destroys up to 2 selected cards".to_string()
+    }
+
+    fn get_effect_category(&self) -> ConsumableEffect {
+        ConsumableEffect::Modification
+    }
+
+    fn get_target_type(&self) -> TargetType {
+        TargetType::Cards(2)
+    }
+
+    fn name(&self) -> &'static str {
+        "The Hanged Man"
+    }
+
+    fn description(&self) -> &'static str {
+        "Destroys up to 2 selected cards"
+    }
+
+    fn cost(&self) -> usize {
+        3
+    }
+}
+
+/// Death (XIII) - Select 2 cards, convert left card to match right card
+///
+/// This is a transformation card that copies one card to another.
+/// Requires exactly 2 cards - the first becomes a copy of the second.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Death;
+
+impl Default for Death {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Death {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl TarotCard for Death {
+    fn card_id(&self) -> ConsumableId {
+        ConsumableId::Death
+    }
+
+    fn arcana_number(&self) -> u8 {
+        13
+    }
+
+    fn arcana_name(&self) -> &'static str {
+        "Death"
+    }
+
+    fn flavor_text(&self) -> &'static str {
+        "Endings enable new beginnings."
+    }
+
+    fn activate(&self, _game: &mut Game, target: Target) -> Result<TarotEffect, TarotError> {
+        let card_target = target
+            .as_card_target()
+            .ok_or_else(|| TarotError::EnhancementFailed {
+                reason: "Invalid target for Death".to_string(),
+            })?;
+
+        if card_target.indices.len() != 2 {
+            return Err(TarotError::InsufficientCards {
+                needed: 2,
+                available: card_target.indices.len(),
+            });
+        }
+
+        let effect = TarotEffect {
+            description: "Transformed first card to match second card".to_string(),
+            ..Default::default()
+        };
+
+        // TODO: Implement actual card copying logic when proper game state mutation API is available
+
+        Ok(effect)
+    }
+}
+
+impl Consumable for Death {
+    fn consumable_type(&self) -> ConsumableType {
+        ConsumableType::Tarot
+    }
+
+    fn can_use(&self, game_state: &Game, target: &Target) -> bool {
+        target.is_valid_type(self.get_target_type()) && target.validate(game_state).is_ok()
+    }
+
+    fn use_effect(&self, game_state: &mut Game, target: Target) -> Result<(), ConsumableError> {
+        match self.activate(game_state, target) {
+            Ok(_effect) => Ok(()),
+            Err(e) => Err(ConsumableError::EffectFailed(e.to_string())),
+        }
+    }
+
+    fn get_description(&self) -> String {
+        "Select 2 cards, convert left card to match right card".to_string()
+    }
+
+    fn get_effect_category(&self) -> ConsumableEffect {
+        ConsumableEffect::Modification
+    }
+
+    fn get_target_type(&self) -> TargetType {
+        TargetType::Cards(2)
+    }
+
+    fn name(&self) -> &'static str {
+        "Death"
+    }
+
+    fn description(&self) -> &'static str {
+        "Select 2 cards, convert left card to match right card"
+    }
+
+    fn cost(&self) -> usize {
+        3
+    }
+}
+
+/// Temperance (XIV) - Gives the total sell value of all current Jokers
+///
+/// This is a utility card that converts joker value to money without destroying them.
+/// Requires no targeting - affects all jokers.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Temperance;
+
+impl Default for Temperance {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Temperance {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl TarotCard for Temperance {
+    fn card_id(&self) -> ConsumableId {
+        ConsumableId::Temperance
+    }
+
+    fn arcana_number(&self) -> u8 {
+        14
+    }
+
+    fn arcana_name(&self) -> &'static str {
+        "Temperance"
+    }
+
+    fn flavor_text(&self) -> &'static str {
+        "Moderation brings unexpected rewards."
+    }
+
+    fn activate(&self, game: &mut Game, _target: Target) -> Result<TarotEffect, TarotError> {
+        // Calculate total sell value of all jokers
+        let total_value = game.jokers.len() as i32 * 2; // Assuming $2 sell value per joker
+
+        let effect = TarotEffect {
+            money_change: total_value,
+            description: format!("Gained ${total_value} from joker values"),
+            ..Default::default()
+        };
+
+        // Apply money change to game state immediately
+        game.money += total_value as f64;
+
+        Ok(effect)
+    }
+}
+
+impl Consumable for Temperance {
+    fn consumable_type(&self) -> ConsumableType {
+        ConsumableType::Tarot
+    }
+
+    fn can_use(&self, game_state: &Game, target: &Target) -> bool {
+        target.is_valid_type(self.get_target_type()) && target.validate(game_state).is_ok()
+    }
+
+    fn use_effect(&self, game_state: &mut Game, target: Target) -> Result<(), ConsumableError> {
+        match self.activate(game_state, target) {
+            Ok(_effect) => Ok(()),
+            Err(e) => Err(ConsumableError::EffectFailed(e.to_string())),
+        }
+    }
+
+    fn get_description(&self) -> String {
+        "Gives the total sell value of all current Jokers".to_string()
+    }
+
+    fn get_effect_category(&self) -> ConsumableEffect {
+        ConsumableEffect::Utility
+    }
+
+    fn get_target_type(&self) -> TargetType {
+        TargetType::None
+    }
+
+    fn name(&self) -> &'static str {
+        "Temperance"
+    }
+
+    fn description(&self) -> &'static str {
+        "Gives the total sell value of all current Jokers"
+    }
+
+    fn cost(&self) -> usize {
+        3
+    }
+}
+
+/// The Devil (XV) - Enhances 1 selected card to Gold Card
+///
+/// Gold Cards provide money-based benefits.
+/// This is a single-target enhancement card.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TheDevil;
+
+impl Default for TheDevil {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl TheDevil {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl TarotCard for TheDevil {
+    fn card_id(&self) -> ConsumableId {
+        ConsumableId::TheDevil
+    }
+
+    fn arcana_number(&self) -> u8 {
+        15
+    }
+
+    fn arcana_name(&self) -> &'static str {
+        "The Devil"
+    }
+
+    fn flavor_text(&self) -> &'static str {
+        "Temptation offers golden rewards."
+    }
+
+    fn activate(&self, _game: &mut Game, target: Target) -> Result<TarotEffect, TarotError> {
+        let card_target = target
+            .as_card_target()
+            .ok_or_else(|| TarotError::EnhancementFailed {
+                reason: "Invalid target for The Devil".to_string(),
+            })?;
+
+        if card_target.indices.len() != 1 {
+            return Err(TarotError::InsufficientCards {
+                needed: 1,
+                available: card_target.indices.len(),
+            });
+        }
+
+        let mut effect = TarotEffect::default();
+
+        // Apply Gold enhancement to the target card
+        effect.enhanced_cards.push(CardEnhancement {
+            card_index: card_target.indices[0],
+            collection: card_target.collection,
+            enhancement: Enhancement::Gold,
+            edition: None,
+        });
+
+        effect.description = "Enhanced 1 card to Gold Card".to_string();
+        Ok(effect)
+    }
+}
+
+impl Consumable for TheDevil {
+    fn consumable_type(&self) -> ConsumableType {
+        ConsumableType::Tarot
+    }
+
+    fn can_use(&self, game_state: &Game, target: &Target) -> bool {
+        target.is_valid_type(self.get_target_type()) && target.validate(game_state).is_ok()
+    }
+
+    fn use_effect(&self, game_state: &mut Game, target: Target) -> Result<(), ConsumableError> {
+        match self.activate(game_state, target) {
+            Ok(_effect) => Ok(()),
+            Err(e) => Err(ConsumableError::EffectFailed(e.to_string())),
+        }
+    }
+
+    fn get_description(&self) -> String {
+        "Enhances 1 selected card to Gold Card".to_string()
+    }
+
+    fn get_effect_category(&self) -> ConsumableEffect {
+        ConsumableEffect::Enhancement
+    }
+
+    fn get_target_type(&self) -> TargetType {
+        TargetType::Cards(1)
+    }
+
+    fn name(&self) -> &'static str {
+        "The Devil"
+    }
+
+    fn description(&self) -> &'static str {
+        "Enhances 1 selected card to Gold Card"
+    }
+
+    fn cost(&self) -> usize {
+        3
+    }
+}
+
+/// The Tower (XVI) - Enhances 1 selected card to Stone Card
+///
+/// Stone Cards provide defensive benefits.
+/// This is a single-target enhancement card.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TheTower;
+
+impl Default for TheTower {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl TheTower {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl TarotCard for TheTower {
+    fn card_id(&self) -> ConsumableId {
+        ConsumableId::TheTower
+    }
+
+    fn arcana_number(&self) -> u8 {
+        16
+    }
+
+    fn arcana_name(&self) -> &'static str {
+        "The Tower"
+    }
+
+    fn flavor_text(&self) -> &'static str {
+        "Destruction clears the way for foundation."
+    }
+
+    fn activate(&self, _game: &mut Game, target: Target) -> Result<TarotEffect, TarotError> {
+        let card_target = target
+            .as_card_target()
+            .ok_or_else(|| TarotError::EnhancementFailed {
+                reason: "Invalid target for The Tower".to_string(),
+            })?;
+
+        if card_target.indices.len() != 1 {
+            return Err(TarotError::InsufficientCards {
+                needed: 1,
+                available: card_target.indices.len(),
+            });
+        }
+
+        let mut effect = TarotEffect::default();
+
+        // Apply Stone enhancement to the target card
+        effect.enhanced_cards.push(CardEnhancement {
+            card_index: card_target.indices[0],
+            collection: card_target.collection,
+            enhancement: Enhancement::Stone,
+            edition: None,
+        });
+
+        effect.description = "Enhanced 1 card to Stone Card".to_string();
+        Ok(effect)
+    }
+}
+
+impl Consumable for TheTower {
+    fn consumable_type(&self) -> ConsumableType {
+        ConsumableType::Tarot
+    }
+
+    fn can_use(&self, game_state: &Game, target: &Target) -> bool {
+        target.is_valid_type(self.get_target_type()) && target.validate(game_state).is_ok()
+    }
+
+    fn use_effect(&self, game_state: &mut Game, target: Target) -> Result<(), ConsumableError> {
+        match self.activate(game_state, target) {
+            Ok(_effect) => Ok(()),
+            Err(e) => Err(ConsumableError::EffectFailed(e.to_string())),
+        }
+    }
+
+    fn get_description(&self) -> String {
+        "Enhances 1 selected card to Stone Card".to_string()
+    }
+
+    fn get_effect_category(&self) -> ConsumableEffect {
+        ConsumableEffect::Enhancement
+    }
+
+    fn get_target_type(&self) -> TargetType {
+        TargetType::Cards(1)
+    }
+
+    fn name(&self) -> &'static str {
+        "The Tower"
+    }
+
+    fn description(&self) -> &'static str {
+        "Enhances 1 selected card to Stone Card"
+    }
+
+    fn cost(&self) -> usize {
+        3
+    }
+}
+
+/// The Star (XVII) - Converts up to 3 selected cards to Diamonds
+///
+/// This is a suit conversion card that changes cards to Diamond suit.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TheStar;
+
+impl Default for TheStar {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl TheStar {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl TarotCard for TheStar {
+    fn card_id(&self) -> ConsumableId {
+        ConsumableId::TheStar
+    }
+
+    fn arcana_number(&self) -> u8 {
+        17
+    }
+
+    fn arcana_name(&self) -> &'static str {
+        "The Star"
+    }
+
+    fn flavor_text(&self) -> &'static str {
+        "Hope shines bright as diamonds."
+    }
+
+    fn activate(&self, _game: &mut Game, target: Target) -> Result<TarotEffect, TarotError> {
+        let card_target = target
+            .as_card_target()
+            .ok_or_else(|| TarotError::EnhancementFailed {
+                reason: "Invalid target for The Star".to_string(),
+            })?;
+
+        let count = card_target.indices.len();
+        if count == 0 || count > 3 {
+            return Err(TarotError::InsufficientCards {
+                needed: 1, // At least 1, up to 3
+                available: count,
+            });
+        }
+
+        let effect = TarotEffect {
+            description: format!("Converted {count} card(s) to Diamonds"),
+            ..Default::default()
+        };
+
+        // TODO: Implement actual suit conversion when proper game state mutation API is available
+
+        Ok(effect)
+    }
+}
+
+impl Consumable for TheStar {
+    fn consumable_type(&self) -> ConsumableType {
+        ConsumableType::Tarot
+    }
+
+    fn can_use(&self, game_state: &Game, target: &Target) -> bool {
+        target.is_valid_type(self.get_target_type()) && target.validate(game_state).is_ok()
+    }
+
+    fn use_effect(&self, game_state: &mut Game, target: Target) -> Result<(), ConsumableError> {
+        match self.activate(game_state, target) {
+            Ok(_effect) => Ok(()),
+            Err(e) => Err(ConsumableError::EffectFailed(e.to_string())),
+        }
+    }
+
+    fn get_description(&self) -> String {
+        "Converts up to 3 selected cards to Diamonds".to_string()
+    }
+
+    fn get_effect_category(&self) -> ConsumableEffect {
+        ConsumableEffect::Modification
+    }
+
+    fn get_target_type(&self) -> TargetType {
+        TargetType::Cards(3)
+    }
+
+    fn name(&self) -> &'static str {
+        "The Star"
+    }
+
+    fn description(&self) -> &'static str {
+        "Converts up to 3 selected cards to Diamonds"
+    }
+
+    fn cost(&self) -> usize {
+        3
+    }
+}
+
+/// The Moon (XVIII) - Converts up to 3 selected cards to Clubs
+///
+/// This is a suit conversion card that changes cards to Club suit.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TheMoon;
+
+impl Default for TheMoon {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl TheMoon {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl TarotCard for TheMoon {
+    fn card_id(&self) -> ConsumableId {
+        ConsumableId::TheMoon
+    }
+
+    fn arcana_number(&self) -> u8 {
+        18
+    }
+
+    fn arcana_name(&self) -> &'static str {
+        "The Moon"
+    }
+
+    fn flavor_text(&self) -> &'static str {
+        "Illusions reveal hidden clubs."
+    }
+
+    fn activate(&self, _game: &mut Game, target: Target) -> Result<TarotEffect, TarotError> {
+        let card_target = target
+            .as_card_target()
+            .ok_or_else(|| TarotError::EnhancementFailed {
+                reason: "Invalid target for The Moon".to_string(),
+            })?;
+
+        let count = card_target.indices.len();
+        if count == 0 || count > 3 {
+            return Err(TarotError::InsufficientCards {
+                needed: 1, // At least 1, up to 3
+                available: count,
+            });
+        }
+
+        let effect = TarotEffect {
+            description: format!("Converted {count} card(s) to Clubs"),
+            ..Default::default()
+        };
+
+        // TODO: Implement actual suit conversion when proper game state mutation API is available
+
+        Ok(effect)
+    }
+}
+
+impl Consumable for TheMoon {
+    fn consumable_type(&self) -> ConsumableType {
+        ConsumableType::Tarot
+    }
+
+    fn can_use(&self, game_state: &Game, target: &Target) -> bool {
+        target.is_valid_type(self.get_target_type()) && target.validate(game_state).is_ok()
+    }
+
+    fn use_effect(&self, game_state: &mut Game, target: Target) -> Result<(), ConsumableError> {
+        match self.activate(game_state, target) {
+            Ok(_effect) => Ok(()),
+            Err(e) => Err(ConsumableError::EffectFailed(e.to_string())),
+        }
+    }
+
+    fn get_description(&self) -> String {
+        "Converts up to 3 selected cards to Clubs".to_string()
+    }
+
+    fn get_effect_category(&self) -> ConsumableEffect {
+        ConsumableEffect::Modification
+    }
+
+    fn get_target_type(&self) -> TargetType {
+        TargetType::Cards(3)
+    }
+
+    fn name(&self) -> &'static str {
+        "The Moon"
+    }
+
+    fn description(&self) -> &'static str {
+        "Converts up to 3 selected cards to Clubs"
+    }
+
+    fn cost(&self) -> usize {
+        3
+    }
+}
+
+/// The Sun (XIX) - Converts up to 3 selected cards to Hearts
+///
+/// This is a suit conversion card that changes cards to Heart suit.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TheSun;
+
+impl Default for TheSun {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl TheSun {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl TarotCard for TheSun {
+    fn card_id(&self) -> ConsumableId {
+        ConsumableId::TheSun
+    }
+
+    fn arcana_number(&self) -> u8 {
+        19
+    }
+
+    fn arcana_name(&self) -> &'static str {
+        "The Sun"
+    }
+
+    fn flavor_text(&self) -> &'static str {
+        "Radiant warmth fills every heart."
+    }
+
+    fn activate(&self, _game: &mut Game, target: Target) -> Result<TarotEffect, TarotError> {
+        let card_target = target
+            .as_card_target()
+            .ok_or_else(|| TarotError::EnhancementFailed {
+                reason: "Invalid target for The Sun".to_string(),
+            })?;
+
+        let count = card_target.indices.len();
+        if count == 0 || count > 3 {
+            return Err(TarotError::InsufficientCards {
+                needed: 1, // At least 1, up to 3
+                available: count,
+            });
+        }
+
+        let effect = TarotEffect {
+            description: format!("Converted {count} card(s) to Hearts"),
+            ..Default::default()
+        };
+
+        // TODO: Implement actual suit conversion when proper game state mutation API is available
+
+        Ok(effect)
+    }
+}
+
+impl Consumable for TheSun {
+    fn consumable_type(&self) -> ConsumableType {
+        ConsumableType::Tarot
+    }
+
+    fn can_use(&self, game_state: &Game, target: &Target) -> bool {
+        target.is_valid_type(self.get_target_type()) && target.validate(game_state).is_ok()
+    }
+
+    fn use_effect(&self, game_state: &mut Game, target: Target) -> Result<(), ConsumableError> {
+        match self.activate(game_state, target) {
+            Ok(_effect) => Ok(()),
+            Err(e) => Err(ConsumableError::EffectFailed(e.to_string())),
+        }
+    }
+
+    fn get_description(&self) -> String {
+        "Converts up to 3 selected cards to Hearts".to_string()
+    }
+
+    fn get_effect_category(&self) -> ConsumableEffect {
+        ConsumableEffect::Modification
+    }
+
+    fn get_target_type(&self) -> TargetType {
+        TargetType::Cards(3)
+    }
+
+    fn name(&self) -> &'static str {
+        "The Sun"
+    }
+
+    fn description(&self) -> &'static str {
+        "Converts up to 3 selected cards to Hearts"
+    }
+
+    fn cost(&self) -> usize {
+        3
+    }
+}
+
+/// Judgement (XX) - Creates a random Joker card
+///
+/// This is a generation card that adds a new joker to the game.
+/// Requires space for a new joker.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Judgement;
+
+impl Default for Judgement {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Judgement {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl TarotCard for Judgement {
+    fn card_id(&self) -> ConsumableId {
+        ConsumableId::Judgement
+    }
+
+    fn arcana_number(&self) -> u8 {
+        20
+    }
+
+    fn arcana_name(&self) -> &'static str {
+        "Judgement"
+    }
+
+    fn flavor_text(&self) -> &'static str {
+        "Divine judgment brings new allies."
+    }
+
+    fn activate(&self, game: &mut Game, _target: Target) -> Result<TarotEffect, TarotError> {
+        // Check if we have space for a new joker first
+        if game.jokers.len() >= 5 {
+            // Assuming 5 is max joker slots
+            return Err(TarotError::NoJokerAvailable);
+        }
+
+        let mut effect = TarotEffect::default();
+
+        // Create a random common joker
+        let common_jokers = [
+            JokerId::Joker,
+            JokerId::GreedyJoker,
+            JokerId::LustyJoker,
+            JokerId::WrathfulJoker,
+            JokerId::GluttonousJoker,
+        ];
+
+        let selected_joker = common_jokers[game.rng.gen_range(0..common_jokers.len())];
+        effect.jokers_created.push(selected_joker);
+        effect.description = format!("Created a {selected_joker:?} joker");
+
+        Ok(effect)
+    }
+}
+
+impl Consumable for Judgement {
+    fn consumable_type(&self) -> ConsumableType {
+        ConsumableType::Tarot
+    }
+
+    fn can_use(&self, game_state: &Game, target: &Target) -> bool {
+        target.is_valid_type(self.get_target_type()) && target.validate(game_state).is_ok()
+    }
+
+    fn use_effect(&self, game_state: &mut Game, target: Target) -> Result<(), ConsumableError> {
+        match self.activate(game_state, target) {
+            Ok(_effect) => Ok(()),
+            Err(e) => Err(ConsumableError::EffectFailed(e.to_string())),
+        }
+    }
+
+    fn get_description(&self) -> String {
+        "Creates a random Joker card".to_string()
+    }
+
+    fn get_effect_category(&self) -> ConsumableEffect {
+        ConsumableEffect::Generation
+    }
+
+    fn get_target_type(&self) -> TargetType {
+        TargetType::None
+    }
+
+    fn name(&self) -> &'static str {
+        "Judgement"
+    }
+
+    fn description(&self) -> &'static str {
+        "Creates a random Joker card"
+    }
+
+    fn cost(&self) -> usize {
+        3
+    }
+}
+
+/// The World (XXI) - Converts up to 3 selected cards to Spades
+///
+/// This is a suit conversion card that changes cards to Spade suit.
+/// Completes the suit conversion cycle with the other cards.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TheWorld;
+
+impl Default for TheWorld {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl TheWorld {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+impl TarotCard for TheWorld {
+    fn card_id(&self) -> ConsumableId {
+        ConsumableId::TheWorld
+    }
+
+    fn arcana_number(&self) -> u8 {
+        21
+    }
+
+    fn arcana_name(&self) -> &'static str {
+        "The World"
+    }
+
+    fn flavor_text(&self) -> &'static str {
+        "Completion brings the sharpest spades."
+    }
+
+    fn activate(&self, _game: &mut Game, target: Target) -> Result<TarotEffect, TarotError> {
+        let card_target = target
+            .as_card_target()
+            .ok_or_else(|| TarotError::EnhancementFailed {
+                reason: "Invalid target for The World".to_string(),
+            })?;
+
+        let count = card_target.indices.len();
+        if count == 0 || count > 3 {
+            return Err(TarotError::InsufficientCards {
+                needed: 1, // At least 1, up to 3
+                available: count,
+            });
+        }
+
+        let effect = TarotEffect {
+            description: format!("Converted {count} card(s) to Spades"),
+            ..Default::default()
+        };
+
+        // TODO: Implement actual suit conversion when proper game state mutation API is available
+
+        Ok(effect)
+    }
+}
+
+impl Consumable for TheWorld {
+    fn consumable_type(&self) -> ConsumableType {
+        ConsumableType::Tarot
+    }
+
+    fn can_use(&self, game_state: &Game, target: &Target) -> bool {
+        target.is_valid_type(self.get_target_type()) && target.validate(game_state).is_ok()
+    }
+
+    fn use_effect(&self, game_state: &mut Game, target: Target) -> Result<(), ConsumableError> {
+        match self.activate(game_state, target) {
+            Ok(_effect) => Ok(()),
+            Err(e) => Err(ConsumableError::EffectFailed(e.to_string())),
+        }
+    }
+
+    fn get_description(&self) -> String {
+        "Converts up to 3 selected cards to Spades".to_string()
+    }
+
+    fn get_effect_category(&self) -> ConsumableEffect {
+        ConsumableEffect::Modification
+    }
+
+    fn get_target_type(&self) -> TargetType {
+        TargetType::Cards(3)
+    }
+
+    fn name(&self) -> &'static str {
+        "The World"
+    }
+
+    fn description(&self) -> &'static str {
+        "Converts up to 3 selected cards to Spades"
+    }
+
     fn cost(&self) -> usize {
         3
     }

@@ -139,7 +139,7 @@ pub enum JokerId {
     Certificate,
     SmilingMask,
     FaceMask,
-    Fortune,
+    FortuneTeller,
     Juggler,
     Drunkard,
     Stone,
@@ -348,6 +348,13 @@ pub struct JokerEffect {
     ///
     /// Used for jokers with special effects, Easter eggs, or important notifications.
     pub message: Option<String>,
+
+    /// Consumables to create and add to the player's inventory.
+    ///
+    /// Used by jokers that generate Tarot cards, Planet cards, or Spectral cards.
+    /// Each consumable ID in the vector represents a consumable to be created
+    /// and added to the player's consumable slots.
+    pub consumables_created: Vec<crate::consumables::ConsumableId>,
 }
 
 impl Default for JokerEffect {
@@ -357,9 +364,10 @@ impl Default for JokerEffect {
             mult: 0,
             money: 0,
             interest_bonus: 0,
-            mult_multiplier: 1.0, // Default to "no change" rather than 0.0
+            mult_multiplier: 1.0, // Default to 1.0 (no effect) instead of 0.0
             retrigger: 0,
             destroy_self: false,
+            consumables_created: Vec::new(),
             destroy_others: Vec::new(),
             transform_cards: Vec::new(),
             hand_size_mod: 0,
@@ -421,6 +429,39 @@ impl JokerEffect {
     /// Set custom message
     pub fn with_message(mut self, message: String) -> Self {
         self.message = Some(message);
+        self
+    }
+
+    /// Add consumables to be created
+    pub fn with_consumables_created(
+        mut self,
+        consumables: Vec<crate::consumables::ConsumableId>,
+    ) -> Self {
+        self.consumables_created = consumables;
+        self
+    }
+
+    /// Add a single consumable to be created
+    pub fn with_consumable_created(mut self, consumable: crate::consumables::ConsumableId) -> Self {
+        self.consumables_created.push(consumable);
+        self
+    }
+
+    /// Set destroy self flag
+    pub fn with_destroy_self(mut self, destroy_self: bool) -> Self {
+        self.destroy_self = destroy_self;
+        self
+    }
+
+    /// Set other jokers to destroy
+    pub fn with_destroy_others(mut self, destroy_others: Vec<JokerId>) -> Self {
+        self.destroy_others = destroy_others;
+        self
+    }
+
+    /// Set card transformations
+    pub fn with_transform_cards(mut self, transform_cards: Vec<(Card, Card)>) -> Self {
+        self.transform_cards = transform_cards;
         self
     }
 }
@@ -533,6 +574,8 @@ pub struct GameContext<'a> {
     pub hands_remaining: f64,
     /// Number of discards used this round
     pub discards_used: u32,
+    /// Whether this is the final hand of the round
+    pub is_final_hand: bool,
     /// All jokers in play
     pub jokers: &'a [Box<dyn Joker>],
     /// Cards in hand
@@ -1324,8 +1367,10 @@ pub mod scaling_additive_mult_jokers;
 pub mod scaling_chips_jokers;
 
 // Include testing utilities for the Joker trait system
-#[cfg(test)]
 pub mod test_utils;
+
+// Include comprehensive TestJoker mock implementations for effect-based testing
+pub mod test_jokers;
 
 // Include comprehensive tests for the new trait system
 #[cfg(test)]
