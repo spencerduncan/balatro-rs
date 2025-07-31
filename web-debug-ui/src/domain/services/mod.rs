@@ -11,7 +11,7 @@ pub use action_validator::{ActionValidator, BalatroActionValidator};
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn services_are_available() {
         // Test that all services can be imported

@@ -26,7 +26,7 @@ use thiserror::Error;
 pub enum ApplicationError {
     /// Domain layer errors - business rule violations
     #[error("Domain error: {message}")]
-    Domain { 
+    Domain {
         message: String,
         #[source]
         source: Box<dyn std::error::Error + Send + Sync>,
@@ -34,27 +34,22 @@ pub enum ApplicationError {
 
     /// Session not found - common in distributed systems
     #[error("Session not found: {session_id} (may have expired after {ttl:?})")]
-    SessionNotFound { 
+    SessionNotFound {
         session_id: String,
         ttl: Option<Duration>,
     },
 
     /// Concurrent session limit exceeded - backpressure protection
     #[error("Concurrent session limit exceeded: {current}/{limit} (consider horizontal scaling)")]
-    SessionLimitExceeded { 
-        current: usize,
-        limit: usize,
-    },
+    SessionLimitExceeded { current: usize, limit: usize },
 
     /// Session already exists - prevents duplicate creation
     #[error("Session already exists: {session_id} (use existing or delete first)")]
-    SessionAlreadyExists { 
-        session_id: String,
-    },
+    SessionAlreadyExists { session_id: String },
 
     /// Infrastructure layer errors - external system failures
     #[error("Infrastructure error: {component} - {message}")]
-    Infrastructure { 
+    Infrastructure {
         component: String,
         message: String,
         retryable: bool,
@@ -64,7 +59,7 @@ pub enum ApplicationError {
 
     /// Validation errors - input sanitization failures
     #[error("Validation error: {field} - {message}")]
-    Validation { 
+    Validation {
         field: String,
         message: String,
         value: Option<String>,
@@ -72,35 +67,26 @@ pub enum ApplicationError {
 
     /// Configuration errors - deployment/startup issues
     #[error("Configuration error: {parameter} - {message}")]
-    Configuration { 
-        parameter: String,
-        message: String,
-    },
+    Configuration { parameter: String, message: String },
 
     /// Timeout errors - SLA violations
     #[error("Operation timeout: {operation} exceeded {timeout:?} (consider increasing limits)")]
-    Timeout { 
+    Timeout {
         operation: String,
         timeout: Duration,
     },
 
     /// Resource exhaustion - capacity planning indicators
     #[error("Resource exhausted: {resource} at {utilization}% (scale up required)")]
-    ResourceExhausted { 
-        resource: String,
-        utilization: u8,
-    },
+    ResourceExhausted { resource: String, utilization: u8 },
 
     /// Concurrent access conflicts - consistency violations
     #[error("Concurrent access conflict: {resource} - {message}")]
-    ConcurrentAccess { 
-        resource: String,
-        message: String,
-    },
+    ConcurrentAccess { resource: String, message: String },
 
     /// Service unavailable - dependency failures
     #[error("Service unavailable: {service} - {reason}")]
-    ServiceUnavailable { 
+    ServiceUnavailable {
         service: String,
         reason: String,
         retry_after: Option<Duration>,
@@ -109,9 +95,9 @@ pub enum ApplicationError {
 
 impl ApplicationError {
     /// Create a domain error from any domain layer error
-    pub fn domain<E>(error: E) -> Self 
-    where 
-        E: std::error::Error + Send + Sync + 'static 
+    pub fn domain<E>(error: E) -> Self
+    where
+        E: std::error::Error + Send + Sync + 'static,
     {
         Self::Domain {
             message: error.to_string(),
@@ -120,9 +106,9 @@ impl ApplicationError {
     }
 
     /// Create an infrastructure error with retry information
-    pub fn infrastructure<E>(component: &str, retryable: bool, error: E) -> Self 
-    where 
-        E: std::error::Error + Send + Sync + 'static 
+    pub fn infrastructure<E>(component: &str, retryable: bool, error: E) -> Self
+    where
+        E: std::error::Error + Send + Sync + 'static,
     {
         Self::Infrastructure {
             component: component.to_string(),
@@ -180,7 +166,7 @@ impl ApplicationError {
             Self::SessionNotFound { .. } => "session",
             Self::SessionLimitExceeded { .. } => "capacity",
             Self::SessionAlreadyExists { .. } => "session",
-            Self::Infrastructure { .. } => "infrastructure", 
+            Self::Infrastructure { .. } => "infrastructure",
             Self::Validation { .. } => "validation",
             Self::Configuration { .. } => "configuration",
             Self::Timeout { .. } => "performance",
@@ -251,10 +237,10 @@ impl ExponentialBackoffRecovery {
     /// Create a default production-ready exponential backoff strategy
     pub fn production_default() -> Self {
         Self::new(
-            3,                                  // 3 attempts max
-            Duration::from_millis(100),         // 100ms initial delay
-            Duration::from_secs(30),            // 30s max delay
-            0.1,                                // 10% jitter
+            3,                          // 3 attempts max
+            Duration::from_millis(100), // 100ms initial delay
+            Duration::from_secs(30),    // 30s max delay
+            0.1,                        // 10% jitter
         )
     }
 }
@@ -303,9 +289,9 @@ impl CircuitBreakerRecovery {
     /// Create a default production-ready circuit breaker strategy
     pub fn production_default() -> Self {
         Self::new(
-            0.5,                              // 50% failure threshold
-            Duration::from_secs(30),          // 30s recovery timeout
-            10,                               // 10 min requests before opening
+            0.5,                     // 50% failure threshold
+            Duration::from_secs(30), // 30s recovery timeout
+            10,                      // 10 min requests before opening
         )
     }
 }
@@ -363,7 +349,9 @@ impl CompositeRecoveryStrategy {
 
 impl ErrorRecoveryStrategy for CompositeRecoveryStrategy {
     fn can_recover(&self, error: &ApplicationError) -> bool {
-        self.strategies.iter().any(|strategy| strategy.can_recover(error))
+        self.strategies
+            .iter()
+            .any(|strategy| strategy.can_recover(error))
     }
 
     fn recover(&self, error: &ApplicationError) -> Result<(), ApplicationError> {
@@ -383,11 +371,19 @@ impl ErrorRecoveryStrategy for CompositeRecoveryStrategy {
     }
 
     fn max_attempts(&self) -> usize {
-        self.strategies.iter().map(|s| s.max_attempts()).max().unwrap_or(1)
+        self.strategies
+            .iter()
+            .map(|s| s.max_attempts())
+            .max()
+            .unwrap_or(1)
     }
 
     fn recovery_delay(&self) -> Duration {
-        self.strategies.iter().map(|s| s.recovery_delay()).min().unwrap_or(Duration::from_millis(100))
+        self.strategies
+            .iter()
+            .map(|s| s.recovery_delay())
+            .min()
+            .unwrap_or(Duration::from_millis(100))
     }
 }
 
@@ -418,8 +414,15 @@ mod tests {
         assert!(matches!(domain_error, ApplicationError::Domain { .. }));
         assert_eq!(domain_error.category(), "domain");
 
-        let infra_error = ApplicationError::infrastructure("test-service", true, io::Error::new(io::ErrorKind::Other, "test"));
-        assert!(matches!(infra_error, ApplicationError::Infrastructure { .. }));
+        let infra_error = ApplicationError::infrastructure(
+            "test-service",
+            true,
+            io::Error::new(io::ErrorKind::Other, "test"),
+        );
+        assert!(matches!(
+            infra_error,
+            ApplicationError::Infrastructure { .. }
+        ));
         assert!(infra_error.is_retryable());
         assert_eq!(infra_error.category(), "infrastructure");
     }
@@ -454,7 +457,7 @@ mod tests {
     #[test]
     fn test_exponential_backoff_recovery() {
         let recovery = ExponentialBackoffRecovery::production_default();
-        
+
         let retryable_error = ApplicationError::Timeout {
             operation: "test".to_string(),
             timeout: Duration::from_secs(1),
@@ -468,7 +471,7 @@ mod tests {
     #[test]
     fn test_circuit_breaker_recovery() {
         let recovery = CircuitBreakerRecovery::production_default();
-        
+
         let service_error = ApplicationError::ServiceUnavailable {
             service: "test".to_string(),
             reason: "timeout".to_string(),
@@ -483,7 +486,7 @@ mod tests {
     #[test]
     fn test_composite_recovery_strategy() {
         let composite = CompositeRecoveryStrategy::production_default();
-        
+
         let service_error = ApplicationError::ServiceUnavailable {
             service: "test".to_string(),
             reason: "timeout".to_string(),

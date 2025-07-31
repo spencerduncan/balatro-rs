@@ -5,18 +5,18 @@
 //! logic and is independent of external frameworks.
 
 pub mod entities;
+pub mod errors;
+pub mod interfaces;
 pub mod services;
 pub mod value_objects;
-pub mod interfaces;
-pub mod errors;
 
 // Re-export key types for clean API - matching the original lib.rs structure
-pub use entities::{GameSession};
 pub use entities::game_session::{GameConfig, GameStats};
-pub use services::{ActionValidator, BalatroActionValidator};
-pub use value_objects::{SessionId, ValidationResult, ValidationError};
-pub use interfaces::{GameRepository, StateNotifier, ActionResult};
+pub use entities::GameSession;
 pub use errors::{DomainError, DomainResult};
+pub use interfaces::{ActionResult, GameRepository, StateNotifier};
+pub use services::{ActionValidator, BalatroActionValidator};
+pub use value_objects::{SessionId, ValidationError, ValidationResult};
 
 // Re-export balatro-rs types for convenience
 // Temporarily disabled due to balatro-rs compilation issues

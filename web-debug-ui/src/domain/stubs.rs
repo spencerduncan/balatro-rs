@@ -6,7 +6,6 @@
 
 // Stub implementations for domain layer when balatro-rs core is not available
 
-
 /// Stub implementation of balatro_rs::Action for testing
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Action {
@@ -17,10 +16,20 @@ pub enum Action {
     NextRound(),
     SelectBlind(Blind),
     RerollShop(),
-    BuyJoker { joker_id: JokerId, slot: usize },
-    BuyConsumable { consumable_id: ConsumableId, slot: usize },
-    BuyVoucher { voucher_id: VoucherId },
-    BuyPack { pack_id: PackId },
+    BuyJoker {
+        joker_id: JokerId,
+        slot: usize,
+    },
+    BuyConsumable {
+        consumable_id: ConsumableId,
+        slot: usize,
+    },
+    BuyVoucher {
+        voucher_id: VoucherId,
+    },
+    BuyPack {
+        pack_id: PackId,
+    },
 }
 
 /// Stub implementation of balatro_rs::Game for testing
@@ -208,10 +217,25 @@ impl std::error::Error for GameError {}
 // Helper function to create test cards
 pub fn create_test_cards() -> Vec<Card> {
     vec![
-        Card { rank: Rank::Ace, suit: Suit::Spades },
-        Card { rank: Rank::King, suit: Suit::Hearts },
-        Card { rank: Rank::Queen, suit: Suit::Diamonds },
-        Card { rank: Rank::Jack, suit: Suit::Clubs },
-        Card { rank: Rank::Ten, suit: Suit::Spades },
+        Card {
+            rank: Rank::Ace,
+            suit: Suit::Spades,
+        },
+        Card {
+            rank: Rank::King,
+            suit: Suit::Hearts,
+        },
+        Card {
+            rank: Rank::Queen,
+            suit: Suit::Diamonds,
+        },
+        Card {
+            rank: Rank::Jack,
+            suit: Suit::Clubs,
+        },
+        Card {
+            rank: Rank::Ten,
+            suit: Suit::Spades,
+        },
     ]
 }

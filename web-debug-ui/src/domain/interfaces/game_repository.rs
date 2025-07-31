@@ -44,7 +44,7 @@ pub trait GameRepository: Send + Sync {
     /// Save a game session to persistent storage
     ///
     /// # Arguments
-    /// 
+    ///
     /// * `session` - The game session to save
     ///
     /// # Returns
@@ -201,7 +201,10 @@ mod tests {
     impl GameRepository for MockGameRepository {
         fn save_session(&self, session: &GameSession) -> Result<(), DomainError> {
             if self.fail_save {
-                return Err(DomainError::repository_error("save_session", "Mock failure"));
+                return Err(DomainError::repository_error(
+                    "save_session",
+                    "Mock failure",
+                ));
             }
 
             let mut sessions = self.sessions.lock().unwrap();
@@ -211,7 +214,10 @@ mod tests {
 
         fn load_session(&self, id: &SessionId) -> Result<GameSession, DomainError> {
             if self.fail_load {
-                return Err(DomainError::repository_error("load_session", "Mock failure"));
+                return Err(DomainError::repository_error(
+                    "load_session",
+                    "Mock failure",
+                ));
             }
 
             let sessions = self.sessions.lock().unwrap();
@@ -223,7 +229,10 @@ mod tests {
 
         fn delete_session(&self, id: &SessionId) -> Result<(), DomainError> {
             if self.fail_delete {
-                return Err(DomainError::repository_error("delete_session", "Mock failure"));
+                return Err(DomainError::repository_error(
+                    "delete_session",
+                    "Mock failure",
+                ));
             }
 
             let mut sessions = self.sessions.lock().unwrap();
@@ -233,7 +242,10 @@ mod tests {
 
         fn session_exists(&self, id: &SessionId) -> Result<bool, DomainError> {
             if self.fail_exists {
-                return Err(DomainError::repository_error("session_exists", "Mock failure"));
+                return Err(DomainError::repository_error(
+                    "session_exists",
+                    "Mock failure",
+                ));
             }
 
             let sessions = self.sessions.lock().unwrap();
@@ -242,7 +254,10 @@ mod tests {
 
         fn list_active_sessions(&self) -> Result<Vec<SessionId>, DomainError> {
             if self.fail_list {
-                return Err(DomainError::repository_error("list_active_sessions", "Mock failure"));
+                return Err(DomainError::repository_error(
+                    "list_active_sessions",
+                    "Mock failure",
+                ));
             }
 
             let sessions = self.sessions.lock().unwrap();
@@ -251,7 +266,10 @@ mod tests {
 
         fn cleanup_expired_sessions(&self, max_age: Duration) -> Result<usize, DomainError> {
             if self.fail_cleanup {
-                return Err(DomainError::repository_error("cleanup_expired_sessions", "Mock failure"));
+                return Err(DomainError::repository_error(
+                    "cleanup_expired_sessions",
+                    "Mock failure",
+                ));
             }
 
             let mut sessions = self.sessions.lock().unwrap();
@@ -265,7 +283,10 @@ mod tests {
 
         fn health_check(&self) -> Result<bool, DomainError> {
             if self.fail_health {
-                return Err(DomainError::repository_error("health_check", "Mock failure"));
+                return Err(DomainError::repository_error(
+                    "health_check",
+                    "Mock failure",
+                ));
             }
 
             Ok(true)
@@ -274,7 +295,7 @@ mod tests {
 
     // Note: These tests require GameSession to be implemented
     // They will be uncommented once GameSession is available
-    
+
     #[test]
     fn trait_can_be_implemented() {
         let _repo = MockGameRepository::new();
@@ -299,7 +320,7 @@ mod tests {
     // TODO: Add comprehensive integration tests once GameSession is implemented
     // These tests will cover:
     // - save_session success and failure cases
-    // - load_session success and failure cases  
+    // - load_session success and failure cases
     // - delete_session success and failure cases
     // - session_exists behavior
     // - list_active_sessions functionality

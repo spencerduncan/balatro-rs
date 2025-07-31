@@ -9,11 +9,11 @@
 
 pub mod memory_store;
 
-pub use memory_store::{HighPerformanceMemoryStore, StoreConfig, StorageError, GameSession};
+pub use memory_store::{GameSession, HighPerformanceMemoryStore, StorageError, StoreConfig};
 
 use crate::infrastructure::SessionId;
-use std::sync::Arc;
 use serde_json::Value;
+use std::sync::Arc;
 
 /// Storage error types
 #[derive(thiserror::Error, Debug)]
@@ -105,10 +105,10 @@ impl GameSession {
 
     /// Get memory usage in bytes
     pub fn memory_usage_bytes(&self) -> usize {
-        std::mem::size_of::<Self>() +
-        self.state_data.capacity() +
-        self.action_history.capacity() +
-        self.metadata.memory_usage_bytes()
+        std::mem::size_of::<Self>()
+            + self.state_data.capacity()
+            + self.action_history.capacity()
+            + self.metadata.memory_usage_bytes()
     }
 
     /// Check if session is expired
@@ -178,9 +178,13 @@ pub struct SessionMetadata {
 impl SessionMetadata {
     /// Get memory usage of metadata
     pub fn memory_usage_bytes(&self) -> usize {
-        std::mem::size_of::<Self>() +
-        self.last_error.as_ref().map_or(0, |s| s.capacity()) +
-        self.custom_data.iter().map(|(k, v)| k.capacity() + v.capacity()).sum::<usize>()
+        std::mem::size_of::<Self>()
+            + self.last_error.as_ref().map_or(0, |s| s.capacity())
+            + self
+                .custom_data
+                .iter()
+                .map(|(k, v)| k.capacity() + v.capacity())
+                .sum::<usize>()
     }
 
     /// Record action execution
@@ -257,11 +261,17 @@ mod tests {
     #[test]
     fn test_session_state_update() {
         let mut session = GameSession::new(uuid::Uuid::new_v4());
-        let test_state = TestGameState { score: 1000, level: 5 };
+        let test_state = TestGameState {
+            score: 1000,
+            level: 5,
+        };
 
         let result = session.update_state(&test_state);
         assert!(result.is_ok(), "State update should succeed");
-        assert!(!session.state_data.is_empty(), "State data should not be empty");
+        assert!(
+            !session.state_data.is_empty(),
+            "State data should not be empty"
+        );
     }
 
     #[test]
@@ -271,7 +281,10 @@ mod tests {
 
         // Should be reasonable size
         assert!(memory_usage > 0, "Memory usage should be positive");
-        assert!(memory_usage < 1024 * 1024, "Empty session should use less than 1MB"); // 1MB
+        assert!(
+            memory_usage < 1024 * 1024,
+            "Empty session should use less than 1MB"
+        ); // 1MB
     }
 
     #[test]
@@ -279,7 +292,10 @@ mod tests {
         let mut session = GameSession::new(uuid::Uuid::new_v4());
 
         // Fresh session should not be expired
-        assert!(!session.is_expired(3600), "Fresh session should not be expired");
+        assert!(
+            !session.is_expired(3600),
+            "Fresh session should not be expired"
+        );
 
         // Manually set old timestamp
         session.last_accessed = std::time::Instant::now() - std::time::Duration::from_secs(7200);

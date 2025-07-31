@@ -4,8 +4,8 @@
 //! This interface enables the domain layer to publish events without coupling
 //! to specific notification mechanisms (WebSocket, SSE, message queues, etc.).
 
-use crate::domain::{value_objects::SessionId, Action};
 use crate::domain::stubs::Game;
+use crate::domain::{value_objects::SessionId, Action};
 
 /// Action result information for notifications
 ///
@@ -36,7 +36,7 @@ impl ActionResult {
             money_delta: None,
         }
     }
-    
+
     /// Create a successful action result with message
     pub fn success_with_message<S: Into<String>>(action: Action, message: S) -> Self {
         Self {
@@ -47,7 +47,7 @@ impl ActionResult {
             money_delta: None,
         }
     }
-    
+
     /// Create a successful action result with score and money deltas
     pub fn success_with_deltas(
         action: Action,
@@ -62,7 +62,7 @@ impl ActionResult {
             money_delta,
         }
     }
-    
+
     /// Create a failed action result
     pub fn failure<S: Into<String>>(action: Action, message: S) -> Self {
         Self {
@@ -185,8 +185,8 @@ pub trait StateNotifier: Send + Sync {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::SessionId;
     use crate::domain::stubs::{Action, Config, Game};
+    use crate::domain::SessionId;
     use std::sync::{Arc, Mutex};
 
     /// Event log entry for testing
@@ -340,7 +340,7 @@ mod tests {
 
         let events = notifier.get_events();
         assert_eq!(events.len(), 1);
-        
+
         match &events[0] {
             Event::StateChange { session_id: id, .. } => {
                 assert_eq!(id, &session_id);
@@ -359,9 +359,13 @@ mod tests {
 
         let events = notifier.get_events();
         assert_eq!(events.len(), 1);
-        
+
         match &events[0] {
-            Event::ActionResult { session_id: id, success, .. } => {
+            Event::ActionResult {
+                session_id: id,
+                success,
+                ..
+            } => {
                 assert_eq!(id, &session_id);
                 assert!(success);
             }
@@ -392,7 +396,10 @@ mod tests {
         }
 
         match &events[1] {
-            Event::SessionEnded { session_id: id, had_final_state } => {
+            Event::SessionEnded {
+                session_id: id,
+                had_final_state,
+            } => {
                 assert_eq!(id, &session_id);
                 assert!(had_final_state);
             }
@@ -405,17 +412,17 @@ mod tests {
         let notifier = MockStateNotifier::new();
         let session_id = SessionId::new();
 
-        notifier.notify_error(
-            Some(&session_id),
-            "Test error occurred",
-            Some("ERR_001"),
-        );
+        notifier.notify_error(Some(&session_id), "Test error occurred", Some("ERR_001"));
 
         let events = notifier.get_events();
         assert_eq!(events.len(), 1);
-        
+
         match &events[0] {
-            Event::Error { session_id: id, message, code } => {
+            Event::Error {
+                session_id: id,
+                message,
+                code,
+            } => {
                 assert_eq!(id, &Some(session_id));
                 assert_eq!(message, "Test error occurred");
                 assert_eq!(code, &Some("ERR_001".to_string()));

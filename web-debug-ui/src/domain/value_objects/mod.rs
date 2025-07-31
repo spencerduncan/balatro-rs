@@ -8,12 +8,12 @@ pub mod session_id;
 pub mod validation_result;
 
 pub use session_id::SessionId;
-pub use validation_result::{ValidationResult, ValidationError};
+pub use validation_result::{ValidationError, ValidationResult};
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn value_objects_are_available() {
         // Test that all value objects can be imported

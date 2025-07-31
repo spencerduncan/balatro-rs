@@ -11,7 +11,7 @@ pub use game_session::GameSession;
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn entities_are_available() {
         // Test that all entities can be imported

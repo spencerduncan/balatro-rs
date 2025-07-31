@@ -3,7 +3,7 @@
 //! Manages 100+ concurrent WebSocket connections with <5ms state update latency.
 //! Uses DashMap for lock-free concurrent access and RAII patterns for cleanup.
 
-use super::{ConnectionPoolConfig, WebSocketError, GameMessage, ConnectionMetrics};
+use super::{ConnectionMetrics, ConnectionPoolConfig, GameMessage, WebSocketError};
 use crate::infrastructure::SessionId;
 use axum::extract::ws::{Message, WebSocket};
 use dashmap::DashMap;
@@ -38,7 +38,10 @@ impl WebSocketConnectionPool {
             Self::cleanup_task(cleanup_connections, cleanup_config).await;
         });
 
-        tracing::info!("WebSocket connection pool initialized with max_connections: {}", config.max_connections);
+        tracing::info!(
+            "WebSocket connection pool initialized with max_connections: {}",
+            config.max_connections
+        );
 
         Ok(Self {
             connections,
@@ -50,7 +53,11 @@ impl WebSocketConnectionPool {
     }
 
     /// Add new WebSocket connection with RAII cleanup
-    pub async fn add_connection(&self, session_id: SessionId, websocket: WebSocket) -> Result<(), WebSocketError> {
+    pub async fn add_connection(
+        &self,
+        session_id: SessionId,
+        websocket: WebSocket,
+    ) -> Result<(), WebSocketError> {
         // Check connection limit
         if self.connections.len() >= self.config.max_connections {
             return Err(WebSocketError::ConnectionLimitExceeded {
@@ -59,7 +66,8 @@ impl WebSocketConnectionPool {
             });
         }
 
-        let connection = WebSocketConnection::new(session_id, websocket, self.state_broadcaster.subscribe())?;
+        let connection =
+            WebSocketConnection::new(session_id, websocket, self.state_broadcaster.subscribe())?;
 
         // Insert connection with concurrent safety
         self.connections.insert(session_id, connection);
@@ -67,7 +75,10 @@ impl WebSocketConnectionPool {
         #[cfg(feature = "monitoring")]
         {
             metrics::counter!("websocket_connections_opened", 1);
-            metrics::gauge!("websocket_active_connections", self.connections.len() as f64);
+            metrics::gauge!(
+                "websocket_active_connections",
+                self.connections.len() as f64
+            );
         }
 
         tracing::info!("WebSocket connection added for session: {}", session_id);
@@ -80,7 +91,10 @@ impl WebSocketConnectionPool {
             #[cfg(feature = "monitoring")]
             {
                 metrics::counter!("websocket_connections_closed", 1);
-                metrics::gauge!("websocket_active_connections", self.connections.len() as f64);
+                metrics::gauge!(
+                    "websocket_active_connections",
+                    self.connections.len() as f64
+                );
             }
 
             tracing::info!("WebSocket connection removed for session: {}", session_id);
@@ -88,7 +102,11 @@ impl WebSocketConnectionPool {
     }
 
     /// Broadcast state update to all connections (PERFORMANCE CRITICAL - <5ms target)
-    pub async fn broadcast_state_update(&self, session_id: &SessionId, state_data: &[u8]) -> Result<(), WebSocketError> {
+    pub async fn broadcast_state_update(
+        &self,
+        session_id: &SessionId,
+        state_data: &[u8],
+    ) -> Result<(), WebSocketError> {
         let start = Instant::now();
 
         let message = GameMessage::StateUpdate {
@@ -103,13 +121,20 @@ impl WebSocketConnectionPool {
 
                 #[cfg(feature = "monitoring")]
                 {
-                    metrics::histogram!("websocket_broadcast_duration_ms", duration.as_millis() as f64);
+                    metrics::histogram!(
+                        "websocket_broadcast_duration_ms",
+                        duration.as_millis() as f64
+                    );
                     metrics::counter!("websocket_messages_broadcast", 1);
                     metrics::counter!("websocket_broadcast_receivers", receiver_count as u64);
 
                     if duration.as_millis() > 5 {
                         metrics::counter!("websocket_slow_broadcasts", 1);
-                        tracing::warn!("Slow WebSocket broadcast: {}ms to {} receivers", duration.as_millis(), receiver_count);
+                        tracing::warn!(
+                            "Slow WebSocket broadcast: {}ms to {} receivers",
+                            duration.as_millis(),
+                            receiver_count
+                        );
                     }
                 }
 
@@ -122,7 +147,11 @@ impl WebSocketConnectionPool {
     }
 
     /// Send message to specific connection with zero-copy optimization
-    pub async fn send_message_zerocopy(&self, session_id: &SessionId, message_bytes: &[u8]) -> Result<(), WebSocketError> {
+    pub async fn send_message_zerocopy(
+        &self,
+        session_id: &SessionId,
+        message_bytes: &[u8],
+    ) -> Result<(), WebSocketError> {
         let start = Instant::now();
 
         if let Some(connection) = self.connections.get(session_id) {
@@ -139,7 +168,9 @@ impl WebSocketConnectionPool {
 
             result
         } else {
-            Err(WebSocketError::ConnectionNotFound { session_id: *session_id })
+            Err(WebSocketError::ConnectionNotFound {
+                session_id: *session_id,
+            })
         }
     }
 
@@ -163,18 +194,26 @@ impl WebSocketConnectionPool {
     }
 
     /// Background cleanup task for stale connections
-    async fn cleanup_task(connections: Arc<DashMap<SessionId, WebSocketConnection>>, config: ConnectionPoolConfig) {
-        let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(config.connection_timeout_seconds));
+    async fn cleanup_task(
+        connections: Arc<DashMap<SessionId, WebSocketConnection>>,
+        config: ConnectionPoolConfig,
+    ) {
+        let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(
+            config.connection_timeout_seconds,
+        ));
 
         loop {
             interval.tick().await;
 
             let now = Instant::now();
-            let timeout_duration = tokio::time::Duration::from_secs(config.connection_timeout_seconds);
+            let timeout_duration =
+                tokio::time::Duration::from_secs(config.connection_timeout_seconds);
 
             // Remove stale connections
             connections.retain(|session_id, connection| {
-                if now.duration_since(connection.created_at) > timeout_duration && !connection.is_active() {
+                if now.duration_since(connection.created_at) > timeout_duration
+                    && !connection.is_active()
+                {
                     tracing::info!("Cleaning up stale connection: {}", session_id);
                     false
                 } else {
@@ -232,7 +271,11 @@ impl WebSocketConnection {
                 };
 
                 let mut sender_guard = sender_clone.lock().await;
-                if sender_guard.send(Message::Binary(serialized.into())).await.is_err() {
+                if sender_guard
+                    .send(Message::Binary(serialized.into()))
+                    .await
+                    .is_err()
+                {
                     active_clone.store(false, Ordering::Relaxed);
                     break;
                 }
@@ -254,7 +297,11 @@ impl WebSocketConnection {
                         tracing::debug!("Received text message from {}: {}", session_id, text);
                     }
                     Ok(Message::Binary(data)) => {
-                        tracing::debug!("Received binary message from {}: {} bytes", session_id, data.len());
+                        tracing::debug!(
+                            "Received binary message from {}: {} bytes",
+                            session_id,
+                            data.len()
+                        );
                     }
                     Ok(Message::Close(_)) => {
                         tracing::info!("WebSocket connection closed by client: {}", session_id);
@@ -293,7 +340,9 @@ impl WebSocketConnection {
         }
 
         let mut sender = self.sender.lock().await;
-        sender.send(Message::Binary(message_bytes.to_vec().into())).await
+        sender
+            .send(Message::Binary(message_bytes.to_vec().into()))
+            .await
             .map_err(|e| WebSocketError::MessageSendFailed {
                 message: e.to_string(),
             })?;
@@ -323,7 +372,10 @@ impl Drop for WebSocketConnection {
             metrics::counter!("websocket_connections_dropped", 1);
         }
 
-        tracing::debug!("WebSocket connection dropped for session: {}", self.session_id);
+        tracing::debug!(
+            "WebSocket connection dropped for session: {}",
+            self.session_id
+        );
     }
 }
 
@@ -333,7 +385,10 @@ impl Drop for WebSocketConnectionPool {
         // Abort cleanup task
         self.cleanup_handle.abort();
 
-        tracing::info!("WebSocket connection pool shutting down with {} active connections", self.connections.len());
+        tracing::info!(
+            "WebSocket connection pool shutting down with {} active connections",
+            self.connections.len()
+        );
     }
 }
 
@@ -345,7 +400,10 @@ mod tests {
     async fn test_connection_pool_creation() {
         let config = ConnectionPoolConfig::default();
         let pool = WebSocketConnectionPool::new(config);
-        assert!(pool.is_ok(), "Connection pool should be created successfully");
+        assert!(
+            pool.is_ok(),
+            "Connection pool should be created successfully"
+        );
     }
 
     #[test]
@@ -366,7 +424,10 @@ mod tests {
         };
 
         let serialized = bincode::serialize(&message).unwrap();
-        assert!(!serialized.is_empty(), "Serialized message should not be empty");
+        assert!(
+            !serialized.is_empty(),
+            "Serialized message should not be empty"
+        );
 
         let deserialized: GameMessage = bincode::deserialize(&serialized).unwrap();
         match deserialized {

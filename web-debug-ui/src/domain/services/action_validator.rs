@@ -5,11 +5,8 @@
 //! that coordinates validation rules and provides a clean interface for
 //! action validation throughout the domain layer.
 
-use crate::domain::{
-    value_objects::{ValidationResult},
-    Action,
-};
-use crate::domain::stubs::{Stage, Game, Blind, JokerId};
+use crate::domain::stubs::{Blind, Game, JokerId, Stage};
+use crate::domain::{value_objects::ValidationResult, Action};
 
 /// Service interface for validating game actions
 ///
@@ -201,7 +198,9 @@ impl BalatroActionValidator {
         match action {
             Action::NextRound() => {
                 if !matches!(state.stage, Stage::PostBlind) {
-                    return ValidationResult::invalid("Can only advance round from PostBlind stage");
+                    return ValidationResult::invalid(
+                        "Can only advance round from PostBlind stage",
+                    );
                 }
                 ValidationResult::valid()
             }
@@ -252,11 +251,7 @@ impl ActionValidator for BalatroActionValidator {
         match state.stage {
             Stage::PreBlind => {
                 // Can select blind
-                for blind in [
-                    Blind::Small,
-                    Blind::Big,
-                    Blind::Boss,
-                ] {
+                for blind in [Blind::Small, Blind::Big, Blind::Boss] {
                     actions.push(Action::SelectBlind(blind));
                 }
 
@@ -363,7 +358,7 @@ impl ActionValidator for BalatroActionValidator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::stubs::{Card, Config, Rank, Suit, Game, Stage};
+    use crate::domain::stubs::{Card, Config, Game, Rank, Stage, Suit};
 
     fn create_test_game() -> Game {
         Game::new(Config::default())
@@ -479,9 +474,7 @@ mod tests {
         let actions = validator.get_available_actions(&game);
 
         // Should include blind selection actions
-        assert!(actions
-            .iter()
-            .any(|a| matches!(a, Action::SelectBlind(_))));
+        assert!(actions.iter().any(|a| matches!(a, Action::SelectBlind(_))));
 
         // Should include card selection actions
         assert!(actions.iter().any(|a| matches!(a, Action::SelectCard(_))));

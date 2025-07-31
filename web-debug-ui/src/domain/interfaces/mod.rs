@@ -8,12 +8,12 @@ pub mod game_repository;
 pub mod state_notifier;
 
 pub use game_repository::GameRepository;
-pub use state_notifier::{StateNotifier, ActionResult};
+pub use state_notifier::{ActionResult, StateNotifier};
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn interfaces_are_available() {
         // Test that all interfaces can be imported

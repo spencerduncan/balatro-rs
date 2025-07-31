@@ -42,11 +42,12 @@ impl HttpServer {
 
     /// Start serving HTTP requests with performance optimizations
     pub async fn serve(self, bind_addr: &str) -> Result<(), HttpServerError> {
-        let listener = TcpListener::bind(bind_addr)
-            .await
-            .map_err(|e| HttpServerError::Startup {
-                message: format!("Failed to bind to {}: {}", bind_addr, e),
-            })?;
+        let listener =
+            TcpListener::bind(bind_addr)
+                .await
+                .map_err(|e| HttpServerError::Startup {
+                    message: format!("Failed to bind to {}: {}", bind_addr, e),
+                })?;
 
         tracing::info!("HTTP server listening on {}", bind_addr);
 
@@ -147,7 +148,9 @@ impl PerformanceOptimizedAcceptor {
     }
 
     /// Accept connections with performance optimizations
-    pub async fn accept(&self) -> Result<(tokio::net::TcpStream, std::net::SocketAddr), std::io::Error> {
+    pub async fn accept(
+        &self,
+    ) -> Result<(tokio::net::TcpStream, std::net::SocketAddr), std::io::Error> {
         let (stream, addr) = self.inner.accept().await?;
 
         // Apply performance optimizations
@@ -172,19 +175,16 @@ mod tests {
     use super::*;
     use crate::infrastructure::{
         storage::{HighPerformanceMemoryStore, StoreConfig},
-        websocket::{WebSocketConnectionPool, ConnectionPoolConfig},
+        websocket::{ConnectionPoolConfig, WebSocketConnectionPool},
     };
 
     #[tokio::test]
     async fn test_server_creation() {
         let storage = Arc::new(HighPerformanceMemoryStore::new(StoreConfig::default()).unwrap());
-        let webocket_pool = Arc::new(WebSocketConnectionPool::new(ConnectionPoolConfig::default()).unwrap());
+        let webocket_pool =
+            Arc::new(WebSocketConnectionPool::new(ConnectionPoolConfig::default()).unwrap());
 
-        let server = HttpServer::new(
-            ServerConfig::default(),
-            webocket_pool,
-            storage,
-        ).await;
+        let server = HttpServer::new(ServerConfig::default(), webocket_pool, storage).await;
 
         assert!(server.is_ok(), "Server should be created successfully");
     }
@@ -194,9 +194,18 @@ mod tests {
         let config = ServerConfig::default();
 
         // Verify performance-oriented defaults
-        assert!(config.tcp_nodelay, "TCP_NODELAY should be enabled for low latency");
-        assert!(config.http2_enabled, "HTTP/2 should be enabled for efficiency");
-        assert_eq!(config.max_connections, 1000, "Should support many connections");
+        assert!(
+            config.tcp_nodelay,
+            "TCP_NODELAY should be enabled for low latency"
+        );
+        assert!(
+            config.http2_enabled,
+            "HTTP/2 should be enabled for efficiency"
+        );
+        assert_eq!(
+            config.max_connections, 1000,
+            "Should support many connections"
+        );
         assert_eq!(config.request_timeout_ms, 5000, "Reasonable timeout");
     }
 

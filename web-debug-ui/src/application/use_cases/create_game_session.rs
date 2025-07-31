@@ -4,7 +4,7 @@
 //! including validation, resource allocation, and initial state setup.
 
 use crate::application::{
-    config::{SessionId, GameConfig},
+    config::{GameConfig, SessionId},
     errors::ApplicationError,
     services::SessionManagementService,
 };
@@ -45,10 +45,13 @@ impl CreateGameSessionUseCase {
     /// # Returns
     /// * `Ok(CreateSessionResponse)` - Successful session creation
     /// * `Err(ApplicationError)` - Creation failure
-    pub async fn execute(&self, request: CreateSessionRequest) -> Result<CreateSessionResponse, ApplicationError> {
+    pub async fn execute(
+        &self,
+        request: CreateSessionRequest,
+    ) -> Result<CreateSessionResponse, ApplicationError> {
         // Delegate to session management service
         let session_id = self.session_service.create_session(request.config).await?;
-        
+
         Ok(CreateSessionResponse {
             session_id,
             created: true,

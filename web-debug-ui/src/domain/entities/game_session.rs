@@ -4,13 +4,13 @@
 //! its associated business rules and behavior. It encapsulates the game state,
 //! action history, and lifecycle management following Domain-Driven Design principles.
 
+use crate::domain::stubs::{Config, Game, Stage};
 use crate::domain::{
     errors::DomainError,
     interfaces::ActionResult,
     value_objects::{SessionId, ValidationResult},
     Action,
 };
-use crate::domain::stubs::{Config, Game, Stage};
 use std::time::{Duration, Instant};
 
 /// Configuration for creating a new game session
@@ -200,12 +200,10 @@ impl GameSession {
                 }
             }
             Action::SelectCard(_) => ValidationResult::valid(),
-            Action::NextRound() => {
-                match self.game.stage {
-                    Stage::PostBlind => ValidationResult::valid(),
-                    _ => ValidationResult::invalid("Can only advance round from PostBlind stage"),
-                }
-            }
+            Action::NextRound() => match self.game.stage {
+                Stage::PostBlind => ValidationResult::valid(),
+                _ => ValidationResult::invalid("Can only advance round from PostBlind stage"),
+            },
             _ => ValidationResult::valid(), // For now, allow other actions
         }
     }
@@ -251,7 +249,7 @@ impl GameSession {
 
         // Apply action to game
         let game_result = self.game.handle_action(action.clone());
-        
+
         // Handle game engine result
         match game_result {
             Ok(_) => {
@@ -272,11 +270,18 @@ impl GameSession {
                     None
                 };
 
-                Ok(ActionResult::success_with_deltas(action, score_delta, money_delta))
+                Ok(ActionResult::success_with_deltas(
+                    action,
+                    score_delta,
+                    money_delta,
+                ))
             }
             Err(game_error) => {
                 // Convert game error to domain error
-                Err(DomainError::invalid_action(format!("Game engine error: {}", game_error)))
+                Err(DomainError::invalid_action(format!(
+                    "Game engine error: {}",
+                    game_error
+                )))
             }
         }
     }
@@ -341,7 +346,7 @@ impl GameSession {
     /// Add an action to the history, maintaining the maximum size constraint
     fn add_to_history(&mut self, action: Action) {
         self.action_history.push(action);
-        
+
         // Maintain bounded history
         while self.action_history.len() > self.max_action_history {
             self.action_history.remove(0);
@@ -369,7 +374,7 @@ mod tests {
     #[test]
     fn game_config_default_values() {
         let config = GameConfig::default();
-        
+
         assert_eq!(config.max_action_history, 1000);
         assert_eq!(config.session_timeout, Duration::from_secs(3600));
     }
@@ -378,7 +383,7 @@ mod tests {
     fn game_session_creation_success() {
         let config = GameConfig::default();
         let session = GameSession::new(config).unwrap();
-        
+
         assert!(!session.id().to_string().is_empty());
         assert!(session.action_history().is_empty());
         assert_eq!(session.action_count(), 0);
@@ -390,10 +395,10 @@ mod tests {
     fn game_session_creation_fails_with_zero_max_history() {
         let mut config = GameConfig::default();
         config.max_action_history = 0;
-        
+
         let result = GameSession::new(config);
         assert!(result.is_err());
-        
+
         match result.unwrap_err() {
             DomainError::SessionCreationFailed { reason } => {
                 assert!(reason.contains("max_action_history"));
@@ -406,10 +411,10 @@ mod tests {
     fn game_session_creation_fails_with_zero_timeout() {
         let mut config = GameConfig::default();
         config.session_timeout = Duration::from_secs(0);
-        
+
         let result = GameSession::new(config);
         assert!(result.is_err());
-        
+
         match result.unwrap_err() {
             DomainError::SessionCreationFailed { reason } => {
                 assert!(reason.contains("session_timeout"));
@@ -423,7 +428,7 @@ mod tests {
         let config = GameConfig::default();
         let session1 = GameSession::new(config.clone()).unwrap();
         let session2 = GameSession::new(config).unwrap();
-        
+
         assert_ne!(session1.id(), session2.id());
     }
 
@@ -432,7 +437,7 @@ mod tests {
         let before = Instant::now();
         let session = GameSession::new(GameConfig::default()).unwrap();
         let after = Instant::now();
-        
+
         assert!(session.created_at() >= before);
         assert!(session.created_at() <= after);
         assert_eq!(session.created_at(), session.last_action_at());
@@ -442,10 +447,10 @@ mod tests {
     fn validate_action_rejects_play_with_no_cards() {
         let session = GameSession::new(GameConfig::default()).unwrap();
         let action = Action::Play();
-        
+
         let validation = session.validate_action(&action);
         assert!(validation.is_invalid());
-        
+
         if let ValidationResult::Invalid(error) = validation {
             assert!(error.reason().contains("No cards selected"));
         }
@@ -455,10 +460,10 @@ mod tests {
     fn validate_action_rejects_discard_with_no_cards() {
         let session = GameSession::new(GameConfig::default()).unwrap();
         let action = Action::Discard();
-        
+
         let validation = session.validate_action(&action);
         assert!(validation.is_invalid());
-        
+
         if let ValidationResult::Invalid(error) = validation {
             assert!(error.reason().contains("No cards selected"));
         }
@@ -467,7 +472,7 @@ mod tests {
     #[test]
     fn validate_action_allows_card_selection() {
         let session = GameSession::new(GameConfig::default()).unwrap();
-        
+
         // Get a card from the available cards to select
         if let Some(card) = session.game().available.cards.first() {
             let action = Action::SelectCard(*card);
@@ -476,15 +481,15 @@ mod tests {
         }
     }
 
-    #[test] 
+    #[test]
     fn session_expiry_based_on_custom_ttl() {
         let mut config = GameConfig::default();
         config.session_timeout = Duration::from_secs(10);
         let session = GameSession::new(config).unwrap();
-        
+
         // Should not be expired with a long TTL
         assert!(!session.is_expired_with_ttl(Duration::from_secs(3600)));
-        
+
         // Should be expired with a very short TTL
         assert!(session.is_expired_with_ttl(Duration::from_nanos(1)));
     }
@@ -492,11 +497,11 @@ mod tests {
     #[test]
     fn session_activity_duration_tracking() {
         let session = GameSession::new(GameConfig::default()).unwrap();
-        
+
         // Initially, activity duration should be zero (or very small)
         let duration = session.activity_duration();
         assert!(duration < Duration::from_millis(100));
-        
+
         // Time since last action should be small
         let time_since = session.time_since_last_action();
         assert!(time_since < Duration::from_millis(100));
@@ -506,18 +511,23 @@ mod tests {
     fn action_history_is_bounded() {
         let mut config = GameConfig::default();
         config.max_action_history = 2; // Very small for testing
-        
+
         let mut session = GameSession::new(config).unwrap();
-        
+
         // Add more actions than the limit
         for i in 0..5 {
-            if let Some(card) = session.game().available.cards.get(i % session.game().available.cards.len()) {
+            if let Some(card) = session
+                .game()
+                .available
+                .cards
+                .get(i % session.game().available.cards.len())
+            {
                 let action = Action::SelectCard(*card);
                 // We expect this might fail due to game rules, but we're testing history bounds
                 let _ = session.apply_action(action);
             }
         }
-        
+
         // History should be bounded
         assert!(session.action_count() <= 2);
     }
@@ -526,7 +536,7 @@ mod tests {
     fn game_stats_reflect_current_state() {
         let session = GameSession::new(GameConfig::default()).unwrap();
         let stats = session.game_stats();
-        
+
         assert_eq!(stats.score, session.game().score);
         assert_eq!(stats.money, session.game().money);
         assert_eq!(stats.ante, session.game().ante_current.0);
@@ -537,16 +547,16 @@ mod tests {
     fn session_clone_creates_independent_copy() {
         let session1 = GameSession::new(GameConfig::default()).unwrap();
         let mut session2 = session1.clone();
-        
+
         // Sessions should have same ID (they're clones)
         assert_eq!(session1.id(), session2.id());
-        
+
         // But they should be independent - modifying one doesn't affect the other
         if let Some(card) = session2.game().available.cards.first() {
             let action = Action::SelectCard(*card);
             let _ = session2.apply_action(action);
         }
-        
+
         // Original session should be unchanged
         assert_eq!(session1.action_count(), 0);
     }
@@ -555,15 +565,15 @@ mod tests {
     fn apply_action_updates_last_action_time() {
         let mut session = GameSession::new(GameConfig::default()).unwrap();
         let initial_time = session.last_action_at();
-        
+
         // Wait a bit to ensure time difference
         thread::sleep(Duration::from_millis(10));
-        
+
         // Apply a valid action
         if let Some(card) = session.game().available.cards.first() {
             let action = Action::SelectCard(*card);
             let _ = session.apply_action(action);
-            
+
             assert!(session.last_action_at() > initial_time);
         }
     }
@@ -572,10 +582,10 @@ mod tests {
     fn apply_action_fails_for_invalid_action() {
         let mut session = GameSession::new(GameConfig::default()).unwrap();
         let action = Action::Play(); // Invalid because no cards selected
-        
+
         let result = session.apply_action(action);
         assert!(result.is_err());
-        
+
         match result.unwrap_err() {
             DomainError::InvalidAction { reason } => {
                 assert!(reason.contains("No cards selected"));
@@ -588,17 +598,17 @@ mod tests {
     fn expired_session_rejects_actions() {
         let mut config = GameConfig::default();
         config.session_timeout = Duration::from_nanos(1); // Immediate expiry
-        
+
         let mut session = GameSession::new(config).unwrap();
-        
+
         // Wait for expiry
         thread::sleep(Duration::from_millis(1));
-        
+
         // Any action should be rejected
         if let Some(card) = session.game().available.cards.first() {
             let action = Action::SelectCard(*card);
             let result = session.apply_action(action);
-            
+
             assert!(result.is_err());
             match result.unwrap_err() {
                 DomainError::SessionExpired { .. } => {
@@ -612,11 +622,11 @@ mod tests {
     #[test]
     fn successful_action_returns_appropriate_result() {
         let mut session = GameSession::new(GameConfig::default()).unwrap();
-        
+
         if let Some(card) = session.game().available.cards.first() {
             let action = Action::SelectCard(*card);
             let result = session.apply_action(action.clone()).unwrap();
-            
+
             assert_eq!(result.action, action);
             assert!(result.success);
             // Score/money deltas might be None for card selection

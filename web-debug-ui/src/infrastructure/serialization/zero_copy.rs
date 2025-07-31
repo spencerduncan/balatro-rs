@@ -69,10 +69,7 @@ impl StackAllocatedActionResponse {
     /// Zero-copy serialization to bytes
     pub fn as_bytes(&self) -> &[u8] {
         unsafe {
-            std::slice::from_raw_parts(
-                self as *const Self as *const u8,
-                mem::size_of::<Self>()
-            )
+            std::slice::from_raw_parts(self as *const Self as *const u8, mem::size_of::<Self>())
         }
     }
 
@@ -85,9 +82,7 @@ impl StackAllocatedActionResponse {
             });
         }
 
-        unsafe {
-            Ok(&*(bytes.as_ptr() as *const Self))
-        }
+        unsafe { Ok(&*(bytes.as_ptr() as *const Self)) }
     }
 
     /// Get size in bytes (compile-time constant)
@@ -122,10 +117,11 @@ impl ZeroCopySerializer {
         self.buffer.clear();
 
         // Use bincode for high-performance binary serialization
-        bincode::serialize_into(&mut self.buffer, state)
-            .map_err(|e| SerializationError::BincodeError {
+        bincode::serialize_into(&mut self.buffer, state).map_err(|e| {
+            SerializationError::BincodeError {
                 message: e.to_string(),
-            })?;
+            }
+        })?;
 
         let duration = start.elapsed();
         if duration.as_millis() > self.performance_threshold_ms {
@@ -145,10 +141,9 @@ impl ZeroCopySerializer {
     {
         let start = Instant::now();
 
-        let result = bincode::deserialize(data)
-            .map_err(|e| SerializationError::BincodeError {
-                message: e.to_string(),
-            })?;
+        let result = bincode::deserialize(data).map_err(|e| SerializationError::BincodeError {
+            message: e.to_string(),
+        })?;
 
         let duration = start.elapsed();
         if duration.as_millis() > self.performance_threshold_ms {
@@ -180,10 +175,9 @@ where
     let start = Instant::now();
 
     // Use bincode for fastest binary serialization
-    let result = bincode::serialize(state)
-        .map_err(|e| SerializationError::BincodeError {
-            message: e.to_string(),
-        })?;
+    let result = bincode::serialize(state).map_err(|e| SerializationError::BincodeError {
+        message: e.to_string(),
+    })?;
 
     let duration = start.elapsed();
     if duration.as_millis() > 1 {
@@ -203,10 +197,9 @@ where
 {
     let start = Instant::now();
 
-    let result = bincode::deserialize(data)
-        .map_err(|e| SerializationError::BincodeError {
-            message: e.to_string(),
-        })?;
+    let result = bincode::deserialize(data).map_err(|e| SerializationError::BincodeError {
+        message: e.to_string(),
+    })?;
 
     let duration = start.elapsed();
     if duration.as_millis() > 1 {
@@ -356,7 +349,10 @@ mod tests {
         let result = StackAllocatedActionResponse::from_bytes(&small_buffer);
 
         match result {
-            Err(SerializationError::BufferTooSmall { required, available }) => {
+            Err(SerializationError::BufferTooSmall {
+                required,
+                available,
+            }) => {
                 assert_eq!(required, StackAllocatedActionResponse::size());
                 assert_eq!(available, 4);
             }
