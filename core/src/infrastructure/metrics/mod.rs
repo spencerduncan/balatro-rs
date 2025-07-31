@@ -9,7 +9,7 @@
 
 pub mod performance_monitor;
 
-pub use performance_monitor::{PerformanceMonitor, OperationTimer, MetricsHandle};
+pub use performance_monitor::{MetricsHandle, OperationTimer, PerformanceMonitor};
 
 use std::time::Instant;
 
@@ -68,15 +68,19 @@ pub fn initialize_metrics(config: &MetricsConfig) -> Result<MetricsHandle, Metri
                 message: e.to_string(),
             })?;
 
-        metrics::set_boxed_recorder(Box::new(recorder))
-            .map_err(|e| MetricsError::InitializationFailed {
+        metrics::set_boxed_recorder(Box::new(recorder)).map_err(|e| {
+            MetricsError::InitializationFailed {
                 message: e.to_string(),
-            })?;
+            }
+        })?;
 
         // Register core infrastructure metrics
         register_infrastructure_metrics();
 
-        tracing::info!("Metrics system initialized with Prometheus export on port {}", config.prometheus_port);
+        tracing::info!(
+            "Metrics system initialized with Prometheus export on port {}",
+            config.prometheus_port
+        );
 
         Ok(MetricsHandle::new(config.clone()))
     }
@@ -92,25 +96,49 @@ pub fn initialize_metrics(config: &MetricsConfig) -> Result<MetricsHandle, Metri
 fn register_infrastructure_metrics() {
     // HTTP server metrics
     metrics::describe_counter!("http_requests_total", "Total HTTP requests");
-    metrics::describe_histogram!("http_request_duration_ms", "HTTP request duration in milliseconds");
+    metrics::describe_histogram!(
+        "http_request_duration_ms",
+        "HTTP request duration in milliseconds"
+    );
     metrics::describe_gauge!("http_active_connections", "Active HTTP connections");
 
     // WebSocket metrics
-    metrics::describe_counter!("websocket_connections_opened", "WebSocket connections opened");
-    metrics::describe_counter!("websocket_connections_closed", "WebSocket connections closed");
-    metrics::describe_gauge!("websocket_active_connections", "Active WebSocket connections");
-    metrics::describe_histogram!("websocket_message_duration_ms", "WebSocket message processing duration");
+    metrics::describe_counter!(
+        "websocket_connections_opened",
+        "WebSocket connections opened"
+    );
+    metrics::describe_counter!(
+        "websocket_connections_closed",
+        "WebSocket connections closed"
+    );
+    metrics::describe_gauge!(
+        "websocket_active_connections",
+        "Active WebSocket connections"
+    );
+    metrics::describe_histogram!(
+        "websocket_message_duration_ms",
+        "WebSocket message processing duration"
+    );
     metrics::describe_counter!("websocket_messages_sent", "WebSocket messages sent");
     metrics::describe_counter!("websocket_messages_received", "WebSocket messages received");
 
     // Action processing metrics (CRITICAL PATH)
-    metrics::describe_histogram!("action_execution_duration_ms", "Action execution duration in milliseconds");
+    metrics::describe_histogram!(
+        "action_execution_duration_ms",
+        "Action execution duration in milliseconds"
+    );
     metrics::describe_counter!("actions_processed_total", "Total actions processed");
-    metrics::describe_counter!("slow_actions_total", "Actions that exceeded performance threshold");
+    metrics::describe_counter!(
+        "slow_actions_total",
+        "Actions that exceeded performance threshold"
+    );
 
     // Storage metrics
     metrics::describe_gauge!("storage_active_sessions", "Active storage sessions");
-    metrics::describe_histogram!("storage_operation_duration_ms", "Storage operation duration");
+    metrics::describe_histogram!(
+        "storage_operation_duration_ms",
+        "Storage operation duration"
+    );
     metrics::describe_gauge!("storage_memory_usage_mb", "Storage memory usage in MB");
     metrics::describe_counter!("storage_sessions_created", "Sessions created");
     metrics::describe_counter!("storage_sessions_removed", "Sessions removed");
@@ -120,7 +148,10 @@ fn register_infrastructure_metrics() {
     metrics::describe_gauge!("memory_peak_usage_bytes", "Peak memory usage in bytes");
 
     // Performance threshold violations
-    metrics::describe_counter!("performance_violations_total", "Performance threshold violations");
+    metrics::describe_counter!(
+        "performance_violations_total",
+        "Performance threshold violations"
+    );
 
     tracing::debug!("Infrastructure metrics registered");
 }
@@ -150,11 +181,21 @@ impl MetricsHandle {
     }
 
     /// Record performance violation
-    pub fn record_performance_violation(&self, operation: &str, duration_ms: u64, threshold_ms: u64) {
+    pub fn record_performance_violation(
+        &self,
+        operation: &str,
+        duration_ms: u64,
+        threshold_ms: u64,
+    ) {
         #[cfg(feature = "monitoring")]
         {
             metrics::counter!("performance_violations_total", 1, "operation" => operation.to_string());
-            tracing::warn!("Performance violation: {} took {}ms (threshold: {}ms)", operation, duration_ms, threshold_ms);
+            tracing::warn!(
+                "Performance violation: {} took {}ms (threshold: {}ms)",
+                operation,
+                duration_ms,
+                threshold_ms
+            );
         }
     }
 
@@ -203,9 +244,7 @@ macro_rules! time_operation {
             );
 
             if duration.as_millis() > 10 {
-                metrics::counter!(
-                    concat!($operation, "_slow_operations"), 1
-                );
+                metrics::counter!(concat!($operation, "_slow_operations"), 1);
             }
         }
 
