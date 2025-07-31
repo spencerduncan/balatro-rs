@@ -495,6 +495,7 @@ impl Game {
                 hands_played: 0,
                 hands_remaining: self.plays,
                 discards_used: 0,
+                is_final_hand: false, // Blind start is never the final hand
                 jokers: &self.jokers,
                 hand: &temp_hand,
                 discarded: &self.discarded,
@@ -783,7 +784,8 @@ impl Game {
             stage: &self.stage,
             hands_played: 0, // TODO: track this properly
             hands_remaining: self.plays,
-            discards_used: 0, // TODO: track this properly
+            discards_used: 0,     // TODO: track this properly
+            is_final_hand: false, // TODO: Implement proper final hand detection logic
             jokers: &self.jokers,
             hand: &Hand::new(hand.hand.cards().to_vec()),
             discarded: &self.discarded,
@@ -955,7 +957,8 @@ impl Game {
                 stage: &self.stage,
                 hands_played: 0, // TODO: track this properly
                 hands_remaining: self.plays,
-                discards_used: 0, // TODO: track this properly
+                discards_used: 0,     // TODO: track this properly
+                is_final_hand: false, // TODO: Implement proper final hand detection logic
                 jokers: &self.jokers,
                 hand: &Hand::new(hand.hand.cards().to_vec()),
                 discarded: &self.discarded,
@@ -1268,6 +1271,7 @@ impl Game {
             stage: &self.stage,
             hands_played: (self.config.plays as f64 - self.plays) as u32,
             hands_remaining: self.plays,
+            is_final_hand: self.plays <= 1.0,
             discards_used: (self.config.discards as f64 - self.discards) as u32,
             jokers: &self.jokers,
             hand: &current_hand,
@@ -2346,7 +2350,8 @@ impl Game {
             stage: &self.stage,
             hands_played: 0, // TODO: track this properly
             hands_remaining: self.plays,
-            discards_used: 0, // TODO: track this properly
+            discards_used: 0,     // TODO: track this properly
+            is_final_hand: false, // Scaling events are not during hand play
             jokers: &self.jokers,
             hand: &crate::hand::Hand::new(vec![]),
             discarded: &self.discarded,

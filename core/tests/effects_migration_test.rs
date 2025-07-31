@@ -212,7 +212,8 @@ fn test_migration_structured_effects_type_safety() {
         stage: &Stage::Blind(Blind::Small),
         hands_played: 0,
         discards_used: 0,
-        hands_remaining: 4.0, // Standard hands remaining for testing
+        hands_remaining: 4.0,
+        is_final_hand: false,
         jokers: &[],
         hand: &temp_hand,
         discarded: &[],

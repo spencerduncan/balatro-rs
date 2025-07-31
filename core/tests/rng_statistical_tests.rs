@@ -425,7 +425,8 @@ fn test_lucky_card_joker_probability() {
             stage: &stage,
             hands_played: 0,
             discards_used: 0,
-            hands_remaining: 4.0, // Standard hands remaining for testing
+            hands_remaining: 4.0,
+            is_final_hand: false, // Standard hands remaining for testing
             jokers: &jokers,
             hand: &hand,
             discarded: &discarded,
@@ -503,7 +504,8 @@ fn test_rng_jokers_deterministic_behavior() {
                 stage: &stage,
                 hands_played: 0,
                 discards_used: 0,
-                hands_remaining: 4.0, // Standard hands remaining for testing
+                hands_remaining: 4.0,
+                is_final_hand: false,
                 jokers: &jokers_vec,
                 hand: &hand,
                 discarded: &discarded,
@@ -539,7 +541,8 @@ fn test_rng_jokers_deterministic_behavior() {
                 stage: &stage,
                 hands_played: 0,
                 discards_used: 0,
-                hands_remaining: 4.0, // Standard hands remaining for testing
+                hands_remaining: 4.0,
+                is_final_hand: false,
                 jokers: &jokers_vec,
                 hand: &hand,
                 discarded: &discarded,
