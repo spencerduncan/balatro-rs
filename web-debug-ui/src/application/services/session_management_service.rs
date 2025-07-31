@@ -5,14 +5,13 @@
 //! production scalability with support for 100+ concurrent sessions.
 
 use crate::application::{
-    config::{ApplicationConfig, CleanupStrategy, GameConfig, SessionId, SessionInfo},
+    config::{ApplicationConfig, GameConfig, SessionId, SessionInfo},
     container::{GameRepository, MetricsCollector},
     errors::ApplicationError,
 };
 use crate::domain::Game;
-use async_trait::async_trait;
 use std::sync::Arc;
-use std::time::{Duration, SystemTime};
+use std::time::Duration;
 
 /// Session Management Service
 ///

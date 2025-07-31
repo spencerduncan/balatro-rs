@@ -100,9 +100,9 @@ impl ActionResult {
 ///     fn notify_state_change(&self, session_id: &SessionId, state: &Game) {
 ///         // Send state update via WebSocket
 ///     }
-///     
+///
 ///     fn notify_action_result(&self, session_id: &SessionId, result: &ActionResult) {
-///         // Send action result via WebSocket  
+///         // Send action result via WebSocket
 ///     }
 /// }
 /// ```

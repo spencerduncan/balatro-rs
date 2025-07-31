@@ -18,49 +18,6 @@ use axum::{
 use serde_json::{json, Value};
 use std::sync::Arc;
 
-/// HTTP server error types
-#[derive(thiserror::Error, Debug)]
-pub enum HttpServerError {
-    #[error("Server startup failed: {message}")]
-    Startup { message: String },
-
-    #[error("Request processing failed: {message}")]
-    RequestProcessing { message: String },
-
-    #[error("WebSocket upgrade failed: {message}")]
-    WebSocketUpgrade { message: String },
-
-    #[error("Performance threshold exceeded: {operation} took {duration_ms}ms")]
-    PerformanceThreshold { operation: String, duration_ms: u64 },
-}
-
-/// HTTP server configuration with performance optimizations
-#[derive(Debug, Clone)]
-pub struct ServerConfig {
-    /// Maximum concurrent connections
-    pub max_connections: usize,
-    /// Request timeout in milliseconds
-    pub request_timeout_ms: u64,
-    /// Keep-alive timeout in seconds
-    pub keep_alive_seconds: u64,
-    /// Enable HTTP/2
-    pub http2_enabled: bool,
-    /// TCP nodelay for low latency
-    pub tcp_nodelay: bool,
-}
-
-impl Default for ServerConfig {
-    fn default() -> Self {
-        Self {
-            max_connections: 1000,
-            request_timeout_ms: 5000, // 5 second timeout
-            keep_alive_seconds: 60,
-            http2_enabled: true,
-            tcp_nodelay: true, // Disable Nagle's algorithm for low latency
-        }
-    }
-}
-
 /// Create the core HTTP router with all endpoints
 pub fn create_router(
     websocket_pool: Arc<crate::infrastructure::websocket::WebSocketConnectionPool>,
@@ -212,7 +169,7 @@ async fn get_session_state(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use axum_test::TestServer;
+    // use axum_test::TestServer;  // Disabled due to UUID version conflict
 
     #[tokio::test]
     async fn test_health_endpoint() {

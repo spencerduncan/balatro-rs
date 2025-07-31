@@ -31,12 +31,12 @@ use std::time::Duration;
 ///         // Implementation here
 ///         Ok(())
 ///     }
-///     
+///
 ///     fn load_session(&self, id: &SessionId) -> Result<GameSession, DomainError> {
-///         // Implementation here  
+///         // Implementation here
 ///         todo!()
 ///     }
-///     
+///
 ///     // ... other methods
 /// }
 /// ```

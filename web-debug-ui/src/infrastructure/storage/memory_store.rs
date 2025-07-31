@@ -289,7 +289,7 @@ impl HighPerformanceMemoryStore {
     /// Process game action (stub implementation)
     async fn process_game_action(
         &self,
-        session: &mut dashmap::mapref::one::RefMut<SessionId, GameSession>,
+        session: &mut dashmap::mapref::one::RefMut<'_, SessionId, GameSession>,
         action_data: Value,
     ) -> Result<Value, StorageError> {
         // This is where the actual game engine integration would happen

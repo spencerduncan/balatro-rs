@@ -5,10 +5,53 @@
 //! - 100+ concurrent connections
 //! - <20MB memory per session
 
-use super::{create_router, AppState, HttpServerError, ServerConfig};
+use super::{create_router, AppState};
 use axum::Router;
 use std::sync::Arc;
 use tokio::net::TcpListener;
+
+/// HTTP server error types
+#[derive(thiserror::Error, Debug)]
+pub enum HttpServerError {
+    #[error("Server startup failed: {message}")]
+    Startup { message: String },
+
+    #[error("Request processing failed: {message}")]
+    RequestProcessing { message: String },
+
+    #[error("WebSocket upgrade failed: {message}")]
+    WebSocketUpgrade { message: String },
+
+    #[error("Performance threshold exceeded: {operation} took {duration_ms}ms")]
+    PerformanceThreshold { operation: String, duration_ms: u64 },
+}
+
+/// HTTP server configuration with performance optimizations
+#[derive(Debug, Clone)]
+pub struct ServerConfig {
+    /// Maximum concurrent connections
+    pub max_connections: usize,
+    /// Request timeout in milliseconds
+    pub request_timeout_ms: u64,
+    /// Keep-alive timeout in seconds
+    pub keep_alive_seconds: u64,
+    /// Enable HTTP/2
+    pub http2_enabled: bool,
+    /// TCP nodelay for low latency
+    pub tcp_nodelay: bool,
+}
+
+impl Default for ServerConfig {
+    fn default() -> Self {
+        Self {
+            max_connections: 1000,
+            request_timeout_ms: 5000, // 5 second timeout
+            keep_alive_seconds: 60,
+            http2_enabled: true,
+            tcp_nodelay: true, // Disable Nagle's algorithm for low latency
+        }
+    }
+}
 
 /// High-performance HTTP server with RAII resource management
 pub struct HttpServer {

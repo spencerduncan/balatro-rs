@@ -12,6 +12,7 @@
 //! - Recovery strategies must be automated where possible
 //! - Error correlation must be preserved across service boundaries
 
+use balatro_rs::error;
 use std::time::Duration;
 use thiserror::Error;
 
@@ -394,8 +395,8 @@ impl Default for CompositeRecoveryStrategy {
 }
 
 /// Conversions from domain layer errors
-impl From<crate::error::DeveloperGameError> for ApplicationError {
-    fn from(error: crate::error::DeveloperGameError) -> Self {
+impl From<error::DeveloperGameError> for ApplicationError {
+    fn from(error: error::DeveloperGameError) -> Self {
         Self::Domain {
             message: error.to_string(),
             source: Box::new(error),

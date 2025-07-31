@@ -14,7 +14,7 @@
 //! - Liskov Substitution: Implementations are safely interchangeable
 
 use crate::application::{
-    config::{ApplicationConfig, GameConfig, SessionId, SessionInfo},
+    config::{ApplicationConfig, GameConfig, SessionId},
     errors::ApplicationError,
 };
 use crate::domain::{Action, Game};

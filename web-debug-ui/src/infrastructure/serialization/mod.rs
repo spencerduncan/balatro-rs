@@ -10,7 +10,7 @@
 pub mod zero_copy;
 
 pub use zero_copy::{
-    deserialize_game_state_zerocopy, serialize_game_state_zerocopy, SerializationError,
+    deserialize_game_state_zerocopy, serialize_game_state_zerocopy,
     StackAllocatedActionResponse, ZeroCopySerializer,
 };
 

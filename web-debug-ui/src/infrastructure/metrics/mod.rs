@@ -68,10 +68,8 @@ pub fn initialize_metrics(config: &MetricsConfig) -> Result<MetricsHandle, Metri
                 message: e.to_string(),
             })?;
 
-        metrics::set_boxed_recorder(Box::new(recorder)).map_err(|e| {
-            MetricsError::InitializationFailed {
-                message: e.to_string(),
-            }
+        metrics::set_global_recorder(recorder).map_err(|e| MetricsError::InitializationFailed {
+            message: e.to_string(),
         })?;
 
         // Register core infrastructure metrics
@@ -269,11 +267,11 @@ macro_rules! record_performance_critical {
 
             if duration_ms > $threshold_ms {
                 metrics::counter!(
-                    "performance_violations_total", 1,
+                    "performance_violations_total",
                     "operation" => $operation,
                     "threshold_ms" => $threshold_ms.to_string(),
                     "actual_ms" => duration_ms.to_string()
-                );
+                ).increment(1);
 
                 tracing::warn!(
                     "PERFORMANCE VIOLATION: {} took {}ms (threshold: {}ms)",

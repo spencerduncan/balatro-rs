@@ -5,7 +5,7 @@
 //! notifications, metrics). Designed for production scalability.
 
 use crate::application::{
-    config::{ApplicationConfig, GameConfig, SessionId},
+    config::{ApplicationConfig, SessionId},
     container::{
         ActionResult, ActionValidator, GameRepository, MetricsCollector, StateChangeEvent,
         StateNotifier,
@@ -13,7 +13,6 @@ use crate::application::{
     errors::ApplicationError,
 };
 use crate::domain::{Action, Game};
-use async_trait::async_trait;
 use std::sync::Arc;
 use std::time::Instant;
 
