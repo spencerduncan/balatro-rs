@@ -10,11 +10,8 @@
 pub mod zero_copy;
 
 pub use zero_copy::{
-    StackAllocatedActionResponse,
-    SerializationError,
-    serialize_game_state_zerocopy,
-    deserialize_game_state_zerocopy,
-    ZeroCopySerializer,
+    deserialize_game_state_zerocopy, serialize_game_state_zerocopy, SerializationError,
+    StackAllocatedActionResponse, ZeroCopySerializer,
 };
 
 use std::mem;
@@ -79,12 +76,7 @@ impl MessageHeader {
 
     /// Convert to bytes (zero-copy)
     pub fn as_bytes(&self) -> &[u8] {
-        unsafe {
-            std::slice::from_raw_parts(
-                self as *const Self as *const u8,
-                Self::SIZE
-            )
-        }
+        unsafe { std::slice::from_raw_parts(self as *const Self as *const u8, Self::SIZE) }
     }
 
     /// Create from bytes (zero-copy)
@@ -96,9 +88,7 @@ impl MessageHeader {
             });
         }
 
-        unsafe {
-            Ok(&*(bytes.as_ptr() as *const Self))
-        }
+        unsafe { Ok(&*(bytes.as_ptr() as *const Self)) }
     }
 }
 
@@ -178,10 +168,7 @@ mod tests {
         let header = MessageHeader::new(message_types::ACTION_RESPONSE, 8);
         let payload = [1u8, 2, 3, 4, 5, 6, 7, 8];
 
-        let message = builder
-            .add_header(header)
-            .add_payload(&payload)
-            .build();
+        let message = builder.add_header(header).add_payload(&payload).build();
 
         assert_eq!(message.len(), MessageHeader::SIZE + 8);
 
@@ -203,7 +190,10 @@ mod tests {
         let result = MessageHeader::from_bytes(&small_buffer);
 
         match result {
-            Err(SerializationError::BufferTooSmall { required, available }) => {
+            Err(SerializationError::BufferTooSmall {
+                required,
+                available,
+            }) => {
                 assert_eq!(required, MessageHeader::SIZE);
                 assert_eq!(available, 4);
             }

@@ -9,7 +9,7 @@
 
 pub mod connection_manager;
 
-pub use connection_manager::{WebSocketConnectionPool, ConnectionPoolConfig, WebSocketError};
+pub use connection_manager::{ConnectionPoolConfig, WebSocketConnectionPool, WebSocketError};
 
 use axum::extract::ws::{Message, WebSocket};
 use dashmap::DashMap;
@@ -23,7 +23,9 @@ pub enum WebSocketError {
     ConnectionLimitExceeded { current: usize, max: usize },
 
     #[error("Connection not found: {session_id}")]
-    ConnectionNotFound { session_id: crate::infrastructure::SessionId },
+    ConnectionNotFound {
+        session_id: crate::infrastructure::SessionId,
+    },
 
     #[error("Message send failed: {message}")]
     MessageSendFailed { message: String },
@@ -88,8 +90,12 @@ pub enum GameMessage {
     },
 
     /// Ping/Pong for connection health
-    Ping { timestamp: u64 },
-    Pong { timestamp: u64 },
+    Ping {
+        timestamp: u64,
+    },
+    Pong {
+        timestamp: u64,
+    },
 }
 
 /// Connection metrics for monitoring
@@ -136,8 +142,14 @@ mod tests {
         let config = ConnectionPoolConfig::default();
 
         // Verify performance-oriented defaults
-        assert_eq!(config.max_connections, 100, "Should support 100+ connections");
-        assert!(config.compression_enabled, "Compression should be enabled for efficiency");
+        assert_eq!(
+            config.max_connections, 100,
+            "Should support 100+ connections"
+        );
+        assert!(
+            config.compression_enabled,
+            "Compression should be enabled for efficiency"
+        );
         assert_eq!(config.ping_interval_seconds, 30, "Reasonable ping interval");
         assert_eq!(config.message_buffer_size, 1024, "Adequate message buffer");
     }

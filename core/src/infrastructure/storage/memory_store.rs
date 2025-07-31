@@ -3,15 +3,15 @@
 //! Uses DashMap for lock-free concurrent access and RAII patterns for resource management.
 //! Designed to maintain <20MB per session and O(1) operations.
 
-use super::{StoreConfig, StorageError, GameSession, SessionMetadata, StorageStats};
+use super::{GameSession, SessionMetadata, StorageError, StorageStats, StoreConfig};
 use crate::infrastructure::SessionId;
 use dashmap::DashMap;
+use serde_json::Value;
 use std::sync::{
     atomic::{AtomicU64, AtomicUsize, Ordering},
     Arc,
 };
 use std::time::Instant;
-use serde_json::Value;
 
 /// High-performance memory store with concurrent access
 pub struct HighPerformanceMemoryStore {
@@ -43,8 +43,11 @@ impl HighPerformanceMemoryStore {
             Self::cleanup_task(cleanup_sessions, cleanup_stats, cleanup_config).await;
         });
 
-        tracing::info!("High-performance memory store created with max_memory: {}MB, max_sessions: {}",
-            config.max_memory_mb, config.max_sessions);
+        tracing::info!(
+            "High-performance memory store created with max_memory: {}MB, max_sessions: {}",
+            config.max_memory_mb,
+            config.max_sessions
+        );
 
         Ok(Self {
             sessions,
@@ -68,7 +71,11 @@ impl HighPerformanceMemoryStore {
         if self.sessions.len() >= self.config.max_sessions {
             return Err(StorageError::OperationFailed {
                 operation: "create_session".to_string(),
-                message: format!("Session limit exceeded: {}/{}", self.sessions.len(), self.config.max_sessions),
+                message: format!(
+                    "Session limit exceeded: {}/{}",
+                    self.sessions.len(),
+                    self.config.max_sessions
+                ),
             });
         }
 
@@ -91,13 +98,20 @@ impl HighPerformanceMemoryStore {
 
         let duration = start.elapsed();
         if duration.as_millis() > 10 {
-            tracing::warn!("Slow session creation: {}ms for {}", duration.as_millis(), session_id);
+            tracing::warn!(
+                "Slow session creation: {}ms for {}",
+                duration.as_millis(),
+                session_id
+            );
         }
 
         #[cfg(feature = "monitoring")]
         {
             metrics::counter!("storage_sessions_created", 1);
-            metrics::histogram!("storage_create_session_duration_ms", duration.as_millis() as f64);
+            metrics::histogram!(
+                "storage_create_session_duration_ms",
+                duration.as_millis() as f64
+            );
         }
 
         tracing::debug!("Session created: {}", session_id);
@@ -126,22 +140,33 @@ impl HighPerformanceMemoryStore {
         let duration = start.elapsed();
         #[cfg(feature = "monitoring")]
         {
-            metrics::histogram!("storage_get_session_duration_ms", duration.as_millis() as f64);
+            metrics::histogram!(
+                "storage_get_session_duration_ms",
+                duration.as_millis() as f64
+            );
         }
 
         result
     }
 
     /// Handle session action (PERFORMANCE CRITICAL - part of <10ms action latency)
-    pub async fn handle_session_action(&self, session_id: SessionId, action_data: Value) -> Result<Value, StorageError> {
+    pub async fn handle_session_action(
+        &self,
+        session_id: SessionId,
+        action_data: Value,
+    ) -> Result<Value, StorageError> {
         let start = Instant::now();
 
         // Get session
-        let mut session = self.sessions.get_mut(&session_id)
+        let mut session = self
+            .sessions
+            .get_mut(&session_id)
             .ok_or(StorageError::SessionNotFound { session_id })?;
 
         // Update session metadata
-        session.metadata.record_action(start.elapsed().as_nanos() as u64);
+        session
+            .metadata
+            .record_action(start.elapsed().as_nanos() as u64);
         session.touch();
 
         // Process action (this would integrate with the actual game engine)
@@ -152,21 +177,31 @@ impl HighPerformanceMemoryStore {
 
         #[cfg(feature = "monitoring")]
         {
-            metrics::histogram!("storage_handle_action_duration_ms", duration.as_millis() as f64);
+            metrics::histogram!(
+                "storage_handle_action_duration_ms",
+                duration.as_millis() as f64
+            );
             if duration.as_millis() > 5 {
                 metrics::counter!("storage_slow_actions", 1);
             }
         }
 
         if duration.as_millis() > 5 {
-            tracing::warn!("Slow action processing: {}ms for session {}", duration.as_millis(), session_id);
+            tracing::warn!(
+                "Slow action processing: {}ms for session {}",
+                duration.as_millis(),
+                session_id
+            );
         }
 
         Ok(result)
     }
 
     /// Get session game state
-    pub async fn get_session_state(&self, session_id: SessionId) -> Result<Option<Value>, StorageError> {
+    pub async fn get_session_state(
+        &self,
+        session_id: SessionId,
+    ) -> Result<Option<Value>, StorageError> {
         let start = Instant::now();
 
         let result = if let Some(session) = self.sessions.get(&session_id) {
@@ -215,7 +250,9 @@ impl HighPerformanceMemoryStore {
 
     /// Get current memory usage in MB
     pub fn memory_usage_mb(&self) -> f64 {
-        let total_bytes: usize = self.sessions.iter()
+        let total_bytes: usize = self
+            .sessions
+            .iter()
             .map(|entry| entry.value().memory_usage_bytes())
             .sum();
 
@@ -250,7 +287,11 @@ impl HighPerformanceMemoryStore {
     }
 
     /// Process game action (stub implementation)
-    async fn process_game_action(&self, session: &mut dashmap::mapref::one::RefMut<SessionId, GameSession>, action_data: Value) -> Result<Value, StorageError> {
+    async fn process_game_action(
+        &self,
+        session: &mut dashmap::mapref::one::RefMut<SessionId, GameSession>,
+        action_data: Value,
+    ) -> Result<Value, StorageError> {
         // This is where the actual game engine integration would happen
         // For now, just return a success response
 
@@ -271,9 +312,9 @@ impl HighPerformanceMemoryStore {
         stats: Arc<MemoryStoreStats>,
         config: StoreConfig,
     ) {
-        let mut interval = tokio::time::interval(
-            tokio::time::Duration::from_secs(config.cleanup_interval_seconds)
-        );
+        let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(
+            config.cleanup_interval_seconds,
+        ));
 
         loop {
             interval.tick().await;
@@ -292,7 +333,9 @@ impl HighPerformanceMemoryStore {
             });
 
             if cleaned_count > 0 {
-                stats.expired_sessions_cleaned.fetch_add(cleaned_count, Ordering::Relaxed);
+                stats
+                    .expired_sessions_cleaned
+                    .fetch_add(cleaned_count, Ordering::Relaxed);
 
                 #[cfg(feature = "monitoring")]
                 {
@@ -338,7 +381,8 @@ impl Drop for HighPerformanceMemoryStore {
 
         tracing::info!(
             "High-performance memory store shutting down: {} sessions, {:.2}MB memory usage",
-            session_count, memory_usage
+            session_count,
+            memory_usage
         );
 
         #[cfg(feature = "monitoring")]
@@ -408,7 +452,10 @@ mod tests {
         let store = HighPerformanceMemoryStore::new(config).unwrap();
 
         let initial_memory = store.memory_usage_mb();
-        assert!(initial_memory >= 0.0, "Initial memory usage should be non-negative");
+        assert!(
+            initial_memory >= 0.0,
+            "Initial memory usage should be non-negative"
+        );
 
         // Create some sessions
         for i in 0..10 {
@@ -417,7 +464,10 @@ mod tests {
         }
 
         let after_memory = store.memory_usage_mb();
-        assert!(after_memory > initial_memory, "Memory usage should increase with sessions");
+        assert!(
+            after_memory > initial_memory,
+            "Memory usage should increase with sessions"
+        );
     }
 
     #[tokio::test]
@@ -455,7 +505,7 @@ mod tests {
         assert!(result.is_err(), "Should reject duplicate session");
 
         match result.unwrap_err() {
-            StorageError::SessionAlreadyExists { .. } => {},
+            StorageError::SessionAlreadyExists { .. } => {}
             _ => panic!("Expected SessionAlreadyExists error"),
         }
     }

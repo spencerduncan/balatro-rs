@@ -54,6 +54,17 @@ pub enum ConsumableError {
     TargetValidation(#[from] TargetValidationError),
 }
 
+impl From<crate::error::DeveloperGameError> for ConsumableError {
+    fn from(err: crate::error::DeveloperGameError) -> Self {
+        match err {
+            crate::error::DeveloperGameError::InvalidAction => {
+                ConsumableError::InvalidGameState("Invalid action for consumable".to_string())
+            }
+            _ => ConsumableError::EffectFailed(err.to_string()),
+        }
+    }
+}
+
 /// Error types for slot operations
 #[derive(Debug, Error)]
 pub enum SlotError {

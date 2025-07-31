@@ -6,7 +6,7 @@
 
 pub mod server;
 
-pub use server::{HttpServer, ServerConfig, HttpServerError};
+pub use server::{HttpServer, HttpServerError, ServerConfig};
 
 use axum::{
     extract::State,
@@ -135,7 +135,11 @@ async fn websocket_upgrade(
         let session_id = uuid::Uuid::new_v4();
 
         // Add connection to pool
-        if let Err(e) = state.websocket_pool.add_connection(session_id, socket).await {
+        if let Err(e) = state
+            .websocket_pool
+            .add_connection(session_id, socket)
+            .await
+        {
             tracing::error!("Failed to add WebSocket connection: {}", e);
         }
     })
@@ -166,7 +170,11 @@ async fn handle_action(
     let start = Instant::now();
 
     // This is the critical path - must be <10ms end-to-end
-    match state.storage.handle_session_action(session_id, action_data).await {
+    match state
+        .storage
+        .handle_session_action(session_id, action_data)
+        .await
+    {
         Ok(result) => {
             let duration = start.elapsed();
 
@@ -175,7 +183,11 @@ async fn handle_action(
                 metrics::histogram!("action_execution_duration_ms", duration.as_millis() as f64);
                 if duration.as_millis() > 10 {
                     metrics::counter!("slow_actions_total", 1);
-                    tracing::warn!("Slow action execution: {}ms for session {}", duration.as_millis(), session_id);
+                    tracing::warn!(
+                        "Slow action execution: {}ms for session {}",
+                        duration.as_millis(),
+                        session_id
+                    );
                 }
             }
 
@@ -206,12 +218,18 @@ mod tests {
     async fn test_health_endpoint() {
         // This would need proper setup with mock storage and websocket pool
         // For now, just test that the router can be created
-        let storage = Arc::new(crate::infrastructure::storage::HighPerformanceMemoryStore::new(
-            crate::infrastructure::storage::StoreConfig::default()
-        ).unwrap());
-        let websocket_pool = Arc::new(crate::infrastructure::websocket::WebSocketConnectionPool::new(
-            crate::infrastructure::websocket::ConnectionPoolConfig::default()
-        ).unwrap());
+        let storage = Arc::new(
+            crate::infrastructure::storage::HighPerformanceMemoryStore::new(
+                crate::infrastructure::storage::StoreConfig::default(),
+            )
+            .unwrap(),
+        );
+        let websocket_pool = Arc::new(
+            crate::infrastructure::websocket::WebSocketConnectionPool::new(
+                crate::infrastructure::websocket::ConnectionPoolConfig::default(),
+            )
+            .unwrap(),
+        );
 
         let router = create_router(websocket_pool, storage);
         let server = TestServer::new(router).unwrap();

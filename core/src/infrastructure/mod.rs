@@ -13,13 +13,13 @@
 #![cfg(feature = "infrastructure")]
 
 pub mod http;
-pub mod websocket;
+pub mod metrics;
 pub mod serialization;
 pub mod storage;
-pub mod metrics;
+pub mod websocket;
 
-use std::sync::Arc;
 use anyhow::Result;
+use std::sync::Arc;
 
 /// Central configuration for the infrastructure foundation
 #[derive(Debug, Clone)]
@@ -66,7 +66,9 @@ pub enum InfrastructureError {
     #[error("Configuration error: {message}")]
     Configuration { message: String },
 
-    #[error("Performance threshold exceeded: {operation} took {duration_ms}ms (limit: {limit_ms}ms)")]
+    #[error(
+        "Performance threshold exceeded: {operation} took {duration_ms}ms (limit: {limit_ms}ms)"
+    )]
     PerformanceThreshold {
         operation: String,
         duration_ms: u64,
@@ -86,13 +88,22 @@ pub async fn initialize(config: InfrastructureConfig) -> Result<InfrastructureFo
         tracing::info!("Infrastructure metrics initialized");
 
         // Initialize other components with monitoring
-        let storage = Arc::new(self::storage::HighPerformanceMemoryStore::new(config.storage_config)?);
+        let storage = Arc::new(self::storage::HighPerformanceMemoryStore::new(
+            config.storage_config,
+        )?);
         tracing::info!("High-performance memory store initialized");
 
-        let websocket_pool = Arc::new(self::websocket::WebSocketConnectionPool::new(config.websocket_config)?);
+        let websocket_pool = Arc::new(self::websocket::WebSocketConnectionPool::new(
+            config.websocket_config,
+        )?);
         tracing::info!("WebSocket connection pool initialized");
 
-        let http_server = self::http::HttpServer::new(config.http_config, websocket_pool.clone(), storage.clone()).await?;
+        let http_server = self::http::HttpServer::new(
+            config.http_config,
+            websocket_pool.clone(),
+            storage.clone(),
+        )
+        .await?;
         tracing::info!("Axum HTTP server initialized");
 
         Ok(InfrastructureFoundation {
@@ -106,9 +117,18 @@ pub async fn initialize(config: InfrastructureConfig) -> Result<InfrastructureFo
     #[cfg(not(feature = "monitoring"))]
     {
         // Initialize without metrics for minimal overhead
-        let storage = Arc::new(self::storage::HighPerformanceMemoryStore::new(config.storage_config)?);
-        let websocket_pool = Arc::new(self::websocket::WebSocketConnectionPool::new(config.websocket_config)?);
-        let http_server = self::http::HttpServer::new(config.http_config, websocket_pool.clone(), storage.clone()).await?;
+        let storage = Arc::new(self::storage::HighPerformanceMemoryStore::new(
+            config.storage_config,
+        )?);
+        let websocket_pool = Arc::new(self::websocket::WebSocketConnectionPool::new(
+            config.websocket_config,
+        )?);
+        let http_server = self::http::HttpServer::new(
+            config.http_config,
+            websocket_pool.clone(),
+            storage.clone(),
+        )
+        .await?;
 
         Ok(InfrastructureFoundation {
             http_server,
@@ -175,7 +195,10 @@ mod tests {
     async fn test_infrastructure_initialization() {
         let config = InfrastructureConfig::default();
         let result = initialize(config).await;
-        assert!(result.is_ok(), "Infrastructure should initialize successfully");
+        assert!(
+            result.is_ok(),
+            "Infrastructure should initialize successfully"
+        );
     }
 
     #[test]

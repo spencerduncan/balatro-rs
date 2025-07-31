@@ -7,16 +7,22 @@ use crate::card::Card;
 use crate::config::Config;
 use crate::consumables::ConsumableId;
 use crate::deck::Deck;
-use crate::error::GameError;
+use crate::error::{DeveloperGameError, GameError};
 use crate::hand::{MadeHand, SelectHand};
 use crate::joker::{GameContext, Joker, JokerId, Jokers, OldJoker as OldJokerTrait};
 use crate::joker_effect_processor::JokerEffectProcessor;
 use crate::joker_factory::JokerFactory;
+<<<<<<< HEAD
 use crate::joker_state::JokerStateManager;
 use crate::rank::HandRank;
 
 // Import debug functionality
 mod debug;
+=======
+use crate::joker_state::{JokerState, JokerStateManager};
+use crate::memory_monitor::MemoryMonitor;
+use crate::rank::{HandRank, Level};
+>>>>>>> 5ddd470b (fix(infrastructure): Complete infrastructure foundation with hand level system)
 use crate::scaling_joker::ScalingEvent;
 use crate::shop::Shop;
 use crate::skip_tags::SkipTagId;
@@ -211,7 +217,7 @@ pub struct Game {
 
     // hand type tracking for this game run
     pub hand_type_counts: HashMap<HandRank, u32>,
-    
+
     // hand type levels (planet card system)
     pub hand_type_levels: HashMap<HandRank, u32>,
 
@@ -568,15 +574,23 @@ impl Game {
         *self.hand_type_counts.entry(hand_rank).or_insert(0) += 1;
     }
 
-    /// Returns the current level of a specific hand type (planet card system).
+    /// Returns the current level information of a specific hand type (planet card system).
     ///
     /// # Arguments
     /// * `hand_rank` - The hand rank to check the level for
     ///
     /// # Returns
-    /// The current level of this hand type (1 if never leveled up)
-    pub fn get_hand_level(&self, hand_rank: HandRank) -> u32 {
-        self.hand_type_levels.get(&hand_rank).copied().unwrap_or(1)
+    /// The current level information with calculated chips and mult values
+    pub fn get_hand_level(&self, hand_rank: HandRank) -> Level {
+        let current_level = self.hand_type_levels.get(&hand_rank).copied().unwrap_or(1);
+        let base_level = hand_rank.base_level();
+
+        // Calculate scaled values based on level
+        Level {
+            level: current_level as usize,
+            chips: base_level.chips * current_level as usize,
+            mult: base_level.mult * current_level as usize,
+        }
     }
 
     /// Levels up a specific hand type (planet card effect).
@@ -586,16 +600,16 @@ impl Game {
     ///
     /// # Returns
     /// Result indicating success or failure
-    pub fn level_up_hand(&mut self, hand_rank: HandRank) -> Result<(), GameError> {
-        let current_level = self.get_hand_level(hand_rank);
-        let new_level = current_level + 1;
-        
+    pub fn level_up_hand(&mut self, hand_rank: HandRank) -> Result<(), DeveloperGameError> {
+        let current_level_num = self.hand_type_levels.get(&hand_rank).copied().unwrap_or(1);
+        let new_level_num = current_level_num + 1;
+
         // Prevent integer overflow and set reasonable maximum level
-        if new_level > 100 {
-            return Err(GameError::InvalidAction("Hand level would exceed maximum".to_string()));
+        if new_level_num > 100 {
+            return Err(DeveloperGameError::InvalidAction);
         }
-        
-        self.hand_type_levels.insert(hand_rank, new_level);
+
+        self.hand_type_levels.insert(hand_rank, new_level_num);
         Ok(())
     }
 
@@ -1960,13 +1974,22 @@ impl Game {
                 Err(GameError::InvalidAction)
             }
 
+<<<<<<< HEAD
             // Planet card usage
+=======
+            // Planet card actions
+>>>>>>> 5ddd470b (fix(infrastructure): Complete infrastructure foundation with hand level system)
             Action::UsePlanetCard {
                 planet_card_id: _,
                 hand_rank_id: _,
             } => {
+<<<<<<< HEAD
                 // TODO: Implement planet card usage through action system
                 // For now, planet cards use level_up_hand directly
+=======
+                // TODO: Implement planet card usage with proper target selection
+                // For now, return InvalidAction to prevent crashes
+>>>>>>> 5ddd470b (fix(infrastructure): Complete infrastructure foundation with hand level system)
                 Err(GameError::InvalidAction)
             }
 
