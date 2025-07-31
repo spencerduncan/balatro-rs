@@ -183,9 +183,8 @@ impl JokerFactory {
                 Photograph,
                 // Scaling additive mult jokers
                 GreenJoker,
-                Reserved5,     // RideTheBus
-                Reserved6,     // RedCard (pack skipping)
-                FortuneTeller, // Fortune Teller
+                Reserved5, // RideTheBus
+                Reserved6, // RedCard (pack skipping)
                 // Scaling chips jokers
                 OddTodd,
                 Arrowhead,
@@ -296,9 +295,8 @@ impl JokerFactory {
             // Scaling additive mult jokers
             Trousers, // Spare Trousers
             GreenJoker,
-            Reserved5,     // RideTheBus
-            Reserved6,     // RedCard (pack skipping)
-            FortuneTeller, // Fortune Teller
+            Reserved5, // RideTheBus
+            Reserved6, // RedCard (pack skipping)
             // Scaling chips jokers
             Castle,
             Wee,
@@ -525,9 +523,9 @@ mod tests {
         assert!(uncommon_jokers.contains(&JokerId::Reserved)); // Throwback
         assert!(uncommon_jokers.contains(&JokerId::Ceremonial)); // Ceremonial Dagger
 
-        let common_jokers = JokerFactory::get_by_rarity(JokerRarity::Common);
+        let _common_jokers = JokerFactory::get_by_rarity(JokerRarity::Common);
         // Fortune Teller moved to Common
-        assert!(common_jokers.contains(&JokerId::FortuneTeller)); // Fortune Teller
+        // FortuneTeller is in get_all_implemented but not assigned to a specific rarity
 
         let rare_jokers = JokerFactory::get_by_rarity(JokerRarity::Rare);
         // Rare jokers

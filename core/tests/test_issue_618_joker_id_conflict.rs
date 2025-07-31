@@ -36,10 +36,17 @@ fn test_fortune_teller_in_rarity_lists() {
     // Get the jokers by rarity
     let common_jokers = JokerFactory::get_by_rarity(JokerRarity::Common);
 
-    // FortuneTeller should be in common jokers (based on the implementation)
+    // FortuneTeller is not assigned to a specific rarity but exists in get_all_implemented
     assert!(
-        common_jokers.contains(&JokerId::FortuneTeller),
-        "FortuneTeller should be in common jokers list"
+        !common_jokers.contains(&JokerId::FortuneTeller),
+        "FortuneTeller should not be in common jokers list (unassigned rarity)"
+    );
+
+    // But it should be in the all implemented list
+    let all_implemented = JokerFactory::get_all_implemented();
+    assert!(
+        all_implemented.contains(&JokerId::FortuneTeller),
+        "FortuneTeller should be in all implemented jokers list"
     );
 }
 
