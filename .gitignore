@@ -1,5 +1,8 @@
 /target
 
+# Profiling data
+*.profraw
+
 # Python virtual environments
 .env/
 .venv/
