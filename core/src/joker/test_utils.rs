@@ -17,13 +17,22 @@
 //! ```rust
 //! use balatro_rs::joker::test_utils::*;
 //! use balatro_rs::joker::{Joker, JokerEffect, JokerId, JokerRarity};
+//! use balatro_rs::card::{Suit, Value};
+//! use balatro_rs::hand::SelectHand;
 //!
 //! // Create a test context
-//! let context = TestContextBuilder::new()
+//! let mut context = TestContextBuilder::new()
 //!     .with_chips(100)
 //!     .with_mult(5)
 //!     .with_money(50)
 //!     .build();
+//!
+//! // Create a test hand
+//! let cards = vec![
+//!     create_test_card(Value::Ace, Suit::Spade),
+//!     create_test_card(Value::King, Suit::Heart),
+//! ];
+//! let hand = SelectHand::new(cards);
 //!
 //! // Use a mock joker for testing
 //! let joker = MockGameplayJoker::new()
@@ -622,8 +631,8 @@ pub struct TestContextBuilder {
     round: u32,
     stage: Stage,
     hands_played: u32,
-    discards_used: u32,
     hands_remaining: f64,
+    discards_used: u32,
     hand: Hand,
     discarded: Vec<Card>,
     hand_type_counts: HashMap<HandRank, u32>,
@@ -642,8 +651,8 @@ impl TestContextBuilder {
             round: 1,
             stage: Stage::Blind(Blind::Small),
             hands_played: 0,
-            discards_used: 0,
             hands_remaining: 4.0,
+            discards_used: 0,
             hand: Hand::new(vec![]),
             discarded: Vec::new(),
             hand_type_counts: HashMap::new(),
@@ -763,8 +772,8 @@ impl TestContextBuilder {
             round: self.round,
             stage: stage_ref,
             hands_played: self.hands_played,
-            discards_used: self.discards_used,
             hands_remaining: self.hands_remaining,
+            discards_used: self.discards_used,
             jokers: jokers_ref,
             hand: hand_ref,
             discarded: discarded_ref,

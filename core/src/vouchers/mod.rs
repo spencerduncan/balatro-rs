@@ -100,14 +100,23 @@ pub enum VoucherEffect {
     ShopEnhancementsEnabled,
     /// Multiplies Tarot card appearance frequency
     TarotFrequencyMultiplier(f64),
+    /// Multiplies Planet card appearance frequency
+    PlanetFrequencyMultiplier(f64),
+    /// Multiplies enhanced card (foil/holo/polychrome) appearance frequency
+    PolychromeFrequencyMultiplier(f64),
     /// Provides percentage discount on all shop items
     ShopDiscountPercent(f64),
-    /// Multiplies polychrome card appearance frequency
-    PolychromeFrequencyMultiplier(f64),
+    /// Applies discount multiplier to shop items (0.5 = 50% off)
+    ShopDiscountMultiplier(f64),
     /// Reduces reroll cost by specified amount
     RerollCostReduction(usize),
     /// Increases consumable slots
     ConsumableSlotIncrease(usize),
+    /// Enables boss blind reroll functionality (limited or unlimited)
+    BossBlindRerollEnabled {
+        unlimited: bool,
+        cost_per_roll: usize,
+    },
     /// No effect (flavor voucher)
     NoEffect,
 }
@@ -122,6 +131,7 @@ impl VoucherEffect {
     }
 
     /// Check if this effect affects shop mechanics
+    /// Check if this effect affects shop mechanics
     pub fn affects_shop(&self) -> bool {
         matches!(
             self,
@@ -131,9 +141,14 @@ impl VoucherEffect {
                 | VoucherEffect::JokerSlotDecrease(_)
                 | VoucherEffect::ShopPlayingCardsEnabled
                 | VoucherEffect::ShopEnhancementsEnabled
+                | VoucherEffect::TarotFrequencyMultiplier(_)
+                | VoucherEffect::PlanetFrequencyMultiplier(_)
+                | VoucherEffect::PolychromeFrequencyMultiplier(_)
                 | VoucherEffect::ShopDiscountPercent(_)
+                | VoucherEffect::ShopDiscountMultiplier(_)
                 | VoucherEffect::RerollCostReduction(_)
                 | VoucherEffect::ConsumableSlotIncrease(_)
+                | VoucherEffect::BossBlindRerollEnabled { .. }
         )
     }
 
@@ -277,6 +292,20 @@ impl VoucherEffect {
                     });
                 }
             }
+            VoucherEffect::PlanetFrequencyMultiplier(multiplier) => {
+                if !multiplier.is_finite() || *multiplier <= 0.0 || *multiplier > 10.0 {
+                    return Err(VoucherError::InvalidScaling {
+                        multiplier: *multiplier,
+                    });
+                }
+            }
+            VoucherEffect::PolychromeFrequencyMultiplier(multiplier) => {
+                if !multiplier.is_finite() || *multiplier <= 0.0 || *multiplier > 10.0 {
+                    return Err(VoucherError::InvalidScaling {
+                        multiplier: *multiplier,
+                    });
+                }
+            }
             VoucherEffect::ShopDiscountPercent(discount) => {
                 if !discount.is_finite() || *discount <= 0.0 || *discount > 100.0 {
                     return Err(VoucherError::InvalidScaling {
@@ -284,9 +313,9 @@ impl VoucherEffect {
                     });
                 }
             }
-            VoucherEffect::PolychromeFrequencyMultiplier(multiplier) => {
-                if !multiplier.is_finite() || *multiplier <= 0.0 || *multiplier > 10.0 {
-                    return Err(VoucherError::InvalidScaling {
+            VoucherEffect::ShopDiscountMultiplier(multiplier) => {
+                if !multiplier.is_finite() || *multiplier <= 0.0 || *multiplier > 1.0 {
+                    return Err(VoucherError::InvalidBlindReduction {
                         multiplier: *multiplier,
                     });
                 }
@@ -299,6 +328,13 @@ impl VoucherEffect {
             VoucherEffect::ConsumableSlotIncrease(amount) => {
                 if *amount > 10 {
                     return Err(VoucherError::ExcessiveJokerSlots { amount: *amount });
+                }
+            }
+            VoucherEffect::BossBlindRerollEnabled { cost_per_roll, .. } => {
+                if *cost_per_roll > 100 {
+                    return Err(VoucherError::ExcessiveMoneyGain {
+                        amount: *cost_per_roll,
+                    });
                 }
             }
             VoucherEffect::ShopPlayingCardsEnabled => {}
@@ -504,13 +540,21 @@ impl GameState {
                 // Tarot frequency affects shop/pack generation, not game state directly
                 // This would be handled by the shop system
             }
+            VoucherEffect::PlanetFrequencyMultiplier(_multiplier) => {
+                // Planet frequency affects shop/pack generation, not game state directly
+                // This would be handled by the shop system
+            }
+            VoucherEffect::PolychromeFrequencyMultiplier(_multiplier) => {
+                // Enhanced card frequency affects shop/pack generation, not game state directly
+                // This would be handled by the shop system
+            }
             VoucherEffect::ShopDiscountPercent(_discount) => {
                 // Shop discount affects item pricing, not game state directly
                 // This would be handled by the shop system
             }
-            VoucherEffect::PolychromeFrequencyMultiplier(_multiplier) => {
-                // Polychrome frequency affects card generation, not game state directly
-                // This would be handled by the card generation system
+            VoucherEffect::ShopDiscountMultiplier(_multiplier) => {
+                // Shop discount affects shop pricing, not game state directly
+                // This would be handled by the shop system
             }
             VoucherEffect::RerollCostReduction(_amount) => {
                 // Reroll cost reduction affects shop reroll pricing, not game state directly
@@ -519,6 +563,10 @@ impl GameState {
             VoucherEffect::ConsumableSlotIncrease(_amount) => {
                 // Consumable slots affect inventory capacity, not current game state
                 // This would be handled by the inventory system
+            }
+            VoucherEffect::BossBlindRerollEnabled { .. } => {
+                // Boss blind reroll affects blind mechanics, not game state directly
+                // This would be handled by the blind system
             }
             VoucherEffect::ShopPlayingCardsEnabled => {
                 // Shop playing cards enable affects shop generation, not game state directly
@@ -651,9 +699,7 @@ pub trait Voucher: Send + Sync + std::fmt::Debug {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, EnumIter)]
 #[cfg_attr(feature = "python", pyo3::pyclass(eq))]
 pub enum VoucherId {
-    // Existing vouchers
-    /// Grab Bag voucher - +1 pack option for all booster packs
-    GrabBag,
+    // Shop vouchers from Issue #17
 
     // Shop vouchers from Issue #17
     /// Overstock voucher - +1 card slot in shop
@@ -668,7 +714,7 @@ pub enum VoucherId {
     RerollSurplus,
     /// Crystal Ball voucher - +1 consumable slot
     CrystalBall,
-    /// Liquidation voucher - All items 25% off, rerolls 25% off
+    /// Liquidation voucher - All cards and packs in shop are 50% off
     Liquidation,
     /// Reroll Glut voucher - Rerolls cost $2 less
     RerollGlut,
@@ -703,14 +749,26 @@ pub enum VoucherId {
     /// Tarot Tycoon voucher - Tarot cards appear 4X more
     TarotTycoon,
 
-    /// Placeholder for future voucher implementations
-    VoucherPlaceholder,
+    // Missing upgrade vouchers from Issue #727
+    /// Glow Up voucher - Foil, Holographic, and Polychrome cards appear 4X more often (upgrade of Hone)
+    GlowUp,
+    /// Recyclomancy voucher - Permanently gain +1 discard each round (upgrade of Wasteful)
+    Recyclomancy,
+    /// Planet Merchant voucher - Planet cards appear 2X more frequently in shop
+    PlanetMerchant,
+    /// Planet Tycoon voucher - Planet cards appear 4X more frequently in shop (upgrade of Planet Merchant)
+    PlanetTycoon,
+    /// Director's Cut voucher - Reroll Boss Blind 1 time per Ante, $10 per roll
+    DirectorsCut,
+    /// Retcon voucher - Reroll Boss Blinds unlimited times, $10 per roll (upgrade of Director's Cut)
+    Retcon,
+    /// Palette voucher - +1 hand size (upgrade of Paint Brush)
+    Palette,
 }
 
 impl fmt::Display for VoucherId {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            VoucherId::GrabBag => write!(f, "Grab Bag"),
             VoucherId::Overstock => write!(f, "Overstock"),
             VoucherId::OverstockPlus => write!(f, "Overstock Plus"),
             VoucherId::ClearanceSale => write!(f, "Clearance Sale"),
@@ -733,7 +791,13 @@ impl fmt::Display for VoucherId {
             VoucherId::PaintBrush => write!(f, "Paint Brush"),
             VoucherId::TarotMerchant => write!(f, "Tarot Merchant"),
             VoucherId::TarotTycoon => write!(f, "Tarot Tycoon"),
-            VoucherId::VoucherPlaceholder => write!(f, "Voucher Placeholder"),
+            VoucherId::GlowUp => write!(f, "Glow Up"),
+            VoucherId::Recyclomancy => write!(f, "Recyclomancy"),
+            VoucherId::PlanetMerchant => write!(f, "Planet Merchant"),
+            VoucherId::PlanetTycoon => write!(f, "Planet Tycoon"),
+            VoucherId::DirectorsCut => write!(f, "Director's Cut"),
+            VoucherId::Retcon => write!(f, "Retcon"),
+            VoucherId::Palette => write!(f, "Palette"),
         }
     }
 }
@@ -753,13 +817,12 @@ impl VoucherId {
     pub fn prerequisites(&self) -> Vec<VoucherId> {
         match self {
             // Base vouchers have no prerequisites
-            VoucherId::GrabBag => vec![],
             VoucherId::Overstock => vec![],
             VoucherId::ClearanceSale => vec![],
             VoucherId::Hone => vec![],
             VoucherId::RerollSurplus => vec![],
             VoucherId::CrystalBall => vec![],
-            VoucherId::Liquidation => vec![],
+            VoucherId::Liquidation => vec![VoucherId::ClearanceSale],
             VoucherId::RerollGlut => vec![VoucherId::RerollSurplus],
 
             // Upgraded versions require base versions
@@ -783,14 +846,20 @@ impl VoucherId {
             VoucherId::MoneyTree => vec![VoucherId::SeedMoney],
             VoucherId::TarotTycoon => vec![VoucherId::TarotMerchant],
 
-            VoucherId::VoucherPlaceholder => vec![],
+            // Missing upgrade vouchers from Issue #727
+            VoucherId::GlowUp => vec![VoucherId::Hone],
+            VoucherId::Recyclomancy => vec![VoucherId::Wasteful],
+            VoucherId::PlanetMerchant => vec![],
+            VoucherId::PlanetTycoon => vec![VoucherId::PlanetMerchant],
+            VoucherId::DirectorsCut => vec![],
+            VoucherId::Retcon => vec![VoucherId::DirectorsCut],
+            VoucherId::Palette => vec![VoucherId::PaintBrush],
         }
     }
 
     /// Get the base cost of this voucher
     pub fn base_cost(&self) -> usize {
         match self {
-            VoucherId::GrabBag => 10,
             VoucherId::Overstock => 10,
             VoucherId::OverstockPlus => 10,
             VoucherId::ClearanceSale => 10,
@@ -799,7 +868,6 @@ impl VoucherId {
             VoucherId::CrystalBall => 10,
             VoucherId::Liquidation => 10,
             VoucherId::RerollGlut => 10,
-            VoucherId::VoucherPlaceholder => 10,
 
             // Gameplay vouchers from Issue #18
             VoucherId::Grabber => 10,
@@ -816,6 +884,13 @@ impl VoucherId {
             VoucherId::PaintBrush => 10, // Mixed effect
             VoucherId::TarotMerchant => 10,
             VoucherId::TarotTycoon => 10,
+            VoucherId::GlowUp => 10,
+            VoucherId::Recyclomancy => 10,
+            VoucherId::PlanetMerchant => 10,
+            VoucherId::PlanetTycoon => 10,
+            VoucherId::DirectorsCut => 10,
+            VoucherId::Retcon => 10,
+            VoucherId::Palette => 10,
         }
     }
 }

@@ -1017,6 +1017,16 @@ impl Joker for GrimJoker {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct AcrobatJokerImpl;
 
+impl AcrobatJokerImpl {
+    /// Get the multiplier parameter for Acrobat joker from joker.json
+    /// TODO: Replace with proper JsonParameterResolver when available
+    fn get_multiplier_parameter() -> f64 {
+        // From joker.json: "X#1# Mult on final hand"
+        // Based on original implementation and joker.json pattern, #1# = 3
+        3.0
+    }
+}
+
 impl Joker for AcrobatJokerImpl {
     fn id(&self) -> JokerId {
         JokerId::AcrobatJoker
@@ -1040,13 +1050,16 @@ impl Joker for AcrobatJokerImpl {
 
     fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
         // Check if this is the final hand of the round
-        // This would need to be tracked by the game engine
-        // For now, we'll use a simple heuristic based on hands remaining
-        if context.hands_played >= 3 {
-            // Assuming typical 4-hand rounds
+        // Use the definitive hands_remaining count from the game engine
+        if context.hands_remaining <= 1.0 {
+            // This is the final hand - apply the multiplier from joker.json parameter
+            let multiplier = Self::get_multiplier_parameter();
             JokerEffect::new()
-                .with_mult_multiplier(3.0)
-                .with_message("Acrobat final hand bonus! X3 Mult!".to_string())
+                .with_mult_multiplier(multiplier)
+                .with_message(format!(
+                    "Acrobat final hand bonus! X{} Mult!",
+                    multiplier as i32
+                ))
         } else {
             JokerEffect::new()
         }
@@ -1106,7 +1119,10 @@ impl Joker for MysteryJoker {
     }
 }
 
-// Vagabond Joker implementation - Create Tarot if hand played with $3 or less
+// Vagabond Joker implementation - Create Tarot if hand played with low money
+// Threshold is configurable for proper game balance
+const VAGABOND_MONEY_THRESHOLD: i32 = 4;
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct VagabondJokerImpl;
 
@@ -1120,7 +1136,7 @@ impl Joker for VagabondJokerImpl {
     }
 
     fn description(&self) -> &str {
-        "Create a Tarot card if hand played with $3 or less"
+        "Create a Tarot card if hand played with $4 or less"
     }
 
     fn rarity(&self) -> JokerRarity {
@@ -1132,10 +1148,24 @@ impl Joker for VagabondJokerImpl {
     }
 
     fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
-        // Check if player has $3 or less
-        if context.money <= 3 {
-            // Create a tarot card (simplified - actual implementation would add to shop/consumables)
-            JokerEffect::new().with_message("Vagabond created a Tarot card!".to_string())
+        use crate::consumables::ConsumableId;
+
+        // Check if player has threshold or less money
+        if context.money <= VAGABOND_MONEY_THRESHOLD {
+            // Get available Tarot cards for selection
+            let tarot_cards = ConsumableId::tarot_cards();
+
+            // Select the first available Tarot card (deterministic for now)
+            // In the future, this should be random and actually add to player's consumables
+            if let Some(tarot_card) = tarot_cards.first() {
+                JokerEffect::new().with_message(format!(
+                    "Vagabond would create {}! (Money: ${})",
+                    tarot_card, context.money
+                ))
+            } else {
+                // Fallback if no Tarot cards available (shouldn't happen)
+                JokerEffect::new().with_message("Vagabond: No Tarot cards available!".to_string())
+            }
         } else {
             JokerEffect::new()
         }
@@ -1226,8 +1256,13 @@ impl Joker for TribouletJoker {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::joker::{JokerId, JokerRarity};
+    use crate::hand::{Hand, SelectHand};
+    use crate::joker::{GameContext, JokerId, JokerRarity};
     use crate::joker_factory::JokerFactory;
+    use crate::joker_state::JokerStateManager;
+    use crate::stage::{Blind, Stage};
+    use std::collections::HashMap;
+    use std::sync::Arc;
 
     #[test]
     fn test_ice_cream_basic_properties() {
@@ -1350,6 +1385,143 @@ mod tests {
     }
 
     #[test]
+    fn test_acrobat_joker_final_hand_detection() {
+        let acrobat = AcrobatJokerImpl;
+        let stage = Stage::Blind(Blind::Small);
+        let jokers: Vec<Box<dyn Joker>> = vec![];
+        let hand = Hand::new(vec![]);
+        let discarded: Vec<Card> = vec![];
+        let joker_state_manager = Arc::new(JokerStateManager::new());
+        let hand_type_counts = HashMap::new();
+        let rng = crate::rng::GameRng::secure();
+
+        // Test final hand (hands_remaining = 1.0)
+        let mut context = GameContext {
+            chips: 0,
+            mult: 1,
+            money: 0,
+            ante: 1,
+            round: 1,
+            stage: &stage,
+            hands_played: 3,
+            hands_remaining: 1.0, // Final hand
+            discards_used: 0,
+            jokers: &jokers,
+            hand: &hand,
+            discarded: &discarded,
+            joker_state_manager: &joker_state_manager,
+            hand_type_counts: &hand_type_counts,
+            cards_in_deck: 52,
+            stone_cards_in_deck: 0,
+            steel_cards_in_deck: 0,
+            rng: &rng,
+        };
+
+        let select_hand = SelectHand::new(vec![]);
+        let effect = acrobat.on_hand_played(&mut context, &select_hand);
+
+        // Should apply multiplier on final hand
+        assert_eq!(effect.mult_multiplier, 3.0);
+        assert!(effect.message.is_some());
+        assert!(effect.message.unwrap().contains("X3 Mult"));
+    }
+
+    #[test]
+    fn test_acrobat_joker_non_final_hand() {
+        let acrobat = AcrobatJokerImpl;
+        let stage = Stage::Blind(Blind::Small);
+        let jokers: Vec<Box<dyn Joker>> = vec![];
+        let hand = Hand::new(vec![]);
+        let discarded: Vec<Card> = vec![];
+        let joker_state_manager = Arc::new(JokerStateManager::new());
+        let hand_type_counts = HashMap::new();
+        let rng = crate::rng::GameRng::secure();
+
+        // Test non-final hand (hands_remaining > 1.0)
+        let mut context = GameContext {
+            chips: 0,
+            mult: 1,
+            money: 0,
+            ante: 1,
+            round: 1,
+            stage: &stage,
+            hands_played: 1,
+            hands_remaining: 3.0, // Not final hand
+            discards_used: 0,
+            jokers: &jokers,
+            hand: &hand,
+            discarded: &discarded,
+            joker_state_manager: &joker_state_manager,
+            hand_type_counts: &hand_type_counts,
+            cards_in_deck: 52,
+            stone_cards_in_deck: 0,
+            steel_cards_in_deck: 0,
+            rng: &rng,
+        };
+
+        let select_hand = SelectHand::new(vec![]);
+        let effect = acrobat.on_hand_played(&mut context, &select_hand);
+
+        // Should NOT apply multiplier on non-final hand
+        assert_eq!(effect.mult_multiplier, 1.0);
+        assert!(effect.message.is_none());
+    }
+
+    #[test]
+    fn test_acrobat_joker_edge_cases() {
+        let acrobat = AcrobatJokerImpl;
+        let stage = Stage::Blind(Blind::Small);
+        let jokers: Vec<Box<dyn Joker>> = vec![];
+        let hand = Hand::new(vec![]);
+        let discarded: Vec<Card> = vec![];
+        let joker_state_manager = Arc::new(JokerStateManager::new());
+        let hand_type_counts = HashMap::new();
+        let rng = crate::rng::GameRng::secure();
+        let select_hand = SelectHand::new(vec![]);
+
+        // Test edge case: hands_remaining = 0.5 (should be final)
+        let mut context = GameContext {
+            chips: 0,
+            mult: 1,
+            money: 0,
+            ante: 1,
+            round: 1,
+            stage: &stage,
+            hands_played: 3,
+            hands_remaining: 0.5,
+            discards_used: 0,
+            jokers: &jokers,
+            hand: &hand,
+            discarded: &discarded,
+            joker_state_manager: &joker_state_manager,
+            hand_type_counts: &hand_type_counts,
+            cards_in_deck: 52,
+            stone_cards_in_deck: 0,
+            steel_cards_in_deck: 0,
+            rng: &rng,
+        };
+        let effect = acrobat.on_hand_played(&mut context, &select_hand);
+        assert_eq!(effect.mult_multiplier, 3.0); // Should trigger
+
+        // Test edge case: hands_remaining = 0.0 (should be final)
+        context.hands_remaining = 0.0;
+        let effect = acrobat.on_hand_played(&mut context, &select_hand);
+        assert_eq!(effect.mult_multiplier, 3.0); // Should trigger
+
+        // Test edge case: hands_remaining = 1.1 (should NOT be final)
+        context.hands_remaining = 1.1;
+        let effect = acrobat.on_hand_played(&mut context, &select_hand);
+        assert_eq!(effect.mult_multiplier, 1.0); // Should NOT trigger
+    }
+
+    #[test]
+    fn test_acrobat_joker_parameter_function() {
+        // Test that the parameter function returns the expected value
+        let multiplier = AcrobatJokerImpl::get_multiplier_parameter();
+        assert_eq!(multiplier, 3.0);
+    }
+
+    #[test]
     fn test_mystery_joker_basic_properties() {
         let mystery = MysteryJoker;
         assert_eq!(mystery.id(), JokerId::Reserved4);
@@ -1366,10 +1538,173 @@ mod tests {
         assert_eq!(vagabond.name(), "Vagabond");
         assert_eq!(
             vagabond.description(),
-            "Create a Tarot card if hand played with $3 or less"
+            "Create a Tarot card if hand played with $4 or less"
         );
         assert_eq!(vagabond.rarity(), JokerRarity::Uncommon);
         assert_eq!(vagabond.cost(), 7);
+    }
+
+    #[test]
+    fn test_vagabond_joker_threshold_behavior() {
+        use crate::hand::SelectHand;
+        use crate::joker::test_utils::TestContextBuilder;
+
+        let vagabond = VagabondJokerImpl;
+        let select_hand = SelectHand::new(vec![]);
+
+        // Test money exactly at threshold ($4)
+        let mut context = TestContextBuilder::new().with_money(4).build();
+        let effect = vagabond.on_hand_played(&mut context, &select_hand);
+        let message = effect.message.unwrap_or_default();
+        assert!(message.contains("Vagabond would create"));
+        assert!(message.contains("Money: $4"));
+
+        // Test money below threshold ($3)
+        let mut context = TestContextBuilder::new().with_money(3).build();
+        let effect = vagabond.on_hand_played(&mut context, &select_hand);
+        let message = effect.message.unwrap_or_default();
+        assert!(message.contains("Vagabond would create"));
+        assert!(message.contains("Money: $3"));
+
+        // Test money at $0 (edge case)
+        let mut context = TestContextBuilder::new().with_money(0).build();
+        let effect = vagabond.on_hand_played(&mut context, &select_hand);
+        let message = effect.message.unwrap_or_default();
+        assert!(message.contains("Vagabond would create"));
+        assert!(message.contains("Money: $0"));
+
+        // Test money above threshold ($5)
+        let mut context = TestContextBuilder::new().with_money(5).build();
+        let effect = vagabond.on_hand_played(&mut context, &select_hand);
+        assert!(effect.message.is_none()); // No effect when above threshold
+
+        // Test money well above threshold ($10)
+        let mut context = TestContextBuilder::new().with_money(10).build();
+        let effect = vagabond.on_hand_played(&mut context, &select_hand);
+        assert!(effect.message.is_none()); // No effect when above threshold
+    }
+
+    #[test]
+    fn test_vagabond_joker_tarot_functionality() {
+        use crate::consumables::ConsumableId;
+        use crate::hand::SelectHand;
+        use crate::joker::test_utils::TestContextBuilder;
+
+        let vagabond = VagabondJokerImpl;
+        let select_hand = SelectHand::new(vec![]);
+
+        // Test that Vagabond references available Tarot cards
+        let mut context = TestContextBuilder::new().with_money(4).build();
+        let effect = vagabond.on_hand_played(&mut context, &select_hand);
+
+        // Should mention creating a Tarot card
+        let message = effect.message.unwrap_or_default();
+        assert!(message.contains("Vagabond would create"));
+
+        // Should reference a valid Tarot card
+        let tarot_cards = ConsumableId::tarot_cards();
+        assert!(!tarot_cards.is_empty(), "Should have available Tarot cards");
+
+        // The first Tarot card should be mentioned in the message
+        if let Some(first_tarot) = tarot_cards.first() {
+            assert!(message.contains(&first_tarot.to_string()));
+        }
+    }
+
+    #[test]
+    fn test_vagabond_joker_threshold_constant() {
+        // Test that the threshold constant is correct
+        assert_eq!(
+            VAGABOND_MONEY_THRESHOLD, 4,
+            "Vagabond threshold should be $4"
+        );
+
+        // Test that description matches threshold
+        let vagabond = VagabondJokerImpl;
+        assert!(vagabond.description().contains("$4"));
+    }
+
+    #[test]
+    fn test_vagabond_joker_comprehensive_behavior() {
+        use crate::consumables::ConsumableId;
+        use crate::hand::SelectHand;
+        use crate::joker::test_utils::TestContextBuilder;
+
+        let vagabond = VagabondJokerImpl;
+        let select_hand = SelectHand::new(vec![]);
+
+        // Test complete workflow: trigger conditions, tarot creation, message generation
+        // This test verifies all promised functionality works together
+
+        // Scenario 1: Player has exactly $4 (threshold) - should trigger
+        let mut context = TestContextBuilder::new().with_money(4).build();
+        let effect = vagabond.on_hand_played(&mut context, &select_hand);
+
+        // Verify effect has appropriate message
+        let message = effect.message.expect("Should have message when triggered");
+        assert!(
+            message.contains("Vagabond would create"),
+            "Message should mention Vagabond creating something"
+        );
+        assert!(
+            message.contains("Money: $4"),
+            "Message should show current money amount"
+        );
+
+        // Verify Tarot card integration
+        let tarot_cards = ConsumableId::tarot_cards();
+        assert!(
+            !tarot_cards.is_empty(),
+            "Tarot cards should be available for selection"
+        );
+        if let Some(first_tarot) = tarot_cards.first() {
+            assert!(
+                message.contains(&first_tarot.to_string()),
+                "Message should reference actual Tarot card"
+            );
+        }
+
+        // Scenario 2: Player has $0 (edge case) - should trigger
+        let mut context = TestContextBuilder::new().with_money(0).build();
+        let effect = vagabond.on_hand_played(&mut context, &select_hand);
+        assert!(effect.message.is_some(), "Should trigger effect at $0");
+
+        // Scenario 3: Player has $3 (below threshold) - should trigger
+        let mut context = TestContextBuilder::new().with_money(3).build();
+        let effect = vagabond.on_hand_played(&mut context, &select_hand);
+        assert!(
+            effect.message.is_some(),
+            "Should trigger effect below threshold"
+        );
+
+        // Scenario 4: Player has $5 (above threshold) - should NOT trigger
+        let mut context = TestContextBuilder::new().with_money(5).build();
+        let effect = vagabond.on_hand_played(&mut context, &select_hand);
+        assert!(
+            effect.message.is_none(),
+            "Should NOT trigger effect above threshold"
+        );
+
+        // Scenario 5: Player has $10 (well above threshold) - should NOT trigger
+        let mut context = TestContextBuilder::new().with_money(10).build();
+        let effect = vagabond.on_hand_played(&mut context, &select_hand);
+        assert!(
+            effect.message.is_none(),
+            "Should NOT trigger effect well above threshold"
+        );
+
+        // Test joker properties remain consistent
+        assert_eq!(vagabond.id(), JokerId::VagabondJoker);
+        assert_eq!(vagabond.name(), "Vagabond");
+        assert!(vagabond.description().contains("$4 or less"));
+        assert_eq!(vagabond.rarity(), JokerRarity::Uncommon);
+        assert_eq!(vagabond.cost(), 7);
+
+        // Test constant usage is consistent
+        assert_eq!(
+            VAGABOND_MONEY_THRESHOLD, 4,
+            "Constant should match implementation"
+        );
     }
 
     #[test]
@@ -1466,8 +1801,8 @@ mod tests {
             "AcrobatJoker should be in Rare rarity"
         );
         assert!(
-            rare_jokers.contains(&JokerId::Fortune),
-            "Fortune Teller (JokerId::Fortune) should be in Rare rarity"
+            rare_jokers.contains(&JokerId::FortuneTeller),
+            "Fortune Teller (JokerId::FortuneTeller) should be in Rare rarity"
         );
 
         let legendary_jokers = JokerFactory::get_by_rarity(JokerRarity::Legendary);
@@ -1558,8 +1893,8 @@ mod tests {
             round: 1,
             stage: &stage,
             hands_played: 0,
-            discards_used: 0,
             hands_remaining: 4.0,
+            discards_used: 0,
             jokers: &jokers,
             hand: &hand,
             discarded: &discarded,
@@ -1605,8 +1940,8 @@ mod tests {
             round: 1,
             stage: &stage,
             hands_played: 0,
-            discards_used: 0,
             hands_remaining: 4.0,
+            discards_used: 0,
             jokers: &jokers,
             hand: &hand,
             discarded: &discarded,
@@ -1652,8 +1987,8 @@ mod tests {
             round: 1,
             stage: &stage,
             hands_played: 0,
-            discards_used: 0,
             hands_remaining: 4.0,
+            discards_used: 0,
             jokers: &jokers,
             hand: &hand,
             discarded: &discarded,
@@ -1699,8 +2034,8 @@ mod tests {
             round: 1,
             stage: &stage,
             hands_played: 0,
-            discards_used: 0,
             hands_remaining: 4.0,
+            discards_used: 0,
             jokers: &jokers,
             hand: &hand,
             discarded: &discarded,

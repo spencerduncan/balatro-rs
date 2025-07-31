@@ -207,6 +207,9 @@ pub struct Game {
     // hand type tracking for this game run
     pub hand_type_counts: HashMap<HandRank, u32>,
 
+    // hand level tracking (for planet card effects)
+    pub hand_levels: HashMap<HandRank, u32>,
+
     // Card enhancement tracking for this game run
     /// Count of Stone cards currently in deck (cached for performance)
     pub stone_cards_in_deck: usize,
@@ -254,11 +257,10 @@ pub struct Game {
     #[cfg_attr(feature = "serde", serde(skip))]
     pub memory_monitor: MemoryMonitor,
 
-    /// Skip tags system state
+    /// Active skip tag state for persistent tag effects (unified approach)
+    pub active_skip_tags: crate::skip_tags::ActiveSkipTags,
     /// Available skip tags for selection
     pub available_skip_tags: Vec<crate::skip_tags::SkipTagInstance>,
-    /// Active skip tags (for stacking effects like Juggle)
-    pub active_skip_tags: Vec<crate::skip_tags::SkipTagInstance>,
     /// Pending skip tag selection (after skipping a blind)
     pub pending_tag_selection: bool,
 }
@@ -347,6 +349,7 @@ impl Game {
             mult: config.base_mult as f64,
             score: config.base_score as f64,
             hand_type_counts: HashMap::new(),
+            hand_levels: HashMap::new(),
 
             // Initialize enhancement tracking (will be calculated after deck is set up)
             stone_cards_in_deck: 0,
@@ -376,9 +379,9 @@ impl Game {
             // Initialize memory monitor with default configuration
             memory_monitor: MemoryMonitor::default(),
 
-            // Initialize skip tags system
+            // Initialize skip tags system (unified approach)
+            active_skip_tags: crate::skip_tags::ActiveSkipTags::new(),
             available_skip_tags: Vec::new(),
-            active_skip_tags: Vec::new(),
             pending_tag_selection: false,
 
             config,
@@ -436,6 +439,68 @@ impl Game {
         self.deal();
     }
 
+    /// Apply a skip tag effect to the game state
+    pub fn apply_skip_tag_effect(
+        &mut self,
+        tag_id: crate::skip_tags::SkipTagId,
+    ) -> Result<crate::skip_tags::TagEffectResult, crate::skip_tags::TagError> {
+        use crate::skip_tags::{get_registry, TagError};
+
+        let registry = get_registry();
+        let tag = registry
+            .get_tag(tag_id)
+            .ok_or(TagError::InvalidTagId(tag_id))?;
+
+        if !tag.can_apply(self) {
+            return Err(TagError::CannotApply(format!(
+                "Tag {} cannot be applied in current game state",
+                tag.name()
+            )));
+        }
+
+        let result = tag.apply_effect(self);
+
+        // Apply immediate money reward
+        if result.money_reward > 0 {
+            self.money += result.money_reward as f64;
+        }
+
+        // Apply shop enhancement effects if this is a shop enhancement tag
+        if result.persist_tag {
+            self.active_skip_tags.apply_shop_enhancement_effect(tag_id);
+        }
+
+        Ok(result)
+    }
+
+    /// Consume next shop modifiers and return them for shop generation
+    pub fn consume_next_shop_modifiers(&mut self) -> crate::skip_tags::NextShopModifiers {
+        self.active_skip_tags.consume_next_shop_modifiers()
+    }
+
+    /// Get the count of blinds skipped (for economic tags)
+    pub fn get_blinds_skipped_count(&self) -> u32 {
+        self.active_skip_tags.blinds_skipped
+    }
+
+    /// Increment the count of blinds skipped
+    pub fn increment_blinds_skipped(&mut self) {
+        self.active_skip_tags.blinds_skipped += 1;
+    }
+
+    /// Handle boss blind defeat (for Investment tag)
+    pub fn handle_boss_blind_defeat(&mut self) -> i32 {
+        let investment_count = self.active_skip_tags.investment_count;
+        if investment_count > 0 {
+            let reward = investment_count as i32 * 25; // $25 per Investment tag
+            self.money += reward as f64;
+            self.active_skip_tags.investment_count = 0; // Reset after payout
+            reward
+        } else {
+            0
+        }
+    }
+
     /// Start a new blind and trigger joker lifecycle events
     pub fn start_blind(&mut self) {
         use crate::hand::Hand;
@@ -455,8 +520,8 @@ impl Game {
                 round: self.round as u32,
                 stage: &self.stage,
                 hands_played: 0,
-                discards_used: 0,
                 hands_remaining: self.plays,
+                discards_used: 0,
                 jokers: &self.jokers,
                 hand: &temp_hand,
                 discarded: &self.discarded,
@@ -525,6 +590,45 @@ impl Game {
     /// * `hand_rank` - The hand rank to increment
     pub fn increment_hand_type_count(&mut self, hand_rank: HandRank) {
         *self.hand_type_counts.entry(hand_rank).or_insert(0) += 1;
+    }
+
+    /// Gets the current level number for a specific hand type.
+    ///
+    /// # Arguments
+    /// * `hand_rank` - The hand rank to get the level for
+    ///
+    /// # Returns
+    /// The current level number of the hand type (defaults to 1 if not leveled up)
+    pub fn get_hand_level_number(&self, hand_rank: HandRank) -> u32 {
+        self.hand_levels.get(&hand_rank).copied().unwrap_or(1)
+    }
+
+    /// Gets the full level information for a specific hand type at its current level.
+    ///
+    /// # Arguments
+    /// * `hand_rank` - The hand rank to get the level info for
+    ///
+    /// # Returns
+    /// Level struct with chips, mult, and level information for the current level
+    pub fn get_hand_level(&self, hand_rank: HandRank) -> crate::rank::Level {
+        let current_level = self.get_hand_level_number(hand_rank);
+        hand_rank.level_at(current_level)
+    }
+
+    /// Levels up a specific hand type (used by Planet cards).
+    ///
+    /// # Arguments
+    /// * `hand_rank` - The hand rank to level up
+    ///
+    /// # Returns
+    /// Ok(()) if successful, Err(ConsumableError) if level up fails
+    pub fn level_up_hand(
+        &mut self,
+        hand_rank: HandRank,
+    ) -> Result<(), crate::consumables::ConsumableError> {
+        let current_level = self.get_hand_level_number(hand_rank);
+        self.hand_levels.insert(hand_rank, current_level + 1);
+        Ok(())
     }
 
     fn clear_blind(&mut self) {
@@ -640,9 +744,10 @@ impl Game {
     }
 
     pub fn calc_score(&mut self, hand: MadeHand) -> f64 {
-        // compute chips and mult from hand level
-        self.chips += hand.rank.level().chips as f64;
-        self.mult += hand.rank.level().mult as f64;
+        // compute chips and mult from hand level (considering planet card upgrades)
+        let level_info = self.get_hand_level(hand.rank);
+        self.chips += level_info.chips as f64;
+        self.mult += level_info.mult as f64;
 
         // add chips for each played card
         let card_chips: f64 = hand.hand.cards().iter().map(|c| c.chips() as f64).sum();
@@ -702,9 +807,9 @@ impl Game {
             ante: self.ante_current as u8,
             round: self.round as u32,
             stage: &self.stage,
-            hands_played: 0,  // TODO: track this properly
-            discards_used: 0, // TODO: track this properly
+            hands_played: 0, // TODO: track this properly
             hands_remaining: self.plays,
+            discards_used: 0, // TODO: track this properly
             jokers: &self.jokers,
             hand: &Hand::new(hand.hand.cards().to_vec()),
             discarded: &self.discarded,
@@ -851,9 +956,10 @@ impl Game {
         let _initial_chips = self.chips;
         let _initial_mult = self.mult;
 
-        // Calculate base values from hand level
-        let base_chips = hand.rank.level().chips as f64;
-        let base_mult = hand.rank.level().mult as f64;
+        // Calculate base values from hand level (considering planet card upgrades)
+        let level_info = self.get_hand_level(hand.rank);
+        let base_chips = level_info.chips as f64;
+        let base_mult = level_info.mult as f64;
         self.chips += base_chips;
         self.mult += base_mult;
 
@@ -873,9 +979,9 @@ impl Game {
                 ante: self.ante_current as u8,
                 round: self.round as u32,
                 stage: &self.stage,
-                hands_played: 0,  // TODO: track this properly
-                discards_used: 0, // TODO: track this properly
+                hands_played: 0, // TODO: track this properly
                 hands_remaining: self.plays,
+                discards_used: 0, // TODO: track this properly
                 jokers: &self.jokers,
                 hand: &Hand::new(hand.hand.cards().to_vec()),
                 discarded: &self.discarded,
@@ -1211,8 +1317,8 @@ impl Game {
             round: self.round as u32,
             stage: &self.stage,
             hands_played: (self.config.plays as f64 - self.plays) as u32,
-            discards_used: (self.config.discards as f64 - self.discards) as u32,
             hands_remaining: self.plays,
+            discards_used: (self.config.discards as f64 - self.discards) as u32,
             jokers: &self.jokers,
             hand: &current_hand,
             discarded: &self.discarded,
@@ -1931,6 +2037,16 @@ impl Game {
                 Err(GameError::InvalidAction)
             }
 
+            // Planet card usage
+            Action::UsePlanetCard {
+                planet_card_id: _,
+                hand_rank_id: _,
+            } => {
+                // TODO: Implement planet card usage through action system
+                // For now, planet cards use level_up_hand directly
+                Err(GameError::InvalidAction)
+            }
+
             // Skip tag system actions
             Action::SkipBlind(blind) => self.handle_skip_blind(blind),
             Action::SelectSkipTag(tag_id) => self.handle_select_skip_tag(tag_id),
@@ -2401,6 +2517,7 @@ impl Game {
             mult: saveable_state.mult,
             score: saveable_state.score,
             hand_type_counts: saveable_state.hand_type_counts,
+            hand_levels: HashMap::new(), // Initialize with empty levels (default level 1)
 
             // Enhancement tracking (will be calculated after loading)
             stone_cards_in_deck: 0,
@@ -2422,9 +2539,9 @@ impl Game {
             rng: crate::rng::GameRng::secure(),
             // Initialize memory monitor (not serialized)
             memory_monitor: MemoryMonitor::default(),
-            // Initialize skip tags system (not serialized)
+            // Initialize skip tags system (not serialized, unified approach)
+            active_skip_tags: crate::skip_tags::ActiveSkipTags::new(),
             available_skip_tags: Vec::new(),
-            active_skip_tags: Vec::new(),
             pending_tag_selection: false,
         };
 
@@ -2453,9 +2570,9 @@ impl Game {
             ante: self.ante_current as u8,
             round: self.round as u32,
             stage: &self.stage,
-            hands_played: 0,  // TODO: track this properly
-            discards_used: 0, // TODO: track this properly
+            hands_played: 0, // TODO: track this properly
             hands_remaining: self.plays,
+            discards_used: 0, // TODO: track this properly
             jokers: &self.jokers,
             hand: &crate::hand::Hand::new(vec![]),
             discarded: &self.discarded,

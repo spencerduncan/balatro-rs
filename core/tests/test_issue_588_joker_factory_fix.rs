@@ -10,11 +10,11 @@ fn test_fortune_teller_joker_correctly_created() {
     // Initialize all systems before running the test to avoid factory race conditions
     balatro_rs::initialize().expect("Failed to initialize core systems");
 
-    let fortune = JokerFactory::create(JokerId::Fortune);
+    let fortune = JokerFactory::create(JokerId::FortuneTeller);
     assert!(fortune.is_some());
 
     let joker = fortune.unwrap();
-    assert_eq!(joker.id(), JokerId::Fortune);
+    assert_eq!(joker.id(), JokerId::FortuneTeller);
     assert_eq!(joker.name(), "Fortune Teller");
     assert_eq!(joker.description(), "+1 Mult per Tarot card used");
     assert_eq!(joker.rarity(), JokerRarity::Rare);
@@ -34,7 +34,7 @@ fn test_red_card_joker_correctly_created() {
     assert_eq!(joker.id(), JokerId::Reserved6);
     assert_eq!(joker.name(), "Red Card");
     assert_eq!(joker.description(), "+3 Mult per pack skipped");
-    assert_eq!(joker.rarity(), JokerRarity::Common);
+    assert_eq!(joker.rarity(), JokerRarity::Uncommon);
 
     // Verify it's not the static joker that gives "+3 Mult when red cards are scored"
     assert_ne!(
@@ -73,7 +73,7 @@ fn test_fortune_teller_creation() {
     balatro_rs::initialize().expect("Failed to initialize core systems");
 
     // Verify we can create Fortune Teller without crashes
-    let fortune = JokerFactory::create(JokerId::Fortune).unwrap();
+    let fortune = JokerFactory::create(JokerId::FortuneTeller).unwrap();
     assert_eq!(fortune.name(), "Fortune Teller");
     assert_eq!(fortune.description(), "+1 Mult per Tarot card used");
 }
@@ -113,7 +113,7 @@ fn test_jokers_in_rarity_lists() {
 
     // Fortune should be in Rare (based on the MysteryJoker's original rarity)
     let rare_jokers = JokerFactory::get_by_rarity(JokerRarity::Rare);
-    assert!(rare_jokers.contains(&JokerId::Fortune));
+    assert!(rare_jokers.contains(&JokerId::FortuneTeller));
 
     // Red Card (Reserved6) should be in Common
     let common_jokers = JokerFactory::get_by_rarity(JokerRarity::Common);
@@ -132,7 +132,7 @@ fn test_jokers_in_implemented_list() {
 
     let implemented = JokerFactory::get_all_implemented();
 
-    assert!(implemented.contains(&JokerId::Fortune));
+    assert!(implemented.contains(&JokerId::FortuneTeller));
     assert!(implemented.contains(&JokerId::Reserved6)); // Red Card
     assert!(implemented.contains(&JokerId::SteelJoker));
 }

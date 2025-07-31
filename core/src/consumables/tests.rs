@@ -14,7 +14,7 @@ mod test_mod {
 
     /// Create a test game with some cards in hand and discard pile
     fn create_test_game() -> Game {
-        let mut game = Game::new(Config::new()); // Create with default config
+        let mut game = Game::new(Config::default()); // Create with default config
 
         // Add some cards to discard pile for testing
         for i in 0..5 {
@@ -274,7 +274,7 @@ mod test_mod {
 
     /// Helper function to create a game with mock jokers
     fn create_game_with_jokers(joker_count: usize) -> Game {
-        let mut game = Game::new(Config::new());
+        let mut game = Game::new(Config::default());
 
         // Add mock jokers to the game
         for i in 0..joker_count {
@@ -516,7 +516,7 @@ mod test_mod {
 
     #[test]
     fn test_joker_target_edge_cases() {
-        let empty_game = Game::new(Config::new());
+        let empty_game = Game::new(Config::default());
 
         // Test with empty game (no jokers)
         let target = JokerTarget::new(0);
@@ -582,7 +582,7 @@ mod test_mod {
         // Test single joker game
         let target = JokerTarget::new(0);
         assert!(target.validate(&single_joker_game).is_ok());
-        assert!(target.validate(&Game::new(Config::new())).is_err()); // Empty game
+        assert!(target.validate(&Game::new(Config::default())).is_err()); // Empty game
 
         let invalid_target = JokerTarget::new(1);
         assert!(invalid_target.validate(&single_joker_game).is_err());

@@ -1709,9 +1709,9 @@ impl<'de> Deserialize<'de> for ConsumableSlots {
 }
 
 // Re-export submodules when they are implemented
-pub mod planet;
+// pub mod planet; // Disabled in main until planet card system is ready
+pub mod spectral;
 pub mod tarot;
-// pub mod spectral;
 
 // Re-export key tarot types for convenience
 pub use tarot::{CardEnhancement, TarotCard, TarotEffect, TarotError, TarotFactory, TarotRarity};
