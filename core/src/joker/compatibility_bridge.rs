@@ -219,6 +219,7 @@ impl AdvancedJokerGameplay for LegacyJokerAdapter {
             round: context.game_context.round,
             stage: context.stage,
             hands_played: context.game_context.hands_played,
+            hands_remaining: context.game_context.hands_remaining,
             discards_used: context.game_context.discards_used,
             hands_remaining: context.game_context.hands_remaining,
             jokers: context.game_context.jokers,

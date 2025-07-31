@@ -301,6 +301,353 @@ impl<T: StaticJoker> Joker for StaticJokerAdapter<T> {
     }
 }
 
+// =============================================================================
+// STRATEGY PATTERN: CONDITION EVALUATOR SYSTEM
+// =============================================================================
+
+/// Trait for evaluating StaticJoker conditions
+/// This replaces the large match statements with modular, extensible logic
+trait ConditionEvaluator {
+    /// Check if condition is met for a specific card
+    fn check_card(&self, card: &Card) -> bool;
+
+    /// Check if condition is met for a hand
+    fn check_hand(&self, hand: &SelectHand) -> bool;
+
+    /// Calculate the effect bonus with access to game context
+    fn calculate_effect(
+        &self,
+        context: &GameContext,
+        base_config: &StaticJokerConfig,
+    ) -> JokerEffect;
+}
+
+/// Configuration for static joker bonuses
+#[derive(Debug, Clone)]
+struct StaticJokerConfig {
+    chips_bonus: Option<i32>,
+    mult_bonus: Option<i32>,
+    mult_multiplier: Option<f64>,
+}
+
+impl StaticJokerConfig {
+    fn new(
+        chips_bonus: Option<i32>,
+        mult_bonus: Option<i32>,
+        mult_multiplier: Option<f64>,
+    ) -> Self {
+        Self {
+            chips_bonus,
+            mult_bonus,
+            mult_multiplier,
+        }
+    }
+
+    /// Create a standard effect from the base configuration
+    fn create_standard_effect(&self) -> JokerEffect {
+        let mut effect = JokerEffect::new();
+
+        if let Some(chips) = self.chips_bonus {
+            effect = effect.with_chips(chips);
+        }
+
+        if let Some(mult) = self.mult_bonus {
+            effect = effect.with_mult(mult);
+        }
+
+        if let Some(multiplier) = self.mult_multiplier {
+            effect = effect.with_mult_multiplier(multiplier);
+        }
+
+        effect
+    }
+}
+
+// =============================================================================
+// CONCRETE CONDITION EVALUATORS
+// =============================================================================
+
+/// Always-true condition evaluator
+struct AlwaysEvaluator;
+
+impl ConditionEvaluator for AlwaysEvaluator {
+    fn check_card(&self, _card: &Card) -> bool {
+        true
+    }
+
+    fn check_hand(&self, _hand: &SelectHand) -> bool {
+        true
+    }
+
+    fn calculate_effect(
+        &self,
+        _context: &GameContext,
+        base_config: &StaticJokerConfig,
+    ) -> JokerEffect {
+        base_config.create_standard_effect()
+    }
+}
+
+/// Suit-based condition evaluator
+struct SuitEvaluator {
+    target_suit: Suit,
+}
+
+impl SuitEvaluator {
+    fn new(suit: Suit) -> Self {
+        Self { target_suit: suit }
+    }
+}
+
+impl ConditionEvaluator for SuitEvaluator {
+    fn check_card(&self, card: &Card) -> bool {
+        card.suit == self.target_suit
+    }
+
+    fn check_hand(&self, hand: &SelectHand) -> bool {
+        hand.cards().iter().any(|card| self.check_card(card))
+    }
+
+    fn calculate_effect(
+        &self,
+        _context: &GameContext,
+        base_config: &StaticJokerConfig,
+    ) -> JokerEffect {
+        base_config.create_standard_effect()
+    }
+}
+
+/// Rank/Value-based condition evaluator
+struct RankEvaluator {
+    target_value: Value,
+}
+
+impl RankEvaluator {
+    fn new(value: Value) -> Self {
+        Self {
+            target_value: value,
+        }
+    }
+}
+
+impl ConditionEvaluator for RankEvaluator {
+    fn check_card(&self, card: &Card) -> bool {
+        card.value == self.target_value
+    }
+
+    fn check_hand(&self, hand: &SelectHand) -> bool {
+        hand.cards().iter().any(|card| self.check_card(card))
+    }
+
+    fn calculate_effect(
+        &self,
+        _context: &GameContext,
+        base_config: &StaticJokerConfig,
+    ) -> JokerEffect {
+        base_config.create_standard_effect()
+    }
+}
+
+/// Hand type condition evaluator
+struct HandTypeEvaluator {
+    required_rank: HandRank,
+}
+
+impl HandTypeEvaluator {
+    fn new(rank: HandRank) -> Self {
+        Self {
+            required_rank: rank,
+        }
+    }
+}
+
+impl ConditionEvaluator for HandTypeEvaluator {
+    fn check_card(&self, _card: &Card) -> bool {
+        // Hand type conditions don't apply to individual cards
+        false
+    }
+
+    fn check_hand(&self, hand: &SelectHand) -> bool {
+        match self.required_rank {
+            HandRank::OnePair => hand.is_pair().is_some(),
+            HandRank::TwoPair => hand.is_two_pair().is_some(),
+            HandRank::ThreeOfAKind => hand.is_three_of_kind().is_some(),
+            HandRank::Straight => hand.is_straight().is_some(),
+            HandRank::Flush => hand.is_flush().is_some(),
+            HandRank::FullHouse => hand.is_fullhouse().is_some(),
+            HandRank::FourOfAKind => hand.is_four_of_kind().is_some(),
+            HandRank::StraightFlush => hand.is_straight_flush().is_some(),
+            HandRank::RoyalFlush => hand.is_royal_flush().is_some(),
+            HandRank::FiveOfAKind => hand.is_five_of_kind().is_some(),
+            HandRank::FlushHouse => hand.is_flush_house().is_some(),
+            HandRank::FlushFive => hand.is_flush_five().is_some(),
+            HandRank::HighCard => hand.is_highcard().is_some(),
+        }
+    }
+
+    fn calculate_effect(
+        &self,
+        _context: &GameContext,
+        base_config: &StaticJokerConfig,
+    ) -> JokerEffect {
+        base_config.create_standard_effect()
+    }
+}
+
+/// Multiple suits condition evaluator
+struct AnySuitEvaluator {
+    target_suits: Vec<Suit>,
+}
+
+impl AnySuitEvaluator {
+    fn new(suits: Vec<Suit>) -> Self {
+        Self {
+            target_suits: suits,
+        }
+    }
+}
+
+impl ConditionEvaluator for AnySuitEvaluator {
+    fn check_card(&self, card: &Card) -> bool {
+        self.target_suits.contains(&card.suit)
+    }
+
+    fn check_hand(&self, hand: &SelectHand) -> bool {
+        hand.cards().iter().any(|card| self.check_card(card))
+    }
+
+    fn calculate_effect(
+        &self,
+        _context: &GameContext,
+        base_config: &StaticJokerConfig,
+    ) -> JokerEffect {
+        base_config.create_standard_effect()
+    }
+}
+
+/// Multiple ranks condition evaluator
+struct AnyRankEvaluator {
+    target_values: Vec<Value>,
+}
+
+impl AnyRankEvaluator {
+    fn new(values: Vec<Value>) -> Self {
+        Self {
+            target_values: values,
+        }
+    }
+}
+
+impl ConditionEvaluator for AnyRankEvaluator {
+    fn check_card(&self, card: &Card) -> bool {
+        self.target_values.contains(&card.value)
+    }
+
+    fn check_hand(&self, hand: &SelectHand) -> bool {
+        hand.cards().iter().any(|card| self.check_card(card))
+    }
+
+    fn calculate_effect(
+        &self,
+        _context: &GameContext,
+        base_config: &StaticJokerConfig,
+    ) -> JokerEffect {
+        base_config.create_standard_effect()
+    }
+}
+
+/// Hand size condition evaluator
+struct HandSizeAtMostEvaluator {
+    max_size: usize,
+}
+
+impl HandSizeAtMostEvaluator {
+    fn new(max_size: usize) -> Self {
+        Self { max_size }
+    }
+}
+
+impl ConditionEvaluator for HandSizeAtMostEvaluator {
+    fn check_card(&self, _card: &Card) -> bool {
+        // Hand size conditions don't apply to individual cards
+        false
+    }
+
+    fn check_hand(&self, hand: &SelectHand) -> bool {
+        hand.cards().len() <= self.max_size
+    }
+
+    fn calculate_effect(
+        &self,
+        _context: &GameContext,
+        base_config: &StaticJokerConfig,
+    ) -> JokerEffect {
+        base_config.create_standard_effect()
+    }
+}
+
+/// Discard count condition evaluator (special case with dynamic calculation)
+struct DiscardCountEvaluator;
+
+impl ConditionEvaluator for DiscardCountEvaluator {
+    fn check_card(&self, _card: &Card) -> bool {
+        true // Always applies, but effect is calculated dynamically
+    }
+
+    fn check_hand(&self, _hand: &SelectHand) -> bool {
+        true // Always applies, but effect is calculated dynamically
+    }
+
+    fn calculate_effect(
+        &self,
+        context: &GameContext,
+        base_config: &StaticJokerConfig,
+    ) -> JokerEffect {
+        // Calculate bonus based on remaining discards
+        const MAX_DISCARDS: u32 = 5; // Standard discards per round
+        let discards_remaining = MAX_DISCARDS.saturating_sub(context.discards_used);
+
+        let mut effect = JokerEffect::new();
+
+        if let Some(chips_base) = base_config.chips_bonus {
+            let chips_bonus = chips_base * discards_remaining as i32;
+            effect = effect.with_chips(chips_bonus);
+        }
+
+        if let Some(mult_base) = base_config.mult_bonus {
+            let mult_bonus = mult_base * discards_remaining as i32;
+            effect = effect.with_mult(mult_bonus);
+        }
+
+        if let Some(multiplier) = base_config.mult_multiplier {
+            effect = effect.with_mult_multiplier(multiplier);
+        }
+
+        effect
+    }
+}
+
+/// Factory for creating condition evaluators based on StaticCondition
+impl StaticCondition {
+    /// Create the appropriate evaluator for this condition
+    fn create_evaluator(&self) -> Box<dyn ConditionEvaluator> {
+        match self {
+            StaticCondition::Always => Box::new(AlwaysEvaluator),
+            StaticCondition::SuitScored(suit) => Box::new(SuitEvaluator::new(*suit)),
+            StaticCondition::RankScored(value) => Box::new(RankEvaluator::new(*value)),
+            StaticCondition::HandType(rank) => Box::new(HandTypeEvaluator::new(*rank)),
+            StaticCondition::AnySuitScored(suits) => Box::new(AnySuitEvaluator::new(suits.clone())),
+            StaticCondition::AnyRankScored(values) => {
+                Box::new(AnyRankEvaluator::new(values.clone()))
+            }
+            StaticCondition::HandSizeAtMost(max_size) => {
+                Box::new(HandSizeAtMostEvaluator::new(*max_size))
+            }
+            StaticCondition::DiscardCount => Box::new(DiscardCountEvaluator),
+        }
+    }
+}
+
 /// Condition for when a static joker effect should apply
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum StaticCondition {
@@ -430,97 +777,22 @@ impl Joker for FrameworkStaticJoker {
 impl FrameworkStaticJoker {
     /// Check if the condition is met for a hand
     fn check_hand_condition(&self, hand: &SelectHand) -> bool {
-        match &self.condition {
-            StaticCondition::Always => true,
-            StaticCondition::DiscardCount => true, // Always applies, but effect is calculated dynamically
-            StaticCondition::HandType(required_rank) => {
-                // Check if the hand contains the required type
-                match required_rank {
-                    HandRank::OnePair => hand.is_pair().is_some(),
-                    HandRank::TwoPair => hand.is_two_pair().is_some(),
-                    HandRank::ThreeOfAKind => hand.is_three_of_kind().is_some(),
-                    HandRank::Straight => hand.is_straight().is_some(),
-                    HandRank::Flush => hand.is_flush().is_some(),
-                    HandRank::FullHouse => hand.is_fullhouse().is_some(),
-                    HandRank::FourOfAKind => hand.is_four_of_kind().is_some(),
-                    HandRank::StraightFlush => hand.is_straight_flush().is_some(),
-                    HandRank::RoyalFlush => hand.is_royal_flush().is_some(),
-                    HandRank::FiveOfAKind => hand.is_five_of_kind().is_some(),
-                    HandRank::FlushHouse => hand.is_flush_house().is_some(),
-                    HandRank::FlushFive => hand.is_flush_five().is_some(),
-                    HandRank::HighCard => hand.is_highcard().is_some(),
-                }
-            }
-            StaticCondition::HandSizeAtMost(max_size) => {
-                // Check if the hand has at most the specified number of cards
-                hand.cards().len() <= *max_size
-            }
-            _ => {
-                // For suit/rank conditions on hands, check if any card matches
-                hand.cards()
-                    .iter()
-                    .any(|card| self.check_card_condition(card))
-            }
-        }
+        let evaluator = self.condition.create_evaluator();
+        evaluator.check_hand(hand)
     }
 
-    /// Check if the condition is met for a card
+    /// Check if the condition is met for a card using strategy pattern
     fn check_card_condition(&self, card: &Card) -> bool {
-        match &self.condition {
-            StaticCondition::Always => true,
-            StaticCondition::DiscardCount => true, // Always applies, but effect is calculated dynamically
-            StaticCondition::SuitScored(suit) => card.suit == *suit,
-            StaticCondition::RankScored(value) => card.value == *value,
-            StaticCondition::AnySuitScored(suits) => suits.contains(&card.suit),
-            StaticCondition::AnyRankScored(values) => values.contains(&card.value),
-            StaticCondition::HandType(_) => {
-                // Hand type conditions don't apply to individual cards
-                false
-            }
-            StaticCondition::HandSizeAtMost(_) => {
-                // Hand size conditions don't apply to individual cards
-                false
-            }
-        }
+        let evaluator = self.condition.create_evaluator();
+        evaluator.check_card(card)
     }
 
-    /// Create the effect based on configured bonuses with access to game context for dynamic calculations
+    /// Create the effect based on configured bonuses using strategy pattern
     fn create_effect_with_context(&self, context: &GameContext) -> JokerEffect {
-        let mut effect = JokerEffect::new();
-
-        match &self.condition {
-            StaticCondition::DiscardCount => {
-                // Calculate bonus based on remaining discards
-                const MAX_DISCARDS: u32 = 5; // Standard discards per round
-                let discards_remaining = MAX_DISCARDS.saturating_sub(context.discards_used);
-
-                if let Some(chips_base) = self.chips_bonus {
-                    let chips_bonus = chips_base * discards_remaining as i32;
-                    effect = effect.with_chips(chips_bonus);
-                }
-
-                if let Some(mult_base) = self.mult_bonus {
-                    let mult_bonus = mult_base * discards_remaining as i32;
-                    effect = effect.with_mult(mult_bonus);
-                }
-            }
-            _ => {
-                // Use standard fixed bonuses for other conditions
-                if let Some(chips) = self.chips_bonus {
-                    effect = effect.with_chips(chips);
-                }
-
-                if let Some(mult) = self.mult_bonus {
-                    effect = effect.with_mult(mult);
-                }
-            }
-        }
-
-        if let Some(multiplier) = self.mult_multiplier {
-            effect = effect.with_mult_multiplier(multiplier);
-        }
-
-        effect
+        let evaluator = self.condition.create_evaluator();
+        let config =
+            StaticJokerConfig::new(self.chips_bonus, self.mult_bonus, self.mult_multiplier);
+        evaluator.calculate_effect(context, &config)
     }
 }
 

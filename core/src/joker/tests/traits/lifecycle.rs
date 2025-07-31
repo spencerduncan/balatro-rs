@@ -11,11 +11,13 @@ use std::sync::{Arc, Mutex};
 
 /// Zero-allocation mock implementation with state tracking
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 struct StaticLifecycleMock {
     state: Arc<Mutex<LifecycleState>>,
 }
 
 #[derive(Debug, Clone, Default)]
+#[allow(dead_code)]
 struct LifecycleState {
     purchase_count: u32,
     sell_count: u32,
@@ -28,12 +30,14 @@ struct LifecycleState {
 }
 
 impl StaticLifecycleMock {
+    #[allow(dead_code)]
     fn with_state() -> Self {
         Self {
             state: Arc::new(Mutex::new(LifecycleState::default())),
         }
     }
 
+    #[allow(dead_code)]
     fn get_state(&self) -> LifecycleState {
         // For tests, we'll panic on poisoned mutex as it indicates a serious error
         // This is consistent with test expectations - tests should not have mutex poisoning
@@ -93,6 +97,7 @@ impl JokerLifecycle for StaticLifecycleMock {
 }
 
 // Test macro for lifecycle events
+#[allow(unused_macros)]
 macro_rules! test_lifecycle_event {
     ($name:ident, $method:ident, $field:ident) => {
         #[test]

@@ -206,6 +206,21 @@ pub fn create_castle() -> ScalingJoker {
     .with_max_value(1200.0) // Max 4 discards per round typically
 }
 
+/// Banner: +30 chips per discard remaining in round
+pub fn create_banner() -> ScalingJoker {
+    ScalingJoker::new(
+        JokerId::Banner,
+        "Banner".to_string(),
+        "+30 Chips per discard remaining".to_string(),
+        JokerRarity::Common,
+        0.0, // Base value 0
+        30.0, // +30 per remaining discard  
+        ScalingTrigger::CardDiscarded, // This will need custom logic to count remaining discards
+        ScalingEffectType::Chips,
+    )
+    .with_reset_condition(ResetCondition::RoundEnd)
+}
+
 /// Factory function to create all scaling jokers
 pub fn create_all_scaling_jokers() -> Vec<ScalingJoker> {
     vec![
@@ -223,6 +238,7 @@ pub fn create_all_scaling_jokers() -> Vec<ScalingJoker> {
         create_marble_joker_scaling(),
         create_loyalty_card(),
         create_castle(),
+        create_banner(),
     ]
 }
 
@@ -243,6 +259,7 @@ pub fn get_scaling_joker_by_id(id: JokerId) -> Option<ScalingJoker> {
         JokerId::MarbleJoker => Some(create_marble_joker_scaling()),
         JokerId::Loyalty => Some(create_loyalty_card()),
         JokerId::Reserved3 => Some(create_castle()),
+        JokerId::Banner => Some(create_banner()),
         _ => None,
     }
 }
@@ -254,7 +271,7 @@ mod tests {
     #[test]
     fn test_all_scaling_jokers_created() {
         let jokers = create_all_scaling_jokers();
-        assert_eq!(jokers.len(), 14, "Should create exactly 14 scaling jokers");
+        assert_eq!(jokers.len(), 15, "Should create exactly 15 scaling jokers");
 
         // Test that all jokers have unique IDs
         let mut ids = std::collections::HashSet::new();
@@ -297,6 +314,7 @@ mod tests {
     fn test_get_scaling_joker_by_id() {
         assert!(get_scaling_joker_by_id(JokerId::Trousers).is_some());
         assert!(get_scaling_joker_by_id(JokerId::GreenJoker).is_some());
+        assert!(get_scaling_joker_by_id(JokerId::Banner).is_some());
         assert!(get_scaling_joker_by_id(JokerId::Joker).is_none()); // Not a scaling joker
     }
 
@@ -310,5 +328,17 @@ mod tests {
                 "Joker description should not be empty"
             );
         }
+    }
+
+    #[test]
+    fn test_banner() {
+        let joker = create_banner();
+        assert_eq!(joker.id, JokerId::Banner);
+        assert_eq!(joker.name, "Banner");
+        assert_eq!(joker.base_value, 0.0);
+        assert_eq!(joker.increment, 30.0);
+        assert_eq!(joker.trigger, ScalingTrigger::CardDiscarded);
+        assert_eq!(joker.effect_type, ScalingEffectType::Chips);
+        assert_eq!(joker.reset_condition, Some(ResetCondition::RoundEnd));
     }
 }

@@ -2,7 +2,8 @@ use crate::joker::basic_economy_jokers::{
     DelayedGratificationJoker, GiftCardJoker, RocketJoker, ToTheMoonJoker,
 };
 use crate::joker::four_fingers::FourFingersJoker;
-use crate::joker::multiplicative_jokers::SteelJoker;
+use crate::joker::multiplicative_jokers::AcrobatJoker;
+use crate::joker::resource_chips_jokers::ScaryFaceJoker;
 use crate::joker::retrigger_jokers::*;
 use crate::joker::scaling_additive_mult_jokers::*;
 use crate::joker::scaling_chips_jokers::*;
@@ -63,13 +64,14 @@ impl JokerFactory {
             JokerId::Banner => Some(StaticJokerFactory::create_banner()),
             JokerId::AbstractJoker => Some(Box::new(AbstractJoker)),
             JokerId::SteelJoker => Some(Box::new(SteelJoker::new())),
+            JokerId::ScaryFace => Some(Box::new(ScaryFaceJoker::new())),
 
             // RNG-based jokers (Issue #442)
             JokerId::Oops => Some(Box::new(OopsAllSixesJoker)),
             JokerId::Reserved7 => Some(Box::new(SixShooterJoker)),
             JokerId::LuckyCharm => Some(Box::new(LuckyCardJoker)),
             JokerId::Reserved8 => Some(Box::new(GrimJoker)),
-            JokerId::AcrobatJoker => Some(Box::new(AcrobatJokerImpl)),
+            JokerId::AcrobatJoker => Some(Box::new(AcrobatJoker::new())),
             JokerId::Fortune => Some(Box::new(FortuneTellerJoker::new())),
             JokerId::Reserved4 => Some(Box::new(MysteryJoker)),
             JokerId::VagabondJoker => Some(Box::new(VagabondJokerImpl)),
@@ -94,7 +96,7 @@ impl JokerFactory {
             JokerId::GreenJoker => Some(Box::new(GreenJoker::new())),
             JokerId::Reserved5 => Some(Box::new(RideTheBusJoker::new())), // RideTheBus
             JokerId::Reserved6 => Some(Box::new(RedCardJoker::new())),    // RedCard (pack skipping)
-            JokerId::RedCard => Some(Box::new(RedCardJoker::new())), // RedCard (direct mapping)
+            JokerId::RedCard => Some(Box::new(RedCardJoker::new())),      // RedCard (pack skipping)
 
             // Scaling chips jokers
             JokerId::Castle => Some(Box::new(CastleJoker::new())),
@@ -177,7 +179,6 @@ impl JokerFactory {
                 // RNG-based jokers (Issue #442)
                 Reserved7,  // SixShooterJoker
                 LuckyCharm, // LuckyCardJoker
-                Fortune,    // Fortune Teller
                 // Special mechanic jokers
                 Erosion,
                 Photograph,
@@ -190,6 +191,8 @@ impl JokerFactory {
                 OddTodd,
                 Arrowhead,
                 Scholar,
+                // Resource chips jokers
+                ScaryFace, // ScaryFace Joker
                 // Scaling xmult jokers (none in common)
                 // Retrigger jokers
                 Hanging, // HangingChadJoker
@@ -209,6 +212,7 @@ impl JokerFactory {
                 FourFingers,
                 // Scaling additive mult jokers
                 Trousers, // Spare Trousers
+                RedCard,  // RedCard (pack skipping)
                 // Scaling chips jokers
                 Hiker,
                 // Scaling xmult jokers
@@ -296,10 +300,10 @@ impl JokerFactory {
             // Scaling additive mult jokers
             Trousers, // Spare Trousers
             GreenJoker,
-            Reserved5, // RideTheBus
-            Reserved6, // RedCard (pack skipping)
-            RedCard,   // Red Card (direct mapping)
-            Fortune,   // Fortune Teller
+            Reserved5,     // RideTheBus
+            Reserved6,     // RedCard (pack skipping)
+            RedCard,       // Red Card (direct mapping)
+            Fortune, // Fortune Teller
             // Scaling chips jokers
             Castle,
             Wee,
@@ -308,6 +312,8 @@ impl JokerFactory {
             OddTodd,
             Arrowhead,
             Scholar,
+            // Resource chips jokers
+            ScaryFace, // ScaryFace Joker
             // Scaling xmult jokers
             SteelJoker, // Scaling Steel Joker
             Reserved,   // Throwback
@@ -375,6 +381,10 @@ mod tests {
         let steel = JokerFactory::create(JokerId::SteelJoker);
         assert!(steel.is_some());
         assert_eq!(steel.unwrap().id(), JokerId::SteelJoker);
+
+        let scary_face = JokerFactory::create(JokerId::ScaryFace);
+        assert!(scary_face.is_some());
+        assert_eq!(scary_face.unwrap().id(), JokerId::ScaryFace);
     }
 
     #[test]
@@ -387,6 +397,7 @@ mod tests {
         assert!(common_jokers.contains(&JokerId::HalfJoker));
         assert!(common_jokers.contains(&JokerId::Banner));
         assert!(common_jokers.contains(&JokerId::AbstractJoker));
+        assert!(common_jokers.contains(&JokerId::ScaryFace));
 
         let uncommon_jokers = JokerFactory::get_by_rarity(JokerRarity::Uncommon);
         assert!(uncommon_jokers.contains(&JokerId::BlueJoker));
@@ -405,6 +416,7 @@ mod tests {
         assert!(implemented.contains(&JokerId::Walkie));
         assert!(implemented.contains(&JokerId::Runner));
         assert!(implemented.contains(&JokerId::AbstractJoker));
+        assert!(implemented.contains(&JokerId::ScaryFace));
 
         // AbstractJoker is now properly implemented and included above
         // Note: Placeholder jokers (HalfJoker, Banner)
@@ -428,7 +440,7 @@ mod tests {
 
         let red_card = JokerFactory::create(JokerId::Reserved6);
         assert!(red_card.is_some());
-        assert_eq!(red_card.unwrap().id(), JokerId::Reserved6);
+        assert_eq!(red_card.unwrap().id(), JokerId::RedCard); // RedCardJoker now uses RedCard ID
 
         let fortune_teller = JokerFactory::create(JokerId::Fortune);
         assert!(fortune_teller.is_some());
@@ -517,6 +529,10 @@ mod tests {
         assert!(uncommon_jokers.contains(&JokerId::Hiker));
         assert!(uncommon_jokers.contains(&JokerId::Reserved)); // Throwback
         assert!(uncommon_jokers.contains(&JokerId::Ceremonial)); // Ceremonial Dagger
+
+        let common_jokers = JokerFactory::get_by_rarity(JokerRarity::Common);
+        // Fortune Teller moved to Common
+        assert!(common_jokers.contains(&JokerId::Fortune)); // Fortune Teller
 
         let rare_jokers = JokerFactory::get_by_rarity(JokerRarity::Rare);
         // Rare scaling jokers

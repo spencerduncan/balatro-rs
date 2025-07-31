@@ -1,4 +1,5 @@
 // This test is currently disabled
+#![allow(clippy::non_minimal_cfg)]
 #![cfg(not(all()))] // Always false, effectively disabling the file
                     // EMERGENCY DISABLE: GameContext constructor and Stage constructor issues - tracked for post-emergency fix
 
@@ -11,7 +12,6 @@ use balatro_rs::hand::{Hand, SelectHand};
 use balatro_rs::joker::{GameContext, Joker, JokerId, JokerRarity};
 use balatro_rs::joker_registry::registry::create_joker;
 use balatro_rs::joker_state::JokerStateManager;
-use balatro_rs::rank::HandRank;
 use balatro_rs::rng::GameRng;
 use balatro_rs::stage::{Blind, Stage};
 use balatro_rs::static_joker_factory::StaticJokerFactory;

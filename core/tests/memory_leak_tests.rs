@@ -48,14 +48,14 @@ fn test_memory_monitoring_configuration() {
 
     // Test RL memory monitoring
     game.enable_rl_memory_monitoring();
-    let config = game.memory_monitor.config();
+    let config = game.debug_manager.memory_monitor.config();
     assert!(config.enable_monitoring);
     assert_eq!(config.max_action_history, 5000);
     assert!(config.warning_threshold_mb < 1024);
 
     // Test simulation memory monitoring
     game.enable_simulation_memory_monitoring();
-    let config = game.memory_monitor.config();
+    let config = game.debug_manager.memory_monitor.config();
     assert!(config.enable_monitoring);
     assert_eq!(config.max_action_history, 1000);
     assert!(config.warning_threshold_mb < 512);
@@ -97,7 +97,9 @@ fn test_memory_safety_check() {
         max_memory_mb: 4,
         ..MemoryConfig::default()
     };
-    game.memory_monitor.update_config(strict_config);
+    game.debug_manager
+        .memory_monitor
+        .update_config(strict_config);
 
     // Should still be safe for small usage
     assert!(game.check_memory_safety());
@@ -133,7 +135,9 @@ fn test_long_running_simulation_memory_stability() {
     // Configure memory monitoring with a very short interval for testing
     let mut memory_config = MemoryConfig::for_simulation();
     memory_config.monitoring_interval_ms = 1; // Check every 1ms for testing
-    game.memory_monitor.update_config(memory_config.clone());
+    game.debug_manager
+        .memory_monitor
+        .update_config(memory_config.clone());
     game.action_history.resize(memory_config.max_action_history);
 
     let start_time = Instant::now();
@@ -305,7 +309,7 @@ mod performance_benchmarks {
         let start = Instant::now();
         for _ in 0..ITERATIONS {
             game.action_history.push(Action::Play());
-            if game.memory_monitor.should_check() {
+            if game.debug_manager.memory_monitor.should_check() {
                 let _ = game.get_memory_stats();
             }
         }
