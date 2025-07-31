@@ -366,8 +366,8 @@ fn test_all_shop_enhancement_tags_persist() {
 fn test_invalid_tag_id() {
     let mut game = create_test_game();
 
-    // Try to apply a tag that's not implemented (Economy tag)
-    let result = game.apply_skip_tag_effect(SkipTagId::Economy);
+    // Try to apply a tag that's not implemented (Charm tag - Reward tags not yet implemented)
+    let result = game.apply_skip_tag_effect(SkipTagId::Charm);
     assert!(result.is_err());
 
     if let Err(e) = result {
