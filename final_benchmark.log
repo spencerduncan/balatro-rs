@@ -1,0 +1,106 @@
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 2 tests
+test joker_impl::tests::test_triboulet_king_gives_x2_mult ... ignored
+test joker_impl::tests::test_triboulet_queen_gives_x2_mult ... ignored
+
+test result: ok. 0 passed; 0 failed; 2 ignored; 0 measured; 850 filtered out; finished in 0.00s
+
+retriggering_scenarios/high_retrigger_processing/20
+                        time:   [3.0382 µs 3.3500 µs 3.8077 µs]
+                        thrpt:  [5.2525 Melem/s 5.9702 Melem/s 6.5828 Melem/s]
+                 change:
+                        time:   [−20.701% −12.715% −3.7440%] (p = 0.01 < 0.05)
+                        thrpt:  [+3.8897% +14.567% +26.106%]
+                        Performance has improved.
+Found 7 outliers among 100 measurements (7.00%)
+  3 (3.00%) high mild
+  4 (4.00%) high severe
+
+large_joker_collections/large_collection_processing/20
+                        time:   [6.3852 µs 6.5058 µs 6.6397 µs]
+                        thrpt:  [3.0122 Melem/s 3.0742 Melem/s 3.1322 Melem/s]
+                 change:
+                        time:   [−44.617% −37.953% −30.706%] (p = 0.00 < 0.05)
+                        thrpt:  [+44.313% +61.169% +80.562%]
+                        Performance has improved.
+large_joker_collections/large_collection_processing/25
+                        time:   [6.7545 µs 6.8599 µs 6.9832 µs]
+                        thrpt:  [3.5800 Melem/s 3.6444 Melem/s 3.7012 Melem/s]
+                 change:
+                        time:   [−56.947% −51.700% −45.625%] (p = 0.00 < 0.05)
+                        thrpt:  [+83.909% +107.04% +132.27%]
+                        Performance has improved.
+Found 12 outliers among 100 measurements (12.00%)
+  5 (5.00%) high mild
+  7 (7.00%) high severe
+
+scaling/joker_count/20  time:   [8.3564 µs 8.5946 µs 8.9011 µs]
+                        thrpt:  [2.2469 Melem/s 2.3270 Melem/s 2.3934 Melem/s]
+                 change:
+                        time:   [−13.559% −5.5600% +2.6894%] (p = 0.21 > 0.05)
+                        thrpt:  [−2.6189% +5.8874% +15.686%]
+                        No change in performance detected.
+Found 13 outliers among 100 measurements (13.00%)
+  1 (1.00%) high mild
+  12 (12.00%) high severe
+
+scaling/joker_count/20  time:   [7.4169 µs 7.6227 µs 7.8747 µs]
+                        thrpt:  [2.5398 Melem/s 2.6237 Melem/s 2.6966 Melem/s]
+                 change:
+                        time:   [−10.600% −7.2470% −4.0402%] (p = 0.00 < 0.05)
+                        thrpt:  [+4.2103% +7.8132% +11.857%]
+                        Performance has improved.
+Found 35 outliers among 100 measurements (35.00%)
+  19 (19.00%) low mild
+  1 (1.00%) high mild
+  15 (15.00%) high severe
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+memory_allocation/joker_creation/20
+                        time:   [390.50 ns 404.14 ns 428.45 ns]
+                        thrpt:  [46.680 Melem/s 49.488 Melem/s 51.216 Melem/s]
+                 change:
+                        time:   [−23.758% −19.006% −13.924%] (p = 0.00 < 0.05)
+                        thrpt:  [+16.177% +23.466% +31.161%]
+                        Performance has improved.
+Found 13 outliers among 100 measurements (13.00%)
+  4 (4.00%) high mild
+  9 (9.00%) high severe
+memory_allocation/effect_accumulation/20
+                        time:   [2.5650 µs 2.5904 µs 2.6191 µs]
+                        thrpt:  [7.6362 Melem/s 7.7209 Melem/s 7.7973 Melem/s]
+                 change:
+                        time:   [−0.8537% +2.1355% +4.7226%] (p = 0.14 > 0.05)
+                        thrpt:  [−4.5096% −2.0909% +0.8610%]
+                        No change in performance detected.
+Found 7 outliers among 100 measurements (7.00%)
+  4 (4.00%) high mild
+  3 (3.00%) high severe
+
+retrigger_performance/retrigger_effects/2
+                        time:   [31.851 ns 32.118 ns 32.468 ns]
+                        change: [+2.3697% +4.5337% +6.5920%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+Found 7 outliers among 100 measurements (7.00%)
+  2 (2.00%) high mild
+  5 (5.00%) high severe
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

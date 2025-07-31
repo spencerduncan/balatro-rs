@@ -201,7 +201,7 @@ impl FortuneTellerJoker {
             id: JokerId::FortuneTeller,
             name: "Fortune Teller".to_string(),
             description: "+1 Mult per Tarot card used".to_string(),
-            rarity: JokerRarity::Rare, // Scaling joker with unlimited growth potential
+            rarity: JokerRarity::Common,
             cost: 8,
             // Removed: tarots_used initialization (dual state eliminated)
         }
@@ -679,10 +679,10 @@ impl Default for RedCardJoker {
 impl RedCardJoker {
     pub fn new() -> Self {
         Self {
-            id: JokerId::RedCard, // Use RedCard as the proper joker ID
+            id: JokerId::RedCard, // RedCard (pack skipping version)
             name: "Red Card".to_string(),
             description: "+3 Mult per pack skipped".to_string(),
-            rarity: JokerRarity::Uncommon, // Based on test expectation
+            rarity: JokerRarity::Uncommon,
             cost: 4,
             // Removed: packs_skipped initialization (dual state eliminated)
         }
@@ -989,7 +989,7 @@ mod tests {
         assert_eq!(joker.joker_type(), "fortune_teller");
         assert_eq!(JokerIdentity::name(&joker), "Fortune Teller");
         assert_eq!(joker.base_cost(), 8);
-        assert_eq!(joker.rarity, JokerRarity::Rare); // Updated to match corrected rarity
+        assert_eq!(joker.rarity, JokerRarity::Common);
     }
 
     #[test]
@@ -1000,7 +1000,7 @@ mod tests {
         assert_eq!(joker.joker_type(), "red_card");
         assert_eq!(JokerIdentity::name(&joker), "Red Card");
         assert_eq!(joker.base_cost(), 4);
-        assert_eq!(joker.rarity, JokerRarity::Uncommon); // Updated to match corrected rarity
+        assert_eq!(joker.rarity, JokerRarity::Uncommon);
     }
 
     #[test]
