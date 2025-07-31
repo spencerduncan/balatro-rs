@@ -16,7 +16,7 @@
 use crate::action::Action;
 use crate::game::Game;
 use crate::application::{
-    config::{SessionId, SessionInfo, GameConfig, ApplicationConfig},
+    config::{SessionId, GameConfig, ApplicationConfig},
     errors::ApplicationError,
 };
 use std::collections::HashMap;
@@ -298,8 +298,8 @@ impl ServiceContainer {
     /// Returns comprehensive health status for operational monitoring.
     pub async fn health_check(&self) -> ContainerHealth {
         let start_time = Instant::now();
-        
-        let storage_health = self.repository.health_check().await.unwrap_or_else(|_| StorageHealth {
+
+        let storage_health = self.repository.health_check().await.unwrap_or(StorageHealth {
             is_healthy: false,
             latency_ms: 0,
             storage_size_mb: 0,
@@ -307,14 +307,14 @@ impl ServiceContainer {
             error_rate: 1.0,
         });
 
-        let notification_health = self.notifier.health_check().await.unwrap_or_else(|_| NotificationHealth {
+        let notification_health = self.notifier.health_check().await.unwrap_or(NotificationHealth {
             is_healthy: false,
             active_subscriptions: 0,
             message_queue_depth: 0,
             error_rate: 1.0,
         });
 
-        let metrics_health = self.metrics.health_check().await.unwrap_or_else(|_| MetricsHealth {
+        let metrics_health = self.metrics.health_check().await.unwrap_or(MetricsHealth {
             is_healthy: false,
             metrics_per_second: 0.0,
             buffer_usage_percent: 100,
@@ -446,7 +446,6 @@ impl Default for ServiceContainerBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::SystemTime;
 
     // Mock implementations for testing
 
@@ -595,7 +594,7 @@ mod tests {
     fn test_builder_validation() {
         let result = ServiceContainerBuilder::new().build();
         assert!(result.is_err());
-        
+
         if let Err(ApplicationError::Configuration { parameter, .. }) = result {
             assert_eq!(parameter, "validator");
         } else {

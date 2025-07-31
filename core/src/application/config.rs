@@ -60,28 +60,28 @@ impl Default for SessionId {
 pub struct GameConfig {
     /// Random number generator seed for reproducible games
     pub seed: Option<u64>,
-    
+
     /// Starting ante level (difficulty)
     pub starting_ante: u32,
-    
+
     /// Maximum ante level before game ends
     pub max_ante: u32,
-    
+
     /// Starting money amount
     pub starting_money: i32,
-    
+
     /// Maximum hand size
     pub hand_size: usize,
-    
+
     /// Number of discards per round
     pub discards: u32,
-    
+
     /// Number of hands per round
     pub hands: u32,
-    
+
     /// Enable/disable specific game features
     pub features: GameFeatures,
-    
+
     /// Performance and resource limits
     pub limits: GameLimits,
 }
@@ -110,19 +110,19 @@ impl Default for GameConfig {
 pub struct GameFeatures {
     /// Enable joker cards
     pub jokers_enabled: bool,
-    
+
     /// Enable consumable cards (tarot, planet, spectral)
     pub consumables_enabled: bool,
-    
+
     /// Enable voucher system
     pub vouchers_enabled: bool,
-    
+
     /// Enable boss blinds
     pub boss_blinds_enabled: bool,
-    
+
     /// Enable card packs in shop
     pub packs_enabled: bool,
-    
+
     /// Enable advanced scoring mechanics
     pub advanced_scoring: bool,
 }
@@ -148,16 +148,16 @@ impl Default for GameFeatures {
 pub struct GameLimits {
     /// Maximum number of actions per session
     pub max_actions: usize,
-    
+
     /// Maximum session duration
     pub max_duration: Duration,
-    
+
     /// Maximum memory usage estimate (MB)
     pub max_memory_mb: usize,
-    
+
     /// Maximum number of jokers in play
     pub max_jokers: usize,
-    
+
     /// Maximum deck size
     pub max_deck_size: usize,
 }
@@ -182,22 +182,22 @@ impl Default for GameLimits {
 pub struct SessionInfo {
     /// Unique session identifier
     pub id: SessionId,
-    
+
     /// Session creation timestamp
     pub created_at: SystemTime,
-    
+
     /// Last activity timestamp
     pub last_activity: SystemTime,
-    
+
     /// Session configuration
     pub config: GameConfig,
-    
+
     /// Current session status
     pub status: SessionStatus,
-    
+
     /// Performance metrics
     pub metrics: SessionMetrics,
-    
+
     /// Optional session metadata for debugging
     pub metadata: HashMap<String, String>,
 }
@@ -242,16 +242,16 @@ impl SessionInfo {
 pub enum SessionStatus {
     /// Session is active and accepting requests
     Active,
-    
+
     /// Session is paused (no new requests accepted)
     Paused,
-    
+
     /// Session is marked for cleanup
     Terminating,
-    
+
     /// Session has completed successfully
     Completed,
-    
+
     /// Session ended due to error
     Failed,
 }
@@ -264,19 +264,19 @@ pub enum SessionStatus {
 pub struct SessionMetrics {
     /// Total number of actions executed
     pub total_actions: usize,
-    
+
     /// Average action execution time (microseconds)
     pub avg_action_time_us: u64,
-    
+
     /// Peak memory usage (MB)
     pub peak_memory_mb: usize,
-    
+
     /// Current game score
     pub current_score: i64,
-    
+
     /// Current ante level
     pub current_ante: u32,
-    
+
     /// Number of errors encountered
     pub error_count: usize,
 }
@@ -299,44 +299,34 @@ impl Default for SessionMetrics {
 /// Controls application layer behavior, resource limits,
 /// and operational parameters. Designed for production
 /// deployment with proper scaling parameters.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ApplicationConfig {
     /// Session management configuration
     pub session: SessionConfig,
-    
+
     /// Performance and resource limits
     pub limits: ApplicationLimits,
-    
+
     /// Monitoring and observability settings
     pub monitoring: MonitoringConfig,
-    
+
     /// Feature flags and experiments
     pub features: ApplicationFeatures,
 }
 
-impl Default for ApplicationConfig {
-    fn default() -> Self {
-        Self {
-            session: SessionConfig::default(),
-            limits: ApplicationLimits::default(),
-            monitoring: MonitoringConfig::default(),
-            features: ApplicationFeatures::default(),
-        }
-    }
-}
 
 /// Session management configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SessionConfig {
     /// Session time-to-live before cleanup
     pub ttl: Duration,
-    
+
     /// Cleanup interval for expired sessions
     pub cleanup_interval: Duration,
-    
+
     /// Maximum number of concurrent sessions
     pub max_concurrent_sessions: usize,
-    
+
     /// Session cleanup strategy
     pub cleanup_strategy: CleanupStrategy,
 }
@@ -357,10 +347,10 @@ impl Default for SessionConfig {
 pub enum CleanupStrategy {
     /// Remove least recently used sessions first
     LeastRecentlyUsed,
-    
+
     /// Remove oldest sessions first
     FirstInFirstOut,
-    
+
     /// Remove sessions with lowest activity
     LowestActivity,
 }
@@ -373,13 +363,13 @@ pub enum CleanupStrategy {
 pub struct ApplicationLimits {
     /// Maximum memory usage for entire application (MB)
     pub max_total_memory_mb: usize,
-    
+
     /// Maximum CPU usage threshold (percentage)
     pub max_cpu_usage_percent: u8,
-    
+
     /// Request rate limiting (requests per second)
     pub max_requests_per_second: usize,
-    
+
     /// Maximum concurrent operations
     pub max_concurrent_operations: usize,
 }
@@ -400,16 +390,16 @@ impl Default for ApplicationLimits {
 pub struct MonitoringConfig {
     /// Enable metrics collection
     pub metrics_enabled: bool,
-    
+
     /// Enable distributed tracing
     pub tracing_enabled: bool,
-    
+
     /// Metrics export interval
     pub metrics_interval: Duration,
-    
+
     /// Log level for application layer
     pub log_level: LogLevel,
-    
+
     /// Enable performance profiling
     pub profiling_enabled: bool,
 }
@@ -441,13 +431,13 @@ pub enum LogLevel {
 pub struct ApplicationFeatures {
     /// Enable experimental features
     pub experimental_features: bool,
-    
+
     /// Enable A/B testing framework
     pub ab_testing: bool,
-    
+
     /// Enable advanced monitoring
     pub advanced_monitoring: bool,
-    
+
     /// Enable automatic recovery
     pub auto_recovery: bool,
 }
@@ -473,7 +463,7 @@ impl DurationExt for Duration {
     fn from_mins(mins: u64) -> Duration {
         Duration::from_secs(mins * 60)
     }
-    
+
     fn from_hours(hours: u64) -> Duration {
         Duration::from_secs(hours * 3600)
     }
@@ -488,7 +478,7 @@ mod tests {
         let id1 = SessionId::new();
         let id2 = SessionId::new();
         assert_ne!(id1, id2);
-        
+
         let uuid_str = id1.as_str();
         let id3 = SessionId::from_string(&uuid_str).unwrap();
         assert_eq!(id1, id3);
@@ -499,10 +489,10 @@ mod tests {
         let config = GameConfig::default();
         let id = SessionId::new();
         let mut session = SessionInfo::new(id, config);
-        
+
         // Should not be expired immediately
         assert!(!session.is_expired(Duration::from_secs(10)));
-        
+
         // Simulate old last_activity
         session.last_activity = SystemTime::now() - Duration::from_secs(20);
         assert!(session.is_expired(Duration::from_secs(10)));
@@ -513,11 +503,11 @@ mod tests {
         let config = GameConfig::default();
         let id = SessionId::new();
         let mut session = SessionInfo::new(id, config);
-        
+
         let original_time = session.last_activity;
         std::thread::sleep(Duration::from_millis(1));
         session.touch();
-        
+
         assert!(session.last_activity > original_time);
     }
 
@@ -535,7 +525,7 @@ mod tests {
         let config = ApplicationConfig::default();
         let serialized = serde_json::to_string(&config).unwrap();
         let deserialized: ApplicationConfig = serde_json::from_str(&serialized).unwrap();
-        
+
         // Compare some key fields
         assert_eq!(config.session.max_concurrent_sessions, deserialized.session.max_concurrent_sessions);
         assert_eq!(config.limits.max_requests_per_second, deserialized.limits.max_requests_per_second);

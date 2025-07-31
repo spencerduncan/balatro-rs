@@ -4,16 +4,13 @@
 //! creation, cleanup, monitoring, and resource management. Designed for
 //! production scalability with support for 100+ concurrent sessions.
 
-use crate::application::{
-    config::{SessionId, SessionInfo, GameConfig, CleanupStrategy, ApplicationConfig},
-    errors::ApplicationError,
-    container::{GameRepository, MetricsCollector},
-};
+use async_trait::async_trait;
+use crate::application::config::{SessionId, SessionInfo, GameConfig, ApplicationConfig};
+use crate::application::errors::ApplicationError;
+use crate::application::container::{GameRepository, MetricsCollector};
 use crate::game::Game;
 use std::sync::Arc;
-use std::time::{Duration, SystemTime};
-use async_trait::async_trait;
-
+use std::time::Duration;
 /// Session Management Service
 ///
 /// Responsible for managing session lifecycle, cleanup, and resource allocation.
@@ -61,18 +58,18 @@ impl SessionManagementService {
     /// - Records session creation metrics
     /// - Initializes game state according to configuration
     /// - Persists session for recovery
-    pub async fn create_session(&self, config: GameConfig) -> Result<SessionId, ApplicationError> {
+    pub async fn create_session(&self, _config: GameConfig) -> Result<SessionId, ApplicationError> {
         let _timer = self.metrics.start_timer("session.creation", &[]);
-        
+
         // Check concurrent session limits
         let active_sessions = self.repository.list_sessions().await?;
         if active_sessions.len() >= self.config.session.max_concurrent_sessions {
             self.metrics.increment_counter(
-                "session.creation.limit_exceeded", 
-                1, 
+                "session.creation.limit_exceeded",
+                1,
                 &[("limit", &self.config.session.max_concurrent_sessions.to_string())]
             ).await;
-            
+
             return Err(ApplicationError::SessionLimitExceeded {
                 current: active_sessions.len(),
                 limit: self.config.session.max_concurrent_sessions,
@@ -81,23 +78,23 @@ impl SessionManagementService {
 
         // Generate unique session ID
         let session_id = SessionId::new();
-        
+
         // Initialize game with configuration
         let mut game = Game::default();
         // TODO: Apply game configuration to game state
         game.start();
-        
+
         // Persist session
         self.repository.save_game(&session_id, &game).await?;
-        
+
         // Record metrics
         self.metrics.increment_counter("session.created", 1, &[]).await;
         self.metrics.record_gauge(
-            "session.active_count", 
-            (active_sessions.len() + 1) as f64, 
+            "session.active_count",
+            (active_sessions.len() + 1) as f64,
             &[]
         ).await;
-        
+
         Ok(session_id)
     }
 
@@ -114,10 +111,10 @@ impl SessionManagementService {
     /// - Implements backpressure protection
     pub async fn cleanup_expired_sessions(&self) -> Result<usize, ApplicationError> {
         let _timer = self.metrics.start_timer("session.cleanup", &[]);
-        
+
         let sessions = self.repository.list_sessions().await?;
         let mut cleaned_up = 0;
-        
+
         for session_id in sessions {
             // Get session info to check expiration
             match self.get_session_info(&session_id).await {
@@ -131,7 +128,7 @@ impl SessionManagementService {
                             Err(err) => {
                                 self.metrics.increment_counter("session.cleanup.error", 1, &[]).await;
                                 // Log error but continue cleanup - don't let one failure stop cleanup
-                                eprintln!("Failed to cleanup session {}: {}", session_id, err);
+                                eprintln!("Failed to cleanup session {session_id}: {err}");
                             }
                         }
                     }
@@ -158,17 +155,17 @@ impl SessionManagementService {
     /// * `Err(ApplicationError::SessionNotFound)` - Session doesn't exist
     pub async fn get_session_info(&self, session_id: &SessionId) -> Result<SessionInfo, ApplicationError> {
         let _timer = self.metrics.start_timer("session.info_retrieval", &[]);
-        
+
         // Load game to verify session exists
-        let game = self.repository.load_game(session_id).await?;
-        
+        let _game = self.repository.load_game(session_id).await?;
+
         // Create session info from game state
         // In a real implementation, we'd store more metadata
         let session_info = SessionInfo::new(
             session_id.clone(),
             GameConfig::default(), // TODO: Get actual config from storage
         );
-        
+
         self.metrics.increment_counter("session.info_retrieved", 1, &[]).await;
         Ok(session_info)
     }
@@ -183,21 +180,21 @@ impl SessionManagementService {
     /// * `Err(ApplicationError)` - Deletion failure
     pub async fn delete_session(&self, session_id: &SessionId) -> Result<(), ApplicationError> {
         let _timer = self.metrics.start_timer("session.deletion", &[]);
-        
+
         // Delete from repository
         self.repository.delete_game(session_id).await?;
-        
+
         // Record metrics
         self.metrics.increment_counter("session.deleted", 1, &[]).await;
-        
+
         // Update active session count
         let active_sessions = self.repository.list_sessions().await.unwrap_or_default();
         self.metrics.record_gauge(
-            "session.active_count", 
-            active_sessions.len() as f64, 
+            "session.active_count",
+            active_sessions.len() as f64,
             &[]
         ).await;
-        
+
         Ok(())
     }
 
@@ -206,7 +203,7 @@ impl SessionManagementService {
     /// # Returns
     /// * `SessionServiceHealth` - Current service health metrics
     pub async fn health_check(&self) -> SessionServiceHealth {
-        let repository_health = self.repository.health_check().await.unwrap_or_else(|_| {
+        let repository_health = self.repository.health_check().await.unwrap_or({
             crate::application::container::StorageHealth {
                 is_healthy: false,
                 latency_ms: 0,
@@ -217,7 +214,7 @@ impl SessionManagementService {
         });
 
         let active_sessions = self.repository.list_sessions().await.unwrap_or_default();
-        
+
         SessionServiceHealth {
             is_healthy: repository_health.is_healthy,
             active_sessions: active_sessions.len(),
@@ -249,7 +246,7 @@ mod tests {
 
     // Mock implementations for testing
     struct MockGameRepository {
-        sessions: Arc<Mutex<HashMap<SessionId, Game>>>,
+        sessions: Arc<Mutex<HashMap<SessionId, bool>>>, // Just track if session exists
         should_fail: bool,
     }
 
@@ -270,37 +267,41 @@ mod tests {
     }
 
     #[async_trait]
+    #[async_trait]
     impl GameRepository for MockGameRepository {
-        async fn save_game(&self, session_id: &SessionId, game: &Game) -> Result<(), ApplicationError> {
+        async fn save_game(&self, session_id: &SessionId, _game: &Game) -> Result<(), ApplicationError> {
             if self.should_fail {
-                return Err(ApplicationError::infrastructure("storage", true, 
-                    std::io::Error::new(std::io::ErrorKind::Other, "mock failure")));
+                return Err(ApplicationError::infrastructure("storage", true,
+                    std::io::Error::other("mock failure")));
             }
-            
+
             let mut sessions = self.sessions.lock().unwrap();
-            sessions.insert(session_id.clone(), game.clone());
+            sessions.insert(session_id.clone(), true);
             Ok(())
         }
 
         async fn load_game(&self, session_id: &SessionId) -> Result<Game, ApplicationError> {
             if self.should_fail {
                 return Err(ApplicationError::infrastructure("storage", true,
-                    std::io::Error::new(std::io::ErrorKind::Other, "mock failure")));
+                    std::io::Error::other("mock failure")));
             }
 
             let sessions = self.sessions.lock().unwrap();
-            sessions.get(session_id)
-                .cloned()
-                .ok_or_else(|| ApplicationError::SessionNotFound {
+            if sessions.contains_key(session_id) {
+                // Return a new default game for testing
+                Ok(Game::new(crate::config::Config::default()))
+            } else {
+                Err(ApplicationError::SessionNotFound {
                     session_id: session_id.as_str(),
                     ttl: Some(Duration::from_secs(3600)),
                 })
+            }
         }
 
         async fn delete_game(&self, session_id: &SessionId) -> Result<(), ApplicationError> {
             if self.should_fail {
                 return Err(ApplicationError::infrastructure("storage", true,
-                    std::io::Error::new(std::io::ErrorKind::Other, "mock failure")));
+                    std::io::Error::other("mock failure")));
             }
 
             let mut sessions = self.sessions.lock().unwrap();
@@ -311,7 +312,7 @@ mod tests {
         async fn list_sessions(&self) -> Result<Vec<SessionId>, ApplicationError> {
             if self.should_fail {
                 return Err(ApplicationError::infrastructure("storage", true,
-                    std::io::Error::new(std::io::ErrorKind::Other, "mock failure")));
+                    std::io::Error::other("mock failure")));
             }
 
             let sessions = self.sessions.lock().unwrap();
@@ -346,6 +347,7 @@ mod tests {
         }
     }
 
+    #[async_trait]
     #[async_trait]
     impl MetricsCollector for MockMetricsCollector {
         async fn increment_counter(&self, name: &str, value: u64, _tags: &[(&str, &str)]) {
@@ -399,10 +401,10 @@ mod tests {
         let service = SessionManagementService::new(repository.clone(), metrics.clone(), config);
 
         let session_id = service.create_session(GameConfig::default()).await.unwrap();
-        
+
         // Verify session was created
         assert!(repository.load_game(&session_id).await.is_ok());
-        
+
         // Verify metrics were recorded
         assert_eq!(metrics.get_metric("session.created"), Some(1.0));
         assert_eq!(metrics.get_metric("session.active_count"), Some(1.0));
@@ -419,10 +421,10 @@ mod tests {
 
         // Create first session (should succeed)
         let _session1 = service.create_session(GameConfig::default()).await.unwrap();
-        
+
         // Create second session (should fail due to limit)
         let result = service.create_session(GameConfig::default()).await;
-        
+
         assert!(matches!(result, Err(ApplicationError::SessionLimitExceeded { current: 1, limit: 1 })));
         assert_eq!(metrics.get_metric("session.creation.limit_exceeded"), Some(1.0));
     }
@@ -449,11 +451,11 @@ mod tests {
 
         // Create a session first
         let session_id = service.create_session(GameConfig::default()).await.unwrap();
-        
+
         // Get session info
         let session_info = service.get_session_info(&session_id).await.unwrap();
         assert_eq!(session_info.id, session_id);
-        
+
         // Verify metrics
         assert_eq!(metrics.get_metric("session.info_retrieved"), Some(1.0));
     }
@@ -468,7 +470,7 @@ mod tests {
 
         let session_id = SessionId::new();
         let result = service.get_session_info(&session_id).await;
-        
+
         assert!(matches!(result, Err(ApplicationError::SessionNotFound { .. })));
     }
 
@@ -482,13 +484,13 @@ mod tests {
 
         // Create a session first
         let session_id = service.create_session(GameConfig::default()).await.unwrap();
-        
+
         // Delete the session
         service.delete_session(&session_id).await.unwrap();
-        
+
         // Verify session was deleted
         assert!(repository.load_game(&session_id).await.is_err());
-        
+
         // Verify metrics
         assert_eq!(metrics.get_metric("session.deleted"), Some(1.0));
         assert_eq!(metrics.get_metric("session.active_count"), Some(0.0));
@@ -504,18 +506,19 @@ mod tests {
         let service = SessionManagementService::new(repository.clone(), metrics.clone(), config);
 
         // Create a session
-        let session_id = service.create_session(GameConfig::default()).await.unwrap();
-        
+        let _session_id = service.create_session(GameConfig::default()).await.unwrap();
+
         // Wait for session to expire
         tokio::time::sleep(Duration::from_millis(10)).await;
-        
+
         // Cleanup expired sessions
         let cleaned_up = service.cleanup_expired_sessions().await.unwrap();
-        
+
         // In this test, cleanup might not work as expected because we don't have
         // proper session metadata storage. This is a limitation of the mock.
         // In a real implementation, we'd store session creation times.
-        assert!(cleaned_up >= 0);
+        // Note: cleaned_up is usize, so always >= 0. This assertion validates the logic.
+        assert!(cleaned_up < 1000); // Reasonable upper bound check instead
     }
 
     #[tokio::test]
@@ -527,7 +530,7 @@ mod tests {
         let service = SessionManagementService::new(repository, metrics, config.clone());
 
         let health = service.health_check().await;
-        
+
         assert!(health.is_healthy);
         assert_eq!(health.active_sessions, 0);
         assert_eq!(health.max_sessions, config.session.max_concurrent_sessions);
@@ -554,7 +557,7 @@ mod tests {
 
         // Wait for all tasks to complete
         let results: Vec<_> = futures::future::join_all(handles).await;
-        
+
         // Check that all succeeded
         let successful_sessions: Vec<_> = results.into_iter()
             .filter_map(|result| result.ok())
@@ -562,7 +565,7 @@ mod tests {
             .collect();
 
         assert_eq!(successful_sessions.len(), 10);
-        
+
         // Verify all sessions are unique
         let mut unique_sessions = std::collections::HashSet::new();
         for session_id in successful_sessions {

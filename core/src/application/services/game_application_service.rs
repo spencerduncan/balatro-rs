@@ -4,15 +4,14 @@
 //! the domain layer (game logic) and infrastructure layer (persistence,
 //! notifications, metrics). Designed for production scalability.
 
-use crate::application::{
-    config::{SessionId, GameConfig, ApplicationConfig},
-    errors::ApplicationError,
-    container::{ActionValidator, GameRepository, StateNotifier, MetricsCollector, StateChangeEvent, ActionResult},
-};
-use crate::{action::Action, game::Game};
-use std::sync::Arc;
-use std::time::Instant;
 use async_trait::async_trait;
+use crate::application::config::{SessionId, ApplicationConfig};
+use crate::application::errors::ApplicationError;
+use crate::application::container::{ActionValidator, GameRepository, StateNotifier, MetricsCollector, StateChangeEvent, ActionResult};
+use crate::game::Game;
+use crate::action::Action;
+use std::sync::Arc;
+use std::time::{Instant, Duration};
 
 /// Game Application Service
 ///
@@ -26,6 +25,7 @@ pub struct GameApplicationService {
     repository: Arc<dyn GameRepository>,
     notifier: Arc<dyn StateNotifier>,
     metrics: Arc<dyn MetricsCollector>,
+    #[allow(dead_code)]
     config: ApplicationConfig,
 }
 
@@ -58,7 +58,7 @@ impl GameApplicationService {
     /// * `Err(ApplicationError)` - Execution failure
     pub async fn execute_action(&self, session_id: &SessionId, action: Action) -> Result<ActionResult, ApplicationError> {
         let start_time = Instant::now();
-        let _timer = self.metrics.start_timer("action.execution", &[("action_type", &format!("{:?}", action))]);
+        let _timer = self.metrics.start_timer("action.execution", &[("action_type", &format!("{action:?}"))]);
 
         // Load current game state
         let mut game = self.repository.load_game(session_id).await?;
@@ -72,7 +72,7 @@ impl GameApplicationService {
 
         // Execute action
         let execution_result = game.handle_action(action.clone());
-        
+
         let success = execution_result.is_ok();
         let execution_time = start_time.elapsed();
 
@@ -100,7 +100,7 @@ impl GameApplicationService {
         } else {
             // Record failure metrics
             self.metrics.increment_counter("action.executed", 1, &[("success", "false")]).await;
-            
+
             // Return the original execution error
             execution_result?;
         }
@@ -123,7 +123,7 @@ impl GameApplicationService {
         let _timer = self.metrics.start_timer("state.retrieval", &[]);
 
         let game = self.repository.load_game(session_id).await?;
-        
+
         self.metrics.increment_counter("state.retrieved", 1, &[]).await;
         Ok(game)
     }
@@ -167,11 +167,9 @@ mod tests {
             Self { should_fail: false }
         }
 
-        fn with_failure() -> Self {
-            Self { should_fail: true }
-        }
     }
 
+    #[async_trait]
     #[async_trait]
     impl ActionValidator for MockActionValidator {
         async fn validate_action(&self, _action: &Action, _game: &Game) -> Result<(), ApplicationError> {
@@ -188,7 +186,7 @@ mod tests {
     }
 
     struct MockGameRepository {
-        sessions: Arc<Mutex<HashMap<SessionId, Game>>>,
+        sessions: Arc<Mutex<HashMap<SessionId, bool>>>, // Just track if session exists
         should_fail: bool,
     }
 
@@ -202,31 +200,35 @@ mod tests {
     }
 
     #[async_trait]
+    #[async_trait]
     impl GameRepository for MockGameRepository {
-        async fn save_game(&self, session_id: &SessionId, game: &Game) -> Result<(), ApplicationError> {
+        async fn save_game(&self, session_id: &SessionId, _game: &Game) -> Result<(), ApplicationError> {
             if self.should_fail {
-                return Err(ApplicationError::infrastructure("storage", true, 
-                    std::io::Error::new(std::io::ErrorKind::Other, "mock failure")));
+                return Err(ApplicationError::infrastructure("storage", true,
+                    std::io::Error::other("mock failure")));
             }
-            
+
             let mut sessions = self.sessions.lock().unwrap();
-            sessions.insert(session_id.clone(), game.clone());
+            sessions.insert(session_id.clone(), true);
             Ok(())
         }
 
         async fn load_game(&self, session_id: &SessionId) -> Result<Game, ApplicationError> {
             if self.should_fail {
                 return Err(ApplicationError::infrastructure("storage", true,
-                    std::io::Error::new(std::io::ErrorKind::Other, "mock failure")));
+                    std::io::Error::other("mock failure")));
             }
 
             let sessions = self.sessions.lock().unwrap();
-            sessions.get(session_id)
-                .cloned()
-                .ok_or_else(|| ApplicationError::SessionNotFound {
+            if sessions.contains_key(session_id) {
+                // Return a new default game for testing
+                Ok(Game::new(crate::config::Config::default()))
+            } else {
+                Err(ApplicationError::SessionNotFound {
                     session_id: session_id.as_str(),
                     ttl: Some(Duration::from_secs(3600)),
                 })
+            }
         }
 
         async fn delete_game(&self, session_id: &SessionId) -> Result<(), ApplicationError> {
@@ -253,6 +255,7 @@ mod tests {
 
     struct MockStateNotifier;
 
+    #[async_trait]
     #[async_trait]
     impl StateNotifier for MockStateNotifier {
         async fn notify_state_change(&self, _session_id: &SessionId, _event: StateChangeEvent) -> Result<(), ApplicationError> {
@@ -290,6 +293,7 @@ mod tests {
         }
     }
 
+    #[async_trait]
     #[async_trait]
     impl MetricsCollector for MockMetricsCollector {
         async fn increment_counter(&self, name: &str, value: u64, _tags: &[(&str, &str)]) {
@@ -350,8 +354,8 @@ mod tests {
         repository.save_game(&session_id, &game).await.unwrap();
 
         // Get game state
-        let retrieved_game = service.get_game_state(&session_id).await.unwrap();
-        
+        let _retrieved_game = service.get_game_state(&session_id).await.unwrap();
+
         // Verify metrics
         assert_eq!(metrics.get_metric("state.retrieved"), Some(1.0));
     }
@@ -368,7 +372,7 @@ mod tests {
 
         let session_id = SessionId::new();
         let result = service.get_game_state(&session_id).await;
-        
+
         assert!(matches!(result, Err(ApplicationError::SessionNotFound { .. })));
     }
 
@@ -390,10 +394,10 @@ mod tests {
 
         // Get available actions
         let actions = service.get_available_actions(&session_id).await.unwrap();
-        
+
         // Should have some actions available
         assert!(!actions.is_empty());
-        
+
         // Verify metrics
         assert_eq!(metrics.get_metric("actions.generated"), Some(1.0));
         assert!(metrics.get_metric("actions.available_count").unwrap() > 0.0);
