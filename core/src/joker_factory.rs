@@ -1,6 +1,7 @@
 use crate::joker::basic_economy_jokers::{
     DelayedGratificationJoker, GiftCardJoker, RocketJoker, ToTheMoonJoker,
 };
+use crate::joker::basic_xmult_jokers::create_misprint_joker;
 use crate::joker::four_fingers::FourFingersJoker;
 use crate::joker::multiplicative_jokers::AcrobatJoker;
 use crate::joker::resource_chips_jokers::ScaryFaceJoker;
@@ -39,6 +40,9 @@ impl JokerFactory {
             JokerId::CleverJoker => Some(StaticJokerFactory::create_clever_joker()),
             JokerId::DeviousJoker => Some(StaticJokerFactory::create_devious_joker()),
             JokerId::CraftyJoker => Some(StaticJokerFactory::create_crafty_joker()),
+
+            // Basic xmult jokers
+            JokerId::Misprint => Some(create_misprint_joker()),
 
             // Money-based conditional jokers
             JokerId::BusinessCard => Some(Box::new(BusinessCard)),
@@ -161,6 +165,8 @@ impl JokerFactory {
                 CleverJoker,
                 DeviousJoker,
                 CraftyJoker,
+                // Basic xmult jokers
+                Misprint,
                 // Money-based conditional jokers
                 BusinessCard,
                 EggJoker,
@@ -261,6 +267,8 @@ impl JokerFactory {
             CleverJoker,
             DeviousJoker,
             CraftyJoker,
+            // Basic xmult jokers
+            Misprint,
             // Money-based conditional jokers
             BusinessCard,
             EggJoker,
@@ -356,6 +364,19 @@ mod tests {
         let runner = JokerFactory::create(JokerId::Runner);
         assert!(runner.is_some());
         assert_eq!(runner.unwrap().id(), JokerId::Runner);
+
+        // Test Misprint joker
+        let misprint = JokerFactory::create(JokerId::Misprint);
+        assert!(misprint.is_some());
+        let misprint_joker = misprint.unwrap();
+        assert_eq!(misprint_joker.id(), JokerId::Misprint);
+        assert_eq!(misprint_joker.name(), "Misprint");
+        assert_eq!(
+            misprint_joker.description(),
+            "+0 to +23 Mult (random each hand)"
+        );
+        assert_eq!(misprint_joker.rarity(), JokerRarity::Common);
+        assert_eq!(misprint_joker.cost(), 3);
     }
 
     #[test]
@@ -393,6 +414,7 @@ mod tests {
         assert!(common_jokers.contains(&JokerId::Banner));
         assert!(common_jokers.contains(&JokerId::AbstractJoker));
         assert!(common_jokers.contains(&JokerId::ScaryFace));
+        assert!(common_jokers.contains(&JokerId::Misprint));
 
         let uncommon_jokers = JokerFactory::get_by_rarity(JokerRarity::Uncommon);
         assert!(uncommon_jokers.contains(&JokerId::BlueJoker));
@@ -412,6 +434,7 @@ mod tests {
         assert!(implemented.contains(&JokerId::Runner));
         assert!(implemented.contains(&JokerId::AbstractJoker));
         assert!(implemented.contains(&JokerId::ScaryFace));
+        assert!(implemented.contains(&JokerId::Misprint));
 
         // AbstractJoker is now properly implemented and included above
         // Note: Placeholder jokers (HalfJoker, Banner)

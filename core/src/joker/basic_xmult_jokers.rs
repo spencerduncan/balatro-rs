@@ -519,7 +519,7 @@ impl JokerGameplay for BloodstoneJoker {
     }
 }
 
-/// Misprint Joker - X1 to X23 Mult (random each hand)
+/// Misprint Joker - +0 to +23 Mult (random each hand)
 #[derive(Debug, Clone)]
 pub struct MisprintJoker {
     id: JokerId,
@@ -540,9 +540,9 @@ impl MisprintJoker {
         Self {
             id: JokerId::Misprint,
             name: "Misprint".to_string(),
-            description: "X1 to X23 Mult (random each hand)".to_string(),
+            description: "+0 to +23 Mult (random each hand)".to_string(),
             rarity: JokerRarity::Common,
-            cost: 4,
+            cost: 3, // Common jokers cost 3
         }
     }
 }
@@ -596,12 +596,12 @@ impl Joker for MisprintJoker {
     }
 
     fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
-        // Use game RNG to generate random multiplier between 1 and 23
-        let multiplier = context.rng.gen_range(1..=23) as f64;
+        // Use game RNG to generate random mult bonus between 0 and 23
+        let mult_bonus = context.rng.gen_range(0..=23);
 
         JokerEffect::new()
-            .with_mult_multiplier(multiplier)
-            .with_message(format!("Misprint: X{multiplier} Mult"))
+            .with_mult(mult_bonus)
+            .with_message(format!("Misprint: +{mult_bonus} Mult"))
     }
 }
 
@@ -744,7 +744,11 @@ mod tests {
         // Test identity
         assert_eq!(misprint.joker_type(), "misprint");
         assert_eq!(JokerIdentity::name(&misprint), "Misprint");
-        assert_eq!(misprint.base_cost(), 4);
+        assert_eq!(
+            Joker::description(&misprint),
+            "+0 to +23 Mult (random each hand)"
+        );
+        assert_eq!(misprint.base_cost(), 3); // Common jokers cost 3
 
         // Test can trigger
         let stage = Stage::Blind(Blind::Small);
@@ -769,5 +773,64 @@ mod tests {
         };
 
         assert!(misprint.can_trigger(&stage, &context));
+    }
+
+    #[test]
+    fn test_misprint_joker_random_mult() {
+        use crate::hand::SelectHand;
+        use crate::joker::{GameContext, Joker};
+        use crate::rng::GameRng;
+        use std::collections::HashMap;
+        use std::sync::Arc;
+
+        let misprint = MisprintJoker::new();
+        let mut rng = GameRng::new(crate::rng::RngMode::Testing(42));
+
+        // Test that Misprint generates mult values in the correct range (0-23)
+        let mut found_values = std::collections::HashSet::new();
+
+        for _ in 0..100 {
+            let mut context = GameContext {
+                chips: 0,
+                mult: 0,
+                money: 0,
+                ante: 1,
+                round: 1,
+                stage: &crate::stage::Stage::Blind(crate::stage::Blind::Small),
+                hands_played: 0,
+                hands_remaining: 3.0,
+                discards_used: 0,
+                jokers: &[],
+                hand: &crate::hand::Hand::new(vec![]),
+                discarded: &[],
+                joker_state_manager: &Arc::new(crate::joker_state::JokerStateManager::new()),
+                hand_type_counts: &HashMap::new(),
+                cards_in_deck: 52,
+                stone_cards_in_deck: 0,
+                steel_cards_in_deck: 0,
+                rng: &mut rng,
+            };
+
+            let hand = SelectHand::new(vec![]);
+            let effect = misprint.on_hand_played(&mut context, &hand);
+
+            // Verify mult is in range 0-23
+            assert!(effect.mult >= 0);
+            assert!(effect.mult <= 23);
+            found_values.insert(effect.mult);
+
+            // Verify mult_multiplier is default (1.0, not used)
+            assert_eq!(effect.mult_multiplier, 1.0);
+
+            // Verify message format
+            let expected_message = format!("Misprint: +{} Mult", effect.mult);
+            assert_eq!(effect.message, Some(expected_message));
+        }
+
+        // We should have found multiple different values in 100 trials
+        assert!(
+            found_values.len() > 1,
+            "Misprint should generate different random values"
+        );
     }
 }
