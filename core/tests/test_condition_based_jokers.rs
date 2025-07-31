@@ -513,8 +513,8 @@ fn test_migrated_jokers_match_original_behavior() {
     // Test all jokers return appropriate effect types
     assert_eq!(effect.mult, 0, "Bull joker should not provide mult");
     assert_eq!(
-        effect.mult_multiplier, 0.0,
-        "Bull joker should not provide mult multiplier"
+        effect.mult_multiplier, 1.0,
+        "Bull joker should not provide mult multiplier (1.0 = no effect)"
     );
     assert!(
         effect.message.is_none() || effect.message.as_ref().unwrap().contains("Bull"),
