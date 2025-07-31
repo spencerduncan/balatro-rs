@@ -7,11 +7,11 @@ use balatro_rs::{
 /// that gains +1 Mult per Tarot card used
 #[test]
 fn test_fortune_teller_joker_correctly_created() {
-    let fortune = JokerFactory::create(JokerId::FortuneTeller);
+    let fortune = JokerFactory::create(JokerId::Fortune);
     assert!(fortune.is_some());
 
     let joker = fortune.unwrap();
-    assert_eq!(joker.id(), JokerId::FortuneTeller);
+    assert_eq!(joker.id(), JokerId::Fortune);
     assert_eq!(joker.name(), "Fortune Teller");
     assert_eq!(joker.description(), "+1 Mult per Tarot card used");
     assert_eq!(joker.rarity(), JokerRarity::Rare);
@@ -70,7 +70,7 @@ fn test_fortune_teller_creation() {
     balatro_rs::initialize().expect("Failed to initialize core systems");
 
     // Verify we can create Fortune Teller without crashes
-    let fortune = JokerFactory::create(JokerId::FortuneTeller).unwrap();
+    let fortune = JokerFactory::create(JokerId::Fortune).unwrap();
     assert_eq!(fortune.name(), "Fortune Teller");
     assert_eq!(fortune.description(), "+1 Mult per Tarot card used");
 }
@@ -107,12 +107,12 @@ fn test_steel_joker_creation() {
 fn test_jokers_in_rarity_lists() {
     // Fortune Teller should be in Rare rarity (was moved from Common to match actual rarity assignment)
     let rare_jokers = JokerFactory::get_by_rarity(JokerRarity::Rare);
-    assert!(rare_jokers.contains(&JokerId::FortuneTeller));
-    
-    // MysteryJoker should be in Rare rarity  
+    assert!(rare_jokers.contains(&JokerId::Fortune));
+
+    // MysteryJoker should be in Rare rarity
     assert!(rare_jokers.contains(&JokerId::MysteryJoker));
 
-    // Red Card should be in Uncommon  
+    // Red Card should be in Uncommon
     let uncommon_jokers = JokerFactory::get_by_rarity(JokerRarity::Uncommon);
     assert!(uncommon_jokers.contains(&JokerId::RedCard));
 
@@ -129,7 +129,7 @@ fn test_jokers_in_implemented_list() {
 
     let implemented = JokerFactory::get_all_implemented();
 
-    assert!(implemented.contains(&JokerId::FortuneTeller));
+    assert!(implemented.contains(&JokerId::Fortune));
     assert!(implemented.contains(&JokerId::MysteryJoker));
     assert!(implemented.contains(&JokerId::Reserved6)); // Red Card
     assert!(implemented.contains(&JokerId::RedCard));
@@ -140,8 +140,8 @@ fn test_jokers_in_implemented_list() {
 /// Ensures each joker type has unique ID and proper factory mapping
 #[test]
 fn test_no_joker_id_conflicts() {
-    // Test that FortuneTeller and MysteryJoker are distinct
-    let fortune_teller = JokerFactory::create(JokerId::FortuneTeller).unwrap();
+    // Test that Fortune and MysteryJoker are distinct
+    let fortune_teller = JokerFactory::create(JokerId::Fortune).unwrap();
     let mystery_joker = JokerFactory::create(JokerId::MysteryJoker).unwrap();
 
     // Ensure they have different IDs
@@ -154,7 +154,7 @@ fn test_no_joker_id_conflicts() {
     assert_ne!(fortune_teller.description(), mystery_joker.description());
 
     // Verify specific expected values
-    assert_eq!(fortune_teller.id(), JokerId::FortuneTeller);
+    assert_eq!(fortune_teller.id(), JokerId::Fortune);
     assert_eq!(fortune_teller.name(), "Fortune Teller");
     assert_eq!(fortune_teller.description(), "+1 Mult per Tarot card used");
 

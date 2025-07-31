@@ -13,7 +13,6 @@ use crate::joker::{GameContext, Joker, JokerId, Jokers, OldJoker as OldJokerTrai
 use crate::joker_effect_processor::JokerEffectProcessor;
 use crate::joker_factory::JokerFactory;
 use crate::joker_state::JokerStateManager;
-use crate::memory_monitor::MemoryMonitor;
 use crate::rank::HandRank;
 
 // Import debug functionality
@@ -1959,7 +1958,6 @@ impl Game {
                 // TODO: Implement consumable selling
                 Err(GameError::InvalidAction)
             }
-
 
             // Skip tag system actions
             Action::SkipBlind(blind) => self.handle_skip_blind(blind),

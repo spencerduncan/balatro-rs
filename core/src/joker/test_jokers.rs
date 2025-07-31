@@ -838,7 +838,7 @@ impl TestScalingJoker {
             .get_state(self.joker_id)
             .map(|state| state.accumulated_value as u32)
             .unwrap_or(0);
-        
+
         match self.scaling_trigger {
             ScalingTrigger::Activations => 1.0 + (activations as f64 * self.scaling_factor),
             ScalingTrigger::HandsPlayed => 1.0 + (activations as f64 * self.scaling_factor),
@@ -882,9 +882,12 @@ impl Joker for TestScalingJoker {
         }
 
         // Update activations count in state manager
-        context.joker_state_manager.update_state(self.joker_id, |state| {
-            state.accumulated_value = (state.accumulated_value + 1.0).min(1000.0); // Max 1000 activations
-        });
+        context
+            .joker_state_manager
+            .update_state(self.joker_id, |state| {
+                state.accumulated_value = (state.accumulated_value + 1.0).min(1000.0);
+                // Max 1000 activations
+            });
 
         // Get current activation count
         let activations = context
@@ -966,9 +969,12 @@ impl Joker for TestScalingChipsJoker {
 
     fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
         // Update activations count in state manager
-        context.joker_state_manager.update_state(self.id(), |state| {
-            state.accumulated_value = (state.accumulated_value + 1.0).min(1000.0); // Max 1000 activations
-        });
+        context
+            .joker_state_manager
+            .update_state(self.id(), |state| {
+                state.accumulated_value = (state.accumulated_value + 1.0).min(1000.0);
+                // Max 1000 activations
+            });
 
         // Get current activation count
         let activations = context
@@ -1168,7 +1174,7 @@ mod tests {
             .with_scaling_factor(0.2);
 
         let mut context = create_mock_context();
-        
+
         // Initially no scaling
         assert_eq!(joker.get_current_multiplier(&context), 1.0);
 
@@ -1180,7 +1186,7 @@ mod tests {
 
         // Should now have scaling multiplier of 2.0 (1 + 5 * 0.2)
         assert_eq!(joker.get_current_multiplier(&context), 2.0);
-        
+
         // The effect should give chips based on 6th activation
         let effect = joker.on_hand_played(&mut context, &hand);
         assert_eq!(effect.chips, 11); // 5 * (1 + 6 * 0.2) = 5 * 2.2 = 11 (6th activation)
@@ -1246,6 +1252,7 @@ mod tests {
             stage,
             hands_played: 0,
             discards_used: 0,
+            hands_remaining: 4.0,
             jokers,
             hand,
             discarded,

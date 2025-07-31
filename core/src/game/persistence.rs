@@ -30,7 +30,6 @@ use crate::vouchers::VoucherCollection;
 
 // Additional imports needed for load functionality
 use crate::joker_effect_processor::JokerEffectProcessor;
-use crate::memory_monitor::MemoryMonitor;
 use crate::target_context::TargetContext;
 
 /// Current save format version
@@ -162,8 +161,8 @@ impl PersistenceManager {
             consumables_in_hand: game.consumables_in_hand.clone(),
             vouchers: game.vouchers.clone(),
             boss_blind_state: game.boss_blind_state.clone(),
-            pack_inventory: game.pack_inventory.clone(),
-            open_pack: game.open_pack.clone(),
+            pack_inventory: game.pack_manager.pack_inventory.clone(),
+            open_pack: game.pack_manager.open_pack.clone(),
             state_version: game.state_version,
         };
 
@@ -226,20 +225,21 @@ impl PersistenceManager {
             steel_cards_in_deck: saveable_state.steel_cards_in_deck,
             // Extended state fields
             consumables_in_hand: saveable_state.consumables_in_hand,
+            consumable_slots: crate::consumables::ConsumableSlots::new(), // Initialize with default slots
             vouchers: saveable_state.vouchers,
             boss_blind_state: saveable_state.boss_blind_state,
-            pack_inventory: saveable_state.pack_inventory,
-            open_pack: saveable_state.open_pack,
+            pack_manager: {
+                let mut pack_manager = crate::game::packs::PackManager::new();
+                pack_manager.pack_inventory = saveable_state.pack_inventory;
+                pack_manager.open_pack = saveable_state.open_pack;
+                pack_manager
+            },
+            debug_manager: crate::game::debug::DebugManager::new(),
             state_version: saveable_state.state_version,
-            // Initialize debug logging fields (not serialized)
-            debug_logging_enabled: false,
-            debug_messages: Vec::new(),
             // Initialize target context (not serialized)
             target_context: TargetContext::new(),
             // Initialize secure RNG (not serialized)
             rng: crate::rng::GameRng::secure(),
-            // Initialize memory monitor (not serialized)
-            memory_monitor: MemoryMonitor::default(),
             // Initialize skip tags system (not serialized)
             available_skip_tags: Vec::new(),
             active_skip_tags: crate::skip_tags::ActiveSkipTags::new(),

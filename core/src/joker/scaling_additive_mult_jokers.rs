@@ -198,7 +198,7 @@ impl Default for FortuneTellerJoker {
 impl FortuneTellerJoker {
     pub fn new() -> Self {
         Self {
-            id: JokerId::FortuneTeller,
+            id: JokerId::Fortune,
             name: "Fortune Teller".to_string(),
             description: "+1 Mult per Tarot card used".to_string(),
             rarity: JokerRarity::Common,

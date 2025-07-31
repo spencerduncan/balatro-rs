@@ -1801,8 +1801,8 @@ mod tests {
             "AcrobatJoker should be in Rare rarity"
         );
         assert!(
-            rare_jokers.contains(&JokerId::FortuneTeller),
-            "Fortune Teller (JokerId::FortuneTeller) should be in Rare rarity"
+            rare_jokers.contains(&JokerId::Fortune),
+            "Fortune Teller (JokerId::Fortune) should be in Rare rarity"
         );
         assert!(
             rare_jokers.contains(&JokerId::MysteryJoker),
@@ -1842,8 +1842,8 @@ mod tests {
             "AcrobatJoker should be in implemented list"
         );
         assert!(
-            all_implemented.contains(&JokerId::FortuneTeller),
-            "FortuneTeller should be in implemented list"
+            all_implemented.contains(&JokerId::Fortune),
+            "Fortune should be in implemented list"
         );
         assert!(
             all_implemented.contains(&JokerId::MysteryJoker),
