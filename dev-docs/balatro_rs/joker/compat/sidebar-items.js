@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Jokers"],"struct":["CleverJoker","CraftyJoker","CrazyJoker","DeviousJoker","DrollJoker","GluttonousJoker","GreedyJoker","IceCreamJoker","JokersIter","JollyJoker","LustyJoker","MadJoker","SlyJoker","TheJoker","WilyJoker","WrathfulJoker","ZanyJoker"],"trait":["Joker"]};
+window.SIDEBAR_ITEMS = {"enum":["Jokers"],"struct":["GluttonousJoker","GreedyJoker","IceCreamJoker","JokersIter","LustyJoker","TheJoker","WrathfulJoker"],"trait":["Joker"]};
