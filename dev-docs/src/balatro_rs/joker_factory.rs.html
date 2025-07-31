@@ -72,7 +72,7 @@
 <a href=#72 id=72 data-nosnippet>72</a>            JokerId::LuckyCharm =&gt; <span class="prelude-val">Some</span>(Box::new(LuckyCardJoker)),
 <a href=#73 id=73 data-nosnippet>73</a>            JokerId::Reserved8 =&gt; <span class="prelude-val">Some</span>(Box::new(GrimJoker)),
 <a href=#74 id=74 data-nosnippet>74</a>            JokerId::AcrobatJoker =&gt; <span class="prelude-val">Some</span>(Box::new(AcrobatJoker::new())),
-<a href=#75 id=75 data-nosnippet>75</a>            JokerId::FortuneTeller =&gt; <span class="prelude-val">Some</span>(Box::new(FortuneTellerJoker::new())),
+<a href=#75 id=75 data-nosnippet>75</a>            JokerId::Fortune =&gt; <span class="prelude-val">Some</span>(Box::new(FortuneTellerJoker::new())),
 <a href=#76 id=76 data-nosnippet>76</a>            JokerId::Reserved4 =&gt; <span class="prelude-val">Some</span>(Box::new(MysteryJoker)),
 <a href=#77 id=77 data-nosnippet>77</a>            JokerId::VagabondJoker =&gt; <span class="prelude-val">Some</span>(Box::new(VagabondJokerImpl)),
 <a href=#78 id=78 data-nosnippet>78</a>            JokerId::Reserved9 =&gt; <span class="prelude-val">Some</span>(Box::new(ChaoticJoker)),
@@ -230,7 +230,7 @@
 <a href=#230 id=230 data-nosnippet>230</a>                // Special mechanic jokers
 <a href=#231 id=231 data-nosnippet>231</a>                </span>Blueprint,
 <a href=#232 id=232 data-nosnippet>232</a>                <span class="comment">// Scaling mult jokers
-<a href=#233 id=233 data-nosnippet>233</a>                </span>FortuneTeller, <span class="comment">// Fortune Teller
+<a href=#233 id=233 data-nosnippet>233</a>                </span>Fortune, <span class="comment">// Fortune Teller
 <a href=#234 id=234 data-nosnippet>234</a>                // Scaling chips jokers
 <a href=#235 id=235 data-nosnippet>235</a>                </span>Castle,
 <a href=#236 id=236 data-nosnippet>236</a>                Wee,
@@ -300,10 +300,10 @@
 <a href=#300 id=300 data-nosnippet>300</a>            // Scaling additive mult jokers
 <a href=#301 id=301 data-nosnippet>301</a>            </span>Trousers, <span class="comment">// Spare Trousers
 <a href=#302 id=302 data-nosnippet>302</a>            </span>GreenJoker,
-<a href=#303 id=303 data-nosnippet>303</a>            Reserved5,     <span class="comment">// RideTheBus
-<a href=#304 id=304 data-nosnippet>304</a>            </span>Reserved6,     <span class="comment">// RedCard (pack skipping)
-<a href=#305 id=305 data-nosnippet>305</a>            </span>RedCard,       <span class="comment">// Red Card (direct mapping)
-<a href=#306 id=306 data-nosnippet>306</a>            </span>FortuneTeller, <span class="comment">// Fortune Teller
+<a href=#303 id=303 data-nosnippet>303</a>            Reserved5, <span class="comment">// RideTheBus
+<a href=#304 id=304 data-nosnippet>304</a>            </span>Reserved6, <span class="comment">// RedCard (pack skipping)
+<a href=#305 id=305 data-nosnippet>305</a>            </span>RedCard,   <span class="comment">// Red Card (direct mapping)
+<a href=#306 id=306 data-nosnippet>306</a>            </span>Fortune,   <span class="comment">// Fortune Teller
 <a href=#307 id=307 data-nosnippet>307</a>            // Scaling chips jokers
 <a href=#308 id=308 data-nosnippet>308</a>            </span>Castle,
 <a href=#309 id=309 data-nosnippet>309</a>            Wee,
@@ -442,9 +442,9 @@
 <a href=#442 id=442 data-nosnippet>442</a>        <span class="macro">assert!</span>(red_card.is_some());
 <a href=#443 id=443 data-nosnippet>443</a>        <span class="macro">assert_eq!</span>(red_card.unwrap().id(), JokerId::RedCard); <span class="comment">// RedCardJoker now uses RedCard ID
 <a href=#444 id=444 data-nosnippet>444</a>
-<a href=#445 id=445 data-nosnippet>445</a>        </span><span class="kw">let </span>fortune_teller = JokerFactory::create(JokerId::FortuneTeller);
+<a href=#445 id=445 data-nosnippet>445</a>        </span><span class="kw">let </span>fortune_teller = JokerFactory::create(JokerId::Fortune);
 <a href=#446 id=446 data-nosnippet>446</a>        <span class="macro">assert!</span>(fortune_teller.is_some());
-<a href=#447 id=447 data-nosnippet>447</a>        <span class="macro">assert_eq!</span>(fortune_teller.unwrap().id(), JokerId::FortuneTeller);
+<a href=#447 id=447 data-nosnippet>447</a>        <span class="macro">assert_eq!</span>(fortune_teller.unwrap().id(), JokerId::Fortune);
 <a href=#448 id=448 data-nosnippet>448</a>
 <a href=#449 id=449 data-nosnippet>449</a>        <span class="comment">// Test scaling chips jokers
 <a href=#450 id=450 data-nosnippet>450</a>        </span><span class="kw">let </span>castle = JokerFactory::create(JokerId::Castle);
@@ -536,7 +536,7 @@
 <a href=#536 id=536 data-nosnippet>536</a>        
 <a href=#537 id=537 data-nosnippet>537</a>        </span><span class="kw">let </span>rare_jokers = JokerFactory::get_by_rarity(JokerRarity::Rare);
 <a href=#538 id=538 data-nosnippet>538</a>        <span class="comment">// Rare scaling jokers
-<a href=#539 id=539 data-nosnippet>539</a>        </span><span class="macro">assert!</span>(rare_jokers.contains(<span class="kw-2">&amp;</span>JokerId::FortuneTeller)); <span class="comment">// Fortune Teller
+<a href=#539 id=539 data-nosnippet>539</a>        </span><span class="macro">assert!</span>(rare_jokers.contains(<span class="kw-2">&amp;</span>JokerId::Fortune)); <span class="comment">// Fortune Teller
 <a href=#540 id=540 data-nosnippet>540</a>        </span><span class="macro">assert!</span>(rare_jokers.contains(<span class="kw-2">&amp;</span>JokerId::Castle));
 <a href=#541 id=541 data-nosnippet>541</a>        <span class="macro">assert!</span>(rare_jokers.contains(<span class="kw-2">&amp;</span>JokerId::Wee));
 <a href=#542 id=542 data-nosnippet>542</a>        <span class="macro">assert!</span>(rare_jokers.contains(<span class="kw-2">&amp;</span>JokerId::Stuntman));
@@ -553,7 +553,7 @@
 <a href=#553 id=553 data-nosnippet>553</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::GreenJoker));
 <a href=#554 id=554 data-nosnippet>554</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::Reserved5));
 <a href=#555 id=555 data-nosnippet>555</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::Reserved6));
-<a href=#556 id=556 data-nosnippet>556</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::FortuneTeller));
+<a href=#556 id=556 data-nosnippet>556</a>        <span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::Fortune));
 <a href=#557 id=557 data-nosnippet>557</a>
 <a href=#558 id=558 data-nosnippet>558</a>        <span class="comment">// Scaling chips jokers
 <a href=#559 id=559 data-nosnippet>559</a>        </span><span class="macro">assert!</span>(implemented.contains(<span class="kw-2">&amp;</span>JokerId::Castle));
