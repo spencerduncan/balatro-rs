@@ -176,3 +176,83 @@ fn test_joker_state_manager_basic_functionality() {
     let state = state_manager.get_state(runner_id).unwrap();
     assert_eq!(state.accumulated_value, 30.0);
 }
+
+// Wave 2 X-Mult Jokers Integration Tests
+#[test]
+fn test_wave2_duo_joker_creation() {
+    // Test that The Duo can be created via factory
+    let the_duo = JokerFactory::create(JokerId::TheDuo);
+    assert!(the_duo.is_some(), "The Duo should be creatable via factory");
+    assert_eq!(the_duo.unwrap().id(), JokerId::TheDuo);
+}
+
+#[test]
+fn test_wave2_xmult_jokers_properties() {
+    // Initialize all systems before running the test to avoid factory race conditions
+    balatro_rs::initialize().expect("Failed to initialize core systems");
+
+    // Test The Duo properties
+    let the_duo = JokerFactory::create(JokerId::TheDuo).unwrap();
+    assert_eq!(the_duo.name(), "The Duo");
+    assert_eq!(
+        the_duo.description(),
+        "X2 Mult if played hand contains a Pair"
+    );
+    assert_eq!(the_duo.cost(), 8);
+
+    // Test The Trio properties
+    let the_trio = JokerFactory::create(JokerId::TheTrio).unwrap();
+    assert_eq!(the_trio.name(), "The Trio");
+    assert_eq!(
+        the_trio.description(),
+        "X3 Mult if played hand contains Three of a Kind"
+    );
+    assert_eq!(the_trio.cost(), 8);
+
+    // Test The Family properties
+    let the_family = JokerFactory::create(JokerId::TheFamily).unwrap();
+    assert_eq!(the_family.name(), "The Family");
+    assert_eq!(
+        the_family.description(),
+        "X4 Mult if played hand contains Four of a Kind"
+    );
+    assert_eq!(the_family.cost(), 8);
+}
+
+#[test]
+fn test_wave2_xmult_jokers_rarity_lists() {
+    // Initialize all systems before running the test to avoid factory race conditions
+    balatro_rs::initialize().expect("Failed to initialize core systems");
+
+    use balatro_rs::joker::JokerRarity;
+
+    // Test that jokers are in correct rarity lists (all are Rare)
+    let rare_jokers = JokerFactory::get_by_rarity(JokerRarity::Rare);
+    assert!(
+        rare_jokers.contains(&JokerId::TheDuo),
+        "The Duo should be in Rare rarity list"
+    );
+    assert!(
+        rare_jokers.contains(&JokerId::TheTrio),
+        "The Trio should be in Rare rarity list"
+    );
+    assert!(
+        rare_jokers.contains(&JokerId::TheFamily),
+        "The Family should be in Rare rarity list"
+    );
+
+    // Test that all jokers are in implemented list
+    let implemented = JokerFactory::get_all_implemented();
+    assert!(
+        implemented.contains(&JokerId::TheDuo),
+        "The Duo should be in implemented list"
+    );
+    assert!(
+        implemented.contains(&JokerId::TheTrio),
+        "The Trio should be in implemented list"
+    );
+    assert!(
+        implemented.contains(&JokerId::TheFamily),
+        "The Family should be in implemented list"
+    );
+}

@@ -135,6 +135,11 @@ impl JokerFactory {
             JokerId::Hanging => Some(Box::new(HangingChadJoker::new())),
             JokerId::SockAndBuskin => Some(Box::new(SockAndBuskinJoker::new())),
 
+            // X-Mult hand-type jokers using StaticJoker framework
+            JokerId::TheDuo => Some(StaticJokerFactory::create_the_duo()),
+            JokerId::TheTrio => Some(StaticJokerFactory::create_the_trio()),
+            JokerId::TheFamily => Some(StaticJokerFactory::create_the_family()),
+
             // TODO: Implement remaining jokers
             _ => None,
         }
@@ -195,7 +200,7 @@ impl JokerFactory {
                 // Retrigger jokers
                 Hanging, // HangingChadJoker
                 // Scaling mult jokers moved to Common
-                Fortune, // Fortune Teller
+                FortuneTeller, // Fortune Teller
             ],
             JokerRarity::Uncommon => vec![
                 // Money-based conditional jokers
@@ -227,6 +232,10 @@ impl JokerFactory {
                 AcrobatJoker,
                 // Special mechanic jokers
                 Blueprint,
+                // X-Mult hand-type jokers
+                TheDuo,
+                TheTrio,
+                TheFamily,
                 // Scaling mult jokers
                 // Scaling chips jokers
                 Castle,
@@ -325,6 +334,10 @@ impl JokerFactory {
             Seltzer,
             Hanging,
             SockAndBuskin,
+            // X-Mult hand-type jokers (Wave 2)
+            TheDuo,
+            TheTrio,
+            TheFamily,
             // Note: HalfJoker and Banner are still placeholders
         ]
     }
@@ -527,7 +540,7 @@ mod tests {
 
         let common_jokers = JokerFactory::get_by_rarity(JokerRarity::Common);
         // Fortune Teller moved to Common
-        assert!(common_jokers.contains(&JokerId::Fortune)); // Fortune Teller
+        assert!(common_jokers.contains(&JokerId::FortuneTeller)); // Fortune Teller
 
         let rare_jokers = JokerFactory::get_by_rarity(JokerRarity::Rare);
         // Rare scaling jokers

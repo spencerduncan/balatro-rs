@@ -4,8 +4,8 @@ This file tracks orchestration activities and task management for the issue-686-
 
 ## Current Status: Initial Setup
 
-**Worktree**: `issue-686-tarot-wave2`  
-**Created**: 2025-07-29  
+**Worktree**: `issue-686-tarot-wave2`
+**Created**: 2025-07-29
 **Purpose**: Track orchestration activities for this development branch
 
 ## Task Categories
@@ -31,7 +31,7 @@ This file tracks orchestration activities and task management for the issue-686-
 ## Review Queue
 
 | PR | Title | Reviewer(s) | Status | Started | Notes |
-|----|-------|-------------|--------|---------|-------|  
+|----|-------|-------------|--------|---------|-------|
 | #802 | Misprint Joker Implementation | PENDING | ✅ **READY** | 2025-08-01 | Issue #621 - Created by linustorbot-address |
 | #803 | Joker Test Suite | PENDING | ✅ **READY** | 2025-08-01 | Issue #364 - Created by johnbotmack-address (re-assigned) |
 | #804 | Simple Static Jokers | PENDING | ✅ **READY** | 2025-08-01 | Created by address agent (re-assigned) |
@@ -43,13 +43,27 @@ This file tracks orchestration activities and task management for the issue-686-
 |----|-------|-------------|--------|-----------|-------|
 | #770 | Vagabond Joker | linus-style-reviewer, unclebot | ✅ **MERGED** (squash) | 2025-07-30 | Dual approval → successful merge, Issue #617 closed |
 
-## Active PR Assignments
+## Active Worktree Assignments
+
+| Issue | Worktree | Agent | Status | Started | Priority |
+|-------|----------|-------|--------|---------|----------|
+| #855 | /home/sd/balatro-rs-ws/worktrees/issue-855-hack | READY | setup | 2025-08-01T23:00:00Z | HIGH |
+| #833 | /home/sd/balatro-rs-ws/worktrees/issue-833-mime | READY | setup | 2025-08-01T23:00:00Z | MEDIUM |
+
+## Legacy PR Assignments (Completed/Archived)
 
 | PR | Issue | Agent | Status | Started | Priority |
 |---|---|---|---|---|---|
 | #703 | 684 | linustorbot-address | assigned | 2025-01-29T01:45:00Z | HIGH |
 | #704 | 685 | botdean-address | assigned | 2025-01-29T01:45:00Z | HIGH |
 | #705 | 686 | HOLD | external-dev | 2025-01-29T01:45:00Z | HOLD |
+
+## Blocked Issues (Dependencies Required)
+
+| Issue | Title | Dependency | Blocker Description | Priority |
+|-------|-------|------------|---------------------|----------|
+| #856 | Midas Mask Joker | Gold Enhancement System | Needs Gold card enhancement effects implementation | MEDIUM |
+| #857 | 8 Ball Joker | Consumable/Tarot System | Needs consumable system compilation fixes | MEDIUM |
 
 ## Completed Static Joker Migration Work
 
@@ -63,16 +77,16 @@ This file tracks orchestration activities and task management for the issue-686-
 
 ### PR #703 (linustorbot-address)
 - **Issue**: Fix CI compilation failures and clippy violations
-- **Key Tasks**: 
+- **Key Tasks**:
   - Fix 16 clippy violations (missing Default implementations, manual range checks)
   - Resolve test compilation errors with GameContext initialization
   - Update all test files to use proper GameContext structure
 - **Estimated Time**: 1.5-2 hours
 
-### PR #704 (botdean-address)  
+### PR #704 (botdean-address)
 - **Issue**: Resolve implementation scope mismatch and complete card effects
 - **Key Tasks**:
-  - Clarify if implementing Wave 1 (0-10) or Wave 2 (11-21) 
+  - Clarify if implementing Wave 1 (0-10) or Wave 2 (11-21)
   - Replace all placeholder implementations with actual card effects
   - Add real game state integration and card modification logic
 - **Estimated Time**: 4-6 hours
