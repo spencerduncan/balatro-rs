@@ -61,17 +61,15 @@ pub fn initialize_metrics(config: &MetricsConfig) -> Result<MetricsHandle, Metri
     #[cfg(feature = "monitoring")]
     {
         // Initialize metrics recorder
-        let recorder = metrics_exporter_prometheus::PrometheusBuilder::new()
+        let (recorder, _task) = metrics_exporter_prometheus::PrometheusBuilder::new()
             .with_http_listener(([0, 0, 0, 0], config.prometheus_port))
             .build()
             .map_err(|e| MetricsError::InitializationFailed {
                 message: e.to_string(),
             })?;
 
-        metrics::set_boxed_recorder(Box::new(recorder)).map_err(|e| {
-            MetricsError::InitializationFailed {
-                message: e.to_string(),
-            }
+        metrics::set_global_recorder(recorder).map_err(|e| MetricsError::InitializationFailed {
+            message: e.to_string(),
         })?;
 
         // Register core infrastructure metrics

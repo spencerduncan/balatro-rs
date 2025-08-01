@@ -394,8 +394,18 @@ impl Default for CompositeRecoveryStrategy {
 }
 
 /// Conversions from domain layer errors
-impl From<crate::error::DeveloperGameError> for ApplicationError {
-    fn from(error: crate::error::DeveloperGameError) -> Self {
+impl From<balatro_rs::error::DeveloperGameError> for ApplicationError {
+    fn from(error: balatro_rs::error::DeveloperGameError) -> Self {
+        Self::Domain {
+            message: error.to_string(),
+            source: Box::new(error),
+        }
+    }
+}
+
+/// Conversion from domain GameError (stub implementation)
+impl From<crate::domain::stubs::GameError> for ApplicationError {
+    fn from(error: crate::domain::stubs::GameError) -> Self {
         Self::Domain {
             message: error.to_string(),
             source: Box::new(error),

@@ -107,11 +107,9 @@ impl HighPerformanceMemoryStore {
 
         #[cfg(feature = "monitoring")]
         {
-            metrics::counter!("storage_sessions_created", 1);
-            metrics::histogram!(
-                "storage_create_session_duration_ms",
-                duration.as_millis() as f64
-            );
+            metrics::counter!("storage_sessions_created").increment(1);
+            metrics::histogram!("storage_create_session_duration_ms")
+                .record(duration.as_millis() as f64);
         }
 
         tracing::debug!("Session created: {}", session_id);
@@ -140,10 +138,8 @@ impl HighPerformanceMemoryStore {
         let duration = start.elapsed();
         #[cfg(feature = "monitoring")]
         {
-            metrics::histogram!(
-                "storage_get_session_duration_ms",
-                duration.as_millis() as f64
-            );
+            metrics::histogram!("storage_get_session_duration_ms")
+                .record(duration.as_millis() as f64);
         }
 
         result
@@ -177,12 +173,10 @@ impl HighPerformanceMemoryStore {
 
         #[cfg(feature = "monitoring")]
         {
-            metrics::histogram!(
-                "storage_handle_action_duration_ms",
-                duration.as_millis() as f64
-            );
+            metrics::histogram!("storage_handle_action_duration_ms")
+                .record(duration.as_millis() as f64);
             if duration.as_millis() > 5 {
-                metrics::counter!("storage_slow_actions", 1);
+                metrics::counter!("storage_slow_actions").increment(1);
             }
         }
 
@@ -223,7 +217,7 @@ impl HighPerformanceMemoryStore {
 
         #[cfg(feature = "monitoring")]
         {
-            metrics::histogram!("storage_get_state_duration_ms", duration.as_millis() as f64);
+            metrics::histogram!("storage_get_state_duration_ms").record(duration.as_millis() as f64);
         }
 
         Ok(result)
@@ -238,7 +232,7 @@ impl HighPerformanceMemoryStore {
 
             #[cfg(feature = "monitoring")]
             {
-                metrics::counter!("storage_sessions_removed", 1);
+                metrics::counter!("storage_sessions_removed").increment(1);
             }
 
             tracing::debug!("Session removed: {}", session_id);
@@ -289,7 +283,7 @@ impl HighPerformanceMemoryStore {
     /// Process game action (stub implementation)
     async fn process_game_action(
         &self,
-        session: &mut dashmap::mapref::one::RefMut<SessionId, GameSession>,
+        session: &mut dashmap::mapref::one::RefMut<'_, SessionId, GameSession>,
         action_data: Value,
     ) -> Result<Value, StorageError> {
         // This is where the actual game engine integration would happen
@@ -339,8 +333,8 @@ impl HighPerformanceMemoryStore {
 
                 #[cfg(feature = "monitoring")]
                 {
-                    metrics::counter!("storage_expired_sessions_cleaned", cleaned_count);
-                    metrics::gauge!("storage_active_sessions", sessions.len() as f64);
+                    metrics::counter!("storage_expired_sessions_cleaned").increment(cleaned_count);
+                    metrics::gauge!("storage_active_sessions").set(sessions.len() as f64);
                 }
 
                 tracing::info!("Cleaned up {} expired sessions", cleaned_count);
@@ -387,8 +381,8 @@ impl Drop for HighPerformanceMemoryStore {
 
         #[cfg(feature = "monitoring")]
         {
-            metrics::gauge!("storage_final_session_count", session_count as f64);
-            metrics::gauge!("storage_final_memory_usage_mb", memory_usage);
+            metrics::gauge!("storage_final_session_count").set(session_count as f64);
+            metrics::gauge!("storage_final_memory_usage_mb").set(memory_usage);
         }
     }
 }

@@ -6,7 +6,7 @@
 
 pub mod server;
 
-pub use server::{HttpServer, HttpServerError, ServerConfig};
+pub use server::HttpServer;
 
 use axum::{
     extract::State,
@@ -180,9 +180,9 @@ async fn handle_action(
 
             #[cfg(feature = "monitoring")]
             {
-                metrics::histogram!("action_execution_duration_ms", duration.as_millis() as f64);
+                metrics::histogram!("action_execution_duration_ms").record(duration.as_millis() as f64);
                 if duration.as_millis() > 10 {
-                    metrics::counter!("slow_actions_total", 1);
+                    metrics::counter!("slow_actions_total").increment(1);
                     tracing::warn!(
                         "Slow action execution: {}ms for session {}",
                         duration.as_millis(),

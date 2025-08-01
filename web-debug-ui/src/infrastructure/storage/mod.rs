@@ -9,7 +9,7 @@
 
 pub mod memory_store;
 
-pub use memory_store::{GameSession, HighPerformanceMemoryStore, StorageError, StoreConfig};
+pub use memory_store::HighPerformanceMemoryStore;
 
 use crate::infrastructure::SessionId;
 use serde_json::Value;

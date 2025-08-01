@@ -9,7 +9,7 @@
 
 pub mod connection_manager;
 
-pub use connection_manager::{ConnectionPoolConfig, WebSocketConnectionPool, WebSocketError};
+pub use connection_manager::WebSocketConnectionPool;
 
 use axum::extract::ws::{Message, WebSocket};
 use dashmap::DashMap;

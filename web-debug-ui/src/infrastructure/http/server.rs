@@ -60,7 +60,7 @@ impl HttpServer {
         // Start the server with performance monitoring
         #[cfg(feature = "monitoring")]
         {
-            metrics::counter!("http_server_starts", 1);
+            metrics::counter!("http_server_starts").increment(1);
             let start_time = std::time::Instant::now();
 
             let result = axum::serve(listener, self.router.clone())
@@ -68,7 +68,7 @@ impl HttpServer {
                 .await;
 
             let uptime = start_time.elapsed();
-            metrics::histogram!("http_server_uptime_seconds", uptime.as_secs() as f64);
+            metrics::histogram!("http_server_uptime_seconds").record(uptime.as_secs() as f64);
 
             result.map_err(|e| HttpServerError::Startup {
                 message: format!("Server failed: {}", e),

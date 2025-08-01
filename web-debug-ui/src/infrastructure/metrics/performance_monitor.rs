@@ -144,13 +144,13 @@ impl OperationTimer {
 
         #[cfg(feature = "monitoring")]
         {
-            metrics::histogram!("action_execution_duration_ms", duration_ms);
+            metrics::histogram!("action_execution_duration_ms").record(duration_ms);
 
             if duration_ms > 10.0 {
                 self.slow_operations.fetch_add(1, Ordering::Relaxed);
                 self.performance_violations.fetch_add(1, Ordering::Relaxed);
 
-                metrics::counter!("slow_actions_total", 1);
+                metrics::counter!("slow_actions_total").increment(1);
                 metrics::counter!("performance_violations_total").increment(1);
 
                 tracing::warn!(
@@ -178,13 +178,13 @@ impl OperationTimer {
 
         #[cfg(feature = "monitoring")]
         {
-            metrics::histogram!("websocket_update_duration_ms", duration_ms);
+            metrics::histogram!("websocket_update_duration_ms").record(duration_ms);
 
             if duration_ms > 5.0 {
                 self.slow_operations.fetch_add(1, Ordering::Relaxed);
                 self.performance_violations.fetch_add(1, Ordering::Relaxed);
 
-                metrics::counter!("websocket_slow_updates", 1);
+                metrics::counter!("websocket_slow_updates").increment(1);
                 metrics::counter!("performance_violations_total").increment(1);
 
                 tracing::warn!(

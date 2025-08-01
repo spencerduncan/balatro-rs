@@ -74,11 +74,9 @@ impl WebSocketConnectionPool {
 
         #[cfg(feature = "monitoring")]
         {
-            metrics::counter!("websocket_connections_opened", 1);
-            metrics::gauge!(
-                "websocket_active_connections",
-                self.connections.len() as f64
-            );
+            metrics::counter!("websocket_connections_opened").increment(1);
+            metrics::gauge!("websocket_active_connections")
+                .set(self.connections.len() as f64);
         }
 
         tracing::info!("WebSocket connection added for session: {}", session_id);
@@ -90,11 +88,9 @@ impl WebSocketConnectionPool {
         if self.connections.remove(session_id).is_some() {
             #[cfg(feature = "monitoring")]
             {
-                metrics::counter!("websocket_connections_closed", 1);
-                metrics::gauge!(
-                    "websocket_active_connections",
-                    self.connections.len() as f64
-                );
+                metrics::counter!("websocket_connections_closed").increment(1);
+                metrics::gauge!("websocket_active_connections")
+                    .set(self.connections.len() as f64);
             }
 
             tracing::info!("WebSocket connection removed for session: {}", session_id);
@@ -121,15 +117,13 @@ impl WebSocketConnectionPool {
 
                 #[cfg(feature = "monitoring")]
                 {
-                    metrics::histogram!(
-                        "websocket_broadcast_duration_ms",
-                        duration.as_millis() as f64
-                    );
-                    metrics::counter!("websocket_messages_broadcast", 1);
-                    metrics::counter!("websocket_broadcast_receivers", receiver_count as u64);
+                    metrics::histogram!("websocket_broadcast_duration_ms")
+                        .record(duration.as_millis() as f64);
+                    metrics::counter!("websocket_messages_broadcast").increment(1);
+                    metrics::counter!("websocket_broadcast_receivers").increment(receiver_count as u64);
 
                     if duration.as_millis() > 5 {
-                        metrics::counter!("websocket_slow_broadcasts", 1);
+                        metrics::counter!("websocket_slow_broadcasts").increment(1);
                         tracing::warn!(
                             "Slow WebSocket broadcast: {}ms to {} receivers",
                             duration.as_millis(),
@@ -160,9 +154,9 @@ impl WebSocketConnectionPool {
             let duration = start.elapsed();
             #[cfg(feature = "monitoring")]
             {
-                metrics::histogram!("websocket_send_duration_ms", duration.as_millis() as f64);
+                metrics::histogram!("websocket_send_duration_ms").record(duration.as_millis() as f64);
                 if duration.as_millis() > 5 {
-                    metrics::counter!("websocket_slow_sends", 1);
+                    metrics::counter!("websocket_slow_sends").increment(1);
                 }
             }
 
@@ -223,7 +217,7 @@ impl WebSocketConnectionPool {
 
             #[cfg(feature = "monitoring")]
             {
-                metrics::gauge!("websocket_active_connections", connections.len() as f64);
+                metrics::gauge!("websocket_active_connections").set(connections.len() as f64);
             }
         }
     }
@@ -308,7 +302,7 @@ impl WebSocketConnection {
                         active_clone.store(false, Ordering::Relaxed);
                         break;
                     }
-                    Ok(Message::Ping(payload)) => {
+                    Ok(Message::Ping(_payload)) => {
                         // Handle ping by sending pong (this would be done automatically by the WebSocket implementation)
                         tracing::debug!("Received ping from {}", session_id);
                     }
@@ -369,7 +363,7 @@ impl Drop for WebSocketConnection {
 
         #[cfg(feature = "monitoring")]
         {
-            metrics::counter!("websocket_connections_dropped", 1);
+            metrics::counter!("websocket_connections_dropped").increment(1);
         }
 
         tracing::debug!(

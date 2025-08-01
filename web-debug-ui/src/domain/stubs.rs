@@ -79,6 +79,28 @@ impl Game {
     pub fn handle_action(&mut self, _action: Action) -> Result<(), GameError> {
         Ok(())
     }
+
+    /// Generate available actions (stub implementation)
+    pub fn gen_actions(&self) -> impl Iterator<Item = Action> {
+        vec![
+            Action::Play(),
+            Action::Discard(),
+            Action::NextRound(),
+        ].into_iter()
+    }
+
+    /// Start the game (stub implementation)
+    pub fn start(&mut self) {
+        // Stub implementation - just set stage to PreBlind
+        self.stage = Stage::PreBlind;
+    }
+}
+
+/// Implement Default for Game
+impl Default for Game {
+    fn default() -> Self {
+        Self::new(Config::default())
+    }
 }
 
 /// Stub implementation of balatro_rs::stage::Stage for testing

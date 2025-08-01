@@ -124,7 +124,7 @@ impl ZeroCopySerializer {
         })?;
 
         let duration = start.elapsed();
-        if duration.as_millis() > self.performance_threshold_ms {
+        if duration.as_millis() > self.performance_threshold_ms as u128 {
             return Err(SerializationError::PerformanceThreshold {
                 operation: "serialize_state".to_string(),
                 duration_ms: duration.as_millis() as u64,
@@ -146,7 +146,7 @@ impl ZeroCopySerializer {
         })?;
 
         let duration = start.elapsed();
-        if duration.as_millis() > self.performance_threshold_ms {
+        if duration.as_millis() > self.performance_threshold_ms as u128 {
             return Err(SerializationError::PerformanceThreshold {
                 operation: "deserialize_state".to_string(),
                 duration_ms: duration.as_millis() as u64,

@@ -74,7 +74,13 @@ impl GameApplicationService {
         let mut game = self.repository.load_game(session_id).await?;
 
         // Validate action
-        self.validator.validate_action(&action, &game).await?;
+        let validation_result = self.validator.validate(&action, &game);
+        if !validation_result.is_valid() {
+            return Err(ApplicationError::Domain {
+                message: "Action validation failed".to_string(),
+                source: Box::new(std::io::Error::new(std::io::ErrorKind::InvalidInput, "Validation failed")),
+            });
+        }
 
         // Record pre-execution state
         let initial_score = game.score;
