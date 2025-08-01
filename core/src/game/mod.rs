@@ -1103,9 +1103,9 @@ impl Game {
     /// Get current memory usage statistics
     pub fn get_memory_stats(&mut self) -> Option<crate::memory_monitor::MemoryStats> {
         let estimated_bytes = self.estimate_memory_usage();
-        let total_actions = self.action_history.total_actions();
+        let bounded_actions = self.action_history.len();
         self.debug_manager
-            .get_memory_stats(estimated_bytes, total_actions)
+            .get_memory_stats(estimated_bytes, bounded_actions)
     }
 
     /// Generate a memory usage report
@@ -1115,29 +1115,32 @@ impl Game {
 
     /// Estimate current memory usage in bytes
     fn estimate_memory_usage(&self) -> usize {
+        // Base game state memory (relatively static)
         let mut total = std::mem::size_of::<Self>();
 
-        // Action history
-        total += self.action_history.memory_stats().estimated_bytes;
+        // Action history - use lightweight calculation instead of full memory_stats()
+        // This avoids expensive calculations in the action history memory_stats method
+        // Use len() (bounded size) not total_actions() (unbounded counter) to prevent memory leak
+        let action_count = self.action_history.len();
+        total += action_count * std::mem::size_of::<crate::action::Action>();
 
-        // Deck cards
-        total += self.deck.cards().len() * std::mem::size_of::<crate::card::Card>();
+        // Cards memory - use length calculations (much faster than iterating)
+        let card_size = std::mem::size_of::<crate::card::Card>();
+        total += self.deck.cards().len() * card_size;
+        total += self.available.cards().len() * card_size;
+        total += self.discarded.len() * card_size;
 
-        // Available cards
-        total += self.available.cards().len() * std::mem::size_of::<crate::card::Card>();
-
-        // Discarded cards
-        total += self.discarded.len() * std::mem::size_of::<crate::card::Card>();
-
-        // Jokers (rough estimate)
+        // Jokers - lightweight estimate
         total += self.jokers.len() * 200; // Estimate 200 bytes per joker
 
-        // Hand type counts
+        // Hand type counts - small and static during gameplay
         total += self.hand_type_counts.len()
             * (std::mem::size_of::<crate::rank::HandRank>() + std::mem::size_of::<u32>());
 
-        // Debug messages
-        total += self.debug_manager.estimate_debug_memory_usage();
+        // Debug messages - only estimate if debug logging is enabled
+        if self.debug_manager.debug_logging_enabled {
+            total += self.debug_manager.estimate_debug_memory_usage();
+        }
 
         total
     }
@@ -1145,9 +1148,9 @@ impl Game {
     /// Check if memory usage exceeds safe limits
     pub fn check_memory_safety(&mut self) -> bool {
         let estimated_bytes = self.estimate_memory_usage();
-        let total_actions = self.action_history.total_actions();
+        let bounded_actions = self.action_history.len();
         self.debug_manager
-            .check_memory_safety(estimated_bytes, total_actions)
+            .check_memory_safety(estimated_bytes, bounded_actions)
     }
 
     /// Configure joker effect cache settings
