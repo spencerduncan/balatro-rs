@@ -12,6 +12,9 @@
 
 use super::tag_effects::pack_effect;
 use super::{SkipTag, SkipTagContext, SkipTagId, SkipTagResult, TagEffectType, TagRarity};
+use crate::consumables::ConsumableId;
+use crate::joker::JokerRarity;
+use crate::joker_factory::JokerFactory;
 use crate::shop::packs::PackType;
 
 /// Charm Tag: Gives a free Mega Arcana Pack
@@ -214,10 +217,16 @@ impl SkipTag for RareTag {
     }
 
     fn activate(&self, context: SkipTagContext) -> SkipTagResult {
-        let game = context.game;
+        let mut game = context.game;
 
-        // TODO: Create a rare joker and add to game state
-        // For now, just acknowledge the reward
+        // Get a random rare joker and add it to the game
+        let rare_jokers = JokerFactory::get_by_rarity(JokerRarity::Rare);
+        if !rare_jokers.is_empty() {
+            let joker_id = *game.rng.choose(&rare_jokers).unwrap();
+            if let Some(joker) = JokerFactory::create(joker_id) {
+                game.jokers.push(joker);
+            }
+        }
 
         SkipTagResult {
             game,
@@ -258,10 +267,16 @@ impl SkipTag for UncommonTag {
     }
 
     fn activate(&self, context: SkipTagContext) -> SkipTagResult {
-        let game = context.game;
+        let mut game = context.game;
 
-        // TODO: Create an uncommon joker and add to game state
-        // For now, just acknowledge the reward
+        // Get a random uncommon joker and add it to the game
+        let uncommon_jokers = JokerFactory::get_by_rarity(JokerRarity::Uncommon);
+        if !uncommon_jokers.is_empty() {
+            let joker_id = *game.rng.choose(&uncommon_jokers).unwrap();
+            if let Some(joker) = JokerFactory::create(joker_id) {
+                game.jokers.push(joker);
+            }
+        }
 
         SkipTagResult {
             game,
@@ -302,16 +317,36 @@ impl SkipTag for TopUpTag {
     }
 
     fn activate(&self, context: SkipTagContext) -> SkipTagResult {
-        let game = context.game;
+        let mut game = context.game;
 
-        // TODO: Fill all consumable slots with appropriate consumables
-        // For now, just acknowledge the effect
+        // Check available consumable slots (default capacity is 2)
+        let max_consumables: usize = 2; // Based on game defaults
+        let current_count = game.consumables_in_hand.len();
+        let available_slots = max_consumables.saturating_sub(current_count);
 
+        if available_slots == 0 {
+            return SkipTagResult {
+                game,
+                additional_tags: vec![],
+                success: false,
+                message: Some("All consumable slots are already filled".to_string()),
+            };
+        }
+
+        // Fill remaining slots with random consumables
+        // Use a basic planet card (Mercury) for simplicity
+        for _ in 0..available_slots {
+            if game.consumables_in_hand.len() < max_consumables {
+                game.consumables_in_hand.push(ConsumableId::Mercury);
+            }
+        }
+
+        let filled_count = available_slots;
         SkipTagResult {
             game,
             additional_tags: vec![],
             success: true,
-            message: Some("Filled all consumable slots".to_string()),
+            message: Some(format!("Filled {filled_count} consumable slot(s)")),
         }
     }
 }

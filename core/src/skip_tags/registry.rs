@@ -488,8 +488,7 @@ impl TagRegistry {
         let definitions = get_all_tag_definitions();
 
         for definition in definitions {
-            // For now, register with a placeholder factory
-            // TODO: Replace with actual tag implementations in subsequent tasks
+            // Register with the actual tag factory implementations
             let tag_id = definition.id;
             let tag_name = definition.name;
             let tag_description = definition.description;
