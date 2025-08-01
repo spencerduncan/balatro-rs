@@ -84,12 +84,19 @@ impl HandAnalysis {
         let mut high_value = Value::Two;
 
         // Single pass to count values and suits
+        let mut wild_cards = 0u8;
         for card in cards {
             let value_idx = card.value as u8;
             let suit_idx = card.suit as u8;
 
             value_counts[value_idx as usize] += 1;
-            suit_counts[suit_idx as usize] += 1;
+
+            // Wild enhancement cards count as any suit for flush detection
+            if matches!(card.enhancement, Some(crate::card::Enhancement::Wild)) {
+                wild_cards += 1;
+            } else {
+                suit_counts[suit_idx as usize] += 1;
+            }
 
             if card.value > high_value {
                 high_value = card.value;
@@ -101,14 +108,15 @@ impl HandAnalysis {
         sorted_counts.sort_by(|a, b| b.cmp(a)); // Sort descending
 
         // Check for flush (normally 5 cards of same suit, but FourFingers allows 4)
+        // Wild cards can count as any suit for flush detection
         let is_flush = if config.min_flush_cards < 5 && cards.len() >= config.min_flush_cards {
-            // FourFingers mode: check if we have at least min_flush_cards of same suit
+            // FourFingers mode: check if we have at least min_flush_cards of same suit (including wilds)
             suit_counts
                 .iter()
-                .any(|&count| count as usize >= config.min_flush_cards)
+                .any(|&count| (count + wild_cards) as usize >= config.min_flush_cards)
         } else {
-            // Normal mode: need exactly 5 cards of same suit
-            cards.len() == 5 && suit_counts.contains(&5)
+            // Normal mode: need exactly 5 cards of same suit (including wilds)
+            cards.len() == 5 && suit_counts.iter().any(|&count| (count + wild_cards) >= 5)
         };
 
         // Check for straight
@@ -570,19 +578,43 @@ impl SelectHand {
             return None;
         }
 
-        // Find any suit with at least min_flush_cards cards
-        if let Some((_value, cards)) = self
+        // Separate Wild enhancement cards from regular cards
+        let mut wild_cards = Vec::new();
+        let mut regular_cards = Vec::new();
+
+        for card in &self.0 {
+            if matches!(card.enhancement, Some(crate::card::Enhancement::Wild)) {
+                wild_cards.push(*card);
+            } else {
+                regular_cards.push(*card);
+            }
+        }
+
+        // Find any suit with at least (min_flush_cards - wild_cards.len()) regular cards
+        let required_regular_cards = config.min_flush_cards.saturating_sub(wild_cards.len());
+
+        if let Some((_suit, suit_cards)) = SelectHand::new(regular_cards)
             .suits_freq()
             .into_iter()
-            .find(|(_key, val)| val.len() >= config.min_flush_cards)
+            .find(|(_key, val)| val.len() >= required_regular_cards)
         {
-            // For FourFingers, return the first min_flush_cards of the suit
-            if cards.len() > config.min_flush_cards {
-                Some(SelectHand::new(
-                    cards.into_iter().take(config.min_flush_cards).collect(),
-                ))
+            // Add wild cards to complete the flush
+            let mut flush_cards = suit_cards;
+            flush_cards.extend(
+                wild_cards
+                    .into_iter()
+                    .take(config.min_flush_cards - flush_cards.len()),
+            );
+
+            // Ensure we don't exceed the required number of cards
+            if flush_cards.len() > config.min_flush_cards {
+                flush_cards.truncate(config.min_flush_cards);
+            }
+
+            if flush_cards.len() >= config.min_flush_cards {
+                Some(SelectHand::new(flush_cards))
             } else {
-                Some(SelectHand::new(cards))
+                None
             }
         } else {
             None

@@ -4,12 +4,12 @@
 mod test_mod {
     use crate::card::{Card, Edition, Seal, Suit, Value};
     use crate::config::Config;
+    use crate::consumables::spectral::{Aura, Talisman};
+    use crate::consumables::Consumable;
     use crate::consumables::{
         CardCollection, CardTarget, ConsumableId, ConsumableSlots, ConsumableType, JokerTarget,
         JokerTargetError, SpectralPool, Target, TargetType, TargetValidationError,
     };
-    use crate::consumables::spectral::{Aura, Talisman};
-    use crate::consumables::Consumable;
     use crate::game::Game;
     use crate::joker::{Joker, JokerId, JokerRarity};
     use crate::rank::HandRank;
@@ -1036,7 +1036,10 @@ mod test_mod {
         game.available.extend(vec![test_card]);
 
         // Verify card starts with base edition
-        assert_eq!(game.available.card_from_index(0).unwrap().edition, Edition::Base);
+        assert_eq!(
+            game.available.card_from_index(0).unwrap().edition,
+            Edition::Base
+        );
 
         // Create Aura spectral card
         let aura = Aura;
@@ -1050,11 +1053,18 @@ mod test_mod {
 
         // Verify the card now has a special edition (not Base)
         let card_after = game.available.card_from_index(0).unwrap();
-        assert_ne!(card_after.edition, Edition::Base, "Card should have a special edition");
+        assert_ne!(
+            card_after.edition,
+            Edition::Base,
+            "Card should have a special edition"
+        );
 
         // Verify it's one of the valid editions
         assert!(
-            matches!(card_after.edition, Edition::Foil | Edition::Holographic | Edition::Polychrome),
+            matches!(
+                card_after.edition,
+                Edition::Foil | Edition::Holographic | Edition::Polychrome
+            ),
             "Card should have Foil, Holographic, or Polychrome edition, got {:?}",
             card_after.edition
         );
@@ -1079,7 +1089,10 @@ mod test_mod {
             let card_after = game.available.card_from_index(0).unwrap();
             assert_ne!(card_after.edition, Edition::Base);
             assert!(
-                matches!(card_after.edition, Edition::Foil | Edition::Holographic | Edition::Polychrome),
+                matches!(
+                    card_after.edition,
+                    Edition::Foil | Edition::Holographic | Edition::Polychrome
+                ),
                 "Card should have one of the three special editions"
             );
         }
@@ -1095,7 +1108,10 @@ mod test_mod {
         game.available.extend(vec![test_card]);
 
         // Verify card starts with Foil
-        assert_eq!(game.available.card_from_index(0).unwrap().edition, Edition::Foil);
+        assert_eq!(
+            game.available.card_from_index(0).unwrap().edition,
+            Edition::Foil
+        );
 
         let aura = Aura;
         let target = Target::cards_in_hand(vec![0]);
@@ -1106,7 +1122,10 @@ mod test_mod {
         // Verify edition was changed (might be same by chance, but implementation works)
         let card_after = game.available.card_from_index(0).unwrap();
         assert!(
-            matches!(card_after.edition, Edition::Foil | Edition::Holographic | Edition::Polychrome),
+            matches!(
+                card_after.edition,
+                Edition::Foil | Edition::Holographic | Edition::Polychrome
+            ),
             "Card should have one of the three special editions"
         );
     }
@@ -1130,11 +1149,18 @@ mod test_mod {
 
         // Use Talisman on the card
         let result = talisman.use_effect(&mut game, target);
-        assert!(result.is_ok(), "Talisman should successfully apply Gold seal");
+        assert!(
+            result.is_ok(),
+            "Talisman should successfully apply Gold seal"
+        );
 
         // Verify the card now has Gold seal
         let card_after = game.available.card_from_index(0).unwrap();
-        assert_eq!(card_after.seal, Some(Seal::Gold), "Card should have Gold seal");
+        assert_eq!(
+            card_after.seal,
+            Some(Seal::Gold),
+            "Card should have Gold seal"
+        );
     }
 
     #[test]
@@ -1147,7 +1173,10 @@ mod test_mod {
         game.available.extend(vec![test_card]);
 
         // Verify card starts with Blue seal
-        assert_eq!(game.available.card_from_index(0).unwrap().seal, Some(Seal::Blue));
+        assert_eq!(
+            game.available.card_from_index(0).unwrap().seal,
+            Some(Seal::Blue)
+        );
 
         let talisman = Talisman;
         let target = Target::cards_in_hand(vec![0]);
@@ -1157,7 +1186,11 @@ mod test_mod {
 
         // Verify seal was changed to Gold
         let card_after = game.available.card_from_index(0).unwrap();
-        assert_eq!(card_after.seal, Some(Seal::Gold), "Card should now have Gold seal, not Blue");
+        assert_eq!(
+            card_after.seal,
+            Some(Seal::Gold),
+            "Card should now have Gold seal, not Blue"
+        );
     }
 
     #[test]
@@ -1173,8 +1206,14 @@ mod test_mod {
         let aura_result = aura.use_effect(&mut game, joker_target.clone());
         let talisman_result = talisman.use_effect(&mut game, joker_target);
 
-        assert!(aura_result.is_err(), "Aura should fail with non-card target");
-        assert!(talisman_result.is_err(), "Talisman should fail with non-card target");
+        assert!(
+            aura_result.is_err(),
+            "Aura should fail with non-card target"
+        );
+        assert!(
+            talisman_result.is_err(),
+            "Talisman should fail with non-card target"
+        );
 
         // Test with invalid card index (empty hand)
         let invalid_target = Target::cards_in_hand(vec![999]); // Invalid index

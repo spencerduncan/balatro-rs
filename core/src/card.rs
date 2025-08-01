@@ -213,7 +213,7 @@ impl Card {
     }
 
     pub fn chips(&self) -> usize {
-        match self.value {
+        let base_chips = match self.value {
             Value::Two => 1,
             Value::Three => 2,
             Value::Four => 3,
@@ -227,6 +227,12 @@ impl Card {
             Value::Queen => 10,
             Value::King => 10,
             Value::Ace => 11,
+        };
+
+        // Add edition bonuses - Foil edition gives +50 chips
+        match self.edition {
+            Edition::Foil => base_chips + 50,
+            _ => base_chips,
         }
     }
 }
