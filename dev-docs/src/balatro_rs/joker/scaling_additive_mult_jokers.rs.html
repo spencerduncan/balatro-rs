@@ -201,8 +201,8 @@
 <a href=#201 id=201 data-nosnippet>201</a>            id: JokerId::FortuneTeller,
 <a href=#202 id=202 data-nosnippet>202</a>            name: <span class="string">"Fortune Teller"</span>.to_string(),
 <a href=#203 id=203 data-nosnippet>203</a>            description: <span class="string">"+1 Mult per Tarot card used"</span>.to_string(),
-<a href=#204 id=204 data-nosnippet>204</a>            rarity: JokerRarity::Rare,
-<a href=#205 id=205 data-nosnippet>205</a>            cost: <span class="number">8</span>,
+<a href=#204 id=204 data-nosnippet>204</a>            rarity: JokerRarity::Common,
+<a href=#205 id=205 data-nosnippet>205</a>            cost: <span class="number">3</span>,
 <a href=#206 id=206 data-nosnippet>206</a>            <span class="comment">// Removed: tarots_used initialization (dual state eliminated)
 <a href=#207 id=207 data-nosnippet>207</a>        </span>}
 <a href=#208 id=208 data-nosnippet>208</a>    }
@@ -988,8 +988,8 @@
 <a href=#988 id=988 data-nosnippet>988</a>        <span class="comment">// Test identity
 <a href=#989 id=989 data-nosnippet>989</a>        </span><span class="macro">assert_eq!</span>(joker.joker_type(), <span class="string">"fortune_teller"</span>);
 <a href=#990 id=990 data-nosnippet>990</a>        <span class="macro">assert_eq!</span>(JokerIdentity::name(<span class="kw-2">&amp;</span>joker), <span class="string">"Fortune Teller"</span>);
-<a href=#991 id=991 data-nosnippet>991</a>        <span class="macro">assert_eq!</span>(joker.base_cost(), <span class="number">8</span>);
-<a href=#992 id=992 data-nosnippet>992</a>        <span class="macro">assert_eq!</span>(joker.rarity, JokerRarity::Rare);
+<a href=#991 id=991 data-nosnippet>991</a>        <span class="macro">assert_eq!</span>(joker.base_cost(), <span class="number">3</span>);
+<a href=#992 id=992 data-nosnippet>992</a>        <span class="macro">assert_eq!</span>(joker.rarity, JokerRarity::Common);
 <a href=#993 id=993 data-nosnippet>993</a>    }
 <a href=#994 id=994 data-nosnippet>994</a>
 <a href=#995 id=995 data-nosnippet>995</a>    <span class="attr">#[test]
