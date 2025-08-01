@@ -95,7 +95,8 @@ impl JokerFactory {
             JokerId::Trousers => Some(Box::new(SpareTrousersJoker::new())),
             JokerId::GreenJoker => Some(Box::new(GreenJoker::new())),
             JokerId::Reserved5 => Some(Box::new(RideTheBusJoker::new())), // RideTheBus
-            JokerId::Reserved6 => Some(Box::new(RedCardJoker::new())),    // RedCard (pack skipping)
+            JokerId::Reserved6 => Some(Box::new(RedCardJoker::with_id(JokerId::Reserved6))), // RedCard (pack skipping)
+            JokerId::RedCard => Some(Box::new(RedCardJoker::new())), // Direct RedCard mapping
 
             // Scaling chips jokers
             JokerId::Castle => Some(Box::new(CastleJoker::new())),
@@ -185,6 +186,7 @@ impl JokerFactory {
                 GreenJoker,
                 Reserved5, // RideTheBus
                 Reserved6, // RedCard (pack skipping)
+                RedCard,   // Direct RedCard mapping
                 // Scaling chips jokers
                 OddTodd,
                 Arrowhead,
@@ -194,8 +196,7 @@ impl JokerFactory {
                 // Scaling xmult jokers (none in common)
                 // Retrigger jokers
                 Hanging, // HangingChadJoker
-                // Scaling mult jokers moved to Common
-                Fortune, // Fortune Teller
+                         // Note: FortuneTeller has unassigned rarity (exists only in get_all_implemented)
             ],
             JokerRarity::Uncommon => vec![
                 // Money-based conditional jokers
@@ -299,6 +300,7 @@ impl JokerFactory {
             GreenJoker,
             Reserved5, // RideTheBus
             Reserved6, // RedCard (pack skipping)
+            RedCard,   // Direct RedCard mapping
             // Scaling chips jokers
             Castle,
             Wee,
@@ -526,8 +528,11 @@ mod tests {
         assert!(uncommon_jokers.contains(&JokerId::Ceremonial)); // Ceremonial Dagger
 
         let common_jokers = JokerFactory::get_by_rarity(JokerRarity::Common);
-        // Fortune Teller moved to Common
-        assert!(common_jokers.contains(&JokerId::Fortune)); // Fortune Teller
+        // Fortune Teller has unassigned rarity (not in any rarity list)
+        assert!(
+            !common_jokers.contains(&JokerId::FortuneTeller),
+            "FortuneTeller should have unassigned rarity"
+        );
 
         let rare_jokers = JokerFactory::get_by_rarity(JokerRarity::Rare);
         // Rare scaling jokers

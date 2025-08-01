@@ -2,7 +2,7 @@ use crate::joker::{JokerId, JokerRarity};
 use crate::rank::HandRank;
 use crate::scaling_joker::{ResetCondition, ScalingEffectType, ScalingJoker, ScalingTrigger};
 
-/// Factory functions for creating the 15 scaling jokers specified in the requirements
+/// Factory functions for creating all 15 scaling jokers specified in the requirements
 /// Spare Trousers: +2 mult per hand with Two Pair
 pub fn create_spare_trousers() -> ScalingJoker {
     ScalingJoker::new(
@@ -121,7 +121,7 @@ pub fn create_green_joker() -> ScalingJoker {
 /// Red Card: +3 mult when any pack skipped
 pub fn create_red_card() -> ScalingJoker {
     ScalingJoker::new(
-        JokerId::RedCard,
+        JokerId::Reserved6,
         "Red Card".to_string(),
         "+3 Mult per pack skipped".to_string(),
         JokerRarity::Common,
@@ -206,6 +206,21 @@ pub fn create_castle() -> ScalingJoker {
     .with_max_value(1200.0) // Max 4 discards per round typically
 }
 
+/// Banner: +30 chips per remaining discard
+pub fn create_banner() -> ScalingJoker {
+    ScalingJoker::new(
+        JokerId::Banner,
+        "Banner".to_string(),
+        "+30 Chips for each remaining discard".to_string(),
+        JokerRarity::Common,
+        0.0,
+        30.0,
+        ScalingTrigger::CardDiscarded, // Will need custom logic for remaining discards
+        ScalingEffectType::Chips,
+    )
+    .with_reset_condition(ResetCondition::RoundEnd)
+}
+
 /// Factory function to create all scaling jokers
 pub fn create_all_scaling_jokers() -> Vec<ScalingJoker> {
     vec![
@@ -223,6 +238,7 @@ pub fn create_all_scaling_jokers() -> Vec<ScalingJoker> {
         create_marble_joker_scaling(),
         create_loyalty_card(),
         create_castle(),
+        create_banner(),
     ]
 }
 
@@ -237,12 +253,13 @@ pub fn get_scaling_joker_by_id(id: JokerId) -> Option<ScalingJoker> {
         JokerId::Ceremonial => Some(create_ceremonial_dagger()),
         JokerId::Reserved => Some(create_throwback()),
         JokerId::GreenJoker => Some(create_green_joker()),
-        JokerId::RedCard => Some(create_red_card()),
+        JokerId::Reserved6 => Some(create_red_card()),
         JokerId::SteelJoker => Some(create_steel_joker_scaling()),
         JokerId::Reserved2 => Some(create_mystic_summit()),
         JokerId::MarbleJoker => Some(create_marble_joker_scaling()),
         JokerId::Loyalty => Some(create_loyalty_card()),
         JokerId::Reserved3 => Some(create_castle()),
+        JokerId::Banner => Some(create_banner()),
         _ => None,
     }
 }
@@ -254,7 +271,7 @@ mod tests {
     #[test]
     fn test_all_scaling_jokers_created() {
         let jokers = create_all_scaling_jokers();
-        assert_eq!(jokers.len(), 14, "Should create exactly 14 scaling jokers");
+        assert_eq!(jokers.len(), 15, "Should create exactly 15 scaling jokers");
 
         // Test that all jokers have unique IDs
         let mut ids = std::collections::HashSet::new();
@@ -294,9 +311,23 @@ mod tests {
     }
 
     #[test]
+    fn test_banner() {
+        let joker = create_banner();
+        assert_eq!(joker.id, JokerId::Banner);
+        assert_eq!(joker.name, "Banner");
+        assert_eq!(joker.base_value, 0.0);
+        assert_eq!(joker.increment, 30.0);
+        assert_eq!(joker.trigger, ScalingTrigger::CardDiscarded);
+        assert_eq!(joker.effect_type, ScalingEffectType::Chips);
+        assert_eq!(joker.reset_condition, Some(ResetCondition::RoundEnd));
+    }
+
+    #[test]
     fn test_get_scaling_joker_by_id() {
         assert!(get_scaling_joker_by_id(JokerId::Trousers).is_some());
         assert!(get_scaling_joker_by_id(JokerId::GreenJoker).is_some());
+        assert!(get_scaling_joker_by_id(JokerId::Banner).is_some());
+        assert!(get_scaling_joker_by_id(JokerId::Reserved6).is_some()); // Red Card
         assert!(get_scaling_joker_by_id(JokerId::Joker).is_none()); // Not a scaling joker
     }
 

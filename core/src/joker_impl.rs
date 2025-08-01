@@ -1534,8 +1534,8 @@ mod tests {
             "LuckyCardJoker should be in Common rarity"
         );
         assert!(
-            common_jokers.contains(&JokerId::Fortune),
-            "Fortune Teller (JokerId::Fortune) should be in Common rarity"
+            !common_jokers.contains(&JokerId::FortuneTeller),
+            "Fortune Teller (JokerId::FortuneTeller) should have unassigned rarity"
         );
 
         let uncommon_jokers = JokerFactory::get_by_rarity(JokerRarity::Uncommon);
@@ -1558,11 +1558,11 @@ mod tests {
             "AcrobatJoker should be in Rare rarity"
         );
 
-        // Fortune Teller is in Common rarity and in all implemented
+        // Fortune Teller has unassigned rarity but is in all implemented
         let common_jokers = JokerFactory::get_by_rarity(JokerRarity::Common);
         assert!(
-            common_jokers.contains(&JokerId::Fortune),
-            "Fortune Teller should be in Common rarity"
+            !common_jokers.contains(&JokerId::FortuneTeller),
+            "Fortune Teller should have unassigned rarity"
         );
 
         let all_implemented = JokerFactory::get_all_implemented();
