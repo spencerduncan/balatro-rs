@@ -195,7 +195,7 @@ impl JokerFactory {
                 // Retrigger jokers
                 Hanging, // HangingChadJoker
                 // Scaling mult jokers moved to Common
-                Fortune, // Fortune Teller
+                FortuneTeller, // Fortune Teller
             ],
             JokerRarity::Uncommon => vec![
                 // Money-based conditional jokers
@@ -527,7 +527,7 @@ mod tests {
 
         let common_jokers = JokerFactory::get_by_rarity(JokerRarity::Common);
         // Fortune Teller moved to Common
-        assert!(common_jokers.contains(&JokerId::Fortune)); // Fortune Teller
+        assert!(common_jokers.contains(&JokerId::FortuneTeller)); // Fortune Teller
 
         let rare_jokers = JokerFactory::get_by_rarity(JokerRarity::Rare);
         // Rare scaling jokers

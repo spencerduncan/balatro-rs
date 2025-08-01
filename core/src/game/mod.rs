@@ -1947,14 +1947,11 @@ impl Game {
                 // TODO: Implement multi-select deactivation
                 Err(GameError::InvalidAction)
             }
-            // Consumable actions - infrastructure ready for implementation
+            // Consumable actions - integrated with shop system
             Action::BuyConsumable {
-                consumable_id: _,
-                slot: _,
-            } => {
-                // TODO: Implement consumable buying when shop integration is complete
-                Err(GameError::InvalidAction)
-            }
+                consumable_id,
+                slot,
+            } => self.handle_buy_consumable_action(consumable_id, slot),
             Action::UseConsumable {
                 slot: _,
                 target_description: _,
