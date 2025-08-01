@@ -197,6 +197,10 @@ impl JokerFactory {
                 Scholar,
                 // Resource chips jokers
                 ScaryFace, // ScaryFace Joker
+                // Simple Static Jokers (Issue #364)
+                Smiley,     // Smiley Face
+                RaisedFist, // Raised Fist
+                RoughGem,   // Rough Gem
                 // Scaling xmult jokers (none in common)
                 // Retrigger jokers
                 Hanging, // HangingChadJoker
@@ -232,6 +236,8 @@ impl JokerFactory {
                 Reserved4, // Mystery Joker
                 // Special mechanic jokers
                 Blueprint,
+                // Simple Static Jokers (Issue #364)
+                BaronJoker, // Baron
                 // Scaling mult jokers
                 FortuneTeller, // Fortune Teller
                 // Scaling chips jokers
@@ -332,6 +338,11 @@ impl JokerFactory {
             Seltzer,
             Hanging,
             SockAndBuskin,
+            // Simple Static Jokers (Issue #364) - Fully implemented
+            Smiley,     // Smiley Face
+            BaronJoker, // Baron
+            RaisedFist, // Raised Fist
+            RoughGem,   // Rough Gem
             // Note: HalfJoker and Banner are still placeholders
         ]
     }
