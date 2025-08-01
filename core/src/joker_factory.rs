@@ -177,8 +177,8 @@ impl JokerFactory {
                 Banner,
                 AbstractJoker,
                 // RNG-based jokers (Issue #442)
-                Reserved7,     // SixShooterJoker
-                LuckyCharm,    // LuckyCardJoker
+                Reserved7,  // SixShooterJoker
+                LuckyCharm, // LuckyCardJoker
                 // Special mechanic jokers
                 Erosion,
                 Photograph,
