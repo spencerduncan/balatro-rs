@@ -8,11 +8,10 @@
 //! - Meteor: Gives a free Celestial Pack
 //! - Rare: Creates a rare Joker
 //! - Uncommon: Creates an uncommon Joker
-//! - TopUp: Fills all consumable slots if there is room
+//! - TopUp: Gives up to 2 Common Jokers if you have space
 
 use super::tag_effects::pack_effect;
 use super::{SkipTag, SkipTagContext, SkipTagId, SkipTagResult, TagEffectType, TagRarity};
-use crate::consumables::ConsumableId;
 use crate::joker::JokerRarity;
 use crate::joker_factory::JokerFactory;
 use crate::shop::packs::PackType;
@@ -287,7 +286,7 @@ impl SkipTag for UncommonTag {
     }
 }
 
-/// TopUp Tag: Fills all consumable slots if there is room
+/// TopUp Tag: Gives up to 2 Common Jokers if you have space
 #[derive(Debug)]
 pub struct TopUpTag;
 
@@ -301,7 +300,7 @@ impl SkipTag for TopUpTag {
     }
 
     fn description(&self) -> &'static str {
-        "Fills all consumable slots if there is room"
+        "Gives up to 2 Common Jokers if you have space"
     }
 
     fn effect_type(&self) -> TagEffectType {
@@ -319,34 +318,40 @@ impl SkipTag for TopUpTag {
     fn activate(&self, context: SkipTagContext) -> SkipTagResult {
         let mut game = context.game;
 
-        // Check available consumable slots (default capacity is 2)
-        let max_consumables: usize = 2; // Based on game defaults
-        let current_count = game.consumables_in_hand.len();
-        let available_slots = max_consumables.saturating_sub(current_count);
+        // Check available joker slots (max 5 jokers)
+        let max_jokers: usize = 5;
+        let current_joker_count = game.jokers.len();
+        let available_slots = max_jokers.saturating_sub(current_joker_count);
 
         if available_slots == 0 {
             return SkipTagResult {
                 game,
                 additional_tags: vec![],
                 success: false,
-                message: Some("All consumable slots are already filled".to_string()),
+                message: Some("No joker slots available".to_string()),
             };
         }
 
-        // Fill remaining slots with random consumables
-        // Use a basic planet card (Mercury) for simplicity
-        for _ in 0..available_slots {
-            if game.consumables_in_hand.len() < max_consumables {
-                game.consumables_in_hand.push(ConsumableId::Mercury);
+        // TopUp gives up to 2 common jokers, limited by available slots
+        let jokers_to_create = std::cmp::min(2, available_slots);
+        let common_jokers = JokerFactory::get_by_rarity(JokerRarity::Common);
+
+        let mut created_count = 0;
+        for _ in 0..jokers_to_create {
+            if !common_jokers.is_empty() && game.jokers.len() < max_jokers {
+                let joker_id = *game.rng.choose(&common_jokers).unwrap();
+                if let Some(joker) = JokerFactory::create(joker_id) {
+                    game.jokers.push(joker);
+                    created_count += 1;
+                }
             }
         }
 
-        let filled_count = available_slots;
         SkipTagResult {
             game,
             additional_tags: vec![],
-            success: true,
-            message: Some(format!("Filled {filled_count} consumable slot(s)")),
+            success: created_count > 0,
+            message: Some(format!("Created {created_count} Common Joker(s)")),
         }
     }
 }
