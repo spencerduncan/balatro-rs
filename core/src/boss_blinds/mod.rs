@@ -6,7 +6,8 @@
 //! # Module Organization
 //!
 //! - `mod.rs` - Core types and traits for boss blinds
-//! - `implementations.rs` - Specific boss blind implementations (future)
+//! - `plant.rs` - The Plant boss blind implementation
+//! - `implementations.rs` - Additional boss blind implementations (future)
 //!
 //! # Design Principles
 //!
@@ -140,15 +141,39 @@ impl HandModification {
 /// This will be extended as boss blind implementations are added
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, EnumIter)]
 pub enum BossBlindId {
-    // Placeholder variants - will be expanded in future implementations
-    /// Placeholder for future boss blind implementations
-    BossBlindPlaceholder,
+    /// The Plant - Debuffs all face cards (Jacks, Queens, Kings) to score 0 base points
+    /// Minimum ante: 4, Score requirement: 2x base chips
+    ThePlant,
+    /// The Serpent - Forces drawing 3 cards after each play or discard
+    /// Minimum ante: 5, Score requirement: 2x base chips
+    TheSerpent,
+    /// The Needle - Limits player to only 1 hand play during the blind
+    /// Minimum ante: 2, Score requirement: 1x base chips
+    TheNeedle,
+    /// The Water - Player starts with 0 discards available
+    /// Minimum ante: 2, Score requirement: 2x base chips
+    TheWater,
+    /// The Flint - Halves all base chips and mult values
+    /// Minimum ante: 2, Score requirement: 2x base chips
+    TheFlint,
+    /// The Mark - Hides all face cards face-down until played
+    /// Minimum ante: 2, Score requirement: 2x base chips
+    TheMark,
+    /// The Wheel - Randomly hides 1 out of every 7 cards face-down
+    /// Minimum ante: 2, Score requirement: 2x base chips
+    TheWheel,
 }
 
 impl fmt::Display for BossBlindId {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            BossBlindId::BossBlindPlaceholder => write!(f, "Boss Blind Placeholder"),
+            BossBlindId::ThePlant => write!(f, "The Plant"),
+            BossBlindId::TheSerpent => write!(f, "The Serpent"),
+            BossBlindId::TheNeedle => write!(f, "The Needle"),
+            BossBlindId::TheWater => write!(f, "The Water"),
+            BossBlindId::TheFlint => write!(f, "The Flint"),
+            BossBlindId::TheMark => write!(f, "The Mark"),
+            BossBlindId::TheWheel => write!(f, "The Wheel"),
         }
     }
 }
@@ -162,14 +187,26 @@ impl BossBlindId {
     /// Get the base score requirement for this boss blind
     pub fn base_score_requirement(&self) -> usize {
         match self {
-            BossBlindId::BossBlindPlaceholder => 300, // Placeholder value
+            BossBlindId::ThePlant => 600,   // 2x base chips requirement
+            BossBlindId::TheSerpent => 600, // 2x base chips requirement
+            BossBlindId::TheNeedle => 300,  // 1x base chips requirement
+            BossBlindId::TheWater => 600,   // 2x base chips requirement
+            BossBlindId::TheFlint => 600,   // 2x base chips requirement
+            BossBlindId::TheMark => 600,    // 2x base chips requirement
+            BossBlindId::TheWheel => 600,   // 2x base chips requirement
         }
     }
 
     /// Get the reward multiplier for this boss blind
     pub fn reward_multiplier(&self) -> f64 {
         match self {
-            BossBlindId::BossBlindPlaceholder => 1.5, // Placeholder value
+            BossBlindId::ThePlant => 2.0,   // Higher reward for higher difficulty
+            BossBlindId::TheSerpent => 2.0, // Higher reward for higher difficulty
+            BossBlindId::TheNeedle => 1.5,  // Lower reward for 1x score requirement
+            BossBlindId::TheWater => 2.0,   // Higher reward for higher difficulty
+            BossBlindId::TheFlint => 2.0,   // Higher reward for higher difficulty
+            BossBlindId::TheMark => 2.0,    // Higher reward for higher difficulty
+            BossBlindId::TheWheel => 2.0,   // Higher reward for higher difficulty
         }
     }
 }
@@ -417,5 +454,20 @@ pub trait BossBlind: Send + Sync + std::fmt::Debug {
     fn min_ante(&self) -> u32;
 }
 
+// Module declarations
+pub mod flint;
+pub mod mark;
+pub mod needle;
+pub mod plant;
+pub mod serpent;
+pub mod water;
+pub mod wheel;
+
 // Re-export commonly used types
-pub use BossBlindId::*;
+pub use flint::TheFlint;
+pub use mark::TheMark;
+pub use needle::TheNeedle;
+pub use plant::ThePlant;
+pub use serpent::TheSerpent;
+pub use water::TheWater;
+pub use wheel::TheWheel;

@@ -86,12 +86,12 @@ fn test_boss_blind_state_management() {
     assert!(!game.boss_blind_state.effect_active);
 
     // Test activating boss blind
-    game.boss_blind_state.active_boss = Some(BossBlindId::BossBlindPlaceholder);
+    game.boss_blind_state.active_boss = Some(BossBlindId::ThePlant);
     game.boss_blind_state.effect_active = true;
 
     assert_eq!(
         game.boss_blind_state.active_boss,
-        Some(BossBlindId::BossBlindPlaceholder)
+        Some(BossBlindId::ThePlant)
     );
     assert!(game.boss_blind_state.effect_active);
 
@@ -127,7 +127,7 @@ fn test_game_serialization_with_extended_state() {
     game.consumables_in_hand
         .push(ConsumableId::TarotPlaceholder);
     game.vouchers.add(VoucherId::Overstock);
-    game.boss_blind_state.active_boss = Some(BossBlindId::BossBlindPlaceholder);
+    game.boss_blind_state.active_boss = Some(BossBlindId::ThePlant);
     game.state_version = StateVersion::V2;
 
     // Test serialization
@@ -145,7 +145,7 @@ fn test_game_serialization_with_extended_state() {
     assert!(deserialized.vouchers.owns(VoucherId::Overstock));
     assert_eq!(
         deserialized.boss_blind_state.active_boss,
-        Some(BossBlindId::BossBlindPlaceholder)
+        Some(BossBlindId::ThePlant)
     );
     assert_eq!(deserialized.state_version, StateVersion::V2);
 }

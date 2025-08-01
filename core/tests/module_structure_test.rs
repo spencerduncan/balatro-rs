@@ -37,7 +37,7 @@ mod tests {
         let _consumable_type = ConsumableType::Tarot;
         let _voucher_id = VoucherId::Overstock;
         let _voucher_collection = VoucherCollection::new();
-        let _boss_blind_id = BossBlindId::BossBlindPlaceholder;
+        let _boss_blind_id = BossBlindId::ThePlant;
         let _boss_blind_state = BossBlindState::new();
         let _hand_modification = HandModification::new();
 
