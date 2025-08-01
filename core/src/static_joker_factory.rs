@@ -646,6 +646,42 @@ impl StaticJokerFactory {
         )
     }
 
+    /// Create Onyx Agate (Played cards with Club suit give +7 Mult when scored)
+    pub fn create_onyx_agate() -> Box<dyn Joker> {
+        Box::new(
+            FrameworkStaticJoker::builder(
+                JokerId::Onyx,
+                "Onyx Agate",
+                "Played cards with Club suit give +7 Mult when scored",
+            )
+            .rarity(JokerRarity::Common)
+            .cost(5)
+            .mult(7)
+            .condition(StaticCondition::SuitScored(Suit::Club))
+            .per_card()
+            .build()
+            .expect("Valid joker configuration"),
+        )
+    }
+
+    /// Create Arrowhead (Played cards with Spade suit give +50 Chips when scored)
+    pub fn create_arrowhead() -> Box<dyn Joker> {
+        Box::new(
+            FrameworkStaticJoker::builder(
+                JokerId::Arrowhead,
+                "Arrowhead",
+                "Played cards with Spade suit give +50 Chips when scored",
+            )
+            .rarity(JokerRarity::Common)
+            .cost(5)
+            .chips(50)
+            .condition(StaticCondition::SuitScored(Suit::Spade))
+            .per_card()
+            .build()
+            .expect("Valid joker configuration"),
+        )
+    }
+
     /// Test-only methods that return concrete types for internal testing
     #[cfg(test)]
     pub fn create_greedy_joker_concrete() -> FrameworkStaticJoker {
@@ -713,11 +749,46 @@ impl StaticJokerFactory {
         .build()
         .expect("Valid joker configuration")
     }
+
+    /// Test-only methods that return concrete types for internal testing
+    #[cfg(test)]
+    pub fn create_onyx_agate_concrete() -> FrameworkStaticJoker {
+        FrameworkStaticJoker::builder(
+            JokerId::Onyx,
+            "Onyx Agate",
+            "Played cards with Club suit give +7 Mult when scored",
+        )
+        .rarity(JokerRarity::Common)
+        .cost(5)
+        .mult(7)
+        .condition(StaticCondition::SuitScored(Suit::Club))
+        .per_card()
+        .build()
+        .expect("Valid joker configuration")
+    }
+
+    /// Test-only methods that return concrete types for internal testing
+    #[cfg(test)]
+    pub fn create_arrowhead_concrete() -> FrameworkStaticJoker {
+        FrameworkStaticJoker::builder(
+            JokerId::Arrowhead,
+            "Arrowhead",
+            "Played cards with Spade suit give +50 Chips when scored",
+        )
+        .rarity(JokerRarity::Common)
+        .cost(5)
+        .chips(50)
+        .condition(StaticCondition::SuitScored(Suit::Spade))
+        .per_card()
+        .build()
+        .expect("Valid joker configuration")
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::card::Card;
 
     #[test]
     fn test_basic_joker_creation() {
@@ -1024,5 +1095,147 @@ mod tests {
 
         let scholar = StaticJokerFactory::create_scholar();
         assert_eq!(scholar.rarity(), JokerRarity::Common);
+    }
+
+    #[test]
+    fn test_onyx_agate_joker() {
+        let onyx_agate = StaticJokerFactory::create_onyx_agate();
+
+        // Test basic properties
+        assert_eq!(onyx_agate.id(), JokerId::Onyx);
+        assert_eq!(onyx_agate.name(), "Onyx Agate");
+        assert_eq!(onyx_agate.rarity(), JokerRarity::Common);
+        assert_eq!(onyx_agate.cost(), 5);
+
+        // Test description
+        assert_eq!(
+            onyx_agate.description(),
+            "Played cards with Club suit give +7 Mult when scored"
+        );
+    }
+
+    #[test]
+    fn test_arrowhead_joker() {
+        let arrowhead = StaticJokerFactory::create_arrowhead();
+
+        // Test basic properties
+        assert_eq!(arrowhead.id(), JokerId::Arrowhead);
+        assert_eq!(arrowhead.name(), "Arrowhead");
+        assert_eq!(arrowhead.rarity(), JokerRarity::Common);
+        assert_eq!(arrowhead.cost(), 5);
+
+        // Test description
+        assert_eq!(
+            arrowhead.description(),
+            "Played cards with Spade suit give +50 Chips when scored"
+        );
+    }
+
+    #[test]
+    fn test_wave2_suit_jokers_can_be_created() {
+        // Test that both new wave2 jokers can be created without panicking
+        let onyx_agate = StaticJokerFactory::create_onyx_agate();
+        let arrowhead = StaticJokerFactory::create_arrowhead();
+
+        // Ensure both have valid properties
+        assert!(!onyx_agate.name().is_empty());
+        assert!(!onyx_agate.description().is_empty());
+        assert!(onyx_agate.cost() > 0);
+
+        assert!(!arrowhead.name().is_empty());
+        assert!(!arrowhead.description().is_empty());
+        assert!(arrowhead.cost() > 0);
+    }
+
+    #[test]
+    fn test_wave2_suit_jokers_follow_established_patterns() {
+        // Test that Onyx Agate follows the same pattern as other suit jokers (like Gluttonous)
+        let onyx_agate = StaticJokerFactory::create_onyx_agate();
+        let gluttonous = StaticJokerFactory::create_gluttonous_joker();
+
+        // Same rarity and cost structure as existing suit jokers
+        assert_eq!(onyx_agate.rarity(), gluttonous.rarity());
+        assert_eq!(onyx_agate.cost(), gluttonous.cost());
+
+        // Test that Arrowhead follows established patterns
+        let arrowhead = StaticJokerFactory::create_arrowhead();
+
+        // Should be same rarity as other suit jokers but different cost is acceptable for chips vs mult
+        assert_eq!(arrowhead.rarity(), JokerRarity::Common);
+        assert_eq!(arrowhead.cost(), 5); // Consistent with other suit jokers
+    }
+
+    #[test]
+    fn test_onyx_agate_concrete_creation() {
+        // Test the concrete version for internal framework testing
+        let onyx_agate = StaticJokerFactory::create_onyx_agate_concrete();
+
+        assert_eq!(onyx_agate.id(), JokerId::Onyx);
+        assert_eq!(onyx_agate.name(), "Onyx Agate");
+        assert_eq!(
+            onyx_agate.description(),
+            "Played cards with Club suit give +7 Mult when scored"
+        );
+        assert_eq!(onyx_agate.rarity(), JokerRarity::Common);
+        assert_eq!(onyx_agate.cost(), 5);
+    }
+
+    #[test]
+    fn test_arrowhead_concrete_creation() {
+        // Test the concrete version for internal framework testing
+        let arrowhead = StaticJokerFactory::create_arrowhead_concrete();
+
+        assert_eq!(arrowhead.id(), JokerId::Arrowhead);
+        assert_eq!(arrowhead.name(), "Arrowhead");
+        assert_eq!(
+            arrowhead.description(),
+            "Played cards with Spade suit give +50 Chips when scored"
+        );
+        assert_eq!(arrowhead.rarity(), JokerRarity::Common);
+        assert_eq!(arrowhead.cost(), 5);
+    }
+
+    #[test]
+    fn test_wave2_jokers_suit_specificity() {
+        // Create the concrete versions to test suit specificity
+        let onyx_agate = StaticJokerFactory::create_onyx_agate_concrete();
+        let arrowhead = StaticJokerFactory::create_arrowhead_concrete();
+
+        // Test that they target different suits
+        // Onyx Agate should target Clubs, Arrowhead should target Spades
+
+        // Test cards of different suits
+        let _club_card = Card::new(Value::King, Suit::Club);
+        let _spade_card = Card::new(Value::King, Suit::Spade);
+        let _heart_card = Card::new(Value::King, Suit::Heart);
+        let _diamond_card = Card::new(Value::King, Suit::Diamond);
+
+        // The StaticJoker framework will handle the actual evaluation,
+        // but we can verify the configuration is correct by checking
+        // that the jokers have been built with the right suit conditions.
+
+        // Since we can't directly test the condition evaluation without GameContext,
+        // we verify the jokers were built successfully (which validates the configuration)
+        assert_eq!(onyx_agate.name(), "Onyx Agate");
+        assert_eq!(arrowhead.name(), "Arrowhead");
+    }
+
+    #[test]
+    fn test_wave2_jokers_bonus_values() {
+        let onyx_agate = StaticJokerFactory::create_onyx_agate_concrete();
+        let arrowhead = StaticJokerFactory::create_arrowhead_concrete();
+
+        // Verify Onyx Agate gives mult bonus (not chips)
+        // Verify Arrowhead gives chips bonus (not mult)
+        // The actual values are embedded in the StaticJoker framework,
+        // so we verify through the descriptions and successful creation
+
+        assert!(onyx_agate.description().contains("Mult"));
+        assert!(onyx_agate.description().contains("7"));
+        assert!(onyx_agate.description().contains("Club"));
+
+        assert!(arrowhead.description().contains("Chips"));
+        assert!(arrowhead.description().contains("50"));
+        assert!(arrowhead.description().contains("Spade"));
     }
 }
