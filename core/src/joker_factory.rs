@@ -222,6 +222,7 @@ impl JokerFactory {
                 Dusk,
                 Seltzer,
                 SockAndBuskin,
+                Hack,
             ],
             JokerRarity::Rare => vec![
                 // RNG-based jokers (Issue #442)
@@ -326,6 +327,7 @@ impl JokerFactory {
             Seltzer,
             Hanging,
             SockAndBuskin,
+            Hack,
             // Note: HalfJoker and Banner are still placeholders
         ]
     }
