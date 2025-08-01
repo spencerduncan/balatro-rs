@@ -171,10 +171,10 @@ impl MemoryMonitor {
         bounded_actions: usize,
     ) -> MemoryStats {
         let now = Instant::now();
-        
+
         // Calculate action history bytes (this is always dynamic)
         let action_history_bytes = bounded_actions * std::mem::size_of::<crate::action::Action>();
-        
+
         // Use cached base memory (excluding action history) if available and fresh
         let final_estimated_bytes = if self.should_recalculate_base_memory() {
             // Store the base memory (excluding action history) in cache
