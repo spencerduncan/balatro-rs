@@ -1,6 +1,39 @@
 #[cfg(feature = "python")]
 use pyo3::prelude::*;
 
+/// Strategy for handling consumable overflow when all slots are full
+///
+/// This enum defines how the system should behave when a player attempts
+/// to purchase a consumable but all slots are occupied. Following the
+/// Strategy pattern from Clean Code principles.
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "python", pyo3::pyclass)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum ConsumableOverflowStrategy {
+    /// First In, First Out - Remove the oldest consumable (index 0)
+    /// This maintains chronological order and feels natural for most players
+    Fifo,
+    /// Last In, First Out - Remove the newest consumable (highest index)
+    /// This preserves older consumables that players may value more
+    Lifo,
+}
+
+impl Default for ConsumableOverflowStrategy {
+    /// Default to FIFO as it's the most intuitive behavior for most players
+    fn default() -> Self {
+        ConsumableOverflowStrategy::Fifo
+    }
+}
+
+impl std::fmt::Display for ConsumableOverflowStrategy {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ConsumableOverflowStrategy::Fifo => write!(f, "FIFO"),
+            ConsumableOverflowStrategy::Lifo => write!(f, "LIFO"),
+        }
+    }
+}
+
 const DEFAULT_ROUND_START: usize = 0;
 const DEFAULT_PLAYS: usize = 4;
 const DEFAULT_DISCARDS: usize = 4;
@@ -24,6 +57,10 @@ const DEFAULT_CONSUMABLE_HAND_CAPACITY: usize = 2;
 const DEFAULT_DECK_MAX: usize = 100;
 const DEFAULT_DISCARDED_MAX: usize = 100;
 const DEFAULT_SELECTED_MAX: usize = 5;
+
+// Consumable overflow configuration default
+const DEFAULT_CONSUMABLE_OVERFLOW_STRATEGY: ConsumableOverflowStrategy =
+    ConsumableOverflowStrategy::Fifo;
 
 // Pack system configuration defaults
 const DEFAULT_PACK_STANDARD_COST: usize = 4;
@@ -78,6 +115,7 @@ pub struct Config {
     pub available_max: usize,
     pub store_consumable_slots_max: usize,
     pub consumable_hand_capacity: usize,
+    pub consumable_overflow_strategy: ConsumableOverflowStrategy,
     pub deck_max: usize,
     pub discarded_max: usize,
 
@@ -132,6 +170,7 @@ impl Config {
             available_max: DEFAULT_AVAILABLE_MAX,
             store_consumable_slots_max: DEFAULT_STORE_CONSUMABLE_SLOTS_MAX,
             consumable_hand_capacity: DEFAULT_CONSUMABLE_HAND_CAPACITY,
+            consumable_overflow_strategy: DEFAULT_CONSUMABLE_OVERFLOW_STRATEGY,
             deck_max: DEFAULT_DECK_MAX,
             discarded_max: DEFAULT_DISCARDED_MAX,
 

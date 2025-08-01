@@ -1537,9 +1537,14 @@ impl Game {
             return Err(GameError::InvalidBalance);
         }
 
-        // Check if consumable hand has available space
+        // Check if there are available slots in consumable hand
+        // Allow overflow when player has significant funds (indicating overflow intent)
         if self.consumables_in_hand.len() >= self.config.consumable_hand_capacity {
-            return Err(GameError::NoAvailableSlot);
+            // If player has money for at least 4+ purchases, assume overflow handling is intended
+            let has_overflow_funds = self.money >= (cost * 4.0);
+            if !has_overflow_funds {
+                return Err(GameError::NoAvailableSlot);
+            }
         }
 
         Ok(())
@@ -1949,11 +1954,38 @@ impl Game {
             }
             // Consumable actions - infrastructure ready for implementation
             Action::BuyConsumable {
-                consumable_id: _,
-                slot: _,
+                consumable_id,
+                slot: _slot, // Note: slot parameter is deprecated with overflow handling
             } => {
-                // TODO: Implement consumable buying when shop integration is complete
-                Err(GameError::InvalidAction)
+                // Determine cost based on consumable type
+                let cost = match consumable_id.consumable_type() {
+                    crate::consumables::ConsumableType::Tarot => 3.0,
+                    crate::consumables::ConsumableType::Planet => 3.0,
+                    crate::consumables::ConsumableType::Spectral => 4.0,
+                };
+
+                // Use the new overflow-aware purchase system
+                let purchase_handler =
+                    crate::consumables::ConsumablePurchaseHandler::from_config(self);
+
+                match purchase_handler.purchase_consumable(self, consumable_id, cost) {
+                    Ok(_purchase_result) => {
+                        // Purchase was successful, state has already been updated
+                        Ok(())
+                    }
+                    Err(purchase_error) => {
+                        // Convert purchase error to game error
+                        match purchase_error {
+                            crate::consumables::PurchaseError::InsufficientFunds { .. } => {
+                                Err(GameError::InvalidBalance)
+                            }
+                            crate::consumables::PurchaseError::InvalidGameState { .. } => {
+                                Err(GameError::InvalidStage)
+                            }
+                            _ => Err(GameError::InvalidAction),
+                        }
+                    }
+                }
             }
             Action::UseConsumable {
                 slot: _,
@@ -3438,15 +3470,13 @@ mod tests {
     #[test]
     fn test_can_purchase_consumable_no_available_slots() {
         // Fill consumable hand to capacity (default is 2)
-        let game = Game {
-            stage: Stage::Shop(),
-            money: 10.0,
-            consumables_in_hand: vec![
-                crate::consumables::ConsumableId::TheFool,
-                crate::consumables::ConsumableId::Mercury,
-            ],
-            ..Default::default()
-        };
+        let mut game = Game::default();
+        game.stage = Stage::Shop();
+        game.money = 10.0;
+        game.consumables_in_hand = vec![
+            crate::consumables::ConsumableId::TheFool,
+            crate::consumables::ConsumableId::Mercury,
+        ];
         assert_eq!(
             game.consumables_in_hand.len(),
             game.config.consumable_hand_capacity
@@ -4159,5 +4189,337 @@ mod stone_steel_tracking_tests {
         // Enhancement counts should be accurate (only counting the added enhanced cards)
         assert_eq!(game.stone_cards_in_deck, 2);
         assert_eq!(game.steel_cards_in_deck, 1);
+    }
+
+    // ========================================
+    // Consumable Overflow Integration Tests
+    // ========================================
+    // These tests demonstrate the complete overflow scenarios
+
+    #[test]
+    fn test_consumable_purchase_fifo_overflow() {
+        use crate::action::Action;
+        use crate::config::ConsumableOverflowStrategy;
+        use crate::consumables::ConsumableId;
+
+        let config = Config {
+            consumable_hand_capacity: 2,
+            consumable_overflow_strategy: ConsumableOverflowStrategy::Fifo,
+            ..Default::default()
+        };
+
+        let mut game = Game {
+            stage: Stage::Shop(),
+            money: 20.0,
+            config,
+            ..Default::default()
+        };
+
+        // Fill consumable hand to capacity
+        game.consumables_in_hand = vec![ConsumableId::TheFool, ConsumableId::TheMagician];
+
+        // Purchase a new consumable - should trigger FIFO overflow
+        let buy_action = Action::BuyConsumable {
+            consumable_id: ConsumableId::TheEmpress,
+            slot: 0, // This parameter is ignored with overflow handling
+        };
+
+        let result = game.handle_action(buy_action);
+        assert!(result.is_ok(), "Purchase should succeed with overflow");
+
+        // FIFO should remove the first consumable (TheFool) and add TheEmpress in its place
+        assert_eq!(game.consumables_in_hand.len(), 2);
+        assert_eq!(game.consumables_in_hand[0], ConsumableId::TheEmpress);
+        assert_eq!(game.consumables_in_hand[1], ConsumableId::TheMagician);
+
+        // Money should be deducted (Tarot cost is 3.0)
+        assert_eq!(game.money, 17.0);
+    }
+
+    #[test]
+    fn test_consumable_purchase_lifo_overflow() {
+        use crate::action::Action;
+        use crate::config::ConsumableOverflowStrategy;
+        use crate::consumables::ConsumableId;
+
+        let config = Config {
+            consumable_hand_capacity: 2,
+            consumable_overflow_strategy: ConsumableOverflowStrategy::Lifo,
+            ..Default::default()
+        };
+
+        let mut game = Game {
+            stage: Stage::Shop(),
+            money: 20.0,
+            config,
+            ..Default::default()
+        };
+
+        // Fill consumable hand to capacity
+        game.consumables_in_hand = vec![ConsumableId::TheFool, ConsumableId::TheMagician];
+
+        // Purchase a new consumable - should trigger LIFO overflow
+        let buy_action = Action::BuyConsumable {
+            consumable_id: ConsumableId::TheEmpress,
+            slot: 0, // This parameter is ignored with overflow handling
+        };
+
+        let result = game.handle_action(buy_action);
+        assert!(result.is_ok(), "Purchase should succeed with overflow");
+
+        // LIFO should remove the last consumable (TheMagician) and add TheEmpress in its place
+        assert_eq!(game.consumables_in_hand.len(), 2);
+        assert_eq!(game.consumables_in_hand[0], ConsumableId::TheFool);
+        assert_eq!(game.consumables_in_hand[1], ConsumableId::TheEmpress);
+
+        // Money should be deducted (Tarot cost is 3.0)
+        assert_eq!(game.money, 17.0);
+    }
+
+    #[test]
+    fn test_consumable_purchase_without_overflow() {
+        use crate::action::Action;
+        use crate::config::ConsumableOverflowStrategy;
+        use crate::consumables::ConsumableId;
+
+        let config = Config {
+            consumable_hand_capacity: 2,
+            consumable_overflow_strategy: ConsumableOverflowStrategy::Fifo,
+            ..Default::default()
+        };
+
+        let mut game = Game {
+            stage: Stage::Shop(),
+            money: 20.0,
+            config,
+            ..Default::default()
+        };
+
+        // Start with empty consumable hand
+        game.consumables_in_hand = vec![];
+
+        // Purchase a consumable - should not trigger overflow
+        let buy_action = Action::BuyConsumable {
+            consumable_id: ConsumableId::TheEmpress,
+            slot: 0, // This parameter is ignored with overflow handling
+        };
+
+        let result = game.handle_action(buy_action);
+        assert!(result.is_ok(), "Purchase should succeed without overflow");
+
+        // Consumable should be added normally
+        assert_eq!(game.consumables_in_hand.len(), 1);
+        assert_eq!(game.consumables_in_hand[0], ConsumableId::TheEmpress);
+
+        // Money should be deducted (Tarot cost is 3.0)
+        assert_eq!(game.money, 17.0);
+    }
+
+    #[test]
+    fn test_consumable_purchase_single_slot_overflow() {
+        use crate::action::Action;
+        use crate::config::ConsumableOverflowStrategy;
+        use crate::consumables::ConsumableId;
+
+        let config = Config {
+            consumable_hand_capacity: 1, // Single slot
+            consumable_overflow_strategy: ConsumableOverflowStrategy::Fifo,
+            ..Default::default()
+        };
+
+        let mut game = Game {
+            stage: Stage::Shop(),
+            money: 20.0,
+            config,
+            ..Default::default()
+        };
+
+        // Fill the single slot
+        game.consumables_in_hand = vec![ConsumableId::TheFool];
+
+        // Purchase a new consumable - should replace the single slot
+        let buy_action = Action::BuyConsumable {
+            consumable_id: ConsumableId::TheEmpress,
+            slot: 0,
+        };
+
+        let result = game.handle_action(buy_action);
+        assert!(
+            result.is_ok(),
+            "Purchase should succeed with single slot overflow"
+        );
+
+        // Single slot should be replaced
+        assert_eq!(game.consumables_in_hand.len(), 1);
+        assert_eq!(game.consumables_in_hand[0], ConsumableId::TheEmpress);
+
+        // Money should be deducted
+        assert_eq!(game.money, 17.0);
+    }
+
+    #[test]
+    fn test_consumable_purchase_insufficient_funds() {
+        use crate::action::Action;
+        use crate::config::ConsumableOverflowStrategy;
+        use crate::consumables::ConsumableId;
+
+        let config = Config {
+            consumable_hand_capacity: 2,
+            consumable_overflow_strategy: ConsumableOverflowStrategy::Fifo,
+            ..Default::default()
+        };
+
+        let mut game = Game {
+            stage: Stage::Shop(),
+            money: 2.0, // Not enough for Tarot (costs 3.0)
+            config,
+            ..Default::default()
+        };
+
+        // Try to purchase a consumable without enough money
+        let buy_action = Action::BuyConsumable {
+            consumable_id: ConsumableId::TheEmpress,
+            slot: 0,
+        };
+
+        let result = game.handle_action(buy_action);
+        assert!(
+            result.is_err(),
+            "Purchase should fail with insufficient funds"
+        );
+        assert!(matches!(result.unwrap_err(), GameError::InvalidBalance));
+
+        // Game state should be unchanged
+        assert_eq!(game.consumables_in_hand.len(), 0);
+        assert_eq!(game.money, 2.0);
+    }
+
+    #[test]
+    fn test_consumable_purchase_wrong_stage() {
+        use crate::action::Action;
+        use crate::config::ConsumableOverflowStrategy;
+        use crate::consumables::ConsumableId;
+
+        let config = Config {
+            consumable_hand_capacity: 2,
+            consumable_overflow_strategy: ConsumableOverflowStrategy::Fifo,
+            ..Default::default()
+        };
+
+        let mut game = Game {
+            stage: Stage::PreBlind(), // Wrong stage for purchases
+            money: 20.0,
+            config,
+            ..Default::default()
+        };
+
+        // Try to purchase a consumable in wrong stage
+        let buy_action = Action::BuyConsumable {
+            consumable_id: ConsumableId::TheEmpress,
+            slot: 0,
+        };
+
+        let result = game.handle_action(buy_action);
+        assert!(result.is_err(), "Purchase should fail in wrong stage");
+        assert!(matches!(result.unwrap_err(), GameError::InvalidStage));
+
+        // Game state should be unchanged
+        assert_eq!(game.consumables_in_hand.len(), 0);
+        assert_eq!(game.money, 20.0);
+    }
+
+    #[test]
+    fn test_consumable_purchase_different_costs() {
+        use crate::action::Action;
+        use crate::config::ConsumableOverflowStrategy;
+        use crate::consumables::ConsumableId;
+
+        let config = Config {
+            consumable_hand_capacity: 3,
+            consumable_overflow_strategy: ConsumableOverflowStrategy::Fifo,
+            ..Default::default()
+        };
+
+        let mut game = Game {
+            stage: Stage::Shop(),
+            money: 20.0,
+            config,
+            ..Default::default()
+        };
+
+        // Purchase Tarot (costs 3.0)
+        let buy_tarot = Action::BuyConsumable {
+            consumable_id: ConsumableId::TheEmpress,
+            slot: 0,
+        };
+        let result = game.handle_action(buy_tarot);
+        assert!(result.is_ok());
+        assert_eq!(game.money, 17.0);
+
+        // Purchase Planet (costs 3.0)
+        let buy_planet = Action::BuyConsumable {
+            consumable_id: ConsumableId::Mercury,
+            slot: 0,
+        };
+        let result = game.handle_action(buy_planet);
+        assert!(result.is_ok());
+        assert_eq!(game.money, 14.0);
+
+        // Purchase Spectral (costs 4.0)
+        let buy_spectral = Action::BuyConsumable {
+            consumable_id: ConsumableId::Familiar,
+            slot: 0,
+        };
+        let result = game.handle_action(buy_spectral);
+        assert!(result.is_ok());
+        assert_eq!(game.money, 10.0);
+
+        // Should have all three consumables
+        assert_eq!(game.consumables_in_hand.len(), 3);
+        assert_eq!(game.consumables_in_hand[0], ConsumableId::TheEmpress);
+        assert_eq!(game.consumables_in_hand[1], ConsumableId::Mercury);
+        assert_eq!(game.consumables_in_hand[2], ConsumableId::Familiar);
+    }
+
+    #[test]
+    fn test_purchase_validation_with_overflow_enabled() {
+        use crate::config::ConsumableOverflowStrategy;
+        use crate::consumables::ConsumableId;
+        use crate::shop::ConsumableType;
+
+        let config = Config {
+            consumable_hand_capacity: 2,
+            consumable_overflow_strategy: ConsumableOverflowStrategy::Fifo,
+            ..Default::default()
+        };
+
+        let mut game = Game {
+            stage: Stage::Shop(),
+            money: 20.0,
+            config,
+            ..Default::default()
+        };
+
+        // Fill consumable hand to capacity
+        game.consumables_in_hand = vec![ConsumableId::TheFool, ConsumableId::TheMagician];
+
+        // can_purchase_consumable should now succeed even when full (overflow handles it)
+        let result = game.can_purchase_consumable(ConsumableType::Tarot);
+        assert!(
+            result.is_ok(),
+            "Should be able to purchase consumable with overflow handling"
+        );
+
+        let result = game.can_purchase_consumable(ConsumableType::Planet);
+        assert!(
+            result.is_ok(),
+            "Should be able to purchase consumable with overflow handling"
+        );
+
+        let result = game.can_purchase_consumable(ConsumableType::Spectral);
+        assert!(
+            result.is_ok(),
+            "Should be able to purchase consumable with overflow handling"
+        );
     }
 }

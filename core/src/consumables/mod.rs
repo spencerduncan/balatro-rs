@@ -1808,12 +1808,19 @@ impl<'de> Deserialize<'de> for ConsumableSlots {
 }
 
 // Re-export submodules when they are implemented
+pub mod purchase;
 pub mod spectral;
 pub mod tarot;
 // pub mod planet; // Disabled in main until planet card system is ready
 
 // Re-export key tarot types for convenience
 pub use tarot::{CardEnhancement, TarotCard, TarotEffect, TarotError, TarotFactory, TarotRarity};
+
+// Re-export key purchase types for convenience
+pub use purchase::{
+    ConsumablePurchaseHandler, FifoOverflowStrategy, LifoOverflowStrategy, OverflowStrategy,
+    OverflowStrategyFactory, PurchaseError, PurchaseResult,
+};
 
 // Test module
 #[cfg(test)]
