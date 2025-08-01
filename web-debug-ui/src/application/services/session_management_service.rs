@@ -5,14 +5,13 @@
 //! production scalability with support for 100+ concurrent sessions.
 
 use crate::application::{
-    config::{ApplicationConfig, CleanupStrategy, GameConfig, SessionId, SessionInfo},
+    config::{ApplicationConfig, GameConfig, SessionId, SessionInfo},
     container::{GameRepository, MetricsCollector},
     errors::ApplicationError,
 };
 use crate::domain::Game;
-use async_trait::async_trait;
 use std::sync::Arc;
-use std::time::{Duration, SystemTime};
+use std::time::Duration;
 
 /// Session Management Service
 ///
@@ -61,7 +60,7 @@ impl SessionManagementService {
     /// - Records session creation metrics
     /// - Initializes game state according to configuration
     /// - Persists session for recovery
-    pub async fn create_session(&self, config: GameConfig) -> Result<SessionId, ApplicationError> {
+    pub async fn create_session(&self, _config: GameConfig) -> Result<SessionId, ApplicationError> {
         let _timer = self.metrics.start_timer("session.creation", &[]);
 
         // Check concurrent session limits
@@ -144,7 +143,7 @@ impl SessionManagementService {
                                     .increment_counter("session.cleanup.error", 1, &[])
                                     .await;
                                 // Log error but continue cleanup - don't let one failure stop cleanup
-                                eprintln!("Failed to cleanup session {}: {}", session_id, err);
+                                eprintln!("Failed to cleanup session {session_id}: {err}");
                             }
                         }
                     }
@@ -178,7 +177,7 @@ impl SessionManagementService {
         let _timer = self.metrics.start_timer("session.info_retrieval", &[]);
 
         // Load game to verify session exists
-        let game = self.repository.load_game(session_id).await?;
+        let _game = self.repository.load_game(session_id).await?;
 
         // Create session info from game state
         // In a real implementation, we'd store more metadata
@@ -226,7 +225,7 @@ impl SessionManagementService {
     /// # Returns
     /// * `SessionServiceHealth` - Current service health metrics
     pub async fn health_check(&self) -> SessionServiceHealth {
-        let repository_health = self.repository.health_check().await.unwrap_or_else(|_| {
+        let repository_health = self.repository.health_check().await.unwrap_or({
             crate::application::container::StorageHealth {
                 is_healthy: false,
                 latency_ms: 0,

@@ -30,7 +30,7 @@ pub struct GameConfig {
 impl Default for GameConfig {
     fn default() -> Self {
         Self {
-            game_config: Config::default(),
+            game_config: Config,
             max_action_history: 1000,
             session_timeout: Duration::from_secs(3600), // 1 hour
         }
@@ -56,7 +56,7 @@ impl Default for GameConfig {
 /// ```ignore
 /// use balatro_domain::{GameSession, GameConfig, Action};
 ///
-/// let config = GameConfig::default();
+/// let config = GameConfig;
 /// let mut session = GameSession::new(config).unwrap();
 ///
 /// // Validate an action
@@ -279,8 +279,7 @@ impl GameSession {
             Err(game_error) => {
                 // Convert game error to domain error
                 Err(DomainError::invalid_action(format!(
-                    "Game engine error: {}",
-                    game_error
+                    "{game_error}"
                 )))
             }
         }
@@ -373,7 +372,7 @@ mod tests {
 
     #[test]
     fn game_config_default_values() {
-        let config = GameConfig::default();
+        let config = GameConfig;
 
         assert_eq!(config.max_action_history, 1000);
         assert_eq!(config.session_timeout, Duration::from_secs(3600));
@@ -381,7 +380,7 @@ mod tests {
 
     #[test]
     fn game_session_creation_success() {
-        let config = GameConfig::default();
+        let config = GameConfig;
         let session = GameSession::new(config).unwrap();
 
         assert!(!session.id().to_string().is_empty());
@@ -393,7 +392,7 @@ mod tests {
 
     #[test]
     fn game_session_creation_fails_with_zero_max_history() {
-        let mut config = GameConfig::default();
+        let mut config = GameConfig;
         config.max_action_history = 0;
 
         let result = GameSession::new(config);
@@ -409,7 +408,7 @@ mod tests {
 
     #[test]
     fn game_session_creation_fails_with_zero_timeout() {
-        let mut config = GameConfig::default();
+        let mut config = GameConfig;
         config.session_timeout = Duration::from_secs(0);
 
         let result = GameSession::new(config);
@@ -425,7 +424,7 @@ mod tests {
 
     #[test]
     fn session_has_unique_ids() {
-        let config = GameConfig::default();
+        let config = GameConfig;
         let session1 = GameSession::new(config.clone()).unwrap();
         let session2 = GameSession::new(config).unwrap();
 
@@ -435,7 +434,7 @@ mod tests {
     #[test]
     fn session_tracks_creation_time() {
         let before = Instant::now();
-        let session = GameSession::new(GameConfig::default()).unwrap();
+        let session = GameSession::new(GameConfig).unwrap();
         let after = Instant::now();
 
         assert!(session.created_at() >= before);
@@ -445,7 +444,7 @@ mod tests {
 
     #[test]
     fn validate_action_rejects_play_with_no_cards() {
-        let session = GameSession::new(GameConfig::default()).unwrap();
+        let session = GameSession::new(GameConfig).unwrap();
         let action = Action::Play();
 
         let validation = session.validate_action(&action);
@@ -458,7 +457,7 @@ mod tests {
 
     #[test]
     fn validate_action_rejects_discard_with_no_cards() {
-        let session = GameSession::new(GameConfig::default()).unwrap();
+        let session = GameSession::new(GameConfig).unwrap();
         let action = Action::Discard();
 
         let validation = session.validate_action(&action);
@@ -471,7 +470,7 @@ mod tests {
 
     #[test]
     fn validate_action_allows_card_selection() {
-        let session = GameSession::new(GameConfig::default()).unwrap();
+        let session = GameSession::new(GameConfig).unwrap();
 
         // Get a card from the available cards to select
         if let Some(card) = session.game().available.cards.first() {
@@ -483,7 +482,7 @@ mod tests {
 
     #[test]
     fn session_expiry_based_on_custom_ttl() {
-        let mut config = GameConfig::default();
+        let mut config = GameConfig;
         config.session_timeout = Duration::from_secs(10);
         let session = GameSession::new(config).unwrap();
 
@@ -496,7 +495,7 @@ mod tests {
 
     #[test]
     fn session_activity_duration_tracking() {
-        let session = GameSession::new(GameConfig::default()).unwrap();
+        let session = GameSession::new(GameConfig).unwrap();
 
         // Initially, activity duration should be zero (or very small)
         let duration = session.activity_duration();
@@ -509,7 +508,7 @@ mod tests {
 
     #[test]
     fn action_history_is_bounded() {
-        let mut config = GameConfig::default();
+        let mut config = GameConfig;
         config.max_action_history = 2; // Very small for testing
 
         let mut session = GameSession::new(config).unwrap();
@@ -534,7 +533,7 @@ mod tests {
 
     #[test]
     fn game_stats_reflect_current_state() {
-        let session = GameSession::new(GameConfig::default()).unwrap();
+        let session = GameSession::new(GameConfig).unwrap();
         let stats = session.game_stats();
 
         assert_eq!(stats.score, session.game().score);
@@ -545,7 +544,7 @@ mod tests {
 
     #[test]
     fn session_clone_creates_independent_copy() {
-        let session1 = GameSession::new(GameConfig::default()).unwrap();
+        let session1 = GameSession::new(GameConfig).unwrap();
         let mut session2 = session1.clone();
 
         // Sessions should have same ID (they're clones)
@@ -563,7 +562,7 @@ mod tests {
 
     #[test]
     fn apply_action_updates_last_action_time() {
-        let mut session = GameSession::new(GameConfig::default()).unwrap();
+        let mut session = GameSession::new(GameConfig).unwrap();
         let initial_time = session.last_action_at();
 
         // Wait a bit to ensure time difference
@@ -580,7 +579,7 @@ mod tests {
 
     #[test]
     fn apply_action_fails_for_invalid_action() {
-        let mut session = GameSession::new(GameConfig::default()).unwrap();
+        let mut session = GameSession::new(GameConfig).unwrap();
         let action = Action::Play(); // Invalid because no cards selected
 
         let result = session.apply_action(action);
@@ -596,7 +595,7 @@ mod tests {
 
     #[test]
     fn expired_session_rejects_actions() {
-        let mut config = GameConfig::default();
+        let mut config = GameConfig;
         config.session_timeout = Duration::from_nanos(1); // Immediate expiry
 
         let mut session = GameSession::new(config).unwrap();
@@ -621,7 +620,7 @@ mod tests {
 
     #[test]
     fn successful_action_returns_appropriate_result() {
-        let mut session = GameSession::new(GameConfig::default()).unwrap();
+        let mut session = GameSession::new(GameConfig).unwrap();
 
         if let Some(card) = session.game().available.cards.first() {
             let action = Action::SelectCard(*card);

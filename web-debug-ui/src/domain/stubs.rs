@@ -82,11 +82,7 @@ impl Game {
 
     /// Generate available actions (stub implementation)
     pub fn gen_actions(&self) -> impl Iterator<Item = Action> {
-        vec![
-            Action::Play(),
-            Action::Discard(),
-            Action::NextRound(),
-        ].into_iter()
+        vec![Action::Play(), Action::Discard(), Action::NextRound()].into_iter()
     }
 
     /// Start the game (stub implementation)
@@ -99,7 +95,7 @@ impl Game {
 /// Implement Default for Game
 impl Default for Game {
     fn default() -> Self {
-        Self::new(Config::default())
+        Self::new(Config)
     }
 }
 

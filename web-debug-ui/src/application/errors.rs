@@ -140,13 +140,7 @@ impl ApplicationError {
 
     /// Check if this error should trigger an alert
     pub fn is_alertable(&self) -> bool {
-        match self {
-            Self::SessionLimitExceeded { .. } => true,
-            Self::ResourceExhausted { .. } => true,
-            Self::ServiceUnavailable { .. } => true,
-            Self::Configuration { .. } => true,
-            _ => false,
-        }
+        matches!(self, Self::SessionLimitExceeded { .. } | Self::ResourceExhausted { .. } | Self::ServiceUnavailable { .. } | Self::Configuration { .. })
     }
 
     /// Get the recommended retry delay for retryable errors
@@ -205,6 +199,7 @@ pub trait ErrorRecoveryStrategy: Send + Sync + std::fmt::Debug {
 /// Implements exponential backoff with jitter for retryable errors.
 /// This prevents thundering herd problems in distributed systems.
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct ExponentialBackoffRecovery {
     max_attempts: usize,
     initial_delay: Duration,
@@ -269,6 +264,7 @@ impl ErrorRecoveryStrategy for ExponentialBackoffRecovery {
 ///
 /// Implements circuit breaker pattern for dependency failures.
 /// Prevents cascading failures by failing fast when dependencies are unhealthy.
+#[allow(dead_code)]
 #[derive(Debug)]
 pub struct CircuitBreakerRecovery {
     failure_threshold: f64,
@@ -366,7 +362,7 @@ impl ErrorRecoveryStrategy for CompositeRecoveryStrategy {
         Err(ApplicationError::infrastructure(
             "recovery",
             false,
-            std::io::Error::new(std::io::ErrorKind::Other, "All recovery strategies failed"),
+            std::io::Error::other("All recovery strategies failed"),
         ))
     }
 

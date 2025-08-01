@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 //! High-Performance Axum HTTP Server
 //!
 //! Designed for <10ms action latency and 100+ concurrent connections.
@@ -11,7 +12,7 @@ pub use server::HttpServer;
 use axum::{
     extract::State,
     http::StatusCode,
-    response::{Html, Json},
+    response::Json,
     routing::{get, post},
     Router,
 };
@@ -114,7 +115,6 @@ async fn metrics_endpoint() -> Result<String, StatusCode> {
     #[cfg(feature = "monitoring")]
     {
         // Export Prometheus metrics
-        use metrics_exporter_prometheus::PrometheusHandle;
         // This would need to be properly implemented with a global metrics handle
         Ok("# Metrics not fully implemented yet\n".to_string())
     }
@@ -180,7 +180,8 @@ async fn handle_action(
 
             #[cfg(feature = "monitoring")]
             {
-                metrics::histogram!("action_execution_duration_ms").record(duration.as_millis() as f64);
+                metrics::histogram!("action_execution_duration_ms")
+                    .record(duration.as_millis() as f64);
                 if duration.as_millis() > 10 {
                     metrics::counter!("slow_actions_total").increment(1);
                     tracing::warn!(

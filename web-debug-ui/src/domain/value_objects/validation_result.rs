@@ -139,7 +139,7 @@ impl fmt::Display for ValidationResult {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Valid => write!(f, "Valid"),
-            Self::Invalid(error) => write!(f, "Invalid: {}", error),
+            Self::Invalid(error) => write!(f, "{error}"),
         }
     }
 }
@@ -149,11 +149,11 @@ impl fmt::Display for ValidationError {
         write!(f, "{}", self.reason)?;
 
         if let Some(code) = &self.error_code {
-            write!(f, " (Code: {})", code)?;
+            write!(f, " (Code: {code})")?;
         }
 
         if let Some(details) = &self.details {
-            write!(f, " - {}", details)?;
+            write!(f, " - {details}")?;
         }
 
         Ok(())

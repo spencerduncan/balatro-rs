@@ -14,7 +14,7 @@
 //! - Liskov Substitution: Implementations are safely interchangeable
 
 use crate::application::{
-    config::{ApplicationConfig, GameConfig, SessionId, SessionInfo},
+    config::{ApplicationConfig, GameConfig, SessionId},
     errors::ApplicationError,
 };
 use crate::domain::{Action, Game};
@@ -291,7 +291,7 @@ impl ServiceContainer {
             self.repository
                 .health_check()
                 .await
-                .unwrap_or_else(|_| StorageHealth {
+                .unwrap_or( StorageHealth {
                     is_healthy: false,
                     latency_ms: 0,
                     storage_size_mb: 0,
@@ -303,7 +303,7 @@ impl ServiceContainer {
             self.notifier
                 .health_check()
                 .await
-                .unwrap_or_else(|_| NotificationHealth {
+                .unwrap_or( NotificationHealth {
                     is_healthy: false,
                     active_subscriptions: 0,
                     message_queue_depth: 0,
@@ -314,7 +314,7 @@ impl ServiceContainer {
             .metrics
             .health_check()
             .await
-            .unwrap_or_else(|_| MetricsHealth {
+            .unwrap_or( MetricsHealth {
                 is_healthy: false,
                 metrics_per_second: 0.0,
                 buffer_usage_percent: 100,

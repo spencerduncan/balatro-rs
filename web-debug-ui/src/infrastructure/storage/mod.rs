@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 //! Memory-Optimized Session Store
 //!
 //! CRITICAL PERFORMANCE TARGETS:
@@ -12,8 +13,6 @@ pub mod memory_store;
 pub use memory_store::HighPerformanceMemoryStore;
 
 use crate::infrastructure::SessionId;
-use serde_json::Value;
-use std::sync::Arc;
 
 /// Storage error types
 #[derive(thiserror::Error, Debug)]

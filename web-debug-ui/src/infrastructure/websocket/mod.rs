@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 //! High-Performance WebSocket Connection Management
 //!
 //! CRITICAL PERFORMANCE TARGETS:
@@ -11,9 +12,6 @@ pub mod connection_manager;
 
 pub use connection_manager::WebSocketConnectionPool;
 
-use axum::extract::ws::{Message, WebSocket};
-use dashmap::DashMap;
-use std::sync::Arc;
 use tokio::sync::broadcast;
 
 /// WebSocket error types
@@ -100,6 +98,7 @@ pub enum GameMessage {
 
 /// Connection metrics for monitoring
 #[derive(Debug, Clone)]
+#[derive(Default)]
 pub struct ConnectionMetrics {
     pub total_connections: usize,
     pub active_connections: usize,
@@ -108,20 +107,6 @@ pub struct ConnectionMetrics {
     pub bytes_sent: u64,
     pub bytes_received: u64,
     pub connection_errors: u64,
-}
-
-impl Default for ConnectionMetrics {
-    fn default() -> Self {
-        Self {
-            total_connections: 0,
-            active_connections: 0,
-            messages_sent: 0,
-            messages_received: 0,
-            bytes_sent: 0,
-            bytes_received: 0,
-            connection_errors: 0,
-        }
-    }
 }
 
 /// Broadcast channel for efficient state updates

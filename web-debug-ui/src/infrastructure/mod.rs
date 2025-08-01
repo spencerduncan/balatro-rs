@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 //! Infrastructure Foundation - Sprint 1
 //!
 //! High-performance Rust infrastructure with Axum HTTP server and WebSocket support.
@@ -23,6 +24,7 @@ use std::sync::Arc;
 
 /// Central configuration for the infrastructure foundation
 #[derive(Debug, Clone)]
+#[derive(Default)]
 pub struct InfrastructureConfig {
     /// HTTP server configuration
     pub http_config: self::http::ServerConfig,
@@ -32,17 +34,6 @@ pub struct InfrastructureConfig {
     pub storage_config: self::storage::StoreConfig,
     /// Performance monitoring configuration
     pub metrics_config: self::metrics::MetricsConfig,
-}
-
-impl Default for InfrastructureConfig {
-    fn default() -> Self {
-        Self {
-            http_config: self::http::ServerConfig::default(),
-            websocket_config: self::websocket::ConnectionPoolConfig::default(),
-            storage_config: self::storage::StoreConfig::default(),
-            metrics_config: self::metrics::MetricsConfig::default(),
-        }
-    }
 }
 
 /// High-performance infrastructure error types
@@ -155,7 +146,10 @@ impl InfrastructureFoundation {
     pub async fn start(&self, bind_addr: &str) -> Result<()> {
         // Note: In a real implementation, we'd need to handle server lifecycle properly
         // For now, this is a stub that would start the server
-        tracing::info!("Infrastructure foundation would start HTTP server on {}", bind_addr);
+        tracing::info!(
+            "Infrastructure foundation would start HTTP server on {}",
+            bind_addr
+        );
         Ok(())
     }
 

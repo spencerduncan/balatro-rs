@@ -5,7 +5,7 @@
 //! notifications, metrics). Designed for production scalability.
 
 use crate::application::{
-    config::{ApplicationConfig, GameConfig, SessionId},
+    config::{ApplicationConfig, SessionId},
     container::{
         ActionResult, ActionValidator, GameRepository, MetricsCollector, StateChangeEvent,
         StateNotifier,
@@ -13,7 +13,6 @@ use crate::application::{
     errors::ApplicationError,
 };
 use crate::domain::{Action, Game};
-use async_trait::async_trait;
 use std::sync::Arc;
 use std::time::Instant;
 
@@ -24,6 +23,7 @@ use std::time::Instant;
 /// - State change notifications
 /// - Comprehensive metrics collection
 /// - Error handling and recovery
+#[allow(dead_code)]
 pub struct GameApplicationService {
     validator: Arc<dyn ActionValidator>,
     repository: Arc<dyn GameRepository>,
@@ -67,7 +67,7 @@ impl GameApplicationService {
         let start_time = Instant::now();
         let _timer = self.metrics.start_timer(
             "action.execution",
-            &[("action_type", &format!("{:?}", action))],
+            &[("action_type", &format!("{action:?}"))],
         );
 
         // Load current game state
@@ -78,7 +78,10 @@ impl GameApplicationService {
         if !validation_result.is_valid() {
             return Err(ApplicationError::Domain {
                 message: "Action validation failed".to_string(),
-                source: Box::new(std::io::Error::new(std::io::ErrorKind::InvalidInput, "Validation failed")),
+                source: Box::new(std::io::Error::new(
+                    std::io::ErrorKind::InvalidInput,
+                    "Validation failed",
+                )),
             });
         }
 

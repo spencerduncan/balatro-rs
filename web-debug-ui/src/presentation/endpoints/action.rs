@@ -1,9 +1,11 @@
+#![allow(missing_docs)]
 //! Action execution HTTP endpoints
 //!
 //! This module will provide REST API endpoints for game action execution
 //! in future iterations. For now, it's a stub module.
 
 // Stub implementation for early integration
+#[derive(Default)]
 #[allow(dead_code)]
 pub struct ActionEndpoints;
 

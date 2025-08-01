@@ -13,6 +13,7 @@ use std::time::Instant;
 /// in the critical path of action processing.
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
+#[derive(Default)]
 pub struct StackAllocatedActionResponse {
     /// Operation success status
     pub success: bool,
@@ -26,19 +27,6 @@ pub struct StackAllocatedActionResponse {
     pub error_code: u32,
     /// Reserved for future use (padding to cache line boundary)
     pub reserved: [u8; 16],
-}
-
-impl Default for StackAllocatedActionResponse {
-    fn default() -> Self {
-        Self {
-            success: false,
-            state_hash: 0,
-            execution_time_nanos: 0,
-            memory_used_bytes: 0,
-            error_code: 0,
-            reserved: [0; 16],
-        }
-    }
 }
 
 impl StackAllocatedActionResponse {
@@ -236,6 +224,9 @@ impl AlignedBuffer {
         &self.data
     }
 
+/// # Safety
+/// This function sets the length of the internal buffer. The caller must ensure
+/// that the buffer actually contains at least `len` valid bytes.
     /// Set length (unsafe - caller must ensure data is initialized)
     pub unsafe fn set_len(&mut self, len: usize) {
         self.data.set_len(len);

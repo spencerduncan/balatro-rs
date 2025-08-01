@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 //! # Web Debug UI - Sprint 1 Integration
 //!
 //! This crate integrates all Sprint 1 components into a unified web-debug-ui package
@@ -117,7 +118,7 @@ pub mod integration {
             StateChangeEvent, StateNotifier, StorageHealth,
         },
     };
-    use crate::domain::{Action, Game};
+    use crate::domain::Game;
 
     /// Default game repository implementation for early integration
     #[derive(Debug, Default)]
@@ -125,7 +126,7 @@ pub mod integration {
 
     impl DefaultGameRepository {
         pub fn new() -> Self {
-            Self::default()
+            Self
         }
     }
 
@@ -144,7 +145,7 @@ pub mod integration {
         async fn load_game(&self, _session_id: &SessionId) -> Result<Game, ApplicationError> {
             // Stub implementation - return default game for now
             tracing::debug!("DefaultGameRepository::load_game called (stub)");
-            Ok(Game::new(crate::domain::stubs::Config::default()))
+            Ok(Game::new(crate::domain::stubs::Config))
         }
 
         async fn delete_game(&self, _session_id: &SessionId) -> Result<(), ApplicationError> {
@@ -178,7 +179,7 @@ pub mod integration {
 
     impl DefaultStateNotifier {
         pub fn new() -> Self {
-            Self::default()
+            Self
         }
     }
 
@@ -224,7 +225,7 @@ pub mod integration {
 
     impl DefaultMetricsCollector {
         pub fn new() -> Self {
-            Self::default()
+            Self
         }
     }
 

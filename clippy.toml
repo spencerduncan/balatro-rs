@@ -1,0 +1,8 @@
+# Clippy configuration for web-debug-ui Sprint 1 integration
+# 
+# This configuration allows missing documentation during Sprint 1 integration
+# to focus on core functionality and CI pipeline stability.
+# Documentation will be addressed systematically in Sprint 2.
+
+# Allow missing documentation during Sprint 1 integration
+missing-docs-in-crate-items = false

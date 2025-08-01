@@ -3,12 +3,12 @@
 //! Uses DashMap for lock-free concurrent access and RAII patterns for resource management.
 //! Designed to maintain <20MB per session and O(1) operations.
 
-use super::{GameSession, SessionMetadata, StorageError, StorageStats, StoreConfig};
+use super::{GameSession, StorageError, StorageStats, StoreConfig};
 use crate::infrastructure::SessionId;
 use dashmap::DashMap;
 use serde_json::Value;
 use std::sync::{
-    atomic::{AtomicU64, AtomicUsize, Ordering},
+    atomic::{AtomicU64, Ordering},
     Arc,
 };
 use std::time::Instant;
@@ -217,7 +217,8 @@ impl HighPerformanceMemoryStore {
 
         #[cfg(feature = "monitoring")]
         {
-            metrics::histogram!("storage_get_state_duration_ms").record(duration.as_millis() as f64);
+            metrics::histogram!("storage_get_state_duration_ms")
+                .record(duration.as_millis() as f64);
         }
 
         Ok(result)

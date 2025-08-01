@@ -3,7 +3,7 @@
 //! Provides high-resolution performance monitoring with <1ms overhead.
 //! Critical for maintaining <10ms action latency requirements.
 
-use super::{MetricsConfig, MetricsError};
+use super::MetricsConfig;
 use std::sync::{
     atomic::{AtomicU64, Ordering},
     Arc,
@@ -122,11 +122,7 @@ impl OperationTimer {
         performance_violations: Arc<AtomicU64>,
     ) -> Self {
         Self {
-            start: if high_resolution {
-                Instant::now() // Nanosecond precision
-            } else {
-                Instant::now() // Still high resolution, but we might sample less frequently
-            },
+            start: Instant::now(), // Always use high precision
             high_resolution,
             slow_operations,
             performance_violations,

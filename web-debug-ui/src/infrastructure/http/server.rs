@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 //! High-Performance Axum HTTP Server Implementation
 //!
 //! CRITICAL PERFORMANCE TARGETS:
@@ -46,7 +47,7 @@ impl HttpServer {
             TcpListener::bind(bind_addr)
                 .await
                 .map_err(|e| HttpServerError::Startup {
-                    message: format!("Failed to bind to {}: {}", bind_addr, e),
+                    message: format!("{bind_addr}: {e}"),
                 })?;
 
         tracing::info!("HTTP server listening on {}", bind_addr);
@@ -71,7 +72,7 @@ impl HttpServer {
             metrics::histogram!("http_server_uptime_seconds").record(uptime.as_secs() as f64);
 
             result.map_err(|e| HttpServerError::Startup {
-                message: format!("Server failed: {}", e),
+                message: format!("{e}"),
             })
         }
 
@@ -81,7 +82,7 @@ impl HttpServer {
                 .with_graceful_shutdown(shutdown_signal())
                 .await
                 .map_err(|e| HttpServerError::Startup {
-                    message: format!("Server failed: {}", e),
+                    message: format!("{e}"),
                 })
         }
     }

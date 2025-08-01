@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 //! Zero-Copy Serialization for Maximum Performance
 //!
 //! CRITICAL PERFORMANCE TARGETS:

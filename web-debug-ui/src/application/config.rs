@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 //! Application Configuration and Session Types
 //!
 //! This module defines all configuration types, session management structures,
@@ -166,7 +167,7 @@ impl Default for GameLimits {
     fn default() -> Self {
         Self {
             max_actions: 10_000,                   // ~1000 rounds max
-            max_duration: Duration::from_hours(2), // 2 hour max session
+            max_duration: <std::time::Duration as crate::application::config::DurationExt>::from_hours(2), // 2 hour max session
             max_memory_mb: 50,                     // 50MB memory limit
             max_jokers: 25,                        // Balatro's natural limit
             max_deck_size: 200,                    // Reasonable deck limit
@@ -300,6 +301,7 @@ impl Default for SessionMetrics {
 /// and operational parameters. Designed for production
 /// deployment with proper scaling parameters.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Default)]
 pub struct ApplicationConfig {
     /// Session management configuration
     pub session: SessionConfig,
@@ -312,17 +314,6 @@ pub struct ApplicationConfig {
 
     /// Feature flags and experiments
     pub features: ApplicationFeatures,
-}
-
-impl Default for ApplicationConfig {
-    fn default() -> Self {
-        Self {
-            session: SessionConfig::default(),
-            limits: ApplicationLimits::default(),
-            monitoring: MonitoringConfig::default(),
-            features: ApplicationFeatures::default(),
-        }
-    }
 }
 
 /// Session management configuration
@@ -344,8 +335,8 @@ pub struct SessionConfig {
 impl Default for SessionConfig {
     fn default() -> Self {
         Self {
-            ttl: Duration::from_hours(1),             // 1 hour TTL
-            cleanup_interval: Duration::from_mins(5), // 5 minute cleanup
+            ttl: <std::time::Duration as crate::application::config::DurationExt>::from_hours(1),             // 1 hour TTL
+            cleanup_interval: <std::time::Duration as crate::application::config::DurationExt>::from_mins(5), // 5 minute cleanup
             max_concurrent_sessions: 1000,            // 1000 concurrent sessions
             cleanup_strategy: CleanupStrategy::LeastRecentlyUsed,
         }
