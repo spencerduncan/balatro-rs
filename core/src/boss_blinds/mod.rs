@@ -6,7 +6,8 @@
 //! # Module Organization
 //!
 //! - `mod.rs` - Core types and traits for boss blinds
-//! - `implementations.rs` - Specific boss blind implementations (future)
+//! - `plant.rs` - The Plant boss blind implementation
+//! - `implementations.rs` - Additional boss blind implementations (future)
 //!
 //! # Design Principles
 //!
@@ -143,12 +144,20 @@ pub enum BossBlindId {
     // Placeholder variants - will be expanded in future implementations
     /// Placeholder for future boss blind implementations
     BossBlindPlaceholder,
+    /// The Plant - Debuffs all face cards (Jacks, Queens, Kings) to score 0 base points
+    /// Minimum ante: 4, Score requirement: 2x base chips
+    ThePlant,
+    /// The Serpent - Forces the player to draw exactly 3 cards after each play or discard action
+    /// Minimum ante: 5, Score requirement: 2x base chips
+    TheSerpent,
 }
 
 impl fmt::Display for BossBlindId {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             BossBlindId::BossBlindPlaceholder => write!(f, "Boss Blind Placeholder"),
+            BossBlindId::ThePlant => write!(f, "The Plant"),
+            BossBlindId::TheSerpent => write!(f, "The Serpent"),
         }
     }
 }
@@ -163,6 +172,8 @@ impl BossBlindId {
     pub fn base_score_requirement(&self) -> usize {
         match self {
             BossBlindId::BossBlindPlaceholder => 300, // Placeholder value
+            BossBlindId::ThePlant => 600,             // 2x base chips requirement
+            BossBlindId::TheSerpent => 600,           // 2x base chips requirement
         }
     }
 
@@ -170,6 +181,8 @@ impl BossBlindId {
     pub fn reward_multiplier(&self) -> f64 {
         match self {
             BossBlindId::BossBlindPlaceholder => 1.5, // Placeholder value
+            BossBlindId::ThePlant => 2.0,             // Higher reward for higher difficulty
+            BossBlindId::TheSerpent => 2.0,           // Higher reward for higher difficulty
         }
     }
 }
@@ -417,5 +430,11 @@ pub trait BossBlind: Send + Sync + std::fmt::Debug {
     fn min_ante(&self) -> u32;
 }
 
+// Module declarations
+pub mod plant;
+pub mod serpent;
+
 // Re-export commonly used types
+pub use plant::ThePlant;
+pub use serpent::TheSerpent;
 pub use BossBlindId::*;
