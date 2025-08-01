@@ -35,6 +35,7 @@ impl HandRank {
     ///
     /// # Returns
     /// Level information with chips and mult adjusted for the given level
+    #[allow(dead_code)]
     pub(crate) fn level_at(&self, level: u32) -> Level {
         let base = self.level();
         let level_bonus = (level.saturating_sub(1)) as usize;

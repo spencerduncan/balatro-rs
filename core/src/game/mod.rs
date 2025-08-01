@@ -12,17 +12,11 @@ use crate::hand::{MadeHand, SelectHand};
 use crate::joker::{GameContext, Joker, JokerId, Jokers, OldJoker as OldJokerTrait};
 use crate::joker_effect_processor::JokerEffectProcessor;
 use crate::joker_factory::JokerFactory;
-<<<<<<< HEAD
 use crate::joker_state::JokerStateManager;
-use crate::rank::HandRank;
+use crate::rank::{HandRank, Level};
 
 // Import debug functionality
 mod debug;
-=======
-use crate::joker_state::{JokerState, JokerStateManager};
-use crate::memory_monitor::MemoryMonitor;
-use crate::rank::{HandRank, Level};
->>>>>>> 5ddd470b (fix(infrastructure): Complete infrastructure foundation with hand level system)
 use crate::scaling_joker::ScalingEvent;
 use crate::shop::Shop;
 use crate::skip_tags::SkipTagId;
@@ -220,7 +214,6 @@ pub struct Game {
 
     // hand type levels (planet card system)
     pub hand_type_levels: HashMap<HandRank, u32>,
-
 
     // Card enhancement tracking for this game run
     /// Count of Stone cards currently in deck (cached for performance)
@@ -583,7 +576,7 @@ impl Game {
     /// The current level information with calculated chips and mult values
     pub fn get_hand_level(&self, hand_rank: HandRank) -> Level {
         let current_level = self.hand_type_levels.get(&hand_rank).copied().unwrap_or(1);
-        let base_level = hand_rank.base_level();
+        let base_level = hand_rank.level();
 
         // Calculate scaled values based on level
         Level {
@@ -1974,22 +1967,13 @@ impl Game {
                 Err(GameError::InvalidAction)
             }
 
-<<<<<<< HEAD
             // Planet card usage
-=======
-            // Planet card actions
->>>>>>> 5ddd470b (fix(infrastructure): Complete infrastructure foundation with hand level system)
             Action::UsePlanetCard {
                 planet_card_id: _,
                 hand_rank_id: _,
             } => {
-<<<<<<< HEAD
                 // TODO: Implement planet card usage through action system
                 // For now, planet cards use level_up_hand directly
-=======
-                // TODO: Implement planet card usage with proper target selection
-                // For now, return InvalidAction to prevent crashes
->>>>>>> 5ddd470b (fix(infrastructure): Complete infrastructure foundation with hand level system)
                 Err(GameError::InvalidAction)
             }
 
@@ -2315,147 +2299,14 @@ impl Game {
     /// Delegates to the persistence manager following Single Responsibility Principle.
     pub fn save_state_to_json(&self) -> Result<String, SaveLoadError> {
         self.persistence_manager.save_state_to_json(self)
-        // Extract joker states from the state manager
-        let joker_states = self.joker_state_manager.snapshot_all();
-
-        // Extract joker IDs from the new joker system
-        let joker_ids: Vec<JokerId> = self.jokers.iter().map(|j| j.id()).collect();
-
-        let saveable_state = SaveableGameState {
-            version: SAVE_VERSION,
-            timestamp: std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_secs(),
-            config: self.config.clone(),
-            shop: self.shop.clone(),
-            deck: self.deck.clone(),
-            available: self.available.clone(),
-            discarded: self.discarded.clone(),
-            blind: self.blind,
-            stage: self.stage,
-            ante_start: self.ante_start,
-            ante_end: self.ante_end,
-            ante_current: self.ante_current,
-            action_history: self.action_history.clone(),
-            round: self.round,
-            joker_ids,
-            joker_states,
-            plays: self.plays,
-            discards: self.discards,
-            reward: self.reward,
-            money: self.money,
-            shop_reroll_cost: self.shop_reroll_cost,
-            shop_rerolls_this_round: self.shop_rerolls_this_round,
-            chips: self.chips,
-            mult: self.mult,
-            score: self.score,
-            hand_type_counts: self.hand_type_counts.clone(),
-            hand_type_levels: self.hand_type_levels.clone(),
-            // Extended state fields
-            consumables_in_hand: self.consumables_in_hand.clone(),
-            vouchers: self.vouchers.clone(),
-            boss_blind_state: self.boss_blind_state.clone(),
-            pack_inventory: self.pack_inventory.clone(),
-            open_pack: self.open_pack.clone(),
-            state_version: self.state_version,
-        };
-
-        serde_json::to_string_pretty(&saveable_state).map_err(SaveLoadError::SerializationError)
->>>>>>> 471a746a (fix(infrastructure): Resolve critical compilation and test failures)
     }
 
     /// Load game state from JSON string
     ///
     /// Delegates to the persistence manager following Single Responsibility Principle.
     pub fn load_state_from_json(json: &str) -> Result<Self, SaveLoadError> {
-<<<<<<< HEAD
         let persistence_manager = persistence::PersistenceManager::new();
         persistence_manager.load_state_from_json(json)
-=======
-        let saveable_state: SaveableGameState =
-            serde_json::from_str(json).map_err(SaveLoadError::DeserializationError)?;
-
-        // Validate version
-        if saveable_state.version > SAVE_VERSION {
-            return Err(SaveLoadError::InvalidVersion(saveable_state.version));
-        }
-
-        // Recreate jokers using JokerFactory
-        let jokers: Vec<Box<dyn Joker>> = saveable_state
-            .joker_ids
-            .into_iter()
-            .filter_map(|id| JokerFactory::create(id))
-            .collect();
-
-        // Create joker state manager
-        let joker_state_manager = Arc::new(JokerStateManager::new());
-
-        // Create new game instance with reconstructed state
-        let game = Game {
-            config: saveable_state.config,
-            shop: saveable_state.shop,
-            deck: saveable_state.deck,
-            available: saveable_state.available,
-            discarded: saveable_state.discarded,
-            blind: saveable_state.blind,
-            stage: saveable_state.stage,
-            ante_start: saveable_state.ante_start,
-            ante_end: saveable_state.ante_end,
-            ante_current: saveable_state.ante_current,
-            action_history: saveable_state.action_history,
-            round: saveable_state.round,
-            jokers,
-            joker_effect_processor: JokerEffectProcessor::new(),
-            joker_state_manager: joker_state_manager.clone(),
-            plays: saveable_state.plays,
-            discards: saveable_state.discards,
-            reward: saveable_state.reward,
-            money: saveable_state.money,
-            shop_reroll_cost: saveable_state.shop_reroll_cost,
-            shop_rerolls_this_round: saveable_state.shop_rerolls_this_round,
-            chips: saveable_state.chips,
-            mult: saveable_state.mult,
-            score: saveable_state.score,
-            hand_type_counts: saveable_state.hand_type_counts,
-            hand_type_levels: saveable_state.hand_type_levels,
-
-            // Enhancement tracking (will be calculated after loading)
-            stone_cards_in_deck: 0,
-            steel_cards_in_deck: 0,
-
-            // Extended state fields
-            consumables_in_hand: saveable_state.consumables_in_hand,
-            vouchers: saveable_state.vouchers,
-            boss_blind_state: saveable_state.boss_blind_state,
-            pack_inventory: saveable_state.pack_inventory,
-            open_pack: saveable_state.open_pack,
-            state_version: saveable_state.state_version,
-            // Initialize debug logging fields (not serialized)
-            debug_logging_enabled: false,
-            debug_messages: Vec::new(),
-            // Initialize target context (not serialized)
-            target_context: TargetContext::new(),
-            // Initialize secure RNG (not serialized)
-            rng: crate::rng::GameRng::secure(),
-            // Initialize memory monitor (not serialized)
-            memory_monitor: MemoryMonitor::default(),
-            // Initialize skip tags system (not serialized)
-            available_skip_tags: Vec::new(),
-            active_skip_tags: Vec::new(),
-            pending_tag_selection: false,
-        };
-
-        // Restore joker states to the state manager
-        game.joker_state_manager
-            .restore_from_snapshot(saveable_state.joker_states);
-
-        // Refresh enhancement counts based on loaded deck
-        let mut game = game;
-        game.refresh_enhancement_counts();
-
-        Ok(game)
->>>>>>> 471a746a (fix(infrastructure): Resolve critical compilation and test failures)
     }
 
     /// Count Stone cards in the current deck

@@ -220,7 +220,7 @@ impl PersistenceManager {
             mult: saveable_state.mult,
             score: saveable_state.score,
             hand_type_counts: saveable_state.hand_type_counts,
-            hand_levels: std::collections::HashMap::new(), // Initialize with empty levels (default level 1)
+            hand_type_levels: std::collections::HashMap::new(), // Initialize with empty levels (default level 1)
             // Card enhancement tracking
             stone_cards_in_deck: saveable_state.stone_cards_in_deck,
             steel_cards_in_deck: saveable_state.steel_cards_in_deck,

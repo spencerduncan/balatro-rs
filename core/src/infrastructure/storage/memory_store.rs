@@ -387,8 +387,8 @@ impl Drop for HighPerformanceMemoryStore {
 
         #[cfg(feature = "monitoring")]
         {
-            metrics::gauge!("storage_final_session_count", session_count as f64);
-            metrics::gauge!("storage_final_memory_usage_mb", memory_usage);
+            metrics::gauge!("storage_final_session_count").set(session_count as f64);
+            metrics::gauge!("storage_final_memory_usage_mb").set(memory_usage);
         }
     }
 }
