@@ -7,7 +7,7 @@
 //! # Design Principles
 //!
 //! - Each tarot card is a separate struct implementing TarotCard
-//! - Performance target: <1ms per card effect
+//! - Performance target: \<1ms per card effect
 //! - Thread-safe implementations using Send + Sync
 //! - Comprehensive error handling for edge cases
 //! - Integration with existing game state and card system
@@ -45,7 +45,7 @@ pub enum TarotError {
 /// # Implementation Requirements
 ///
 /// - Must be thread-safe (Send + Sync)
-/// - Performance target: <1ms per effect
+/// - Performance target: \<1ms per effect
 /// - Must handle all edge cases gracefully
 /// - Should provide meaningful error messages
 pub trait TarotCard: Consumable + Send + Sync + fmt::Debug {
