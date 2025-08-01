@@ -133,6 +133,7 @@ fn test_cargo_check() {
 
 /// Test that fast tests pass (subset of test suite)
 #[test]
+#[ignore = "Disabled to prevent test-within-test infinite loop that causes CI timeouts"]
 fn test_fast_tests() {
     let output = Command::new("cargo")
         .args(["test", "--lib", "--bins", "--quiet"])
