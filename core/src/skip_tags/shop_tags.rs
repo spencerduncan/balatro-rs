@@ -40,9 +40,12 @@ impl SkipTag for VoucherTag {
     }
 
     fn activate(&self, context: SkipTagContext) -> SkipTagResult {
-        // TODO: Add voucher to next shop modifiers
+        let mut game = context.game;
+        game.active_skip_tags
+            .apply_shop_enhancement_effect(SkipTagId::Voucher);
+
         SkipTagResult {
-            game: context.game,
+            game,
             additional_tags: vec![],
             success: true,
             message: Some("Next shop will have an additional voucher".to_string()),
@@ -80,9 +83,12 @@ impl SkipTag for CouponTag {
     }
 
     fn activate(&self, context: SkipTagContext) -> SkipTagResult {
-        // TODO: Set coupon modifier for next shop
+        let mut game = context.game;
+        game.active_skip_tags
+            .apply_shop_enhancement_effect(SkipTagId::Coupon);
+
         SkipTagResult {
-            game: context.game,
+            game,
             additional_tags: vec![],
             success: true,
             message: Some("Initial items will be free in next shop".to_string()),
@@ -120,9 +126,12 @@ impl SkipTag for D6Tag {
     }
 
     fn activate(&self, context: SkipTagContext) -> SkipTagResult {
-        // TODO: Set free reroll modifier for next shop
+        let mut game = context.game;
+        game.active_skip_tags
+            .apply_shop_enhancement_effect(SkipTagId::D6);
+
         SkipTagResult {
-            game: context.game,
+            game,
             additional_tags: vec![],
             success: true,
             message: Some("First reroll will be free in next shop".to_string()),
@@ -160,9 +169,12 @@ impl SkipTag for FoilTag {
     }
 
     fn activate(&self, context: SkipTagContext) -> SkipTagResult {
-        // TODO: Set foil joker modifier for next shop
+        let mut game = context.game;
+        game.active_skip_tags
+            .apply_shop_enhancement_effect(SkipTagId::Foil);
+
         SkipTagResult {
-            game: context.game,
+            game,
             additional_tags: vec![],
             success: true,
             message: Some("Next base edition joker will become Foil and free".to_string()),
@@ -200,9 +212,12 @@ impl SkipTag for HolographicTag {
     }
 
     fn activate(&self, context: SkipTagContext) -> SkipTagResult {
-        // TODO: Set holographic joker modifier for next shop
+        let mut game = context.game;
+        game.active_skip_tags
+            .apply_shop_enhancement_effect(SkipTagId::Holographic);
+
         SkipTagResult {
-            game: context.game,
+            game,
             additional_tags: vec![],
             success: true,
             message: Some("Next base edition joker will become Holographic and free".to_string()),
@@ -240,9 +255,12 @@ impl SkipTag for PolychromeTag {
     }
 
     fn activate(&self, context: SkipTagContext) -> SkipTagResult {
-        // TODO: Set polychrome joker modifier for next shop
+        let mut game = context.game;
+        game.active_skip_tags
+            .apply_shop_enhancement_effect(SkipTagId::Polychrome);
+
         SkipTagResult {
-            game: context.game,
+            game,
             additional_tags: vec![],
             success: true,
             message: Some("Next base edition joker will become Polychrome and free".to_string()),
