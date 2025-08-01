@@ -202,7 +202,7 @@ impl FortuneTellerJoker {
             name: "Fortune Teller".to_string(),
             description: "+1 Mult per Tarot card used".to_string(),
             rarity: JokerRarity::Common,
-            cost: 8,
+            cost: 3,
             // Removed: tarots_used initialization (dual state eliminated)
         }
     }
@@ -679,7 +679,7 @@ impl Default for RedCardJoker {
 impl RedCardJoker {
     pub fn new() -> Self {
         Self {
-            id: JokerId::RedCard, // Always use RedCard ID
+            id: JokerId::Reserved6, // RedCard (pack skipping version)
             name: "Red Card".to_string(),
             description: "+3 Mult per pack skipped".to_string(),
             rarity: JokerRarity::Common,
@@ -988,7 +988,7 @@ mod tests {
         // Test identity
         assert_eq!(joker.joker_type(), "fortune_teller");
         assert_eq!(JokerIdentity::name(&joker), "Fortune Teller");
-        assert_eq!(joker.base_cost(), 8);
+        assert_eq!(joker.base_cost(), 3);
         assert_eq!(joker.rarity, JokerRarity::Common);
     }
 

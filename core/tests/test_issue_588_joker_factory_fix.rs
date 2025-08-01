@@ -27,11 +27,11 @@ fn test_fortune_teller_joker_correctly_created() {
 /// that gains +3 Mult per pack skipped
 #[test]
 fn test_red_card_joker_correctly_created() {
-    let red_card = JokerFactory::create(JokerId::RedCard);
+    let red_card = JokerFactory::create(JokerId::Reserved6);
     assert!(red_card.is_some());
 
     let joker = red_card.unwrap();
-    assert_eq!(joker.id(), JokerId::RedCard);
+    assert_eq!(joker.id(), JokerId::Reserved6);
     assert_eq!(joker.name(), "Red Card");
     assert_eq!(joker.description(), "+3 Mult per pack skipped");
     assert_eq!(joker.rarity(), JokerRarity::Common);
@@ -85,7 +85,7 @@ fn test_red_card_creation() {
     balatro_rs::initialize().expect("Failed to initialize core systems");
 
     // Verify Red Card can be created and used without crashes
-    let red_card = JokerFactory::create(JokerId::RedCard).unwrap();
+    let red_card = JokerFactory::create(JokerId::Reserved6).unwrap();
     assert_eq!(red_card.name(), "Red Card");
     assert_eq!(red_card.description(), "+3 Mult per pack skipped");
 }
@@ -111,13 +111,10 @@ fn test_jokers_in_rarity_lists() {
     // Initialize all systems before running the test to avoid factory race conditions
     balatro_rs::initialize().expect("Failed to initialize core systems");
 
-    // FortuneTeller has unassigned rarity (not in any rarity list)
+    // Fortune should be in Common (as implemented)
     let common_jokers = JokerFactory::get_by_rarity(JokerRarity::Common);
-    assert!(
-        !common_jokers.contains(&JokerId::FortuneTeller),
-        "FortuneTeller should have unassigned rarity"
-    );
-    assert!(common_jokers.contains(&JokerId::RedCard)); // RedCard
+    assert!(common_jokers.contains(&JokerId::FortuneTeller));
+    assert!(common_jokers.contains(&JokerId::Reserved6)); // RedCard
 
     // Steel Joker should be in Uncommon
     let uncommon_jokers = JokerFactory::get_by_rarity(JokerRarity::Uncommon);
@@ -133,7 +130,7 @@ fn test_jokers_in_implemented_list() {
     let implemented = JokerFactory::get_all_implemented();
 
     assert!(implemented.contains(&JokerId::FortuneTeller));
-    assert!(implemented.contains(&JokerId::RedCard)); // Red Card
+    assert!(implemented.contains(&JokerId::Reserved6)); // Red Card
     assert!(implemented.contains(&JokerId::SteelJoker));
 }
 
