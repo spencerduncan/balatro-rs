@@ -477,7 +477,7 @@ impl TarotCard for TheHighPriestess {
     fn activate(&self, game: &mut Game, _target: Target) -> Result<TarotEffect, TarotError> {
         let mut effect = TarotEffect::default();
         let planet_cards = ConsumableId::planet_cards();
-        let count = std::cmp::min(2, 5 - game.consumables_in_hand.len());
+        let count = std::cmp::min(2, 5 - game.consumable_slots.len());
 
         for _ in 0..count {
             if let Some(&planet_id) = planet_cards.get(game.rng.gen_range(0..planet_cards.len())) {
@@ -659,7 +659,7 @@ impl TarotCard for TheEmperor {
             return Err(TarotError::NoJokerAvailable); // Reusing appropriate error type
         }
 
-        let count = std::cmp::min(2, 5 - game.consumables_in_hand.len()); // Don't exceed hand limit
+        let count = std::cmp::min(2, 5 - game.consumable_slots.len()); // Don't exceed slot limit
 
         for _ in 0..count {
             // Safe to unwrap here since we checked tarot_cards is not empty above

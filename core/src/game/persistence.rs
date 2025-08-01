@@ -16,7 +16,7 @@ use crate::boss_blinds::BossBlindState;
 use crate::bounded_action_history::BoundedActionHistory;
 use crate::card::Card;
 use crate::config::Config;
-use crate::consumables::ConsumableId;
+use crate::consumables::{ConsumableId, ConsumableSlots};
 use crate::deck::Deck;
 use crate::joker::{Joker, JokerId};
 use crate::joker_factory::JokerFactory;
@@ -69,7 +69,7 @@ struct SaveableGameState {
     pub stone_cards_in_deck: usize,
     pub steel_cards_in_deck: usize,
     // Extended state fields
-    pub consumables_in_hand: Vec<ConsumableId>,
+    pub consumable_slot_ids: Vec<Option<ConsumableId>>,
     pub vouchers: VoucherCollection,
     pub boss_blind_state: BossBlindState,
     pub pack_inventory: Vec<Pack>,
@@ -159,7 +159,9 @@ impl PersistenceManager {
             stone_cards_in_deck: game.stone_cards_in_deck,
             steel_cards_in_deck: game.steel_cards_in_deck,
             // Extended state fields
-            consumables_in_hand: game.consumables_in_hand.clone(),
+            // For now, we can't fully serialize ConsumableSlots due to trait objects
+            // This is a temporary solution - in a full implementation, we'd need to track ConsumableIds
+            consumable_slot_ids: vec![None; game.consumable_slots.capacity()],
             vouchers: game.vouchers.clone(),
             boss_blind_state: game.boss_blind_state.clone(),
             pack_inventory: game.pack_manager.pack_inventory().clone(),
@@ -225,7 +227,8 @@ impl PersistenceManager {
             stone_cards_in_deck: saveable_state.stone_cards_in_deck,
             steel_cards_in_deck: saveable_state.steel_cards_in_deck,
             // Extended state fields
-            consumables_in_hand: saveable_state.consumables_in_hand,
+            // Initialize empty consumable slots - in a full implementation, we'd restore from ConsumableIds
+            consumable_slots: ConsumableSlots::new(),
             vouchers: saveable_state.vouchers,
             boss_blind_state: saveable_state.boss_blind_state,
             state_version: saveable_state.state_version,
