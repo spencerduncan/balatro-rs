@@ -121,7 +121,7 @@ pub fn create_green_joker() -> ScalingJoker {
 /// Red Card: +3 mult when any pack skipped
 pub fn create_red_card() -> ScalingJoker {
     ScalingJoker::new(
-        JokerId::Reserved6,
+        JokerId::RedCard,
         "Red Card".to_string(),
         "+3 Mult per pack skipped".to_string(),
         JokerRarity::Common,
@@ -237,7 +237,7 @@ pub fn get_scaling_joker_by_id(id: JokerId) -> Option<ScalingJoker> {
         JokerId::Ceremonial => Some(create_ceremonial_dagger()),
         JokerId::Reserved => Some(create_throwback()),
         JokerId::GreenJoker => Some(create_green_joker()),
-        JokerId::Reserved6 => Some(create_red_card()),
+        JokerId::RedCard => Some(create_red_card()),
         JokerId::SteelJoker => Some(create_steel_joker_scaling()),
         JokerId::Reserved2 => Some(create_mystic_summit()),
         JokerId::MarbleJoker => Some(create_marble_joker_scaling()),
@@ -297,7 +297,7 @@ mod tests {
     fn test_get_scaling_joker_by_id() {
         assert!(get_scaling_joker_by_id(JokerId::Trousers).is_some());
         assert!(get_scaling_joker_by_id(JokerId::GreenJoker).is_some());
-        assert!(get_scaling_joker_by_id(JokerId::Reserved6).is_some()); // Red Card
+        assert!(get_scaling_joker_by_id(JokerId::RedCard).is_some()); // Red Card
         assert!(get_scaling_joker_by_id(JokerId::Joker).is_none()); // Not a scaling joker
     }
 

@@ -678,12 +678,8 @@ impl Default for RedCardJoker {
 
 impl RedCardJoker {
     pub fn new() -> Self {
-        Self::with_id(JokerId::RedCard)
-    }
-
-    pub fn with_id(id: JokerId) -> Self {
         Self {
-            id, // Use the provided ID (RedCard or Reserved6)
+            id: JokerId::RedCard, // Always use RedCard ID
             name: "Red Card".to_string(),
             description: "+3 Mult per pack skipped".to_string(),
             rarity: JokerRarity::Common,

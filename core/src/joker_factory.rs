@@ -52,7 +52,7 @@ impl JokerFactory {
             JokerId::Runner => Some(Box::new(RunnerJoker)),
 
             // Static jokers from StaticJokerFactory
-            // Note: RedCard scaling version is handled by Reserved6 below
+            // Note: RedCard scaling version is handled by the scaling system
             JokerId::BlueJoker => Some(StaticJokerFactory::create_blue_joker()),
             JokerId::FacelessJoker => Some(StaticJokerFactory::create_faceless_joker()),
             JokerId::Square => {
@@ -95,8 +95,7 @@ impl JokerFactory {
             JokerId::Trousers => Some(Box::new(SpareTrousersJoker::new())),
             JokerId::GreenJoker => Some(Box::new(GreenJoker::new())),
             JokerId::Reserved5 => Some(Box::new(RideTheBusJoker::new())), // RideTheBus
-            JokerId::Reserved6 => Some(Box::new(RedCardJoker::with_id(JokerId::Reserved6))), // RedCard (pack skipping)
-            JokerId::RedCard => Some(Box::new(RedCardJoker::new())), // Direct RedCard mapping
+            JokerId::RedCard => Some(Box::new(RedCardJoker::new())), // RedCard (pack skipping)
 
             // Scaling chips jokers
             JokerId::Castle => Some(Box::new(CastleJoker::new())),
@@ -185,8 +184,7 @@ impl JokerFactory {
                 // Scaling additive mult jokers
                 GreenJoker,
                 Reserved5, // RideTheBus
-                Reserved6, // RedCard (pack skipping)
-                RedCard,   // Direct RedCard mapping
+                RedCard,   // RedCard (pack skipping)
                 // Scaling chips jokers
                 OddTodd,
                 Arrowhead,
@@ -299,8 +297,7 @@ impl JokerFactory {
             Trousers, // Spare Trousers
             GreenJoker,
             Reserved5, // RideTheBus
-            Reserved6, // RedCard (pack skipping)
-            RedCard,   // Direct RedCard mapping
+            RedCard,   // RedCard (pack skipping)
             // Scaling chips jokers
             Castle,
             Wee,
@@ -399,7 +396,7 @@ mod tests {
         let uncommon_jokers = JokerFactory::get_by_rarity(JokerRarity::Uncommon);
         assert!(uncommon_jokers.contains(&JokerId::BlueJoker));
         assert!(uncommon_jokers.contains(&JokerId::SteelJoker));
-        // Note: RedCard is now a scaling joker (Reserved6) handled separately
+        // Note: RedCard is a scaling joker handled by the scaling system
     }
 
     #[test]
@@ -435,9 +432,9 @@ mod tests {
         assert!(ride_the_bus.is_some());
         assert_eq!(ride_the_bus.unwrap().id(), JokerId::Reserved5);
 
-        let red_card = JokerFactory::create(JokerId::Reserved6);
+        let red_card = JokerFactory::create(JokerId::RedCard);
         assert!(red_card.is_some());
-        assert_eq!(red_card.unwrap().id(), JokerId::Reserved6);
+        assert_eq!(red_card.unwrap().id(), JokerId::RedCard);
 
         let fortune_teller = JokerFactory::create(JokerId::FortuneTeller);
         assert!(fortune_teller.is_some());
@@ -514,7 +511,7 @@ mod tests {
         // Common scaling jokers
         assert!(common_jokers.contains(&JokerId::GreenJoker));
         assert!(common_jokers.contains(&JokerId::Reserved5)); // RideTheBus
-        assert!(common_jokers.contains(&JokerId::Reserved6)); // RedCard (pack skipping)
+        assert!(common_jokers.contains(&JokerId::RedCard)); // RedCard (pack skipping)
         assert!(common_jokers.contains(&JokerId::OddTodd));
         assert!(common_jokers.contains(&JokerId::Arrowhead));
         assert!(common_jokers.contains(&JokerId::Scholar));
@@ -551,7 +548,7 @@ mod tests {
         assert!(implemented.contains(&JokerId::Trousers));
         assert!(implemented.contains(&JokerId::GreenJoker));
         assert!(implemented.contains(&JokerId::Reserved5));
-        assert!(implemented.contains(&JokerId::Reserved6));
+        assert!(implemented.contains(&JokerId::RedCard));
         assert!(implemented.contains(&JokerId::FortuneTeller));
 
         // Scaling chips jokers
