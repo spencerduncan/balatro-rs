@@ -1,40 +1,22 @@
-//! Application Layer - Use Case Orchestration and Dependency Coordination
+//! Application Layer - Simple Session Management
 //!
-//! This module implements the Application Layer of the Clean Architecture pattern,
-//! providing use case orchestration, dependency injection, and session management
-//! for scalable game engine operations.
-//!
-//! ## Architecture Overview
-//!
-//! The Application Layer sits between the Domain and Infrastructure layers:
-//! - **Domain Layer**: Core business logic (game rules, actions, state)
-//! - **Application Layer**: Use case orchestration, session management, DI
-//! - **Infrastructure Layer**: External concerns (persistence, networking, UI)
+//! This module provides a thin application layer over the core game engine,
+//! offering session management for multiple concurrent games. Designed to be
+//! simple, fast, and appropriate for a game engine context.
 //!
 //! ## Key Components
 //!
-//! - **Services**: High-level application services for use case orchestration
-//! - **Use Cases**: Specific business workflows (create session, execute action)
-//! - **Dependency Injection**: Service container and trait-based dependencies
-//! - **Error Handling**: Comprehensive error types and recovery strategies
-//! - **Session Management**: Multi-session lifecycle and cleanup
+//! - **SessionManager**: In-memory session storage and lifecycle management
+//! - **GameSession**: Wrapper around Game with session metadata
+//! - **SessionError**: Simple error handling for session operations
 //!
-//! ## Production Design Principles
+//! ## Design Principles
 //!
-//! - **Scalability**: Designed for 100+ concurrent sessions
-//! - **Fault Tolerance**: Graceful error handling and recovery
-//! - **Observability**: Comprehensive metrics and tracing
-//! - **Performance**: Sub-10ms latency targets for all operations
+//! - **Simplicity**: Minimal abstraction over core Game
+//! - **Performance**: Synchronous operations, no async overhead
+//! - **Game Engine Appropriate**: No enterprise patterns, just what's needed
 
-pub mod config;
-pub mod container;
-pub mod errors;
-pub mod services;
-pub mod use_cases;
+pub mod session;
 
 // Re-export key types for easier consumption
-pub use config::ApplicationConfig;
-pub use container::ServiceContainer;
-pub use errors::{ApplicationError, ErrorRecoveryStrategy};
-pub use services::{GameApplicationService, SessionManagementService};
-pub use use_cases::{CreateGameSessionUseCase, ExecuteGameActionUseCase};
+pub use session::{GameSession, SessionError, SessionManager};

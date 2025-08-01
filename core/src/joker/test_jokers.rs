@@ -882,9 +882,12 @@ impl Joker for TestScalingJoker {
         }
 
         // Update activations count in state manager
-        context.joker_state_manager.update_state(self.joker_id, |state| {
-            state.accumulated_value = (state.accumulated_value + 1.0).min(1000.0); // Max 1000 activations
-        });
+        context
+            .joker_state_manager
+            .update_state(self.joker_id, |state| {
+                state.accumulated_value = (state.accumulated_value + 1.0).min(1000.0);
+                // Max 1000 activations
+            });
 
         // Get current activation count
         let activations = context
@@ -966,9 +969,12 @@ impl Joker for TestScalingChipsJoker {
 
     fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
         // Update activations count in state manager
-        context.joker_state_manager.update_state(self.id(), |state| {
-            state.accumulated_value = (state.accumulated_value + 1.0).min(1000.0); // Max 1000 activations
-        });
+        context
+            .joker_state_manager
+            .update_state(self.id(), |state| {
+                state.accumulated_value = (state.accumulated_value + 1.0).min(1000.0);
+                // Max 1000 activations
+            });
 
         // Get current activation count
         let activations = context
