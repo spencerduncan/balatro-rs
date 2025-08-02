@@ -74,6 +74,7 @@ impl JokerFactory {
             JokerId::Reserved8 => Some(Box::new(GrimJoker)),
             JokerId::AcrobatJoker => Some(Box::new(AcrobatJoker::new())),
             JokerId::FortuneTeller => Some(Box::new(FortuneTellerJoker::new())),
+            JokerId::Fortune => Some(Box::new(FortuneTellerJoker::new_with_fortune_id())), // Alias for FortuneTeller
             JokerId::VagabondJoker => Some(Box::new(VagabondJokerImpl)),
             JokerId::Reserved9 => Some(Box::new(ChaoticJoker)),
 
