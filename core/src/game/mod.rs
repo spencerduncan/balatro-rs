@@ -1320,8 +1320,14 @@ impl Game {
         self.action_history.resize(action_history_limit);
     }
 
-    /// Get current memory usage statistics
+    /// Get current memory usage statistics (zero-cost when monitoring disabled)
     pub fn get_memory_stats(&mut self) -> Option<crate::memory_monitor::MemoryStats> {
+        // Early return if monitoring is disabled - avoid all expensive calculations
+        if !self.debug_manager.memory_monitor.should_check() {
+            return self.debug_manager.memory_monitor.last_stats().cloned();
+        }
+
+        // Only calculate memory if monitoring is actually enabled and needed
         let estimated_bytes = self.estimate_memory_usage();
         let bounded_actions = self.action_history.len();
         self.debug_manager
@@ -1333,40 +1339,51 @@ impl Game {
         self.debug_manager.generate_memory_report()
     }
 
-    /// Estimate current memory usage in bytes
+    /// Estimate current memory usage in bytes (optimized for minimal overhead)
     fn estimate_memory_usage(&self) -> usize {
-        // Base game state memory (relatively static)
-        let mut total = std::mem::size_of::<Self>();
+        // Extremely fast estimation using simple multiplication and pre-computed constants
+        // Avoid all expensive operations and system calls
 
-        // Action history - use lightweight calculation instead of full memory_stats()
-        // This avoids expensive calculations in the action history memory_stats method
-        // Use len() (bounded size) not total_actions() (unbounded counter) to prevent memory leak
-        let action_count = self.action_history.len();
-        total += action_count * std::mem::size_of::<crate::action::Action>();
+        // Pre-computed constants for speed
+        const BASE_GAME_SIZE: usize = 2048;
+        const ACTION_SIZE: usize = 32;
+        const CARD_SIZE: usize = 48;
+        const JOKER_SIZE: usize = 200;
+        const HASHMAP_ENTRY_SIZE: usize = 16;
+        const DEBUG_MSG_AVG_SIZE: usize = 64;
 
-        // Cards memory - use length calculations (much faster than iterating)
-        let card_size = std::mem::size_of::<crate::card::Card>();
-        total += self.deck.cards().len() * card_size;
-        total += self.available.cards().len() * card_size;
-        total += self.discarded.len() * card_size;
+        let mut total = BASE_GAME_SIZE;
 
-        // Jokers - lightweight estimate
-        total += self.jokers.len() * 200; // Estimate 200 bytes per joker
+        // Action history - simple multiplication, no expensive len() calls where possible
+        total += self.action_history.len() * ACTION_SIZE;
 
-        // Hand type counts - small and static during gameplay
-        total += self.hand_type_counts.len()
-            * (std::mem::size_of::<crate::rank::HandRank>() + std::mem::size_of::<u32>());
+        // Cards - combine all card collections in one calculation
+        let total_cards =
+            self.deck.cards().len() + self.available.cards().len() + self.discarded.len();
+        total += total_cards * CARD_SIZE;
 
-        // Debug messages - only estimate if debug logging is enabled
+        // Jokers - simple multiplication
+        total += self.jokers.len() * JOKER_SIZE;
+
+        // HashMaps - minimal estimation
+        total += (self.hand_type_counts.len() + self.hand_levels.len()) * HASHMAP_ENTRY_SIZE;
+
+        // Debug messages - only if enabled, use fast length estimate
         if self.debug_manager.debug_logging_enabled {
-            total += self.debug_manager.estimate_debug_memory_usage();
+            total += self.debug_manager.debug_messages.len() * DEBUG_MSG_AVG_SIZE;
         }
 
         total
     }
 
-    /// Check if memory usage exceeds safe limits
+    /// Check if memory usage exceeds safe limits (zero-cost when monitoring disabled)
     pub fn check_memory_safety(&mut self) -> bool {
+        // Early return if monitoring is disabled - assume safe to avoid expensive calculations
+        if !self.debug_manager.memory_monitor.config().enable_monitoring {
+            return true;
+        }
+
+        // Only perform expensive calculations if monitoring is actually enabled
         let estimated_bytes = self.estimate_memory_usage();
         let bounded_actions = self.action_history.len();
         self.debug_manager
