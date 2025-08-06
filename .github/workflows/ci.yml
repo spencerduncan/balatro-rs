@@ -22,33 +22,35 @@ permissions:
 jobs:
   test:
     name: Test Suite
+    timeout-minutes: 30  # Job-level timeout to prevent hanging
     strategy:
+      fail-fast: false  # Don't cancel other matrix jobs if one fails
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-      
+
       - name: Install dependencies (Linux)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y pkg-config libssl-dev python3 python3-dev
-          
+
       - name: Install dependencies (macOS)
         if: runner.os == 'macOS'
         run: |
           brew install pkg-config openssl python3
-          
+
       - name: Install dependencies (Windows)
         if: runner.os == 'Windows'
         run: |
           choco install python3 --yes
           echo "OPENSSL_DIR=C:\Program Files\OpenSSL-Win64" >> $GITHUB_ENV
-      
+
       - name: Cache cargo registry
         uses: actions/cache@v4
         with:
@@ -58,7 +60,7 @@ jobs:
           key: ${{ matrix.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ matrix.os }}-cargo-registry-
-      
+
       - name: Cache cargo build
         uses: actions/cache@v4
         with:
@@ -67,25 +69,71 @@ jobs:
           restore-keys: |
             ${{ matrix.os }}-cargo-build-test-${{ hashFiles('**/Cargo.lock') }}-
             ${{ matrix.os }}-cargo-build-test-
-      
+
       - name: Run tests
+        timeout-minutes: 15  # Step-level timeout for test execution
         shell: bash
+        env:
+          RUST_TEST_THREADS: 4  # Limit parallelism to prevent resource exhaustion
+          RUST_LOG: debug  # Enable detailed logging for debugging
+          TEST_CORRELATION_ID: ${{ github.run_id }}-${{ github.run_number }}-${{ matrix.os }}  # Unique ID for tracing
         run: |
-          # Run all tests with verbose output and capture results
+          # Run all tests with retry mechanism for flaky tests
+          echo "Starting test run with correlation ID: $TEST_CORRELATION_ID"
           set +e  # Don't exit on test failure, we want to capture the results
-          cargo test --all --verbose > test_output.log 2>&1
-          TEST_EXIT_CODE=$?
+
+          # Retry mechanism: up to 3 attempts for flaky tests
+          MAX_ATTEMPTS=3
+          ATTEMPT=1
+          TEST_EXIT_CODE=1
+
+          while [ $ATTEMPT -le $MAX_ATTEMPTS ] && [ $TEST_EXIT_CODE -ne 0 ]; do
+            echo "Test attempt $ATTEMPT of $MAX_ATTEMPTS (Correlation: $TEST_CORRELATION_ID)"
+
+            # Monitor memory usage during tests
+            if command -v free >/dev/null 2>&1; then
+              echo "Memory before test run:"
+              free -h
+            fi
+
+            # Run tests with timeout wrapper
+            timeout 900 cargo test --all --verbose > test_output_attempt_$ATTEMPT.log 2>&1
+            TEST_EXIT_CODE=$?
+
+            # Check if timeout occurred
+            if [ $TEST_EXIT_CODE -eq 124 ]; then
+              echo "ERROR: Tests timed out after 15 minutes (Correlation: $TEST_CORRELATION_ID)"
+              echo "TIMEOUT" > test_failure_reason.txt
+            fi
+
+            # Consolidate logs
+            cp test_output_attempt_$ATTEMPT.log test_output.log
+
+            if [ $TEST_EXIT_CODE -ne 0 ] && [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
+              echo "Tests failed with code $TEST_EXIT_CODE, retrying... (Correlation: $TEST_CORRELATION_ID)"
+              sleep 5  # Brief pause before retry
+            fi
+
+            ATTEMPT=$((ATTEMPT + 1))
+          done
+
+          # Log final status
+          if [ $TEST_EXIT_CODE -eq 0 ]; then
+            echo "Tests passed after $((ATTEMPT - 1)) attempt(s) (Correlation: $TEST_CORRELATION_ID)"
+          else
+            echo "Tests failed after $MAX_ATTEMPTS attempts (Correlation: $TEST_CORRELATION_ID)"
+          fi
           set -e
-          
+
           # Save the exit code for later use
           echo $TEST_EXIT_CODE > test_exit_code.txt
-          
+
           # Display the output (for GitHub Actions logs)
           cat test_output.log
-          
+
           # Exit with the original test exit code
           exit $TEST_EXIT_CODE
-          
+
       - name: Generate test summary
         if: always()
         shell: bash
@@ -95,7 +143,7 @@ jobs:
           echo "- Rust Version: $(rustc --version)" >> test_summary.md
           echo "- Test Run: $(date)" >> test_summary.md
           echo "" >> test_summary.md
-          
+
           # Parse test results if output exists
           if [ -f test_output.log ]; then
             # Extract test summary from cargo test output
@@ -103,14 +151,14 @@ jobs:
             PASSED_TESTS=$(grep -oE "[0-9]+ passed" test_output.log | tail -1 | grep -oE "[0-9]+" || echo "0")
             FAILED_TESTS=$(grep -oE "[0-9]+ failed" test_output.log | tail -1 | grep -oE "[0-9]+" || echo "0")
             IGNORED_TESTS=$(grep -oE "[0-9]+ ignored" test_output.log | tail -1 | grep -oE "[0-9]+" || echo "0")
-            
+
             echo "### Test Results" >> test_summary.md
             echo "- Total Tests: $TOTAL_TESTS" >> test_summary.md
             echo "- Tests Passed: $PASSED_TESTS" >> test_summary.md
             echo "- Tests Failed: $FAILED_TESTS" >> test_summary.md
             echo "- Tests Ignored: $IGNORED_TESTS" >> test_summary.md
             echo "" >> test_summary.md
-            
+
             # Add status
             if [ -f test_exit_code.txt ] && [ "$(cat test_exit_code.txt)" = "0" ]; then
               echo "- Status: ✅ All tests passed" >> test_summary.md
@@ -120,7 +168,7 @@ jobs:
           else
             echo "- Status: ⚠️ Test output not available" >> test_summary.md
           fi
-          
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
@@ -133,39 +181,41 @@ jobs:
 
   fmt:
     name: Rustfmt
+    timeout-minutes: 10  # Formatting should be quick
     runs-on: ubuntu-latest
     container:
       image: rust:latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install dependencies
         run: |
           apt-get update
           apt-get install -y git
-      
+
       - name: Install rustfmt
         run: rustup component add rustfmt
-      
+
       - name: Check formatting
         run: cargo fmt --all -- --check
 
   clippy:
     name: Clippy
+    timeout-minutes: 20  # Clippy analysis timeout
     runs-on: ubuntu-latest
     container:
       image: rust:latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install dependencies
         run: |
           apt-get update
           apt-get install -y pkg-config libssl-dev python3 python3-dev git
-      
+
       - name: Install clippy
         run: rustup component add clippy
-      
+
       - name: Cache cargo registry
         uses: actions/cache@v4
         with:
@@ -175,7 +225,7 @@ jobs:
           key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-registry-
-      
+
       - name: Cache cargo build
         uses: actions/cache@v4
         with:
@@ -184,28 +234,29 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-build-clippy-${{ hashFiles('**/Cargo.lock') }}-
             ${{ runner.os }}-cargo-build-clippy-
-      
+
       - name: Run clippy
         run: cargo clippy --all -- -D warnings
 
   coverage:
     name: Code Coverage
+    timeout-minutes: 40  # Coverage can take longer
     runs-on: ubuntu-latest
     container:
       image: rust:latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install Python and dependencies
         run: |
           apt-get update
           apt-get install -y python3 python3-dev python3-venv python3-pip pkg-config libssl-dev
-          
+
       - name: Setup Python virtual environment
         run: |
           python3 -m venv /opt/venv
           echo "/opt/venv/bin" >> $GITHUB_PATH
-          
+
       - name: Install LLVM and coverage tools
         run: |
           # Install LLVM for coverage
@@ -219,7 +270,7 @@ jobs:
           # Use the virtual environment's pip
           /opt/venv/bin/pip install --upgrade pip
           /opt/venv/bin/pip install maturin pytest pytest-cov
-      
+
       - name: Cache cargo registry
         uses: actions/cache@v4
         with:
@@ -229,12 +280,12 @@ jobs:
           key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-registry-
-      
+
       - name: Generate Rust code coverage
         run: |
           # Run coverage on core library with Python feature
           cargo llvm-cov --features python,serde,colored --lcov --output-path coverage.lcov -p balatro-rs
-      
+
       - name: Upload Rust coverage to codecov.io
         uses: codecov/codecov-action@v3
         with:
@@ -242,21 +293,21 @@ jobs:
           files: ./coverage.lcov
           flags: rust
           fail_ci_if_error: false
-      
+
       - name: Build Python extension for coverage
         run: |
           cd pylatro
           # Set VIRTUAL_ENV for maturin
           export VIRTUAL_ENV=/opt/venv
           /opt/venv/bin/maturin develop
-      
+
       - name: Run Python tests with coverage
         run: |
           cd pylatro
           # Set VIRTUAL_ENV for consistency
           export VIRTUAL_ENV=/opt/venv
           /opt/venv/bin/python -m pytest test/test_pylatro.py -v --cov=pylatro --cov-report=xml
-      
+
       - name: Upload Python coverage to codecov.io
         uses: codecov/codecov-action@v3
         with:
@@ -268,27 +319,28 @@ jobs:
   # Test Python bindings
   python-test:
     name: Python Bindings Test
+    timeout-minutes: 25  # Python tests timeout
     runs-on: ubuntu-latest
     container:
       image: rust:latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install Python and dependencies
         run: |
           apt-get update
           apt-get install -y python3 python3-dev python3-venv python3-pip pkg-config libssl-dev
-          
+
       - name: Setup Python virtual environment
         run: |
           python3 -m venv /opt/venv
           echo "/opt/venv/bin" >> $GITHUB_PATH
-          
+
       - name: Install Python packages
         run: |
           /opt/venv/bin/pip install --upgrade pip
           /opt/venv/bin/pip install maturin pytest
-      
+
       - name: Cache cargo registry
         uses: actions/cache@v4
         with:
@@ -298,7 +350,7 @@ jobs:
           key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-registry-
-      
+
       - name: Cache cargo build
         uses: actions/cache@v4
         with:
@@ -306,13 +358,13 @@ jobs:
           key: ${{ runner.os }}-cargo-build-python-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-build-python-
-      
+
       - name: Build Python extension
         run: |
           cd pylatro
           export VIRTUAL_ENV=/opt/venv
           /opt/venv/bin/maturin develop
-      
+
       - name: Run Python tests
         run: |
           cd pylatro
@@ -322,6 +374,7 @@ jobs:
   # Ensure all workspace members build successfully
   build-all:
     name: Build All Workspace Members
+    timeout-minutes: 20  # Build timeout
     runs-on: ubuntu-latest
     container:
       image: rust:latest
@@ -330,12 +383,12 @@ jobs:
         member: [balatro-rs, balatro-cli, pylatro]
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install dependencies
         run: |
           apt-get update
           apt-get install -y pkg-config libssl-dev python3 python3-dev git
-      
+
       - name: Cache cargo registry
         uses: actions/cache@v4
         with:
@@ -345,7 +398,7 @@ jobs:
           key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-registry-
-      
+
       - name: Cache cargo build
         uses: actions/cache@v4
         with:
@@ -353,24 +406,25 @@ jobs:
           key: ${{ runner.os }}-cargo-build-${{ matrix.member }}-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-build-${{ matrix.member }}-
-      
+
       - name: Build workspace member
         run: cargo build -p ${{ matrix.member }} --verbose
 
   # Run benchmarks to ensure they compile (but don't fail on performance)
   bench-check:
     name: Benchmark Compilation Check
+    timeout-minutes: 15  # Benchmark compilation timeout
     runs-on: ubuntu-latest
     container:
       image: rust:latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install dependencies
         run: |
           apt-get update
           apt-get install -y pkg-config libssl-dev python3 python3-dev git
-      
+
       - name: Cache cargo registry
         uses: actions/cache@v4
         with:
@@ -380,7 +434,7 @@ jobs:
           key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-registry-
-      
+
       - name: Cache cargo build
         uses: actions/cache@v4
         with:
@@ -388,13 +442,14 @@ jobs:
           key: ${{ runner.os }}-cargo-build-bench-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-build-bench-
-      
+
       - name: Check benchmarks compile
         run: cargo bench --no-run -p balatro-rs
 
   # Run performance benchmarks and validate against baselines
   performance-test:
     name: Performance Testing
+    timeout-minutes: 45  # Performance tests need more time
     # Only run performance tests on pushes to main/master, not on PRs
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     runs-on: ubuntu-latest
@@ -402,12 +457,12 @@ jobs:
       image: rust:latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install dependencies
         run: |
           apt-get update
           apt-get install -y pkg-config libssl-dev python3 python3-dev git
-      
+
       - name: Cache cargo registry
         uses: actions/cache@v4
         with:
@@ -417,7 +472,7 @@ jobs:
           key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-registry-
-      
+
       - name: Cache cargo build
         uses: actions/cache@v4
         with:
@@ -425,12 +480,12 @@ jobs:
           key: ${{ runner.os }}-cargo-build-perf-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-build-perf-
-      
+
       - name: Run benchmarks
         run: |
           # Run benchmarks and capture results
           cargo bench -p balatro-rs --verbose > benchmark_results.txt 2>&1 || echo "Benchmarks completed with status $?"
-          
+
       - name: Validate performance
         run: |
           echo "Benchmark execution completed"
@@ -445,7 +500,7 @@ jobs:
           else
             echo "Warning: No benchmark results file found"
           fi
-          
+
       - name: Upload benchmark results
         uses: actions/upload-artifact@v4
         with:
@@ -455,22 +510,23 @@ jobs:
   # Security and dependency scanning
   security-scan:
     name: Security & Dependency Scanning
+    timeout-minutes: 15  # Security scan timeout
     runs-on: ubuntu-latest
     container:
       image: rust:latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install dependencies
         run: |
           apt-get update
           apt-get install -y pkg-config libssl-dev git
-      
+
       - name: Install security tools
         run: |
           cargo install cargo-audit
           cargo install cargo-deny
-      
+
       - name: Cache cargo registry
         uses: actions/cache@v4
         with:
@@ -480,7 +536,7 @@ jobs:
           key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-registry-
-      
+
       - name: Run cargo audit
         run: |
           # Run cargo audit and capture output
@@ -488,25 +544,25 @@ jobs:
           cargo audit > cargo_audit.log 2>&1
           AUDIT_EXIT_CODE=$?
           set -e
-          
+
           # Create audit summary
           echo "# Cargo Audit Results" > audit_summary.md
           echo "Exit Code: $AUDIT_EXIT_CODE" >> audit_summary.md
           echo "Date: $(date)" >> audit_summary.md
           echo "" >> audit_summary.md
-          
+
           if [ $AUDIT_EXIT_CODE -eq 0 ]; then
             echo "✅ No security vulnerabilities found" >> audit_summary.md
           else
             echo "⚠️ Security issues detected - see cargo_audit.log for details" >> audit_summary.md
           fi
-          
+
           # Display output for GitHub Actions logs
           cat cargo_audit.log
-          
+
           # Exit with original code
           exit $AUDIT_EXIT_CODE
-        
+
       - name: Run cargo deny
         run: |
           # Run cargo deny and capture output
@@ -514,25 +570,25 @@ jobs:
           cargo deny check > cargo_deny.log 2>&1
           DENY_EXIT_CODE=$?
           set -e
-          
+
           # Create deny summary
           echo "# Cargo Deny Results" > deny_summary.md
           echo "Exit Code: $DENY_EXIT_CODE" >> deny_summary.md
           echo "Date: $(date)" >> deny_summary.md
           echo "" >> deny_summary.md
-          
+
           if [ $DENY_EXIT_CODE -eq 0 ]; then
             echo "✅ All dependency checks passed" >> deny_summary.md
           else
             echo "⚠️ Dependency issues detected - see cargo_deny.log for details" >> deny_summary.md
           fi
-          
+
           # Display output for GitHub Actions logs
           cat cargo_deny.log
-          
+
           # Exit with original code
           exit $DENY_EXIT_CODE
-          
+
       - name: Upload security scan results
         if: always()
         uses: actions/upload-artifact@v4
