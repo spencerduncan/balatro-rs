@@ -45,7 +45,9 @@ mod optimization_tests {
             cards_in_deck: 52,
             stone_cards_in_deck: 0,
             steel_cards_in_deck: 0,
+            enhanced_cards_in_deck: 0,
             rng: &test_rng,
+            is_final_hand: false, // Test context
         };
 
         let hand = SelectHand::new(vec![

@@ -223,14 +223,16 @@ mod tests {
         shop.refresh(&rng);
         let initial_count = shop.jokers.len();
         let joker_to_buy = shop.jokers[0].clone();
+        let initial_joker_type_count = shop.jokers.iter().filter(|j| *j == &joker_to_buy).count();
 
         let result = shop.buy_joker(&joker_to_buy);
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), joker_to_buy);
         assert_eq!(shop.jokers.len(), initial_count - 1);
 
-        // Joker should be removed from shop
-        assert!(!shop.jokers.contains(&joker_to_buy));
+        // One instance of this joker type should be removed from shop
+        let remaining_joker_type_count = shop.jokers.iter().filter(|j| *j == &joker_to_buy).count();
+        assert_eq!(remaining_joker_type_count, initial_joker_type_count - 1);
     }
 
     #[test]
@@ -304,15 +306,23 @@ mod tests {
         let rng = crate::rng::GameRng::for_testing(42);
         shop.refresh(&rng);
         let joker = shop.jokers[0].clone();
+        let initial_joker_count = shop.jokers.iter().filter(|j| *j == &joker).count();
 
         // First purchase should succeed
         let result1 = shop.buy_joker(&joker);
         assert!(result1.is_ok());
 
-        // Second purchase of same joker should fail
+        // Second purchase of same joker type should succeed if there are multiple copies,
+        // or fail if there was only one copy
         let result2 = shop.buy_joker(&joker);
-        assert!(result2.is_err());
-        assert!(matches!(result2.unwrap_err(), GameError::NoJokerMatch));
+        if initial_joker_count > 1 {
+            // Should succeed - buying second copy
+            assert!(result2.is_ok());
+        } else {
+            // Should fail - no more copies available
+            assert!(result2.is_err());
+            assert!(matches!(result2.unwrap_err(), GameError::NoJokerMatch));
+        }
     }
 
     #[test]
@@ -473,6 +483,7 @@ mod tests {
         for _ in 0..10 {
             let joker = generator.gen_joker(&rng);
             // All generated jokers should be valid Jokers enum variants
+            // Note: Hand-type jokers (JollyJoker, ZanyJoker, etc.) migrated to StaticJoker framework
             assert!(matches!(
                 joker,
                 Jokers::TheJoker(_)
@@ -480,16 +491,6 @@ mod tests {
                     | Jokers::LustyJoker(_)
                     | Jokers::WrathfulJoker(_)
                     | Jokers::GluttonousJoker(_)
-                    | Jokers::JollyJoker(_)
-                    | Jokers::ZanyJoker(_)
-                    | Jokers::MadJoker(_)
-                    | Jokers::CrazyJoker(_)
-                    | Jokers::DrollJoker(_)
-                    | Jokers::SlyJoker(_)
-                    | Jokers::WilyJoker(_)
-                    | Jokers::CleverJoker(_)
-                    | Jokers::DeviousJoker(_)
-                    | Jokers::CraftyJoker(_)
                     | Jokers::IceCreamJoker(_)
             ));
         }

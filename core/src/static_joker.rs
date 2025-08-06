@@ -307,6 +307,7 @@ impl<T: StaticJoker> Joker for StaticJokerAdapter<T> {
 
 /// Trait for evaluating StaticJoker conditions
 /// This replaces the large match statements with modular, extensible logic
+#[allow(dead_code)]
 trait ConditionEvaluator {
     /// Check if condition is met for a specific card
     fn check_card(&self, card: &Card) -> bool;
@@ -324,6 +325,7 @@ trait ConditionEvaluator {
 
 /// Configuration for static joker bonuses
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 struct StaticJokerConfig {
     chips_bonus: Option<i32>,
     mult_bonus: Option<i32>,
@@ -331,6 +333,7 @@ struct StaticJokerConfig {
 }
 
 impl StaticJokerConfig {
+    #[allow(dead_code)]
     fn new(
         chips_bonus: Option<i32>,
         mult_bonus: Option<i32>,
@@ -344,6 +347,7 @@ impl StaticJokerConfig {
     }
 
     /// Create a standard effect from the base configuration
+    #[allow(dead_code)]
     fn create_standard_effect(&self) -> JokerEffect {
         let mut effect = JokerEffect::new();
 
@@ -368,6 +372,7 @@ impl StaticJokerConfig {
 // =============================================================================
 
 /// Always-true condition evaluator
+#[allow(dead_code)]
 struct AlwaysEvaluator;
 
 impl ConditionEvaluator for AlwaysEvaluator {
@@ -389,6 +394,7 @@ impl ConditionEvaluator for AlwaysEvaluator {
 }
 
 /// Suit-based condition evaluator
+#[allow(dead_code)]
 struct SuitEvaluator {
     target_suit: Suit,
 }
@@ -418,6 +424,7 @@ impl ConditionEvaluator for SuitEvaluator {
 }
 
 /// Rank/Value-based condition evaluator
+#[allow(dead_code)]
 struct RankEvaluator {
     target_value: Value,
 }
@@ -449,6 +456,7 @@ impl ConditionEvaluator for RankEvaluator {
 }
 
 /// Hand type condition evaluator
+#[allow(dead_code)]
 struct HandTypeEvaluator {
     required_rank: HandRank,
 }
@@ -495,6 +503,7 @@ impl ConditionEvaluator for HandTypeEvaluator {
 }
 
 /// Multiple suits condition evaluator
+#[allow(dead_code)]
 struct AnySuitEvaluator {
     target_suits: Vec<Suit>,
 }
@@ -526,6 +535,7 @@ impl ConditionEvaluator for AnySuitEvaluator {
 }
 
 /// Multiple ranks condition evaluator
+#[allow(dead_code)]
 struct AnyRankEvaluator {
     target_values: Vec<Value>,
 }
@@ -557,6 +567,7 @@ impl ConditionEvaluator for AnyRankEvaluator {
 }
 
 /// Hand size condition evaluator
+#[allow(dead_code)]
 struct HandSizeAtMostEvaluator {
     max_size: usize,
 }
@@ -587,6 +598,7 @@ impl ConditionEvaluator for HandSizeAtMostEvaluator {
 }
 
 /// Discard count condition evaluator (special case with dynamic calculation)
+#[allow(dead_code)]
 struct DiscardCountEvaluator;
 
 impl ConditionEvaluator for DiscardCountEvaluator {
@@ -628,9 +640,13 @@ impl ConditionEvaluator for DiscardCountEvaluator {
 }
 
 /// Factory for creating condition evaluators based on StaticCondition
+/// NOTE: This strategy pattern implementation is incomplete for new condition types
+/// and is currently unused in favor of the direct match-based approach in FrameworkStaticJoker
 impl StaticCondition {
     /// Create the appropriate evaluator for this condition
-    fn create_evaluator(&self) -> Box<dyn ConditionEvaluator> {
+    /// Currently disabled due to incomplete implementation for new condition types
+    #[allow(dead_code)]
+    fn _create_evaluator_unused(&self) -> Box<dyn ConditionEvaluator> {
         match self {
             StaticCondition::Always => Box::new(AlwaysEvaluator),
             StaticCondition::SuitScored(suit) => Box::new(SuitEvaluator::new(*suit)),
@@ -644,6 +660,8 @@ impl StaticCondition {
                 Box::new(HandSizeAtMostEvaluator::new(*max_size))
             }
             StaticCondition::DiscardCount => Box::new(DiscardCountEvaluator),
+            // New condition types not yet implemented in strategy pattern
+            _ => panic!("Strategy pattern evaluator not implemented for this condition type"),
         }
     }
 }
@@ -668,6 +686,18 @@ pub enum StaticCondition {
     HandSizeAtMost(usize),
     /// Apply based on remaining discards (multiplies bonus by remaining discard count)
     DiscardCount,
+    /// Apply based on money owned (multiplies bonus by money count)
+    MoneyCount,
+    /// Apply based on cards remaining in deck (multiplies bonus by deck size)
+    DeckSize,
+    /// Apply based on Stone cards in deck (multiplies bonus by Stone card count)
+    StoneCardsInDeck,
+    /// Apply based on Enhanced cards in deck (multiplies bonus by Enhanced card count)
+    EnhancedCardsInDeck,
+    /// Apply when exactly this many discards remain
+    DiscardCountExact(usize),
+    /// Apply when at least this many Enhanced cards are in deck
+    EnhancedCardsThreshold(usize),
 }
 
 /// A framework-based static joker that provides consistent bonuses based on conditions.
@@ -777,22 +807,201 @@ impl Joker for FrameworkStaticJoker {
 impl FrameworkStaticJoker {
     /// Check if the condition is met for a hand
     fn check_hand_condition(&self, hand: &SelectHand) -> bool {
-        let evaluator = self.condition.create_evaluator();
-        evaluator.check_hand(hand)
+        match &self.condition {
+            StaticCondition::Always => true,
+            StaticCondition::DiscardCount => true, // Always applies, but effect is calculated dynamically
+            StaticCondition::MoneyCount => true, // Always applies, but effect is calculated dynamically
+            StaticCondition::DeckSize => true, // Always applies, but effect is calculated dynamically
+            StaticCondition::StoneCardsInDeck => true, // Always applies, but effect is calculated dynamically
+            StaticCondition::EnhancedCardsInDeck => true, // Always applies, but effect is calculated dynamically
+            StaticCondition::DiscardCountExact(_) => true, // Effect is calculated dynamically in create_effect_with_context
+            StaticCondition::EnhancedCardsThreshold(_) => true, // Effect is calculated dynamically in create_effect_with_context
+            StaticCondition::HandType(required_rank) => {
+                // Check if the hand contains the required type
+                match required_rank {
+                    HandRank::OnePair => hand.is_pair().is_some(),
+                    HandRank::TwoPair => hand.is_two_pair().is_some(),
+                    HandRank::ThreeOfAKind => hand.is_three_of_kind().is_some(),
+                    HandRank::Straight => hand.is_straight().is_some(),
+                    HandRank::Flush => hand.is_flush().is_some(),
+                    HandRank::FullHouse => hand.is_fullhouse().is_some(),
+                    HandRank::FourOfAKind => hand.is_four_of_kind().is_some(),
+                    HandRank::StraightFlush => hand.is_straight_flush().is_some(),
+                    HandRank::RoyalFlush => hand.is_royal_flush().is_some(),
+                    HandRank::FiveOfAKind => hand.is_five_of_kind().is_some(),
+                    HandRank::FlushHouse => hand.is_flush_house().is_some(),
+                    HandRank::FlushFive => hand.is_flush_five().is_some(),
+                    HandRank::HighCard => hand.is_highcard().is_some(),
+                }
+            }
+            StaticCondition::HandSizeAtMost(max_size) => {
+                // Check if the hand has at most the specified number of cards
+                hand.cards().len() <= *max_size
+            }
+            _ => {
+                // For suit/rank conditions on hands, check if any card matches
+                hand.cards()
+                    .iter()
+                    .any(|card| self.check_card_condition(card))
+            }
+        }
     }
 
     /// Check if the condition is met for a card using strategy pattern
     fn check_card_condition(&self, card: &Card) -> bool {
-        let evaluator = self.condition.create_evaluator();
-        evaluator.check_card(card)
+        match &self.condition {
+            StaticCondition::Always => true,
+            StaticCondition::DiscardCount => true, // Always applies, but effect is calculated dynamically
+            StaticCondition::MoneyCount => true, // Always applies, but effect is calculated dynamically
+            StaticCondition::DeckSize => true, // Always applies, but effect is calculated dynamically
+            StaticCondition::StoneCardsInDeck => true, // Always applies, but effect is calculated dynamically
+            StaticCondition::EnhancedCardsInDeck => true, // Always applies, but effect is calculated dynamically
+            StaticCondition::DiscardCountExact(_) => true, // Always applies, but effect is calculated dynamically
+            StaticCondition::EnhancedCardsThreshold(_) => true, // Always applies, but effect is calculated dynamically
+            StaticCondition::SuitScored(suit) => card.suit == *suit,
+            StaticCondition::RankScored(value) => card.value == *value,
+            StaticCondition::AnySuitScored(suits) => suits.contains(&card.suit),
+            StaticCondition::AnyRankScored(values) => values.contains(&card.value),
+            StaticCondition::HandType(_) => {
+                // Hand type conditions don't apply to individual cards
+                false
+            }
+            StaticCondition::HandSizeAtMost(_) => {
+                // Hand size conditions don't apply to individual cards
+                false
+            }
+        }
     }
 
     /// Create the effect based on configured bonuses using strategy pattern
     fn create_effect_with_context(&self, context: &GameContext) -> JokerEffect {
-        let evaluator = self.condition.create_evaluator();
-        let config =
-            StaticJokerConfig::new(self.chips_bonus, self.mult_bonus, self.mult_multiplier);
-        evaluator.calculate_effect(context, &config)
+        let mut effect = JokerEffect::new();
+
+        match &self.condition {
+            StaticCondition::DiscardCount => {
+                // Calculate bonus based on remaining discards
+                const MAX_DISCARDS: u32 = 5; // Standard discards per round
+                let discards_remaining = MAX_DISCARDS.saturating_sub(context.discards_used);
+
+                if let Some(chips_base) = self.chips_bonus {
+                    let chips_bonus = chips_base * discards_remaining as i32;
+                    effect = effect.with_chips(chips_bonus);
+                }
+
+                if let Some(mult_base) = self.mult_bonus {
+                    let mult_bonus = mult_base * discards_remaining as i32;
+                    effect = effect.with_mult(mult_bonus);
+                }
+            }
+            StaticCondition::MoneyCount => {
+                // Calculate bonus based on money owned (clamp negative to 0)
+                let money_multiplier = context.money.max(0);
+
+                if let Some(chips_base) = self.chips_bonus {
+                    let chips_bonus = chips_base * money_multiplier;
+                    effect = effect.with_chips(chips_bonus);
+                }
+
+                if let Some(mult_base) = self.mult_bonus {
+                    let mult_bonus = mult_base * money_multiplier;
+                    effect = effect.with_mult(mult_bonus);
+                }
+            }
+            StaticCondition::DeckSize => {
+                // Calculate bonus based on cards remaining in deck
+                let deck_size_multiplier = context.cards_in_deck as i32;
+
+                if let Some(chips_base) = self.chips_bonus {
+                    let chips_bonus = chips_base * deck_size_multiplier;
+                    effect = effect.with_chips(chips_bonus);
+                }
+
+                if let Some(mult_base) = self.mult_bonus {
+                    let mult_bonus = mult_base * deck_size_multiplier;
+                    effect = effect.with_mult(mult_bonus);
+                }
+            }
+            StaticCondition::StoneCardsInDeck => {
+                // Calculate bonus based on Stone cards in deck
+                let stone_cards_multiplier = context.stone_cards_in_deck as i32;
+
+                if let Some(chips_base) = self.chips_bonus {
+                    let chips_bonus = chips_base * stone_cards_multiplier;
+                    effect = effect.with_chips(chips_bonus);
+                }
+
+                if let Some(mult_base) = self.mult_bonus {
+                    let mult_bonus = mult_base * stone_cards_multiplier;
+                    effect = effect.with_mult(mult_bonus);
+                }
+            }
+            StaticCondition::EnhancedCardsInDeck => {
+                // Calculate bonus based on Enhanced cards in deck
+                let enhanced_cards_multiplier = context.enhanced_cards_in_deck as i32;
+
+                if let Some(chips_base) = self.chips_bonus {
+                    let chips_bonus = chips_base * enhanced_cards_multiplier;
+                    effect = effect.with_chips(chips_bonus);
+                }
+
+                if let Some(mult_base) = self.mult_bonus {
+                    let mult_bonus = mult_base * enhanced_cards_multiplier;
+                    effect = effect.with_mult(mult_bonus);
+                }
+            }
+            StaticCondition::DiscardCountExact(expected_discards) => {
+                // Apply bonus only if exactly this many discards remain
+                const MAX_DISCARDS: u32 = 5; // Standard discards per round
+                let discards_remaining = MAX_DISCARDS.saturating_sub(context.discards_used);
+
+                if discards_remaining == *expected_discards as u32 {
+                    if let Some(chips) = self.chips_bonus {
+                        effect = effect.with_chips(chips);
+                    }
+
+                    if let Some(mult) = self.mult_bonus {
+                        effect = effect.with_mult(mult);
+                    }
+                }
+                // No effect if discard count doesn't match exactly
+            }
+            StaticCondition::EnhancedCardsThreshold(threshold) => {
+                // Apply bonus only if at least this many Enhanced cards are in deck
+                if context.enhanced_cards_in_deck >= *threshold {
+                    if let Some(chips) = self.chips_bonus {
+                        effect = effect.with_chips(chips);
+                    }
+
+                    if let Some(mult) = self.mult_bonus {
+                        effect = effect.with_mult(mult);
+                    }
+
+                    if let Some(multiplier) = self.mult_multiplier {
+                        effect = effect.with_mult_multiplier(multiplier);
+                    }
+                }
+                // No effect if threshold not met
+            }
+            _ => {
+                // Use standard fixed bonuses for other conditions
+                if let Some(chips) = self.chips_bonus {
+                    effect = effect.with_chips(chips);
+                }
+
+                if let Some(mult) = self.mult_bonus {
+                    effect = effect.with_mult(mult);
+                }
+            }
+        }
+
+        // Apply mult multiplier for conditions that don't handle it specially
+        if !matches!(self.condition, StaticCondition::EnhancedCardsThreshold(_)) {
+            if let Some(multiplier) = self.mult_multiplier {
+                effect = effect.with_mult_multiplier(multiplier);
+            }
+        }
+
+        effect
     }
 }
 
@@ -864,6 +1073,33 @@ impl StaticJokerBuilder {
             }
             (StaticCondition::DiscardCount, true) => {
                 return Err("DiscardCount conditions should be per_hand, not per_card".to_string());
+            }
+            (StaticCondition::MoneyCount, true) => {
+                return Err("MoneyCount conditions should be per_hand, not per_card".to_string());
+            }
+            (StaticCondition::DeckSize, true) => {
+                return Err("DeckSize conditions should be per_hand, not per_card".to_string());
+            }
+            (StaticCondition::StoneCardsInDeck, true) => {
+                return Err(
+                    "StoneCardsInDeck conditions should be per_hand, not per_card".to_string(),
+                );
+            }
+            (StaticCondition::EnhancedCardsInDeck, true) => {
+                return Err(
+                    "EnhancedCardsInDeck conditions should be per_hand, not per_card".to_string(),
+                );
+            }
+            (StaticCondition::DiscardCountExact(_), true) => {
+                return Err(
+                    "DiscardCountExact conditions should be per_hand, not per_card".to_string(),
+                );
+            }
+            (StaticCondition::EnhancedCardsThreshold(_), true) => {
+                return Err(
+                    "EnhancedCardsThreshold conditions should be per_hand, not per_card"
+                        .to_string(),
+                );
             }
             (StaticCondition::SuitScored(_), false) => {
                 return Err("SuitScored conditions should be per_card, not per_hand".to_string());

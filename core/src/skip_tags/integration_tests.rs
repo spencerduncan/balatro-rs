@@ -109,8 +109,8 @@ mod tests {
         let registry = global_registry();
         let weighted_tags = registry.get_weighted_tags();
 
-        // Should have all 6 shop enhancement tags with weights
-        assert_eq!(weighted_tags.len(), 6);
+        // Should have all 11 tags with weights (6 shop + 5 economic)
+        assert_eq!(weighted_tags.len(), 11);
 
         // Each tag should have appropriate weight based on rarity
         for (tag_id, weight) in weighted_tags {

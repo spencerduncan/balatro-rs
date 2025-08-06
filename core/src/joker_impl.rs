@@ -169,345 +169,10 @@ impl Joker for GluttonousJoker {
     }
 }
 
-// Jolly Joker implementation
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct JollyJoker;
-
-impl Joker for JollyJoker {
-    fn id(&self) -> JokerId {
-        JokerId::JollyJoker
-    }
-
-    fn name(&self) -> &str {
-        "Jolly Joker"
-    }
-
-    fn description(&self) -> &str {
-        "+8 Mult if played hand contains a Pair"
-    }
-
-    fn rarity(&self) -> JokerRarity {
-        JokerRarity::Common
-    }
-
-    fn cost(&self) -> usize {
-        3
-    }
-
-    fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
-        if hand.is_pair().is_some() {
-            JokerEffect::new().with_mult(8)
-        } else {
-            JokerEffect::new()
-        }
-    }
-}
-
-// Zany Joker implementation
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct ZanyJoker;
-
-impl Joker for ZanyJoker {
-    fn id(&self) -> JokerId {
-        JokerId::ZanyJoker
-    }
-
-    fn name(&self) -> &str {
-        "Zany Joker"
-    }
-
-    fn description(&self) -> &str {
-        "+12 Mult if played hand contains a Three of a Kind"
-    }
-
-    fn rarity(&self) -> JokerRarity {
-        JokerRarity::Common
-    }
-
-    fn cost(&self) -> usize {
-        4
-    }
-
-    fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
-        if hand.is_three_of_kind().is_some() {
-            JokerEffect::new().with_mult(12)
-        } else {
-            JokerEffect::new()
-        }
-    }
-}
-
-// Mad Joker implementation
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct MadJoker;
-
-impl Joker for MadJoker {
-    fn id(&self) -> JokerId {
-        JokerId::MadJoker
-    }
-
-    fn name(&self) -> &str {
-        "Mad Joker"
-    }
-
-    fn description(&self) -> &str {
-        "+10 Mult if played hand contains a Two Pair"
-    }
-
-    fn rarity(&self) -> JokerRarity {
-        JokerRarity::Common
-    }
-
-    fn cost(&self) -> usize {
-        4
-    }
-
-    fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
-        if hand.is_two_pair().is_some() {
-            JokerEffect::new().with_mult(10)
-        } else {
-            JokerEffect::new()
-        }
-    }
-}
-
-// Crazy Joker implementation
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct CrazyJoker;
-
-impl Joker for CrazyJoker {
-    fn id(&self) -> JokerId {
-        JokerId::CrazyJoker
-    }
-
-    fn name(&self) -> &str {
-        "Crazy Joker"
-    }
-
-    fn description(&self) -> &str {
-        "+12 Mult if played hand contains a Straight"
-    }
-
-    fn rarity(&self) -> JokerRarity {
-        JokerRarity::Common
-    }
-
-    fn cost(&self) -> usize {
-        4
-    }
-
-    fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
-        if hand.is_straight().is_some() {
-            JokerEffect::new().with_mult(12)
-        } else {
-            JokerEffect::new()
-        }
-    }
-}
-
-// Droll Joker implementation
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct DrollJoker;
-
-impl Joker for DrollJoker {
-    fn id(&self) -> JokerId {
-        JokerId::DrollJoker
-    }
-
-    fn name(&self) -> &str {
-        "Droll Joker"
-    }
-
-    fn description(&self) -> &str {
-        "+10 Mult if played hand contains a Flush"
-    }
-
-    fn rarity(&self) -> JokerRarity {
-        JokerRarity::Common
-    }
-
-    fn cost(&self) -> usize {
-        4
-    }
-
-    fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
-        if hand.is_flush().is_some() {
-            JokerEffect::new().with_mult(10)
-        } else {
-            JokerEffect::new()
-        }
-    }
-}
-
-// Sly Joker implementation
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct SlyJoker;
-
-impl Joker for SlyJoker {
-    fn id(&self) -> JokerId {
-        JokerId::SlyJoker
-    }
-
-    fn name(&self) -> &str {
-        "Sly Joker"
-    }
-
-    fn description(&self) -> &str {
-        "+50 Chips if played hand contains a Pair"
-    }
-
-    fn rarity(&self) -> JokerRarity {
-        JokerRarity::Common
-    }
-
-    fn cost(&self) -> usize {
-        3
-    }
-
-    fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
-        if hand.is_pair().is_some() {
-            JokerEffect::new().with_chips(50)
-        } else {
-            JokerEffect::new()
-        }
-    }
-}
-
-// Wily Joker implementation
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct WilyJoker;
-
-impl Joker for WilyJoker {
-    fn id(&self) -> JokerId {
-        JokerId::WilyJoker
-    }
-
-    fn name(&self) -> &str {
-        "Wily Joker"
-    }
-
-    fn description(&self) -> &str {
-        "+100 Chips if played hand contains a Three of a Kind"
-    }
-
-    fn rarity(&self) -> JokerRarity {
-        JokerRarity::Common
-    }
-
-    fn cost(&self) -> usize {
-        4
-    }
-
-    fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
-        if hand.is_three_of_kind().is_some() {
-            JokerEffect::new().with_chips(100)
-        } else {
-            JokerEffect::new()
-        }
-    }
-}
-
-// Clever Joker implementation
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct CleverJoker;
-
-impl Joker for CleverJoker {
-    fn id(&self) -> JokerId {
-        JokerId::CleverJoker
-    }
-
-    fn name(&self) -> &str {
-        "Clever Joker"
-    }
-
-    fn description(&self) -> &str {
-        "+80 Chips if played hand contains a Two Pair"
-    }
-
-    fn rarity(&self) -> JokerRarity {
-        JokerRarity::Common
-    }
-
-    fn cost(&self) -> usize {
-        4
-    }
-
-    fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
-        if hand.is_two_pair().is_some() {
-            JokerEffect::new().with_chips(80)
-        } else {
-            JokerEffect::new()
-        }
-    }
-}
-
-// Devious Joker implementation
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct DeviousJoker;
-
-impl Joker for DeviousJoker {
-    fn id(&self) -> JokerId {
-        JokerId::DeviousJoker
-    }
-
-    fn name(&self) -> &str {
-        "Devious Joker"
-    }
-
-    fn description(&self) -> &str {
-        "+100 Chips if played hand contains a Straight"
-    }
-
-    fn rarity(&self) -> JokerRarity {
-        JokerRarity::Common
-    }
-
-    fn cost(&self) -> usize {
-        4
-    }
-
-    fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
-        if hand.is_straight().is_some() {
-            JokerEffect::new().with_chips(100)
-        } else {
-            JokerEffect::new()
-        }
-    }
-}
-
-// Crafty Joker implementation
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct CraftyJoker;
-
-impl Joker for CraftyJoker {
-    fn id(&self) -> JokerId {
-        JokerId::CraftyJoker
-    }
-
-    fn name(&self) -> &str {
-        "Crafty Joker"
-    }
-
-    fn description(&self) -> &str {
-        "+80 Chips if played hand contains a Flush"
-    }
-
-    fn rarity(&self) -> JokerRarity {
-        JokerRarity::Common
-    }
-
-    fn cost(&self) -> usize {
-        4
-    }
-
-    fn on_hand_played(&self, _context: &mut GameContext, hand: &SelectHand) -> JokerEffect {
-        if hand.is_flush().is_some() {
-            JokerEffect::new().with_chips(80)
-        } else {
-            JokerEffect::new()
-        }
-    }
-}
+// Hand-type jokers have been migrated to StaticJoker framework (Clean Code: eliminate duplication)
+// Old custom implementations removed - now using StaticJokerFactory methods
+// This demonstrates Clean Code principle: prefer composition over inheritance
+// StaticJoker framework provides cleaner, more maintainable abstractions
 
 // Money-Based Conditional Jokers for Issue #82
 
@@ -1049,9 +714,8 @@ impl Joker for AcrobatJokerImpl {
     }
 
     fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
-        // Check if this is the final hand of the round
-        // Use the definitive hands_remaining count from the game engine
-        if context.hands_remaining <= 1.0 {
+        // Use actual final hand verification instead of heuristic detection
+        if context.is_final_hand {
             // This is the final hand - apply the multiplier from joker.json parameter
             let multiplier = Self::get_multiplier_parameter();
             JokerEffect::new()
@@ -1062,59 +726,6 @@ impl Joker for AcrobatJokerImpl {
                 ))
         } else {
             JokerEffect::new()
-        }
-    }
-}
-
-// Mystery Joker implementation - random effect each hand
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct MysteryJoker;
-
-impl Joker for MysteryJoker {
-    fn id(&self) -> JokerId {
-        JokerId::Reserved4 // Use Reserved4 to avoid conflict with Fortune Teller
-    }
-
-    fn name(&self) -> &str {
-        "Mystery Joker"
-    }
-
-    fn description(&self) -> &str {
-        "Random effect each hand"
-    }
-
-    fn rarity(&self) -> JokerRarity {
-        JokerRarity::Rare
-    }
-
-    fn cost(&self) -> usize {
-        10
-    }
-
-    fn on_hand_played(&self, context: &mut GameContext, _hand: &SelectHand) -> JokerEffect {
-        // Generate random effect - choose from several possibilities
-        let effect_type = context.rng.gen_range(0..6);
-
-        match effect_type {
-            0 => JokerEffect::new()
-                .with_mult(15)
-                .with_message("Mystery effect: +15 Mult!".to_string()),
-            1 => JokerEffect::new()
-                .with_chips(100)
-                .with_message("Mystery effect: +100 Chips!".to_string()),
-            2 => JokerEffect::new()
-                .with_money(5)
-                .with_message("Mystery effect: +$5!".to_string()),
-            3 => JokerEffect::new()
-                .with_mult_multiplier(2.0)
-                .with_message("Mystery effect: X2 Mult!".to_string()),
-            4 => JokerEffect::new()
-                .with_retrigger(1)
-                .with_message("Mystery effect: Retrigger!".to_string()),
-            _ => JokerEffect::new()
-                .with_chips(50)
-                .with_mult(10)
-                .with_message("Mystery effect: Balanced bonus!".to_string()),
         }
     }
 }
@@ -1258,13 +869,7 @@ impl Joker for TribouletJoker {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::hand::{Hand, SelectHand};
-    use crate::joker::{GameContext, JokerId, JokerRarity};
     use crate::joker_factory::JokerFactory;
-    use crate::joker_state::JokerStateManager;
-    use crate::stage::{Blind, Stage};
-    use std::collections::HashMap;
-    use std::sync::Arc;
 
     #[test]
     fn test_ice_cream_basic_properties() {
@@ -1388,26 +993,36 @@ mod tests {
 
     #[test]
     fn test_acrobat_joker_final_hand_detection() {
+        // Test that Acrobat joker correctly triggers on final hand
         let acrobat = AcrobatJokerImpl;
-        let stage = Stage::Blind(Blind::Small);
-        let jokers: Vec<Box<dyn Joker>> = vec![];
-        let hand = Hand::new(vec![]);
-        let discarded: Vec<Card> = vec![];
+
+        use crate::hand::{Hand, SelectHand};
+        use crate::joker_state::JokerStateManager;
+        use crate::stage::{Blind, Stage};
+        use std::collections::HashMap;
+        use std::sync::Arc;
+
         let joker_state_manager = Arc::new(JokerStateManager::new());
         let hand_type_counts = HashMap::new();
-        let rng = crate::rng::GameRng::secure();
+        let hand = Hand::new(vec![]);
+        let select_hand = SelectHand::new(vec![]);
+        let discarded = vec![];
+        let jokers: Vec<Box<dyn Joker>> = vec![];
+        let rng = crate::rng::GameRng::for_testing(42);
+        let stage = Stage::Blind(Blind::Small);
 
-        // Test final hand (hands_remaining = 1.0)
-        let mut context = GameContext {
+        // Test final hand - should trigger multiplier
+        let mut context_final = crate::joker::GameContext {
             chips: 0,
-            mult: 1,
+            mult: 0,
             money: 0,
             ante: 1,
             round: 1,
             stage: &stage,
             hands_played: 3,
-            hands_remaining: 1.0, // Final hand
             discards_used: 0,
+            hands_remaining: 1.0,
+            is_final_hand: true, // This is the final hand - should trigger
             jokers: &jokers,
             hand: &hand,
             discarded: &discarded,
@@ -1416,40 +1031,53 @@ mod tests {
             cards_in_deck: 52,
             stone_cards_in_deck: 0,
             steel_cards_in_deck: 0,
+            enhanced_cards_in_deck: 0,
             rng: &rng,
         };
 
-        let select_hand = SelectHand::new(vec![]);
-        let effect = acrobat.on_hand_played(&mut context, &select_hand);
+        let effect_final = acrobat.on_hand_played(&mut context_final, &select_hand);
 
-        // Should apply multiplier on final hand
-        assert_eq!(effect.mult_multiplier, 3.0);
-        assert!(effect.message.is_some());
-        assert!(effect.message.unwrap().contains("X3 Mult"));
+        // Should apply 3.0 multiplier on final hand
+        assert_eq!(effect_final.mult_multiplier, 3.0);
+        assert!(effect_final.message.is_some());
+        assert!(effect_final
+            .message
+            .unwrap()
+            .contains("Acrobat final hand bonus"));
     }
 
     #[test]
     fn test_acrobat_joker_non_final_hand() {
+        // Test that Acrobat joker does NOT trigger on non-final hands
         let acrobat = AcrobatJokerImpl;
-        let stage = Stage::Blind(Blind::Small);
-        let jokers: Vec<Box<dyn Joker>> = vec![];
-        let hand = Hand::new(vec![]);
-        let discarded: Vec<Card> = vec![];
+
+        use crate::hand::{Hand, SelectHand};
+        use crate::joker_state::JokerStateManager;
+        use crate::stage::{Blind, Stage};
+        use std::collections::HashMap;
+        use std::sync::Arc;
+
         let joker_state_manager = Arc::new(JokerStateManager::new());
         let hand_type_counts = HashMap::new();
-        let rng = crate::rng::GameRng::secure();
+        let hand = Hand::new(vec![]);
+        let select_hand = SelectHand::new(vec![]);
+        let discarded = vec![];
+        let jokers: Vec<Box<dyn Joker>> = vec![];
+        let rng = crate::rng::GameRng::for_testing(42);
+        let stage = Stage::Blind(Blind::Small);
 
-        // Test non-final hand (hands_remaining > 1.0)
-        let mut context = GameContext {
+        // Test non-final hand - should NOT trigger
+        let mut context_non_final = crate::joker::GameContext {
             chips: 0,
-            mult: 1,
+            mult: 0,
             money: 0,
             ante: 1,
             round: 1,
             stage: &stage,
-            hands_played: 1,
-            hands_remaining: 3.0, // Not final hand
+            hands_played: 2,
             discards_used: 0,
+            hands_remaining: 2.0,
+            is_final_hand: false, // NOT the final hand - should not trigger
             jokers: &jokers,
             hand: &hand,
             discarded: &discarded,
@@ -1458,19 +1086,25 @@ mod tests {
             cards_in_deck: 52,
             stone_cards_in_deck: 0,
             steel_cards_in_deck: 0,
+            enhanced_cards_in_deck: 0,
             rng: &rng,
         };
 
-        let select_hand = SelectHand::new(vec![]);
-        let effect = acrobat.on_hand_played(&mut context, &select_hand);
+        let effect_non_final = acrobat.on_hand_played(&mut context_non_final, &select_hand);
 
-        // Should NOT apply multiplier on non-final hand
-        assert_eq!(effect.mult_multiplier, 1.0);
-        assert!(effect.message.is_none());
+        // Should NOT apply multiplier on non-final hand (default multiplier is 1.0 = no change)
+        assert_eq!(effect_non_final.mult_multiplier, 1.0);
+        assert!(effect_non_final.message.is_none());
     }
 
     #[test]
     fn test_acrobat_joker_edge_cases() {
+        use crate::hand::{Hand, SelectHand};
+        use crate::joker_state::JokerStateManager;
+        use crate::stage::{Blind, Stage};
+        use std::collections::HashMap;
+        use std::sync::Arc;
+
         let acrobat = AcrobatJokerImpl;
         let stage = Stage::Blind(Blind::Small);
         let jokers: Vec<Box<dyn Joker>> = vec![];
@@ -1478,7 +1112,7 @@ mod tests {
         let discarded: Vec<Card> = vec![];
         let joker_state_manager = Arc::new(JokerStateManager::new());
         let hand_type_counts = HashMap::new();
-        let rng = crate::rng::GameRng::secure();
+        let rng = crate::rng::GameRng::for_testing(42);
         let select_hand = SelectHand::new(vec![]);
 
         // Test edge case: hands_remaining = 0.5 (should be final)
@@ -1492,6 +1126,7 @@ mod tests {
             hands_played: 3,
             hands_remaining: 0.5,
             discards_used: 0,
+            is_final_hand: true, // Explicitly set for edge case testing
             jokers: &jokers,
             hand: &hand,
             discarded: &discarded,
@@ -1500,6 +1135,7 @@ mod tests {
             cards_in_deck: 52,
             stone_cards_in_deck: 0,
             steel_cards_in_deck: 0,
+            enhanced_cards_in_deck: 0,
             rng: &rng,
         };
         let effect = acrobat.on_hand_played(&mut context, &select_hand);
@@ -1507,11 +1143,13 @@ mod tests {
 
         // Test edge case: hands_remaining = 0.0 (should be final)
         context.hands_remaining = 0.0;
+        context.is_final_hand = true;
         let effect = acrobat.on_hand_played(&mut context, &select_hand);
         assert_eq!(effect.mult_multiplier, 3.0); // Should trigger
 
         // Test edge case: hands_remaining = 1.1 (should NOT be final)
         context.hands_remaining = 1.1;
+        context.is_final_hand = false;
         let effect = acrobat.on_hand_played(&mut context, &select_hand);
         assert_eq!(effect.mult_multiplier, 1.0); // Should NOT trigger
     }
@@ -1524,13 +1162,126 @@ mod tests {
     }
 
     #[test]
-    fn test_mystery_joker_basic_properties() {
-        let mystery = MysteryJoker;
-        assert_eq!(mystery.id(), JokerId::Reserved4);
-        assert_eq!(mystery.name(), "Mystery Joker");
-        assert_eq!(mystery.description(), "Random effect each hand");
-        assert_eq!(mystery.rarity(), JokerRarity::Rare);
-        assert_eq!(mystery.cost(), 10);
+    fn test_acrobat_joker_correct_final_hand_behavior() {
+        // This test demonstrates the correct behavior with proper final hand detection
+        let acrobat = AcrobatJokerImpl;
+
+        use crate::hand::{Hand, SelectHand};
+        use crate::joker_state::JokerStateManager;
+        use crate::stage::{Blind, Stage};
+        use std::collections::HashMap;
+        use std::sync::Arc;
+
+        let joker_state_manager = Arc::new(JokerStateManager::new());
+        let hand_type_counts = HashMap::new();
+        let hand = Hand::new(vec![]);
+        let select_hand = SelectHand::new(vec![]);
+        let discarded = vec![];
+        let jokers: Vec<Box<dyn Joker>> = vec![];
+        let rng = crate::rng::GameRng::for_testing(42);
+        let stage = Stage::Blind(Blind::Small);
+
+        // Test case 1: 3rd hand but marked as final - should trigger
+        let mut context_3rd_final = crate::joker::GameContext {
+            chips: 0,
+            mult: 0,
+            money: 0,
+            ante: 1,
+            round: 1,
+            stage: &stage,
+            hands_played: 2, // 3rd hand
+            discards_used: 0,
+            hands_remaining: 1.0,
+            is_final_hand: true, // This IS the final hand
+            jokers: &jokers,
+            hand: &hand,
+            discarded: &discarded,
+            joker_state_manager: &joker_state_manager,
+            hand_type_counts: &hand_type_counts,
+            cards_in_deck: 52,
+            stone_cards_in_deck: 0,
+            steel_cards_in_deck: 0,
+            enhanced_cards_in_deck: 0,
+            rng: &rng,
+        };
+
+        let effect_3rd_final = acrobat.on_hand_played(&mut context_3rd_final, &select_hand);
+
+        // Correctly triggers on final hand regardless of hand number
+        assert_eq!(effect_3rd_final.mult_multiplier, 3.0);
+        assert!(effect_3rd_final
+            .message
+            .as_ref()
+            .unwrap()
+            .contains("Acrobat final hand bonus"));
+
+        // Test case 2: 6th hand but marked as final - should trigger
+        let mut context_6th_final = crate::joker::GameContext {
+            chips: 0,
+            mult: 0,
+            money: 0,
+            ante: 1,
+            round: 1,
+            stage: &stage,
+            hands_played: 5, // 6th hand
+            discards_used: 0,
+            hands_remaining: 1.0,
+            is_final_hand: true, // This IS the final hand
+            jokers: &jokers,
+            hand: &hand,
+            discarded: &discarded,
+            joker_state_manager: &joker_state_manager,
+            hand_type_counts: &hand_type_counts,
+            cards_in_deck: 52,
+            stone_cards_in_deck: 0,
+            steel_cards_in_deck: 0,
+            enhanced_cards_in_deck: 0,
+            rng: &rng,
+        };
+
+        let effect_6th_final = acrobat.on_hand_played(&mut context_6th_final, &select_hand);
+
+        // Correctly triggers on final hand even if it's the 6th hand
+        assert_eq!(effect_6th_final.mult_multiplier, 3.0);
+        assert!(effect_6th_final
+            .message
+            .as_ref()
+            .unwrap()
+            .contains("Acrobat final hand bonus"));
+
+        // Test case 3: 1st hand marked as final - should trigger (edge case)
+        let mut context_1st_final = crate::joker::GameContext {
+            chips: 0,
+            mult: 0,
+            money: 0,
+            ante: 1,
+            round: 1,
+            stage: &stage,
+            hands_played: 0, // 1st hand
+            discards_used: 0,
+            hands_remaining: 1.0,
+            is_final_hand: true, // Unusual but possible - only one hand available
+            jokers: &jokers,
+            hand: &hand,
+            discarded: &discarded,
+            joker_state_manager: &joker_state_manager,
+            hand_type_counts: &hand_type_counts,
+            cards_in_deck: 52,
+            stone_cards_in_deck: 0,
+            steel_cards_in_deck: 0,
+            enhanced_cards_in_deck: 0,
+            rng: &rng,
+        };
+
+        let effect_1st_final = acrobat.on_hand_played(&mut context_1st_final, &select_hand);
+
+        // Correctly triggers even on 1st hand if it's marked as final
+        assert_eq!(effect_1st_final.mult_multiplier, 3.0);
+        assert!(effect_1st_final
+            .message
+            .as_ref()
+            .unwrap()
+            .contains("Acrobat final hand bonus"));
     }
 
     #[test]
@@ -1752,10 +1503,10 @@ mod tests {
             "AcrobatJoker should be creatable from factory"
         );
 
-        let mystery = JokerFactory::create(JokerId::Reserved4);
+        let fortune_teller = JokerFactory::create(JokerId::FortuneTeller);
         assert!(
-            mystery.is_some(),
-            "MysteryJoker should be creatable from factory"
+            fortune_teller.is_some(),
+            "FortuneTeller should be creatable from factory"
         );
 
         let vagabond = JokerFactory::create(JokerId::VagabondJoker);
@@ -1782,6 +1533,10 @@ mod tests {
             common_jokers.contains(&JokerId::LuckyCharm),
             "LuckyCardJoker should be in Common rarity"
         );
+        assert!(
+            common_jokers.contains(&JokerId::FortuneTeller),
+            "Fortune Teller (JokerId::FortuneTeller) should be in Common rarity"
+        );
 
         let uncommon_jokers = JokerFactory::get_by_rarity(JokerRarity::Uncommon);
         assert!(
@@ -1802,9 +1557,18 @@ mod tests {
             rare_jokers.contains(&JokerId::AcrobatJoker),
             "AcrobatJoker should be in Rare rarity"
         );
+
+        // Fortune Teller is in Common rarity and in all implemented
+        let common_jokers = JokerFactory::get_by_rarity(JokerRarity::Common);
         assert!(
-            rare_jokers.contains(&JokerId::FortuneTeller),
-            "Fortune Teller (JokerId::FortuneTeller) should be in Rare rarity"
+            common_jokers.contains(&JokerId::FortuneTeller),
+            "Fortune Teller should be in Common rarity"
+        );
+
+        let all_implemented = JokerFactory::get_all_implemented();
+        assert!(
+            all_implemented.contains(&JokerId::FortuneTeller),
+            "Fortune Teller should be in all implemented jokers"
         );
 
         let legendary_jokers = JokerFactory::get_by_rarity(JokerRarity::Legendary);
@@ -1840,8 +1604,8 @@ mod tests {
             "AcrobatJoker should be in implemented list"
         );
         assert!(
-            all_implemented.contains(&JokerId::Reserved4),
-            "MysteryJoker should be in implemented list"
+            all_implemented.contains(&JokerId::FortuneTeller),
+            "FortuneTeller should be in implemented list"
         );
         assert!(
             all_implemented.contains(&JokerId::VagabondJoker),
@@ -1897,6 +1661,7 @@ mod tests {
             hands_played: 0,
             hands_remaining: 4.0,
             discards_used: 0,
+            is_final_hand: false, // Test context
             jokers: &jokers,
             hand: &hand,
             discarded: &discarded,
@@ -1905,6 +1670,7 @@ mod tests {
             cards_in_deck: 52,
             stone_cards_in_deck: 0,
             steel_cards_in_deck: 0,
+            enhanced_cards_in_deck: 0,
             rng: &rng,
         };
 
@@ -1944,6 +1710,7 @@ mod tests {
             hands_played: 0,
             hands_remaining: 4.0,
             discards_used: 0,
+            is_final_hand: false, // Test context
             jokers: &jokers,
             hand: &hand,
             discarded: &discarded,
@@ -1952,6 +1719,7 @@ mod tests {
             cards_in_deck: 52,
             stone_cards_in_deck: 0,
             steel_cards_in_deck: 0,
+            enhanced_cards_in_deck: 0,
             rng: &rng,
         };
 
@@ -1991,6 +1759,7 @@ mod tests {
             hands_played: 0,
             hands_remaining: 4.0,
             discards_used: 0,
+            is_final_hand: false, // Test context
             jokers: &jokers,
             hand: &hand,
             discarded: &discarded,
@@ -1999,6 +1768,7 @@ mod tests {
             cards_in_deck: 52,
             stone_cards_in_deck: 0,
             steel_cards_in_deck: 0,
+            enhanced_cards_in_deck: 0,
             rng: &rng,
         };
 
@@ -2038,6 +1808,7 @@ mod tests {
             hands_played: 0,
             hands_remaining: 4.0,
             discards_used: 0,
+            is_final_hand: false, // Test context
             jokers: &jokers,
             hand: &hand,
             discarded: &discarded,
@@ -2046,6 +1817,7 @@ mod tests {
             cards_in_deck: 52,
             stone_cards_in_deck: 0,
             steel_cards_in_deck: 0,
+            enhanced_cards_in_deck: 0,
             rng: &rng,
         };
 

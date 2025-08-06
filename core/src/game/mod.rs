@@ -322,6 +322,24 @@ fn _format_joker_effect_debug_message(
 }
 
 impl Game {
+    /// Get effective joker slots including Negative edition bonuses
+    /// Collects all cards from deck, available, and discarded piles
+    pub fn effective_joker_slots(&self) -> usize {
+        let mut all_cards = Vec::new();
+
+        // Collect cards from deck
+        all_cards.extend(self.deck.cards());
+
+        // Collect cards from available (hand)
+        all_cards.extend(self.available.cards());
+
+        // Collect cards from discarded pile
+        all_cards.extend(self.discarded.clone());
+
+        // Use config helper to calculate effective slots
+        self.config.effective_joker_slots(&all_cards)
+    }
+
     pub fn new(config: Config) -> Self {
         let ante_start = Ante::try_from(config.ante_start).unwrap_or(Ante::One);
         Self {
@@ -495,6 +513,7 @@ impl Game {
                 hands_played: 0,
                 hands_remaining: self.plays,
                 discards_used: 0,
+                is_final_hand: false, // Blind start is never the final hand
                 jokers: &self.jokers,
                 hand: &temp_hand,
                 discarded: &self.discarded,
@@ -503,6 +522,7 @@ impl Game {
                 cards_in_deck: self.deck.len(),
                 stone_cards_in_deck: self.stone_cards_in_deck,
                 steel_cards_in_deck: self.steel_cards_in_deck,
+                enhanced_cards_in_deck: 0, // TODO: Track enhanced cards when implemented
                 rng: &self.rng,
             };
 
@@ -668,6 +688,226 @@ impl Game {
         self.available.select_card(card)
     }
 
+    /// Select multiple cards using the multi-select system
+    pub(crate) fn select_cards(&mut self, cards: Vec<Card>) -> Result<(), GameError> {
+        // Ensure target context is synchronized with current game state
+        self.sync_target_context();
+
+        // Activate multi-select mode if not already active
+        if !self.target_context.is_multi_select_active() {
+            self.target_context.activate_multi_select();
+        }
+
+        // Validate all cards exist in available cards
+        let available_cards = self.available.cards();
+        for card in &cards {
+            if !available_cards.iter().any(|c| c.id == card.id) {
+                return Err(GameError::NoCardMatch);
+            }
+        }
+
+        // Convert cards to IDs for multi-select context
+        let card_ids: Vec<usize> = cards.iter().map(|card| card.id).collect();
+
+        // Check if this would exceed the limit and truncate if necessary
+        let limits = self.target_context.multi_select_context().limits().clone();
+        let current_selection_count = self
+            .target_context
+            .multi_select_context()
+            .selected_cards()
+            .len();
+        let available_slots = limits.cards_max.saturating_sub(current_selection_count);
+
+        let cards_to_select = if card_ids.len() > available_slots {
+            // Truncate to fit the limit - select first N cards that fit
+            card_ids.into_iter().take(available_slots).collect()
+        } else {
+            card_ids
+        };
+
+        // Use multi-select context to select cards (up to the limit)
+        if !cards_to_select.is_empty() {
+            self.target_context
+                .multi_select_context_mut()
+                .select_cards(cards_to_select)
+                .map_err(|_| GameError::InvalidSelectCard)?;
+        }
+
+        Ok(())
+    }
+
+    /// Deselect a single card using the multi-select system
+    pub(crate) fn deselect_card(&mut self, card: Card) -> Result<(), GameError> {
+        // Ensure target context is synchronized with current game state
+        self.sync_target_context();
+
+        // Validate card exists in available cards
+        let available_cards = self.available.cards();
+        if !available_cards.iter().any(|c| c.id == card.id) {
+            return Err(GameError::NoCardMatch);
+        }
+
+        // Use multi-select context to deselect card
+        // If multi-select is not active, activate it first
+        if !self.target_context.is_multi_select_active() {
+            self.target_context.activate_multi_select();
+        }
+
+        // Try to deselect the card - it's OK if the card wasn't selected
+        match self
+            .target_context
+            .multi_select_context_mut()
+            .deselect_card(card.id)
+        {
+            Ok(_) => {}
+            Err(crate::multi_select::MultiSelectError::NotSelected) => {
+                // This is fine - trying to deselect an unselected card should succeed gracefully
+            }
+            Err(_) => return Err(GameError::InvalidSelectCard),
+        }
+
+        Ok(())
+    }
+
+    /// Deselect multiple cards using the multi-select system
+    pub(crate) fn deselect_cards(&mut self, cards: Vec<Card>) -> Result<(), GameError> {
+        // Ensure target context is synchronized with current game state
+        self.sync_target_context();
+
+        // Validate all cards exist in available cards
+        let available_cards = self.available.cards();
+        for card in &cards {
+            if !available_cards.iter().any(|c| c.id == card.id) {
+                return Err(GameError::NoCardMatch);
+            }
+        }
+
+        // If multi-select is not active, activate it first
+        if !self.target_context.is_multi_select_active() {
+            self.target_context.activate_multi_select();
+        }
+
+        // Deselect each card individually
+        for card in cards {
+            self.target_context
+                .multi_select_context_mut()
+                .deselect_card(card.id)
+                .map_err(|_| GameError::InvalidSelectCard)?;
+        }
+
+        Ok(())
+    }
+
+    /// Toggle card selection using the multi-select system
+    pub(crate) fn toggle_card_selection(&mut self, card: Card) -> Result<(), GameError> {
+        // Ensure target context is synchronized with current game state
+        self.sync_target_context();
+
+        // Validate card exists in available cards
+        let available_cards = self.available.cards();
+        if !available_cards.iter().any(|c| c.id == card.id) {
+            return Err(GameError::NoCardMatch);
+        }
+
+        // If multi-select is not active, activate it first
+        if !self.target_context.is_multi_select_active() {
+            self.target_context.activate_multi_select();
+        }
+
+        // Toggle card selection
+        self.target_context
+            .multi_select_context_mut()
+            .toggle_card(card.id)
+            .map_err(|_| GameError::InvalidSelectCard)?;
+
+        Ok(())
+    }
+
+    /// Select all available cards using the multi-select system
+    pub(crate) fn select_all_cards(&mut self) -> Result<(), GameError> {
+        // Ensure target context is synchronized with current game state
+        self.sync_target_context();
+
+        // If multi-select is not active, activate it first
+        if !self.target_context.is_multi_select_active() {
+            self.target_context.activate_multi_select();
+        }
+
+        // Get all available card IDs
+        let available_cards = self.available.cards();
+        let card_ids: Vec<usize> = available_cards.iter().map(|card| card.id).collect();
+
+        // Store original limits and set temporary limits for select all
+        let original_limits = self.target_context.multi_select_context().limits().clone();
+        let mut temp_limits = original_limits.clone();
+        temp_limits.cards_max = card_ids.len().max(temp_limits.cards_max); // Ensure we can select all cards
+        self.target_context
+            .multi_select_context_mut()
+            .set_limits(temp_limits);
+
+        // Clear any existing selections and select all cards
+        self.target_context.multi_select_context_mut().clear_cards();
+        let result = self
+            .target_context
+            .multi_select_context_mut()
+            .select_cards(card_ids)
+            .map_err(|_| GameError::InvalidSelectCard);
+
+        // Restore original limits
+        self.target_context
+            .multi_select_context_mut()
+            .set_limits(original_limits);
+
+        result
+    }
+
+    /// Deselect all cards using the multi-select system
+    pub(crate) fn deselect_all_cards(&mut self) -> Result<(), GameError> {
+        // Ensure target context is synchronized with current game state
+        self.sync_target_context();
+
+        // If multi-select is not active, activate it first
+        if !self.target_context.is_multi_select_active() {
+            self.target_context.activate_multi_select();
+        }
+
+        // Clear all card selections
+        self.target_context.multi_select_context_mut().clear_cards();
+
+        Ok(())
+    }
+
+    /// Select a range of cards using the multi-select system
+    pub(crate) fn range_select_cards(&mut self, start: Card, end: Card) -> Result<(), GameError> {
+        // Ensure target context is synchronized with current game state
+        self.sync_target_context();
+
+        // Validate both cards exist in available cards
+        let available_cards = self.available.cards();
+        if !available_cards.iter().any(|c| c.id == start.id) {
+            return Err(GameError::NoCardMatch);
+        }
+        if !available_cards.iter().any(|c| c.id == end.id) {
+            return Err(GameError::NoCardMatch);
+        }
+
+        // If multi-select is not active, activate it first
+        if !self.target_context.is_multi_select_active() {
+            self.target_context.activate_multi_select();
+        }
+
+        // Get available card IDs in order
+        let available_card_ids: Vec<usize> = available_cards.iter().map(|card| card.id).collect();
+
+        // Use multi-select context to perform range selection
+        self.target_context
+            .multi_select_context_mut()
+            .range_select_cards(start.id, end.id, &available_card_ids)
+            .map_err(|_| GameError::InvalidSelectCard)?;
+
+        Ok(())
+    }
+
     pub(crate) fn move_card(
         &mut self,
         direction: MoveDirection,
@@ -718,6 +958,11 @@ impl Game {
     }
 
     pub fn calc_score(&mut self, hand: MadeHand) -> f64 {
+        // Production Pattern: Reset state BEFORE operations to prevent accumulation
+        // This ensures idempotent behavior across multiple calc_score calls
+        self.mult = self.config.base_mult as f64;
+        self.chips = self.config.base_chips as f64;
+
         // compute chips and mult from hand level (considering planet card upgrades)
         let level_info = self.get_hand_level(hand.rank);
         self.chips += level_info.chips as f64;
@@ -726,6 +971,17 @@ impl Game {
         // add chips for each played card
         let card_chips: f64 = hand.hand.cards().iter().map(|c| c.chips() as f64).sum();
         self.chips += card_chips;
+
+        // Apply edition bonuses from played cards
+        // Holographic edition: +10 mult per card
+        let holographic_mult = hand
+            .hand
+            .cards()
+            .iter()
+            .filter(|card| card.edition == crate::card::Edition::Holographic)
+            .count() as f64
+            * 10.0;
+        self.mult += holographic_mult;
 
         // Apply JokerEffect from structured joker system
         if !self.jokers.is_empty() {
@@ -754,16 +1010,26 @@ impl Game {
         }
 
         // compute score
-        let score = self.chips * self.mult;
+        let mut score = self.chips * self.mult;
+
+        // Apply Polychrome edition: x1.5 multiplier per card
+        let polychrome_cards = hand
+            .hand
+            .cards()
+            .iter()
+            .filter(|card| card.edition == crate::card::Edition::Polychrome)
+            .count();
+
+        if polychrome_cards > 0 {
+            let polychrome_multiplier = 1.5_f64.powi(polychrome_cards as i32);
+            score *= polychrome_multiplier;
+        }
 
         // Check for killscreen condition
         if !score.is_finite() {
             self.add_debug_message("KILLSCREEN: Final score reached infinity!".to_string());
         }
 
-        // reset chips and mult
-        self.mult = self.config.base_mult as f64;
-        self.chips = self.config.base_chips as f64;
         score
     }
 
@@ -783,7 +1049,8 @@ impl Game {
             stage: &self.stage,
             hands_played: 0, // TODO: track this properly
             hands_remaining: self.plays,
-            discards_used: 0, // TODO: track this properly
+            discards_used: 0,     // TODO: track this properly
+            is_final_hand: false, // TODO: Implement proper final hand detection logic
             jokers: &self.jokers,
             hand: &Hand::new(hand.hand.cards().to_vec()),
             discarded: &self.discarded,
@@ -792,6 +1059,7 @@ impl Game {
             cards_in_deck: self.deck.len(),
             stone_cards_in_deck: self.stone_cards_in_deck,
             steel_cards_in_deck: self.steel_cards_in_deck,
+            enhanced_cards_in_deck: 0, // TODO: Track enhanced cards when implemented
             rng: &self.rng,
         };
 
@@ -955,7 +1223,8 @@ impl Game {
                 stage: &self.stage,
                 hands_played: 0, // TODO: track this properly
                 hands_remaining: self.plays,
-                discards_used: 0, // TODO: track this properly
+                discards_used: 0,     // TODO: track this properly
+                is_final_hand: false, // TODO: Implement proper final hand detection logic
                 jokers: &self.jokers,
                 hand: &Hand::new(hand.hand.cards().to_vec()),
                 discarded: &self.discarded,
@@ -964,6 +1233,7 @@ impl Game {
                 cards_in_deck: self.deck.len(),
                 stone_cards_in_deck: self.stone_cards_in_deck,
                 steel_cards_in_deck: self.steel_cards_in_deck,
+                enhanced_cards_in_deck: 0, // TODO: Track enhanced cards when implemented
                 rng: &self.rng,
             };
 
@@ -1097,9 +1367,9 @@ impl Game {
     /// Get current memory usage statistics
     pub fn get_memory_stats(&mut self) -> Option<crate::memory_monitor::MemoryStats> {
         let estimated_bytes = self.estimate_memory_usage();
-        let total_actions = self.action_history.total_actions();
+        let bounded_actions = self.action_history.len();
         self.debug_manager
-            .get_memory_stats(estimated_bytes, total_actions)
+            .get_memory_stats(estimated_bytes, bounded_actions)
     }
 
     /// Generate a memory usage report
@@ -1109,29 +1379,32 @@ impl Game {
 
     /// Estimate current memory usage in bytes
     fn estimate_memory_usage(&self) -> usize {
+        // Base game state memory (relatively static)
         let mut total = std::mem::size_of::<Self>();
 
-        // Action history
-        total += self.action_history.memory_stats().estimated_bytes;
+        // Action history - use lightweight calculation instead of full memory_stats()
+        // This avoids expensive calculations in the action history memory_stats method
+        // Use len() (bounded size) not total_actions() (unbounded counter) to prevent memory leak
+        let action_count = self.action_history.len();
+        total += action_count * std::mem::size_of::<crate::action::Action>();
 
-        // Deck cards
-        total += self.deck.cards().len() * std::mem::size_of::<crate::card::Card>();
+        // Cards memory - use length calculations (much faster than iterating)
+        let card_size = std::mem::size_of::<crate::card::Card>();
+        total += self.deck.cards().len() * card_size;
+        total += self.available.cards().len() * card_size;
+        total += self.discarded.len() * card_size;
 
-        // Available cards
-        total += self.available.cards().len() * std::mem::size_of::<crate::card::Card>();
-
-        // Discarded cards
-        total += self.discarded.len() * std::mem::size_of::<crate::card::Card>();
-
-        // Jokers (rough estimate)
+        // Jokers - lightweight estimate
         total += self.jokers.len() * 200; // Estimate 200 bytes per joker
 
-        // Hand type counts
+        // Hand type counts - small and static during gameplay
         total += self.hand_type_counts.len()
             * (std::mem::size_of::<crate::rank::HandRank>() + std::mem::size_of::<u32>());
 
-        // Debug messages
-        total += self.debug_manager.estimate_debug_memory_usage();
+        // Debug messages - only estimate if debug logging is enabled
+        if self.debug_manager.debug_logging_enabled {
+            total += self.debug_manager.estimate_debug_memory_usage();
+        }
 
         total
     }
@@ -1139,9 +1412,9 @@ impl Game {
     /// Check if memory usage exceeds safe limits
     pub fn check_memory_safety(&mut self) -> bool {
         let estimated_bytes = self.estimate_memory_usage();
-        let total_actions = self.action_history.total_actions();
+        let bounded_actions = self.action_history.len();
         self.debug_manager
-            .check_memory_safety(estimated_bytes, total_actions)
+            .check_memory_safety(estimated_bytes, bounded_actions)
     }
 
     /// Configure joker effect cache settings
@@ -1268,6 +1541,7 @@ impl Game {
             stage: &self.stage,
             hands_played: (self.config.plays as f64 - self.plays) as u32,
             hands_remaining: self.plays,
+            is_final_hand: self.plays <= 1.0,
             discards_used: (self.config.discards as f64 - self.discards) as u32,
             jokers: &self.jokers,
             hand: &current_hand,
@@ -1277,6 +1551,7 @@ impl Game {
             cards_in_deck: self.deck.len(),
             stone_cards_in_deck: self.stone_cards_in_deck,
             steel_cards_in_deck: self.steel_cards_in_deck,
+            enhanced_cards_in_deck: 0, // TODO: Add proper Enhanced card tracking
             rng: &self.rng,
         };
 
@@ -1317,7 +1592,7 @@ impl Game {
         if self.stage != Stage::Shop() {
             return Err(GameError::InvalidStage);
         }
-        if self.jokers.len() >= self.config.joker_slots {
+        if self.jokers.len() >= self.effective_joker_slots() {
             return Err(GameError::NoAvailableSlot);
         }
         if joker.cost() as f64 > self.money {
@@ -1369,13 +1644,13 @@ impl Game {
             return Err(GameError::InvalidStage);
         }
 
-        // Validate slot index - must be within expanded joker slot limit
-        if slot >= self.config.joker_slots {
+        // Validate slot index - must be within expanded joker slot limit (including Negative edition bonuses)
+        if slot >= self.effective_joker_slots() {
             return Err(GameError::InvalidSlot);
         }
 
         // Check if we've reached the joker limit
-        if self.jokers.len() >= self.config.joker_slots {
+        if self.jokers.len() >= self.effective_joker_slots() {
             return Err(GameError::NoAvailableSlot);
         }
 
@@ -1736,6 +2011,10 @@ impl Game {
 
         // Handle boss blind progression (same as normal blind completion)
         if blind == Blind::Boss {
+            // Process investment tag payouts before progression
+            let investment_reward = self.handle_boss_blind_defeat();
+            self.money += investment_reward as f64;
+
             if let Some(ante_next) = self.ante_current.next(self.ante_end) {
                 self.ante_current = ante_next;
             } else {
@@ -1795,6 +2074,10 @@ impl Game {
 
         // passed boss blind, either win or progress ante
         if blind == Blind::Boss {
+            // Process investment tag payouts before progression
+            let investment_reward = self.handle_boss_blind_defeat();
+            self.money += investment_reward as f64;
+
             if let Some(ante_next) = self.ante_current.next(self.ante_end) {
                 self.ante_current = ante_next;
             } else {
@@ -1863,34 +2146,34 @@ impl Game {
             },
 
             // Multi-select actions - placeholder implementations for now
-            Action::SelectCards(_) => {
-                // TODO: Implement multi-card selection
-                Err(GameError::InvalidAction)
-            }
-            Action::DeselectCard(_) => {
-                // TODO: Implement card deselection
-                Err(GameError::InvalidAction)
-            }
-            Action::DeselectCards(_) => {
-                // TODO: Implement multi-card deselection
-                Err(GameError::InvalidAction)
-            }
-            Action::ToggleCardSelection(_) => {
-                // TODO: Implement card selection toggle
-                Err(GameError::InvalidAction)
-            }
-            Action::SelectAllCards() => {
-                // TODO: Implement select all cards
-                Err(GameError::InvalidAction)
-            }
-            Action::DeselectAllCards() => {
-                // TODO: Implement deselect all cards
-                Err(GameError::InvalidAction)
-            }
-            Action::RangeSelectCards { start: _, end: _ } => {
-                // TODO: Implement range selection
-                Err(GameError::InvalidAction)
-            }
+            Action::SelectCards(cards) => match self.stage.is_blind() {
+                true => self.select_cards(cards),
+                false => Err(GameError::InvalidAction),
+            },
+            Action::DeselectCard(card) => match self.stage.is_blind() {
+                true => self.deselect_card(card),
+                false => Err(GameError::InvalidAction),
+            },
+            Action::DeselectCards(cards) => match self.stage.is_blind() {
+                true => self.deselect_cards(cards),
+                false => Err(GameError::InvalidAction),
+            },
+            Action::ToggleCardSelection(card) => match self.stage.is_blind() {
+                true => self.toggle_card_selection(card),
+                false => Err(GameError::InvalidAction),
+            },
+            Action::SelectAllCards() => match self.stage.is_blind() {
+                true => self.select_all_cards(),
+                false => Err(GameError::InvalidAction),
+            },
+            Action::DeselectAllCards() => match self.stage.is_blind() {
+                true => self.deselect_all_cards(),
+                false => Err(GameError::InvalidAction),
+            },
+            Action::RangeSelectCards { start, end } => match self.stage.is_blind() {
+                true => self.range_select_cards(start, end),
+                false => Err(GameError::InvalidAction),
+            },
             Action::SelectJoker(_) => {
                 // TODO: Implement joker selection
                 Err(GameError::InvalidAction)
@@ -1980,6 +2263,9 @@ impl Game {
 
         // First, call the original skip_blind method to set up the basic skip mechanics
         self.skip_blind(blind)?;
+
+        // Increment the blinds_skipped counter for economic tags
+        self.active_skip_tags.blinds_skipped += 1;
 
         // Generate potential skip tags based on rarity weights
         let registry = global_registry();
@@ -2335,7 +2621,8 @@ impl Game {
             stage: &self.stage,
             hands_played: 0, // TODO: track this properly
             hands_remaining: self.plays,
-            discards_used: 0, // TODO: track this properly
+            discards_used: 0,     // TODO: track this properly
+            is_final_hand: false, // Scaling events are not during hand play
             jokers: &self.jokers,
             hand: &crate::hand::Hand::new(vec![]),
             discarded: &self.discarded,
@@ -2344,6 +2631,7 @@ impl Game {
             cards_in_deck: self.deck.len(),
             stone_cards_in_deck: self.stone_cards_in_deck,
             steel_cards_in_deck: self.steel_cards_in_deck,
+            enhanced_cards_in_deck: 0, // TODO: Track enhanced cards when implemented
             rng: &self.rng,
         };
 
@@ -4138,5 +4426,331 @@ mod stone_steel_tracking_tests {
         // Enhancement counts should be accurate (only counting the added enhanced cards)
         assert_eq!(game.stone_cards_in_deck, 2);
         assert_eq!(game.steel_cards_in_deck, 1);
+    }
+
+    #[test]
+    fn test_edition_bonus_holographic_mult() {
+        use crate::card::{Card, Edition, Suit, Value};
+        use crate::hand::{MadeHand, SelectHand};
+        use crate::rank::HandRank;
+
+        let mut game = Game::new(Config::default());
+
+        // Create a hand with one Holographic card
+        let mut card1 = Card::new(Value::Ace, Suit::Heart);
+        card1.edition = Edition::Holographic;
+        let card2 = Card::new(Value::King, Suit::Heart);
+
+        let cards = vec![card1, card2];
+        let hand = SelectHand::new(cards.clone());
+        let made_hand = MadeHand {
+            hand,
+            rank: HandRank::HighCard,
+            all: cards,
+        };
+
+        // Reset game state for consistent testing
+        game.chips = 0.0;
+        game.mult = 0.0;
+
+        let score = game.calc_score(made_hand);
+
+        // HighCard level: 5 chips + 1 mult, card chips (11 + 10), holographic mult (+10)
+        // Expected: (5 + 21 chips) * (1 + 10 mult) = 26 * 11 = 286
+        assert_eq!(
+            score, 286.0,
+            "Holographic edition should add +10 mult bonus"
+        );
+    }
+
+    #[test]
+    fn test_edition_bonus_holographic_multiple_cards() {
+        use crate::card::{Card, Edition, Suit, Value};
+        use crate::hand::{MadeHand, SelectHand};
+        use crate::rank::HandRank;
+
+        let mut game = Game::new(Config::default());
+
+        // Create a hand with two Holographic cards
+        let mut card1 = Card::new(Value::Ace, Suit::Heart);
+        card1.edition = Edition::Holographic;
+        let mut card2 = Card::new(Value::King, Suit::Heart);
+        card2.edition = Edition::Holographic;
+
+        let cards = vec![card1, card2];
+        let hand = SelectHand::new(cards.clone());
+        let made_hand = MadeHand {
+            hand,
+            rank: HandRank::HighCard,
+            all: cards,
+        };
+
+        // Reset game state for consistent testing
+        game.chips = 0.0;
+        game.mult = 0.0;
+
+        let score = game.calc_score(made_hand);
+
+        // HighCard level: 5 chips + 1 mult, card chips (11 + 10), holographic mult (+20)
+        // Expected: (5 + 21 chips) * (1 + 20 mult) = 26 * 21 = 546
+        assert_eq!(
+            score, 546.0,
+            "Multiple Holographic cards should stack mult bonuses"
+        );
+    }
+
+    #[test]
+    fn test_edition_bonus_polychrome_score_multiplier() {
+        use crate::card::{Card, Edition, Suit, Value};
+        use crate::hand::{MadeHand, SelectHand};
+        use crate::rank::HandRank;
+
+        let mut game = Game::new(Config::default());
+
+        // Create a hand with one Polychrome card
+        let mut card1 = Card::new(Value::Ace, Suit::Heart);
+        card1.edition = Edition::Polychrome;
+        let card2 = Card::new(Value::King, Suit::Heart);
+
+        let cards = vec![card1, card2];
+        let hand = SelectHand::new(cards.clone());
+        let made_hand = MadeHand {
+            hand,
+            rank: HandRank::HighCard,
+            all: cards,
+        };
+
+        // Set up known chips and mult for predictable calculation
+        game.chips = 0.0;
+        game.mult = 1.0; // Start with 1 mult to make calculation clear
+
+        let score = game.calc_score(made_hand);
+
+        // HighCard level: 5 chips + 1 mult, card chips (11 + 10), final mult = 1
+        // Before Polychrome: (5 + 21 chips) * (0 + 1 mult) = 26 * 1 = 26
+        // After Polychrome: 26 * 1.5 = 39.0
+        assert_eq!(
+            score, 39.0,
+            "Polychrome edition should apply x1.5 score multiplier"
+        );
+    }
+
+    #[test]
+    fn test_edition_bonus_polychrome_multiple_cards() {
+        use crate::card::{Card, Edition, Suit, Value};
+        use crate::hand::{MadeHand, SelectHand};
+        use crate::rank::HandRank;
+
+        let mut game = Game::new(Config::default());
+
+        // Create a hand with two Polychrome cards
+        let mut card1 = Card::new(Value::Ace, Suit::Heart);
+        card1.edition = Edition::Polychrome;
+        let mut card2 = Card::new(Value::King, Suit::Heart);
+        card2.edition = Edition::Polychrome;
+
+        let cards = vec![card1, card2];
+        let hand = SelectHand::new(cards.clone());
+        let made_hand = MadeHand {
+            hand,
+            rank: HandRank::HighCard,
+            all: cards,
+        };
+
+        // Set up known chips and mult for predictable calculation
+        game.chips = 0.0;
+        game.mult = 1.0;
+
+        let score = game.calc_score(made_hand);
+
+        // HighCard level: 5 chips + 1 mult, card chips (11 + 10), final mult = 1
+        // Before Polychrome: (5 + 21 chips) * (0 + 1 mult) = 26 * 1 = 26
+        // After Polychrome: 26 * (1.5^2) = 26 * 2.25 = 58.5
+        assert_eq!(
+            score, 58.5,
+            "Multiple Polychrome cards should multiply score by 1.5^n"
+        );
+    }
+
+    #[test]
+    fn test_edition_bonus_negative_joker_slots() {
+        use crate::card::{Card, Edition, Suit, Value};
+
+        let mut game = Game::new(Config::default());
+        let base_slots = game.config.joker_slots; // Should be 5 by default
+
+        // Test with no Negative cards
+        assert_eq!(game.effective_joker_slots(), base_slots);
+
+        // Add one Negative card to deck
+        let mut neg_card = Card::new(Value::Ace, Suit::Heart);
+        neg_card.edition = Edition::Negative;
+        game.deck.extend(vec![neg_card]);
+
+        assert_eq!(
+            game.effective_joker_slots(),
+            base_slots + 1,
+            "One Negative card should add +1 joker slot"
+        );
+
+        // Add another Negative card to available hand
+        let mut neg_card2 = Card::new(Value::King, Suit::Spade);
+        neg_card2.edition = Edition::Negative;
+        game.available.extend(vec![neg_card2]);
+
+        assert_eq!(
+            game.effective_joker_slots(),
+            base_slots + 2,
+            "Two Negative cards should add +2 joker slots"
+        );
+
+        // Add a Negative card to discarded pile
+        let mut neg_card3 = Card::new(Value::Queen, Suit::Diamond);
+        neg_card3.edition = Edition::Negative;
+        game.discarded.push(neg_card3);
+
+        assert_eq!(
+            game.effective_joker_slots(),
+            base_slots + 3,
+            "Three Negative cards should add +3 joker slots"
+        );
+    }
+
+    #[test]
+    fn test_edition_bonus_negative_respects_max_slots() {
+        use crate::card::{Card, Edition, Suit, Value};
+
+        let mut game = Game::new(Config::default());
+        game.config.joker_slots_max = 7; // Set low max for testing
+        game.config.joker_slots = 5;
+
+        // Add many Negative cards (more than the cap allows)
+        let values = [
+            Value::Ace,
+            Value::King,
+            Value::Queen,
+            Value::Jack,
+            Value::Ten,
+        ];
+        for value in values {
+            let mut neg_card = Card::new(value, Suit::Heart);
+            neg_card.edition = Edition::Negative;
+            game.deck.extend(vec![neg_card]);
+        }
+
+        // Should be capped at joker_slots_max
+        assert_eq!(
+            game.effective_joker_slots(),
+            game.config.joker_slots_max,
+            "Negative edition bonus should be capped at joker_slots_max for production safety"
+        );
+    }
+
+    #[test]
+    fn test_edition_bonus_integration_all_types() {
+        use crate::card::{Card, Edition, Suit, Value};
+        use crate::hand::{MadeHand, SelectHand};
+        use crate::rank::HandRank;
+
+        let mut game = Game::new(Config::default());
+
+        // Create a hand with all edition types
+        let mut foil_card = Card::new(Value::Ace, Suit::Heart);
+        foil_card.edition = Edition::Foil;
+
+        let mut holo_card = Card::new(Value::King, Suit::Heart);
+        holo_card.edition = Edition::Holographic;
+
+        let mut poly_card = Card::new(Value::Queen, Suit::Heart);
+        poly_card.edition = Edition::Polychrome;
+
+        let mut neg_card = Card::new(Value::Jack, Suit::Heart);
+        neg_card.edition = Edition::Negative;
+
+        // Add Negative card to deck for joker slot bonus
+        game.deck.extend(vec![neg_card]);
+
+        let cards = vec![foil_card, holo_card, poly_card];
+        let hand = SelectHand::new(cards.clone());
+        let made_hand = MadeHand {
+            hand,
+            rank: HandRank::HighCard,
+            all: cards,
+        };
+
+        // Reset game state
+        game.chips = 0.0;
+        game.mult = 0.0;
+
+        let score = game.calc_score(made_hand);
+
+        // Expected calculation:
+        // - HighCard level: +5 chips, +1 mult
+        // - Foil Ace: 11 + 50 = 61 chips
+        // - Holo King: 10 chips, +10 mult
+        // - Poly Queen: 10 chips
+        // Total chips: 5 + 61 + 10 + 10 = 86
+        // Total mult: 1 + 10 = 11
+        // Base score: 86 * 11 = 946
+        // Polychrome multiplier: 946 * 1.5 = 1419
+        assert_eq!(
+            score, 1419.0,
+            "All edition bonuses should work together correctly"
+        );
+
+        // Verify Negative card adds joker slot
+        assert_eq!(
+            game.effective_joker_slots(),
+            game.config.joker_slots + 1,
+            "Negative card should add +1 joker slot"
+        );
+    }
+
+    #[test]
+    fn test_edition_bonus_production_stress_test() {
+        use crate::card::{Card, Edition, Suit, Value};
+        use crate::hand::{MadeHand, SelectHand};
+        use crate::rank::HandRank;
+
+        let mut game = Game::new(Config::default());
+
+        // Stress test with maximum Polychrome cards (5 cards max hand)
+        let mut cards = Vec::new();
+        for _i in 0..5 {
+            let mut card = Card::new(Value::Ace, Suit::Heart);
+            card.edition = Edition::Polychrome;
+            cards.push(card);
+        }
+
+        let hand = SelectHand::new(cards.clone());
+        let made_hand = MadeHand {
+            hand,
+            rank: HandRank::HighCard,
+            all: cards,
+        };
+
+        // Set up for calculation
+        game.chips = 0.0;
+        game.mult = 1.0;
+
+        let score = game.calc_score(made_hand);
+
+        // HighCard level: +5 chips, +1 mult
+        // Each Ace: 11 chips (no foil bonus for these)
+        // Total chips: 5 + (5 * 11) = 5 + 55 = 60
+        // Base score: 60 * 1 = 60
+        // Polychrome: 5 cards = 1.5^5 = 7.59375 multiplier
+        // Final: 60 * 7.59375 = 455.625
+        assert_eq!(
+            score, 455.625,
+            "Large Polychrome multipliers should calculate correctly"
+        );
+
+        // Verify score is finite (no overflow/NaN)
+        assert!(
+            score.is_finite(),
+            "Score should remain finite under stress conditions"
+        );
+        assert!(score > 0.0, "Score should be positive");
     }
 }

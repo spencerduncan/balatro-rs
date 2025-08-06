@@ -326,6 +326,412 @@ fn test_boss_blind_defeat_no_investment() {
     assert_eq!(reward, 0);
 }
 
+// ============= ECONOMIC TAG TESTS =============
+
+#[test]
+fn test_economy_tag_basic_functionality() {
+    let registry = global_registry();
+    let economy_tag = registry.get_tag(SkipTagId::Economy).unwrap();
+
+    // Test tag metadata
+    assert_eq!(economy_tag.id(), SkipTagId::Economy);
+    assert_eq!(economy_tag.name(), "Economy");
+    assert_eq!(economy_tag.effect_type(), TagEffectType::ImmediateReward);
+    assert!(economy_tag.description().contains("Doubles your money"));
+    assert!(economy_tag.description().contains("max +$40"));
+    assert!(!economy_tag.stackable());
+}
+
+#[test]
+fn test_economy_tag_positive_money() {
+    use balatro_rs::skip_tags::SkipTagContext;
+
+    let registry = global_registry();
+    let economy_tag = registry.get_tag(SkipTagId::Economy).unwrap();
+
+    // Test with $20 - should double to $40
+    let mut game = create_test_game();
+    game.money = 20.0;
+
+    let context = SkipTagContext {
+        game,
+        skipped_blind: None,
+        available_tags: vec![],
+    };
+
+    let result = economy_tag.activate(context);
+    assert!(result.success);
+    assert_eq!(result.game.money, 40.0); // $20 doubled
+    assert!(result.message.as_ref().unwrap().contains("+$20"));
+}
+
+#[test]
+fn test_economy_tag_max_cap() {
+    use balatro_rs::skip_tags::SkipTagContext;
+
+    let registry = global_registry();
+    let economy_tag = registry.get_tag(SkipTagId::Economy).unwrap();
+
+    // Test with $50 - should only give +$40 max
+    let mut game = create_test_game();
+    game.money = 50.0;
+
+    let context = SkipTagContext {
+        game,
+        skipped_blind: None,
+        available_tags: vec![],
+    };
+
+    let result = economy_tag.activate(context);
+    assert!(result.success);
+    assert_eq!(result.game.money, 90.0); // $50 + $40 max
+    assert!(result.message.as_ref().unwrap().contains("+$40"));
+}
+
+#[test]
+fn test_economy_tag_negative_money() {
+    use balatro_rs::skip_tags::SkipTagContext;
+
+    let registry = global_registry();
+    let economy_tag = registry.get_tag(SkipTagId::Economy).unwrap();
+
+    // Test with negative money - should give $0
+    let mut game = create_test_game();
+    game.money = -10.0;
+
+    let context = SkipTagContext {
+        game,
+        skipped_blind: None,
+        available_tags: vec![],
+    };
+
+    let result = economy_tag.activate(context);
+    assert!(result.success);
+    assert_eq!(result.game.money, -10.0); // No change
+    assert!(result
+        .message
+        .as_ref()
+        .unwrap()
+        .contains("negative balance"));
+}
+
+#[test]
+fn test_investment_tag_basic_functionality() {
+    let registry = global_registry();
+    let investment_tag = registry.get_tag(SkipTagId::Investment).unwrap();
+
+    // Test tag metadata
+    assert_eq!(investment_tag.id(), SkipTagId::Investment);
+    assert_eq!(investment_tag.name(), "Investment");
+    assert_eq!(
+        investment_tag.effect_type(),
+        TagEffectType::GameStateModifier
+    );
+    assert!(investment_tag.description().contains("$25"));
+    assert!(investment_tag.description().contains("Boss Blind"));
+    assert!(investment_tag.stackable()); // Investment is stackable
+}
+
+#[test]
+fn test_investment_tag_activation() {
+    use balatro_rs::skip_tags::SkipTagContext;
+
+    let registry = global_registry();
+    let investment_tag = registry.get_tag(SkipTagId::Investment).unwrap();
+
+    let game = create_test_game();
+    assert_eq!(game.active_skip_tags.investment_count, 0);
+
+    let context = SkipTagContext {
+        game,
+        skipped_blind: None,
+        available_tags: vec![],
+    };
+
+    let result = investment_tag.activate(context);
+    assert!(result.success);
+    assert_eq!(result.game.active_skip_tags.investment_count, 1);
+    assert!(result.message.as_ref().unwrap().contains("$25"));
+    assert!(result.message.as_ref().unwrap().contains("1 investment"));
+}
+
+#[test]
+fn test_investment_tag_stacking() {
+    use balatro_rs::skip_tags::SkipTagContext;
+
+    let registry = global_registry();
+    let investment_tag = registry.get_tag(SkipTagId::Investment).unwrap();
+
+    let mut game = create_test_game();
+
+    // Apply investment tag 3 times
+    for i in 1..=3 {
+        let context = SkipTagContext {
+            game,
+            skipped_blind: None,
+            available_tags: vec![],
+        };
+
+        let result = investment_tag.activate(context);
+        game = result.game;
+        assert_eq!(game.active_skip_tags.investment_count, i);
+        assert!(result
+            .message
+            .as_ref()
+            .unwrap()
+            .contains(&format!("${}", i * 25)));
+    }
+}
+
+#[test]
+fn test_investment_tag_boss_blind_payout() {
+    let mut game = create_test_game();
+
+    // Set up 3 investment tags
+    game.active_skip_tags.investment_count = 3;
+    let initial_money = game.money;
+
+    // Defeat boss blind
+    let reward = game.handle_boss_blind_defeat();
+    assert_eq!(reward, 75); // 3 * $25
+    assert_eq!(game.money, initial_money + 75.0);
+    assert_eq!(game.active_skip_tags.investment_count, 0); // Reset after payout
+}
+
+#[test]
+fn test_garbage_tag_basic_functionality() {
+    let registry = global_registry();
+    let garbage_tag = registry.get_tag(SkipTagId::Garbage).unwrap();
+
+    // Test tag metadata
+    assert_eq!(garbage_tag.id(), SkipTagId::Garbage);
+    assert_eq!(garbage_tag.name(), "Garbage");
+    assert_eq!(garbage_tag.effect_type(), TagEffectType::ImmediateReward);
+    assert!(garbage_tag.description().contains("$1"));
+    assert!(garbage_tag.description().contains("unused discard"));
+    assert!(!garbage_tag.stackable());
+}
+
+#[test]
+fn test_garbage_tag_with_unused_discards() {
+    use balatro_rs::skip_tags::SkipTagContext;
+
+    let registry = global_registry();
+    let garbage_tag = registry.get_tag(SkipTagId::Garbage).unwrap();
+
+    let mut game = create_test_game();
+    game.config.discards = 4; // Starting discards
+    game.discards = 3.0; // 3 unused discards remaining
+    let initial_money = game.money;
+
+    let context = SkipTagContext {
+        game,
+        skipped_blind: None,
+        available_tags: vec![],
+    };
+
+    let result = garbage_tag.activate(context);
+    assert!(result.success);
+    assert_eq!(result.game.money, initial_money + 3.0); // +$3 for 3 unused
+    assert!(result.message.as_ref().unwrap().contains("+$3"));
+    assert!(result
+        .message
+        .as_ref()
+        .unwrap()
+        .contains("3 unused discards"));
+}
+
+#[test]
+fn test_garbage_tag_no_unused_discards() {
+    use balatro_rs::skip_tags::SkipTagContext;
+
+    let registry = global_registry();
+    let garbage_tag = registry.get_tag(SkipTagId::Garbage).unwrap();
+
+    let mut game = create_test_game();
+    game.config.discards = 4;
+    game.discards = 0.0; // All discards used
+    let initial_money = game.money;
+
+    let context = SkipTagContext {
+        game,
+        skipped_blind: None,
+        available_tags: vec![],
+    };
+
+    let result = garbage_tag.activate(context);
+    assert!(result.success);
+    assert_eq!(result.game.money, initial_money); // No reward
+    assert!(result.message.as_ref().unwrap().contains("+$0"));
+}
+
+#[test]
+fn test_speed_tag_basic_functionality() {
+    let registry = global_registry();
+    let speed_tag = registry.get_tag(SkipTagId::Speed).unwrap();
+
+    // Test tag metadata
+    assert_eq!(speed_tag.id(), SkipTagId::Speed);
+    assert_eq!(speed_tag.name(), "Speed");
+    assert_eq!(speed_tag.effect_type(), TagEffectType::ImmediateReward);
+    assert!(speed_tag.description().contains("$5"));
+    assert!(speed_tag.description().contains("Blind"));
+    assert!(speed_tag.description().contains("skipped"));
+    assert!(!speed_tag.stackable());
+}
+
+#[test]
+fn test_speed_tag_minimum_payout() {
+    use balatro_rs::skip_tags::SkipTagContext;
+
+    let registry = global_registry();
+    let speed_tag = registry.get_tag(SkipTagId::Speed).unwrap();
+
+    let mut game = create_test_game();
+    game.active_skip_tags.blinds_skipped = 0; // No blinds skipped
+    let initial_money = game.money;
+
+    let context = SkipTagContext {
+        game,
+        skipped_blind: None,
+        available_tags: vec![],
+    };
+
+    let result = speed_tag.activate(context);
+    assert!(result.success);
+    assert_eq!(result.game.money, initial_money + 5.0); // Minimum $5
+    assert!(result.message.as_ref().unwrap().contains("+$5"));
+    assert!(result.message.as_ref().unwrap().contains("min $5"));
+}
+
+#[test]
+fn test_speed_tag_multiple_blinds() {
+    use balatro_rs::skip_tags::SkipTagContext;
+
+    let registry = global_registry();
+    let speed_tag = registry.get_tag(SkipTagId::Speed).unwrap();
+
+    let mut game = create_test_game();
+    game.active_skip_tags.blinds_skipped = 4; // 4 blinds skipped
+    let initial_money = game.money;
+
+    let context = SkipTagContext {
+        game,
+        skipped_blind: None,
+        available_tags: vec![],
+    };
+
+    let result = speed_tag.activate(context);
+    assert!(result.success);
+    assert_eq!(result.game.money, initial_money + 20.0); // 4 * $5
+    assert!(result.message.as_ref().unwrap().contains("+$20"));
+    assert!(result
+        .message
+        .as_ref()
+        .unwrap()
+        .contains("4 blind(s) skipped"));
+}
+
+#[test]
+fn test_handy_tag_basic_functionality() {
+    let registry = global_registry();
+    let handy_tag = registry.get_tag(SkipTagId::Handy).unwrap();
+
+    // Test tag metadata
+    assert_eq!(handy_tag.id(), SkipTagId::Handy);
+    assert_eq!(handy_tag.name(), "Handy");
+    assert_eq!(handy_tag.effect_type(), TagEffectType::ImmediateReward);
+    assert!(handy_tag.description().contains("$1"));
+    assert!(handy_tag.description().contains("hand played"));
+    assert!(!handy_tag.stackable());
+}
+
+#[test]
+fn test_handy_tag_with_played_hands() {
+    use balatro_rs::skip_tags::SkipTagContext;
+
+    let registry = global_registry();
+    let handy_tag = registry.get_tag(SkipTagId::Handy).unwrap();
+
+    let mut game = create_test_game();
+    game.plays = 17.0; // 17 hands played (retroactive)
+    let initial_money = game.money;
+
+    let context = SkipTagContext {
+        game,
+        skipped_blind: None,
+        available_tags: vec![],
+    };
+
+    let result = handy_tag.activate(context);
+    assert!(result.success);
+    assert_eq!(result.game.money, initial_money + 17.0); // +$17
+    assert!(result.message.as_ref().unwrap().contains("+$17"));
+    assert!(result.message.as_ref().unwrap().contains("17 hands played"));
+}
+
+#[test]
+fn test_handy_tag_no_hands_played() {
+    use balatro_rs::skip_tags::SkipTagContext;
+
+    let registry = global_registry();
+    let handy_tag = registry.get_tag(SkipTagId::Handy).unwrap();
+
+    let mut game = create_test_game();
+    game.plays = 0.0; // No hands played
+    let initial_money = game.money;
+
+    let context = SkipTagContext {
+        game,
+        skipped_blind: None,
+        available_tags: vec![],
+    };
+
+    let result = handy_tag.activate(context);
+    assert!(result.success);
+    assert_eq!(result.game.money, initial_money); // No reward
+    assert!(result.message.as_ref().unwrap().contains("+$0"));
+}
+
+#[test]
+fn test_all_economic_tags_registered() {
+    let registry = global_registry();
+
+    // All economic tags should be registered
+    assert!(registry.get_tag(SkipTagId::Economy).is_some());
+    assert!(registry.get_tag(SkipTagId::Investment).is_some());
+    assert!(registry.get_tag(SkipTagId::Garbage).is_some());
+    assert!(registry.get_tag(SkipTagId::Speed).is_some());
+    assert!(registry.get_tag(SkipTagId::Handy).is_some());
+}
+
+#[test]
+fn test_economic_tags_game_integration() {
+    let mut game = create_test_game();
+
+    // Set up game state for testing
+    game.money = 20.0;
+    game.active_skip_tags.blinds_skipped = 2;
+    game.discards = 2.0; // 2 unused discards
+    game.plays = 10.0; // 10 hands played
+
+    // Apply economic tags through game interface
+    let economy_result = game.apply_skip_tag_effect(SkipTagId::Economy).unwrap();
+    assert_eq!(economy_result.money_reward, 20); // Doubled $20
+
+    let investment_result = game.apply_skip_tag_effect(SkipTagId::Investment).unwrap();
+    assert_eq!(investment_result.money_reward, 0); // No immediate reward
+
+    let garbage_result = game.apply_skip_tag_effect(SkipTagId::Garbage).unwrap();
+    assert_eq!(garbage_result.money_reward, 2); // $2 for 2 unused discards
+
+    let speed_result = game.apply_skip_tag_effect(SkipTagId::Speed).unwrap();
+    assert_eq!(speed_result.money_reward, 10); // $10 for 2 blinds skipped
+
+    let handy_result = game.apply_skip_tag_effect(SkipTagId::Handy).unwrap();
+    assert_eq!(handy_result.money_reward, 10); // $10 for 10 hands played
+}
+
 #[test]
 fn test_all_shop_enhancement_tags_are_next_shop_modifiers() {
     let registry = global_registry();
@@ -366,8 +772,8 @@ fn test_all_shop_enhancement_tags_persist() {
 fn test_invalid_tag_id() {
     let mut game = create_test_game();
 
-    // Try to apply a tag that's not implemented (Economy tag)
-    let result = game.apply_skip_tag_effect(SkipTagId::Economy);
+    // Try to apply a tag that's not implemented (Charm tag - Reward tags not yet implemented)
+    let result = game.apply_skip_tag_effect(SkipTagId::Charm);
     assert!(result.is_err());
 
     if let Err(e) = result {

@@ -137,6 +137,23 @@ pub fn global_registry() -> &'static SkipTagRegistry {
         //     eprintln!("Failed to register Juggle tag: {e}");
         // }
 
+        // Register all economic tags
+        if let Err(e) = registry.register(crate::skip_tags::economic_tags::EconomyTag) {
+            eprintln!("Failed to register Economy tag: {e}");
+        }
+        if let Err(e) = registry.register(crate::skip_tags::economic_tags::InvestmentTag) {
+            eprintln!("Failed to register Investment tag: {e}");
+        }
+        if let Err(e) = registry.register(crate::skip_tags::economic_tags::GarbageTag) {
+            eprintln!("Failed to register Garbage tag: {e}");
+        }
+        if let Err(e) = registry.register(crate::skip_tags::economic_tags::SpeedTag) {
+            eprintln!("Failed to register Speed tag: {e}");
+        }
+        if let Err(e) = registry.register(crate::skip_tags::economic_tags::HandyTag) {
+            eprintln!("Failed to register Handy tag: {e}");
+        }
+
         registry
     })
 }

@@ -213,7 +213,7 @@ impl Card {
     }
 
     pub fn chips(&self) -> usize {
-        match self.value {
+        let base_chips = match self.value {
             Value::Two => 1,
             Value::Three => 2,
             Value::Four => 3,
@@ -227,6 +227,12 @@ impl Card {
             Value::Queen => 10,
             Value::King => 10,
             Value::Ace => 11,
+        };
+
+        // Add edition bonuses - Foil edition gives +50 chips
+        match self.edition {
+            Edition::Foil => base_chips + 50,
+            _ => base_chips,
         }
     }
 }
@@ -306,5 +312,77 @@ mod tests {
         let king = Card::new(Value::King, Suit::Club);
         assert!(!king.is_even());
         assert!(!king.is_odd());
+    }
+
+    #[test]
+    fn test_edition_bonus_foil_chips() {
+        // Test Foil edition gives +50 chips bonus
+        let mut card = Card::new(Value::Ace, Suit::Heart);
+        card.edition = Edition::Foil;
+
+        // Ace normally gives 11 chips, Foil should add 50 for total of 61
+        assert_eq!(card.chips(), 61);
+
+        // Test with different card values
+        let mut two = Card::new(Value::Two, Suit::Spade);
+        two.edition = Edition::Foil;
+        assert_eq!(two.chips(), 51); // 1 + 50
+
+        let mut king = Card::new(Value::King, Suit::Diamond);
+        king.edition = Edition::Foil;
+        assert_eq!(king.chips(), 60); // 10 + 50
+    }
+
+    #[test]
+    fn test_edition_bonus_base_no_bonus() {
+        // Test Base edition gives no bonus
+        let card = Card::new(Value::Ace, Suit::Heart);
+        assert_eq!(card.edition, Edition::Base); // Default should be Base
+        assert_eq!(card.chips(), 11); // No bonus applied
+
+        let two = Card::new(Value::Two, Suit::Spade);
+        assert_eq!(two.chips(), 1); // No bonus applied
+    }
+
+    #[test]
+    fn test_edition_bonus_other_editions_no_chip_bonus() {
+        // Test that Holographic, Polychrome, and Negative don't affect chips
+        // (they have other bonuses applied elsewhere)
+        let mut holo_card = Card::new(Value::Ace, Suit::Heart);
+        holo_card.edition = Edition::Holographic;
+        assert_eq!(holo_card.chips(), 11); // No chip bonus from Holographic
+
+        let mut poly_card = Card::new(Value::Ace, Suit::Heart);
+        poly_card.edition = Edition::Polychrome;
+        assert_eq!(poly_card.chips(), 11); // No chip bonus from Polychrome
+
+        let mut neg_card = Card::new(Value::Ace, Suit::Heart);
+        neg_card.edition = Edition::Negative;
+        assert_eq!(neg_card.chips(), 11); // No chip bonus from Negative
+    }
+
+    #[test]
+    fn test_edition_bonus_production_edge_cases() {
+        // Production-ready edge case testing
+
+        // Test with all card values for Foil edition
+        for value in &Value::values() {
+            let mut card = Card::new(*value, Suit::Heart);
+            card.edition = Edition::Foil;
+
+            let base_chips = Card::new(*value, Suit::Heart).chips();
+            assert_eq!(
+                card.chips(),
+                base_chips + 50,
+                "Foil edition should add exactly 50 chips to {value:?}"
+            );
+        }
+
+        // Test overflow safety (should not panic even with extreme values)
+        let mut max_card = Card::new(Value::Ace, Suit::Heart); // Highest base chips (11)
+        max_card.edition = Edition::Foil;
+        let result = max_card.chips();
+        assert_eq!(result, 61);
+        assert!(result < usize::MAX, "Should not overflow");
     }
 }

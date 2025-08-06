@@ -47,7 +47,8 @@ impl TestData {
             stage: &self.stage,
             hands_played: 0,
             discards_used: 0,
-            hands_remaining: 4.0, // Standard hands remaining for testing
+            hands_remaining: 4.0,
+            is_final_hand: false,
             jokers: &self.jokers,
             hand: &self.hand,
             discarded: &self.discarded,
@@ -56,6 +57,7 @@ impl TestData {
             cards_in_deck: 52,
             stone_cards_in_deck: 0,
             steel_cards_in_deck: 0,
+            enhanced_cards_in_deck: 0,
             rng: &self.rng,
         }
     }
@@ -281,7 +283,7 @@ fn test_ceremonial_dagger() {
 }
 
 #[test]
-fn test_all_15_scaling_jokers() {
+fn test_all_14_scaling_jokers() {
     let jokers = create_all_scaling_jokers();
     assert_eq!(jokers.len(), 14, "Should create exactly 14 scaling jokers");
 
@@ -641,24 +643,24 @@ fn test_scaling_joker_state_persistence() {
     // Create a new harness with different joker IDs to test independence
     let mut harness2 = create_test_harness();
 
-    let banner_joker = ScalingJoker::new(
-        JokerId::Banner,
-        "Banner".to_string(),
-        "+1 Chips per dollar held".to_string(),
+    let loyalty_joker = ScalingJoker::new(
+        JokerId::Loyalty,
+        "Loyalty Card".to_string(),
+        "+1 Mult per blind completed this ante".to_string(),
         JokerRarity::Common,
         0.0,
         1.0,
-        ScalingTrigger::MoneyGained,
-        ScalingEffectType::Chips,
+        ScalingTrigger::BlindCompleted,
+        ScalingEffectType::Mult,
     );
 
-    harness2.add_joker(banner_joker);
+    harness2.add_joker(loyalty_joker);
 
     // Accumulate some state
-    harness2.process_scaling_event(ScalingEvent::MoneyGained);
-    harness2.process_scaling_event(ScalingEvent::MoneyGained);
+    harness2.process_scaling_event(ScalingEvent::BlindCompleted);
+    harness2.process_scaling_event(ScalingEvent::BlindCompleted);
 
-    assert_eq!(harness2.get_accumulated_value(JokerId::Banner), 2.0);
+    assert_eq!(harness2.get_accumulated_value(JokerId::Loyalty), 2.0);
 
     // Create separate save data
     let jokers2_as_trait: Vec<Box<dyn Joker>> = harness2
@@ -677,7 +679,7 @@ fn test_scaling_joker_state_persistence() {
 
     // Verify the two save files are independent
     assert_eq!(save_data2.joker_states.len(), 1);
-    assert!(save_data2.joker_states.contains_key(&JokerId::Banner));
+    assert!(save_data2.joker_states.contains_key(&JokerId::Loyalty));
     assert!(!save_data2.joker_states.contains_key(&JokerId::Trousers));
 
     // Step 10: Test partial load (loading subset of jokers)
@@ -1146,7 +1148,8 @@ fn test_performance_with_many_scaling_jokers() {
         stage: &stage,
         hands_played: 0,
         discards_used: 0,
-        hands_remaining: 4.0, // Standard hands remaining for testing
+        hands_remaining: 4.0,
+        is_final_hand: false,
         jokers: &jokers,
         hand: &hand,
         discarded: &discarded,
@@ -1155,6 +1158,7 @@ fn test_performance_with_many_scaling_jokers() {
         cards_in_deck: 52,
         stone_cards_in_deck: 0,
         steel_cards_in_deck: 0,
+        enhanced_cards_in_deck: 0,
         rng,
     };
 

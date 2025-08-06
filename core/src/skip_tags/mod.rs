@@ -3,6 +3,7 @@
 //! Skip tags are special rewards that can be obtained when skipping blinds.
 //! They provide various effects to enhance gameplay.
 
+pub mod economic_tags;
 pub mod shop_tags;
 pub mod tag_effects;
 pub mod tag_registry;
@@ -420,6 +421,11 @@ mod tests {
         assert_eq!(SkipTagId::Boss.to_string(), "Boss");
         assert_eq!(SkipTagId::Orbital.to_string(), "Orbital");
         assert_eq!(SkipTagId::Juggle.to_string(), "Juggle");
+        assert_eq!(SkipTagId::Economy.to_string(), "Economy");
+        assert_eq!(SkipTagId::Investment.to_string(), "Investment");
+        assert_eq!(SkipTagId::Garbage.to_string(), "Garbage");
+        assert_eq!(SkipTagId::Speed.to_string(), "Speed");
+        assert_eq!(SkipTagId::Handy.to_string(), "Handy");
     }
 
     #[test]

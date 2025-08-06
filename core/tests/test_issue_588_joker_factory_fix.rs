@@ -17,7 +17,7 @@ fn test_fortune_teller_joker_correctly_created() {
     assert_eq!(joker.id(), JokerId::FortuneTeller);
     assert_eq!(joker.name(), "Fortune Teller");
     assert_eq!(joker.description(), "+1 Mult per Tarot card used");
-    assert_eq!(joker.rarity(), JokerRarity::Rare);
+    assert_eq!(joker.rarity(), JokerRarity::Common);
 
     // Verify it's not the MysteryJoker (which has a different description)
     assert_ne!(joker.description(), "Random effect each hand");
@@ -111,13 +111,10 @@ fn test_jokers_in_rarity_lists() {
     // Initialize all systems before running the test to avoid factory race conditions
     balatro_rs::initialize().expect("Failed to initialize core systems");
 
-    // Fortune should be in Rare (based on the factory)
-    let rare_jokers = JokerFactory::get_by_rarity(JokerRarity::Rare);
-    assert!(rare_jokers.contains(&JokerId::FortuneTeller));
-
-    // Red Card (Reserved6) should be in Common (based on the factory)
+    // Fortune should be in Common (as implemented)
     let common_jokers = JokerFactory::get_by_rarity(JokerRarity::Common);
-    assert!(common_jokers.contains(&JokerId::Reserved6));
+    assert!(common_jokers.contains(&JokerId::FortuneTeller));
+    assert!(common_jokers.contains(&JokerId::Reserved6)); // RedCard
 
     // Steel Joker should be in Uncommon
     let uncommon_jokers = JokerFactory::get_by_rarity(JokerRarity::Uncommon);

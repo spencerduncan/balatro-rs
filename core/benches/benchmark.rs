@@ -266,6 +266,7 @@ fn benchmark_joker_processing(processor: &mut JokerEffectProcessor, iterations: 
         hands_played: 0,
         discards_used: 0,
         hands_remaining: 4.0, // Standard hands remaining for testing
+        is_final_hand: false,
         jokers: &[],
         hand: &hand,
         discarded: &[],
@@ -274,6 +275,7 @@ fn benchmark_joker_processing(processor: &mut JokerEffectProcessor, iterations: 
         cards_in_deck: 52,
         stone_cards_in_deck: 0,
         steel_cards_in_deck: 0,
+        enhanced_cards_in_deck: 0,
         rng: &rng,
     };
 

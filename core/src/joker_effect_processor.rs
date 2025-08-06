@@ -640,6 +640,7 @@ impl JokerEffectProcessor {
             hands_played: 0,
             hands_remaining: 4.0,
             discards_used: 0,
+            is_final_hand: false, // Test context, not final hand
             jokers: &[],
             hand: &test_hand,
             discarded: &[],
@@ -648,6 +649,7 @@ impl JokerEffectProcessor {
             cards_in_deck: 52,
             stone_cards_in_deck: 0, // TEST: Should use proper test deck composition
             steel_cards_in_deck: 0, // TEST: Should use proper test deck composition
+            enhanced_cards_in_deck: 0,
             rng: &test_rng,
         };
 
@@ -2200,6 +2202,7 @@ mod tests {
             hands_played: 0,
             hands_remaining: 4.0,
             discards_used: 0,
+            is_final_hand: false, // Test context
             jokers: &[],
             hand: &crate::hand::Hand::new(vec![]),
             discarded: &[],
@@ -2208,6 +2211,7 @@ mod tests {
             cards_in_deck: 52,
             stone_cards_in_deck: 0, // TEST: Should use proper test deck composition
             steel_cards_in_deck: 0, // TEST: Should use proper test deck composition
+            enhanced_cards_in_deck: 0,
             rng: &crate::rng::GameRng::secure(),
         };
 
@@ -2468,6 +2472,7 @@ mod tests {
                 hands_played: 0,
                 discards_used: 0,
                 hands_remaining: 4.0,
+                is_final_hand: false, // Test context
                 jokers,
                 hand,
                 discarded,
@@ -2476,6 +2481,7 @@ mod tests {
                 cards_in_deck: 52,
                 stone_cards_in_deck: 0,
                 steel_cards_in_deck: 0,
+                enhanced_cards_in_deck: 0,
                 rng,
             }
         };
@@ -2545,6 +2551,7 @@ mod tests {
             hands_played: 0,
             hands_remaining: 4.0,
             discards_used: 0,
+            is_final_hand: false, // Test context
             jokers: &[],
             hand: &crate::hand::Hand::new(vec![]),
             discarded: &[],
@@ -2553,6 +2560,7 @@ mod tests {
             cards_in_deck: 52,
             stone_cards_in_deck: 0, // TEST: Should use proper test deck composition
             steel_cards_in_deck: 0, // TEST: Should use proper test deck composition
+            enhanced_cards_in_deck: 0,
             rng: &crate::rng::GameRng::secure(),
         };
 
@@ -2935,6 +2943,7 @@ mod tests {
             hands_played: 0,
             hands_remaining: 4.0,
             discards_used: 0,
+            is_final_hand: false, // Test context
             jokers: &[],
             hand: &crate::hand::Hand::new(vec![]),
             discarded: &[],
@@ -2943,6 +2952,7 @@ mod tests {
             cards_in_deck: 52,
             stone_cards_in_deck: 0, // TEST: Should use proper test deck composition
             steel_cards_in_deck: 0, // TEST: Should use proper test deck composition
+            enhanced_cards_in_deck: 0,
             rng: &crate::rng::GameRng::secure(),
         };
 
@@ -2981,6 +2991,7 @@ mod tests {
             hands_played: 0,
             hands_remaining: 4.0,
             discards_used: 0,
+            is_final_hand: false, // Test context
             jokers: &[],
             hand: &crate::hand::Hand::new(vec![]),
             discarded: &[],
@@ -2989,6 +3000,7 @@ mod tests {
             cards_in_deck: 52,
             stone_cards_in_deck: 0, // TEST: Should use proper test deck composition
             steel_cards_in_deck: 0, // TEST: Should use proper test deck composition
+            enhanced_cards_in_deck: 0,
             rng: &crate::rng::GameRng::secure(),
         };
 

@@ -1,5 +1,8 @@
 /target
 
+# Profiling data
+*.profraw
+
 # Python virtual environments
 .env/
 .venv/
@@ -31,3 +34,7 @@ coverage.json
 *.bak
 *.old
 *.orig
+
+# Test output files
+test_output.log
+*.test_output

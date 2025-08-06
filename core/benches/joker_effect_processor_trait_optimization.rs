@@ -49,6 +49,7 @@ impl TestGameData {
             hands_played: 0,
             discards_used: 0,
             hands_remaining: 4.0, // Standard hands remaining for testing
+            is_final_hand: false,
             jokers: &[],
             hand: &self.hand,
             discarded: &[],
@@ -57,6 +58,7 @@ impl TestGameData {
             cards_in_deck: 52,
             stone_cards_in_deck: 0, // BENCHMARK: Using standard deck composition
             steel_cards_in_deck: 0, // BENCHMARK: Using standard deck composition
+            enhanced_cards_in_deck: 0,
             rng: &self.rng,
         }
     }
