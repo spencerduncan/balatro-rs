@@ -774,6 +774,7 @@ impl TestContextBuilder {
             hands_played: self.hands_played,
             hands_remaining: self.hands_remaining,
             discards_used: self.discards_used,
+            is_final_hand: false, // Test context, override with .with_final_hand() if needed
             jokers: jokers_ref,
             hand: hand_ref,
             discarded: discarded_ref,
@@ -782,6 +783,7 @@ impl TestContextBuilder {
             cards_in_deck: self.cards_in_deck,
             stone_cards_in_deck: self.stone_cards_in_deck,
             steel_cards_in_deck: 0,
+            enhanced_cards_in_deck: 0,
             rng: rng_ref,
         }
     }

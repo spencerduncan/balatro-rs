@@ -139,9 +139,8 @@ pub enum JokerId {
     Certificate,
     SmilingMask,
     FaceMask,
-    Fortune,
     FortuneTeller,
-    MysteryJoker,
+    Fortune, // Alias for FortuneTeller for compatibility
     Juggler,
     Drunkard,
     Stone,
@@ -576,6 +575,8 @@ pub struct GameContext<'a> {
     pub hands_remaining: f64,
     /// Number of discards used this round
     pub discards_used: u32,
+    /// Whether this is the final hand of the round
+    pub is_final_hand: bool,
     /// All jokers in play
     pub jokers: &'a [Box<dyn Joker>],
     /// Cards in hand
@@ -592,6 +593,8 @@ pub struct GameContext<'a> {
     pub stone_cards_in_deck: usize,
     /// Number of Steel cards in deck (for Steel Joker calculations)
     pub steel_cards_in_deck: usize,
+    /// Number of Enhanced cards in deck (for condition-based jokers)
+    pub enhanced_cards_in_deck: usize,
     /// Random number generator for secure randomness
     pub rng: &'a crate::rng::GameRng,
 }

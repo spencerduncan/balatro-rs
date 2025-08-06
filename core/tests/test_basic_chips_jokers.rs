@@ -54,7 +54,8 @@ fn create_test_context_with_deck_and_stones(
         stage: &STAGE,
         hands_played: 0,
         discards_used,
-        hands_remaining: 4.0, // Standard hands remaining for testing
+        hands_remaining: 4.0,
+        is_final_hand: false,
         jokers: &[],
         hand,
         discarded: &[],
@@ -63,6 +64,7 @@ fn create_test_context_with_deck_and_stones(
         cards_in_deck,
         stone_cards_in_deck,
         steel_cards_in_deck: 0,
+        enhanced_cards_in_deck: 0,
         rng,
     }
 }

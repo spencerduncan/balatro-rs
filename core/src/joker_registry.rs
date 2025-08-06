@@ -238,15 +238,7 @@ fn initialize_default_jokers(registry: &mut JokerRegistry) {
         create_gluttonous_joker,
     );
 
-    register_joker(
-        registry,
-        JokerId::Banner,
-        "Banner",
-        "+30 Chips for each remaining discard",
-        JokerRarity::Common,
-        None,
-        create_banner_joker,
-    );
+    // Banner joker registration moved to register_static_jokers to avoid duplicate registration
 
     // Register all static jokers from StaticJokerFactory
     register_static_jokers(registry);
@@ -273,9 +265,7 @@ fn create_gluttonous_joker() -> Box<dyn Joker> {
     Box::new(crate::joker_impl::GluttonousJoker)
 }
 
-fn create_banner_joker() -> Box<dyn Joker> {
-    crate::static_joker_factory::StaticJokerFactory::create_banner()
-}
+// create_banner_joker removed - Banner joker is now created directly in register_static_jokers
 
 /// Helper function to register a joker with its definition and factory
 fn register_joker(

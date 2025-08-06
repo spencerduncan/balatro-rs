@@ -1253,6 +1253,7 @@ mod tests {
             hands_played: 0,
             hands_remaining: 4.0,
             discards_used: 0,
+            is_final_hand: false,
             jokers,
             hand,
             discarded,
@@ -1261,6 +1262,7 @@ mod tests {
             cards_in_deck: 52,
             stone_cards_in_deck: 0,
             steel_cards_in_deck: 0,
+            enhanced_cards_in_deck: 0,
             rng,
         }
     }

@@ -212,15 +212,17 @@ fn test_migration_structured_effects_type_safety() {
         stage: &Stage::Blind(Blind::Small),
         hands_played: 0,
         discards_used: 0,
-        hands_remaining: 4.0, // Standard hands remaining for testing
+        hands_remaining: 4.0,
+        is_final_hand: false,
         jokers: &[],
         hand: &temp_hand,
         discarded: &[],
         joker_state_manager: &game.joker_state_manager,
         hand_type_counts: &game.hand_type_counts,
-        cards_in_deck: 52,      // Standard deck size
-        stone_cards_in_deck: 0, // No stone cards by default
-        steel_cards_in_deck: 0, // No steel cards by default
+        cards_in_deck: 52,         // Standard deck size
+        stone_cards_in_deck: 0,    // No stone cards by default
+        steel_cards_in_deck: 0,    // No steel cards by default
+        enhanced_cards_in_deck: 0, // No enhanced cards by default
         rng: &game.rng,
     };
 

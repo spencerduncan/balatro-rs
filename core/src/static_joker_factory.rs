@@ -361,22 +361,19 @@ impl StaticJokerFactory {
         )
     }
 
-    /// Create Blue Joker (Black cards give +3 Mult when scored)
+    /// Create Blue Joker (+2 Chips per remaining card in deck)
     pub fn create_blue_joker() -> Box<dyn Joker> {
         Box::new(
             FrameworkStaticJoker::builder(
                 JokerId::BlueJoker,
                 "Blue Joker",
-                "Black cards (Clubs and Spades) give +3 Mult when scored",
+                "+2 Chips per remaining card in deck",
             )
-            .rarity(JokerRarity::Uncommon)
-            .cost(6)
-            .mult(3)
-            .condition(StaticCondition::AnySuitScored(vec![
-                Suit::Club,
-                Suit::Spade,
-            ]))
-            .per_card()
+            .rarity(JokerRarity::Common)
+            .cost(3)
+            .chips(2) // Base value, multiplied by deck size in create_effect_with_context
+            .condition(StaticCondition::DeckSize)
+            .per_hand()
             .build()
             .expect("Valid joker configuration"),
         )
@@ -567,6 +564,38 @@ impl StaticJokerFactory {
             .cost(3)
             .chips(30) // Base amount per remaining discard
             .condition(StaticCondition::DiscardCount)
+            .per_hand()
+            .build()
+            .expect("Valid joker configuration"),
+        )
+    }
+
+    /// Create Bull joker (+2 Chips per $1 owned)
+    pub fn create_bull_joker() -> Box<dyn Joker> {
+        Box::new(
+            FrameworkStaticJoker::builder(JokerId::BullMarket, "Bull", "+2 Chips per $1 owned")
+                .rarity(JokerRarity::Common)
+                .cost(3)
+                .chips(2) // Base value, multiplied by money in create_effect_with_context
+                .condition(StaticCondition::MoneyCount)
+                .per_hand()
+                .build()
+                .expect("Valid joker configuration"),
+        )
+    }
+
+    /// Create Stone Joker (+25 Chips per Stone card in deck)
+    pub fn create_stone_joker() -> Box<dyn Joker> {
+        Box::new(
+            FrameworkStaticJoker::builder(
+                JokerId::Stone,
+                "Stone Joker",
+                "+25 Chips per Stone card in deck",
+            )
+            .rarity(JokerRarity::Uncommon)
+            .cost(4)
+            .chips(25) // Base value, multiplied by stone cards count in create_effect_with_context
+            .condition(StaticCondition::StoneCardsInDeck)
             .per_hand()
             .build()
             .expect("Valid joker configuration"),

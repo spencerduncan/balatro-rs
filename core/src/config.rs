@@ -109,6 +109,18 @@ pub struct Config {
 }
 
 impl Config {
+    /// Calculate effective joker slots including Negative edition bonuses
+    /// Each Negative edition card in the deck provides +1 joker slot
+    pub fn effective_joker_slots(&self, cards: &[crate::card::Card]) -> usize {
+        let negative_cards = cards
+            .iter()
+            .filter(|card| card.edition == crate::card::Edition::Negative)
+            .count();
+
+        // Add negative edition bonuses, but cap at joker_slots_max for production safety
+        (self.joker_slots + negative_cards).min(self.joker_slots_max)
+    }
+
     pub fn new() -> Self {
         Config {
             round_start: DEFAULT_ROUND_START,
@@ -590,6 +602,121 @@ mod tests {
         assert_eq!(config.money_max, usize::MAX);
         assert_eq!(config.deck_max, usize::MAX);
         assert_eq!(config.available_max, usize::MAX);
+    }
+
+    #[test]
+    fn test_effective_joker_slots_no_negative_cards() {
+        let config = Config::new();
+        let cards = vec![
+            crate::card::Card::new(crate::card::Value::Ace, crate::card::Suit::Heart),
+            crate::card::Card::new(crate::card::Value::King, crate::card::Suit::Spade),
+        ];
+
+        // With no Negative edition cards, should return base joker_slots
+        assert_eq!(config.effective_joker_slots(&cards), config.joker_slots);
+    }
+
+    #[test]
+    fn test_effective_joker_slots_with_negative_cards() {
+        let config = Config::new();
+
+        // Create cards with different editions
+        let mut base_card =
+            crate::card::Card::new(crate::card::Value::Ace, crate::card::Suit::Heart);
+        base_card.edition = crate::card::Edition::Base;
+
+        let mut foil_card =
+            crate::card::Card::new(crate::card::Value::King, crate::card::Suit::Spade);
+        foil_card.edition = crate::card::Edition::Foil;
+
+        let mut neg_card1 =
+            crate::card::Card::new(crate::card::Value::Queen, crate::card::Suit::Diamond);
+        neg_card1.edition = crate::card::Edition::Negative;
+
+        let mut neg_card2 =
+            crate::card::Card::new(crate::card::Value::Jack, crate::card::Suit::Club);
+        neg_card2.edition = crate::card::Edition::Negative;
+
+        let cards = vec![base_card, foil_card, neg_card1, neg_card2];
+
+        // Should add 2 slots for the 2 Negative cards
+        assert_eq!(config.effective_joker_slots(&cards), config.joker_slots + 2);
+    }
+
+    #[test]
+    fn test_effective_joker_slots_respects_max() {
+        let mut config = Config::new();
+        config.joker_slots = 5;
+        config.joker_slots_max = 7; // Set low max for testing
+
+        // Create many Negative cards
+        let mut cards = Vec::new();
+        for _i in 0..10 {
+            let mut neg_card =
+                crate::card::Card::new(crate::card::Value::Ace, crate::card::Suit::Heart);
+            neg_card.edition = crate::card::Edition::Negative;
+            cards.push(neg_card);
+        }
+
+        // Should be capped at joker_slots_max
+        assert_eq!(config.effective_joker_slots(&cards), config.joker_slots_max);
+    }
+
+    #[test]
+    fn test_effective_joker_slots_empty_deck() {
+        let config = Config::new();
+        let cards = vec![];
+
+        // Empty deck should return base joker_slots
+        assert_eq!(config.effective_joker_slots(&cards), config.joker_slots);
+    }
+
+    #[test]
+    fn test_effective_joker_slots_all_editions() {
+        let config = Config::new();
+
+        // Create one card of each edition type
+        let mut base_card =
+            crate::card::Card::new(crate::card::Value::Ace, crate::card::Suit::Heart);
+        base_card.edition = crate::card::Edition::Base;
+
+        let mut foil_card =
+            crate::card::Card::new(crate::card::Value::King, crate::card::Suit::Spade);
+        foil_card.edition = crate::card::Edition::Foil;
+
+        let mut holo_card =
+            crate::card::Card::new(crate::card::Value::Queen, crate::card::Suit::Diamond);
+        holo_card.edition = crate::card::Edition::Holographic;
+
+        let mut poly_card =
+            crate::card::Card::new(crate::card::Value::Jack, crate::card::Suit::Club);
+        poly_card.edition = crate::card::Edition::Polychrome;
+
+        let mut neg_card =
+            crate::card::Card::new(crate::card::Value::Ten, crate::card::Suit::Heart);
+        neg_card.edition = crate::card::Edition::Negative;
+
+        let cards = vec![base_card, foil_card, holo_card, poly_card, neg_card];
+
+        // Only the Negative card should add +1 slot
+        assert_eq!(config.effective_joker_slots(&cards), config.joker_slots + 1);
+    }
+
+    #[test]
+    fn test_effective_joker_slots_production_safety() {
+        let mut config = Config::new();
+        config.joker_slots = usize::MAX - 1; // Near overflow condition
+        config.joker_slots_max = usize::MAX;
+
+        let mut neg_card =
+            crate::card::Card::new(crate::card::Value::Ace, crate::card::Suit::Heart);
+        neg_card.edition = crate::card::Edition::Negative;
+        let cards = vec![neg_card];
+
+        // Should handle near-overflow gracefully
+        let result = config.effective_joker_slots(&cards);
+        assert!(result >= config.joker_slots, "Should not underflow");
+        assert!(result <= config.joker_slots_max, "Should respect max limit");
     }
 
     #[test]

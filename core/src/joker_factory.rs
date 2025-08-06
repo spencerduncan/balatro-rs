@@ -28,16 +28,17 @@ impl JokerFactory {
             JokerId::LustyJoker => Some(Box::new(LustyJoker)),
             JokerId::WrathfulJoker => Some(Box::new(WrathfulJoker)),
             JokerId::GluttonousJoker => Some(Box::new(GluttonousJoker)),
-            JokerId::JollyJoker => Some(Box::new(JollyJoker)),
-            JokerId::ZanyJoker => Some(Box::new(ZanyJoker)),
-            JokerId::MadJoker => Some(Box::new(MadJoker)),
-            JokerId::CrazyJoker => Some(Box::new(CrazyJoker)),
-            JokerId::DrollJoker => Some(Box::new(DrollJoker)),
-            JokerId::SlyJoker => Some(Box::new(SlyJoker)),
-            JokerId::WilyJoker => Some(Box::new(WilyJoker)),
-            JokerId::CleverJoker => Some(Box::new(CleverJoker)),
-            JokerId::DeviousJoker => Some(Box::new(DeviousJoker)),
-            JokerId::CraftyJoker => Some(Box::new(CraftyJoker)),
+            // Hand-type jokers using StaticJoker framework (Clean Code: eliminate duplication)
+            JokerId::JollyJoker => Some(StaticJokerFactory::create_jolly_joker()),
+            JokerId::ZanyJoker => Some(StaticJokerFactory::create_zany_joker()),
+            JokerId::MadJoker => Some(StaticJokerFactory::create_mad_joker()),
+            JokerId::CrazyJoker => Some(StaticJokerFactory::create_crazy_joker()),
+            JokerId::DrollJoker => Some(StaticJokerFactory::create_droll_joker()),
+            JokerId::SlyJoker => Some(StaticJokerFactory::create_sly_joker()),
+            JokerId::WilyJoker => Some(StaticJokerFactory::create_wily_joker()),
+            JokerId::CleverJoker => Some(StaticJokerFactory::create_clever_joker()),
+            JokerId::DeviousJoker => Some(StaticJokerFactory::create_devious_joker()),
+            JokerId::CraftyJoker => Some(StaticJokerFactory::create_crafty_joker()),
 
             // Money-based conditional jokers
             JokerId::BusinessCard => Some(Box::new(BusinessCard)),
@@ -79,7 +80,7 @@ impl JokerFactory {
             JokerId::Reserved8 => Some(Box::new(GrimJoker)),
             JokerId::AcrobatJoker => Some(Box::new(AcrobatJoker::new())),
             JokerId::FortuneTeller => Some(Box::new(FortuneTellerJoker::new())),
-            JokerId::Reserved4 => Some(Box::new(MysteryJoker)),
+            JokerId::Fortune => Some(Box::new(FortuneTellerJoker::new_with_fortune_id())), // Alias for FortuneTeller
             JokerId::VagabondJoker => Some(Box::new(VagabondJokerImpl)),
             JokerId::Reserved9 => Some(Box::new(ChaoticJoker)),
 
@@ -140,6 +141,7 @@ impl JokerFactory {
             JokerId::Seltzer => Some(Box::new(SeltzerJoker::new())),
             JokerId::Hanging => Some(Box::new(HangingChadJoker::new())),
             JokerId::SockAndBuskin => Some(Box::new(SockAndBuskinJoker::new())),
+            JokerId::Hack => Some(create_hack_joker()),
 
             // TODO: Implement remaining jokers
             _ => None,
@@ -204,6 +206,8 @@ impl JokerFactory {
                 // Scaling xmult jokers (none in common)
                 // Retrigger jokers
                 Hanging, // HangingChadJoker
+                // Scaling mult jokers moved to Common
+                FortuneTeller, // Fortune Teller
             ],
             JokerRarity::Uncommon => vec![
                 // Money-based conditional jokers
@@ -229,17 +233,16 @@ impl JokerFactory {
                 Dusk,
                 Seltzer,
                 SockAndBuskin,
+                Hack,
             ],
             JokerRarity::Rare => vec![
                 // RNG-based jokers (Issue #442)
                 AcrobatJoker,
-                Reserved4, // Mystery Joker
                 // Special mechanic jokers
                 Blueprint,
                 // Simple Static Jokers (Issue #364)
                 BaronJoker, // Baron
                 // Scaling mult jokers
-                FortuneTeller, // Fortune Teller
                 // Scaling chips jokers
                 Castle,
                 Wee,
@@ -296,7 +299,7 @@ impl JokerFactory {
             LuckyCharm, // LuckyCardJoker
             Reserved8,  // GrimJoker
             AcrobatJoker,
-            Reserved4, // MysteryJoker
+            FortuneTeller,
             VagabondJoker,
             Reserved9, // ChaoticJoker
             // Special mechanic jokers using new trait system
@@ -309,9 +312,8 @@ impl JokerFactory {
             // Scaling additive mult jokers
             Trousers, // Spare Trousers
             GreenJoker,
-            Reserved5,     // RideTheBus
-            Reserved6,     // RedCard (pack skipping)
-            FortuneTeller, // Fortune Teller
+            Reserved5, // RideTheBus
+            Reserved6, // RedCard (pack skipping)
             // Scaling chips jokers
             Castle,
             Wee,
@@ -338,12 +340,13 @@ impl JokerFactory {
             Seltzer,
             Hanging,
             SockAndBuskin,
+            Hack,
             // Simple Static Jokers (Issue #364) - Fully implemented
             Smiley,     // Smiley Face
             BaronJoker, // Baron
             RaisedFist, // Raised Fist
             RoughGem,   // Rough Gem
-            // Note: HalfJoker and Banner are still placeholders
+                        // Note: HalfJoker and Banner are still placeholders
         ]
     }
 }
@@ -543,9 +546,12 @@ mod tests {
         assert!(uncommon_jokers.contains(&JokerId::Reserved)); // Throwback
         assert!(uncommon_jokers.contains(&JokerId::Ceremonial)); // Ceremonial Dagger
 
+        let common_jokers = JokerFactory::get_by_rarity(JokerRarity::Common);
+        // Fortune Teller moved to Common
+        assert!(common_jokers.contains(&JokerId::FortuneTeller)); // Fortune Teller
+
         let rare_jokers = JokerFactory::get_by_rarity(JokerRarity::Rare);
         // Rare scaling jokers
-        assert!(rare_jokers.contains(&JokerId::FortuneTeller)); // Fortune Teller
         assert!(rare_jokers.contains(&JokerId::Castle));
         assert!(rare_jokers.contains(&JokerId::Wee));
         assert!(rare_jokers.contains(&JokerId::Stuntman));

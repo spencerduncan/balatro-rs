@@ -29,7 +29,7 @@ use crate::state_version::StateVersion;
 use crate::vouchers::VoucherCollection;
 
 // Additional imports needed for load functionality
-use crate::game::{DebugManager, PackManager};
+use super::{DebugManager, PackManager};
 use crate::joker_effect_processor::JokerEffectProcessor;
 use crate::target_context::TargetContext;
 
@@ -163,7 +163,7 @@ impl PersistenceManager {
             vouchers: game.vouchers.clone(),
             boss_blind_state: game.boss_blind_state.clone(),
             pack_inventory: game.pack_manager.pack_inventory().clone(),
-            open_pack: None, // TODO: Fix when pack_manager API is available
+            open_pack: game.pack_manager.open_pack_state().clone(),
             state_version: game.state_version,
         };
 
@@ -228,9 +228,15 @@ impl PersistenceManager {
             consumables_in_hand: saveable_state.consumables_in_hand,
             vouchers: saveable_state.vouchers,
             boss_blind_state: saveable_state.boss_blind_state,
-            // Initialize pack manager (TODO: restore pack inventory)
-            pack_manager: PackManager::new(),
             state_version: saveable_state.state_version,
+            // Initialize pack manager with loaded state
+            pack_manager: {
+                let mut pm = PackManager::new();
+                for pack in saveable_state.pack_inventory {
+                    pm.add_pack(pack);
+                }
+                pm
+            },
             // Initialize debug manager (not serialized)
             debug_manager: DebugManager::new(),
             // Initialize target context (not serialized)

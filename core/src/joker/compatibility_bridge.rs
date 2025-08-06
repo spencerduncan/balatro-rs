@@ -220,6 +220,7 @@ impl AdvancedJokerGameplay for LegacyJokerAdapter {
             stage: context.stage,
             hands_played: context.game_context.hands_played,
             hands_remaining: context.game_context.hands_remaining,
+            is_final_hand: context.game_context.hands_remaining <= 1.0,
             discards_used: context.game_context.discards_used,
             jokers: context.game_context.jokers,
             hand: context.game_context.hand,
@@ -229,6 +230,7 @@ impl AdvancedJokerGameplay for LegacyJokerAdapter {
             cards_in_deck: context.game_context.cards_in_deck,
             stone_cards_in_deck: context.game_context.stone_cards_in_deck,
             steel_cards_in_deck: context.game_context.steel_cards_in_deck,
+            enhanced_cards_in_deck: context.game_context.enhanced_cards_in_deck,
             rng: context.game_context.rng,
         };
 
