@@ -1,0 +1,116 @@
+## Summary
+This issue tracks the implementation status of the 75 remaining jokers out of the total 150 Balatro jokers. Currently, 75 jokers are implemented and functional.
+
+## Context
+- Total Balatro jokers: 150
+- Currently implemented: 75
+- Remaining to implement: 75
+- Parent epic: #51
+
+## Missing Jokers by Category
+
+### 1. Basic Scoring/Multiplicative Jokers (15)
+- [ ] Fibonacci - Ace/2/3/5/8 give +8 Mult
+- [ ] Even Steven - Even ranks give +4 Mult
+- [ ] Golden Joker - Earn  at end of round
+- [ ] Half Joker - +20 Mult if ≤3 cards
+- [ ] Splash - Every played card counts in scoring
+- [ ] Seeing Double - X1.5 Mult for Club + other suit
+- [ ] Cloud 9 - Earn  per 9 in deck
+- [ ] Shoot the Moon - Queens in hand give +13 Mult
+- [ ] Raised Fist - Double lowest rank held adds to Mult
+- [ ] Blackboard - X3 Mult if all cards black
+- [ ] Polished Joker - X1.5 Mult if all cards non-face
+- [ ] Bloodstone - 1 in 3 chance Hearts give X1.5 Mult
+- [ ] Onyx Agate - Clubs give +8 Mult
+- [ ] Glass Joker - X0.75 Mult per Glass card destroyed
+- [ ] Stone Joker - +50 Chips per Stone card in deck
+
+### 2. Hand Type Conditional Jokers (11)
+- [ ] The Duo - X2 Mult if hand contains Pair
+- [ ] The Trio - X3 Mult if hand contains Three of a Kind
+- [ ] The Family - X4 Mult if hand contains Four of a Kind
+- [ ] The Tribe - X2 Mult if hand contains Flush
+- [ ] The Order - X3 Mult if hand contains Straight (Note: Currently using this ID incorrectly)
+- [ ] Flower Pot - X3 Mult if all 4 suits in hand
+- [ ] Shortcut - Straights with gaps of 1 rank
+- [ ] Smeared Joker - Hearts/Diamonds same, Spades/Clubs same
+- [ ] Pareidolia - All cards considered face cards
+- [ ] Card Sharp - X3 Mult if poker hand already played
+- [ ] Hit the Road - X0.5 Mult per Jack discarded
+
+### 3. Economy/Resource Jokers (13)
+- [ ] Credit Card - Go up to -0 in debt
+- [ ] Mail-In Rebate - Earn $ for discarding rank
+- [ ] To Do List - Earn  if poker hand matches
+- [ ] Satellite - Earn $ per unique Planet used
+- [ ] Golden Ticket - Gold cards earn
+- [ ] Reserved Parking - Face cards in hand chance for
+- [ ] Matador - Earn  if trigger Boss Blind
+- [ ] Diet Cola - Sell to create free tag
+- [ ] Trading Card - Discard 1 card for
+- [ ] Swashbuckler - Sell value of jokers adds to Mult
+- [ ] Luchador - Sell to disable Boss Blind
+- [ ] Astronomer - Planet cards/packs free
+- [ ] Cartomancer - Create Tarot when Blind selected
+
+### 4. Retrigger/Card Manipulation Jokers (9)
+- [ ] Mime - Retrigger all held in hand abilities
+- [ ] Hack - Retrigger 2/3/4/5
+- [ ] Midas Mask - Face cards become Gold
+- [ ] DNA - Copy single card in first hand
+- [ ] Sixth Sense - Destroy single 6 for Spectral
+- [ ] Séance - Straight Flush creates Spectral
+- [ ] Certificate - Random sealed card at round start
+- [ ] 8 Ball - 8s create Tarot cards
+- [ ] Superposition - Ace + Straight creates Tarot
+
+### 5. Scaling/Progressive Jokers (15)
+- [ ] Ride the Bus - +1 Mult per hand without face (Note: Currently Reserved5)
+- [ ] Flash Card - +2 Mult per reroll
+- [ ] Popcorn - +20 Mult, -4 per round
+- [ ] Ramen - X2 Mult, -X0.01 per discard
+- [ ] Turtle Bean - +5 hand size, -1 per round
+- [ ] Ice Cream - +100 Chips, -5 per hand (Note: Different from IceCream already implemented)
+- [ ] Seltzer - Retrigger all for 10 hands (Note: Already implemented)
+- [ ] Campfire - X0.5 Mult per card sold, resets
+- [ ] Acrobat - X3 Mult on final hand (Note: Already implemented)
+- [ ] Countdown - Gain  per Ace discarded
+- [ ] Madness - Destroy Joker for X0.5 Mult
+- [ ] Obelisk - X0.2 Mult per hand without most played
+- [ ] Vampire - X0.2 Mult per Enhanced card, removes
+- [ ] Hologram - X0.25 Mult per card added to deck
+- [ ] Canio - X0.01 Mult when face card destroyed
+
+### 6. Special/Complex Mechanic Jokers (12)
+- [ ] Invisible Joker - After 3 rounds, duplicate random
+- [ ] Brainstorm - Copies leftmost Joker (see #823)
+- [ ] Perkeo - Duplicate consumable at shop end
+- [ ] Chicot - Disables Boss Blinds
+- [ ] Yorick - X1 Mult per 23 cards discarded
+- [ ] Mr. Bones - Prevents death if 25% chips
+- [ ] Joker Stencil - X1 Mult per empty slot
+- [ ] Driver's License - X3 if 16+ Enhanced
+- [ ] Chaos the Clown - 1 free reroll (see #822)
+- [ ] Merry Andy - +3 discards, -1 hand size
+- [ ] Troubadour - +2 hand size, -1 hand
+- [ ] Drunkard - +1 discard each round
+
+## Related Issues
+- #820 - Remove fake SixShooterJoker
+- #821 - Remove fake GrimJoker
+- #822 - Fix ChaoticJoker (should be Chaos the Clown)
+- #823 - Fix Blueprint/Brainstorm confusion
+- #62 - Effect Jokers Implementation (covers some of these)
+- #68 - Legendary Joker Implementation
+- #116 - Advanced Additive Mult Jokers
+
+## Implementation Notes
+Many missing jokers require systems not yet implemented:
+- Consumable card generation (Tarot/Planet/Spectral)
+- Card enhancement/transformation systems
+- Boss Blind interaction mechanics
+- Shop mechanics (rerolls, pack skipping)
+- Complex scaling and state management
+
+This comprehensive list ensures all 75 missing jokers are tracked and can be referenced when implementing them.
