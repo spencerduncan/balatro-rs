@@ -131,7 +131,7 @@ struct FireworkJoker;
 
 impl Joker for FireworkJoker {
     fn id(&self) -> JokerId {
-        JokerId::Reserved6
+        JokerId::Reserved10
     }
 
     fn name(&self) -> &str {

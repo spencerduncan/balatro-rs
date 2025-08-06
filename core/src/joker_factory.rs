@@ -74,6 +74,7 @@ impl JokerFactory {
             JokerId::Reserved8 => Some(Box::new(GrimJoker)),
             JokerId::AcrobatJoker => Some(Box::new(AcrobatJoker::new())),
             JokerId::FortuneTeller => Some(Box::new(FortuneTellerJoker::new())),
+            JokerId::Fortune => Some(Box::new(FortuneTellerJoker::new_with_fortune_id())), // Alias for FortuneTeller
             JokerId::VagabondJoker => Some(Box::new(VagabondJokerImpl)),
             JokerId::Reserved9 => Some(Box::new(ChaoticJoker)),
 
@@ -134,6 +135,7 @@ impl JokerFactory {
             JokerId::Seltzer => Some(Box::new(SeltzerJoker::new())),
             JokerId::Hanging => Some(Box::new(HangingChadJoker::new())),
             JokerId::SockAndBuskin => Some(Box::new(SockAndBuskinJoker::new())),
+            JokerId::Hack => Some(create_hack_joker()),
 
             // TODO: Implement remaining jokers
             _ => None,
@@ -221,6 +223,7 @@ impl JokerFactory {
                 Dusk,
                 Seltzer,
                 SockAndBuskin,
+                Hack,
             ],
             JokerRarity::Rare => vec![
                 // RNG-based jokers (Issue #442)
@@ -325,6 +328,7 @@ impl JokerFactory {
             Seltzer,
             Hanging,
             SockAndBuskin,
+            Hack,
             // Note: HalfJoker and Banner are still placeholders
         ]
     }

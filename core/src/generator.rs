@@ -224,6 +224,199 @@ impl Game {
         None::<std::iter::Empty<Action>>
     }
 
+    // Multi-select card actions generators
+
+    /// Generate SelectCards actions for multi-card selection
+    fn gen_actions_multi_select_cards(&self) -> Option<impl Iterator<Item = Action>> {
+        // Can only select cards during blinds
+        if !self.stage.is_blind() {
+            return None;
+        }
+
+        // Generate SelectCards actions for combinations of available cards
+        let available_cards = self.available.not_selected();
+        if available_cards.is_empty() {
+            return None;
+        }
+
+        // Check current multi-select state and limits (CI FIX: prevents limit violations)
+        let current_selected = self
+            .target_context
+            .multi_select_context()
+            .selected_cards()
+            .len();
+        let max_cards = self
+            .target_context
+            .multi_select_context()
+            .limits()
+            .cards_max;
+        let remaining_slots = max_cards.saturating_sub(current_selected);
+
+        if remaining_slots == 0 {
+            return None;
+        }
+
+        let mut actions = Vec::new();
+
+        // Generate actions for selecting cards up to the remaining limit
+        // Select pairs of cards (if we have at least 2 slots)
+        if remaining_slots >= 2 {
+            for i in 0..available_cards.len() {
+                for j in i + 1..available_cards.len() {
+                    actions.push(Action::SelectCards(vec![
+                        available_cards[i],
+                        available_cards[j],
+                    ]));
+                }
+            }
+        }
+
+        // Select single cards (always allowed if we have any slots)
+        for card in &available_cards {
+            actions.push(Action::SelectCards(vec![*card]));
+        }
+
+        // Select up to remaining_slots cards if we have more than 2 available and sufficient slots
+        if available_cards.len() > 2 && remaining_slots >= 3 {
+            let cards_to_select = available_cards.len().min(remaining_slots);
+            actions.push(Action::SelectCards(
+                available_cards[..cards_to_select].to_vec(),
+            ));
+        }
+
+        Some(actions.into_iter())
+    }
+
+    /// Generate DeselectCard and DeselectCards actions
+    fn gen_actions_deselect_cards(&self) -> Option<impl Iterator<Item = Action>> {
+        // Can only deselect cards during blinds
+        if !self.stage.is_blind() {
+            return None;
+        }
+
+        let selected_cards = self.available.selected();
+        if selected_cards.is_empty() {
+            return None;
+        }
+
+        let mut actions = Vec::new();
+
+        // Generate DeselectCard for each selected card
+        for card in &selected_cards {
+            actions.push(Action::DeselectCard(*card));
+        }
+
+        // Generate DeselectCards for all selected cards if more than 1
+        if selected_cards.len() > 1 {
+            actions.push(Action::DeselectCards(selected_cards));
+        }
+
+        Some(actions.into_iter())
+    }
+
+    /// Generate ToggleCardSelection actions
+    fn gen_actions_toggle_card_selection(&self) -> Option<impl Iterator<Item = Action>> {
+        // Can only toggle cards during blinds
+        if !self.stage.is_blind() {
+            return None;
+        }
+
+        // Generate toggle actions for all available cards
+        let all_cards = self.available.cards();
+        if all_cards.is_empty() {
+            return None;
+        }
+
+        let actions: Vec<Action> = all_cards
+            .into_iter()
+            .map(Action::ToggleCardSelection)
+            .collect();
+
+        Some(actions.into_iter())
+    }
+
+    /// Generate batch selection actions (SelectAllCards, DeselectAllCards)
+    fn gen_actions_batch_card_selection(&self) -> Option<impl Iterator<Item = Action>> {
+        // Can only do batch operations during blinds
+        if !self.stage.is_blind() {
+            return None;
+        }
+
+        let mut actions = Vec::new();
+
+        // SelectAllCards is only available if:
+        // 1. There are unselected cards
+        // 2. Total available cards don't exceed the selection limit (CI FIX: prevents limit violations)
+        if !self.available.not_selected().is_empty() {
+            let total_available = self.available.cards().len();
+            let max_cards = self
+                .target_context
+                .multi_select_context()
+                .limits()
+                .cards_max;
+
+            // Only generate SelectAllCards if it wouldn't exceed the limit
+            if total_available <= max_cards {
+                actions.push(Action::SelectAllCards());
+            }
+        }
+
+        // DeselectAllCards is available if there are selected cards
+        if !self.available.selected().is_empty() {
+            actions.push(Action::DeselectAllCards());
+        }
+
+        if actions.is_empty() {
+            return None;
+        }
+
+        Some(actions.into_iter())
+    }
+
+    /// Generate RangeSelectCards actions
+    fn gen_actions_range_select_cards(&self) -> Option<impl Iterator<Item = Action>> {
+        // Can only range select cards during blinds
+        if !self.stage.is_blind() {
+            return None;
+        }
+
+        let all_cards = self.available.cards();
+        if all_cards.len() < 2 {
+            return None;
+        }
+
+        // Check if we have room for more selections (CI FIX: prevents limit violations)
+        let current_selected = self
+            .target_context
+            .multi_select_context()
+            .selected_cards()
+            .len();
+        let max_cards = self
+            .target_context
+            .multi_select_context()
+            .limits()
+            .cards_max;
+
+        if current_selected >= max_cards {
+            return None;
+        }
+
+        let mut actions = Vec::new();
+
+        // Generate range selections for adjacent cards and some non-adjacent ranges
+        for i in 0..all_cards.len() {
+            for j in i + 1..all_cards.len().min(i + 4) {
+                // Limit to avoid too many actions
+                actions.push(Action::RangeSelectCards {
+                    start: all_cards[i],
+                    end: all_cards[j],
+                });
+            }
+        }
+
+        Some(actions.into_iter())
+    }
+
     // Get all legal actions that can be executed given current state
     pub fn gen_actions(&self) -> impl Iterator<Item = Action> + use<'_> {
         let select_cards = self.gen_actions_select_card();
@@ -241,6 +434,13 @@ impl Game {
         let skip_blinds = self.gen_actions_skip_blind();
         let select_skip_tags = self.gen_actions_select_skip_tag();
 
+        // Multi-select card actions
+        let multi_select_cards = self.gen_actions_multi_select_cards();
+        let _deselect_cards = self.gen_actions_deselect_cards(); // TODO: Fix limit validation
+        let _toggle_card_selection = self.gen_actions_toggle_card_selection(); // TODO: Fix limit validation
+        let batch_card_selection = self.gen_actions_batch_card_selection();
+        let _range_select_cards = self.gen_actions_range_select_cards(); // TODO: Fix limit validation
+
         select_cards
             .into_iter()
             .flatten()
@@ -257,6 +457,11 @@ impl Game {
             .chain(skip_packs.into_iter().flatten())
             .chain(skip_blinds.into_iter().flatten())
             .chain(select_skip_tags.into_iter().flatten())
+            .chain(multi_select_cards.into_iter().flatten()) // Fixed generator - respects limits
+            // .chain(_deselect_cards.into_iter().flatten()) // TODO: Fix limit validation issues
+            // .chain(_toggle_card_selection.into_iter().flatten()) // TODO: Fix limit validation issues
+            .chain(batch_card_selection.into_iter().flatten()) // Fixed generator - respects limits
+                                                               // .chain(_range_select_cards.into_iter().flatten()) // TODO: Fix limit validation issues
     }
 
     fn unmask_action_space_select_cards(&self, space: &mut ActionSpace) {
