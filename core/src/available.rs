@@ -45,6 +45,13 @@ impl Available {
         Some(self.cards[i].0)
     }
 
+    pub(crate) fn get_card_mut(&mut self, i: usize) -> Option<&mut Card> {
+        if i >= self.cards.len() {
+            return None;
+        }
+        Some(&mut self.cards[i].0)
+    }
+
     pub(crate) fn remove_selected(&mut self) -> usize {
         let remove_count = self.selected().len();
         self.cards.retain(|(_c, a)| !*a);
