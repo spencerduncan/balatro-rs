@@ -38,3 +38,13 @@ coverage.json
 # Test output files
 test_output.log
 *.test_output
+
+# Benchmark and performance output files
+*_performance.txt
+current_performance.txt
+optimized_performance.txt
+zero_cost_performance.txt
+
+# Temporary debug files
+test_debug.rs
+issue_*_body.txt

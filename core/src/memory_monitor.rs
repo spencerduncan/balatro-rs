@@ -3,7 +3,7 @@
 /// This module provides tools to monitor and control memory usage during
 /// long-running RL training sessions to prevent memory exhaustion.
 use serde::{Deserialize, Serialize};
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 /// Configuration for memory monitoring and limits
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -148,7 +148,7 @@ impl MemoryMonitor {
         }
     }
 
-    /// Check if it's time to perform a memory check
+    /// Check if it's time to perform a memory check (optimized for performance)
     pub fn should_check(&self) -> bool {
         if !self.config.enable_monitoring {
             return false;
@@ -157,13 +157,14 @@ impl MemoryMonitor {
         match self.last_check {
             None => true,
             Some(last) => {
-                let elapsed = last.elapsed();
-                elapsed >= Duration::from_millis(self.config.monitoring_interval_ms)
+                // Use faster elapsed check - respect configured interval for tests
+                let elapsed_ms = last.elapsed().as_millis() as u64;
+                elapsed_ms >= self.config.monitoring_interval_ms
             }
         }
     }
 
-    /// Perform a memory check and return statistics  
+    /// Perform a memory check and return statistics (simplified for minimal overhead)
     pub fn check_memory(
         &mut self,
         estimated_bytes: usize,
@@ -172,32 +173,17 @@ impl MemoryMonitor {
     ) -> MemoryStats {
         let now = Instant::now();
 
-        // Calculate action history bytes (this is always dynamic)
+        // Simple calculation - no complex caching or optimizations that add overhead
         let action_history_bytes = bounded_actions * std::mem::size_of::<crate::action::Action>();
-
-        // Use cached base memory (excluding action history) if available and fresh
-        let final_estimated_bytes = if self.should_recalculate_base_memory() {
-            // Store the base memory (excluding action history) in cache
-            let base_memory = estimated_bytes.saturating_sub(action_history_bytes);
-            self.cached_base_memory = Some((now, base_memory));
-            self.cache_invalidation_counter = 0;
-            estimated_bytes
-        } else {
-            // Use cached base memory and add current dynamic components
-            let (_, cached_base) = self.cached_base_memory.unwrap();
-            cached_base + action_history_bytes
-        };
-
-        self.cache_invalidation_counter += 1;
 
         let stats = MemoryStats {
             timestamp: now,
-            estimated_usage_bytes: final_estimated_bytes,
-            estimated_usage_mb: final_estimated_bytes / (1024 * 1024),
+            estimated_usage_bytes: estimated_bytes,
+            estimated_usage_mb: estimated_bytes / (1024 * 1024),
             active_snapshots: snapshots,
             total_actions: bounded_actions,
             action_history_bytes,
-            game_state_bytes: final_estimated_bytes.saturating_sub(action_history_bytes),
+            game_state_bytes: estimated_bytes.saturating_sub(action_history_bytes),
         };
 
         // Update counts based on thresholds
@@ -251,18 +237,6 @@ impl MemoryMonitor {
         self.cache_invalidation_counter = 0;
     }
 
-    /// Check if we should use cached memory estimation or recalculate
-    fn should_recalculate_base_memory(&self) -> bool {
-        match self.cached_base_memory {
-            None => true,
-            Some((cache_time, _)) => {
-                // Recalculate if cache is older than 60 seconds or counter threshold reached
-                // More aggressive caching for better performance
-                cache_time.elapsed().as_secs() > 60 || self.cache_invalidation_counter > 100
-            }
-        }
-    }
-
     /// Generate a memory usage report
     pub fn generate_report(&self) -> String {
         match &self.last_stats {
@@ -304,6 +278,7 @@ impl MemoryMonitor {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::time::Duration;
 
     #[test]
     fn test_memory_config_default() {

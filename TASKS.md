@@ -1,37 +1,54 @@
-# TASKS.md - Orchestration Activity Tracker
+# TASKS.md - Recovery Orchestration Tracker
 
-This file tracks orchestration activities and task management for the issue-686-tarot-wave2 worktree.
+This file tracks recovery operations for three incomplete worktrees after system crash.
 
-## Current Status: Initial Setup
+## Current Status: Recovery In Progress
 
-**Worktree**: `issue-686-tarot-wave2`  
-**Created**: 2025-07-29  
-**Purpose**: Track orchestration activities for this development branch
+**Mode**: Recovery Orchestration
+**Started**: 2025-08-01
+**Purpose**: Complete and merge uncommitted work from crashed worktrees
 
-## Task Categories
+## Recovery Queue - Priority Order
 
-### 🔧 Infrastructure Tasks
-- [ ] Initial project setup and configuration
-- [ ] Environment validation
-- [ ] Dependency management
+### 🔥 **IMMEDIATE**: Issue #855 (Hack Joker) - 100% Complete, Cleanup Only
+- **Status**: Ready for agent assignment
+- **Worktree**: `/home/sd/balatro-rs-ws/worktrees/issue-855-hack`
+- **Work Needed**:
+  - Delete stray file: `"core/src/joker_factory.rs:198:17"`
+  - Fix integration test: `test_hack_integration.rs` (syntax errors)
+  - Stage changes and create PR
+- **Time Estimate**: 15 minutes
+- **Agent**: To be assigned
 
-### 🚀 Development Tasks
-- [ ] Feature implementation
-- [ ] Code review and refinement
-- [ ] Testing and validation
+### 📈 **HIGH**: Issue #818 (Scoring System) - 97% Complete, Nearly Ready
+- **Status**: Ready for agent assignment
+- **Worktree**: `/home/sd/balatro-rs-ws/issue-818-calc-score-integration`
+- **Work Needed**:
+  - Final validation (all tests passing)
+  - PR creation with comprehensive description
+- **Time Estimate**: 30 minutes
+- **Agent**: To be assigned
 
-### 📋 Documentation Tasks
-- [ ] Update documentation
-- [ ] Code comments and examples
-- [ ] API documentation
+### 🔧 **MEDIUM**: Issue #814 (Edition Bonuses) - 70% Complete, Debugging Needed
+- **Status**: Ready for agent assignment
+- **Worktree**: `/home/sd/balatro-rs-ws/issue-814-edition-bonuses`
+- **Work Needed**:
+  - Debug Holographic scoring calculation (expected 210.0, actual 286.0)
+  - Debug Polychrome scoring calculation (expected 31.5, actual 78.0)
+  - Fix integration test (expected 1215.0, actual 1419.0)
+  - Add comprehensive edge case tests
+- **Time Estimate**: 2-4 hours
+- **Agent**: To be assigned
 
-### ✅ Completed Tasks
-- [x] Created TASKS.md for orchestration tracking
+## Active Worktree Assignments
+
+| Issue | Worktree | Agent | Status | Started | Priority | Completion |
+|-------|----------|-------|--------|---------|----------|------------|
 
 ## Review Queue
 
 | PR | Title | Reviewer(s) | Status | Started | Notes |
-|----|-------|-------------|--------|---------|-------|  
+|----|-------|-------------|--------|---------|-------|
 | #802 | Misprint Joker Implementation | PENDING | ✅ **READY** | 2025-08-01 | Issue #621 - Created by linustorbot-address |
 | #803 | Joker Test Suite | PENDING | ✅ **READY** | 2025-08-01 | Issue #364 - Created by johnbotmack-address (re-assigned) |
 | #804 | Simple Static Jokers | PENDING | ✅ **READY** | 2025-08-01 | Created by address agent (re-assigned) |
@@ -63,16 +80,16 @@ This file tracks orchestration activities and task management for the issue-686-
 
 ### PR #703 (linustorbot-address)
 - **Issue**: Fix CI compilation failures and clippy violations
-- **Key Tasks**: 
+- **Key Tasks**:
   - Fix 16 clippy violations (missing Default implementations, manual range checks)
   - Resolve test compilation errors with GameContext initialization
   - Update all test files to use proper GameContext structure
 - **Estimated Time**: 1.5-2 hours
 
-### PR #704 (botdean-address)  
+### PR #704 (botdean-address)
 - **Issue**: Resolve implementation scope mismatch and complete card effects
 - **Key Tasks**:
-  - Clarify if implementing Wave 1 (0-10) or Wave 2 (11-21) 
+  - Clarify if implementing Wave 1 (0-10) or Wave 2 (11-21)
   - Replace all placeholder implementations with actual card effects
   - Add real game state integration and card modification logic
 - **Estimated Time**: 4-6 hours
@@ -138,4 +155,4 @@ This file serves as a central location for tracking all orchestration activities
 **Lesson**: Agent reliability monitoring and re-assignment procedures are essential for project success.
 
 ---
-*Last Updated: 2025-08-01*
+*Last Updated: 2025-08-06*

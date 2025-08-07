@@ -646,6 +646,142 @@ impl StaticJokerFactory {
         )
     }
 
+    // =============================================================================
+    // NEW SIMPLE STATIC JOKERS - Clean Code Implementation
+    // =============================================================================
+
+    /// Create Smiley Face (Played face cards give +4 Mult when scored)
+    /// This is a perfect fit for the StaticJoker framework
+    pub fn create_smiley_face() -> Box<dyn Joker> {
+        // Load parameter from joker.json, fallback to 4 if not found
+        let mult_bonus = Self::load_smiley_face_parameter();
+
+        Box::new(
+            FrameworkStaticJoker::builder(
+                JokerId::Smiley,
+                "Smiley Face",
+                "Played face cards give +4 Mult when scored",
+            )
+            .rarity(JokerRarity::Common)
+            .cost(3)
+            .mult(mult_bonus)
+            .condition(StaticCondition::AnyRankScored(vec![
+                Value::Jack,
+                Value::Queen,
+                Value::King,
+            ]))
+            .per_card()
+            .build()
+            .expect("Valid joker configuration"),
+        )
+    }
+
+    /// Load Smiley Face parameter from joker.json, with fallback to 4
+    fn load_smiley_face_parameter() -> i32 {
+        match JsonParameterResolver::new() {
+            Ok(resolver) => {
+                match resolver.get_parameters_by_id(JokerId::Smiley) {
+                    Ok(params) => params.first().unwrap_or(4), // #1# = mult value
+                    Err(_) => 4, // Fallback to reasonable value from joker.json analysis
+                }
+            }
+            Err(_) => 4, // Fallback to reasonable value
+        }
+    }
+
+    /// Create Baron (Each King held in hand gives X1.5 Mult)
+    /// Uses the new RankHeldInHand condition for clean implementation
+    pub fn create_baron() -> Box<dyn Joker> {
+        // Load parameter from joker.json, fallback to 1.5 if not found
+        let mult_multiplier = Self::load_baron_parameter();
+
+        Box::new(
+            FrameworkStaticJoker::builder(
+                JokerId::BaronJoker,
+                "Baron",
+                "Each King held in hand gives X1.5 Mult",
+            )
+            .rarity(JokerRarity::Rare)
+            .cost(8)
+            .mult_multiplier(mult_multiplier)
+            .condition(StaticCondition::RankHeldInHand(Value::King))
+            .per_hand()
+            .build()
+            .expect("Valid joker configuration"),
+        )
+    }
+
+    /// Load Baron parameter from joker.json, with fallback to 1.5
+    fn load_baron_parameter() -> f64 {
+        match JsonParameterResolver::new() {
+            Ok(resolver) => {
+                match resolver.get_parameters_by_id(JokerId::BaronJoker) {
+                    Ok(params) => {
+                        // Convert i32 to f64, expecting the parameter to be stored as scaled integer
+                        let scaled_value = params.first().unwrap_or(150); // 150 = 1.5 * 100
+                        scaled_value as f64 / 100.0 // Convert back to decimal
+                    }
+                    Err(_) => 1.5,
+                }
+            }
+            Err(_) => 1.5, // Fallback value from joker.json analysis
+        }
+    }
+
+    /// Create Raised Fist (Adds double the rank of lowest ranked card held in hand to Mult)
+    /// Uses the new LowestRankInHand condition for clean implementation
+    pub fn create_raised_fist() -> Box<dyn Joker> {
+        Box::new(
+            FrameworkStaticJoker::builder(
+                JokerId::RaisedFist,
+                "Raised Fist",
+                "Adds double the rank of lowest ranked card held in hand to Mult",
+            )
+            .rarity(JokerRarity::Common)
+            .cost(3)
+            .mult(2) // This will be multiplied by the lowest rank value
+            .condition(StaticCondition::LowestRankInHand)
+            .per_hand()
+            .build()
+            .expect("Valid joker configuration"),
+        )
+    }
+
+    /// Create Rough Gem (Played cards with Diamond suit earn $1 when scored)
+    /// Uses the new money support in the StaticJoker framework
+    pub fn create_rough_gem() -> Box<dyn Joker> {
+        // Load parameter from joker.json, fallback to 1 if not found
+        let money_bonus = Self::load_rough_gem_parameter();
+
+        Box::new(
+            FrameworkStaticJoker::builder(
+                JokerId::RoughGem,
+                "Rough Gem",
+                "Played cards with Diamond suit earn $1 when scored",
+            )
+            .rarity(JokerRarity::Common)
+            .cost(4)
+            .money(money_bonus)
+            .condition(StaticCondition::SuitScored(Suit::Diamond))
+            .per_card()
+            .build()
+            .expect("Valid joker configuration"),
+        )
+    }
+
+    /// Load Rough Gem parameter from joker.json, with fallback to 1
+    fn load_rough_gem_parameter() -> i32 {
+        match JsonParameterResolver::new() {
+            Ok(resolver) => {
+                match resolver.get_parameters_by_id(JokerId::RoughGem) {
+                    Ok(params) => params.first().unwrap_or(1), // #1# = money value per diamond
+                    Err(_) => 1, // Fallback value from joker.json analysis
+                }
+            }
+            Err(_) => 1, // Fallback value
+        }
+    }
+
     /// Test-only methods that return concrete types for internal testing
     #[cfg(test)]
     pub fn create_greedy_joker_concrete() -> FrameworkStaticJoker {
@@ -1024,5 +1160,98 @@ mod tests {
 
         let scholar = StaticJokerFactory::create_scholar();
         assert_eq!(scholar.rarity(), JokerRarity::Common);
+    }
+
+    // =============================================================================
+    // TESTS FOR NEW SIMPLE STATIC JOKERS
+    // =============================================================================
+
+    #[test]
+    fn test_smiley_face_joker() {
+        let smiley_face = StaticJokerFactory::create_smiley_face();
+
+        // Test properties
+        assert_eq!(smiley_face.id(), JokerId::Smiley);
+        assert_eq!(smiley_face.name(), "Smiley Face");
+        assert_eq!(smiley_face.rarity(), JokerRarity::Common);
+        assert_eq!(smiley_face.cost(), 3);
+
+        // Test description contains expected content
+        assert!(smiley_face.description().contains("Played face cards give"));
+        assert!(smiley_face.description().contains("Mult when scored"));
+    }
+
+    #[test]
+    fn test_baron_joker() {
+        let baron = StaticJokerFactory::create_baron();
+
+        // Test properties
+        assert_eq!(baron.id(), JokerId::BaronJoker);
+        assert_eq!(baron.name(), "Baron");
+        assert_eq!(baron.rarity(), JokerRarity::Rare);
+        assert_eq!(baron.cost(), 8);
+
+        // Test description contains expected content
+        assert!(baron.description().contains("Each King"));
+        assert!(baron.description().contains("held in hand"));
+        assert!(baron.description().contains("X1.5 Mult"));
+    }
+
+    #[test]
+    fn test_raised_fist_joker() {
+        let raised_fist = StaticJokerFactory::create_raised_fist();
+
+        // Test properties
+        assert_eq!(raised_fist.id(), JokerId::RaisedFist);
+        assert_eq!(raised_fist.name(), "Raised Fist");
+        assert_eq!(raised_fist.rarity(), JokerRarity::Common);
+        assert_eq!(raised_fist.cost(), 3);
+
+        // Test description contains expected content
+        assert!(raised_fist.description().contains("double the rank"));
+        assert!(raised_fist.description().contains("lowest ranked card"));
+        assert!(raised_fist.description().contains("held in hand"));
+    }
+
+    #[test]
+    fn test_rough_gem_joker() {
+        let rough_gem = StaticJokerFactory::create_rough_gem();
+
+        // Test properties
+        assert_eq!(rough_gem.id(), JokerId::RoughGem);
+        assert_eq!(rough_gem.name(), "Rough Gem");
+        assert_eq!(rough_gem.rarity(), JokerRarity::Common);
+        assert_eq!(rough_gem.cost(), 4);
+
+        // Test description contains expected content
+        assert!(rough_gem.description().contains("Diamond suit"));
+        assert!(rough_gem.description().contains("earn $1"));
+        assert!(rough_gem.description().contains("when scored"));
+    }
+
+    #[test]
+    fn test_all_new_simple_static_jokers_creation() {
+        // Test that all four new jokers can be created without panicking
+        let new_jokers = vec![
+            StaticJokerFactory::create_smiley_face(),
+            StaticJokerFactory::create_baron(),
+            StaticJokerFactory::create_raised_fist(),
+            StaticJokerFactory::create_rough_gem(),
+        ];
+
+        assert_eq!(new_jokers.len(), 4);
+
+        // Ensure all have valid IDs and names
+        for joker in &new_jokers {
+            assert!(!joker.name().is_empty());
+            assert!(!joker.description().is_empty());
+            assert!(joker.cost() > 0);
+        }
+
+        // Verify each has the expected ID
+        assert_eq!(new_jokers[0].id(), JokerId::Smiley);
+        assert_eq!(new_jokers[1].id(), JokerId::BaronJoker);
+        assert_eq!(new_jokers[2].id(), JokerId::RaisedFist);
+        assert_eq!(new_jokers[3].id(), JokerId::RoughGem);
     }
 }
