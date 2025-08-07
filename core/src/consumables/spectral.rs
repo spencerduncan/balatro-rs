@@ -37,7 +37,7 @@
 //! - **System-wide**: Global game effects (Black Hole)
 //! - **Transformation**: Cards that transform game state (Sigil, Ouija, Ectoplasm)
 
-use crate::card::{Card, Edition, Enhancement, Suit, Value};
+use crate::card::{Card, Edition, Enhancement, Seal, Suit, Value};
 use crate::consumables::{
     Consumable, ConsumableEffect, ConsumableError, ConsumableId, ConsumableType, Target, TargetType,
 };
@@ -536,12 +536,10 @@ impl Consumable for Talisman {
             }
 
             // Add Gold Seal to the selected card
-            // Note: In production, this would need proper card access methods
             let card_index = card_target.indices[0];
-            eprintln!("Talisman: Added Gold Seal to card at index {card_index}");
-
-            // In a full implementation, we would:
-            // game_state.available.get_card_mut(card_index).seal = Some(Seal::Gold);
+            if let Some(card) = game_state.available.get_card_mut(card_index) {
+                card.seal = Some(Seal::Gold);
+            }
 
             Ok(())
         } else {
@@ -609,10 +607,9 @@ impl Consumable for Aura {
             let chosen_edition = *game_state.rng.choose(&editions).unwrap();
 
             let card_index = card_target.indices[0];
-            eprintln!("Aura: Added {chosen_edition:?} edition to card at index {card_index}");
-
-            // In a full implementation:
-            // game_state.available.get_card_mut(card_index).edition = chosen_edition;
+            if let Some(card) = game_state.available.get_card_mut(card_index) {
+                card.edition = chosen_edition;
+            }
 
             Ok(())
         } else {

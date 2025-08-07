@@ -528,6 +528,123 @@ impl JokerGameplay for SockAndBuskinJoker {
     }
 }
 
+/// Hack - Retriggers all played 2, 3, 4, or 5
+#[derive(Debug, Clone)]
+pub struct HackJoker {
+    id: JokerId,
+    name: String,
+    description: String,
+    rarity: JokerRarity,
+    cost: usize,
+}
+
+impl Default for HackJoker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl HackJoker {
+    pub fn new() -> Self {
+        Self {
+            id: JokerId::Hack,
+            name: "Hack".to_string(),
+            description: "Retriggers all played 2s, 3s, 4s, and 5s".to_string(),
+            rarity: JokerRarity::Uncommon,
+            cost: 5,
+        }
+    }
+
+    fn is_target_rank(card: &Card) -> bool {
+        matches!(
+            card.value,
+            Value::Two | Value::Three | Value::Four | Value::Five
+        )
+    }
+}
+
+impl JokerIdentity for HackJoker {
+    fn joker_type(&self) -> &'static str {
+        "hack"
+    }
+
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    fn description(&self) -> &str {
+        &self.description
+    }
+
+    fn rarity(&self) -> Rarity {
+        match self.rarity {
+            JokerRarity::Common => Rarity::Common,
+            JokerRarity::Uncommon => Rarity::Uncommon,
+            JokerRarity::Rare => Rarity::Rare,
+            JokerRarity::Legendary => Rarity::Legendary,
+        }
+    }
+
+    fn base_cost(&self) -> u64 {
+        self.cost as u64
+    }
+}
+
+impl Joker for HackJoker {
+    fn id(&self) -> JokerId {
+        self.id
+    }
+
+    fn name(&self) -> &str {
+        &self.name
+    }
+
+    fn description(&self) -> &str {
+        &self.description
+    }
+
+    fn rarity(&self) -> JokerRarity {
+        self.rarity
+    }
+
+    fn cost(&self) -> usize {
+        self.cost
+    }
+
+    fn on_card_scored(&self, _context: &mut GameContext, card: &Card) -> JokerEffect {
+        if Self::is_target_rank(card) {
+            JokerEffect::new()
+                .with_retrigger(1)
+                .with_message(format!("Hack: {:?} retriggered!", card.value))
+        } else {
+            JokerEffect::new()
+        }
+    }
+}
+
+impl JokerGameplay for HackJoker {
+    fn process(&mut self, stage: &Stage, _context: &mut ProcessContext) -> ProcessResult {
+        if !matches!(stage, Stage::Blind(_)) {
+            return ProcessResult::default();
+        }
+
+        let has_target_ranks = _context.played_cards.iter().any(Self::is_target_rank);
+
+        if has_target_ranks {
+            ProcessResult {
+                retriggered: true,
+                ..Default::default()
+            }
+        } else {
+            ProcessResult::default()
+        }
+    }
+
+    fn can_trigger(&self, stage: &Stage, context: &ProcessContext) -> bool {
+        matches!(stage, Stage::Blind(_)) && context.played_cards.iter().any(Self::is_target_rank)
+    }
+}
+
 /// Factory functions for creating retrigger jokers
 pub fn create_dusk_joker() -> Box<dyn Joker> {
     Box::new(DuskJoker::new())
@@ -543,6 +660,10 @@ pub fn create_hanging_chad_joker() -> Box<dyn Joker> {
 
 pub fn create_sock_and_buskin_joker() -> Box<dyn Joker> {
     Box::new(SockAndBuskinJoker::new())
+}
+
+pub fn create_hack_joker() -> Box<dyn Joker> {
+    Box::new(HackJoker::new())
 }
 
 #[cfg(test)]
@@ -691,6 +812,120 @@ mod tests {
         assert!(!SockAndBuskinJoker::is_face_card(&Card::new(
             Value::Two,
             Suit::Diamond
+        )));
+    }
+
+    #[test]
+    fn test_hack() {
+        let hack = HackJoker::new();
+
+        // Test identity
+        assert_eq!(hack.joker_type(), "hack");
+        assert_eq!(JokerIdentity::name(&hack), "Hack");
+        assert_eq!(hack.base_cost(), 5);
+        assert_eq!(hack.rarity, JokerRarity::Uncommon);
+    }
+
+    #[test]
+    fn test_hack_target_ranks() {
+        let hack = HackJoker::new();
+        let mut test_context = crate::joker::test_utils::TestContextBuilder::new().build();
+
+        // Target ranks (2, 3, 4, 5) should be retriggered
+        let two = Card::new(Value::Two, Suit::Diamond);
+        let effect_two = hack.on_card_scored(&mut test_context, &two);
+        assert_eq!(effect_two.retrigger, 1);
+        assert!(effect_two.message.unwrap().contains("Two"));
+
+        let three = Card::new(Value::Three, Suit::Club);
+        let effect_three = hack.on_card_scored(&mut test_context, &three);
+        assert_eq!(effect_three.retrigger, 1);
+        assert!(effect_three.message.unwrap().contains("Three"));
+
+        let four = Card::new(Value::Four, Suit::Heart);
+        let effect_four = hack.on_card_scored(&mut test_context, &four);
+        assert_eq!(effect_four.retrigger, 1);
+        assert!(effect_four.message.unwrap().contains("Four"));
+
+        let five = Card::new(Value::Five, Suit::Spade);
+        let effect_five = hack.on_card_scored(&mut test_context, &five);
+        assert_eq!(effect_five.retrigger, 1);
+        assert!(effect_five.message.unwrap().contains("Five"));
+
+        // Non-target ranks should not be retriggered
+        let six = Card::new(Value::Six, Suit::Diamond);
+        let effect_six = hack.on_card_scored(&mut test_context, &six);
+        assert_eq!(effect_six.retrigger, 0);
+
+        let ace = Card::new(Value::Ace, Suit::Spade);
+        let effect_ace = hack.on_card_scored(&mut test_context, &ace);
+        assert_eq!(effect_ace.retrigger, 0);
+
+        let king = Card::new(Value::King, Suit::Heart);
+        let effect_king = hack.on_card_scored(&mut test_context, &king);
+        assert_eq!(effect_king.retrigger, 0);
+
+        let ten = Card::new(Value::Ten, Suit::Club);
+        let effect_ten = hack.on_card_scored(&mut test_context, &ten);
+        assert_eq!(effect_ten.retrigger, 0);
+    }
+
+    #[test]
+    fn test_target_rank_detection() {
+        // Test target ranks (2, 3, 4, 5)
+        assert!(HackJoker::is_target_rank(&Card::new(
+            Value::Two,
+            Suit::Heart
+        )));
+        assert!(HackJoker::is_target_rank(&Card::new(
+            Value::Three,
+            Suit::Diamond
+        )));
+        assert!(HackJoker::is_target_rank(&Card::new(
+            Value::Four,
+            Suit::Spade
+        )));
+        assert!(HackJoker::is_target_rank(&Card::new(
+            Value::Five,
+            Suit::Club
+        )));
+
+        // Test non-target ranks
+        assert!(!HackJoker::is_target_rank(&Card::new(
+            Value::Six,
+            Suit::Heart
+        )));
+        assert!(!HackJoker::is_target_rank(&Card::new(
+            Value::Seven,
+            Suit::Diamond
+        )));
+        assert!(!HackJoker::is_target_rank(&Card::new(
+            Value::Eight,
+            Suit::Spade
+        )));
+        assert!(!HackJoker::is_target_rank(&Card::new(
+            Value::Nine,
+            Suit::Club
+        )));
+        assert!(!HackJoker::is_target_rank(&Card::new(
+            Value::Ten,
+            Suit::Heart
+        )));
+        assert!(!HackJoker::is_target_rank(&Card::new(
+            Value::Jack,
+            Suit::Diamond
+        )));
+        assert!(!HackJoker::is_target_rank(&Card::new(
+            Value::Queen,
+            Suit::Spade
+        )));
+        assert!(!HackJoker::is_target_rank(&Card::new(
+            Value::King,
+            Suit::Club
+        )));
+        assert!(!HackJoker::is_target_rank(&Card::new(
+            Value::Ace,
+            Suit::Heart
         )));
     }
 }

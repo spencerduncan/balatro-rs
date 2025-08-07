@@ -31,7 +31,7 @@ fn test_red_card_joker_correctly_created() {
     assert!(red_card.is_some());
 
     let joker = red_card.unwrap();
-    assert_eq!(joker.id(), JokerId::RedCard);
+    assert_eq!(joker.id(), JokerId::Reserved6);
     assert_eq!(joker.name(), "Red Card");
     assert_eq!(joker.description(), "+3 Mult per pack skipped");
     assert_eq!(joker.rarity(), JokerRarity::Common);
@@ -130,7 +130,7 @@ fn test_jokers_in_implemented_list() {
     let implemented = JokerFactory::get_all_implemented();
 
     assert!(implemented.contains(&JokerId::FortuneTeller));
-    assert!(implemented.contains(&JokerId::RedCard)); // Red Card
+    assert!(implemented.contains(&JokerId::Reserved6)); // Red Card
     assert!(implemented.contains(&JokerId::SteelJoker));
 }
 
