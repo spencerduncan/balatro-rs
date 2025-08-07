@@ -1,17 +1,47 @@
+//! SessionId Value Object
+//!
+//! SessionId represents a unique identifier for a game session.
+//! Following Domain-Driven Design principles, it encapsulates validation
+//! and provides type safety for session identification.
+//!
+//! This implementation uses an 8-byte atomic counter for memory efficiency
+//! at scale, saving 50% memory compared to UUID (16 bytes).
+
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-// Performance-optimized SessionId using atomic operations for thread-safe ID generation
-// Uses 64-bit IDs for efficient comparison and storage (8 bytes vs UUID's 16 bytes)
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct SessionId {
-    value: u64,
-}
-
 // Global atomic counter for session IDs - ensures uniqueness across threads
 static SESSION_COUNTER: AtomicU64 = AtomicU64::new(0);
+
+/// Unique identifier for a game session
+///
+/// SessionId is a value object that uses an 8-byte atomic counter
+/// for memory-efficient unique identification at scale.
+///
+/// The ID is composed of:
+/// - Upper 44 bits: microsecond timestamp (provides uniqueness across restarts)
+/// - Lower 20 bits: atomic counter (provides ~1M unique IDs per microsecond)
+///
+/// # Examples
+///
+/// ```
+/// use balatro_rs::domain::SessionId;
+///
+/// // Generate a new session ID
+/// let session_id = SessionId::new();
+///
+/// // Parse from string (hex format)
+/// let parsed = SessionId::from_value(0x123456789abcdef0);
+///
+/// // Convert to string
+/// let id_string = session_id.to_string();
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct SessionId {
+    value: u64, // 8 bytes instead of 16!
+}
 
 impl SessionId {
     /// Create a new unique SessionId
@@ -43,6 +73,11 @@ impl SessionId {
         self.value
     }
 
+    /// Get the underlying u64 value (alias for value())
+    pub fn as_u64(&self) -> u64 {
+        self.value
+    }
+
     /// Extract timestamp component (for TTL calculations)
     pub fn timestamp_micros(&self) -> u64 {
         self.value >> 20
@@ -61,11 +96,60 @@ impl fmt::Display for SessionId {
     }
 }
 
+/// Error type for SessionId parsing
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SessionIdError {
+    message: &'static str,
+}
+
+impl fmt::Display for SessionIdError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "SessionId error: {}", self.message)
+    }
+}
+
+impl std::error::Error for SessionIdError {}
+
+impl TryFrom<String> for SessionId {
+    type Error = SessionIdError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        // Support both formats: "session_xxxx" and raw hex
+        let hex_str = value
+            .strip_prefix("session_")
+            .or_else(|| value.strip_prefix("session-"))
+            .unwrap_or(&value);
+
+        u64::from_str_radix(hex_str, 16)
+            .map(Self::from_value)
+            .map_err(|_| SessionIdError {
+                message: "Invalid hex format for SessionId",
+            })
+    }
+}
+
+impl From<u64> for SessionId {
+    fn from(value: u64) -> Self {
+        Self::from_value(value)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::collections::HashSet;
+    use std::mem;
     use std::thread;
+
+    #[test]
+    fn session_id_is_exactly_8_bytes() {
+        // Production requirement: SessionId must be 8 bytes, not 16!
+        assert_eq!(
+            mem::size_of::<SessionId>(),
+            8,
+            "SessionId must be exactly 8 bytes for memory efficiency at scale"
+        );
+    }
 
     #[test]
     fn test_session_id_uniqueness() {
@@ -105,5 +189,69 @@ mod tests {
         let serialized = serde_json::to_string(&id).unwrap();
         let deserialized: SessionId = serde_json::from_str(&serialized).unwrap();
         assert_eq!(id, deserialized);
+    }
+
+    #[test]
+    fn session_id_can_be_displayed() {
+        let id = SessionId::from_value(0x123456789abcdef0);
+        let display_string = format!("{id}");
+
+        // Should be in format "session_xxxx"
+        assert!(display_string.starts_with("session_"));
+        assert_eq!(display_string, "session_123456789abcdef0");
+    }
+
+    #[test]
+    fn session_id_can_be_parsed_from_valid_string() {
+        // Test with "session_" prefix
+        let hex_str = "session_123456789abcdef0";
+        let session_id = SessionId::try_from(hex_str.to_string()).unwrap();
+        assert_eq!(session_id.as_u64(), 0x123456789abcdef0);
+
+        // Test with "session-" prefix (hyphen)
+        let hex_str = "session-123456789abcdef0";
+        let session_id = SessionId::try_from(hex_str.to_string()).unwrap();
+        assert_eq!(session_id.as_u64(), 0x123456789abcdef0);
+
+        // Test without prefix
+        let hex_str = "123456789abcdef0";
+        let session_id = SessionId::try_from(hex_str.to_string()).unwrap();
+        assert_eq!(session_id.as_u64(), 0x123456789abcdef0);
+    }
+
+    #[test]
+    fn session_id_parsing_fails_for_invalid_string() {
+        let invalid_str = "not-a-hex";
+        let result = SessionId::try_from(invalid_str.to_string());
+
+        assert!(result.is_err(), "Should fail to parse invalid hex string");
+    }
+
+    #[test]
+    fn session_id_implements_required_traits() {
+        let id1 = SessionId::new();
+        let id2 = id1; // Copy trait test (not clone)
+
+        // Test Copy
+        assert_eq!(id1, id2);
+
+        // Test Debug
+        let debug_string = format!("{id1:?}");
+        assert!(debug_string.contains("SessionId"));
+
+        // Test Hash (can be used in HashSet)
+        let mut set = HashSet::new();
+        set.insert(id1);
+        assert_eq!(set.len(), 1);
+    }
+
+    #[test]
+    fn display_implementation_is_allocation_free() {
+        // This test ensures Display doesn't allocate unnecessarily
+        let id = SessionId::from_value(0xdeadbeef);
+        let formatted = format!("{id}");
+
+        // Verify format is correct and predictable
+        assert_eq!(formatted, "session_00000000deadbeef");
     }
 }

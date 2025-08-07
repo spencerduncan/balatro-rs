@@ -23,7 +23,6 @@ toml = { version = "~0.8.12", optional = true }
 strum = { version = "0.26", features = ["derive"] }
 thiserror = "~1.0.61"
 tracing = { version = "~0.1.40", optional = true}
-uuid  = {version = "~1.9.1", optional = true, features = ["v7"]}
 
 [dev-dependencies]
 criterion = "0.6.0"
@@ -34,7 +33,7 @@ python = ["dep:pyo3"]
 statistical_tests = []  # Enable slow/flaky statistical tests (disabled in CI)
 integration_tests = []  # Enable slow integration tests (disabled in CI)
 disabled-for-emergency = []  # Temporarily disabled tests with API mismatches
-serde = ["dep:serde", "dep:serde_json", "dep:toml", "dep:regex", "uuid?/serde"]
+serde = ["dep:serde", "dep:serde_json", "dep:toml", "dep:regex"]
 colored = ["dep:colored"]
 
 [[bench]]
