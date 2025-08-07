@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["packs","persistence"],"struct":["AccumulatedEffects","Game","JokerContribution","ScoreBreakdown"]};
+window.SIDEBAR_ITEMS = {"mod":["packs","persistence"],"struct":["AccumulatedEffects","EnhancementEffects","Game","JokerContribution","ScoreBreakdown"]};
