@@ -125,12 +125,12 @@ impl Game {
         if self.stage != Stage::Shop() {
             return None;
         }
-        // Cannot buy if all joker slots full
-        if self.joker_count() >= self.config.joker_slots {
+        // Cannot buy if all joker slots full (including Negative edition bonuses)
+        if self.joker_count() >= self.effective_joker_slots() {
             return None;
         }
         self.shop
-            .gen_moves_buy_joker(self.money, self.jokers.len(), self.config.joker_slots)
+            .gen_moves_buy_joker(self.money, self.jokers.len(), self.effective_joker_slots())
     }
 
     // Get buy pack actions
