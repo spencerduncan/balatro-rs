@@ -1808,16 +1808,20 @@
 <a href=#1808 id=1808 data-nosnippet>1808</a>}
 <a href=#1809 id=1809 data-nosnippet>1809</a>
 <a href=#1810 id=1810 data-nosnippet>1810</a><span class="comment">// Re-export submodules when they are implemented
-<a href=#1811 id=1811 data-nosnippet>1811</a></span><span class="kw">pub mod </span>spectral;
-<a href=#1812 id=1812 data-nosnippet>1812</a><span class="kw">pub mod </span>tarot;
-<a href=#1813 id=1813 data-nosnippet>1813</a><span class="comment">// pub mod planet; // Disabled in main until planet card system is ready
-<a href=#1814 id=1814 data-nosnippet>1814</a>
-<a href=#1815 id=1815 data-nosnippet>1815</a>// Re-export key tarot types for convenience
-<a href=#1816 id=1816 data-nosnippet>1816</a></span><span class="kw">pub use </span>tarot::{CardEnhancement, TarotCard, TarotEffect, TarotError, TarotFactory, TarotRarity};
-<a href=#1817 id=1817 data-nosnippet>1817</a>
-<a href=#1818 id=1818 data-nosnippet>1818</a><span class="comment">// Test module
-<a href=#1819 id=1819 data-nosnippet>1819</a></span><span class="attr">#[cfg(test)]
-<a href=#1820 id=1820 data-nosnippet>1820</a></span><span class="kw">mod </span>tests;
+<a href=#1811 id=1811 data-nosnippet>1811</a></span><span class="kw">pub mod </span>purchase;
+<a href=#1812 id=1812 data-nosnippet>1812</a><span class="kw">pub mod </span>spectral;
+<a href=#1813 id=1813 data-nosnippet>1813</a><span class="kw">pub mod </span>tarot;
+<a href=#1814 id=1814 data-nosnippet>1814</a><span class="comment">// pub mod planet; // Disabled in main until planet card system is ready
+<a href=#1815 id=1815 data-nosnippet>1815</a>
+<a href=#1816 id=1816 data-nosnippet>1816</a>// Re-export key tarot types for convenience
+<a href=#1817 id=1817 data-nosnippet>1817</a></span><span class="kw">pub use </span>tarot::{CardEnhancement, TarotCard, TarotEffect, TarotError, TarotFactory, TarotRarity};
+<a href=#1818 id=1818 data-nosnippet>1818</a>
+<a href=#1819 id=1819 data-nosnippet>1819</a><span class="comment">// Re-export key purchase types for convenience
+<a href=#1820 id=1820 data-nosnippet>1820</a></span><span class="kw">pub use </span>purchase::{ConsumablePurchaseAssignment, PurchaseError, SlotAssignmentStats};
 <a href=#1821 id=1821 data-nosnippet>1821</a>
-<a href=#1822 id=1822 data-nosnippet>1822</a><span class="comment">// Re-export commonly used types
-<a href=#1823 id=1823 data-nosnippet>1823</a></span><span class="kw">pub use </span>ConsumableId::<span class="kw-2">*</span>;</code></pre></div></section></main></body></html>
+<a href=#1822 id=1822 data-nosnippet>1822</a><span class="comment">// Test module
+<a href=#1823 id=1823 data-nosnippet>1823</a></span><span class="attr">#[cfg(test)]
+<a href=#1824 id=1824 data-nosnippet>1824</a></span><span class="kw">mod </span>tests;
+<a href=#1825 id=1825 data-nosnippet>1825</a>
+<a href=#1826 id=1826 data-nosnippet>1826</a><span class="comment">// Re-export commonly used types
+<a href=#1827 id=1827 data-nosnippet>1827</a></span><span class="kw">pub use </span>ConsumableId::<span class="kw-2">*</span>;</code></pre></div></section></main></body></html>
