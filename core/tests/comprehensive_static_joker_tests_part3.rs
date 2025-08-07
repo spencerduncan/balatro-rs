@@ -674,99 +674,94 @@ mod color_based_joker_tests {
 
     #[test]
     fn test_blue_joker_properties() {
-        // Blue Joker: Black cards (Clubs and Spades) give +3 Mult when scored
+        // Blue Joker: +2 Chips per remaining card in deck
         let joker = StaticJokerFactory::create_blue_joker();
 
         assert_eq!(joker.id(), JokerId::BlueJoker);
         assert_eq!(joker.name(), "Blue Joker");
+        assert_eq!(joker.description(), "+2 Chips per remaining card in deck");
+        assert_eq!(joker.rarity(), JokerRarity::Common);
+        assert_eq!(joker.cost(), 3);
+    }
+
+    #[test]
+    fn test_blue_joker_deck_based_chips() {
+        // Blue Joker gives chips based on deck size
+        let joker = StaticJokerFactory::create_blue_joker();
+
+        // Test with 40 cards in deck
+        let mut context = create_test_context(10, 2);
+        context.cards_in_deck = 40;
+
+        // Blue Joker gives chips regardless of card
+        let test_hand = SelectHand::new(vec![
+            create_test_card(Suit::Club, Value::Two),
+            create_test_card(Suit::Heart, Value::Three),
+        ]);
+        let effect = joker.on_hand_played(&mut context, &test_hand);
+
+        // Should give 2 chips per card in deck = 80 chips
         assert_eq!(
-            joker.description(),
-            "Black cards (Clubs and Spades) give +3 Mult when scored"
+            effect.chips, 80,
+            "Blue Joker should provide 2 chips per card in deck (40 cards = 80 chips)"
         );
-        assert_eq!(joker.rarity(), JokerRarity::Uncommon);
-        assert_eq!(joker.cost(), 6);
+        assert_eq!(effect.mult, 0, "Blue Joker should not provide mult");
+
+        // Test with smaller deck
+        context.cards_in_deck = 10;
+        let effect = joker.on_hand_played(&mut context, &test_hand);
+        assert_eq!(
+            effect.chips, 20,
+            "Blue Joker should provide 2 chips per card in deck (10 cards = 20 chips)"
+        );
     }
 
     #[test]
-    fn test_blue_joker_black_suits() {
-        // Performance test: Optimized color filtering like texture sampling
+    fn test_blue_joker_empty_deck() {
+        // Edge case: Blue Joker with empty deck
         let joker = StaticJokerFactory::create_blue_joker();
         let mut context = create_test_context(10, 2);
 
-        let black_suits = vec![Suit::Club, Suit::Spade];
-        let test_values = vec![
-            Value::Two,
-            Value::Six,
-            Value::Nine,
-            Value::Queen,
-            Value::Ace,
-        ];
+        // Test with empty deck
+        context.cards_in_deck = 0;
+        let test_hand = SelectHand::new(vec![create_test_card(Suit::Diamond, Value::Five)]);
+        let effect = joker.on_hand_played(&mut context, &test_hand);
 
-        for suit in black_suits {
-            for value in &test_values {
-                let black_card = create_test_card(suit, *value);
-                let effect = joker.on_card_scored(&mut context, &black_card);
-
-                assert_eq!(
-                    effect.mult, 3,
-                    "Blue Joker should provide +3 mult for {value:?} of {suit:?}"
-                );
-                assert_eq!(effect.chips, 0, "Blue Joker should not provide chips");
-            }
-        }
+        assert_eq!(
+            effect.chips, 0,
+            "Blue Joker should provide 0 chips when deck is empty"
+        );
+        assert_eq!(effect.mult, 0, "Blue Joker should not provide mult");
     }
 
     #[test]
-    fn test_blue_joker_red_suits() {
-        // Edge case: Red suits should not trigger - like alpha channel validation
-        let joker = StaticJokerFactory::create_blue_joker();
-        let mut context = create_test_context(10, 2);
-
-        let red_suits = vec![Suit::Heart, Suit::Diamond];
-        let test_values = vec![
-            Value::Two,
-            Value::Six,
-            Value::Nine,
-            Value::Queen,
-            Value::Ace,
-        ];
-
-        for suit in red_suits {
-            for value in &test_values {
-                let red_card = create_test_card(suit, *value);
-                let effect = joker.on_card_scored(&mut context, &red_card);
-
-                assert_eq!(
-                    effect.mult, 0,
-                    "Blue Joker should not trigger for {value:?} of {suit:?}"
-                );
-            }
-        }
-    }
-
-    #[test]
-    fn test_color_joker_interaction() {
-        // Performance test: Color jokers working simultaneously like dual-pipeline rendering
+    fn test_blue_and_red_joker_independence() {
+        // Test that Blue Joker (deck-based) and Red Card (color-based) work independently
         let red_card_joker = StaticJokerFactory::create_red_card();
         let blue_joker = StaticJokerFactory::create_blue_joker();
         let mut context = create_test_context(15, 1);
+        context.cards_in_deck = 25;
 
-        // Test that they work independently and don't interfere
+        // Test Red Card with red suit
         let red_heart = create_test_card(Suit::Heart, Value::King);
-        let black_spade = create_test_card(Suit::Spade, Value::King);
-
         let red_effect = red_card_joker.on_card_scored(&mut context, &red_heart);
-        let blue_no_effect = blue_joker.on_card_scored(&mut context, &red_heart);
-
-        let blue_effect = blue_joker.on_card_scored(&mut context, &black_spade);
-        let red_no_effect = red_card_joker.on_card_scored(&mut context, &black_spade);
-
         assert_eq!(red_effect.mult, 3, "Red Card should trigger for hearts");
+
+        // Test Blue Joker gives chips based on deck size, not card color
+        let test_hand = SelectHand::new(vec![
+            red_heart,
+            create_test_card(Suit::Diamond, Value::Queen),
+        ]);
+        let blue_effect = blue_joker.on_hand_played(&mut context, &test_hand);
         assert_eq!(
-            blue_no_effect.mult, 0,
-            "Blue Joker should not trigger for hearts"
+            blue_effect.chips, 50,
+            "Blue Joker should give 50 chips (25 cards * 2)"
         );
-        assert_eq!(blue_effect.mult, 3, "Blue Joker should trigger for spades");
+        assert_eq!(blue_effect.mult, 0, "Blue Joker should not provide mult");
+
+        // Test Red Card with black suit
+        let black_spade = create_test_card(Suit::Spade, Value::King);
+        let red_no_effect = red_card_joker.on_card_scored(&mut context, &black_spade);
         assert_eq!(
             red_no_effect.mult, 0,
             "Red Card should not trigger for spades"
@@ -820,17 +815,17 @@ mod integration_tests_missing_coverage {
 
     #[test]
     fn test_comprehensive_rank_coverage() {
-        // Performance test: Scholar + color jokers like multi-pass rendering
+        // Performance test: Scholar + Red Card + Blue Joker interaction
         let scholar = StaticJokerFactory::create_scholar(); // Aces +20 Chips +4 Mult
         let red_card = StaticJokerFactory::create_red_card(); // Red +3 Mult
-        let blue_joker = StaticJokerFactory::create_blue_joker(); // Black +3 Mult
+        let blue_joker = StaticJokerFactory::create_blue_joker(); // +2 Chips per card in deck
         let mut context = create_test_context(25, 0);
+        context.cards_in_deck = 30; // Set deck size for Blue Joker
 
-        // Test Red Ace (should trigger both Scholar and Red Card)
+        // Test Red Ace (should trigger Scholar and Red Card)
         let red_ace = create_test_card(Suit::Heart, Value::Ace);
         let scholar_effect = scholar.on_card_scored(&mut context, &red_ace);
         let red_effect = red_card.on_card_scored(&mut context, &red_ace);
-        let blue_no_effect = blue_joker.on_card_scored(&mut context, &red_ace);
 
         assert_eq!(
             scholar_effect.chips, 20,
@@ -844,15 +839,26 @@ mod integration_tests_missing_coverage {
             red_effect.mult, 3,
             "Red Card should provide mult for red ace"
         );
+
+        // Blue Joker provides chips based on deck size on hand played
+        let test_hand = SelectHand::new(vec![
+            red_ace,
+            create_test_card(Suit::Diamond, Value::Two),
+            create_test_card(Suit::Club, Value::Three),
+        ]);
+        let blue_hand_effect = blue_joker.on_hand_played(&mut context, &test_hand);
         assert_eq!(
-            blue_no_effect.mult, 0,
-            "Blue Joker should not trigger for red ace"
+            blue_hand_effect.chips, 60,
+            "Blue Joker should provide 60 chips (30 cards * 2)"
+        );
+        assert_eq!(
+            blue_hand_effect.mult, 0,
+            "Blue Joker should not provide mult"
         );
 
-        // Test Black Ace (should trigger both Scholar and Blue Joker)
+        // Test Black Ace (should trigger Scholar only, not Red Card)
         let black_ace = create_test_card(Suit::Spade, Value::Ace);
         let scholar_effect_2 = scholar.on_card_scored(&mut context, &black_ace);
-        let blue_effect = blue_joker.on_card_scored(&mut context, &black_ace);
         let red_no_effect = red_card.on_card_scored(&mut context, &black_ace);
 
         assert_eq!(
@@ -862,10 +868,6 @@ mod integration_tests_missing_coverage {
         assert_eq!(
             scholar_effect_2.mult, 4,
             "Scholar should provide mult for black ace"
-        );
-        assert_eq!(
-            blue_effect.mult, 3,
-            "Blue Joker should provide mult for black ace"
         );
         assert_eq!(
             red_no_effect.mult, 0,
