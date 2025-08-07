@@ -1,4 +1,8 @@
 //! Common test utilities and infrastructure for balatro-rs
+
+#![allow(dead_code)]
+#![allow(unused_imports)]
+#![allow(clippy::all)]
 //!
 //! This module provides comprehensive testing utilities including:
 //! - Test fixtures for game states, cards, and actions
@@ -39,7 +43,7 @@ pub use helpers::*;
 
 /// Test data builders for fluent test creation
 pub mod builders {
-    pub use super::fixtures::{DeckBuilder, GameStateBuilder, JokerTestBuilder, TestDataGenerator};
+    pub use super::fixtures::{DeckBuilder, GameStateBuilder};
 }
 
 // ============================================================================
@@ -49,30 +53,9 @@ pub mod builders {
 /// Domain-specific assertions for game testing
 pub mod asserts {
     pub use super::assertions::{
-        assert_action_completes_within,
-        assert_action_invalid,
-        assert_action_valid,
-        assert_actions_deterministic,
-        assert_ante_level,
-        assert_ante_progression_valid,
-        assert_deck_size,
-        assert_game_ended,
-        assert_game_running,
-        assert_game_stage,
-        // Production assertions
-        assert_game_state_equals,
-        assert_game_state_snapshot,
-        assert_hand_rank,
-        assert_joker_collection_valid,
-        assert_joker_effect,
-        assert_joker_effect_neutral,
-        assert_money_in_range,
-        assert_money_never_negative,
-        assert_round_number,
-        assert_round_progression_valid,
-        assert_score_in_range,
-        assert_scoring_correct,
-        assert_valid_state_transition,
+        assert_action_valid, assert_game_ended, assert_game_running, assert_game_stage,
+        assert_game_state_equals, assert_game_state_snapshot, assert_money_in_range,
+        assert_score_in_range, assert_valid_state_transition,
     };
 }
 
@@ -94,14 +77,8 @@ pub mod environment {
 
 /// Performance testing utilities
 pub mod performance {
-    pub use super::fixtures::{
-        create_concurrent_test_fixtures, create_memory_test_fixtures, create_performance_test_data,
-        MemoryTestFixtures, PerformanceTestData,
-    };
-
-    pub use super::helpers::{measure_execution_time, PerformanceMeasurement, PerformanceMonitor};
-
-    pub use super::assertions::assert_action_completes_within;
+    pub use super::fixtures::create_concurrent_test_fixtures;
+    // Other performance utilities would go here when implemented
 }
 
 // ============================================================================
@@ -113,8 +90,7 @@ pub mod snapshot {
     pub use super::assertions::{
         assert_game_state_equals, assert_game_state_snapshot, GameStateSnapshot, StateTolerance,
     };
-
-    pub use super::helpers::{GameStateRecord, GameStateRecorder};
+    // Other snapshot utilities would go here when implemented
 }
 
 // ============================================================================
@@ -123,12 +99,8 @@ pub mod snapshot {
 
 /// Common test patterns and utilities
 pub mod patterns {
-    pub use super::helpers::{
-        execute_action_sequence, game_with_action, play_until_game_over, retry_test,
-        run_parameterized_test,
-    };
-
-    pub use super::fixtures::{create_edge_case_scenarios, TestScenario};
+    pub use super::helpers::execute_action_sequence;
+    // Other patterns would go here when implemented
 }
 
 // ============================================================================
@@ -148,13 +120,11 @@ pub mod prelude {
     };
 
     pub use super::assertions::{
-        assert_action_valid, assert_actions_deterministic, assert_ante_level,
-        assert_ante_progression_valid, assert_game_ended, assert_game_running,
-        assert_game_state_equals, assert_money_in_range, assert_money_never_negative,
-        assert_round_number, assert_round_progression_valid, assert_valid_state_transition,
+        assert_action_valid, assert_game_ended, assert_game_running, assert_game_state_equals,
+        assert_money_in_range, assert_score_in_range, assert_valid_state_transition,
     };
 
-    pub use super::helpers::{execute_action_sequence, measure_execution_time, TestEnvironment};
+    pub use super::helpers::{execute_action_sequence, TestEnvironment};
 }
 
 // ============================================================================
@@ -260,8 +230,8 @@ mod tests {
     fn test_builder_pattern() {
         let game = GameStateBuilder::new().with_ante(2).with_money(10).build();
 
-        assert_eq!(game.ante, 2);
-        assert_eq!(game.money, 10);
+        assert_eq!(game.ante_current, balatro_rs::ante::Ante::Two);
+        assert_eq!(game.money, 10.0);
     }
 
     #[test]

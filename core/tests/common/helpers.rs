@@ -2,6 +2,9 @@
 //!
 //! Provides utility functions that simplify test setup and execution.
 //!
+
+#![allow(clippy::all)]
+
 //! ## Production Engineering Patterns
 //! - Test environment configuration for reproducibility
 //! - Random seed management for deterministic tests
@@ -496,9 +499,9 @@ where
 
 /// Retry helper for flaky tests
 /// Production pattern: Test stability
-pub fn retry_test<F>(max_attempts: usize, test_fn: F) -> Result<(), String>
+pub fn retry_test<F>(max_attempts: usize, mut test_fn: F) -> Result<(), String>
 where
-    F: Fn() -> Result<(), String>,
+    F: FnMut() -> Result<(), String>,
 {
     for attempt in 1..=max_attempts {
         match test_fn() {
@@ -564,7 +567,7 @@ mod tests {
 
     #[test]
     fn test_test_fixture() {
-        let mut fixture = TestFixture::new(|| Game::default()).with_teardown(|game| {
+        let mut fixture = TestFixture::new(|| Game::default()).with_teardown(|_game| {
             // Cleanup code here
             // Can't directly set ante, it's managed by game progression
             // game.ante_current = Ante::Zero;

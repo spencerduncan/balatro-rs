@@ -27,6 +27,8 @@ uuid  = {version = "~1.9.1", optional = true, features = ["v7"]}
 
 [dev-dependencies]
 criterion = "0.6.0"
+proptest = "1.4.0"
+mockall = "0.13.0"
 
 [features]
 default = ["serde", "python"]
@@ -34,6 +36,8 @@ python = ["dep:pyo3"]
 statistical_tests = []  # Enable slow/flaky statistical tests (disabled in CI)
 integration_tests = []  # Enable slow integration tests (disabled in CI)
 disabled-for-emergency = []  # Temporarily disabled tests with API mismatches
+mock = []  # Enable mock testing framework
+proptest = []  # Enable property-based testing
 serde = ["dep:serde", "dep:serde_json", "dep:toml", "dep:regex", "uuid?/serde"]
 colored = ["dep:colored"]
 

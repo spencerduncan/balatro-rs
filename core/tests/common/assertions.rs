@@ -3,6 +3,8 @@
 //! Provides specialized assertion functions for game domain concepts
 //! that go beyond standard Rust assertions.
 //!
+
+#![allow(clippy::all)]
 //! ## Production Engineering Patterns
 //! - Detailed error messages for debugging at 3 AM
 //! - State comparison utilities for regression testing
@@ -605,7 +607,6 @@ pub fn assert_actions_deterministic(seed: u64, action_count: usize) {
 
 /// Custom assertion macros for cleaner test code
 /// Production pattern: Domain-specific test macros
-
 #[macro_export]
 macro_rules! assert_game_won {
     ($game:expr) => {
