@@ -123,19 +123,45 @@ pub fn global_registry() -> &'static SkipTagRegistry {
             eprintln!("Failed to register Polychrome tag: {e}");
         }
 
-        // TODO: Register utility tags when they're re-enabled
-        // if let Err(e) = registry.register(crate::skip_tags::utility_tags::DoubleTag) {
-        //     eprintln!("Failed to register Double tag: {e}");
-        // }
-        // if let Err(e) = registry.register(crate::skip_tags::utility_tags::BossTag) {
-        //     eprintln!("Failed to register Boss tag: {e}");
-        // }
-        // if let Err(e) = registry.register(crate::skip_tags::utility_tags::OrbitalTag) {
-        //     eprintln!("Failed to register Orbital tag: {e}");
-        // }
-        // if let Err(e) = registry.register(crate::skip_tags::utility_tags::JuggleTag) {
-        //     eprintln!("Failed to register Juggle tag: {e}");
-        // }
+        // Register utility tags (re-enabled after fixing interface)
+        if let Err(e) = registry.register(crate::skip_tags::utility_tags::DoubleTag) {
+            eprintln!("Failed to register Double tag: {e}");
+        }
+        if let Err(e) = registry.register(crate::skip_tags::utility_tags::BossTag) {
+            eprintln!("Failed to register Boss tag: {e}");
+        }
+        if let Err(e) = registry.register(crate::skip_tags::utility_tags::OrbitalTag) {
+            eprintln!("Failed to register Orbital tag: {e}");
+        }
+        if let Err(e) = registry.register(crate::skip_tags::utility_tags::JuggleTag) {
+            eprintln!("Failed to register Juggle tag: {e}");
+        }
+
+        // Register all reward tags
+        if let Err(e) = registry.register(crate::skip_tags::reward_tags::CharmTag) {
+            eprintln!("Failed to register Charm tag: {e}");
+        }
+        if let Err(e) = registry.register(crate::skip_tags::reward_tags::EtherealTag) {
+            eprintln!("Failed to register Ethereal tag: {e}");
+        }
+        if let Err(e) = registry.register(crate::skip_tags::reward_tags::BuffoonTag) {
+            eprintln!("Failed to register Buffoon tag: {e}");
+        }
+        if let Err(e) = registry.register(crate::skip_tags::reward_tags::StandardTag) {
+            eprintln!("Failed to register Standard tag: {e}");
+        }
+        if let Err(e) = registry.register(crate::skip_tags::reward_tags::MeteorTag) {
+            eprintln!("Failed to register Meteor tag: {e}");
+        }
+        if let Err(e) = registry.register(crate::skip_tags::reward_tags::RareTag) {
+            eprintln!("Failed to register Rare tag: {e}");
+        }
+        if let Err(e) = registry.register(crate::skip_tags::reward_tags::UncommonTag) {
+            eprintln!("Failed to register Uncommon tag: {e}");
+        }
+        if let Err(e) = registry.register(crate::skip_tags::reward_tags::TopUpTag) {
+            eprintln!("Failed to register TopUp tag: {e}");
+        }
 
         // Register all economic tags
         if let Err(e) = registry.register(crate::skip_tags::economic_tags::EconomyTag) {

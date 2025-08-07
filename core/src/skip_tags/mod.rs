@@ -4,21 +4,23 @@
 //! They provide various effects to enhance gameplay.
 
 pub mod economic_tags;
+pub mod reward_tags;
 pub mod shop_tags;
 pub mod tag_effects;
 pub mod tag_registry;
 
-// Temporarily disable utility tags due to interface mismatch
-// TODO: Re-enable and fix utility tags in a follow-up
-// pub mod utility_tags;
+// Re-enabled utility tags - interface mismatch resolved
+pub mod utility_tags;
 
 #[cfg(test)]
 mod integration_tests;
 
 // Re-export public API
+pub use reward_tags::*;
 pub use shop_tags::*;
 pub use tag_effects::*;
 pub use tag_registry::*;
+pub use utility_tags::*;
 
 use crate::game::Game;
 use crate::stage::Blind;

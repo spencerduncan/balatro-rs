@@ -35,6 +35,10 @@ coverage.json
 *.old
 *.orig
 
+# Test output files
+test_output.log
+*.test_output
+
 # Benchmark and performance output files
 *_performance.txt
 current_performance.txt
