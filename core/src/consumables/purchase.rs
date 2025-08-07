@@ -130,8 +130,9 @@ impl ConsumablePurchaseAssignment {
     /// ```rust
     /// use balatro_rs::consumables::purchase::ConsumablePurchaseAssignment;
     /// use balatro_rs::game::Game;
+    /// use balatro_rs::config::Config;
     ///
-    /// let game = Game::new();
+    /// let game = Game::new(Config::default());
     /// let assignment = ConsumablePurchaseAssignment::new();
     ///
     /// match assignment.find_first_empty_slot(&game) {
@@ -205,8 +206,9 @@ impl ConsumablePurchaseAssignment {
     /// use balatro_rs::consumables::purchase::ConsumablePurchaseAssignment;
     /// use balatro_rs::consumables::ConsumableId;
     /// use balatro_rs::game::Game;
+    /// use balatro_rs::config::Config;
     ///
-    /// let mut game = Game::new();
+    /// let mut game = Game::new(Config::default());
     /// let assignment = ConsumablePurchaseAssignment::new();
     ///
     /// match assignment.assign_consumable_to_slot(&mut game, ConsumableId::TheFool, 0) {
@@ -315,9 +317,10 @@ impl ConsumablePurchaseAssignment {
     /// use balatro_rs::consumables::purchase::ConsumablePurchaseAssignment;
     /// use balatro_rs::consumables::ConsumableId;
     /// use balatro_rs::game::Game;
+    /// use balatro_rs::config::Config;
     /// use balatro_rs::stage::Stage;
     ///
-    /// let mut game = Game::new();
+    /// let mut game = Game::new(Config::default());
     /// game.stage = Stage::Shop(); // Ensure we're in shop stage
     /// game.money = 10.0; // Ensure we have money
     ///
@@ -378,8 +381,9 @@ impl ConsumablePurchaseAssignment {
     /// ```rust
     /// use balatro_rs::consumables::purchase::ConsumablePurchaseAssignment;
     /// use balatro_rs::game::Game;
+    /// use balatro_rs::config::Config;
     ///
-    /// let game = Game::new();
+    /// let game = Game::new(Config::default());
     /// let assignment = ConsumablePurchaseAssignment::new();
     /// let stats = assignment.get_slot_statistics(&game);
     ///
