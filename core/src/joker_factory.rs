@@ -60,6 +60,12 @@ impl JokerFactory {
             }
             JokerId::Walkie => Some(StaticJokerFactory::create_walkie()),
 
+            // Simple Static Jokers (Issue #364)
+            JokerId::Smiley => Some(StaticJokerFactory::create_smiley_face()),
+            JokerId::BaronJoker => Some(StaticJokerFactory::create_baron()),
+            JokerId::RaisedFist => Some(StaticJokerFactory::create_raised_fist()),
+            JokerId::RoughGem => Some(StaticJokerFactory::create_rough_gem()),
+
             // Placeholder jokers with TODO comments
             JokerId::HalfJoker => Some(StaticJokerFactory::create_half_joker()),
             JokerId::Banner => Some(StaticJokerFactory::create_banner()),
@@ -74,6 +80,7 @@ impl JokerFactory {
             JokerId::Reserved8 => Some(Box::new(GrimJoker)),
             JokerId::AcrobatJoker => Some(Box::new(AcrobatJoker::new())),
             JokerId::FortuneTeller => Some(Box::new(FortuneTellerJoker::new())),
+            JokerId::Fortune => Some(Box::new(FortuneTellerJoker::new_with_fortune_id())), // Alias for FortuneTeller
             JokerId::VagabondJoker => Some(Box::new(VagabondJokerImpl)),
             JokerId::Reserved9 => Some(Box::new(ChaoticJoker)),
 
@@ -134,6 +141,7 @@ impl JokerFactory {
             JokerId::Seltzer => Some(Box::new(SeltzerJoker::new())),
             JokerId::Hanging => Some(Box::new(HangingChadJoker::new())),
             JokerId::SockAndBuskin => Some(Box::new(SockAndBuskinJoker::new())),
+            JokerId::Hack => Some(create_hack_joker()),
 
             // X-Mult hand-type jokers using StaticJoker framework
             JokerId::TheDuo => Some(StaticJokerFactory::create_the_duo()),
@@ -196,6 +204,10 @@ impl JokerFactory {
                 Scholar,
                 // Resource chips jokers
                 ScaryFace, // ScaryFace Joker
+                // Simple Static Jokers (Issue #364)
+                Smiley,     // Smiley Face
+                RaisedFist, // Raised Fist
+                RoughGem,   // Rough Gem
                 // Scaling xmult jokers (none in common)
                 // Retrigger jokers
                 Hanging, // HangingChadJoker
@@ -226,6 +238,7 @@ impl JokerFactory {
                 Dusk,
                 Seltzer,
                 SockAndBuskin,
+                Hack,
             ],
             JokerRarity::Rare => vec![
                 // RNG-based jokers (Issue #442)
@@ -236,6 +249,8 @@ impl JokerFactory {
                 TheDuo,
                 TheTrio,
                 TheFamily,
+                // Simple Static Jokers (Issue #364)
+                BaronJoker, // Baron
                 // Scaling mult jokers
                 // Scaling chips jokers
                 Castle,
@@ -334,11 +349,17 @@ impl JokerFactory {
             Seltzer,
             Hanging,
             SockAndBuskin,
+            Hack,
             // X-Mult hand-type jokers (Wave 2)
             TheDuo,
             TheTrio,
             TheFamily,
-            // Note: HalfJoker and Banner are still placeholders
+            // Simple Static Jokers (Issue #364) - Fully implemented
+            Smiley,     // Smiley Face
+            BaronJoker, // Baron
+            RaisedFist, // Raised Fist
+            RoughGem,   // Rough Gem
+                        // Note: HalfJoker and Banner are still placeholders
         ]
     }
 }

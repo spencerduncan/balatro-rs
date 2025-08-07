@@ -140,6 +140,7 @@ pub enum JokerId {
     SmilingMask,
     FaceMask,
     FortuneTeller,
+    Fortune, // Alias for FortuneTeller for compatibility
     Juggler,
     Drunkard,
     Stone,

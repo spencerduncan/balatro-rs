@@ -2,7 +2,7 @@ use crate::joker::{JokerId, JokerRarity};
 use crate::rank::HandRank;
 use crate::scaling_joker::{ResetCondition, ScalingEffectType, ScalingJoker, ScalingTrigger};
 
-/// Factory functions for creating the 15 scaling jokers specified in the requirements
+/// Factory functions for creating all 14 scaling jokers specified in the requirements
 /// Spare Trousers: +2 mult per hand with Two Pair
 pub fn create_spare_trousers() -> ScalingJoker {
     ScalingJoker::new(
@@ -297,6 +297,7 @@ mod tests {
     fn test_get_scaling_joker_by_id() {
         assert!(get_scaling_joker_by_id(JokerId::Trousers).is_some());
         assert!(get_scaling_joker_by_id(JokerId::GreenJoker).is_some());
+        assert!(get_scaling_joker_by_id(JokerId::RedCard).is_some()); // Red Card
         assert!(get_scaling_joker_by_id(JokerId::Joker).is_none()); // Not a scaling joker
     }
 

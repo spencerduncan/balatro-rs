@@ -86,22 +86,19 @@ impl DebugManager {
         *action_history_limit = config.max_action_history;
     }
 
-    /// Get current memory usage statistics
+    /// Get current memory usage statistics (optimized to avoid double-checking)
     pub fn get_memory_stats(
         &mut self,
         estimated_bytes: usize,
         total_actions: usize,
     ) -> Option<crate::memory_monitor::MemoryStats> {
-        if self.memory_monitor.should_check() {
-            let stats = self.memory_monitor.check_memory(
-                estimated_bytes,
-                1, // Number of active snapshots (hard to track, estimate as 1)
-                total_actions,
-            );
-            Some(stats)
-        } else {
-            self.memory_monitor.last_stats().cloned()
-        }
+        // should_check() was already called by caller, so proceed with check_memory()
+        let stats = self.memory_monitor.check_memory(
+            estimated_bytes,
+            1, // Number of active snapshots (hard to track, estimate as 1)
+            total_actions,
+        );
+        Some(stats)
     }
 
     /// Generate a memory usage report
