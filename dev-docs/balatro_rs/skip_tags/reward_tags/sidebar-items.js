@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["BuffoonTag","CharmTag","EtherealTag","MeteorTag","RareTag","StandardTag","TopUpTag","UncommonTag"]};
