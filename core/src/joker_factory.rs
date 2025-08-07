@@ -60,6 +60,12 @@ impl JokerFactory {
             }
             JokerId::Walkie => Some(StaticJokerFactory::create_walkie()),
 
+            // Simple Static Jokers (Issue #364)
+            JokerId::Smiley => Some(StaticJokerFactory::create_smiley_face()),
+            JokerId::BaronJoker => Some(StaticJokerFactory::create_baron()),
+            JokerId::RaisedFist => Some(StaticJokerFactory::create_raised_fist()),
+            JokerId::RoughGem => Some(StaticJokerFactory::create_rough_gem()),
+
             // Placeholder jokers with TODO comments
             JokerId::HalfJoker => Some(StaticJokerFactory::create_half_joker()),
             JokerId::Banner => Some(StaticJokerFactory::create_banner()),
@@ -193,6 +199,10 @@ impl JokerFactory {
                 Scholar,
                 // Resource chips jokers
                 ScaryFace, // ScaryFace Joker
+                // Simple Static Jokers (Issue #364)
+                Smiley,     // Smiley Face
+                RaisedFist, // Raised Fist
+                RoughGem,   // Rough Gem
                 // Scaling xmult jokers (none in common)
                 // Retrigger jokers
                 Hanging, // HangingChadJoker
@@ -230,6 +240,8 @@ impl JokerFactory {
                 AcrobatJoker,
                 // Special mechanic jokers
                 Blueprint,
+                // Simple Static Jokers (Issue #364)
+                BaronJoker, // Baron
                 // Scaling mult jokers
                 // Scaling chips jokers
                 Castle,
@@ -329,7 +341,12 @@ impl JokerFactory {
             Hanging,
             SockAndBuskin,
             Hack,
-            // Note: HalfJoker and Banner are still placeholders
+            // Simple Static Jokers (Issue #364) - Fully implemented
+            Smiley,     // Smiley Face
+            BaronJoker, // Baron
+            RaisedFist, // Raised Fist
+            RoughGem,   // Rough Gem
+                        // Note: HalfJoker and Banner are still placeholders
         ]
     }
 }
