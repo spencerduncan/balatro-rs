@@ -47,6 +47,7 @@ pub mod state_version;
 pub mod static_joker;
 pub mod static_joker_factory;
 pub mod target_context;
+pub mod test_infrastructure;
 pub mod vouchers;
 
 /// Initialize all core library systems

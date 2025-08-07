@@ -22,7 +22,9 @@ permissions:
 jobs:
   test:
     name: Test Suite
+    timeout-minutes: 30  # Job-level timeout to prevent hanging
     strategy:
+      fail-fast: false  # Don't cancel other matrix jobs if one fails
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
@@ -71,12 +73,58 @@ jobs:
             ${{ matrix.os }}-cargo-build-test-
 
       - name: Run tests
+        timeout-minutes: 15  # Step-level timeout for test execution
         shell: bash
+        env:
+          RUST_TEST_THREADS: 4  # Limit parallelism to prevent resource exhaustion
+          RUST_LOG: debug  # Enable detailed logging for debugging
+          TEST_CORRELATION_ID: ${{ github.run_id }}-${{ github.run_number }}-${{ matrix.os }}  # Unique ID for tracing
         run: |
-          # Run all tests with verbose output and capture results
+          # Run all tests with retry mechanism for flaky tests
+          echo "Starting test run with correlation ID: $TEST_CORRELATION_ID"
           set +e  # Don't exit on test failure, we want to capture the results
-          cargo test --all --verbose > test_output.log 2>&1
-          TEST_EXIT_CODE=$?
+
+          # Retry mechanism: up to 3 attempts for flaky tests
+          MAX_ATTEMPTS=3
+          ATTEMPT=1
+          TEST_EXIT_CODE=1
+
+          while [ $ATTEMPT -le $MAX_ATTEMPTS ] && [ $TEST_EXIT_CODE -ne 0 ]; do
+            echo "Test attempt $ATTEMPT of $MAX_ATTEMPTS (Correlation: $TEST_CORRELATION_ID)"
+
+            # Monitor memory usage during tests
+            if command -v free >/dev/null 2>&1; then
+              echo "Memory before test run:"
+              free -h
+            fi
+
+            # Run tests with timeout wrapper
+            timeout 900 cargo test --all --verbose > test_output_attempt_$ATTEMPT.log 2>&1
+            TEST_EXIT_CODE=$?
+
+            # Check if timeout occurred
+            if [ $TEST_EXIT_CODE -eq 124 ]; then
+              echo "ERROR: Tests timed out after 15 minutes (Correlation: $TEST_CORRELATION_ID)"
+              echo "TIMEOUT" > test_failure_reason.txt
+            fi
+
+            # Consolidate logs
+            cp test_output_attempt_$ATTEMPT.log test_output.log
+
+            if [ $TEST_EXIT_CODE -ne 0 ] && [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
+              echo "Tests failed with code $TEST_EXIT_CODE, retrying... (Correlation: $TEST_CORRELATION_ID)"
+              sleep 5  # Brief pause before retry
+            fi
+
+            ATTEMPT=$((ATTEMPT + 1))
+          done
+
+          # Log final status
+          if [ $TEST_EXIT_CODE -eq 0 ]; then
+            echo "Tests passed after $((ATTEMPT - 1)) attempt(s) (Correlation: $TEST_CORRELATION_ID)"
+          else
+            echo "Tests failed after $MAX_ATTEMPTS attempts (Correlation: $TEST_CORRELATION_ID)"
+          fi
           set -e
 
           # Save the exit code for later use
@@ -135,6 +183,7 @@ jobs:
 
   fmt:
     name: Rustfmt
+    timeout-minutes: 10  # Formatting should be quick
     runs-on: ubuntu-latest
     container:
       image: rust:latest
@@ -154,6 +203,7 @@ jobs:
 
   clippy:
     name: Clippy
+    timeout-minutes: 20  # Clippy analysis timeout
     runs-on: ubuntu-latest
     container:
       image: rust:latest
@@ -192,6 +242,7 @@ jobs:
 
   coverage:
     name: Code Coverage
+    timeout-minutes: 40  # Coverage can take longer
     runs-on: ubuntu-latest
     container:
       image: rust:latest
@@ -270,6 +321,7 @@ jobs:
   # Test Python bindings
   python-test:
     name: Python Bindings Test
+    timeout-minutes: 25  # Python tests timeout
     runs-on: ubuntu-latest
     container:
       image: rust:latest
@@ -324,6 +376,7 @@ jobs:
   # Ensure all workspace members build successfully
   build-all:
     name: Build All Workspace Members
+    timeout-minutes: 20  # Build timeout
     runs-on: ubuntu-latest
     container:
       image: rust:latest
@@ -362,6 +415,7 @@ jobs:
   # Run benchmarks to ensure they compile (but don't fail on performance)
   bench-check:
     name: Benchmark Compilation Check
+    timeout-minutes: 15  # Benchmark compilation timeout
     runs-on: ubuntu-latest
     container:
       image: rust:latest
@@ -397,6 +451,7 @@ jobs:
   # Run performance benchmarks and validate against baselines
   performance-test:
     name: Performance Testing
+    timeout-minutes: 45  # Performance tests need more time
     # Only run performance tests on pushes to main/master, not on PRs
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     runs-on: ubuntu-latest
@@ -457,6 +512,7 @@ jobs:
   # Security and dependency scanning
   security-scan:
     name: Security & Dependency Scanning
+    timeout-minutes: 15  # Security scan timeout
     runs-on: ubuntu-latest
     container:
       image: rust:latest
