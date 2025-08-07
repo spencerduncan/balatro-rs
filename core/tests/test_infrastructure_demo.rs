@@ -6,17 +6,17 @@
 // Import the test infrastructure
 mod common;
 
-use common::prelude::*;
 use common::builders::*;
-use common::performance::*;
-use common::snapshot::*;
 use common::environment::*;
 use common::patterns::*;
+use common::performance::*;
+use common::prelude::*;
+use common::snapshot::*;
 
 use balatro_rs::{
     action::Action,
-    stage::{Stage, Blind},
     joker::JokerId,
+    stage::{Blind, Stage},
 };
 use std::time::Duration;
 
@@ -130,21 +130,17 @@ fn test_performance_monitoring() {
             let _game = create_test_game();
         },
         Duration::from_millis(100),
-        "Game creation"
+        "Game creation",
     );
 }
 
 #[test]
 fn test_test_fixture_with_setup_teardown() {
-    let mut fixture = TestFixture::new(|| {
-        GameStateBuilder::new()
-            .with_money(100)
-            .build()
-    })
-    .with_teardown(|game| {
-        // Cleanup code - reset state
-        game.money = 0;
-    });
+    let mut fixture = TestFixture::new(|| GameStateBuilder::new().with_money(100).build())
+        .with_teardown(|game| {
+            // Cleanup code - reset state
+            game.money = 0;
+        });
 
     // Setup the fixture
     let game = fixture.setup_mut();
@@ -159,17 +155,13 @@ fn test_parameterized_test_pattern() {
     let ante_levels = vec![1, 2, 3, 4, 5, 6, 7, 8];
 
     // Run parameterized test
-    let results = run_parameterized_test(
-        "test_valid_ante_levels",
-        ante_levels,
-        |&ante| {
-            if ante >= 1 && ante <= 8 {
-                Ok(())
-            } else {
-                Err(format!("Invalid ante level: {}", ante))
-            }
+    let results = run_parameterized_test("test_valid_ante_levels", ante_levels, |&ante| {
+        if ante >= 1 && ante <= 8 {
+            Ok(())
+        } else {
+            Err(format!("Invalid ante level: {}", ante))
         }
-    );
+    });
 
     // All should pass
     assert!(results.iter().all(|r| r.is_ok()));
@@ -184,10 +176,7 @@ fn test_game_state_recorder_for_debugging() {
     recorder.record(&game, 0, None);
 
     // Simulate some actions
-    let actions = vec![
-        Action::SelectBlind(Blind::Small),
-        Action::Play,
-    ];
+    let actions = vec![Action::SelectBlind(Blind::Small), Action::Play];
 
     for (i, action) in actions.iter().enumerate() {
         if game.gen_actions().any(|a| &a == action) {
@@ -267,14 +256,13 @@ fn test_test_validator_for_invariants() {
     assert!(result.is_ok());
 
     // Create custom validator
-    let custom_validator = TestValidator::new()
-        .add_invariant(|game| {
-            if game.ante > 5 {
-                Err("Ante too high for this test".to_string())
-            } else {
-                Ok(())
-            }
-        });
+    let custom_validator = TestValidator::new().add_invariant(|game| {
+        if game.ante > 5 {
+            Err("Ante too high for this test".to_string())
+        } else {
+            Ok(())
+        }
+    });
 
     let result = custom_validator.validate(&game);
     assert!(result.is_ok());

@@ -39,12 +39,7 @@ pub use helpers::*;
 
 /// Test data builders for fluent test creation
 pub mod builders {
-    pub use super::fixtures::{
-        GameStateBuilder,
-        JokerTestBuilder,
-        DeckBuilder,
-        TestDataGenerator,
-    };
+    pub use super::fixtures::{DeckBuilder, GameStateBuilder, JokerTestBuilder, TestDataGenerator};
 }
 
 // ============================================================================
@@ -54,30 +49,30 @@ pub mod builders {
 /// Domain-specific assertions for game testing
 pub mod asserts {
     pub use super::assertions::{
-        assert_action_valid,
+        assert_action_completes_within,
         assert_action_invalid,
-        assert_hand_rank,
-        assert_game_stage,
+        assert_action_valid,
+        assert_actions_deterministic,
+        assert_ante_level,
+        assert_ante_progression_valid,
+        assert_deck_size,
         assert_game_ended,
         assert_game_running,
-        assert_joker_effect,
-        assert_joker_effect_neutral,
-        assert_score_in_range,
-        assert_money_in_range,
-        assert_ante_level,
-        assert_round_number,
-        assert_deck_size,
+        assert_game_stage,
         // Production assertions
         assert_game_state_equals,
         assert_game_state_snapshot,
-        assert_money_never_negative,
-        assert_ante_progression_valid,
-        assert_round_progression_valid,
-        assert_action_completes_within,
+        assert_hand_rank,
         assert_joker_collection_valid,
+        assert_joker_effect,
+        assert_joker_effect_neutral,
+        assert_money_in_range,
+        assert_money_never_negative,
+        assert_round_number,
+        assert_round_progression_valid,
+        assert_score_in_range,
         assert_scoring_correct,
         assert_valid_state_transition,
-        assert_actions_deterministic,
     };
 }
 
@@ -88,11 +83,7 @@ pub mod asserts {
 /// Test environment and configuration utilities
 pub mod environment {
     pub use super::helpers::{
-        TestEnvironment,
-        SeedManager,
-        TestFixture,
-        PerformanceMonitor,
-        GameStateRecorder,
+        GameStateRecorder, PerformanceMonitor, SeedManager, TestEnvironment, TestFixture,
         TestValidator,
     };
 }
@@ -104,22 +95,13 @@ pub mod environment {
 /// Performance testing utilities
 pub mod performance {
     pub use super::fixtures::{
-        create_performance_test_data,
-        PerformanceTestData,
-        create_concurrent_test_fixtures,
-        create_memory_test_fixtures,
-        MemoryTestFixtures,
+        create_concurrent_test_fixtures, create_memory_test_fixtures, create_performance_test_data,
+        MemoryTestFixtures, PerformanceTestData,
     };
 
-    pub use super::helpers::{
-        measure_execution_time,
-        PerformanceMonitor,
-        PerformanceMeasurement,
-    };
+    pub use super::helpers::{measure_execution_time, PerformanceMeasurement, PerformanceMonitor};
 
-    pub use super::assertions::{
-        assert_action_completes_within,
-    };
+    pub use super::assertions::assert_action_completes_within;
 }
 
 // ============================================================================
@@ -129,16 +111,10 @@ pub mod performance {
 /// Snapshot testing utilities for regression detection
 pub mod snapshot {
     pub use super::assertions::{
-        GameStateSnapshot,
-        StateTolerance,
-        assert_game_state_snapshot,
-        assert_game_state_equals,
+        assert_game_state_equals, assert_game_state_snapshot, GameStateSnapshot, StateTolerance,
     };
 
-    pub use super::helpers::{
-        GameStateRecorder,
-        GameStateRecord,
-    };
+    pub use super::helpers::{GameStateRecord, GameStateRecorder};
 }
 
 // ============================================================================
@@ -148,17 +124,11 @@ pub mod snapshot {
 /// Common test patterns and utilities
 pub mod patterns {
     pub use super::helpers::{
+        execute_action_sequence, game_with_action, play_until_game_over, retry_test,
         run_parameterized_test,
-        retry_test,
-        execute_action_sequence,
-        play_until_game_over,
-        game_with_action,
     };
 
-    pub use super::fixtures::{
-        create_edge_case_scenarios,
-        TestScenario,
-    };
+    pub use super::fixtures::{create_edge_case_scenarios, TestScenario};
 }
 
 // ============================================================================
@@ -173,27 +143,18 @@ pub mod patterns {
 /// ```
 pub mod prelude {
     pub use super::fixtures::{
-        create_test_game,
-        create_test_game_with_seed,
-        create_test_deck,
-        create_test_hand,
-        create_test_actions,
-        TestHandType,
-        GameStateBuilder,
+        create_test_actions, create_test_deck, create_test_game, create_test_game_with_seed,
+        create_test_hand, GameStateBuilder, TestHandType,
     };
 
     pub use super::assertions::{
-        assert_action_valid,
-        assert_game_running,
-        assert_game_ended,
-        assert_money_never_negative,
+        assert_action_valid, assert_actions_deterministic, assert_ante_level,
+        assert_ante_progression_valid, assert_game_ended, assert_game_running,
+        assert_game_state_equals, assert_money_in_range, assert_money_never_negative,
+        assert_round_number, assert_round_progression_valid, assert_valid_state_transition,
     };
 
-    pub use super::helpers::{
-        TestEnvironment,
-        measure_execution_time,
-        execute_action_sequence,
-    };
+    pub use super::helpers::{execute_action_sequence, measure_execution_time, TestEnvironment};
 }
 
 // ============================================================================
@@ -290,17 +251,14 @@ mod tests {
             chips: 0,
             mult: 0,
             score: 0,
-            stage: balatro_rs::stage::Stage::PreBlind,
+            stage: balatro_rs::stage::Stage::PreBlind(),
             joker_count: 0,
         };
     }
 
     #[test]
     fn test_builder_pattern() {
-        let game = GameStateBuilder::new()
-            .with_ante(2)
-            .with_money(10)
-            .build();
+        let game = GameStateBuilder::new().with_ante(2).with_money(10).build();
 
         assert_eq!(game.ante, 2);
         assert_eq!(game.money, 10);
@@ -313,9 +271,7 @@ mod tests {
         let game = create_test_game();
         assert_game_running(&game);
 
-        let (_, duration) = measure_execution_time(|| {
-            create_test_deck()
-        });
+        let (_, duration) = measure_execution_time(|| create_test_deck());
         assert!(duration.as_nanos() > 0);
     }
 }

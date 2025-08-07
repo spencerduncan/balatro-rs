@@ -8,16 +8,10 @@
 //! - Setup/teardown functions for resource management
 //! - Performance monitoring utilities for benchmarking
 
-use balatro_rs::{
-    action::Action,
-    game::Game,
-    error::GameError,
-    config::Config,
-    stage::Stage,
-};
-use std::time::{Duration, Instant};
-use std::sync::{Arc, Mutex};
+use balatro_rs::{action::Action, config::Config, error::GameError, game::Game, stage::Stage};
 use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
+use std::time::{Duration, Instant};
 
 /// Executes a sequence of actions on a game and returns the result
 pub fn execute_action_sequence(game: &mut Game, actions: Vec<Action>) -> Result<(), GameError> {
@@ -33,12 +27,13 @@ pub fn play_until_game_over(game: &mut Game, max_iterations: usize) -> usize {
 
     while !game.is_over() && iterations < max_iterations {
         let actions = game.gen_actions();
-        if actions.is_empty() {
+        let actions_vec: Vec<Action> = actions.collect();
+        if actions_vec.is_empty() {
             break;
         }
 
         // Take the first available action (simple AI)
-        if let Err(_) = game.handle_action(actions[0].clone()) {
+        if let Err(_) = game.handle_action(actions_vec[0].clone()) {
             break;
         }
 
@@ -124,7 +119,8 @@ impl TestEnvironment {
     /// Creates a game with this environment's configuration
     pub fn create_game(&self) -> Game {
         let config = Config {
-            seed: Some(self.seed),
+            // Note: Config doesn't have seed field
+            // TODO: Find proper way to seed the game
             ..Default::default()
         };
         let mut game = Game::new(config);
@@ -351,10 +347,20 @@ impl GameStateRecorder {
         self.states.push(GameStateRecord {
             step,
             action,
-            ante: game.ante,
-            round: game.round,
-            money: game.money,
-            score: game.score,
+            ante: match game.ante_current {
+                balatro_rs::ante::Ante::Zero => 0,
+                balatro_rs::ante::Ante::One => 1,
+                balatro_rs::ante::Ante::Two => 2,
+                balatro_rs::ante::Ante::Three => 3,
+                balatro_rs::ante::Ante::Four => 4,
+                balatro_rs::ante::Ante::Five => 5,
+                balatro_rs::ante::Ante::Six => 6,
+                balatro_rs::ante::Ante::Seven => 7,
+                balatro_rs::ante::Ante::Eight => 8,
+            },
+            round: game.round as u8,
+            money: game.money as i32,
+            score: game.score as i32,
             stage: game.stage.clone(),
             timestamp: Instant::now(),
         });
@@ -381,7 +387,11 @@ impl GameStateRecorder {
             println!(
                 "Step {}: {:?} | Ante: {}, Round: {}, Money: ${}, Score: {}, Stage: {:?}",
                 state.step,
-                state.action.as_ref().map(|a| format!("{:?}", a)).unwrap_or_else(|| "None".to_string()),
+                state
+                    .action
+                    .as_ref()
+                    .map(|a| format!("{:?}", a))
+                    .unwrap_or_else(|| "None".to_string()),
                 state.ante,
                 state.round,
                 state.money,
@@ -435,15 +445,18 @@ impl TestValidator {
     pub fn standard() -> Self {
         Self::new()
             .add_invariant(|game| {
-                if game.money < 0 {
+                if game.money < 0.0 {
                     Err(format!("Money is negative: {}", game.money))
                 } else {
                     Ok(())
                 }
             })
             .add_invariant(|game| {
-                if game.ante > 8 {
-                    Err(format!("Ante exceeds maximum: {}", game.ante))
+                // Check if ante exceeds maximum
+                use balatro_rs::ante::Ante;
+                if matches!(game.ante_current, Ante::Eight) {
+                    // Already at max ante, next would exceed
+                    Err(format!("Ante at maximum: {:?}", game.ante_current))
                 } else {
                     Ok(())
                 }
@@ -551,11 +564,11 @@ mod tests {
 
     #[test]
     fn test_test_fixture() {
-        let mut fixture = TestFixture::new(|| Game::default())
-            .with_teardown(|game| {
-                // Cleanup code here
-                game.ante = 0;
-            });
+        let mut fixture = TestFixture::new(|| Game::default()).with_teardown(|game| {
+            // Cleanup code here
+            // Can't directly set ante, it's managed by game progression
+            // game.ante_current = Ante::Zero;
+        });
 
         let game = fixture.setup_mut();
         game.start();
@@ -589,7 +602,7 @@ mod tests {
         let game = Game::default();
 
         recorder.record(&game, 0, None);
-        recorder.record(&game, 1, Some(Action::Play));
+        recorder.record(&game, 1, Some(Action::Play()));
 
         let history = recorder.get_history();
         assert_eq!(history.len(), 2);
@@ -612,17 +625,13 @@ mod tests {
     #[test]
     fn test_parameterized_test() {
         let params = vec![1, 2, 3, 4, 5];
-        let results = run_parameterized_test(
-            "test_even_numbers",
-            params,
-            |&n| {
-                if n % 2 == 0 {
-                    Ok(())
-                } else {
-                    Err(format!("{} is not even", n))
-                }
+        let results = run_parameterized_test("test_even_numbers", params, |&n| {
+            if n % 2 == 0 {
+                Ok(())
+            } else {
+                Err(format!("{} is not even", n))
             }
-        );
+        });
 
         assert_eq!(results.len(), 5);
         assert!(results[1].is_ok()); // 2 is even

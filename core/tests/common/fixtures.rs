@@ -15,10 +15,10 @@ use balatro_rs::{
     config::Config,
     game::Game,
     hand::Hand,
-    joker::{JokerId, JokerEffect},
-    stage::{Stage, Blind},
+    joker::{JokerEffect, JokerId},
+    rng::GameRng,
     shop::packs::PackType,
-    rng::BalatroRng,
+    stage::{Blind, Stage},
 };
 
 /// Creates a default game configuration for testing
@@ -50,9 +50,19 @@ pub fn create_test_deck() -> Vec<Card> {
 
     for suit in [Suit::Heart, Suit::Diamond, Suit::Club, Suit::Spade] {
         for value in [
-            Value::Ace, Value::Two, Value::Three, Value::Four, Value::Five,
-            Value::Six, Value::Seven, Value::Eight, Value::Nine, Value::Ten,
-            Value::Jack, Value::Queen, Value::King
+            Value::Ace,
+            Value::Two,
+            Value::Three,
+            Value::Four,
+            Value::Five,
+            Value::Six,
+            Value::Seven,
+            Value::Eight,
+            Value::Nine,
+            Value::Ten,
+            Value::Jack,
+            Value::Queen,
+            Value::King,
         ] {
             cards.push(Card::new(value, suit));
         }
@@ -350,7 +360,10 @@ impl GameStateBuilder {
     /// Builds the game with the configured state
     pub fn build(self) -> Game {
         let config = if let Some(seed) = self.seed {
-            Config { seed: Some(seed), ..self.config }
+            Config {
+                seed: Some(seed),
+                ..self.config
+            }
         } else {
             self.config
         };
@@ -482,7 +495,7 @@ impl DeckBuilder {
 /// Production pattern: Scalable test data generation
 pub struct TestDataGenerator {
     seed: u64,
-    rng: BalatroRng,
+    // TODO: Use proper RNG type - GameRng needs more context for initialization
 }
 
 impl TestDataGenerator {
@@ -498,9 +511,19 @@ impl TestDataGenerator {
     pub fn generate_random_cards(&mut self, count: usize) -> Vec<Card> {
         let suits = [Suit::Heart, Suit::Diamond, Suit::Club, Suit::Spade];
         let values = [
-            Value::Ace, Value::Two, Value::Three, Value::Four, Value::Five,
-            Value::Six, Value::Seven, Value::Eight, Value::Nine, Value::Ten,
-            Value::Jack, Value::Queen, Value::King
+            Value::Ace,
+            Value::Two,
+            Value::Three,
+            Value::Four,
+            Value::Five,
+            Value::Six,
+            Value::Seven,
+            Value::Eight,
+            Value::Nine,
+            Value::Ten,
+            Value::Jack,
+            Value::Queen,
+            Value::King,
         ];
 
         (0..count)
@@ -521,10 +544,7 @@ impl TestDataGenerator {
                     .with_ante(self.rng.gen_range(1..=8))
                     .with_round(self.rng.gen_range(1..=3))
                     .with_money(self.rng.gen_range(0..=100))
-                    .with_score(
-                        self.rng.gen_range(0..=1000),
-                        self.rng.gen_range(1..=50)
-                    )
+                    .with_score(self.rng.gen_range(0..=1000), self.rng.gen_range(1..=50))
                     .build()
             })
             .collect()
@@ -538,12 +558,14 @@ impl TestDataGenerator {
             let mut sequence = Vec::new();
             for _ in 0..length {
                 // Generate random actions
-                let action = match self.rng.gen_range(0..5) {
+                use rand::prelude::*;
+                let mut rng = rand::thread_rng();
+                let action = match rng.gen_range(0..5) {
                     0 => Action::SelectCard(self.generate_random_cards(1)[0].clone()),
                     1 => Action::Play,
                     2 => Action::Discard,
                     3 => Action::NextRound,
-                    _ => Action::CashOut(self.rng.gen_range(0..=100) as f64),
+                    _ => Action::CashOut(rng.gen_range(0..=100) as f64),
                 };
                 sequence.push(action);
             }
@@ -571,12 +593,14 @@ pub fn create_concurrent_test_fixtures(count: usize) -> Vec<Game> {
 pub fn create_memory_test_fixtures() -> MemoryTestFixtures {
     MemoryTestFixtures {
         small_games: (0..10).map(|i| create_test_game_with_seed(i)).collect(),
-        large_games: (0..100).map(|i| {
-            GameStateBuilder::new()
-                .with_seed(i)
-                .with_jokers(vec![JokerId::Joker; 5])
-                .build()
-        }).collect(),
+        large_games: (0..100)
+            .map(|i| {
+                GameStateBuilder::new()
+                    .with_seed(i)
+                    .with_jokers(vec![JokerId::Joker; 5])
+                    .build()
+            })
+            .collect(),
         stress_games: (0..1000).map(|i| create_test_game_with_seed(i)).collect(),
     }
 }
@@ -631,7 +655,12 @@ mod tests {
             TestHandType::HighCard,
         ] {
             let hand = create_test_hand(hand_type);
-            assert_eq!(hand.len(), 5, "Hand type {:?} should have 5 cards", hand_type);
+            assert_eq!(
+                hand.len(),
+                5,
+                "Hand type {:?} should have 5 cards",
+                hand_type
+            );
         }
 
         assert_eq!(create_test_hand(TestHandType::Empty).len(), 0);
@@ -709,9 +738,7 @@ mod tests {
 
     #[test]
     fn test_deck_builder() {
-        let deck = DeckBuilder::new()
-            .with_standard_deck()
-            .build();
+        let deck = DeckBuilder::new().with_standard_deck().build();
 
         assert_eq!(deck.len(), 52);
 
