@@ -55,32 +55,78 @@ mod tests {
         assert!(!game.active_skip_tags.is_empty());
     }
 
-    // Utility tags (Double, Boss, Orbital, Juggle) are temporarily disabled
-    // TODO: Re-enable when utility tags are implemented
+    // Utility tags (Double, Boss, Orbital, Juggle) are now enabled
 
     #[test]
-    #[ignore = "Utility tags temporarily disabled - will be re-enabled in follow-up PR"]
     fn test_double_tag_duplication() {
-        // Test disabled - Double tag not currently implemented
-        // This test will be re-enabled when utility tags are implemented
+        let game = Game::default();
+
+        // Set up Double tag context with available tags to duplicate
+        let context = SkipTagContext {
+            game,
+            skipped_blind: Some(Blind::Small),
+            available_tags: vec![SkipTagId::Boss, SkipTagId::Orbital],
+        };
+
+        let double_tag = utility_tags::DoubleTag;
+        let result = double_tag.activate(context);
+
+        assert!(result.success);
+        assert_eq!(result.additional_tags.len(), 1);
+        assert!(result.additional_tags.contains(&SkipTagId::Boss)); // First non-Double tag
     }
 
     #[test]
-    #[ignore = "Utility tags temporarily disabled - will be re-enabled in follow-up PR"]
     fn test_boss_tag_activation() {
-        // Test disabled - Boss tag not currently implemented
+        let game = Game::default();
+        let context = SkipTagContext {
+            game,
+            skipped_blind: Some(Blind::Boss),
+            available_tags: vec![],
+        };
+
+        let boss_tag = utility_tags::BossTag;
+        let result = boss_tag.activate(context);
+
+        assert!(result.success);
+        assert!(result.message.unwrap().contains("Boss Blind"));
     }
 
     #[test]
-    #[ignore = "Utility tags temporarily disabled - will be re-enabled in follow-up PR"]
     fn test_orbital_tag_activation() {
-        // Test disabled - Orbital tag not currently implemented
+        let game = Game::default();
+        let context = SkipTagContext {
+            game,
+            skipped_blind: Some(Blind::Small),
+            available_tags: vec![],
+        };
+
+        let orbital_tag = utility_tags::OrbitalTag;
+        let result = orbital_tag.activate(context);
+
+        assert!(result.success);
+        let message = result.message.unwrap();
+        assert!(message.contains("Upgraded"));
+        assert!(message.contains("3 levels"));
     }
 
     #[test]
-    #[ignore = "Utility tags temporarily disabled - will be re-enabled in follow-up PR"]
     fn test_juggle_tag_stacking() {
-        // Test disabled - Juggle tag not currently implemented
+        let game = Game::default();
+        let context = SkipTagContext {
+            game,
+            skipped_blind: Some(Blind::Small),
+            available_tags: vec![],
+        };
+
+        let juggle_tag = utility_tags::JuggleTag;
+        let result = juggle_tag.activate(context);
+
+        assert!(result.success);
+        assert!(result.message.unwrap().contains("+3 hand size"));
+
+        // Test that juggle tags are stackable
+        assert!(juggle_tag.stackable());
     }
 
     #[test]
@@ -109,8 +155,8 @@ mod tests {
         let registry = global_registry();
         let weighted_tags = registry.get_weighted_tags();
 
-        // Should have all 11 tags with weights (6 shop + 5 economic)
-        assert_eq!(weighted_tags.len(), 11);
+        // Should have all 23 tags with weights (6 shop + 5 economic + 4 utility + 8 reward)
+        assert_eq!(weighted_tags.len(), 23);
 
         // Each tag should have appropriate weight based on rarity
         for (tag_id, weight) in weighted_tags {

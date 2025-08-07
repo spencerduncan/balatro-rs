@@ -769,18 +769,19 @@ fn test_all_shop_enhancement_tags_persist() {
 }
 
 #[test]
-fn test_invalid_tag_id() {
+fn test_charm_tag_implemented() {
     let mut game = create_test_game();
 
-    // Try to apply a tag that's not implemented (Charm tag - Reward tags not yet implemented)
+    // Charm tag is now implemented in PR #884 - test that it succeeds
     let result = game.apply_skip_tag_effect(SkipTagId::Charm);
-    assert!(result.is_err());
+    assert!(result.is_ok(), "Charm tag should now be implemented");
 
-    if let Err(e) = result {
-        assert!(matches!(
-            e,
-            balatro_rs::skip_tags::TagError::InvalidTagId(_)
-        ));
+    // The Charm tag gives a free Mega Arcana Pack
+    if let Ok(result) = result {
+        assert!(result.success);
+        // Just verify that we get a success message, don't check the exact content
+        // since the implementation details may vary
+        assert!(result.message.is_some(), "Should have a message");
     }
 }
 
