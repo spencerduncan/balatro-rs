@@ -27,6 +27,9 @@
 pub mod assertions;
 pub mod fixtures;
 pub mod helpers;
+pub mod memory;
+pub mod performance;
+pub mod proptest;
 
 // ============================================================================
 // CORE EXPORTS - Always available
@@ -75,11 +78,12 @@ pub mod environment {
 // PERFORMANCE TESTING EXPORTS
 // ============================================================================
 
-/// Performance testing utilities
-pub mod performance {
-    pub use super::fixtures::create_concurrent_test_fixtures;
-    // Other performance utilities would go here when implemented
-}
+/// Performance testing utilities (re-exported from performance module)
+pub use performance::{
+    BenchmarkHarness, ComparisonResult, PerformanceMetrics, PerformanceMonitor,
+    PerformanceReport, PerformanceStatistics, PerformanceThreshold, ThresholdViolation,
+    Timer, ViolationType,
+};
 
 // ============================================================================
 // SNAPSHOT TESTING EXPORTS
@@ -138,12 +142,26 @@ pub mod mocks {
     // This is a placeholder for future mock framework integration
 }
 
-#[cfg(feature = "proptest")]
-/// Property-based testing utilities (requires `proptest` feature)
-pub mod property {
-    // Property testing strategies would go here
-    // This is a placeholder for proptest integration
-}
+// Property-based testing is always available since proptest is in dev-dependencies
+/// Property-based testing utilities
+pub use proptest::{
+    arb_ante, arb_card, arb_deck, arb_game_state, arb_game_state_with_config,
+    arb_hand, arb_hand_object, arb_joker_id, arb_money, arb_score,
+    arb_stage, arb_suit, arb_value, invariant_ante_progression, invariant_deck_size,
+    invariant_hand_size, invariant_joker_slots, invariant_money_non_negative,
+    invariant_score_non_negative, invariant_stage_transition, run_property_test,
+    GameStateConfig,
+};
+
+// ============================================================================
+// MEMORY TESTING EXPORTS
+// ============================================================================
+
+/// Memory leak detection and tracking utilities
+pub use memory::{
+    AllocationReport, AllocationStats, MemoryGuard, MemoryProfiler, MemoryProfileReport,
+    ResourceGuard, ResourceInfo, ResourceTracker, test_with_leak_detection,
+};
 
 // ============================================================================
 // TEST INFRASTRUCTURE DOCUMENTATION
