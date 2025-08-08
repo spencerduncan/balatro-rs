@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["RepositoryMetrics","SessionInfo"],"trait":["ActionHistoryRepository","AsyncRepository","GameRepository","Repository","RepositoryFactory","SessionRepository","UnitOfWork"]};

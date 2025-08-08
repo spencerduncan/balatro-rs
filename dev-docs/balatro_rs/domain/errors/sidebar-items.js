@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["DomainError"],"type":["DomainResult"]};
+window.SIDEBAR_ITEMS = {"enum":["DomainError"],"struct":["ErrorContext"],"type":["DomainResult"]};
