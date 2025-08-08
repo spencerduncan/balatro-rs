@@ -143,6 +143,11 @@ impl JokerFactory {
             JokerId::SockAndBuskin => Some(Box::new(SockAndBuskinJoker::new())),
             JokerId::Hack => Some(create_hack_joker()),
 
+            // X-Mult hand-type jokers using StaticJoker framework
+            JokerId::TheDuo => Some(StaticJokerFactory::create_the_duo()),
+            JokerId::TheTrio => Some(StaticJokerFactory::create_the_trio()),
+            JokerId::TheFamily => Some(StaticJokerFactory::create_the_family()),
+
             // TODO: Implement remaining jokers
             _ => None,
         }
@@ -240,6 +245,10 @@ impl JokerFactory {
                 AcrobatJoker,
                 // Special mechanic jokers
                 Blueprint,
+                // X-Mult hand-type jokers
+                TheDuo,
+                TheTrio,
+                TheFamily,
                 // Simple Static Jokers (Issue #364)
                 BaronJoker, // Baron
                 // Scaling mult jokers
@@ -341,6 +350,10 @@ impl JokerFactory {
             Hanging,
             SockAndBuskin,
             Hack,
+            // X-Mult hand-type jokers (Wave 2)
+            TheDuo,
+            TheTrio,
+            TheFamily,
             // Simple Static Jokers (Issue #364) - Fully implemented
             Smiley,     // Smiley Face
             BaronJoker, // Baron

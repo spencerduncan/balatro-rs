@@ -59,11 +59,6 @@ impl MockRng {
         Self::with_sequence(vec![value; 1000])
     }
 
-    /// Add values to the sequence
-    pub fn push_sequence(&mut self, values: Vec<f64>) {
-        self.sequence.extend(values);
-    }
-
     /// Get the next value (0.0 to 1.0)
     pub fn next_f64(&mut self) -> f64 {
         if self.replay_mode {
@@ -88,10 +83,10 @@ impl MockRng {
         value
     }
 
-    /// Get the next integer in range (inclusive)
+    /// Get the next integer in range [min, max)
     pub fn gen_range(&mut self, min: i32, max: i32) -> i32 {
         let f = self.next_f64();
-        let range = (max - min + 1) as f64;
+        let range = (max - min) as f64;
         min + (f * range) as i32
     }
 
@@ -125,110 +120,6 @@ impl MockRng {
     }
 }
 
-/// Builder for creating complex RNG sequences
-#[derive(Clone)]
-pub struct RngSequence {
-    values: Vec<f64>,
-}
-
-impl RngSequence {
-    /// Create a new sequence builder
-    pub fn new() -> Self {
-        Self { values: Vec::new() }
-    }
-
-    /// Add a single value
-    pub fn then(mut self, value: f64) -> Self {
-        self.values.push(value);
-        self
-    }
-
-    /// Add multiple identical values
-    pub fn then_repeat(mut self, value: f64, count: usize) -> Self {
-        self.values.extend(vec![value; count]);
-        self
-    }
-
-    /// Add a range of values
-    pub fn then_range(mut self, start: f64, end: f64, steps: usize) -> Self {
-        if steps > 1 {
-            let step = (end - start) / (steps - 1) as f64;
-            for i in 0..steps {
-                self.values.push(start + step * i as f64);
-            }
-        }
-        self
-    }
-
-    /// Add random-looking but deterministic values
-    pub fn then_pseudo_random(mut self, count: usize, seed: u64) -> Self {
-        let mut rng = StdRng::seed_from_u64(seed);
-        for _ in 0..count {
-            self.values.push(rng.gen_range(0.0..1.0));
-        }
-        self
-    }
-
-    /// Build the MockRng
-    pub fn build(self) -> MockRng {
-        MockRng::with_sequence(self.values)
-    }
-}
-
-/// Replay recorder for debugging test failures
-#[derive(Debug, Clone)]
-pub struct RngReplay {
-    snapshots: Vec<RngSnapshot>,
-}
-
-#[derive(Debug, Clone)]
-struct RngSnapshot {
-    label: String,
-    history: Vec<f64>,
-    sequence_remaining: Vec<f64>,
-}
-
-impl RngReplay {
-    /// Create a new replay recorder
-    pub fn new() -> Self {
-        Self {
-            snapshots: Vec::new(),
-        }
-    }
-
-    /// Take a snapshot of the RNG state
-    pub fn snapshot(&mut self, rng: &MockRng, label: impl Into<String>) {
-        self.snapshots.push(RngSnapshot {
-            label: label.into(),
-            history: rng.history.clone(),
-            sequence_remaining: rng.sequence.iter().copied().collect(),
-        });
-    }
-
-    /// Export replay data for debugging
-    pub fn export(&self) -> String {
-        let mut output = String::new();
-        output.push_str("=== RNG Replay Data ===\n");
-
-        for (i, snapshot) in self.snapshots.iter().enumerate() {
-            output.push_str(&format!("\n[{}] {}\n", i, snapshot.label));
-            output.push_str(&format!("  History: {:?}\n", snapshot.history));
-            output.push_str(&format!("  Remaining: {:?}\n", snapshot.sequence_remaining));
-        }
-
-        output
-    }
-
-    /// Create a MockRng from a snapshot
-    pub fn restore(&self, index: usize) -> Option<MockRng> {
-        self.snapshots.get(index).map(|snapshot| {
-            let mut rng = MockRng::with_sequence(snapshot.sequence_remaining.clone());
-            rng.history = snapshot.history.clone();
-            rng
-        })
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -248,7 +139,7 @@ mod tests {
 
         assert_eq!(rng.gen_range(0, 10), 0);
         assert_eq!(rng.gen_range(0, 10), 5);
-        assert_eq!(rng.gen_range(0, 10), 10);
+        assert_eq!(rng.gen_range(0, 10), 9);
     }
 
     #[test]
@@ -275,48 +166,6 @@ mod tests {
         assert_eq!(rng.next_f64(), v1);
         assert_eq!(rng.next_f64(), v2);
         assert_eq!(rng.next_f64(), v3);
-    }
-
-    #[test]
-    fn test_rng_sequence_builder() {
-        let mut rng = RngSequence::new()
-            .then(0.1)
-            .then_repeat(0.5, 3)
-            .then_range(0.0, 1.0, 5)
-            .build();
-
-        assert_eq!(rng.next_f64(), 0.1);
-        assert_eq!(rng.next_f64(), 0.5);
-        assert_eq!(rng.next_f64(), 0.5);
-        assert_eq!(rng.next_f64(), 0.5);
-        assert_eq!(rng.next_f64(), 0.0);
-        assert_eq!(rng.next_f64(), 0.25);
-        assert_eq!(rng.next_f64(), 0.5);
-        assert_eq!(rng.next_f64(), 0.75);
-        assert_eq!(rng.next_f64(), 1.0);
-    }
-
-    #[test]
-    fn test_rng_replay_snapshots() {
-        let mut rng = MockRng::with_sequence(vec![0.1, 0.2, 0.3, 0.4]);
-        let mut replay = RngReplay::new();
-
-        rng.next_f64();
-        replay.snapshot(&rng, "after first");
-
-        rng.next_f64();
-        rng.next_f64();
-        replay.snapshot(&rng, "after third");
-
-        // Restore from first snapshot
-        if let Some(mut restored) = replay.restore(0) {
-            assert_eq!(restored.next_f64(), 0.2);
-        }
-
-        // Restore from second snapshot
-        if let Some(mut restored) = replay.restore(1) {
-            assert_eq!(restored.next_f64(), 0.4);
-        }
     }
 
     #[test]

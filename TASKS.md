@@ -261,7 +261,14 @@ mockall = "0.13"
 | #770 | Vagabond Joker | linus-style-reviewer, unclebot | Merged (squash) | 2025-07-30 | Dual approval → successful merge, Issue #617 closed |
 | SKIP-TAGS | Skip Tags Implementation | unclebot-address | Completed | 2025-08-01 | 21 non-functional tags → 100% functional, 54/54 tests passing |
 
-## Active PR Assignments
+## Active Worktree Assignments
+
+| Issue | Worktree | Agent | Status | Started | Priority |
+|-------|----------|-------|--------|---------|----------|
+| #855 | /home/sd/balatro-rs-ws/worktrees/issue-855-hack | READY | setup | 2025-08-01T23:00:00Z | HIGH |
+| #833 | /home/sd/balatro-rs-ws/worktrees/issue-833-mime | READY | setup | 2025-08-01T23:00:00Z | MEDIUM |
+
+## Legacy PR Assignments (Completed/Archived)
 
 | PR | Issue | Agent | Status | Started | Priority |
 |---|---|---|---|---|---|

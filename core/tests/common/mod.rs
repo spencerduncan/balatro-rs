@@ -131,10 +131,12 @@ pub mod prelude {
 // MOCK EXPORTS
 // ============================================================================
 
-/// Mock implementations for testing (simplified framework)
+/// Mock implementations for testing
+// Re-export all mock types from the mocks module
 pub use self::mocks::{
-    get_mock_config, reset_mock_config, set_mock_config, MockConfig, MockRng, RngReplay,
-    RngSequence,
+    get_mock_config, reset_mock_config, set_mock_config, ActionRecorder, ActionScript,
+    ActionSequence, ActionValidator, GameScenario, MockConfig, MockGameBuilder, MockRng,
+    RngReplay, RngSequence, StateSnapshot, StateTransitionTracker,
 };
 
 #[cfg(feature = "proptest")]
