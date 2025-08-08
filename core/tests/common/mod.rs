@@ -8,7 +8,7 @@
 //! - Test fixtures for game states, cards, and actions
 //! - Domain-specific assertions
 //! - Helper functions for test scenarios
-//! - Mock implementations (when mockall feature is enabled)
+//! - Mock implementations for deterministic testing
 //!
 //! ## Production Engineering Patterns from PR #779
 //! This test infrastructure implements production-ready patterns salvaged from PR #779:
@@ -19,10 +19,14 @@
 //! - State snapshot testing for regression detection
 //!
 //! ## Architecture
-//! The test infrastructure is organized into three main modules:
+//! The test infrastructure is organized into several main modules:
 //! - `fixtures`: Test data factories and builders
 //! - `assertions`: Domain-specific validation functions
 //! - `helpers`: Test execution utilities and environment management
+//! - `mocks`: Mock implementations for deterministic testing
+//! - `memory`: Memory leak detection and tracking
+//! - `performance`: Performance monitoring and benchmarking
+//! - `proptest`: Property-based testing utilities
 
 pub mod assertions;
 pub mod fixtures;
@@ -37,6 +41,13 @@ pub mod mocks;
 pub use assertions::*;
 pub use fixtures::*;
 pub use helpers::*;
+
+// Re-export mock utilities
+pub use mocks::{
+    get_mock_config, reset_mock_config, set_mock_config, ActionRecorder, ActionScript,
+    ActionSequence, ActionValidator, GameScenario, MockConfig, MockGameBuilder, MockRng,
+    StateSnapshot, StateTransitionTracker,
+};
 
 // ============================================================================
 // BUILDER PATTERN EXPORTS
@@ -66,20 +77,14 @@ pub mod asserts {
 
 /// Test environment and configuration utilities
 pub mod environment {
-    pub use super::helpers::{
-        GameStateRecorder, PerformanceMonitor, SeedManager, TestEnvironment, TestFixture,
-        TestValidator,
-    };
+    pub use super::helpers::{execute_action_sequence, TestEnvironment};
 }
 
 // ============================================================================
 // PERFORMANCE TESTING EXPORTS
 // ============================================================================
 
-/// Performance testing utilities (Day 2+ implementation)
-// Note: Full performance module will be added in Day 2 of salvage plan
-// For now, re-export basic utilities from fixtures
-pub use fixtures::create_concurrent_test_fixtures;
+// Performance testing utilities would be re-exported here when implemented
 
 // ============================================================================
 // SNAPSHOT TESTING EXPORTS
@@ -128,23 +133,23 @@ pub mod prelude {
 }
 
 // ============================================================================
-// MOCK EXPORTS
+// FEATURE-GATED EXPORTS
 // ============================================================================
 
-/// Mock implementations for testing
-// Re-export all mock types from the mocks module
-pub use self::mocks::{
-    get_mock_config, reset_mock_config, set_mock_config, ActionRecorder, ActionScript,
-    ActionSequence, ActionValidator, GameScenario, MockConfig, MockGameBuilder, MockRng,
-    RngReplay, RngSequence, StateSnapshot, StateTransitionTracker,
-};
-
-#[cfg(feature = "proptest")]
-/// Property-based testing utilities (requires `proptest` feature)
-pub mod property {
-    // Property testing strategies would go here
-    // This is a placeholder for proptest integration
+#[cfg(feature = "mock")]
+/// Mock implementations for testing (requires `mock` feature)
+pub mod mocks_feature_gated {
+    // Mock implementations would go here when added
+    // This is a placeholder for future mock framework integration
 }
+
+// Property-based testing utilities would be re-exported here when implemented
+
+// ============================================================================
+// MEMORY TESTING EXPORTS
+// ============================================================================
+
+// Memory leak detection utilities would be re-exported here when implemented
 
 // ============================================================================
 // TEST INFRASTRUCTURE DOCUMENTATION

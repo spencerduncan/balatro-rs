@@ -5,9 +5,8 @@
 
 use super::MockRng;
 use balatro_rs::{
-    action::Action, boss_blinds::BlindType, card::Card, card::CardModifier, card::Suit,
-    consumables::ConsumableType, deck::Deck, game::Game, hand::HandType, joker::JokerId,
-    rank::Rank, stage::Stage, vouchers::VoucherId,
+    action::Action, card::Card, card::Suit, consumables::ConsumableType, deck::Deck, game::Game,
+    joker::JokerId, rank::HandRank, stage::Stage, vouchers::VoucherId,
 };
 use std::collections::HashMap;
 
@@ -25,8 +24,8 @@ pub struct MockGameBuilder {
     pub deck_cards: Vec<Card>,
     pub consumables: Vec<ConsumableType>,
     pub vouchers: Vec<VoucherId>,
-    pub planet_levels: HashMap<HandType, u8>,
-    pub boss_blind: Option<BlindType>,
+    pub planet_levels: HashMap<HandRank, u8>,
+    pub boss_blind: Option<String>, // Using String for blind type name
     pub rng: Option<MockRng>,
 }
 

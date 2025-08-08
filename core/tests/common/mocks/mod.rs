@@ -37,7 +37,7 @@ pub mod rng;
 // Re-export commonly used types
 pub use actions::{ActionRecorder, ActionScript, ActionSequence, ActionValidator};
 pub use game::{GameScenario, MockGameBuilder, StateSnapshot, StateTransitionTracker};
-pub use rng::{MockRng, RngReplay, RngSequence};
+pub use rng::MockRng;
 
 /// Trait for mockable components
 pub trait Mockable {

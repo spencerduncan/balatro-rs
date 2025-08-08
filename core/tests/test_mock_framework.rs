@@ -7,19 +7,33 @@ mod common;
 
 use common::mocks::{
     set_mock_config, ActionRecorder, ActionScript, ActionSequence, ActionValidator, GameScenario,
-    MockConfig, MockGameBuilder, MockRng, RngReplay, RngSequence, StateSnapshot,
-    StateTransitionTracker,
+    MockConfig, MockGameBuilder, MockRng, StateSnapshot, StateTransitionTracker,
 };
 
 use balatro_rs::{
     action::Action,
-    card::{Card, Suit},
+    card::{Card, Suit, Value},
     game::Game,
-    hand::HandType,
     joker::JokerId,
-    rank::Rank,
-    stage::Stage,
+    rank::HandRank,
+    stage::{Blind, Stage},
 };
+
+// Helper function to create test cards
+fn test_card(index: usize) -> Card {
+    let values = [
+        Value::Ace,
+        Value::Two,
+        Value::Three,
+        Value::Four,
+        Value::Five,
+    ];
+    let suits = [Suit::Heart, Suit::Diamond, Suit::Club, Suit::Spade];
+    Card::new(
+        values[index % values.len()],
+        suits[(index / values.len()) % suits.len()],
+    )
+}
 
 #[test]
 fn test_deterministic_game_scenario() {
@@ -31,7 +45,7 @@ fn test_deterministic_game_scenario() {
         .with_money(50)
         .with_ante_round(3, 2)
         .with_score(2500)
-        .with_stage(Stage::Blind)
+        .with_stage(Stage::Blind(Blind::Small))
         .with_hands_discards(3, 2)
         .with_jokers(vec![JokerId::Baron, JokerId::Scholar])
         .build();
@@ -80,19 +94,19 @@ fn test_action_recording_and_replay() {
     let game = Game::new();
 
     // Record a sequence of actions
-    recorder.record_with_context(Action::SelectCard(0), &game);
-    recorder.record_with_context(Action::SelectCard(1), &game);
-    recorder.record_with_context(Action::SelectCard(2), &game);
-    recorder.record_with_context(Action::PlayHand(vec![0, 1, 2]), &game);
+    recorder.record_with_context(Action::SelectCard(test_card(0)), &game);
+    recorder.record_with_context(Action::SelectCard(test_card(1)), &game);
+    recorder.record_with_context(Action::SelectCard(test_card(2)), &game);
+    recorder.record_with_context(Action::Play(), &game);
 
     // Export as script
     let mut script = recorder.export_script();
 
     // Replay the actions
-    assert_eq!(script.next(), Some(Action::SelectCard(0)));
-    assert_eq!(script.next(), Some(Action::SelectCard(1)));
-    assert_eq!(script.next(), Some(Action::SelectCard(2)));
-    assert_eq!(script.next(), Some(Action::PlayHand(vec![0, 1, 2])));
+    assert_eq!(script.next(), Some(Action::SelectCard(test_card(0))));
+    assert_eq!(script.next(), Some(Action::SelectCard(test_card(1))));
+    assert_eq!(script.next(), Some(Action::SelectCard(test_card(2))));
+    assert_eq!(script.next(), Some(Action::Play()));
     assert_eq!(script.next(), None);
 
     // Verify recording summary
@@ -107,7 +121,7 @@ fn test_game_scenario_presets() {
     assert_eq!(new_run.get_stage(), Stage::PreBlind);
 
     let mid_blind = GameScenario::mid_blind();
-    assert_eq!(mid_blind.stage, Stage::Blind);
+    assert_eq!(mid_blind.stage, Stage::Blind(Blind::Small));
     assert_eq!(mid_blind.jokers.len(), 2);
 
     let shop = GameScenario::at_shop();
@@ -163,9 +177,9 @@ fn test_action_validation() {
 
     // Valid action sequence
     let valid_sequence = vec![
-        Action::SelectCard(0),
-        Action::SelectCard(1),
-        Action::PlayHand(vec![0, 1]),
+        Action::SelectCard(test_card(0)),
+        Action::SelectCard(test_card(1)),
+        Action::Play(),
         Action::EndRound,
     ];
 
@@ -175,9 +189,9 @@ fn test_action_validation() {
 
     // Sequence with warnings (consecutive duplicates)
     let warning_sequence = vec![
-        Action::SelectCard(0),
-        Action::SelectCard(0), // Duplicate
-        Action::PlayHand(vec![0]),
+        Action::SelectCard(test_card(0)),
+        Action::SelectCard(test_card(0)), // Duplicate
+        Action::Play(),
     ];
 
     let result = validator.validate(&warning_sequence);
@@ -185,7 +199,7 @@ fn test_action_validation() {
 
     // Invalid sequence (shop action after play)
     let invalid_sequence = vec![
-        Action::PlayHand(vec![0, 1]),
+        Action::Play(),
         Action::BuyJoker(0), // Can't buy immediately after playing
     ];
 
@@ -229,12 +243,19 @@ fn test_mock_config_thread_safety() {
 
 #[test]
 fn test_complex_rng_sequence_builder() {
-    let mut rng = RngSequence::new()
-        .then(0.1)
-        .then_repeat(0.5, 3)
-        .then_range(0.0, 1.0, 5)
-        .then_pseudo_random(3, 42)
-        .build();
+    // Create a sequence combining different patterns
+    let mut sequence = vec![0.1];
+    sequence.extend(vec![0.5; 3]);
+    for i in 0..5 {
+        sequence.push(i as f64 / 4.0);
+    }
+    // Add some pseudo-random values
+    let mut prng = rand::rngs::StdRng::seed_from_u64(42);
+    use rand::Rng;
+    for _ in 0..3 {
+        sequence.push(prng.gen_range(0.0..1.0));
+    }
+    let mut rng = MockRng::with_sequence(sequence);
 
     // Verify the sequence
     assert_eq!(rng.next_f64(), 0.1);
@@ -253,10 +274,13 @@ fn test_complex_rng_sequence_builder() {
     let v3 = rng.next_f64();
 
     // Create another RNG with same seed to verify determinism
-    let mut rng2 = RngSequence::new()
-        .then_repeat(0.0, 9) // Skip first 9 values
-        .then_pseudo_random(3, 42)
-        .build();
+    // Create RNG that skips first 9 values then has pseudo-random values
+    let mut sequence2 = vec![0.0; 9];
+    let mut prng2 = rand::rngs::StdRng::seed_from_u64(42);
+    for _ in 0..3 {
+        sequence2.push(prng2.gen_range(0.0..1.0));
+    }
+    let mut rng2 = MockRng::with_sequence(sequence2);
 
     for _ in 0..9 {
         rng2.next_f64();
@@ -270,17 +294,17 @@ fn test_complex_rng_sequence_builder() {
 #[test]
 fn test_action_sequence_builder() {
     let sequence = ActionSequence::new()
-        .then(Action::SelectCard(0))
-        .then(Action::SelectCard(1))
+        .then(Action::SelectCard(test_card(0)))
+        .then(Action::SelectCard(test_card(1)))
         .repeat(Action::Discard(vec![2]), 2)
-        .then_all(vec![Action::SelectCard(3), Action::PlayHand(vec![0, 1, 3])])
+        .then_all(vec![Action::SelectCard(test_card(3)), Action::Play()])
         .build();
 
     assert_eq!(sequence.len(), 6);
-    assert_eq!(sequence[0], Action::SelectCard(0));
+    assert_eq!(sequence[0], Action::SelectCard(test_card(0)));
     assert_eq!(sequence[2], Action::Discard(vec![2]));
     assert_eq!(sequence[3], Action::Discard(vec![2]));
-    assert_eq!(sequence[5], Action::PlayHand(vec![0, 1, 3]));
+    assert_eq!(sequence[5], Action::Play());
 }
 
 #[test]
@@ -333,11 +357,11 @@ fn test_action_recorder_with_outcomes() {
     let game = Game::new();
 
     // Record actions with context
-    recorder.record_with_context(Action::SelectCard(0), &game);
-    recorder.record_outcome(Stage::Blind, true, None);
+    recorder.record_with_context(Action::SelectCard(test_card(0)), &game);
+    recorder.record_outcome(Stage::Blind(Blind::Small), true, None);
 
-    recorder.record_with_context(Action::PlayHand(vec![0]), &game);
-    recorder.record_outcome(Stage::Blind, false, Some("Invalid hand".to_string()));
+    recorder.record_with_context(Action::Play(), &game);
+    recorder.record_outcome(Stage::Blind(Blind::Small), false, Some("Invalid hand".to_string()));
 
     // Validate sequence should fail due to illegal action
     assert!(!recorder.validate_sequence());
@@ -383,10 +407,11 @@ fn test_full_mock_integration() {
     });
 
     // Create deterministic RNG
-    let mut rng = RngSequence::new()
-        .then_repeat(0.5, 5)
-        .then_range(0.0, 1.0, 5)
-        .build();
+    let mut sequence = vec![0.5; 5];
+    for i in 0..5 {
+        sequence.push(i as f64 / 4.0);
+    }
+    let mut rng = MockRng::with_sequence(sequence);
 
     // Build game scenario
     let game = GameScenario::mid_blind().with_rng(rng.clone()).build();
@@ -400,15 +425,15 @@ fn test_full_mock_integration() {
 
     // Execute and record action sequence
     let actions = ActionSequence::new()
-        .then(Action::SelectCard(0))
-        .then(Action::SelectCard(1))
-        .then(Action::PlayHand(vec![0, 1]))
+        .then(Action::SelectCard(test_card(0)))
+        .then(Action::SelectCard(test_card(1)))
+        .then(Action::Play())
         .build();
 
     for action in &actions {
         recorder.record_with_context(action.clone(), &game);
         // In real usage, we'd execute the action here
-        recorder.record_outcome(Stage::Blind, true, None);
+        recorder.record_outcome(Stage::Blind(Blind::Small), true, None);
     }
 
     tracker.record(&game, "after_play");
@@ -420,7 +445,7 @@ fn test_full_mock_integration() {
 
     // Create replay script
     let mut script = recorder.export_script();
-    assert_eq!(script.next(), Some(Action::SelectCard(0)));
+    assert_eq!(script.next(), Some(Action::SelectCard(test_card(0))));
 
     // Export debugging information
     let history = tracker.export_history();
