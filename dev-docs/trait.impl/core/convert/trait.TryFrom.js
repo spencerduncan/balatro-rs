@@ -1,5 +1,5 @@
 (function() {
-    var implementors = Object.fromEntries([["balatro_rs",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.88.0/core/convert/trait.TryFrom.html\" title=\"trait core::convert::TryFrom\">TryFrom</a>&lt;<a class=\"primitive\" href=\"https://doc.rust-lang.org/1.88.0/std/primitive.usize.html\">usize</a>&gt; for <a class=\"enum\" href=\"balatro_rs/ante/enum.Ante.html\" title=\"enum balatro_rs::ante::Ante\">Ante</a>"]]]]);
+    var implementors = Object.fromEntries([["balatro_rs",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.89.0/core/convert/trait.TryFrom.html\" title=\"trait core::convert::TryFrom\">TryFrom</a>&lt;<a class=\"primitive\" href=\"https://doc.rust-lang.org/1.89.0/std/primitive.usize.html\">usize</a>&gt; for <a class=\"enum\" href=\"balatro_rs/ante/enum.Ante.html\" title=\"enum balatro_rs::ante::Ante\">Ante</a>"]]]]);
     if (window.register_implementors) {
         window.register_implementors(implementors);
     } else {
