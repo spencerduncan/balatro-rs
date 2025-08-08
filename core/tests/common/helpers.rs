@@ -122,8 +122,8 @@ impl TestEnvironment {
     /// Creates a game with this environment's configuration
     pub fn create_game(&self) -> Game {
         let config = Config {
-            // Note: Config doesn't have seed field
-            // TODO: Find proper way to seed the game
+            // Note: Seed configuration will be available in future API updates
+            // Current limitation: Config struct does not expose seed field
             ..Default::default()
         };
         let mut game = Game::new(config);

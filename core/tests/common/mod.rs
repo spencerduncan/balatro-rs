@@ -27,6 +27,7 @@
 pub mod assertions;
 pub mod fixtures;
 pub mod helpers;
+pub mod mocks;
 
 // ============================================================================
 // CORE EXPORTS - Always available
@@ -75,11 +76,10 @@ pub mod environment {
 // PERFORMANCE TESTING EXPORTS
 // ============================================================================
 
-/// Performance testing utilities
-pub mod performance {
-    pub use super::fixtures::create_concurrent_test_fixtures;
-    // Other performance utilities would go here when implemented
-}
+/// Performance testing utilities (Day 2+ implementation)
+// Note: Full performance module will be added in Day 2 of salvage plan
+// For now, re-export basic utilities from fixtures
+pub use fixtures::create_concurrent_test_fixtures;
 
 // ============================================================================
 // SNAPSHOT TESTING EXPORTS
@@ -128,15 +128,14 @@ pub mod prelude {
 }
 
 // ============================================================================
-// FEATURE-GATED EXPORTS
+// MOCK EXPORTS
 // ============================================================================
 
-#[cfg(feature = "mock")]
-/// Mock implementations for testing (requires `mock` feature)
-pub mod mocks {
-    // Mock implementations would go here when added
-    // This is a placeholder for future mock framework integration
-}
+/// Mock implementations for testing (simplified framework)
+pub use self::mocks::{
+    get_mock_config, reset_mock_config, set_mock_config, MockConfig, MockRng, RngReplay,
+    RngSequence,
+};
 
 #[cfg(feature = "proptest")]
 /// Property-based testing utilities (requires `proptest` feature)
