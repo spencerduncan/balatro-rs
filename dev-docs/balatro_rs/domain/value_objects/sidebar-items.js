@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["SessionId"]};
+window.SIDEBAR_ITEMS = {"struct":["Money","Score","SessionId"]};

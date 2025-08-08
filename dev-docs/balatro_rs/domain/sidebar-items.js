@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["entities","value_objects"]};
+window.SIDEBAR_ITEMS = {"mod":["entities","errors","value_objects"]};
