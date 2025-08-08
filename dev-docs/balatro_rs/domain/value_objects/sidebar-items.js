@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["Money","Score","SessionId"]};
+window.SIDEBAR_ITEMS = {"mod":["money","score","session_id","validation_result"],"trait":["ValueObject"]};

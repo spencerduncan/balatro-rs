@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["initialize"],"mod":["entities","errors","repositories","services","value_objects"],"struct":["DomainConfig"]};
+window.SIDEBAR_ITEMS = {"mod":["entities","errors","repositories","services","value_objects"]};

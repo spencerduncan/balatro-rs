@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["GameService","ValidationService"],"trait":["DomainService","ServiceLocator"]};
+window.SIDEBAR_ITEMS = {"mod":["action_validator","validation_hooks","validation_rules"],"struct":["GameService","ValidationService"],"trait":["DomainService","ServiceLocator"]};
