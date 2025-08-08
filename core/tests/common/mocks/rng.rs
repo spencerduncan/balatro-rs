@@ -3,6 +3,8 @@
 //! Provides controlled random number generation for reproducible test scenarios.
 //! Supports sequence-based predictable outcomes and replay capabilities.
 
+#![allow(dead_code)]
+
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 use std::collections::VecDeque;
@@ -138,19 +140,19 @@ impl RngSequence {
     }
 
     /// Add a single value
-    pub fn then(&mut self, value: f64) -> &mut Self {
+    pub fn then(mut self, value: f64) -> Self {
         self.values.push(value);
         self
     }
 
     /// Add multiple identical values
-    pub fn then_repeat(&mut self, value: f64, count: usize) -> &mut Self {
+    pub fn then_repeat(mut self, value: f64, count: usize) -> Self {
         self.values.extend(vec![value; count]);
         self
     }
 
     /// Add a range of values
-    pub fn then_range(&mut self, start: f64, end: f64, steps: usize) -> &mut Self {
+    pub fn then_range(mut self, start: f64, end: f64, steps: usize) -> Self {
         if steps > 1 {
             let step = (end - start) / (steps - 1) as f64;
             for i in 0..steps {
@@ -161,7 +163,7 @@ impl RngSequence {
     }
 
     /// Add random-looking but deterministic values
-    pub fn then_pseudo_random(&mut self, count: usize, seed: u64) -> &mut Self {
+    pub fn then_pseudo_random(mut self, count: usize, seed: u64) -> Self {
         let mut rng = StdRng::seed_from_u64(seed);
         for _ in 0..count {
             self.values.push(rng.gen_range(0.0..1.0));

@@ -1,54 +1,13 @@
-//! Mock Framework for Deterministic Testing
+//! Minimal Mock Framework for Deterministic Testing
 //!
-//! This module provides comprehensive mocking capabilities for testing the Balatro game engine.
-//! It enables deterministic, reproducible test scenarios through controlled randomness,
-//! predictable game states, and scripted action sequences.
-//!
-//! # Main Components
-//!
-//! - **Mock RNG**: Deterministic random number generation with sequence-based outcomes
-//! - **Game State Mocks**: Builders and helpers for creating predictable game scenarios
-//! - **Action Mocks**: Tools for scripting and validating action sequences
-//!
-//! # Usage Example
-//!
-//! ```rust
-//! use crate::common::mocks::{MockRng, MockGameBuilder, ActionRecorder};
-//!
-//! // Create deterministic RNG
-//! let mut rng = MockRng::with_sequence(vec![0.5, 0.2, 0.8]);
-//!
-//! // Build predictable game state
-//! let game = MockGameBuilder::new()
-//!     .with_money(100)
-//!     .with_jokers(vec![JokerId::Baron, JokerId::Scholar])
-//!     .build();
-//!
-//! // Record and validate actions
-//! let recorder = ActionRecorder::new();
-//! recorder.record(Action::SelectCard(0));
-//! assert!(recorder.validate_sequence());
-//! ```
+//! This module provides mock RNG capabilities for testing the Balatro game engine.
+//! Day 1 implementation focuses on deterministic RNG for reproducible tests.
+//! Advanced mocking features will be added in Day 2-3 of the salvage plan.
 
-pub mod actions;
-pub mod game;
 pub mod rng;
 
-// Re-export commonly used types
-pub use actions::{ActionRecorder, ActionScript, ActionSequence, ActionValidator};
-pub use game::{GameScenario, MockGameBuilder, StateSnapshot, StateTransitionTracker};
-pub use rng::{MockRng, RngReplay, RngSequence};
-
-/// Trait for mockable components
-pub trait Mockable {
-    /// Create a mock version of this component
-    fn mock() -> Self;
-
-    /// Create a mock with specific configuration
-    fn mock_with<F>(config: F) -> Self
-    where
-        F: FnOnce(&mut Self);
-}
+// Re-export MockRng for easy access
+pub use rng::MockRng;
 
 /// Configuration for mock framework behavior
 #[derive(Debug, Clone)]
@@ -77,7 +36,7 @@ impl Default for MockConfig {
     }
 }
 
-/// Global mock configuration (thread-local for test isolation)
+// Global mock configuration (thread-local for test isolation)
 thread_local! {
     static MOCK_CONFIG: std::cell::RefCell<MockConfig> = std::cell::RefCell::new(MockConfig::default());
 }
