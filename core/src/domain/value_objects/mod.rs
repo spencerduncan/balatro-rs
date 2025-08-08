@@ -11,7 +11,7 @@ pub mod validation_result;
 
 pub use money::Money;
 pub use score::Score;
-pub use session_id::SessionId;
+pub use session_id::{SessionId, SessionIdError};
 pub use validation_result::{ValidationError, ValidationResult};
 
 /// Common trait for value objects that can be safely constructed
