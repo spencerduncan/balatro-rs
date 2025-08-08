@@ -646,6 +646,60 @@ impl StaticJokerFactory {
         )
     }
 
+    /// Create The Duo (X2 Mult if played hand contains a Pair)
+    pub fn create_the_duo() -> Box<dyn Joker> {
+        Box::new(
+            FrameworkStaticJoker::builder(
+                JokerId::TheDuo,
+                "The Duo",
+                "X2 Mult if played hand contains a Pair",
+            )
+            .rarity(JokerRarity::Rare)
+            .cost(8)
+            .mult_multiplier(2.0)
+            .condition(StaticCondition::HandType(HandRank::OnePair))
+            .per_hand()
+            .build()
+            .expect("Valid joker configuration"),
+        )
+    }
+
+    /// Create The Trio (X3 Mult if played hand contains Three of a Kind)
+    pub fn create_the_trio() -> Box<dyn Joker> {
+        Box::new(
+            FrameworkStaticJoker::builder(
+                JokerId::TheTrio,
+                "The Trio",
+                "X3 Mult if played hand contains Three of a Kind",
+            )
+            .rarity(JokerRarity::Rare)
+            .cost(8)
+            .mult_multiplier(3.0)
+            .condition(StaticCondition::HandType(HandRank::ThreeOfAKind))
+            .per_hand()
+            .build()
+            .expect("Valid joker configuration"),
+        )
+    }
+
+    /// Create The Family (X4 Mult if played hand contains Four of a Kind)
+    pub fn create_the_family() -> Box<dyn Joker> {
+        Box::new(
+            FrameworkStaticJoker::builder(
+                JokerId::TheFamily,
+                "The Family",
+                "X4 Mult if played hand contains Four of a Kind",
+            )
+            .rarity(JokerRarity::Rare)
+            .cost(8)
+            .mult_multiplier(4.0)
+            .condition(StaticCondition::HandType(HandRank::FourOfAKind))
+            .per_hand()
+            .build()
+            .expect("Valid joker configuration"),
+        )
+    }
+
     // =============================================================================
     // NEW SIMPLE STATIC JOKERS - Clean Code Implementation
     // =============================================================================
