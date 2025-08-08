@@ -5,6 +5,7 @@
 
 #![allow(dead_code)]
 
+use super::MockConfig;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 use std::collections::VecDeque;
@@ -28,31 +29,40 @@ pub struct MockRng {
     replay_mode: bool,
 
     /// Configuration
-    strict_mode: bool,
+    config: MockConfig,
 }
 
 impl MockRng {
     /// Create a new MockRng with a predetermined sequence
     pub fn with_sequence(values: Vec<f64>) -> Self {
+        let config = MockConfig {
+            strict_validation: true,
+            ..Default::default()
+        };
         Self {
             sequence: values.into_iter().collect(),
             fallback: StdRng::seed_from_u64(42),
             history: Vec::new(),
             replay_position: 0,
             replay_mode: false,
-            strict_mode: true,
+            config,
         }
     }
 
     /// Create a MockRng with a specific seed
     pub fn with_seed(seed: u64) -> Self {
+        let config = MockConfig {
+            seed,
+            strict_validation: false,
+            ..Default::default()
+        };
         Self {
             sequence: VecDeque::new(),
             fallback: StdRng::seed_from_u64(seed),
             history: Vec::new(),
             replay_position: 0,
             replay_mode: false,
-            strict_mode: false,
+            config,
         }
     }
 
@@ -80,21 +90,28 @@ impl MockRng {
 
         let value = if let Some(v) = self.sequence.pop_front() {
             v
-        } else if self.strict_mode {
+        } else if self.config.strict_validation {
             panic!("MockRng: Sequence exhausted in strict mode");
         } else {
             self.fallback.gen_range(0.0..1.0)
         };
 
+        // Enforce max_recorded_actions limit to prevent memory leak
+        if self.history.len() >= self.config.max_recorded_actions {
+            self.history.remove(0);
+        }
         self.history.push(value);
         value
     }
 
-    /// Get the next integer in range
+    /// Get the next integer in range [min, max] inclusive
     pub fn gen_range(&mut self, min: i32, max: i32) -> i32 {
         let f = self.next_f64();
-        let range = (max - min) as f64;
-        min + (f * range) as i32
+        // For inclusive range [min, max], we need max - min + 1 values
+        let range = (max - min + 1) as f64;
+        let result = min + (f * range).floor() as i32;
+        // Clamp to handle f=1.0 edge case
+        result.min(max)
     }
 
     /// Get the next boolean with probability
@@ -123,7 +140,7 @@ impl MockRng {
 
     /// Set strict mode (panic when sequence exhausted)
     pub fn set_strict(&mut self, strict: bool) {
-        self.strict_mode = strict;
+        self.config.strict_validation = strict;
     }
 }
 
@@ -246,11 +263,16 @@ mod tests {
 
     #[test]
     fn test_mock_rng_range() {
-        let mut rng = MockRng::with_sequence(vec![0.0, 0.5, 1.0]);
+        let mut rng = MockRng::with_sequence(vec![0.0, 0.5, 0.999]);
 
-        assert_eq!(rng.gen_range(0, 10), 0);
-        assert_eq!(rng.gen_range(0, 10), 5);
-        assert_eq!(rng.gen_range(0, 10), 10);
+        // Test inclusive range [0, 10]
+        assert_eq!(rng.gen_range(0, 10), 0); // 0.0 maps to 0
+        assert_eq!(rng.gen_range(0, 10), 5); // 0.5 maps to 5
+        assert_eq!(rng.gen_range(0, 10), 10); // 0.999 maps to 10 (inclusive)
+
+        // Test edge case with f=1.0
+        let mut rng2 = MockRng::with_sequence(vec![1.0]);
+        assert_eq!(rng2.gen_range(0, 10), 10); // 1.0 should give max value
     }
 
     #[test]

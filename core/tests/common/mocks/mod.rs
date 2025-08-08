@@ -10,7 +10,7 @@ pub mod rng;
 pub use rng::MockRng;
 
 /// Configuration for mock framework behavior
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct MockConfig {
     /// Enable strict validation of action sequences
     pub strict_validation: bool,
@@ -48,7 +48,7 @@ pub fn set_mock_config(config: MockConfig) {
 
 /// Get the current mock configuration
 pub fn get_mock_config() -> MockConfig {
-    MOCK_CONFIG.with(|c| c.borrow().clone())
+    MOCK_CONFIG.with(|c| *c.borrow())
 }
 
 /// Reset mock configuration to defaults
@@ -75,7 +75,7 @@ mod tests {
             seed: 12345,
             max_recorded_actions: 500,
         };
-        set_mock_config(custom.clone());
+        set_mock_config(custom);
 
         let retrieved = get_mock_config();
         assert_eq!(retrieved.seed, 12345);
