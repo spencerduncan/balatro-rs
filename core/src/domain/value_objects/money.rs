@@ -1,18 +1,3 @@
-<<<<<<< HEAD
-//! Money value object - simplified version
-
-use std::fmt;
-
-/// Money represents in-game currency
-#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
-pub struct Money(f64);
-
-impl Money {
-    /// Create a new Money value
-    pub fn new(amount: f64) -> Result<Self, String> {
-        if amount < 0.0 {
-            Err("Money cannot be negative".to_string())
-=======
 //! Money Value Object
 //!
 //! Money represents in-game currency with business rules enforcement.
@@ -56,27 +41,11 @@ impl Money {
     pub fn try_new(amount: i32) -> Result<Self, String> {
         if amount < 0 {
             Err(format!("Money cannot be negative: {amount}"))
->>>>>>> 707de7d6 (feat(#911): implement domain value objects)
         } else {
             Ok(Self(amount))
         }
     }
 
-<<<<<<< HEAD
-    /// Get the raw value
-    pub fn value(&self) -> f64 {
-        self.0
-    }
-
-    /// Add money
-    pub fn add(&self, amount: f64) -> Result<Self, String> {
-        Self::new(self.0 + amount)
-    }
-
-    /// Subtract money
-    pub fn subtract(&self, amount: f64) -> Result<Self, String> {
-        Self::new(self.0 - amount)
-=======
     /// Create Money with zero value
     pub fn zero() -> Self {
         Self(0)
@@ -114,25 +83,17 @@ impl Money {
     /// Check if can afford the given amount
     pub fn can_afford(&self, cost: Money) -> bool {
         self.0 >= cost.0
->>>>>>> 707de7d6 (feat(#911): implement domain value objects)
     }
 }
 
 impl Default for Money {
     fn default() -> Self {
-<<<<<<< HEAD
-        Self(0.0)
-=======
         Self::zero()
->>>>>>> 707de7d6 (feat(#911): implement domain value objects)
     }
 }
 
 impl fmt::Display for Money {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-<<<<<<< HEAD
-        write!(f, "${:.0}", self.0)
-=======
         write!(f, "${}", self.0)
     }
 }
@@ -148,7 +109,6 @@ impl std::ops::Add for Money {
 
     fn add(self, rhs: Self) -> Self::Output {
         Self(self.0.saturating_add(rhs.0))
->>>>>>> 707de7d6 (feat(#911): implement domain value objects)
     }
 }
 
@@ -157,11 +117,6 @@ mod tests {
     use super::*;
 
     #[test]
-<<<<<<< HEAD
-    fn test_money_creation() {
-        assert!(Money::new(10.0).is_ok());
-        assert!(Money::new(-1.0).is_err());
-=======
     fn money_new_clamps_negative_to_zero() {
         let money = Money::new(-10);
         assert_eq!(money.amount(), 0);
@@ -217,6 +172,5 @@ mod tests {
         assert!(m1 < m2);
         assert!(m2 > m1);
         assert!(m2 == m3);
->>>>>>> 707de7d6 (feat(#911): implement domain value objects)
     }
 }

@@ -45,7 +45,7 @@ pub struct SessionId {
 
 impl SessionId {
     /// Generate a new unique SessionId
-    /// 
+    ///
     /// Format: [44-bit timestamp in microseconds][20-bit counter]
     /// Provides ~557 years of timestamps with 1M unique IDs per microsecond
     pub fn new() -> Self {
@@ -53,24 +53,24 @@ impl SessionId {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_micros() as u64;
-        
+
         // Use only lower 44 bits of timestamp (gives us ~557 years from epoch)
         let timestamp_bits = timestamp & 0xFFFFFFFFFFF;
-        
+
         // Get counter value and increment atomically
         let counter = COUNTER.fetch_add(1, Ordering::Relaxed) & 0xFFFFF; // 20 bits
-        
+
         // Combine: timestamp (upper 44 bits) | counter (lower 20 bits)
         let id = (timestamp_bits << 20) | counter;
-        
+
         Self { value: id }
     }
-    
+
     /// Create SessionId from a raw value (for testing/deserialization)
     pub fn from_value(value: u64) -> Self {
         Self { value }
     }
-    
+
     /// Get the raw value of the SessionId
     pub fn value(&self) -> u64 {
         self.value

@@ -1,15 +1,3 @@
-<<<<<<< HEAD
-//! Score value object - simplified version
-
-use std::fmt;
-
-/// Score represents game points
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-pub struct Score(u64);
-
-impl Score {
-    /// Create a new Score
-=======
 //! Score Value Object
 //!
 //! Score represents game scoring with business rules enforcement.
@@ -45,30 +33,20 @@ pub struct Score(u64);
 
 impl Score {
     /// Create new Score with the given value
->>>>>>> 707de7d6 (feat(#911): implement domain value objects)
     pub fn new(value: u64) -> Self {
         Self(value)
     }
 
-<<<<<<< HEAD
-    /// Get the raw value
-=======
     /// Create Score with zero value
     pub fn zero() -> Self {
         Self(0)
     }
 
     /// Get the score value
->>>>>>> 707de7d6 (feat(#911): implement domain value objects)
     pub fn value(&self) -> u64 {
         self.0
     }
 
-<<<<<<< HEAD
-    /// Add to score
-    pub fn add(&self, points: u64) -> Self {
-        Self(self.0.saturating_add(points))
-=======
     /// Check if score is zero
     pub fn is_zero(&self) -> bool {
         self.0 == 0
@@ -108,15 +86,11 @@ impl Score {
 impl Default for Score {
     fn default() -> Self {
         Self::zero()
->>>>>>> 707de7d6 (feat(#911): implement domain value objects)
     }
 }
 
 impl fmt::Display for Score {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-<<<<<<< HEAD
-        write!(f, "{}", self.0)
-=======
         // Format with thousands separators for readability
         let s = self.0.to_string();
         let mut result = String::new();
@@ -152,7 +126,6 @@ impl std::ops::Add for Score {
 
     fn add(self, rhs: Self) -> Self::Output {
         Self(self.0.saturating_add(rhs.0))
->>>>>>> 707de7d6 (feat(#911): implement domain value objects)
     }
 }
 
@@ -161,11 +134,6 @@ mod tests {
     use super::*;
 
     #[test]
-<<<<<<< HEAD
-    fn test_score_operations() {
-        let score = Score::new(100);
-        assert_eq!(score.add(50).value(), 150);
-=======
     fn score_basic_operations() {
         let s1 = Score::new(1000);
         let s2 = Score::new(500);
@@ -231,6 +199,5 @@ mod tests {
         assert!(s1 < s2);
         assert!(s2 > s1);
         assert!(s2 == s3);
->>>>>>> 707de7d6 (feat(#911): implement domain value objects)
     }
 }
