@@ -12,13 +12,13 @@
 use balatro_rs::{
     action::Action,
     ante::Ante,
-    card::{Card, Value, Suit},
+    card::{Card, Suit, Value},
     config::Config,
     deck::Deck,
     game::Game,
     hand::Hand,
     joker::JokerId,
-    stage::{Stage, Blind, End},
+    stage::{Blind, End, Stage},
 };
 use proptest::prelude::*;
 use proptest::strategy::{BoxedStrategy, Strategy};
@@ -64,11 +64,10 @@ pub fn arb_card() -> impl Strategy<Value = Card> {
 
 /// Generate arbitrary valid hands (1-5 cards)
 pub fn arb_hand() -> impl Strategy<Value = Vec<Card>> {
-    prop::collection::vec(arb_card(), 1..=5)
-        .prop_filter("unique cards only", |cards| {
-            let unique: HashSet<_> = cards.iter().collect();
-            unique.len() == cards.len()
-        })
+    prop::collection::vec(arb_card(), 1..=5).prop_filter("unique cards only", |cards| {
+        let unique: HashSet<_> = cards.iter().collect();
+        unique.len() == cards.len()
+    })
 }
 
 /// Generate arbitrary valid hands as Hand objects
@@ -84,14 +83,24 @@ pub fn arb_deck_size() -> impl Strategy<Value = usize> {
 /// Generate arbitrary valid decks
 pub fn arb_deck() -> impl Strategy<Value = Deck> {
     arb_deck_size().prop_map(|size| {
-        let mut deck = Deck::new();
+        let deck = Deck::new();
         // Add cards up to the specified size
         let mut cards_added = 0;
-        for suit in [Suit::Club, Suit::Diamond, Suit::Heart, Suit::Spade] {
-            for value in [
-                Value::Two, Value::Three, Value::Four, Value::Five,
-                Value::Six, Value::Seven, Value::Eight, Value::Nine,
-                Value::Ten, Value::Jack, Value::Queen, Value::King, Value::Ace,
+        for _suit in [Suit::Club, Suit::Diamond, Suit::Heart, Suit::Spade] {
+            for _value in [
+                Value::Two,
+                Value::Three,
+                Value::Four,
+                Value::Five,
+                Value::Six,
+                Value::Seven,
+                Value::Eight,
+                Value::Nine,
+                Value::Ten,
+                Value::Jack,
+                Value::Queen,
+                Value::King,
+                Value::Ace,
             ] {
                 if cards_added >= size {
                     break;
@@ -250,7 +259,7 @@ pub fn arb_game_state() -> BoxedStrategy<Game> {
 }
 
 /// Generate a game state in a specific stage
-pub fn arb_game_in_stage(stage: Stage) -> BoxedStrategy<Game> {
+pub fn arb_game_in_stage(_stage: Stage) -> BoxedStrategy<Game> {
     // Note: Setting stage directly on Game might not be supported
     // This is simplified for the example
     arb_game_state()
@@ -264,10 +273,10 @@ pub fn arb_game_in_stage(stage: Stage) -> BoxedStrategy<Game> {
 /// Generate a game state with specific jokers
 pub fn arb_game_with_jokers(joker_ids: Vec<JokerId>) -> BoxedStrategy<Game> {
     arb_game_state()
-        .prop_map(move |mut game| {
+        .prop_map(move |game| {
             // Clear existing jokers and add specified ones
             // This would need proper implementation
-            for id in &joker_ids {
+            for _id in &joker_ids {
                 // Add joker with given ID
                 // game.add_joker(id.clone());
             }
@@ -286,7 +295,7 @@ pub fn invariant_money_non_negative(game: &Game) -> bool {
 }
 
 /// Check that scoring always returns non-negative values
-pub fn invariant_score_non_negative(hand: &Hand) -> bool {
+pub fn invariant_score_non_negative(_hand: &Hand) -> bool {
     // Score calculation would go here
     // For now, always return true as placeholder
     true
@@ -356,14 +365,14 @@ where
 }
 
 /// Helper to test action validity
-pub fn prop_action_always_valid(game: &Game, action: &Action) -> bool {
+pub fn prop_action_always_valid(_game: &Game, _action: &Action) -> bool {
     // Check if action is valid for current game state
     // This would need proper implementation based on game rules
     true
 }
 
 /// Helper to test state transitions
-pub fn prop_valid_state_transition(before: &Game, action: &Action, after: &Game) -> bool {
+pub fn prop_valid_state_transition(_before: &Game, _action: &Action, _after: &Game) -> bool {
     // Verify that the state transition is valid
     // This would need proper implementation
     true
@@ -385,8 +394,9 @@ pub fn shrink_hand(hand: Vec<Card>) -> BoxedStrategy<Vec<Card>> {
         prop_oneof![
             Just(hand.clone()),
             Just(hand[1..].to_vec()),
-            Just(hand[..hand.len()-1].to_vec()),
-        ].boxed()
+            Just(hand[..hand.len() - 1].to_vec()),
+        ]
+        .boxed()
     }
 }
 

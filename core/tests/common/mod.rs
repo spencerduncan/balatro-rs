@@ -80,9 +80,8 @@ pub mod environment {
 
 /// Performance testing utilities (re-exported from performance module)
 pub use performance::{
-    BenchmarkHarness, ComparisonResult, PerformanceMetrics, PerformanceMonitor,
-    PerformanceReport, PerformanceStatistics, PerformanceThreshold, ThresholdViolation,
-    Timer, ViolationType,
+    BenchmarkHarness, ComparisonResult, PerformanceMetrics, PerformanceMonitor, PerformanceReport,
+    PerformanceStatistics, PerformanceThreshold, ThresholdViolation, Timer, ViolationType,
 };
 
 // ============================================================================
@@ -145,12 +144,11 @@ pub mod mocks {
 // Property-based testing is always available since proptest is in dev-dependencies
 /// Property-based testing utilities
 pub use proptest::{
-    arb_ante, arb_card, arb_deck, arb_game_state, arb_game_state_with_config,
-    arb_hand, arb_hand_object, arb_joker_id, arb_money, arb_score,
-    arb_stage, arb_suit, arb_value, invariant_ante_progression, invariant_deck_size,
-    invariant_hand_size, invariant_joker_slots, invariant_money_non_negative,
-    invariant_score_non_negative, invariant_stage_transition, run_property_test,
-    GameStateConfig,
+    arb_ante, arb_card, arb_deck, arb_game_state, arb_game_state_with_config, arb_hand,
+    arb_hand_object, arb_joker_id, arb_money, arb_score, arb_stage, arb_suit, arb_value,
+    invariant_ante_progression, invariant_deck_size, invariant_hand_size, invariant_joker_slots,
+    invariant_money_non_negative, invariant_score_non_negative, invariant_stage_transition,
+    run_property_test, GameStateConfig,
 };
 
 // ============================================================================
@@ -159,8 +157,8 @@ pub use proptest::{
 
 /// Memory leak detection and tracking utilities
 pub use memory::{
-    AllocationReport, AllocationStats, MemoryGuard, MemoryProfiler, MemoryProfileReport,
-    ResourceGuard, ResourceInfo, ResourceTracker, test_with_leak_detection,
+    test_with_leak_detection, AllocationReport, AllocationStats, MemoryGuard, MemoryProfileReport,
+    MemoryProfiler, ResourceGuard, ResourceInfo, ResourceTracker,
 };
 
 // ============================================================================

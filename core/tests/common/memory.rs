@@ -310,10 +310,7 @@ impl Drop for MemoryGuard {
     fn drop(&mut self) {
         let delta = self.memory_delta();
         if delta > 0 {
-            let msg = format!(
-                "Memory leak in '{}': {} bytes leaked",
-                self.name, delta
-            );
+            let msg = format!("Memory leak in '{}': {} bytes leaked", self.name, delta);
 
             if self.panic_on_leak {
                 panic!("{}", msg);
@@ -521,7 +518,7 @@ impl MemoryProfiler {
     where
         F: FnOnce() -> R,
     {
-        let start = std::time::Instant::now();
+        let _start = std::time::Instant::now();
         self.sample(&stats);
 
         let result = f();

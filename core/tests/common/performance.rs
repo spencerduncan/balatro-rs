@@ -92,7 +92,10 @@ impl PerformanceMonitor {
     /// Record a performance measurement
     pub fn record(&self, metric: PerformanceMetrics) {
         let mut metrics = self.metrics.lock().unwrap();
-        metrics.entry(metric.name.clone()).or_insert_with(Vec::new).push(metric);
+        metrics
+            .entry(metric.name.clone())
+            .or_insert_with(Vec::new)
+            .push(metric);
     }
 
     /// Measure the performance of a closure
@@ -173,7 +176,9 @@ impl PerformanceMonitor {
     /// Get statistics for a named metric
     pub fn get_statistics(&self, name: &str) -> Option<PerformanceStatistics> {
         let metrics = self.metrics.lock().unwrap();
-        metrics.get(name).map(|measurements| PerformanceStatistics::from_metrics(measurements))
+        metrics
+            .get(name)
+            .map(|measurements| PerformanceStatistics::from_metrics(measurements))
     }
 
     /// Clear all recorded metrics
@@ -337,18 +342,36 @@ impl PerformanceStatistics {
         let mut durations: Vec<Duration> = metrics.iter().map(|m| m.avg_duration()).collect();
         durations.sort();
 
-        let count = durations.len();
+        // Sum up all iterations from all metrics
+        let total_iterations: u32 = metrics.iter().map(|m| m.iterations).sum();
+        let count = if total_iterations > 0 {
+            total_iterations as usize
+        } else {
+            durations.len()
+        };
         let sum: Duration = durations.iter().sum();
         let mean = sum / count as u32;
 
-        let median = if count % 2 == 0 {
-            (durations[count / 2 - 1] + durations[count / 2]) / 2
+        let median = if durations.len() == 0 {
+            Duration::ZERO
+        } else if durations.len() % 2 == 0 && durations.len() > 1 {
+            (durations[durations.len() / 2 - 1] + durations[durations.len() / 2]) / 2
+        } else if durations.len() > 0 {
+            durations[durations.len() / 2]
         } else {
-            durations[count / 2]
+            Duration::ZERO
         };
 
-        let min = durations[0];
-        let max = durations[count - 1];
+        let min = if durations.is_empty() {
+            Duration::ZERO
+        } else {
+            durations[0]
+        };
+        let max = if durations.is_empty() {
+            Duration::ZERO
+        } else {
+            durations[durations.len() - 1]
+        };
 
         // Calculate standard deviation
         let variance = durations
@@ -361,13 +384,25 @@ impl PerformanceStatistics {
                 };
                 diff * diff
             })
-            .sum::<u128>() / count as u128;
+            .sum::<u128>()
+            / count as u128;
 
         let std_dev_nanos = (variance as f64).sqrt();
         let std_deviation = Duration::from_nanos(std_dev_nanos as u64);
 
-        let percentile_95 = durations[(count as f64 * 0.95) as usize].min(max);
-        let percentile_99 = durations[(count as f64 * 0.99) as usize].min(max);
+        let percentile_95 = if durations.len() > 0 {
+            let index = ((durations.len() as f64 * 0.95) as usize).min(durations.len() - 1);
+            durations[index]
+        } else {
+            Duration::ZERO
+        };
+
+        let percentile_99 = if durations.len() > 0 {
+            let index = ((durations.len() as f64 * 0.99) as usize).min(durations.len() - 1);
+            durations[index]
+        } else {
+            Duration::ZERO
+        };
 
         let total_memory = metrics.iter().map(|m| m.memory_delta()).sum();
 
@@ -523,7 +558,8 @@ impl BenchmarkHarness {
         self.monitor.clear();
 
         // Benchmark phase
-        self.monitor.measure_iterations(name, self.benchmark_iterations, f);
+        self.monitor
+            .measure_iterations(name, self.benchmark_iterations, f);
 
         // Get statistics
         self.monitor.get_statistics(name).unwrap_or_default()
@@ -589,15 +625,33 @@ impl ComparisonResult {
 impl fmt::Display for ComparisonResult {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "Benchmark Comparison:")?;
-        writeln!(f, "  Baseline ({}): {:?}", self.baseline.0, self.baseline.1.mean_duration)?;
-        writeln!(f, "  Comparison ({}): {:?}", self.comparison.0, self.comparison.1.mean_duration)?;
+        writeln!(
+            f,
+            "  Baseline ({}): {:?}",
+            self.baseline.0, self.baseline.1.mean_duration
+        )?;
+        writeln!(
+            f,
+            "  Comparison ({}): {:?}",
+            self.comparison.0, self.comparison.1.mean_duration
+        )?;
 
         if self.is_faster() {
-            writeln!(f, "  {} is {:.2}x faster ({:.1}% improvement)",
-                self.comparison.0, self.speedup(), self.improvement_percent())?;
+            writeln!(
+                f,
+                "  {} is {:.2}x faster ({:.1}% improvement)",
+                self.comparison.0,
+                self.speedup(),
+                self.improvement_percent()
+            )?;
         } else {
-            writeln!(f, "  {} is {:.2}x slower ({:.1}% regression)",
-                self.comparison.0, 1.0 / self.speedup(), -self.improvement_percent())?;
+            writeln!(
+                f,
+                "  {} is {:.2}x slower ({:.1}% regression)",
+                self.comparison.0,
+                1.0 / self.speedup(),
+                -self.improvement_percent()
+            )?;
         }
 
         Ok(())
@@ -744,9 +798,7 @@ mod tests {
 
     #[test]
     fn test_benchmark_harness() {
-        let harness = BenchmarkHarness::new()
-            .with_warmup(10)
-            .with_iterations(100);
+        let harness = BenchmarkHarness::new().with_warmup(10).with_iterations(100);
 
         let stats = harness.bench("simple_operation", || {
             let _ = 1 + 1;
@@ -762,7 +814,7 @@ mod tests {
 
         monitor.set_threshold(
             "slow_operation",
-            PerformanceThreshold::with_duration(Duration::from_millis(5))
+            PerformanceThreshold::with_duration(Duration::from_millis(5)),
         );
 
         monitor.measure("slow_operation", || {
@@ -776,13 +828,17 @@ mod tests {
 
     #[test]
     fn test_comparison() {
-        let harness = BenchmarkHarness::new()
-            .with_warmup(10)
-            .with_iterations(100);
+        let harness = BenchmarkHarness::new().with_warmup(10).with_iterations(100);
 
         let result = harness.compare(
-            "slow", || { thread::sleep(Duration::from_micros(10)); },
-            "fast", || { thread::sleep(Duration::from_micros(5)); }
+            "slow",
+            || {
+                thread::sleep(Duration::from_micros(10));
+            },
+            "fast",
+            || {
+                thread::sleep(Duration::from_micros(5));
+            },
         );
 
         assert!(result.is_faster());
