@@ -15,7 +15,8 @@ use crate::domain::errors::ErrorContext;
 use crate::domain::repositories::{ActionHistoryRepository, GameRepository, SessionRepository};
 use crate::domain::{DomainError, DomainResult};
 use crate::game::Game;
-use std::sync::Arc;
+use std::borrow::Cow;
+use std::sync::{Arc, RwLock};
 
 /// Base trait for all domain services
 ///
@@ -35,9 +36,9 @@ pub trait DomainService: Send + Sync {
 /// This service coordinates game operations across multiple repositories
 /// and ensures business rules are enforced consistently.
 pub struct GameService<G: GameRepository, S: SessionRepository, A: ActionHistoryRepository> {
-    game_repo: Arc<G>,
-    session_repo: Arc<S>,
-    history_repo: Arc<A>,
+    game_repo: Arc<RwLock<G>>,
+    session_repo: Arc<RwLock<S>>,
+    history_repo: Arc<RwLock<A>>,
 }
 
 impl<G, S, A> GameService<G, S, A>
@@ -47,7 +48,11 @@ where
     A: ActionHistoryRepository,
 {
     /// Create a new game service with dependency injection
-    pub fn new(game_repo: Arc<G>, session_repo: Arc<S>, history_repo: Arc<A>) -> Self {
+    pub fn new(
+        game_repo: Arc<RwLock<G>>,
+        session_repo: Arc<RwLock<S>>,
+        history_repo: Arc<RwLock<A>>,
+    ) -> Self {
         Self {
             game_repo,
             session_repo,
@@ -56,15 +61,22 @@ where
     }
 
     /// Create a new game with session
-    pub fn create_game(&mut self, game_id: &str, session_id: &str) -> DomainResult<Game> {
+    pub fn create_game(&self, game_id: &str, session_id: &str) -> DomainResult<Game> {
         // Check if game already exists
-        if self.game_repo.exists(game_id)? {
-            return Err(DomainError::ValidationFailed(
-                ErrorContext::new("CreateGame")
-                    .with_entity("Game")
-                    .with_detail(format!("Game {game_id} already exists"))
-                    .build(),
-            ));
+        {
+            let game_repo = self.game_repo.read().map_err(|_| {
+                DomainError::ServiceError(Cow::Borrowed(
+                    "Failed to acquire read lock on game repository",
+                ))
+            })?;
+            if game_repo.exists(game_id)? {
+                return Err(DomainError::ValidationFailed(
+                    ErrorContext::new("CreateGame")
+                        .with_entity("Game")
+                        .with_detail(format!("Game {game_id} already exists"))
+                        .build(),
+                ));
+            }
         }
 
         // Create new game
@@ -72,27 +84,45 @@ where
         game.start();
 
         // Save game state
-        Arc::get_mut(&mut self.game_repo)
-            .ok_or_else(|| DomainError::ServiceError("Cannot get mutable reference".into()))?
-            .save(game_id, &game)?;
+        {
+            let mut game_repo = self.game_repo.write().map_err(|_| {
+                DomainError::ServiceError(Cow::Borrowed(
+                    "Failed to acquire write lock on game repository",
+                ))
+            })?;
+            game_repo.save(game_id, &game)?;
+        }
 
         // Create session
-        Arc::get_mut(&mut self.session_repo)
-            .ok_or_else(|| DomainError::ServiceError("Cannot get mutable reference".into()))?
-            .create_session(session_id, game_id)?;
+        {
+            let mut session_repo = self.session_repo.write().map_err(|_| {
+                DomainError::ServiceError(Cow::Borrowed(
+                    "Failed to acquire write lock on session repository",
+                ))
+            })?;
+            session_repo.create_session(session_id, game_id)?;
+        }
 
         Ok(game)
     }
 
     /// Execute an action in a game
     pub fn execute_action(
-        &mut self,
+        &self,
         game_id: &str,
         session_id: &str,
         action: Action,
     ) -> DomainResult<()> {
         // Validate session
-        let session = self.session_repo.get_session(session_id)?;
+        let session = {
+            let session_repo = self.session_repo.read().map_err(|_| {
+                DomainError::ServiceError(Cow::Borrowed(
+                    "Failed to acquire read lock on session repository",
+                ))
+            })?;
+            session_repo.get_session(session_id)?
+        };
+
         if session.game_id != game_id {
             return Err(DomainError::ValidationFailed(
                 ErrorContext::new("ExecuteAction")
@@ -102,7 +132,14 @@ where
         }
 
         // Load game
-        let mut game = self.game_repo.find_by_id(game_id)?;
+        let mut game = {
+            let game_repo = self.game_repo.read().map_err(|_| {
+                DomainError::ServiceError(Cow::Borrowed(
+                    "Failed to acquire read lock on game repository",
+                ))
+            })?;
+            game_repo.find_by_id(game_id)?
+        };
 
         // Validate action
         if !game.gen_actions().any(|a| a == action) {
@@ -115,23 +152,39 @@ where
         }
 
         // Execute action
-        game.handle_action(action.clone())
-            .map_err(|e| DomainError::ServiceError(format!("Failed to execute action: {e:?}")))?;
+        game.handle_action(action.clone()).map_err(|e| {
+            DomainError::ServiceError(Cow::Owned(format!("Failed to execute action: {e:?}")))
+        })?;
 
         // Save updated game state
-        Arc::get_mut(&mut self.game_repo)
-            .ok_or_else(|| DomainError::ServiceError("Cannot get mutable reference".into()))?
-            .save(game_id, &game)?;
+        {
+            let mut game_repo = self.game_repo.write().map_err(|_| {
+                DomainError::ServiceError(Cow::Borrowed(
+                    "Failed to acquire write lock on game repository",
+                ))
+            })?;
+            game_repo.save(game_id, &game)?;
+        }
 
         // Record action in history
-        Arc::get_mut(&mut self.history_repo)
-            .ok_or_else(|| DomainError::ServiceError("Cannot get mutable reference".into()))?
-            .record_action(game_id, &action)?;
+        {
+            let mut history_repo = self.history_repo.write().map_err(|_| {
+                DomainError::ServiceError(Cow::Borrowed(
+                    "Failed to acquire write lock on history repository",
+                ))
+            })?;
+            history_repo.record_action(game_id, &action)?;
+        }
 
         // Update session activity
-        Arc::get_mut(&mut self.session_repo)
-            .ok_or_else(|| DomainError::ServiceError("Cannot get mutable reference".into()))?
-            .touch_session(session_id)?;
+        {
+            let mut session_repo = self.session_repo.write().map_err(|_| {
+                DomainError::ServiceError(Cow::Borrowed(
+                    "Failed to acquire write lock on session repository",
+                ))
+            })?;
+            session_repo.touch_session(session_id)?;
+        }
 
         Ok(())
     }
@@ -139,7 +192,15 @@ where
     /// Get game state with validation
     pub fn get_game(&self, game_id: &str, session_id: &str) -> DomainResult<Game> {
         // Validate session
-        let session = self.session_repo.get_session(session_id)?;
+        let session = {
+            let session_repo = self.session_repo.read().map_err(|_| {
+                DomainError::ServiceError(Cow::Borrowed(
+                    "Failed to acquire read lock on session repository",
+                ))
+            })?;
+            session_repo.get_session(session_id)?
+        };
+
         if session.game_id != game_id {
             return Err(DomainError::Unauthorized(
                 ErrorContext::new("GetGame")
@@ -149,7 +210,12 @@ where
         }
 
         // Load and return game
-        self.game_repo.find_by_id(game_id)
+        let game_repo = self.game_repo.read().map_err(|_| {
+            DomainError::ServiceError(Cow::Borrowed(
+                "Failed to acquire read lock on game repository",
+            ))
+        })?;
+        game_repo.find_by_id(game_id)
     }
 }
 
@@ -164,9 +230,30 @@ where
     }
 
     fn health_check(&self) -> DomainResult<()> {
-        self.game_repo.health_check()?;
-        self.session_repo.health_check()?;
-        self.history_repo.health_check()?;
+        {
+            let game_repo = self.game_repo.read().map_err(|_| {
+                DomainError::ServiceError(Cow::Borrowed(
+                    "Failed to acquire read lock on game repository",
+                ))
+            })?;
+            game_repo.health_check()?;
+        }
+        {
+            let session_repo = self.session_repo.read().map_err(|_| {
+                DomainError::ServiceError(Cow::Borrowed(
+                    "Failed to acquire read lock on session repository",
+                ))
+            })?;
+            session_repo.health_check()?;
+        }
+        {
+            let history_repo = self.history_repo.read().map_err(|_| {
+                DomainError::ServiceError(Cow::Borrowed(
+                    "Failed to acquire read lock on history repository",
+                ))
+            })?;
+            history_repo.health_check()?;
+        }
         Ok(())
     }
 }

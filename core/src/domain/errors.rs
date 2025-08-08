@@ -12,6 +12,7 @@
 //! - Be testable and observable
 
 use crate::error::{DeveloperGameError, UserError};
+use std::borrow::Cow;
 use std::fmt;
 
 /// Domain-specific error type
@@ -21,34 +22,34 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub enum DomainError {
     /// Entity not found in repository
-    NotFound(String),
+    NotFound(Cow<'static, str>),
 
     /// Business rule validation failed
-    ValidationFailed(String),
+    ValidationFailed(Cow<'static, str>),
 
     /// Operation not allowed in current state
-    InvalidState(String),
+    InvalidState(Cow<'static, str>),
 
     /// Concurrency conflict detected
-    ConcurrencyConflict(String),
+    ConcurrencyConflict(Cow<'static, str>),
 
     /// Repository operation failed
-    RepositoryError(String),
+    RepositoryError(Cow<'static, str>),
 
     /// Service operation failed
-    ServiceError(String),
+    ServiceError(Cow<'static, str>),
 
     /// Configuration error
-    Configuration(String),
+    Configuration(Cow<'static, str>),
 
     /// Authorization failure
-    Unauthorized(String),
+    Unauthorized(Cow<'static, str>),
 
     /// External dependency failure
-    ExternalServiceError(String),
+    ExternalServiceError(Cow<'static, str>),
 
     /// Timeout occurred
-    Timeout(String),
+    Timeout(Cow<'static, str>),
 }
 
 impl fmt::Display for DomainError {
@@ -107,14 +108,14 @@ impl From<DomainError> for UserError {
 ///
 /// Following the Builder pattern for constructing detailed error contexts
 pub struct ErrorContext {
-    operation: String,
-    entity: Option<String>,
-    details: Vec<String>,
+    operation: Cow<'static, str>,
+    entity: Option<Cow<'static, str>>,
+    details: Vec<Cow<'static, str>>,
 }
 
 impl ErrorContext {
     /// Create a new error context
-    pub fn new(operation: impl Into<String>) -> Self {
+    pub fn new(operation: impl Into<Cow<'static, str>>) -> Self {
         Self {
             operation: operation.into(),
             entity: None,
@@ -123,30 +124,41 @@ impl ErrorContext {
     }
 
     /// Add entity information
-    pub fn with_entity(mut self, entity: impl Into<String>) -> Self {
+    pub fn with_entity(mut self, entity: impl Into<Cow<'static, str>>) -> Self {
         self.entity = Some(entity.into());
         self
     }
 
     /// Add detail information
-    pub fn with_detail(mut self, detail: impl Into<String>) -> Self {
+    pub fn with_detail(mut self, detail: impl Into<Cow<'static, str>>) -> Self {
         self.details.push(detail.into());
         self
     }
 
     /// Build the error message
-    pub fn build(self) -> String {
-        let mut parts = vec![format!("Operation: {}", self.operation)];
+    pub fn build(self) -> Cow<'static, str> {
+        use std::fmt::Write;
+
+        // Pre-allocate buffer with reasonable capacity
+        let mut buffer = String::with_capacity(128);
+
+        write!(&mut buffer, "Operation: {}", self.operation).unwrap();
 
         if let Some(entity) = self.entity {
-            parts.push(format!("Entity: {entity}"));
+            write!(&mut buffer, "; Entity: {entity}").unwrap();
         }
 
         if !self.details.is_empty() {
-            parts.push(format!("Details: {}", self.details.join(", ")));
+            write!(&mut buffer, "; Details: ").unwrap();
+            for (i, detail) in self.details.iter().enumerate() {
+                if i > 0 {
+                    write!(&mut buffer, ", ").unwrap();
+                }
+                write!(&mut buffer, "{detail}").unwrap();
+            }
         }
 
-        parts.join("; ")
+        Cow::Owned(buffer)
     }
 }
 
@@ -156,7 +168,7 @@ mod tests {
 
     #[test]
     fn test_error_display() {
-        let err = DomainError::NotFound("Game session 123".into());
+        let err = DomainError::NotFound(Cow::Borrowed("Game session 123"));
         assert_eq!(err.to_string(), "Entity not found: Game session 123");
     }
 
@@ -174,7 +186,7 @@ mod tests {
 
     #[test]
     fn test_domain_to_developer_error_conversion() {
-        let domain_err = DomainError::ValidationFailed("Invalid move".into());
+        let domain_err = DomainError::ValidationFailed(Cow::Borrowed("Invalid move"));
         let dev_err: DeveloperGameError = domain_err.into();
 
         match dev_err {
@@ -187,7 +199,7 @@ mod tests {
 
     #[test]
     fn test_domain_to_user_error_conversion() {
-        let domain_err = DomainError::Unauthorized("Access denied".into());
+        let domain_err = DomainError::Unauthorized(Cow::Borrowed("Access denied"));
         let user_err: UserError = domain_err.into();
 
         assert!(matches!(user_err, UserError::InvalidOperation));

@@ -151,6 +151,7 @@ pub trait RepositoryFactory: Send + Sync {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::borrow::Cow;
 
     /// Mock implementation for testing - using simple state tracking
     struct MockGameRepository {
@@ -168,7 +169,9 @@ mod tests {
             if self.game_exists.contains(id) {
                 Ok(Game::default())
             } else {
-                Err(DomainError::NotFound(format!("Game {id} not found")))
+                Err(DomainError::NotFound(Cow::Owned(format!(
+                    "Game {id} not found"
+                ))))
             }
         }
 
@@ -181,7 +184,9 @@ mod tests {
             if self.game_exists.remove(id) {
                 Ok(())
             } else {
-                Err(DomainError::NotFound(format!("Game {id} not found")))
+                Err(DomainError::NotFound(Cow::Owned(format!(
+                    "Game {id} not found"
+                ))))
             }
         }
 
