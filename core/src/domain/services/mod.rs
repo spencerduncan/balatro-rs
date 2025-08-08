@@ -10,6 +10,10 @@
 //! - **Domain Services**: Encapsulate core business logic
 //! - **Infrastructure Services**: Handle technical concerns
 
+pub mod action_validator;
+pub mod validation_hooks;
+pub mod validation_rules;
+
 use crate::action::Action;
 use crate::domain::errors::ErrorContext;
 use crate::domain::repositories::{ActionHistoryRepository, GameRepository, SessionRepository};

@@ -13,7 +13,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 // Global atomic counter for session IDs - ensures uniqueness across threads
-static SESSION_COUNTER: AtomicU64 = AtomicU64::new(0);
+static COUNTER: AtomicU64 = AtomicU64::new(0);
 
 /// Unique identifier for a game session
 ///
@@ -44,30 +44,33 @@ pub struct SessionId {
 }
 
 impl SessionId {
-    /// Create a new unique SessionId
-    /// Uses timestamp + atomic counter for guaranteed uniqueness even in high-throughput scenarios
+    /// Generate a new unique SessionId
+    /// 
+    /// Format: [44-bit timestamp in microseconds][20-bit counter]
+    /// Provides ~557 years of timestamps with 1M unique IDs per microsecond
     pub fn new() -> Self {
-        // Get current timestamp in microseconds for time-based uniqueness
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .unwrap_or_default()
+            .unwrap()
             .as_micros() as u64;
-
-        // Atomic increment for thread-safe counter
-        let counter = SESSION_COUNTER.fetch_add(1, Ordering::SeqCst);
-
-        // Combine timestamp (high 44 bits) with counter (low 20 bits)
-        // This allows ~1M unique IDs per microsecond, sufficient for any game server
-        let value = (timestamp << 20) | (counter & 0xFFFFF);
-
-        Self { value }
+        
+        // Use only lower 44 bits of timestamp (gives us ~557 years from epoch)
+        let timestamp_bits = timestamp & 0xFFFFFFFFFFF;
+        
+        // Get counter value and increment atomically
+        let counter = COUNTER.fetch_add(1, Ordering::Relaxed) & 0xFFFFF; // 20 bits
+        
+        // Combine: timestamp (upper 44 bits) | counter (lower 20 bits)
+        let id = (timestamp_bits << 20) | counter;
+        
+        Self { value: id }
     }
-
-    /// Create a SessionId from a raw value (for deserialization/testing)
+    
+    /// Create SessionId from a raw value (for testing/deserialization)
     pub fn from_value(value: u64) -> Self {
         Self { value }
     }
-
+    
     /// Get the raw value of the SessionId
     pub fn value(&self) -> u64 {
         self.value
@@ -178,9 +181,17 @@ mod tests {
         for handle in handles {
             let ids = handle.join().unwrap();
             for id in ids {
-                assert!(all_ids.insert(id), "Thread-unsafe duplicate detected");
+                assert!(all_ids.insert(id), "Duplicate ID across threads");
             }
         }
+        assert_eq!(all_ids.len(), 10000);
+    }
+
+    #[test]
+    fn test_session_id_display() {
+        let id = SessionId::from_value(0x123456789ABCDEF0);
+        let display = format!("{}", id);
+        assert_eq!(display, "session_123456789abcdef0");
     }
 
     #[test]
