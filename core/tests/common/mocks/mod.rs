@@ -1,13 +1,12 @@
 //! Minimal Mock Framework for Deterministic Testing
 //!
 //! This module provides mock RNG capabilities for testing the Balatro game engine.
-//! Day 1 implementation focuses on deterministic RNG for reproducible tests.
-//! Advanced mocking features will be added in Day 2-3 of the salvage plan.
+//! Day 3 implementation focuses on deterministic RNG for reproducible tests.
 
 pub mod rng;
 
 // Re-export MockRng for easy access
-pub use rng::MockRng;
+pub use rng::{MockRng, RngReplay, RngSequence};
 
 /// Configuration for mock framework behavior
 #[derive(Debug, Clone, Copy)]
