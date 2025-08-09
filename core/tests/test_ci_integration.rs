@@ -64,12 +64,7 @@ mod coverage_exclusions {
     #[test]
     fn test_coverage_excluded_paths() {
         // Verify that test files are excluded from coverage
-        let excluded_patterns = vec![
-            "*/tests/*",
-            "*/benches/*",
-            "*/examples/*",
-            "*/build.rs",
-        ];
+        let excluded_patterns = vec!["*/tests/*", "*/benches/*", "*/examples/*", "*/build.rs"];
 
         // This would be checked by the coverage tool
         for pattern in excluded_patterns {
@@ -160,11 +155,7 @@ mod artifacts {
 
     #[test]
     fn test_coverage_artifact_paths() {
-        let expected_paths = vec![
-            "target/coverage",
-            "target/llvm-cov",
-            "target/tarpaulin",
-        ];
+        let expected_paths = vec!["target/coverage", "target/llvm-cov", "target/tarpaulin"];
 
         for path in expected_paths {
             let p = PathBuf::from(path);
@@ -389,7 +380,7 @@ mod error_reporting {
 fn test_full_ci_pipeline() {
     use std::env;
     use std::path::PathBuf;
-    
+
     // This test simulates the full CI pipeline
     if env::var("CI").is_err() {
         // Skip if not in CI
@@ -412,11 +403,7 @@ fn test_full_ci_pipeline() {
     // Would run: cargo criterion
 
     // 6. Artifact generation
-    let artifacts = vec![
-        "target/test-results",
-        "target/coverage",
-        "target/criterion",
-    ];
+    let artifacts = vec!["target/test-results", "target/coverage", "target/criterion"];
 
     for artifact_dir in artifacts {
         let path = PathBuf::from(artifact_dir);

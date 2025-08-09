@@ -361,7 +361,11 @@ fn test_action_recorder_with_outcomes() {
     recorder.record_outcome(Stage::Blind(Blind::Small), true, None);
 
     recorder.record_with_context(Action::Play(), &game);
-    recorder.record_outcome(Stage::Blind(Blind::Small), false, Some("Invalid hand".to_string()));
+    recorder.record_outcome(
+        Stage::Blind(Blind::Small),
+        false,
+        Some("Invalid hand".to_string()),
+    );
 
     // Validate sequence should fail due to illegal action
     assert!(!recorder.validate_sequence());
