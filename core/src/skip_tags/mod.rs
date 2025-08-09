@@ -137,12 +137,12 @@ impl ActiveSkipTags {
     }
 
     /// Get mutable iterator over tag instances
-    pub fn iter_mut(&mut self) -> std::slice::IterMut<SkipTagInstance> {
+    pub fn iter_mut(&mut self) -> std::slice::IterMut<'_, SkipTagInstance> {
         self.active_instances.iter_mut()
     }
 
     /// Get iterator over tag instances
-    pub fn iter(&self) -> std::slice::Iter<SkipTagInstance> {
+    pub fn iter(&self) -> std::slice::Iter<'_, SkipTagInstance> {
         self.active_instances.iter()
     }
 
