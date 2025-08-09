@@ -63,7 +63,6 @@ dependencies = [
  "thiserror",
  "toml",
  "tracing",
- "uuid",
 ]
 
 [[package]]
@@ -791,16 +790,6 @@ name = "unindent"
 version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7264e107f553ccae879d21fbea1d6724ac785e8c3bfc762137959b5802826ef3"
-
-[[package]]
-name = "uuid"
-version = "1.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5de17fd2f7da591098415cff336e12965a28061ddace43b59cb3c430179c9439"
-dependencies = [
- "getrandom",
- "serde",
-]
 
 [[package]]
 name = "walkdir"
