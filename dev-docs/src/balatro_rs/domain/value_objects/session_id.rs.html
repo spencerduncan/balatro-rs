@@ -190,7 +190,7 @@
 <a href=#190 id=190 data-nosnippet>190</a>    <span class="attr">#[test]
 <a href=#191 id=191 data-nosnippet>191</a>    </span><span class="kw">fn </span>test_session_id_display() {
 <a href=#192 id=192 data-nosnippet>192</a>        <span class="kw">let </span>id = SessionId::from_value(<span class="number">0x123456789ABCDEF0</span>);
-<a href=#193 id=193 data-nosnippet>193</a>        <span class="kw">let </span>display = <span class="macro">format!</span>(<span class="string">"{}"</span>, id);
+<a href=#193 id=193 data-nosnippet>193</a>        <span class="kw">let </span>display = <span class="macro">format!</span>(<span class="string">"{id}"</span>);
 <a href=#194 id=194 data-nosnippet>194</a>        <span class="macro">assert_eq!</span>(display, <span class="string">"session_123456789abcdef0"</span>);
 <a href=#195 id=195 data-nosnippet>195</a>    }
 <a href=#196 id=196 data-nosnippet>196</a>
