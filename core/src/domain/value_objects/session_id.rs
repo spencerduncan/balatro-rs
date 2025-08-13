@@ -190,7 +190,7 @@ mod tests {
     #[test]
     fn test_session_id_display() {
         let id = SessionId::from_value(0x123456789ABCDEF0);
-        let display = format!("{}", id);
+        let display = format!("{id}");
         assert_eq!(display, "session_123456789abcdef0");
     }
 

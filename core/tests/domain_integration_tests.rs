@@ -5,23 +5,23 @@ use balatro_rs::game::Game;
 
 #[test]
 fn test_domain_error_conversions() {
-    let domain_err = DomainError::NotFound("test".to_string());
+    let domain_err = DomainError::NotFound("test".into());
     let _dev_err: balatro_rs::error::DeveloperGameError = domain_err.clone().into();
     let _user_err: balatro_rs::error::UserError = domain_err.into();
 }
 
 #[test]
 fn test_money_value_object() {
-    let money = Money::new(100.0).unwrap();
-    assert_eq!(money.value(), 100.0);
+    let money = Money::new(100);
+    assert_eq!(money.amount(), 100);
 
-    let added = money.add(50.0).unwrap();
-    assert_eq!(added.value(), 150.0);
+    let added = money.add(Money::new(50));
+    assert_eq!(added.amount(), 150);
 
-    let subtracted = added.subtract(25.0).unwrap();
-    assert_eq!(subtracted.value(), 125.0);
+    let subtracted = added.subtract(Money::new(25)).unwrap();
+    assert_eq!(subtracted.amount(), 125);
 
-    assert!(Money::new(-10.0).is_err());
+    assert!(Money::try_new(-10).is_err());
 }
 
 #[test]
@@ -29,7 +29,7 @@ fn test_score_value_object() {
     let score = Score::new(1000);
     assert_eq!(score.value(), 1000);
 
-    let new_score = score.add(500);
+    let new_score = score.add(Score::new(500));
     assert_eq!(new_score.value(), 1500);
 }
 
